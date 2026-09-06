@@ -20,6 +20,10 @@ export const spec = {
 		description: { type: "string", description: "Release description" },
 		model: { type: "string", description: "Candidate int8 ONNX classifier path" },
 		tokenizer: { type: "string", description: "SentencePiece tokenizer path" },
+		"char-vocab": {
+			type: "string",
+			description: "Sealed character vocabulary path — stages a character-path family (no tokenizer)",
+		},
 		"model-card": { type: "string", description: "Model-card JSON path" },
 		fst: { type: "string", description: "FST gazetteer path" },
 		"model-size": { type: "string", description: "Override the displayed model size" },

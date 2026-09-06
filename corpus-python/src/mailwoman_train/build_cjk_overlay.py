@@ -113,7 +113,10 @@ def build(
     volume_root: str,
     jp_version: str = JP_VERSION,
     force: bool = False,
+    extra_corpora: Sequence[tuple[Path, str]] = (),
 ) -> dict[str, Any]:
+    """Write the overlay. ``extra_corpora`` are further versioned corpora on the same schema and label set (the Korean
+    slice, ``juso-kr``), referenced by volume path like the JP parts and folded into the sealed vocabulary."""
     if out_dir.exists() and any(out_dir.iterdir()) and not force:
         raise RuntimeError(f"{out_dir} is not empty; pass --force to overwrite")
     for split in ("train", "val"):
@@ -148,16 +151,43 @@ def build(
     jp_vocab_path = next(jp_corpus.glob("char-vocab-*.json"))
     cn_train_raws = pq.read_table(out_dir / "train" / "cn-units-0000.parquet", columns=["raw"])["raw"].to_pylist()
     vocab = merge_char_vocab(load_char_vocab(jp_vocab_path), cn_train_raws)
+
+    extra_parts: dict[str, dict[str, list[str]]] = {}
+    extra_vocab_sizes: dict[str, int] = {}
+    for corpus_dir, corpus_source in extra_corpora:
+        parts = {
+            split: sorted(path.name for path in (corpus_dir / split).glob("*.parquet")) for split in ("train", "val")
+        }
+        if not parts["train"] or not parts["val"]:
+            raise RuntimeError(f"{corpus_dir} holds no train/val parquet parts")
+        extra_vocab = load_char_vocab(next(corpus_dir.glob("char-vocab-*.json")))
+        extra_vocab_sizes[corpus_source] = len(extra_vocab)
+        # The union re-sorted by code point, the same deterministic order `build_char_vocab` uses.
+        characters = set(vocab) | set(extra_vocab)
+        characters -= {"<pad>", "<unk>"}
+        vocab = {"<pad>": PAD_CHAR_ID, "<unk>": UNK_CHAR_ID}
+        for index, character in enumerate(sorted(characters), start=2):
+            vocab[character] = index
+        extra_parts[corpus_dir.name] = {**parts, "source": [corpus_source]}
     save_char_vocab(vocab, out_dir / "char-vocab-cjk.json")
 
-    slices = [
-        {"path": f"{volume_root}/{jp_version}/{split}/{name}", "split": split, "source": "overture-jp"}
-        for split in ("train", "val")
-        for name in jp_parts[split]
-    ] + [
-        {"path": f"{volume_root}/{out_dir.name}/{split}/cn-units-0000.parquet", "split": split, "source": CN_SOURCE}
-        for split in ("train", "val")
-    ]
+    slices = (
+        [
+            {"path": f"{volume_root}/{jp_version}/{split}/{name}", "split": split, "source": "overture-jp"}
+            for split in ("train", "val")
+            for name in jp_parts[split]
+        ]
+        + [
+            {"path": f"{volume_root}/{out_dir.name}/{split}/cn-units-0000.parquet", "split": split, "source": CN_SOURCE}
+            for split in ("train", "val")
+        ]
+        + [
+            {"path": f"{volume_root}/{version}/{split}/{name}", "split": split, "source": parts["source"][0]}
+            for version, parts in extra_parts.items()
+            for split in ("train", "val")
+            for name in parts[split]
+        ]
+    )
     manifest = {
         "corpus_version": out_dir.name,
         "base_corpus_version": jp_version,
@@ -177,7 +207,8 @@ def build(
         "jp_parts": jp_parts,
         "cn_rows": {**counts, "board": len(board)},
         "cn_span_tags": dict(tag_counts.most_common()),
-        "char_vocab": {"jp": len(load_char_vocab(jp_vocab_path)), "cjk": len(vocab)},
+        "char_vocab": {"jp": len(load_char_vocab(jp_vocab_path)), **extra_vocab_sizes, "cjk": len(vocab)},
+        "extra_corpora": {version: parts["source"][0] for version, parts in extra_parts.items()},
         "cn_sources": [str(cn_train), str(cn_val), str(cn_test)],
     }
     (out_dir / "build-report.json").write_text(
@@ -196,7 +227,20 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--volume-root", default=DEFAULT_VOLUME_ROOT, help="where the manifest's paths point")
     parser.add_argument("--jp-version", default=JP_VERSION)
     parser.add_argument("--force", action="store_true")
+    parser.add_argument(
+        "--extra-corpus",
+        action="append",
+        default=[],
+        metavar="DIR:SOURCE",
+        help="another versioned corpus on the same schema, referenced by volume path under SOURCE (repeatable)",
+    )
     args = parser.parse_args(argv)
+    extra_corpora = []
+    for entry in args.extra_corpus:
+        directory, _, source = entry.rpartition(":")
+        if not directory or not source:
+            raise SystemExit(f"--extra-corpus takes DIR:SOURCE, got {entry!r}")
+        extra_corpora.append((Path(directory), source))
     report = build(
         jp_corpus=Path(args.jp_corpus),
         cn_train=Path(args.cn_train),
@@ -206,6 +250,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         volume_root=args.volume_root,
         jp_version=args.jp_version,
         force=args.force,
+        extra_corpora=extra_corpora,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2))
 

@@ -126,7 +126,15 @@ export interface BuildCandidateOptions {
 	 * that lets it stand in prominence races. `countries` are judged only where `<cc>.txt` exists under `geonamesDir`;
 	 * absent dumps are skipped loudly.
 	 */
-	currencyBackfill?: { geonamesDir: string; countries: readonly string[] }
+	currencyBackfill?: {
+		geonamesDir: string
+		countries: readonly string[]
+		/**
+		 * The dead placetypes the resurrection judges; `resurrectCurrencyHoles`'s default (`locality`) when absent. The
+		 * `localadmin` widening #1746 named is admitted here once its census is read.
+		 */
+		deadPlacetypes?: readonly string[]
+	}
 	/**
 	 * Optional progress callback for CLI / test introspection.
 	 */
@@ -430,6 +438,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			tx: kdb,
 			geonamesDir: opts.currencyBackfill.geonamesDir,
 			countries: opts.currencyBackfill.countries,
+			...(opts.currencyBackfill.deadPlacetypes ? { deadPlacetypes: opts.currencyBackfill.deadPlacetypes } : {}),
 			attrs,
 			ccID,
 			ptID,

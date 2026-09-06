@@ -1,0 +1,79 @@
+# === v8-cjk-kr-probe — 2,000-step probe of the JP + CN + KR mixture (the KR spec §5). ===============================#
+# ONE change against v8-cjk-kana (the CJK base, 0.9924 blended / 0.9821 municipality macro on the JP board): the corpus
+# is `v8-cjk-kr-2026-09-06`, the same JP + CN parts plus the Korean road-name-address slice `v8-kr-2026-09-06`
+# (2,000,000 train / 20,000 val / 20,000 board rows over 27 held-out 시군구, five registers, `juso-kr`; KOGL Type 1,
+# attribution 행정안전부) at source share 0.38, and the vocabulary re-sealed over the union (2,239 JP + 842 KR
+# characters → 3,165). No new tag: REGION → region, CITY → subregion (the 시군구 are WOF counties), DISTRICT →
+# dependent_locality, STREET, NUMBER, POSTCODE. Head, geometry, seed and schedule unchanged. Spec:
+# docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md.
+#
+# --- WHAT THE RUN MUST SHOW (pre-registered) ---------------------------------------------------------------------
+#   * KR board (`kr-board.jsonl`, scorer `--resolve-tags region,subregion --centroids kr-sigungu-centroids.json`):
+#     per-tag span exact-match `street` and `house_number` ≥ 0.99, `subregion` ≥ 0.97, `dependent_locality` ≥ 0.95,
+#     `region` ≥ 0.99, `postcode` ≥ 0.99. The untrained base reads 0.0000 on every tag but house_number (0.0428).
+#     Coordinate-acceptability @15 km through the 시군구 centroid is the reading beside those, per register.
+#   * JP board (`v8-jp-kana-2026-09-06/jp-board.jsonl`, the same scorer): blended ≥ 0.9924 − 0.005 and municipality
+#     macro ≥ 0.9821 − 0.005 — the KR rows must not cost JP; `かすみがうら市` failed rows ≤ 5 and `中新川郡上市町` beside it.
+#   * CN board: `locality_unit` ≥ 11 of 14.
+#   * Score BOTH arms (this run and v8-cjk-kana) on the same scorer in the same session; a scorer patch between two
+#     reads is a comparison of scorers.
+#   * At 2,000 steps the bars above are read at the step's own level: KR street / house_number ≥ 0.95 says the
+#     surface is learnable from the mixture and earns the 24k run (`v8-cjk-kr.yaml`); lower is the finding.
+#
+# Launch:
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk_kr
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-kr-probe.yaml --resume auto
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-kr-2026-09-06
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform. Same as v8-jp-full.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+    CN: 1.0
+    KR: 1.0
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart.
+  source_weights:
+    overture-jp: 0.60
+    juso-kr: 0.38
+    coarse-placer-cn-units: 0.02
+  coarse_filter: false
+  # JP val 20,000 + CN val 11 + KR val 20,000.
+  val_rows: 40011
+  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-kr-2026-09-06/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # v8-jp-full's geometry, unchanged, so the two deltas above are the only deltas.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-kr-probe-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 2000
+  eval_every_steps: 1000
+  save_every_steps: 2000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

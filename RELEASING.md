@@ -445,6 +445,25 @@ arc, Task 8) is COUNTRY-SPECIFIC BY DESIGN — omit it entirely for a release wh
 `softFeed.pairIndexByCountry`. (`en-nz` ships NO postcode binary — no WOF NZ postcode extract exists yet; see
 `neural-weights-en-nz/model-card.json`'s `no_postcode_bin` follow-up.)
 
+#### Character-path families stage under their OWN directory (`cjk/<version>/`)
+
+`@mailwoman/neural-weights-cjk` ships `model.onnx` + `char-vocab.json` and no tokenizer. Its graph shares a basename
+with the Latin base's and is not the same bytes, so it is never staged into `en-us/<version>/`: `--char-vocab` selects
+the family shape, the directory is `<locale>/<version>` with the FAMILY's card version, and no `releases.json` entry is
+written (the demo does not serve it).
+
+```bash
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli.js release hf v<CJK CARD VERSION> \
+  --locale cjk --label "…" --description "…" \
+  --model $MAILWOMAN_DATA_ROOT/models/<run>/served-package/model.onnx \
+  --char-vocab $MAILWOMAN_DATA_ROOT/models/<run>/served-package/char-vocab.json \
+  --model-card packages/neural-weights-cjk/model-card.json
+```
+
+`fetch-hf-weights` plans a family from `release.config.json`'s `charWeights` only once its workspace is in
+`.release-it.json`'s list, reads it from `<family>/v<card version>/` and verifies it against the family's own
+`files_md5`; the preflight `--source hf` names the unstaged object before any dispatch.
+
 #### FST artifacts with no builder — what NOT to re-publish (#1493)
 
 Four FST binaries in `$MAILWOMAN_DATA_ROOT/wof/` predate the `FST_LOCALES` registry (#1318) and

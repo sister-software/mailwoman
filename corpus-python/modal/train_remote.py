@@ -4755,6 +4755,61 @@ def sync_v8cjk_kana():
     secrets=[r2_secret],
     timeout=1800,
 )
+def sync_v8cjk_kr():
+    """Stage the v8 CJK + Korean corpus (the KR spec): the JP kana corpus, the Korean slice, the JP + CN + KR overlay
+    with its re-sealed vocabulary, the configs and the training code."""
+    import os
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus-python/scripts/ {VOL_MOUNT}/corpus-python/scripts/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-jp-kana-2026-09-06/ {VOL_MOUNT}/corpus/versioned/v8-jp-kana-2026-09-06/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-kr-2026-09-06/ {VOL_MOUNT}/corpus/versioned/v8-kr-2026-09-06/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-cjk-kr-2026-09-06/ {VOL_MOUNT}/corpus/versioned/v8-cjk-kr-2026-09-06/ {retry}",
+    ]
+    for command in commands:
+        print(f"$ {command}")
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+    vol.commit()
+    kr = f"{VOL_MOUNT}/corpus/versioned/v8-kr-2026-09-06"
+    overlay = f"{VOL_MOUNT}/corpus/versioned/v8-cjk-kr-2026-09-06"
+    checks = {
+        "v8-cjk-kr configs": all(
+            os.path.isfile(f"{package}/configs/{name}.yaml") for name in ("v8-cjk-kr-probe", "v8-cjk-kr")
+        ),
+        "KR builder in the package": os.path.isfile(f"{package}/build_kr_slice.py"),
+        "KR train parts": all(os.path.isfile(f"{kr}/train/kr-part-{index:04d}.parquet") for index in range(8)),
+        "KR val part": os.path.isfile(f"{kr}/val/kr-part-0000.parquet"),
+        "KR board + centroids": os.path.isfile(f"{kr}/kr-board.jsonl")
+        and os.path.isfile(f"{kr}/kr-sigungu-centroids.json"),
+        "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),
+        "CN train part": os.path.isfile(f"{overlay}/train/cn-units-0000.parquet"),
+        "CJK+KR char vocab": os.path.isfile(f"{overlay}/char-vocab-cjk.json"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"sync incomplete: {missing}")
+    print("\nv8-cjk-kr sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
 def sync_v8cjk():
     """Stage the v8 CJK overlay (#2034) through R2 and verify mounted visibility.
 

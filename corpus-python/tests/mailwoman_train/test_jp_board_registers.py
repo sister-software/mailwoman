@@ -123,11 +123,11 @@ def test_per_register_fractions_are_computed_over_that_register_only():
     assert result["fraction"] == pytest.approx(5 / 6)
 
     per = result["per_register"]
-    assert per["native"] == {"rows": 3, "acceptable": 3, "unresolved": 0, "fraction": 1.0}
-    assert per["arabic_chome"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "fraction": 1.0}
-    assert per["designator"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "fraction": 1.0}
+    assert per["native"] == {"rows": 3, "acceptable": 3, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
+    assert per["arabic_chome"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
+    assert per["designator"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
     # The one that failed reads 0.0000 on its own, where the blended 0.83 would have hidden it.
-    assert per["compact_folded"] == {"rows": 1, "acceptable": 0, "unresolved": 1, "fraction": 0.0}
+    assert per["compact_folded"] == {"rows": 1, "acceptable": 0, "unresolved": 1, "gold_exact": 0, "fraction": 0.0}
 
 
 def test_per_register_totals_partition_the_blended_totals():
@@ -218,8 +218,8 @@ def test_municipality_macro_weights_each_held_out_municipality_once():
     result = _score(chiyoda)
 
     assert result["fraction"] == pytest.approx(4 / 6)
-    assert result["per_municipality"]["CHIYODA"] == {"rows": 4, "acceptable": 4, "fraction": 1.0}
-    assert result["per_municipality"]["KITA"] == {"rows": 2, "acceptable": 0, "fraction": 0.0}
+    assert result["per_municipality"]["CHIYODA"] == {"rows": 4, "acceptable": 4, "gold_exact": 0, "fraction": 1.0}
+    assert result["per_municipality"]["KITA"] == {"rows": 2, "acceptable": 0, "gold_exact": 0, "fraction": 0.0}
     assert result["municipality_macro"] == pytest.approx(0.5)
 
     report = scorer.format_report(result)

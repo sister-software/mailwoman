@@ -94,7 +94,7 @@ Beyond the 71 workspaces the repo root holds workspace config and six directorie
 
 - `apps/web-demo/` — a standalone Python + single-page-HTML parser demo (`server.py`, no `package.json`), served behind the playpen nginx
 - `corpus-python/` — the Python training code, including the Modal launcher
-- `hf-publish/` — three Hugging Face model/dataset card READMEs, nothing else
+- `hf-publish/` — four Hugging Face model/dataset card READMEs (en-us, cjk, the tokenizer, the WOF gazetteer), nothing else
 - `data/` — checked-in reference inputs (e.g. `data/gazetteer/anchor-lexicon-v1.json`, the copy `mailwoman eval promote` runs against)
 - `evals/` — the per-model score ledger (`evals/scores-by-version.json`)
 - `docker/` — the private `mailwoman-docker` dependency manifest for the ghcr image. It HAS a `package.json`, which makes it look like a workspace; it is not in the `workspaces` array, and it installs the PUBLISHED `@mailwoman/*` packages rather than the local ones
@@ -130,6 +130,7 @@ The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `t
 - `<workspace>/scripts/link-dev-weights.ts` — materializes the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the **data-root overlay** (`$MAILWOMAN_DATA_ROOT/weights/<locale>/`), NOT into the tracked workspace — the workspace package stays bare on a dev checkout (writing into it caused the four hazards `packages/release-kit/lib/weights/link-weights-overlay.ts`'s header lists: empty worktrees, `yarn test` mutating tracked dirs, copy-through-symlink, `YN0035` tarballs). `resolveWeights`'s overlay rung is what reads it in local dev; a test asserting the consumer's package-carries-weights state must seed its own scratch overlay instead (`dropin-cold-start.test.ts`, #1733).
 - `packages/neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-populates the data-root overlay** as a side effect.
 - `mwops release copy-weights` (`packages/release-kit/lib/weights/copy-weights.ts`) — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
+- A character-path family (`charWeights` in `release.config.json`, `packages/neural-weights-cjk`) reads from its OWN Hugging Face directory, `<family>/v<card version>/`, and is verified against its own card: its `model.onnx` shares a basename with the Latin base's and is different bytes, and the bucket is flat by basename. `fetch-hf-weights` plans a family only once its workspace is in the release list; `mailwoman release hf --char-vocab …` stages it (RELEASING.md).
 - `mwops release publish-workspace` (`packages/release-kit/lib/pack/publish-workspace.ts`) — invoked per workspace by release-it's hook (with `--allow-unplanned`) and by `publish.yml`'s loop (with `--plan`). Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
 
 ### Pitfall: the overlay `link-dev-weights.ts` is a copy-paste template

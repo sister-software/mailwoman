@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -41,7 +42,7 @@ CN_ROW = {
 }
 
 
-def write_jsonl(path: Path, rows: list[dict]) -> Path:
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:
     path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
     return path
 
@@ -141,3 +142,84 @@ def test_build_writes_the_overlay_with_the_jp_parts_referenced_by_volume_path(tm
     assert report["cn_span_tags"]["locality_unit"] == 2
     assert report["char_vocab"]["cjk"] > report["char_vocab"]["jp"]
     assert (out / "cn-board.jsonl").read_text(encoding="utf-8").count("\n") == 2
+
+
+def make_kr_corpus(root: Path) -> Path:
+    corpus = root / "v8-kr-2026-09-06"
+    for split in ("train", "val"):
+        (corpus / split).mkdir(parents=True)
+        pq.write_table(
+            pa.Table.from_pylist(
+                [
+                    {
+                        "raw": "서울특별시 종로구 자하문로 94",
+                        "tokens": ["서울특별시", "종로구", "자하문로", "94"],
+                        "labels": ["B-region", "B-subregion", "B-street", "B-house_number"],
+                        "span_starts": [0, 6, 10, 15],
+                        "span_ends": [5, 9, 14, 17],
+                        "span_tags": ["region", "subregion", "street", "house_number"],
+                        "country": "KR",
+                        "source": "juso-kr",
+                        "register": "no_dong",
+                    }
+                ],
+                schema=SCHEMA,
+            ),
+            corpus / split / "kr-part-0000.parquet",
+        )
+    save_char_vocab(
+        {
+            "<pad>": 0,
+            "<unk>": 1,
+            " ": 2,
+            "4": 3,
+            "9": 4,
+            "구": 5,
+            "로": 6,
+            "문": 7,
+            "별": 8,
+            "서": 9,
+            "시": 10,
+            "울": 11,
+            "자": 12,
+            "종": 13,
+            "특": 14,
+            "하": 15,
+        },
+        corpus / "char-vocab-kr.json",
+    )
+    return corpus
+
+
+def test_an_extra_corpus_is_referenced_by_volume_path_and_folded_into_the_vocabulary(tmp_path: Path) -> None:
+    corpus = make_jp_corpus(tmp_path)
+    kr = make_kr_corpus(tmp_path)
+    train = write_jsonl(tmp_path / "train.jsonl", [CN_ROW])
+    val = write_jsonl(tmp_path / "val.jsonl", [CN_ROW])
+    test = write_jsonl(tmp_path / "test.jsonl", [CN_ROW])
+    out = tmp_path / "v8-cjk-kr-test"
+
+    report = build(
+        jp_corpus=corpus,
+        cn_train=train,
+        cn_val=val,
+        cn_test=test,
+        out_dir=out,
+        volume_root="/data/corpus/versioned",
+        extra_corpora=[(kr, "juso-kr")],
+    )
+
+    manifest = json.loads((out / "MANIFEST.json").read_text(encoding="utf-8"))
+    kr_entries = [entry for entry in manifest["slices"] if entry["source"] == "juso-kr"]
+    assert [entry["path"] for entry in kr_entries] == [
+        "/data/corpus/versioned/v8-kr-2026-09-06/train/kr-part-0000.parquet",
+        "/data/corpus/versioned/v8-kr-2026-09-06/val/kr-part-0000.parquet",
+    ]
+    vocab = json.loads((out / "char-vocab-cjk.json").read_text(encoding="utf-8"))
+    assert "서" in vocab and "東" in vocab
+    # Code-point order, ids contiguous from 2: the same seal `build_char_vocab` writes.
+    characters = [character for character in vocab if character not in ("<pad>", "<unk>")]
+    assert characters == sorted(characters)
+    assert sorted(vocab.values()) == list(range(len(vocab)))
+    assert report["char_vocab"]["juso-kr"] == 16
+    assert report["extra_corpora"] == {"v8-kr-2026-09-06": "juso-kr"}
