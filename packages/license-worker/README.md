@@ -24,7 +24,8 @@ production only an `active` entry of the shipped register passes the self-test.
 | `STRIPE_SECRET_KEY`                                  | secret     | a restricted key with read scope on checkout sessions, subscriptions, invoices, invoice payments, disputes |
 | `STRIPE_WEBHOOK_SECRET`                              | secret     | the webhook destination's signing secret                                                                   |
 | `LICENSE_SIGNING_KEY_PEM`                            | secret     | the worker's Ed25519 private key, PKCS#8 PEM                                                               |
-| `EMAIL_API_KEY`                                      | secret     | the transactional email provider's API key                                                                 |
+| `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone         |
+| `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                             |
 | `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                           |
 | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`        | var        | the allowlisted Price IDs; `lib/plans.ts` maps each to a plan code                                         |
 | `AGREEMENT_VERSION`                                  | var        | the terms version new Payment Links carry; a session with another version is fulfilled and logged          |

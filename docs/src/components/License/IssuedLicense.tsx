@@ -9,19 +9,18 @@
  *   worker answers is stored anywhere but the DOM.
  */
 
+import {
+	CLAIM_INTERVAL_MS,
+	fetchClaim,
+	initialClaimState,
+	nextClaimState,
+	type ClaimState,
+	type IssuedClaim,
+} from "@mailwoman/license-worker/sdk/claim"
+import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "@mailwoman/license-worker/sdk/constants"
 import { useClipboard } from "@mailwoman/react"
 import type React from "react"
 import { useEffect, useReducer } from "react"
-
-import {
-	CLAIM_INTERVAL_MS,
-	type ClaimState,
-	fetchClaim,
-	initialClaimState,
-	type IssuedClaim,
-	nextClaimState,
-} from "../../license/claim.ts"
-import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "../../license/shop.ts"
 
 import styles from "./styles.module.css"
 

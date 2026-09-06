@@ -904,7 +904,7 @@ import {
 	shopIsOpen,
 	SUPPORT_EMAIL,
 	TERMS_PATH,
-} from "../../license/shop.ts"
+} from "#license/shop"
 import styles from "./styles.module.css"
 
 /**

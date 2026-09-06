@@ -10,7 +10,7 @@
  *   CORS admits this site and answers `no-store`.
  */
 
-import { LICENSE_WORKER_URL } from "./shop.ts"
+import { LICENSE_WORKER_URL } from "#sdk/constants"
 
 export type ClaimResponse =
 	| { status: "pending" }
@@ -66,7 +66,9 @@ export function initialClaimState(): ClaimState {
 }
 
 export function nextClaimState(state: ClaimState, event: ClaimEvent): ClaimState {
-	if (state.phase !== "polling") return state
+	if (state.phase !== "polling") {
+		return state
+	}
 
 	const attempts = state.attempts + 1
 	const startedAt = state.startedAt ?? event.now
@@ -74,16 +76,30 @@ export function nextClaimState(state: ClaimState, event: ClaimEvent): ClaimState
 	const stillPolling: ClaimState = { phase: "polling", attempts, startedAt }
 
 	if (event.kind === "response") {
-		if (event.response.status === "issued") return { phase: "issued", claim: event.response }
+		if (event.response.status === "issued") {
+			return { phase: "issued", claim: event.response }
+		}
 
-		if (event.response.status === "revoked") return { phase: "revoked" }
+		if (event.response.status === "revoked") {
+			return { phase: "revoked" }
+		}
 
-		return overdue ? { phase: "waiting_too_long", attempts } : stillPolling
+		if (overdue) {
+			return { phase: "waiting_too_long", attempts }
+		}
+
+		return stillPolling
 	}
 
-	if (event.kind === "http" && event.status === HTTP_NOT_FOUND) return { phase: "not_found" }
+	if (event.kind === "http" && event.status === HTTP_NOT_FOUND) {
+		return { phase: "not_found" }
+	}
 
-	return overdue ? { phase: "unreachable", attempts } : stillPolling
+	if (overdue) {
+		return { phase: "unreachable", attempts }
+	}
+
+	return stillPolling
 }
 
 /**
@@ -95,9 +111,11 @@ export async function fetchClaim(sessionID: string, signal?: AbortSignal): Promi
 	try {
 		const response = await fetch(claimURL(sessionID), { headers: { accept: "application/json" }, signal })
 
-		if (!response.ok) return { kind: "http", status: response.status, now }
+		if (!response.ok) {
+			return { kind: "http", status: response.status, now }
+		}
 
-		return { kind: "response", response: (await response.json()) as ClaimResponse, now }
+		return { kind: "response", response: await response.json(), now }
 	} catch {
 		return { kind: "error", now }
 	}
