@@ -86,7 +86,7 @@ const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
 			])
 
 		const { PremiseLinkageMode, PremiseLinkagePolicy } = await import("#eval-harness/premise-linkage/schema")
-		const { $private } = await import("@mailwoman/core/env")
+		const { $private } = await import("#env")
 
 		const controlled = typeof options.config === "string" && options.config.length > 0
 		const mode = controlled ? PremiseLinkageMode.Controlled : PremiseLinkageMode.Synthetic

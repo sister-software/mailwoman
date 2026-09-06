@@ -34,12 +34,12 @@
  */
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
 
+import { $public } from "#env/index"
 import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "#weights/derived-weights-key"
 import {
 	type PairIndexInputs,

@@ -54,10 +54,10 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
 import { writeLocalJSONFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { haversineKm } from "@mailwoman/spatial"
 
+import { $public } from "#env"
 import { renderOaResolverReport } from "#eval-harness/oa-resolver-report"
 import { dumpAggPair, newAggPair, recordInto, stateBucket } from "#eval-harness/oa-resolver/aggregate"
 import { buildAssembledArm } from "#eval-harness/oa-resolver/assembled-arm"

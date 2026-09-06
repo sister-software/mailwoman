@@ -22,22 +22,3 @@ import { z } from "zod"
 export function blankAsAbsent<T extends z.ZodType>(inner: T) {
 	return z.preprocess((v) => (v === "" ? undefined : v), inner)
 }
-
-/**
- * A utility for creating a live, typed view over `process.env` layered on an optional `.env` file. Only keys in the
- *
- * @internal
- */
-export function liveEnv<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.infer<z.ZodObject<Shape>> {
-	const view = {} as z.infer<z.ZodObject<Shape>>
-
-	for (const key of Object.keys(schema.shape)) {
-		Object.defineProperty(view, key, {
-			enumerable: true,
-			// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
-			get: () => schema.parse(process.env)[key as keyof z.infer<z.ZodObject<Shape>>],
-		})
-	}
-
-	return view
-}

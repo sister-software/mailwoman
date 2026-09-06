@@ -116,11 +116,6 @@
 			"default": "./out/env/index.js",
 			"types": "./out/env/index.d.ts"
 		},
-		"./env/*": {
-			"node": "./lib/env/*.ts",
-			"default": "./out/env/*.js",
-			"types": "./out/env/*.d.ts"
-		},
 		"./layers": {
 			"node": "./lib/layers/index.ts",
 			"default": "./out/layers/index.js",
@@ -420,6 +415,16 @@
 			"node": "./lib/decoder/unknown-spans.ts",
 			"default": "./out/decoder/unknown-spans.js",
 			"types": "./out/decoder/unknown-spans.d.ts"
+		},
+		"./env/schema": {
+			"node": "./lib/env/schema.ts",
+			"default": "./out/env/schema.js",
+			"types": "./out/env/schema.d.ts"
+		},
+		"./env/utils": {
+			"node": "./lib/env/utils.ts",
+			"default": "./out/env/utils.js",
+			"types": "./out/env/utils.d.ts"
 		},
 		"./layers/manifest": {
 			"node": "./lib/layers/manifest.ts",

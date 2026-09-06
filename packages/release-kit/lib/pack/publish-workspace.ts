@@ -35,11 +35,11 @@
  *   — keeps the monorepo version-synced in git while npm doesn't see a weights tick.
  */
 
-import { $private, $public } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
 
+import { $private, $public } from "#env/index"
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "#pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
 

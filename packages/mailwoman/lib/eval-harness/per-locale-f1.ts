@@ -57,7 +57,6 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
@@ -74,6 +73,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { $public } from "#env"
 import { normalizeComponent } from "#eval-harness/per-tag-f1"
 
 /**

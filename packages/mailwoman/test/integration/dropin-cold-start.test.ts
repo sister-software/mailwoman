@@ -37,7 +37,6 @@
  *   re-downloading.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -48,6 +47,8 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { join } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 const fixtures = new AsyncDisposableStack()
 

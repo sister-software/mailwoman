@@ -64,6 +64,11 @@
 	],
 	"type": "module",
 	"imports": {
+		"#env": {
+			"node": "./lib/env/index.ts",
+			"default": "./out/env/index.js",
+			"types": "./out/env/index.d.ts"
+		},
 		"#geocode": {
 			"node": "./lib/geocode/index.ts",
 			"default": "./out/geocode/index.js",
@@ -151,6 +156,11 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./env": {
+			"node": "./lib/env/index.ts",
+			"default": "./out/env/index.js",
+			"types": "./out/env/index.d.ts"
 		},
 		"./dev-tools/*": {
 			"node": "./lib/dev-tools/*.ts",

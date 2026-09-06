@@ -29,6 +29,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./env": {
+			"node": "./lib/env/index.ts",
+			"default": "./out/env/index.js",
+			"types": "./out/env/index.d.ts"
+		},
 		"./registry": {
 			"node": "./lib/registry.ts",
 			"default": "./out/registry.js",

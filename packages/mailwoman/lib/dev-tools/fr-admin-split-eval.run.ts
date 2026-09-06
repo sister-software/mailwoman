@@ -22,7 +22,6 @@
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -33,6 +32,7 @@ import { stripCombiningMarks } from "@mailwoman/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
+import { $public } from "#env"
 import { collectResolved, type Resolved } from "#eval-harness/oa-resolver/tree-hits"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
