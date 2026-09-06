@@ -28,10 +28,22 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { gitHead } from "@mailwoman/core/git"
 import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import {
+	createLayerCoverageTable,
+	createLayerManifestTable,
+	type LayerContractDatabase,
+	LayerFreshnessPolicy,
+	LayerTier,
+	writeLayerCoverage,
+	writeLayerManifest,
+} from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { isoSeconds } from "@mailwoman/core/utils"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import {
@@ -46,6 +58,12 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath } from "path-ts"
 
+import {
+	certifiedCoverageCells,
+	type CoveragePoint,
+	STREET_CENTROID_COVERAGE_RESOLUTION,
+	wholeCommunes,
+} from "#sdk/coverage"
 import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "#sdk/fetch"
 import { streetLocaleForBANCountry } from "#sdk/street-locale"
 
@@ -121,7 +139,7 @@ async function main(): Promise<void> {
 	let written = 0
 
 	{
-		using kdb = new DatabaseClient<StreetCentroidDatabase>(tmp)
+		using kdb = new DatabaseClient<StreetCentroidDatabase & LayerContractDatabase>(tmp)
 		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-1000000;")
 
 		await createStreetCentroidTable(kdb)
@@ -201,6 +219,65 @@ async function main(): Promise<void> {
 		console.error(`[ban] indexing…`)
 
 		await createStreetCentroidIndexes(kdb)
+
+		// The layer contract's two tables (#2150): coverage per res-9 cell from BAN's own certification flag, the
+		// commune's whole total deciding the basis, and the manifest that names where the cells live.
+		console.error(`[ban] coverage from certification (per commune, ${STREET_CENTROID_COVERAGE_RESOLUTION} cells)…`)
+
+		const flags = new Map<string, number | null>()
+
+		for (const row of src
+			.prepare(
+				`SELECT admin_code, MIN(COALESCE(certified, -1)) AS minimum FROM address_point
+				 WHERE admin_code IS NOT NULL GROUP BY admin_code`
+			)
+			.iterate() as Iterable<{ admin_code: string; minimum: number }>) {
+			flags.set(row.admin_code, row.minimum < 0 ? null : row.minimum)
+		}
+
+		const whole = wholeCommunes(flags)
+
+		const cells = certifiedCoverageCells(
+			(function* points(): Iterable<CoveragePoint> {
+				for (const row of src.prepare(`SELECT lat, lon, admin_code FROM address_point`).iterate() as Iterable<{
+					lat: number
+					lon: number
+					admin_code: string | null
+				}>) {
+					yield { lat: row.lat, lon: row.lon, adminCode: row.admin_code }
+				}
+			})(),
+			whole
+		)
+
+		await createLayerCoverageTable(kdb)
+		await createLayerManifestTable(kdb)
+		await writeLayerCoverage(kdb, cells)
+
+		await writeLayerManifest(kdb, {
+			name: `street-centroids-${args.country}`,
+			version: args.release,
+			schemaVersion: 1,
+			tier: LayerTier.BuildLocal,
+			// The SPDX identifier the obligations table knows; `BAN_LICENSE` is the display string ATTRIBUTION.json carries.
+			license: "etalab-2.0",
+			attribution: BAN_ATTRIBUTION,
+			source,
+			sourceVintage: args.release,
+			buildCmd: "node packages/ban/out/scripts/build-street-centroid-database.js",
+			buildSHA: await gitHead(repoRootPath(), { short: true }),
+			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
+			spineKeys: { h3: { column: "layer_coverage.h3_cell", resolution: STREET_CENTROID_COVERAGE_RESOLUTION } },
+			createdAt: isoSeconds(),
+		})
+
+		const designated = cells.filter((cell) => cell.basis === "designated").length
+
+		console.error(
+			`[ban]   ${whole.size.toLocaleString()} of ${flags.size.toLocaleString()} communes whole; ` +
+				`${designated.toLocaleString()} of ${cells.length.toLocaleString()} cells designated`
+		)
+
 		kdb.exec("ANALYZE")
 	}
 

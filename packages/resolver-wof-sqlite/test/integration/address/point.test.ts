@@ -39,7 +39,7 @@ beforeAll(async () => {
 
 	const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
-	// (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
+	// (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release, admin_code, certified)
 	insert.run(
 		"osborne drive",
 		"osborne drive",
@@ -51,7 +51,9 @@ beforeAll(async () => {
 		-27.1836,
 		152.9567,
 		"t",
-		"r"
+		"r",
+		null,
+		null
 	)
 
 	// A source that carries the range VERBATIM — the exact key must win over the low-end retry.
@@ -66,7 +68,9 @@ beforeAll(async () => {
 		-27.9999,
 		152.9999,
 		"t",
-		"r"
+		"r",
+		null,
+		null
 	)
 
 	insert.run("forest road", "forest road", "19", null, "7250", "trevallyn", "Forest Road", -41.4316, 147.1185, "t", "r")
@@ -90,7 +94,9 @@ beforeAll(async () => {
 		48.718479,
 		2.587971,
 		"ban:fr",
-		"r"
+		"r",
+		null,
+		null
 	)
 
 	// Two villages under one DE postcode, both with a Teichstraße 3 (#1631): the postcode rung must not answer the other
@@ -116,7 +122,9 @@ beforeAll(async () => {
 		32.965477444,
 		-96.82785054,
 		"overture:NAD",
-		"r"
+		"r",
+		null,
+		null
 	)
 
 	lookup = new AddressPointSqliteLookup(path)

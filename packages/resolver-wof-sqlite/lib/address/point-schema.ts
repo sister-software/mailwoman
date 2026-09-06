@@ -59,6 +59,16 @@ export interface AddressPointTable {
 	 * The pinned data release the point was ingested from.
 	 */
 	release: string
+	/**
+	 * The source register's stable administrative key for the point's commune or municipality — BAN's `code_insee`. A
+	 * display name (`locality_norm`) is not a key; the coverage basis is computed per THIS.
+	 */
+	admin_code: string | null
+	/**
+	 * The register's own certification flag for the point (BAN `certification_commune`: 1 certified by the commune, 0
+	 * not), or null for a source that states none. A basis is never inferred from a share of these.
+	 */
+	certified: number | null
 }
 
 /**
@@ -93,6 +103,8 @@ export const ADDRESS_POINT_COLUMNS = [
 	"lon",
 	"source",
 	"release",
+	"admin_code",
+	"certified",
 ] as const
 
 /**
@@ -113,6 +125,8 @@ export async function createAddressPointTable(db: AddressPointSchemaHandle): Pro
 		.addColumn("lon", "real", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("release", "text", (c) => c.notNull())
+		.addColumn("admin_code", "text")
+		.addColumn("certified", "integer")
 		.execute()
 }
 

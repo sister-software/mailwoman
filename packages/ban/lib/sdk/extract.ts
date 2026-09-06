@@ -57,12 +57,32 @@ export interface BANAddrRecord {
 	lieuDit: string | null
 	lon: number
 	lat: number
+	/**
+	 * `code_insee` — the commune's stable INSEE key (`nom_commune` is a display name).
+	 */
+	codeInsee: string | null
+	/**
+	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not; null when the column is
+	 * blank. Carried verbatim so a coverage basis can be computed per commune rather than inferred from a share.
+	 */
+	certified: number | null
 }
 
 /**
  * The BAN CSV columns this ingest reads (validated against the first parsed row — header drift fails LOUDLY).
  */
-const REQUIRED_COLUMNS = ["numero", "rep", "nom_voie", "code_postal", "nom_commune", "nom_ld", "lon", "lat"] as const
+const REQUIRED_COLUMNS = [
+	"numero",
+	"rep",
+	"nom_voie",
+	"code_postal",
+	"nom_commune",
+	"nom_ld",
+	"lon",
+	"lat",
+	"code_insee",
+	"certification_commune",
+] as const
 
 /**
  * Chunk size used while streaming BAN CSV bytes from disk.
@@ -172,6 +192,8 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 		const city = row.nom_commune?.trim()
 		const lieuDit = cleanLieuDit(row.nom_ld, city || null)
 
+		const certification = row.certification_commune?.trim()
+
 		yield {
 			numero,
 			rep: rep ? rep.toLowerCase() : null,
@@ -181,6 +203,8 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 			lieuDit,
 			lon,
 			lat,
+			codeInsee: row.code_insee?.trim() || null,
+			certified: certification === "1" ? 1 : certification === "0" ? 0 : null,
 		}
 	}
 }

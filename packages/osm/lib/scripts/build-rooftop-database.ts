@@ -203,6 +203,9 @@ async function main(): Promise<void> {
 				rec.lon,
 				rowSource,
 				args.release,
+				// OSM states no commune key and no certification flag.
+				null,
+				null,
 				h3Cell
 			)
 

@@ -189,7 +189,9 @@ async function main(): Promise<void> {
 					rec.lat,
 					rec.lon,
 					source,
-					args.release
+					args.release,
+					rec.codeInsee,
+					rec.certified
 				)
 
 				written++

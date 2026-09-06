@@ -71,6 +71,11 @@
 			"default": "./out/sdk/extract.js",
 			"types": "./out/sdk/extract.d.ts"
 		},
+		"./sdk/coverage": {
+			"node": "./lib/sdk/coverage.ts",
+			"default": "./out/sdk/coverage.js",
+			"types": "./out/sdk/coverage.d.ts"
+		},
 		"./sdk/street-locale": {
 			"node": "./lib/sdk/street-locale.ts",
 			"default": "./out/sdk/street-locale.js",
@@ -87,7 +92,9 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
+		"h3-js": "^4.5.0",
 		"path-ts": "^2.3.0",
 		"spliterator": "^6.4.1"
 	},

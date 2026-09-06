@@ -251,7 +251,10 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 					lat,
 					lon,
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
-					OA_MODE ? "openaddresses-latest" : String(options.release)
+					OA_MODE ? "openaddresses-latest" : String(options.release),
+					// Neither source states a commune key or a certification flag.
+					null,
+					null
 				)
 
 				kept++
