@@ -65,7 +65,8 @@ mints what the webhook missed, re-sends what failed, and corrects a license's st
 ruled in the customer's favour. Sandbox and production are separate Wrangler environments; issuance is off until
 `ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key is not an active entry of the shipped register.
 Deploys by manual dispatch only (`.github/workflows/license-worker.yml`), which refuses a bundle that imports a Node
-builtin.
+builtin. `GET /health` carries `email: ok | failing`, the latter when a token's email has stayed `failed` for over an
+hour, so one external check covers the ledger alert and the email alert.
 
 ### Changed — the license key signs and verifies on WebCrypto
 
