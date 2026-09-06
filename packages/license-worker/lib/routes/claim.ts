@@ -12,26 +12,13 @@
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 
+import { ClaimResponseSchema } from "#claim-contract"
 import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies } from "#fulfil"
 import { currentToken, findLicenseByCheckoutSession, takePendingRefreshSecret } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
 import { clientAddress, withinLimits } from "#routes/rate-limit"
 import { isStripeNotFound } from "#stripe/client"
-
-const ClaimSchema = z.discriminatedUnion("status", [
-	z.object({ status: z.literal("pending") }),
-	z.object({ status: z.literal("revoked") }),
-	z.object({
-		status: z.literal("issued"),
-		token: z.string(),
-		lid: z.string(),
-		licensee: z.string(),
-		issued: z.string(),
-		expires: z.string(),
-		refresh_secret: z.string().optional(),
-	}),
-])
 
 const ErrorSchema = z.object({ error: z.string() })
 
@@ -44,7 +31,7 @@ const claimRoute = createRoute({
 	responses: {
 		200: {
 			description: "Pending until the first invoice is paid; then the token, once with the refresh secret.",
-			content: { "application/json": { schema: ClaimSchema } },
+			content: { "application/json": { schema: ClaimResponseSchema } },
 		},
 		404: {
 			description: "Stripe knows no Checkout Session by this id.",

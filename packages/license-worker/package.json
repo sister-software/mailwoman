@@ -33,6 +33,11 @@
 			"default": "./out/shop/operations.js",
 			"types": "./out/shop/operations.d.ts"
 		},
+		"./claim-contract": {
+			"node": "./lib/claim-contract.ts",
+			"default": "./out/claim-contract.js",
+			"types": "./out/claim-contract.d.ts"
+		},
 		"./env": {
 			"node": "./lib/env.ts",
 			"default": "./out/env.js",

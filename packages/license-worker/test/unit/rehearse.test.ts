@@ -140,11 +140,18 @@ describe("the rehearsal purchase", () => {
 		})
 
 		// The worker as Stripe's delivery reaches it: pending, the first token twice, then the renewal's.
+		const issued = {
+			status: "issued",
+			token: "mwl1.a.b",
+			lid: `lic_${"a".repeat(22)}`,
+			licensee: "Rehearsal Licensee Ltd",
+		}
+
 		const claims = [
 			{ status: "pending" },
-			{ status: "issued", issued: "2026-09-06", expires: "2026-10-20" },
-			{ status: "issued", issued: "2026-09-06", expires: "2026-10-20" },
-			{ status: "issued", issued: "2027-02-14", expires: "2027-03-07" },
+			{ ...issued, issued: "2026-09-06", expires: "2026-10-20" },
+			{ ...issued, issued: "2026-09-06", expires: "2026-10-20" },
+			{ ...issued, issued: "2027-02-14", expires: "2027-03-07" },
 		]
 
 		const asked: string[] = []
@@ -186,6 +193,28 @@ describe("the rehearsal purchase", () => {
 		expect(advance?.form.get("frozen_time")).toBe(String(NOW + 32 * DAY))
 		// One wait on the pending claim, one on the advancing clock, one on the unchanged token.
 		expect(slept).toEqual([1, 1, 1])
+	})
+
+	it("refuses a worker answer that is no claim rather than reading dates off it", async () => {
+		const stripe = recordingStripeFetch({
+			"GET /v1/checkout/sessions/cs_test_3": {
+				id: "cs_test_3",
+				object: "checkout.session",
+				subscription: "sub_3",
+				customer: "cus_3",
+			},
+			"GET /v1/customers/cus_3": { id: "cus_3", object: "customer", test_clock: "clock_3" },
+		})
+
+		await expect(
+			advanceRehearsal(stripeClient(worker, stripe.fetch), {
+				session: "cs_test_3",
+				workerOrigin: WORKER,
+				days: 32,
+				fetch: async () => Response.json({ status: "issued", issued: "2026-09-06" }),
+				sleep: async () => {},
+			})
+		).rejects.toThrow("no claim")
 	})
 
 	it("refuses a customer that is not on a test clock", async () => {

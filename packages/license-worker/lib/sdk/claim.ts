@@ -6,26 +6,15 @@
  *   The claim page's state, as a pure reducer over the worker's claim route, and the one fetch that feeds it. Only
  *   `polling` moves; every other phase is terminal. `pending` past the deadline is the page saying the email will arrive
  *   on its own; an unanswered worker past the deadline is `unreachable`, a different word, because a customer who sees
- *   it acts differently. The docs site is a browser bundle, so the request is a plain `fetch`: the worker's exact-origin
- *   CORS admits this site and answers `no-store`.
+ *   it acts differently, and a 200 whose body is not a claim counts as unanswered rather than as a claim with fields
+ *   missing. The docs site is a browser bundle, so the request is a plain `fetch`: the worker's exact-origin CORS
+ *   admits this site and answers `no-store`.
  */
 
+import { type ClaimResponse, type IssuedClaim, parseClaimResponse } from "#claim-contract"
 import { LICENSE_WORKER_URL } from "#sdk/constants"
 
-export type ClaimResponse =
-	| { status: "pending" }
-	| { status: "revoked" }
-	| {
-			status: "issued"
-			token: string
-			lid: string
-			licensee: string
-			issued: string
-			expires: string
-			refresh_secret?: string
-	  }
-
-export type IssuedClaim = Extract<ClaimResponse, { status: "issued" }>
+export type { ClaimResponse, IssuedClaim } from "#claim-contract"
 
 export type ClaimState =
 	| { phase: "polling"; attempts: number; startedAt?: number }
@@ -38,6 +27,7 @@ export type ClaimState =
 export type ClaimEvent =
 	| { kind: "response"; response: ClaimResponse; now: number }
 	| { kind: "http"; status: number; now: number }
+	| { kind: "malformed"; now: number }
 	| { kind: "error"; now: number }
 
 /**
@@ -115,7 +105,9 @@ export async function fetchClaim(sessionID: string, signal?: AbortSignal): Promi
 			return { kind: "http", status: response.status, now }
 		}
 
-		return { kind: "response", response: await response.json(), now }
+		const claim = parseClaimResponse(await response.json())
+
+		return claim ? { kind: "response", response: claim, now } : { kind: "malformed", now }
 	} catch {
 		return { kind: "error", now }
 	}
