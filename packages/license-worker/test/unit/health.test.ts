@@ -10,7 +10,7 @@
 import { createLicenseWorkerApp } from "@mailwoman/license-worker/app"
 import { readEnv } from "@mailwoman/license-worker/env"
 import { openLedger } from "@mailwoman/license-worker/ledger/client"
-import { createLicense, insertToken } from "@mailwoman/license-worker/ledger/licenses"
+import { createLicenseIfAbsent, insertTokenIfAbsent } from "@mailwoman/license-worker/ledger/licenses"
 import { env } from "cloudflare:workers"
 import { beforeAll, expect, test } from "vitest"
 
@@ -51,7 +51,7 @@ test("GET /health answers issuance, the environment's mode, a reachable ledger, 
 test("the email word turns failing on a failed email older than an hour, and stays ok on a fresh failure", async () => {
 	const ledger = openLedger(env.LICENSE_LEDGER)
 
-	await createLicense(ledger, {
+	await createLicenseIfAbsent(ledger, {
 		lid: "lic_health",
 		subscription_id: "sub_health",
 		customer_id: "cus_health",
@@ -76,11 +76,11 @@ test("the email word turns failing on a failed email older than an hour, and sta
 		created_at: new Date(NOW - minutesAgo * 60 * 1000).toISOString(),
 	})
 
-	await insertToken(ledger, token("in_fresh", 10))
+	await insertTokenIfAbsent(ledger, token("in_fresh", 10))
 
 	expect(await (await app().request("/health")).json()).toMatchObject({ email: "ok" })
 
-	await insertToken(ledger, token("in_stale", 90))
+	await insertTokenIfAbsent(ledger, token("in_stale", 90))
 
 	expect(await (await app().request("/health")).json()).toMatchObject({ email: "failing" })
 

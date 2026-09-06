@@ -13,6 +13,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import { envWithSigningKey } from "../support/keys.ts"
 import { applyMigrations } from "../support/migrations.ts"
+import { priceOf } from "../support/plans.ts"
 import {
 	chargeObject,
 	chargeRefundedEvent,
@@ -58,7 +59,7 @@ async function app(suffix: string, options: { issuance?: boolean; signing?: "ok"
 		subscriptionID: `sub_${suffix}`,
 		licensee: "Example Ltd",
 		email: "ops@example.com",
-		priceID: worker.STRIPE_PRICE_MONTHLY,
+		priceID: priceOf(worker, "commercial-monthly-v1"),
 	})
 
 	const stripe = stripeClient(
@@ -67,13 +68,13 @@ async function app(suffix: string, options: { issuance?: boolean; signing?: "ok"
 			[`GET /v1/invoices/in_${suffix}`]: invoiceObject({
 				id: `in_${suffix}`,
 				subscriptionID: `sub_${suffix}`,
-				priceID: worker.STRIPE_PRICE_MONTHLY,
+				priceID: priceOf(worker, "commercial-monthly-v1"),
 				paidAt: OCT_1,
 				periodEnd: NOV_1,
 			}),
 			[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
 				id: `sub_${suffix}`,
-				priceID: worker.STRIPE_PRICE_MONTHLY,
+				priceID: priceOf(worker, "commercial-monthly-v1"),
 				currentPeriodEnd: NOV_1,
 			}),
 			"GET /v1/checkout/sessions?": checkoutSessionList([session]),
@@ -226,7 +227,7 @@ describe("the routes", () => {
 		).toEqual({ status: "revoked" })
 	})
 
-	it("kill switch: with issuance disabled the webhook still answers 200 and records the event, the claim stays pending, and refresh keeps answering", async () => {
+	it("kill switch: with issuance disabled the webhook still answers 200 and records the event, an unminted claim stays pending, and a minted token is still served to its claim and its refresh", async () => {
 		const a = await app("k")
 
 		await a.webhook(invoicePaidEvent({ id: "evt_k", invoiceID: "in_k" }))
@@ -241,6 +242,7 @@ describe("the routes", () => {
 		const refresh = await disabled.post("/v1/licenses/refresh", { lid: claim.lid, secret: claim.refresh_secret })
 
 		expect(refresh.status).toBe(200)
+		expect(await (await disabled.claim()).json()).toMatchObject({ status: "issued", token: claim.token })
 
 		const fresh = await app("k0", { issuance: false })
 

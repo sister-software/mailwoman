@@ -13,6 +13,7 @@
 	"type": "module",
 	"imports": {
 		"#test/*": "./test/*.ts",
+		"#shop/ids.json": "./lib/shop/ids.json",
 		"#*": {
 			"workerd": "./lib/*.ts",
 			"node": "./lib/*.ts",
@@ -31,6 +32,11 @@
 			"node": "./lib/shop/operations.ts",
 			"default": "./out/shop/operations.js",
 			"types": "./out/shop/operations.d.ts"
+		},
+		"./claim-contract": {
+			"node": "./lib/claim-contract.ts",
+			"default": "./out/claim-contract.js",
+			"types": "./out/claim-contract.d.ts"
 		},
 		"./env": {
 			"node": "./lib/env.ts",
@@ -97,6 +103,11 @@
 			"default": "./out/ledger/schema.js",
 			"types": "./out/ledger/schema.d.ts"
 		},
+		"./policy": {
+			"node": "./lib/policy.ts",
+			"default": "./out/policy.js",
+			"types": "./out/policy.d.ts"
+		},
 		"./plans": {
 			"node": "./lib/plans.ts",
 			"default": "./out/plans.js",
@@ -122,10 +133,10 @@
 			"default": "./out/shop/rehearse.js",
 			"types": "./out/shop/rehearse.d.ts"
 		},
-		"./shop/wrangler-vars": {
-			"node": "./lib/shop/wrangler-vars.ts",
-			"default": "./out/shop/wrangler-vars.js",
-			"types": "./out/shop/wrangler-vars.d.ts"
+		"./shop/ids": {
+			"node": "./lib/shop/ids.ts",
+			"default": "./out/shop/ids.js",
+			"types": "./out/shop/ids.d.ts"
 		},
 		"./signing": {
 			"node": "./lib/signing.ts",

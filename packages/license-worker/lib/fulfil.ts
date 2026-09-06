@@ -5,8 +5,11 @@
  *
  *   Fulfilment: one paid invoice becomes one signed token. Everything checked here is re-read from Stripe by id — the
  *   invoice, its subscription, and when the license row does not exist yet, the Checkout Session — so a webhook body is
- *   never the source of an entitlement. The ledger's primary keys are the idempotency: a second mint for one invoice
- *   answers `already_minted`, and two events for one payment in either order produce one token.
+ *   never the source of an entitlement. The ledger's unique keys are the idempotency: a second mint for one invoice
+ *   answers `already_minted`, two events for one payment in either order produce one token, and two callers racing
+ *   for one invoice or one subscription both get a defined answer with one row between them. What the keys do not
+ *   promise is one email: the loser of a mint race may find the winner's token with its email still pending and send
+ *   it too, and the provider's idempotency key is what closes that window where the provider honours one.
  */
 
 import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
@@ -18,17 +21,17 @@ import type { LicenseWorkerEnv } from "#env"
 import { newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
 import type { Ledger } from "#ledger/client"
 import {
-	createLicense,
+	createLicenseIfAbsent,
 	findLicense,
 	findLicenseBySubscription,
 	findToken,
-	insertToken,
+	insertTokenIfAbsent,
 	setEmailState,
 	setPlanCode,
 } from "#ledger/licenses"
-import type { EmailState, LicenseRow, LicenseTokenRow } from "#ledger/schema"
+import type { LicenseRow, LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
-import { AGREEMENT_METADATA_KEY, LICENSEE_FIELD_KEY } from "#shop/catalog"
+import { AGREEMENT_METADATA_KEY, AGREEMENT_VERSION, LICENSEE_FIELD_KEY } from "#shop/catalog"
 import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
 
 export interface FulfilDependencies {
@@ -46,9 +49,9 @@ export type FulfilOutcome =
 	| { outcome: "refused"; reason: string }
 
 /**
- * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after.
- * Mints no token; `invoice.paid` does. The refresh secret is stored by digest and held in plaintext only until the
- * first claim reads it.
+ * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after,
+ * and read back all the same when a concurrent caller's row landed first. Mints no token; `invoice.paid` does. The
+ * refresh secret is stored by digest and held in plaintext only until the first claim reads it.
  */
 export async function ensureLicenseFromCheckoutSession(
 	env: LicenseWorkerEnv,
@@ -78,9 +81,9 @@ export async function ensureLicenseFromCheckoutSession(
 
 	if (!agreement) throw new Error(`checkout session ${session.id} carries no ${AGREEMENT_METADATA_KEY} metadata`)
 
-	if (agreement !== env.AGREEMENT_VERSION) {
+	if (agreement !== AGREEMENT_VERSION) {
 		console.warn(
-			`checkout session ${session.id} accepted agreement ${agreement}; this environment sells ${env.AGREEMENT_VERSION}`
+			`checkout session ${session.id} accepted agreement ${agreement}; the catalog sells ${AGREEMENT_VERSION}`
 		)
 	}
 
@@ -88,7 +91,7 @@ export async function ensureLicenseFromCheckoutSession(
 	const plan = priceID ? planForPrice(env, priceID) : undefined
 	const refreshSecret = newRefreshSecret()
 
-	await createLicense(deps.ledger, {
+	await createLicenseIfAbsent(deps.ledger, {
 		lid: newLicenseID(),
 		subscription_id: subscriptionID,
 		customer_id: customerID,
@@ -109,7 +112,9 @@ export async function ensureLicenseFromCheckoutSession(
 }
 
 /**
- * Mint for one invoice.
+ * One paid invoice to one token: refused with a reason when the invoice, its Price or its subscription is not one this
+ * worker mints for, `already_minted` when the ledger holds the token, `minted` once the token is inserted and the email
+ * attempted.
  */
 export async function fulfilInvoice(
 	env: LicenseWorkerEnv,
@@ -120,18 +125,7 @@ export async function fulfilInvoice(
 
 	const existingToken = await findToken(deps.ledger, invoiceID)
 
-	if (existingToken) {
-		// A crash between the insert and the send leaves the email pending; the retry that finds the token sends it.
-		if (existingToken.email_state !== "sent") {
-			const holder = await findLicense(deps.ledger, existingToken.lid)
-
-			if (holder) {
-				await sendTokenEmail(deps, holder, existingToken)
-			}
-		}
-
-		return { outcome: "already_minted", lid: existingToken.lid, invoiceID }
-	}
+	if (existingToken) return alreadyMinted(deps, existingToken)
 
 	const invoice = await deps.stripe.invoices.retrieve(invoiceID)
 
@@ -208,7 +202,7 @@ export async function fulfilInvoice(
 
 	const token = await encodeLicenseKey(payload, env.LICENSE_SIGNING_KEY_PEM)
 
-	await insertToken(deps.ledger, {
+	const inserted = await insertTokenIfAbsent(deps.ledger, {
 		invoice_id: invoiceID,
 		lid: license.lid,
 		issued,
@@ -217,23 +211,56 @@ export async function fulfilInvoice(
 		token,
 	})
 
+	if (inserted === "present") {
+		// Another mint for this invoice landed between the read above and this insert; its row is the token.
+		const winner = await findToken(deps.ledger, invoiceID)
+
+		if (!winner) throw new Error(`token for ${invoiceID} vanished after a concurrent insert`)
+
+		return alreadyMinted(deps, winner)
+	}
+
 	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires })
 
 	return { outcome: "minted", lid: license.lid, invoiceID }
 }
 
 /**
- * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while it is
- * still pending, so a re-send after a failed first attempt carries what the first would have. A provider failure is
- * recorded as `failed` for the reconciliation pass; it never fails the mint.
+ * The answer for an invoice whose token exists. A crash between the insert and the send leaves the email pending, and
+ * the retry that finds the token sends it.
+ */
+async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): Promise<FulfilOutcome> {
+	if (token.email_state !== "sent") {
+		const holder = await findLicense(deps.ledger, token.lid)
+
+		if (holder) {
+			await sendTokenEmail(deps, holder, token)
+		}
+	}
+
+	return { outcome: "already_minted", lid: token.lid, invoiceID: token.invoice_id }
+}
+
+/**
+ * What one send attempt came to. `failed` is the provider's refusal, recorded as such so the reconciliation pass sends
+ * again. A failure to record either answer throws instead: the row keeps its earlier state and the pass sends again,
+ * which after an accepted send is the one window in which a licensee can receive the message twice.
+ */
+export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string }
+
+/**
+ * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while the
+ * plaintext is still pending, so a re-send before the first claim carries what the first would have.
  */
 export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,
 	license: LicenseRow,
 	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires">
-): Promise<EmailState> {
+): Promise<SendOutcome> {
+	let messageID: string
+
 	try {
-		const { messageID } = await deps.email.send(
+		;({ messageID } = await deps.email.send(
 			{
 				to: license.email,
 				licensee: license.licensee,
@@ -244,14 +271,14 @@ export async function sendTokenEmail(
 				...(license.refresh_secret_pending ? { refreshSecret: license.refresh_secret_pending } : {}),
 			},
 			token.invoice_id
-		)
-
-		await setEmailState(deps.ledger, token.invoice_id, "sent", messageID)
-
-		return "sent"
-	} catch {
+		))
+	} catch (error) {
 		await setEmailState(deps.ledger, token.invoice_id, "failed")
 
-		return "failed"
+		return { state: "failed", reason: error instanceof Error ? error.message : String(error) }
 	}
+
+	await setEmailState(deps.ledger, token.invoice_id, "sent", messageID)
+
+	return { state: "sent" }
 }

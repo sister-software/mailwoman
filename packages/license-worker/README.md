@@ -27,8 +27,6 @@ production only an `active` entry of the shipped register passes the self-test.
 | `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone         |
 | `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                             |
 | `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                           |
-| `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`        | var        | the allowlisted Price IDs; `lib/plans.ts` maps each to a plan code                                         |
-| `AGREEMENT_VERSION`                                  | var        | the terms version new Payment Links carry; a session with another version is fulfilled and logged          |
 | `ISSUANCE_ENABLED`                                   | var        | the kill switch: `false` refuses to mint and answers claims `pending`; refresh and status keep working     |
 | `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts; an event or invoice from the other mode is refused               |
 | `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                 |
@@ -52,14 +50,17 @@ the installed release does not trust is a token no installation accepts, which i
 
    ```bash
    yarn mwops shop status --mode live                      # read what the account holds; writes nothing
-   yarn mwops shop provision --mode live --apply           # create what is missing; write the Price ids into wrangler.toml
+   yarn mwops shop provision --mode live --apply           # create what is missing; write the ids into lib/shop/ids.json
    ```
 
-   `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY` and writes the sandbox
-   environment; `--mode live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, refuses any other prefix, and also writes the
-   Payment Links into `docs/src/license/shop.ts`. A Payment Link is created only with consent collection; if Stripe
+   `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY`; `--mode live` reads
+   `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses any other prefix. Both write `lib/shop/ids.json`, the one file that
+   names the Price ids the worker allowlists and the Payment Links the site renders. A Payment Link is created only with consent collection; if Stripe
    refuses it, the report reads `blocked` and the remedy is the terms-of-service URL under the account's public details
-   in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing.
+   in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing. An object that
+   differs from the catalog is reported under `drift`; `--apply` updates what an update can change (a link's promotion
+   codes, a webhook's events), deactivates and recreates a Payment Link whose agreement or consent collection differs,
+   and leaves a Price's amount and a webhook's API version as drift for the operator.
 
 3. Set the four secrets for the environment:
 
@@ -109,18 +110,25 @@ delivery to the worker as the first thing to check.
 ## The kill switch
 
 `ISSUANCE_ENABLED = "false"` and a redeploy. The webhook keeps answering 200 and recording events, `invoice.paid`
-answers `refused: issuance is disabled` and mints nothing, claims answer `pending`, and refresh and status keep serving
-what was already minted. Turning it back on lets the six-hourly reconciliation mint every paid invoice it refused.
+answers `refused: issuance is disabled` and mints nothing, a claim for a license with no token answers `pending`, and
+refresh, status and a claim for a token already minted keep serving it. Turning it back on lets the six-hourly
+reconciliation mint what it refused: every paid invoice of a subscription the ledger knows, and the first invoice of a
+subscription it does not know if that invoice was created within the last week (the section below says why).
 
 ## Reconciliation
 
-A Cron Trigger every six hours runs `lib/reconcile.ts` over the last week of paid invoices. It mints a paid invoice with
-no token through the same path the webhook takes, sends a token whose email is not confirmed sent (`pending` after a
-crash, or `failed`) under the same invoice id, which the provider deduplicates, and corrects a license whose state
-disagrees with its subscription, including a dispute Stripe has since ruled won and a subscription that ended once
-its token's date has passed. The
-report in the worker log names ids only. A license whose Stripe records cannot be read is reported and never stops the
-sweep for the rest.
+A Cron Trigger every six hours runs `lib/reconcile.ts`. It mints a paid invoice with no token through the same path
+the webhook takes, sends a token whose email is not confirmed sent (`pending` after a crash, or `failed`) under the
+same invoice id, and corrects a license whose state disagrees with its subscription, including a dispute Stripe has
+since ruled won and a subscription that ended once its token's date has passed. The report in the worker log names ids
+only; one item's failure is recorded against it and never stops the sweep for the rest.
+
+What it recovers: every license in the ledger is read whole each pass, and its subscription's latest paid invoice is
+minted if no token holds it, however old. A subscription the ledger has never seen (its `checkout.session.completed`
+lost and its success page never visited) is found only through Stripe's invoice list, which filters by creation time,
+so it is recovered while its first invoice was created within the last week; past that, resend the invoice's
+`invoice.paid` from the Stripe dashboard. A resend through Cloudflare's binding can deliver twice when the ledger fails
+to record an accepted send; Resend deduplicates on the invoice id.
 
 ## Refunds and disputes
 

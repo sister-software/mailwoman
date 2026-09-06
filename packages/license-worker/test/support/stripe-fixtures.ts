@@ -56,6 +56,10 @@ export interface SubscriptionInit {
 	currentPeriodEnd: number
 	status?: string
 	livemode?: boolean
+	/**
+	 * The expanded `latest_invoice`, as the reconciliation pass asks for it.
+	 */
+	latestInvoice?: object
 }
 
 export function subscriptionObject(init: SubscriptionInit) {
@@ -64,6 +68,7 @@ export function subscriptionObject(init: SubscriptionInit) {
 		object: "subscription",
 		status: init.status ?? "active",
 		livemode: init.livemode ?? false,
+		...(init.latestInvoice ? { latest_invoice: init.latestInvoice } : {}),
 		items: {
 			object: "list",
 			data: [

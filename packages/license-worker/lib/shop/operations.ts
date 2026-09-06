@@ -5,35 +5,27 @@
  *
  *   The shop's operations for `mwops shop <operation>`: the same contract as the release registry (an id, a declared
  *   effect, zod input and output, `run`), so the operator CLI is a view over this list the way it is over the other
- *   two. `status` reads; `provision` writes to Stripe and, with `--apply`, to the two files that must carry what Stripe
- *   answered: the environment's Price ids in `wrangler.toml`, and for live mode the Payment Links in the site's shop
- *   module. The mode picks the key: `test` reads `MAILWOMAN_STRIPE_SECRET_KEY` and refuses anything but an `sk_test_`
- *   key; `live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses anything but `sk_live_`.
+ *   two. `status` reads; `provision` writes to Stripe and, with `--apply`, to `shop/ids.json`, the one file that
+ *   carries what Stripe answered. The mode picks the key: `test` reads `MAILWOMAN_STRIPE_SECRET_KEY` and refuses
+ *   anything but an `sk_test_` key; `live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses anything but
+ *   `sk_live_`.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/release-kit"
 import Stripe from "stripe"
 import { z } from "zod"
 
-import { AGREEMENT_VERSION, SHOP_PLANS } from "#shop/catalog"
+import { SHOP_PLAN_CODES, SHOP_PLANS } from "#shop/catalog"
 import { $private } from "#shop/env"
-import { type ProvisionReport, provisionShop } from "#shop/provision"
+import { type ShopIDsByMode, type ShopMode, withShopIDs } from "#shop/ids"
+import { type ProvisionReport, ProvisionReportSchema, provisionShop } from "#shop/provision"
 import { advanceRehearsal, startRehearsal } from "#shop/rehearse"
-import { readEnvironmentVar, withEnvironmentVars } from "#shop/wrangler-vars"
 import { STRIPE_API_VERSION } from "#stripe/client"
 
-const ShopMode = z.enum(["test", "live"])
-
-type ShopMode = z.infer<typeof ShopMode>
-
-/**
- * The Wrangler environment each Stripe mode's ids belong to.
- */
-const ENVIRONMENT_FOR_MODE: Record<ShopMode, "sandbox" | "production"> = { test: "sandbox", live: "production" }
+const ShopModeSchema = z.enum(["test", "live"])
 
 const DEFAULT_SITE_ORIGIN = "https://mailwoman.ai"
 
@@ -51,102 +43,47 @@ function stripeFor(mode: ShopMode): Stripe {
 	return new Stripe(key, { apiVersion: STRIPE_API_VERSION, httpClient: Stripe.createFetchHttpClient() })
 }
 
-const ProvisionedObjectSchema = z.object({
-	id: z.string().optional(),
-	action: z.enum(["exists", "created", "missing", "blocked"]),
-})
-
-const ReportSchema = z.object({
-	terms: z.object({ url: z.string(), consent: z.boolean() }),
-	product: ProvisionedObjectSchema,
-	prices: z.record(z.string(), ProvisionedObjectSchema),
-	paymentLinks: z.record(
-		z.string(),
-		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean() })
-	),
-	portal: ProvisionedObjectSchema,
-	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().optional() }).optional(),
-})
-
 const ProvisionInputSchema = z.object({
-	mode: ShopMode,
+	mode: ShopModeSchema,
 	apply: z.boolean().optional(),
 	"site-origin": z.string().optional(),
 	"worker-origin": z.string().optional(),
 })
 
-interface WrittenFiles {
-	wranglerToml?: string
-	shopModule?: string
+/**
+ * Carry the ids Stripe answered into `ids.json`, the one file that names them. The webhook secret is never written; it
+ * goes to `wrangler secret put`.
+ */
+async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<string | undefined> {
+	const idsPath = resolvePackagePath("@mailwoman/license-worker", "lib", "shop", "ids.json")
+	const current = await readLocalJSONFile<ShopIDsByMode>(idsPath)
+
+	const next = withShopIDs(current, mode, {
+		prices: Object.fromEntries(SHOP_PLANS.flatMap((plan) => entryOf(plan.code, report.prices[plan.code].id))),
+		paymentLinks: Object.fromEntries(
+			SHOP_PLANS.flatMap((plan) => entryOf(plan.code, report.paymentLinks[plan.code].url))
+		),
+	})
+
+	if (JSON.stringify(next) === JSON.stringify(current)) return undefined
+
+	await writeLocalJSONFile(next, idsPath)
+
+	return String(idsPath)
 }
 
-/**
- * Carry the ids Stripe answered into the files that must hold them: the environment's Price ids, and for live mode the
- * Payment Links the site renders. The webhook secret is never written; it goes to `wrangler secret put`.
- */
-async function recordInRepository(
-	mode: ShopMode,
-	report: ProvisionReport,
-	log: (line: string) => void
-): Promise<WrittenFiles> {
-	const written: WrittenFiles = {}
-	const environment = ENVIRONMENT_FOR_MODE[mode]
-	const monthly = report.prices["commercial-monthly-v1"].id
-	const yearly = report.prices["commercial-yearly-v1"].id
-
-	if (monthly && yearly) {
-		const tomlPath = resolvePackagePath("@mailwoman/license-worker", "wrangler.toml")
-		const toml = await readLocalTextFile(tomlPath)
-		const next = withEnvironmentVars(toml, environment, { STRIPE_PRICE_MONTHLY: monthly, STRIPE_PRICE_YEARLY: yearly })
-
-		if (next !== toml) {
-			await writeLocalTextFile(next, tomlPath)
-			written.wranglerToml = String(tomlPath)
-		}
-
-		const agreement = readEnvironmentVar(toml, environment, "AGREEMENT_VERSION")
-
-		if (agreement !== AGREEMENT_VERSION) {
-			log(
-				`wrangler.toml [env.${environment}.vars] AGREEMENT_VERSION reads ${agreement}; the catalog sells ${AGREEMENT_VERSION}`
-			)
-		}
-	}
-
-	const links = SHOP_PLANS.map((plan) => report.paymentLinks[plan.code].url)
-
-	if (mode === "live" && links.every((url): url is string => url !== undefined)) {
-		const shopPath = repoRootPath("docs", "src", "license", "shop.ts")
-		const source = await readLocalTextFile(shopPath)
-		const [monthlyURL, yearlyURL] = links as [string, string]
-
-		const next = source
-			.replace(
-				/^export const PAYMENT_LINK_MONTHLY: string \| undefined = .*$/mu,
-				`export const PAYMENT_LINK_MONTHLY: string | undefined = ${JSON.stringify(monthlyURL)}`
-			)
-			.replace(
-				/^export const PAYMENT_LINK_YEARLY: string \| undefined = .*$/mu,
-				`export const PAYMENT_LINK_YEARLY: string | undefined = ${JSON.stringify(yearlyURL)}`
-			)
-
-		if (next !== source) {
-			await writeLocalTextFile(next, shopPath)
-			written.shopModule = String(shopPath)
-		}
-	}
-
-	return written
+function entryOf(code: string, value: string | undefined): [string, string][] {
+	return value ? [[code, value]] : []
 }
 
 const provisionOperation = defineOperation({
 	id: "shop.provision",
 	description:
-		"Reconcile the Stripe account against the shop catalog: the Product, the two Prices, the two Payment Links, the portal configuration and, given --worker-origin, the webhook destination. Reports what exists and what is missing; --apply creates the missing objects and writes the Price ids into wrangler.toml (and, live, the Payment Links into docs/src/license/shop.ts).",
+		"Reconcile the Stripe account against the shop catalog: the Product, the two Prices, the two Payment Links, the portal configuration and, given --worker-origin, the webhook destination. Reports what exists and what is missing; --apply creates the missing objects and writes their ids into lib/shop/ids.json.",
 	effect: OperationEffect.ExternalWrite,
 	inputSchema: ProvisionInputSchema,
-	outputSchema: ReportSchema.extend({
-		written: z.object({ wranglerToml: z.string().optional(), shopModule: z.string().optional() }),
+	outputSchema: ProvisionReportSchema.extend({
+		written: z.string().optional(),
 	}),
 	async run(input, context) {
 		const apply = input.apply === true && !context.dryRun
@@ -170,9 +107,9 @@ const provisionOperation = defineOperation({
 			)
 		}
 
-		const written = apply ? await recordInRepository(input.mode, report, context.log) : {}
+		const written = apply ? await recordShopIDs(input.mode, report) : undefined
 
-		return { ...report, written }
+		return { ...report, ...(written ? { written } : {}) }
 	},
 })
 
@@ -181,11 +118,11 @@ const statusOperation = defineOperation({
 	description: "Read what the Stripe account holds against the shop catalog, writing nothing.",
 	effect: OperationEffect.Read,
 	inputSchema: z.object({
-		mode: ShopMode,
+		mode: ShopModeSchema,
 		"site-origin": z.string().optional(),
 		"worker-origin": z.string().optional(),
 	}),
-	outputSchema: ReportSchema,
+	outputSchema: ProvisionReportSchema,
 	async run(input, context) {
 		return await provisionShop(stripeFor(input.mode), {
 			siteOrigin: input["site-origin"] ?? DEFAULT_SITE_ORIGIN,
@@ -195,10 +132,6 @@ const statusOperation = defineOperation({
 		})
 	},
 })
-
-const PLAN_CODES = SHOP_PLANS.map((plan) => plan.code) as [ShopPlanCode, ...ShopPlanCode[]]
-
-type ShopPlanCode = (typeof SHOP_PLANS)[number]["code"]
 
 const TokenDatesSchema = z.object({ issued: z.string(), expires: z.string() })
 
@@ -213,7 +146,7 @@ const rehearseOperation = defineOperation({
 		"Start a rehearsal purchase in Stripe's test mode: a customer on a test clock and a Checkout Session shaped as the Payment Link is. Prints the URL to pay with the test card; then run shop.rehearse-renewal with the session id.",
 	effect: OperationEffect.ExternalWrite,
 	inputSchema: z.object({
-		plan: z.enum(PLAN_CODES).optional(),
+		plan: z.enum(SHOP_PLAN_CODES).optional(),
 		licensee: z.string().optional(),
 		email: z.string().optional(),
 		"site-origin": z.string().optional(),

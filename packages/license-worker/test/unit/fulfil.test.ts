@@ -15,6 +15,7 @@ import {
 	findToken,
 	setEmailState,
 } from "@mailwoman/license-worker/ledger/licenses"
+import { AGREEMENT_VERSION } from "@mailwoman/license-worker/shop/catalog"
 import { stripeClient } from "@mailwoman/license-worker/stripe/client"
 import { handleStripeEvent } from "@mailwoman/license-worker/stripe/handlers"
 import { env } from "cloudflare:workers"
@@ -22,6 +23,7 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest"
 
 import { envWithSigningKey } from "../support/keys.ts"
 import { applyMigrations } from "../support/migrations.ts"
+import { priceOf } from "../support/plans.ts"
 import {
 	chargeObject,
 	chargeRefundedEvent,
@@ -78,8 +80,8 @@ async function fixture(
 
 	const signing = await envWithSigningKey(readEnv(bindings))
 	const worker = signing.env
-	const priceID = options.priceID ?? worker.STRIPE_PRICE_MONTHLY
-	const periodEnd = priceID === worker.STRIPE_PRICE_YEARLY ? OCT_1_NEXT_YEAR : NOV_1
+	const priceID = options.priceID ?? priceOf(worker, "commercial-monthly-v1")
+	const periodEnd = priceID === priceOf(worker, "commercial-yearly-v1") ? OCT_1_NEXT_YEAR : NOV_1
 
 	const session = checkoutSessionObject({
 		id: `cs_${suffix}`,
@@ -151,7 +153,7 @@ describe("fulfilment", () => {
 
 		expect(verified).toMatchObject({
 			status: "valid",
-			payload: { licensee: "Example Ltd", agreement: worker.AGREEMENT_VERSION, scope: "all", expires: "2026-11-15" },
+			payload: { licensee: "Example Ltd", agreement: AGREEMENT_VERSION, scope: "all", expires: "2026-11-15" },
 		})
 
 		expect(sent).toHaveLength(1)
@@ -243,7 +245,7 @@ describe("fulfilment", () => {
 		const { env: worker, deps, kid, publicKeyPEM } = await fixture("7", { renewalInvoiceID: "in_7b" })
 
 		await fulfilInvoice(worker, deps, "in_7")
-		await fulfilInvoice({ ...worker, AGREEMENT_VERSION: "commercial-2027-01" }, deps, "in_7b")
+		await fulfilInvoice(worker, deps, "in_7b")
 
 		const verify = (token: string, now: string) =>
 			verifyLicenseKey(token, { trustedKeys: { [kid]: publicKeyPEM }, now: new Date(now) })
@@ -262,6 +264,35 @@ describe("fulfilment", () => {
 
 		await expect(fulfilInvoice(bare.env, bare.deps, "in_7n")).rejects.toThrow(/agreement_version/u)
 		expect(await findToken(bare.deps.ledger, "in_7n")).toBeUndefined()
+	})
+
+	it("two mints racing for one invoice leave one token and both answer; two checkouts racing for one subscription leave one row", async () => {
+		const { env: worker, deps } = await fixture("9")
+
+		const outcomes = await Promise.all([fulfilInvoice(worker, deps, "in_9"), fulfilInvoice(worker, deps, "in_9")])
+
+		expect(outcomes.map((outcome) => outcome.outcome).toSorted()).toEqual(["already_minted", "minted"])
+
+		const license = await findLicenseBySubscription(deps.ledger, "sub_9")
+
+		expect(await countTokens(deps.ledger, license!.lid)).toBe(1)
+		expect(sent.length).toBeGreaterThanOrEqual(1)
+
+		const racing = await fixture("9r")
+		const completed = checkoutCompletedEvent({ id: "evt_9r", sessionID: "cs_9r", subscriptionID: "sub_9r" })
+
+		await Promise.all([
+			handleStripeEvent(racing.env, racing.deps, completed),
+			handleStripeEvent(racing.env, racing.deps, completed),
+		])
+
+		const rows = await racing.deps.ledger
+			.selectFrom("licenses")
+			.select("lid")
+			.where("subscription_id", "=", "sub_9r")
+			.execute()
+
+		expect(rows).toHaveLength(1)
 	})
 
 	it("a subscription that ends keeps the license active until the current token's date passes, then lapses it", async () => {

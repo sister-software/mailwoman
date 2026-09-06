@@ -15,7 +15,9 @@ import { env } from "cloudflare:workers"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { envWithSigningKey } from "../support/keys.ts"
+import { ledgerRefusingWrites } from "../support/ledger.ts"
 import { applyMigrations } from "../support/migrations.ts"
+import { priceOf } from "../support/plans.ts"
 import {
 	chargeDisputeCreatedEvent,
 	chargeObject,
@@ -28,23 +30,26 @@ import {
 	invoicePaymentList,
 	subscriptionObject,
 } from "../support/stripe-fixtures.ts"
-import { stripeFetch } from "../support/stripe-mock.ts"
+import { type RecordedStripeCall, recordingStripeFetch } from "../support/stripe-mock.ts"
 
 const OCT_1 = Date.UTC(2026, 9, 1) / 1000
 const NOV_1 = Date.UTC(2026, 10, 1) / 1000
+const DEC_1 = Date.UTC(2026, 11, 1) / 1000
 const WEEK = 7 * 24 * 3600
 
 beforeAll(async () => {
 	await applyMigrations(env.LICENSE_LEDGER)
 })
 
-function recordingEmail() {
+function recordingEmail(refuse?: string) {
 	const sent: string[] = []
 
 	return {
 		sent,
 		provider: {
 			send: async (_message: unknown, key: string) => {
+				if (refuse) throw new Error(refuse)
+
 				sent.push(key)
 
 				return { messageID: `msg_${key}` }
@@ -55,14 +60,27 @@ function recordingEmail() {
 
 async function fixture(
 	suffix: string,
-	options: { subscriptionStatus?: string; disputeStatus?: string; listInvoices?: boolean; chargeRefunded?: number } = {}
+	options: {
+		subscriptionStatus?: string
+		disputeStatus?: string
+		listInvoices?: boolean
+		chargeRefunded?: number
+		/**
+		 * Invoice ids the list answers ahead of this fixture's, with no object behind them: a retrieval of one fails.
+		 */
+		unreadableInvoices?: string[]
+		/**
+		 * A paid renewal invoice the subscription reads as its latest, outside the listed window.
+		 */
+		latestInvoiceID?: string
+	} = {}
 ) {
 	const { env: worker } = await envWithSigningKey(readEnv({ ...env, ISSUANCE_ENABLED: "true" }))
 
 	const invoice = invoiceObject({
 		id: `in_${suffix}`,
 		subscriptionID: `sub_${suffix}`,
-		priceID: worker.STRIPE_PRICE_MONTHLY,
+		priceID: priceOf(worker, "commercial-monthly-v1"),
 		paidAt: OCT_1,
 		periodEnd: NOV_1,
 	})
@@ -74,49 +92,74 @@ async function fixture(
 		refunded: options.chargeRefunded ?? 0,
 	})
 
-	const stripe = stripeClient(
-		worker,
-		stripeFetch({
-			"GET /v1/invoices?": invoiceList(options.listInvoices === false ? [] : [invoice]),
-			[`GET /v1/invoices/in_${suffix}`]: invoice,
-			[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
-				id: `sub_${suffix}`,
-				priceID: worker.STRIPE_PRICE_MONTHLY,
-				currentPeriodEnd: NOV_1,
-				status: options.subscriptionStatus,
-			}),
-			"GET /v1/checkout/sessions?": checkoutSessionList([
-				checkoutSessionObject({
-					id: `cs_${suffix}`,
-					subscriptionID: `sub_${suffix}`,
-					licensee: "Missed Ltd",
-					email: "m@example.com",
-				}),
-			]),
-			[`GET /v1/charges/ch_${suffix}`]: charge,
-			"GET /v1/charges?": { object: "list", url: "/v1/charges", has_more: false, data: [charge] },
-			"GET /v1/invoice_payments?": invoicePaymentList({ invoiceID: `in_${suffix}`, paymentIntentID: `pi_${suffix}` }),
-			"GET /v1/disputes?": disputeList(
-				options.disputeStatus
-					? [{ id: `dp_${suffix}`, paymentIntentID: `pi_${suffix}`, status: options.disputeStatus }]
-					: []
-			),
-		})
+	const unreadable = (options.unreadableInvoices ?? []).map((id) =>
+		invoiceObject({ id, subscriptionID: `sub_${id}`, priceID: "price_x", paidAt: OCT_1, periodEnd: NOV_1 })
 	)
 
+	const latestInvoice = options.latestInvoiceID
+		? invoiceObject({
+				id: options.latestInvoiceID,
+				subscriptionID: `sub_${suffix}`,
+				priceID: priceOf(worker, "commercial-monthly-v1"),
+				paidAt: NOV_1,
+				periodEnd: DEC_1,
+			})
+		: undefined
+
+	const recording = recordingStripeFetch({
+		"GET /v1/invoices?": invoiceList(options.listInvoices === false ? [] : [...unreadable, invoice]),
+		[`GET /v1/invoices/in_${suffix}`]: invoice,
+		...(latestInvoice ? { [`GET /v1/invoices/${options.latestInvoiceID}`]: latestInvoice } : {}),
+		[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
+			id: `sub_${suffix}`,
+			priceID: priceOf(worker, "commercial-monthly-v1"),
+			currentPeriodEnd: NOV_1,
+			status: options.subscriptionStatus,
+			latestInvoice,
+		}),
+		"GET /v1/checkout/sessions?": checkoutSessionList([
+			checkoutSessionObject({
+				id: `cs_${suffix}`,
+				subscriptionID: `sub_${suffix}`,
+				licensee: "Missed Ltd",
+				email: "m@example.com",
+			}),
+		]),
+		[`GET /v1/charges/ch_${suffix}`]: charge,
+		"GET /v1/charges?": { object: "list", url: "/v1/charges", has_more: false, data: [charge] },
+		"GET /v1/invoice_payments?": invoicePaymentList({ invoiceID: `in_${suffix}`, paymentIntentID: `pi_${suffix}` }),
+		"GET /v1/disputes?": disputeList(
+			options.disputeStatus
+				? [{ id: `dp_${suffix}`, paymentIntentID: `pi_${suffix}`, status: options.disputeStatus }]
+				: []
+		),
+	})
+
+	const stripe = stripeClient(worker, recording.fetch)
 	const ledger = openLedger(env.LICENSE_LEDGER)
 
-	return { worker, stripe, ledger }
+	return { worker, stripe, ledger, calls: recording.calls }
+}
+
+function invoiceListings(calls: RecordedStripeCall[]) {
+	return calls.filter((call) => call.method === "GET" && call.path === "/v1/invoices")
 }
 
 describe("reconciliation", () => {
 	it("mints a paid invoice the webhook never delivered, and re-sends a token whose email failed or stayed pending, once each", async () => {
-		const { worker, stripe, ledger } = await fixture("9")
+		const { worker, stripe, ledger, calls } = await fixture("9")
 		const email = recordingEmail()
-		const deps = { stripe, ledger, email: email.provider }
+		const now = Date.UTC(2026, 9, 3)
+		const deps = { stripe, ledger, email: email.provider, now: () => now }
 		const report = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
 		expect(report).toMatchObject({ minted: ["in_9"], resent: [], refused: [], corrected: [] })
+
+		// The listing is Stripe's paid invoices by creation time, from a week before the clock.
+		expect(invoiceListings(calls).map((call) => [call.form.get("status"), call.form.get("created[gte]")])).toEqual([
+			["paid", String(Math.floor(now / 1000) - WEEK)],
+		])
+
 		expect((await findToken(ledger, "in_9"))?.email_state).toBe("sent")
 		expect(email.sent).toEqual(["in_9"])
 
@@ -224,5 +267,127 @@ describe("reconciliation", () => {
 		expect(standing.minted).toEqual(["in_14"])
 		expect(standing.corrected.filter((entry) => entry.lid === partialLicense?.lid)).toEqual([])
 		expect((await findLicenseBySubscription(partial.ledger, "sub_14"))?.license_state).toBe("active")
+	})
+
+	it("an invoice that cannot be read fails alone: the next invoice is minted and the later sweeps still run", async () => {
+		const { worker, stripe, ledger } = await fixture("15", { unreadableInvoices: ["in_15_unreadable"] })
+		const email = recordingEmail()
+		const deps = { stripe, ledger, email: email.provider }
+
+		await setEmailState(ledger, "in_14", "failed")
+
+		const report = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
+
+		expect(report.failed).toContainEqual({
+			stage: "mint",
+			invoiceID: "in_15_unreadable",
+			reason: expect.stringContaining("in_15_unreadable"),
+		})
+
+		expect(report.minted).toEqual(["in_15"])
+		expect(report.incomplete).toEqual([])
+		expect(report.resent).toContain("in_14")
+	})
+
+	it("a state write the ledger refuses is reported against its license, and the sweep goes on", async () => {
+		const active = await fixture("16")
+		const email = recordingEmail()
+
+		await fulfilInvoice(active.worker, { stripe: active.stripe, ledger: active.ledger, email: email.provider }, "in_16")
+
+		const canceled = await fixture("16", { subscriptionStatus: "canceled", listInvoices: false })
+		const license = await findLicenseBySubscription(canceled.ledger, "sub_16")
+
+		const report = await reconcileLedger(
+			canceled.worker,
+			{
+				stripe: canceled.stripe,
+				ledger: ledgerRefusingWrites(canceled.ledger),
+				email: email.provider,
+				now: () => Date.UTC(2026, 10, 20),
+			},
+			{ sinceSeconds: WEEK }
+		)
+
+		expect(report.failed).toContainEqual({
+			stage: "state",
+			lid: license?.lid,
+			reason: expect.stringContaining("D1 refused the write"),
+		})
+
+		expect((await findLicenseBySubscription(canceled.ledger, "sub_16"))?.license_state).toBe("active")
+	})
+
+	it("a provider refusal and a send the ledger could not record are reported as different failures", async () => {
+		const { worker, stripe, ledger } = await fixture("17", { listInvoices: false })
+		const accepting = recordingEmail()
+
+		await fulfilInvoice(worker, { stripe, ledger, email: accepting.provider }, "in_17")
+
+		const license = await findLicenseBySubscription(ledger, "sub_17")
+		const refusing = recordingEmail("mailbox full")
+
+		await setEmailState(ledger, "in_17", "failed")
+
+		const refused = await reconcileLedger(worker, { stripe, ledger, email: refusing.provider }, { sinceSeconds: WEEK })
+
+		expect(refused.failed).toContainEqual({
+			stage: "email",
+			invoiceID: "in_17",
+			lid: license?.lid,
+			reason: "provider refused: mailbox full",
+		})
+
+		expect((await findToken(ledger, "in_17"))?.email_state).toBe("failed")
+
+		const unrecorded = await reconcileLedger(
+			worker,
+			{ stripe, ledger: ledgerRefusingWrites(ledger), email: accepting.provider },
+			{ sinceSeconds: WEEK }
+		)
+
+		expect(unrecorded.failed).toContainEqual({
+			stage: "email",
+			invoiceID: "in_17",
+			lid: license?.lid,
+			reason: "D1 refused the write",
+		})
+
+		expect(accepting.sent.filter((key) => key === "in_17")).toHaveLength(2)
+		expect((await findToken(ledger, "in_17"))?.email_state).toBe("failed")
+	})
+
+	it("mints a known subscription's latest paid invoice that the listed window no longer holds", async () => {
+		const first = await fixture("19")
+		const email = recordingEmail()
+
+		await fulfilInvoice(first.worker, { stripe: first.stripe, ledger: first.ledger, email: email.provider }, "in_19")
+
+		const later = await fixture("19", { listInvoices: false, latestInvoiceID: "in_19b" })
+		const deps = { stripe: later.stripe, ledger: later.ledger, email: email.provider }
+		const report = await reconcileLedger(later.worker, deps, { sinceSeconds: WEEK })
+
+		expect(report.minted).toEqual(["in_19b"])
+		expect((await findToken(later.ledger, "in_19b"))?.expires).toBe("2026-12-15")
+		expect(invoiceListings(later.calls)).toHaveLength(1)
+
+		const again = await reconcileLedger(later.worker, deps, { sinceSeconds: WEEK })
+
+		expect(again.minted).toEqual([])
+		expect(email.sent.filter((key) => key === "in_19b")).toHaveLength(1)
+	})
+
+	it("a listing that fails part way is reported as incomplete rather than as an empty sweep", async () => {
+		const { worker, ledger } = await fixture("18", { listInvoices: false })
+		const email = recordingEmail()
+
+		const report = await reconcileLedger(
+			worker,
+			{ stripe: stripeClient(worker, recordingStripeFetch({}).fetch), ledger, email: email.provider },
+			{ sinceSeconds: WEEK }
+		)
+
+		expect(report.incomplete).toContainEqual({ stage: "mint", reason: expect.stringContaining("no fixture") })
+		expect(report.minted).toEqual([])
 	})
 })

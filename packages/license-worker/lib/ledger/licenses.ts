@@ -5,7 +5,9 @@
  *
  *   Every read and write against the ledger, so no route or handler holds a query. The idempotency the worker relies on
  *   lives in the schema's unique constraints — one event id, one subscription, one Checkout Session, one token per
- *   invoice — and the two writers that would collide (`recordEventOnce`, `insertToken`) answer or throw accordingly.
+ *   invoice — and the three writers that can collide (`recordEventOnce`, `createLicenseIfAbsent`,
+ *   `insertTokenIfAbsent`) insert on no conflict and answer whether this caller's row landed, so two callers racing to
+ *   the same row both get a defined answer and only a unique conflict is forgiven: any other error still throws.
  */
 
 import type { Ledger } from "#ledger/client"
@@ -57,8 +59,18 @@ export async function findLicense(ledger: Ledger, lid: string): Promise<LicenseR
 	return ledger.selectFrom("licenses").selectAll().where("lid", "=", lid).executeTakeFirst()
 }
 
-export async function createLicense(ledger: Ledger, row: NewLicense): Promise<void> {
-	await ledger.insertInto("licenses").values(row).execute()
+/**
+ * Create the license row unless one already holds its subscription or Checkout Session. `"present"` is another caller's
+ * row, which the caller reads back by subscription.
+ */
+export async function createLicenseIfAbsent(ledger: Ledger, row: NewLicense): Promise<"inserted" | "present"> {
+	const result = await ledger
+		.insertInto("licenses")
+		.values(row)
+		.onConflict((conflict) => conflict.doNothing())
+		.executeTakeFirst()
+
+	return Number(result.numInsertedOrUpdatedRows ?? 0) > 0 ? "inserted" : "present"
 }
 
 export async function setPlanCode(ledger: Ledger, lid: string, planCode: string): Promise<void> {
@@ -128,10 +140,17 @@ export async function findTokenLid(ledger: Ledger, invoiceID: string): Promise<s
 }
 
 /**
- * Throws on a second token for one invoice: the primary key is the idempotency the mint relies on.
+ * Insert the token for an invoice unless one exists: the primary key is the idempotency the mint relies on, and
+ * `"present"` tells the caller that another mint won the race and its row is the token.
  */
-export async function insertToken(ledger: Ledger, row: NewToken): Promise<void> {
-	await ledger.insertInto("license_tokens").values(row).execute()
+export async function insertTokenIfAbsent(ledger: Ledger, row: NewToken): Promise<"inserted" | "present"> {
+	const result = await ledger
+		.insertInto("license_tokens")
+		.values(row)
+		.onConflict((conflict) => conflict.column("invoice_id").doNothing())
+		.executeTakeFirst()
+
+	return Number(result.numInsertedOrUpdatedRows ?? 0) > 0 ? "inserted" : "present"
 }
 
 export async function countTokens(ledger: Ledger, lid: string): Promise<number> {
@@ -173,7 +192,7 @@ export async function setEmailState(
 /**
  * Tokens whose email has not been confirmed sent: `pending` covers a crash between the insert and the send, or between
  * the provider accepting the message and the ledger recording it; `failed` is a provider refusal. Both are re-sent
- * under the invoice id, which the provider deduplicates.
+ * under the invoice id; whether the provider deduplicates on it is the provider's (`email/provider.ts`).
  */
 export async function tokensAwaitingEmail(ledger: Ledger): Promise<LicenseTokenRow[]> {
 	return ledger.selectFrom("license_tokens").selectAll().where("email_state", "in", ["pending", "failed"]).execute()
@@ -202,8 +221,8 @@ export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: st
 }
 
 /**
- * Every license, for the reconciliation pass. The table holds one row per customer, so the pass reads it whole rather
- * than asking Stripe what changed, which its subscription list cannot answer.
+ * Every license, for the reconciliation pass. The table holds one row per subscription, so the pass reads it whole
+ * rather than asking Stripe what changed, which its subscription list cannot answer.
  */
 export async function allLicenses(ledger: Ledger): Promise<LicenseRow[]> {
 	return ledger.selectFrom("licenses").selectAll().orderBy("created_at", "asc").execute()

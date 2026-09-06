@@ -4,10 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   The scheduled pass. Stripe is the authority on what was paid and what stands; this ledger is the authority on what
- *   was minted and sent. Three sweeps, each safe to repeat: a paid invoice in the window with no token is minted through
- *   the path the webhook takes; a token whose email is not confirmed sent goes again under the same invoice id; and a license whose
+ *   was minted and sent. Three sweeps, each safe to repeat: a paid invoice with no token is minted through the path the
+ *   webhook takes; a token whose email is not confirmed sent goes again under the same invoice id; and a license whose
  *   state disagrees with its subscription is corrected, including a dispute Stripe has since ruled in the customer's
- *   favour. The report names ids only.
+ *   favour. One item's failure is recorded against that item and the sweep goes on; a listing that cannot be completed
+ *   is recorded as such, so an empty sweep is never mistaken for a clean one. The report names ids only.
+ *
+ *   What the pass recovers, and what it does not. A subscription the ledger knows is read whole on every pass, and its
+ *   latest paid invoice is minted if no token holds it, however long ago it was created or paid: a lost renewal
+ *   webhook, or a renewal refused while issuance was off, is minted on the next pass with issuance on. A subscription
+ *   the ledger has never seen (its checkout webhook lost and its success page never visited) is found only through
+ *   the invoice list, which Stripe filters by creation time, so it is recovered while its first invoice was created
+ *   within `sinceSeconds`; past that the remedy is to resend the `invoice.paid` event from the Stripe dashboard.
  */
 
 import type Stripe from "stripe"
@@ -23,8 +31,19 @@ import {
 	setLicenseState,
 	tokensAwaitingEmail,
 } from "#ledger/licenses"
-import { type LicenseRow, LicenseState } from "#ledger/schema"
-import { licenseStateFromSubscription } from "#stripe/handlers"
+import { type LicenseRow, LicenseState, type LicenseTokenRow } from "#ledger/schema"
+import { licenseStateAfterSubscription } from "#policy"
+
+export type ReconcileStage = "mint" | "email" | "state"
+
+/**
+ * One item the pass could not finish, with the id the next operator action needs: the invoice for a mint, the invoice
+ * and the license for a delivery, the license for a state correction.
+ */
+export type ReconcileFailure =
+	| { stage: "mint"; invoiceID: string; reason: string }
+	| { stage: "email"; invoiceID: string; lid: string; reason: string }
+	| { stage: "state"; lid: string; reason: string }
 
 export interface ReconcileReport {
 	minted: string[]
@@ -32,14 +51,19 @@ export interface ReconcileReport {
 	refused: Array<{ invoiceID: string; reason: string }>
 	corrected: Array<{ lid: string; from: LicenseState; to: LicenseState }>
 	/**
-	 * Licenses whose Stripe records could not be read this pass. One is never allowed to stop the sweep for the rest.
+	 * Items that failed on their own; each is retried by the next pass.
 	 */
-	failed: Array<{ lid: string; reason: string }>
+	failed: ReconcileFailure[]
+	/**
+	 * Sweeps whose listing failed part way: the items after the failure were never seen this pass.
+	 */
+	incomplete: Array<{ stage: ReconcileStage; reason: string }>
 }
 
 export interface ReconcileOptions {
 	/**
-	 * How far back to list paid invoices. Wider than the cron interval, so a pass that fails leaves nothing unminted.
+	 * How far back to list paid invoices, by the invoice's creation time: the bound on recovering a subscription the
+	 * ledger has never seen. Wider than the cron interval, so one failed pass costs nothing.
 	 */
 	sinceSeconds: number
 }
@@ -47,60 +71,135 @@ export interface ReconcileOptions {
 const PAYMENT_STATE_DISPUTED = "disputed"
 const PAYMENT_STATE_REFUNDED = "refunded"
 
+const EMAIL_ADDRESS = /[^\s@<>"']+@[^\s@<>"']+/gu
+const LONG_OPAQUE_VALUE = /[A-Za-z0-9_-]{40,}/gu
+const REASON_LENGTH = 200
+
+/**
+ * An error as the report carries it: the message, with anything shaped like an address or a token or secret struck,
+ * since the report is logged.
+ */
+export function failureReason(error: unknown): string {
+	const text = error instanceof Error ? error.message : String(error)
+
+	return text.replace(EMAIL_ADDRESS, "<email>").replace(LONG_OPAQUE_VALUE, "<redacted>").slice(0, REASON_LENGTH)
+}
+
 export async function reconcileLedger(
 	env: LicenseWorkerEnv,
 	deps: FulfilDependencies,
 	options: ReconcileOptions
 ): Promise<ReconcileReport> {
-	const report: ReconcileReport = { minted: [], resent: [], refused: [], corrected: [], failed: [] }
+	const report: ReconcileReport = { minted: [], resent: [], refused: [], corrected: [], failed: [], incomplete: [] }
 	const since = Math.floor((deps.now ?? Date.now)() / 1000) - options.sinceSeconds
 
-	for await (const invoice of deps.stripe.invoices.list({ status: "paid", created: { gte: since }, limit: 100 })) {
-		if (await findToken(deps.ledger, invoice.id)) continue
+	try {
+		for await (const invoice of deps.stripe.invoices.list({ status: "paid", created: { gte: since }, limit: 100 })) {
+			await mintIfUnminted(env, deps, invoice.id, report)
+		}
+	} catch (error) {
+		report.incomplete.push({ stage: "mint", reason: failureReason(error) })
+	}
 
-		const outcome = await fulfilInvoice(env, deps, invoice.id)
+	let awaiting: LicenseTokenRow[] = []
 
-		if (outcome.outcome === "minted") {
-			report.minted.push(invoice.id)
-		} else if (outcome.outcome === "refused") {
-			report.refused.push({ invoiceID: invoice.id, reason: outcome.reason })
+	try {
+		awaiting = await tokensAwaitingEmail(deps.ledger)
+	} catch (error) {
+		report.incomplete.push({ stage: "email", reason: failureReason(error) })
+	}
+
+	for (const token of awaiting) {
+		try {
+			const license = await findLicense(deps.ledger, token.lid)
+
+			if (!license) throw new Error(`token ${token.invoice_id} names license ${token.lid}, which has no row`)
+
+			const outcome = await sendTokenEmail(deps, license, token)
+
+			if (outcome.state === "sent") {
+				report.resent.push(token.invoice_id)
+			} else {
+				report.failed.push({
+					stage: "email",
+					invoiceID: token.invoice_id,
+					lid: token.lid,
+					reason: `provider refused: ${failureReason(outcome.reason)}`,
+				})
+			}
+		} catch (error) {
+			report.failed.push({ stage: "email", invoiceID: token.invoice_id, lid: token.lid, reason: failureReason(error) })
 		}
 	}
 
-	for (const token of await tokensAwaitingEmail(deps.ledger)) {
-		const license = await findLicense(deps.ledger, token.lid)
+	let licenses: LicenseRow[] = []
 
-		if (!license) continue
-
-		if ((await sendTokenEmail(deps, license, token)) === "sent") {
-			report.resent.push(token.invoice_id)
-		}
+	try {
+		licenses = await allLicenses(deps.ledger)
+	} catch (error) {
+		report.incomplete.push({ stage: "state", reason: failureReason(error) })
 	}
 
-	for (const license of await allLicenses(deps.ledger)) {
-		let next: Correction | undefined
+	for (const license of licenses) {
+		let subscription: Stripe.Subscription
 
 		try {
-			next = await stateStripeSays(deps.stripe, deps, license)
+			subscription = await deps.stripe.subscriptions.retrieve(license.subscription_id, { expand: ["latest_invoice"] })
 		} catch (error) {
-			report.failed.push({ lid: license.lid, reason: error instanceof Error ? error.message : String(error) })
+			report.failed.push({ stage: "state", lid: license.lid, reason: failureReason(error) })
 
 			continue
 		}
 
-		if (next === undefined || next.state === license.license_state) continue
+		const latest = subscription.latest_invoice
 
-		await setLicenseState(
-			deps.ledger,
-			license.lid,
-			next.state,
-			next.paymentState ? { paymentState: next.paymentState } : {}
-		)
+		if (latest && typeof latest !== "string" && latest.status === "paid") {
+			await mintIfUnminted(env, deps, latest.id, report)
+		}
 
-		report.corrected.push({ lid: license.lid, from: license.license_state, to: next.state })
+		try {
+			const next = await stateStripeSays(deps.stripe, deps, license, subscription)
+
+			if (next === undefined || next.state === license.license_state) continue
+
+			await setLicenseState(
+				deps.ledger,
+				license.lid,
+				next.state,
+				next.paymentState ? { paymentState: next.paymentState } : {}
+			)
+
+			report.corrected.push({ lid: license.lid, from: license.license_state, to: next.state })
+		} catch (error) {
+			report.failed.push({ stage: "state", lid: license.lid, reason: failureReason(error) })
+		}
 	}
 
 	return report
+}
+
+/**
+ * Mint one listed invoice unless the ledger already holds its token; a failure is this invoice's alone.
+ */
+async function mintIfUnminted(
+	env: LicenseWorkerEnv,
+	deps: FulfilDependencies,
+	invoiceID: string,
+	report: ReconcileReport
+): Promise<void> {
+	try {
+		if (await findToken(deps.ledger, invoiceID)) return
+
+		const outcome = await fulfilInvoice(env, deps, invoiceID)
+
+		if (outcome.outcome === "minted") {
+			report.minted.push(invoiceID)
+		} else if (outcome.outcome === "refused") {
+			report.refused.push({ invoiceID, reason: outcome.reason })
+		}
+	} catch (error) {
+		report.failed.push({ stage: "mint", invoiceID, reason: failureReason(error) })
+	}
 }
 
 interface Correction {
@@ -142,10 +241,9 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
 async function stateStripeSays(
 	stripe: Stripe,
 	deps: FulfilDependencies,
-	license: LicenseRow
+	license: LicenseRow,
+	subscription: Stripe.Subscription
 ): Promise<Correction | undefined> {
-	const subscription = await stripe.subscriptions.retrieve(license.subscription_id)
-
 	const token = await currentToken(deps.ledger, license.lid)
 	const today = todayUTC(deps.now)
 
@@ -155,7 +253,7 @@ async function stateStripeSays(
 		}
 
 		return {
-			state: licenseStateFromSubscription(license.license_state, subscription, { graceUntil: token?.expires, today }),
+			state: licenseStateAfterSubscription(license.license_state, subscription, { graceUntil: token?.expires, today }),
 		}
 	}
 
@@ -171,6 +269,6 @@ async function stateStripeSays(
 	if (dispute?.status !== "won") return undefined
 
 	return {
-		state: licenseStateFromSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
+		state: licenseStateAfterSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
 	}
 }
