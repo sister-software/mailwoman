@@ -16,7 +16,6 @@
  *   and both behaviors are pinned by their consumers' boards.
  */
 
-import { flatten } from "#decoder/serialize-tuples"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import type { ComponentTag } from "#types/component"
 
@@ -110,13 +109,7 @@ export interface FlatTreeNode {
 export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 	if (!tree) return []
 
-	const all: AddressNode[] = []
-
-	for (const root of tree.roots) {
-		flatten(root, all)
-	}
-
-	return all
+	return Array.from(walkNodes(tree.roots))
 		.map((node) => ({
 			tag: node.tag,
 			value: node.value,
