@@ -8,7 +8,12 @@
  */
 
 import * as HIERARCHY_LINEAGE from "mailwoman/hierarchy-lineage"
-import { annotateHierarchyLineage, type HierarchyLineageEntry } from "mailwoman/hierarchy-lineage"
+import {
+	annotateHierarchyLineage,
+	assembleHierarchy,
+	type HierarchyLineageEntry,
+	type HierarchySourceNode,
+} from "mailwoman/hierarchy-lineage"
 import { describe, expect, it } from "vitest"
 
 function entry(placeID?: string): HierarchyLineageEntry {
@@ -99,5 +104,38 @@ describe("annotateHierarchyLineage (#1731)", () => {
 
 		expect(registerLocality.in_winner_lineage).toBeUndefined()
 		expect(region.in_winner_lineage).toBe(true)
+	})
+})
+
+describe("assembleHierarchy — the JP tiers", () => {
+	it("lists a resolved prefecture, municipality and district most specific first, municipality above district", () => {
+		const nodes: HierarchySourceNode[] = [
+			{
+				tag: "prefecture",
+				value: "宮崎県",
+				lat: 31.9,
+				lon: 131.4,
+				placeID: "wof:85672707",
+				metadata: { resolver_name: "Miyazaki" },
+			},
+			{ tag: "district", value: "下長飯町", lat: 31.7, lon: 131.1, placeID: "wof:1" },
+			{
+				tag: "municipality",
+				value: "都城市",
+				lat: 31.73,
+				lon: 131.08,
+				placeID: "wof:102031529",
+				metadata: { resolver_name: "Miyakonojō" },
+			},
+			{ tag: "house_number", value: "1867-2" },
+		]
+
+		const hierarchy = assembleHierarchy(nodes, null, undefined)
+
+		expect(hierarchy.map((h) => [h.tag, h.name])).toEqual([
+			["municipality", "Miyakonojō"],
+			["district", "下長飯町"],
+			["prefecture", "Miyazaki"],
+		])
 	})
 })

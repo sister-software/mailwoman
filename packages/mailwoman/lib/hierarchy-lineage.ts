@@ -56,7 +56,21 @@ export interface HierarchyEntry extends HierarchyLineageEntry {
 	lon?: number
 }
 
-const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
+/**
+ * The admin tags the hierarchy admits, most specific first. The JP tiers (`municipality`, `district`, `prefecture`) sit
+ * beside their Latin counterparts in the order the admin ladder uses — `municipality` above `district`, because the
+ * anchor below is graded on lineage and an unscoped district can resolve a namesake.
+ */
+const HIERARCHY_TAGS = [
+	"locality",
+	"municipality",
+	"dependent_locality",
+	"district",
+	"subregion",
+	"region",
+	"prefecture",
+	"country",
+]
 
 /**
  * The MOST-SPECIFIC resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
