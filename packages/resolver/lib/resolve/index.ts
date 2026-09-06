@@ -38,6 +38,7 @@ import {
 	applyRegionCountryCoherence,
 } from "#admin/coherence-passes"
 import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin/containment"
+import { resolveCompoundMunicipality } from "#admin/jp-municipality"
 import { describeCapabilityGaps, reportCapabilityGaps } from "#backend-capabilities"
 import {
 	BARE_REGION_DOMINANCE_LOG10,
@@ -400,7 +401,26 @@ class WOFResolver implements Resolver {
 		// stripped of their resolve contribution — the walk does not look them up. Digit-only excluded
 		// spans were retagged to `house_number` and flow through their correct sibling placetype.
 		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length && !isShapeExcludedPostcode(node)) {
-			const picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
+			let picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
+
+			// A compound JP municipality as a scoped pair: the parent fallback is withheld on the tail probe only.
+			if (!picked && node.tag === "municipality") {
+				picked = await resolveCompoundMunicipality(
+					node.value,
+					parentResolved,
+					() => state.lookupsRemaining > 0,
+					async (value, scope, parentFallback) => {
+						const prior = state.parentFallback
+						state.parentFallback = prior && parentFallback
+
+						try {
+							return await this.#lookupAndPick({ ...node, value }, placetype, scope, state)
+						} finally {
+							state.parentFallback = prior
+						}
+					}
+				)
+			}
 
 			if (picked) {
 				resolved = picked.top

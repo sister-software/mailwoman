@@ -6,4 +6,5 @@
 
 export * from "#admin/coherence-passes"
 export * from "#admin/containment"
+export * from "#admin/jp-municipality"
 export * from "#admin/winner"

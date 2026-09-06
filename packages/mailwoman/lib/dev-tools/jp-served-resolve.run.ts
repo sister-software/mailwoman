@@ -8,21 +8,15 @@
  *   Three things had to hold before a JP parse produced a coordinate at all, and this tool measured each: the placetype
  *   map routes `prefecture` / `municipality` / `district` (0 of 300 rows resolved without it), the admin ladder carries
  *   the JP rungs with `municipality` above `district` (202 vs 271 of 300 accepted @15 km), and the normalizer keeps the
- *   postal mark 〒 for the character path (171 vs 202 with the map and a district-first ladder). Shipped, the run reads
- *   271 of 300 (90.3%).
- *
- *   The `--split` arm reduces a compound municipality (`大島郡知名町` → `知名町`, `大阪市北区` → `北区`) to its trailing
- *   unit before the walk. Unscoped it LOSES rows (251 of 300): a bare ward resolves a namesake in another city
- *   (`神戸市西区` → Fukuoka, 407 km). A scoped form — the city resolved first, the ward probed as its child — is the
- *   design that arm is waiting for; the misses it would reach are the county-town rows that fall to the prefecture
- *   centroid (25–36 km).
+ *   postal mark 〒 for the character path (171 vs 202 with the map and a district-first ladder). The resolver's scoped
+ *   pair for a compound municipality (`compoundMunicipality`, #2175) then took 271 to 282 of 300; the same split
+ *   applied UNSCOPED before the walk had read 251, because a bare ward resolves a namesake in another city.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/jp-served-resolve.run.ts [--board <jsonl>] [--rows 300] [--seed 42]
- *   [--split] [--normalize false] [--tolerance-km 15] [--trace 2] [--json <out>]
+ *   [--normalize false] [--tolerance-km 15] [--trace 2] [--json <out>]
  */
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
-import type { AddressNode } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { mulberry32 } from "@mailwoman/core/random"
 import type { Resolver } from "@mailwoman/core/resolver"
@@ -53,38 +47,12 @@ interface GradedRow {
 	accepted: boolean
 }
 
-/**
- * The trailing administrative unit of a compound municipality: the town after a county (`大島郡知名町` → `知名町`), the ward
- * after a city (`大阪市北区` → `北区`). A plain municipality is returned unchanged.
- */
-export function trailingMunicipalityUnit(value: string): string {
-	const county = /^.+郡(.+[町村])$/u.exec(value)
-
-	if (county) return county[1]!
-
-	const ward = /^.+市(.+区)$/u.exec(value)
-
-	if (ward) return ward[1]!
-
-	return value
-}
-
-function splitCompoundMunicipalities(node: AddressNode): AddressNode {
-	const children = node.children?.map(splitCompoundMunicipalities)
-
-	if (node.tag === "municipality") {
-		return { ...node, value: trailingMunicipalityUnit(node.value), ...(children ? { children } : {}) }
-	}
-
-	return children ? { ...node, children } : node
-}
-
 const traces: unknown[] = []
 
-function instrumented(resolver: Resolver, split: boolean, trace: boolean): Resolver {
+function instrumented(resolver: Resolver, trace: boolean): Resolver {
 	return {
 		resolveTree: (tree, opts) =>
-			resolver.resolveTree(split ? { ...tree, roots: tree.roots.map(splitCompoundMunicipalities) } : tree, {
+			resolver.resolveTree(tree, {
 				...opts,
 				...(trace ? { traceSink: (record) => traces.push(record) } : {}),
 			}),
@@ -98,7 +66,6 @@ async function main(): Promise<void> {
 			board: { type: "string" },
 			rows: { type: "string", default: "300" },
 			seed: { type: "string", default: "42" },
-			split: { type: "boolean", default: false },
 			normalize: { type: "string", default: "true" },
 			"tolerance-km": { type: "string", default: "15" },
 			trace: { type: "string", default: "0" },
@@ -125,7 +92,7 @@ async function main(): Promise<void> {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "ja-JP" })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = await createResolverBackend(mod, { dataRoot: mailwomanDataRoot(), wofPaths: [] })
-	const resolver = instrumented(createWOFResolver(lookup), values.split === true, traceRows > 0)
+	const resolver = instrumented(createWOFResolver(lookup), traceRows > 0)
 
 	const graded: GradedRow[] = []
 
@@ -175,7 +142,7 @@ async function main(): Promise<void> {
 	}
 
 	console.log(
-		`split=${values.split} normalize=${values.normalize} rows=${graded.length} resolved=${resolved} accepted@${toleranceKm}km=${accepted} (${((100 * accepted) / graded.length).toFixed(1)}%)`
+		`normalize=${values.normalize} rows=${graded.length} resolved=${resolved} accepted@${toleranceKm}km=${accepted} (${((100 * accepted) / graded.length).toFixed(1)}%)`
 	)
 
 	for (const [register, bucket] of [...byRegister].toSorted()) {
@@ -189,7 +156,7 @@ async function main(): Promise<void> {
 	}
 
 	if (values.json) {
-		await writeLocalJSONFile({ split: values.split, toleranceKm, rows: graded }, values.json)
+		await writeLocalJSONFile({ toleranceKm, rows: graded }, values.json)
 	}
 }
 

@@ -100,6 +100,15 @@ that arm waits for is the scoped form: the city resolved first, the ward probed 
 The Latin board did not move: `mwdev_compare` origin/main vs the working tree over the full regression board,
 board-routed, reads 0 rows differed (the run id is in the #2164 comment).
 
+**The scoped split (#2175).** The resolver walk now probes a compound municipality as a pair after the whole span
+misses: the head (`神戸市`, `猿島郡`) under the node's own parent, then the tail (`西区`, `五霞町`) as the head's child with
+the parent fallback OFF, so a namesake outside the head is never admissible; a county head with no key sends the town
+under the prefecture the walk already holds. Same 300 rows: 282 accepted (94.0%). Same 2,000 rows: **1,889 (94.5%)**,
+1,048 within 5 km, 4 beyond 50 km — all four `和歌山県日高郡美浜町`, where the scoped town probe missed (Wakayama's 美浜町
+has no key) and the candidate backend's own region-scope fallback re-admitted Aichi's, 184 km away. The tail probe now
+refuses a `regionScopeMiss` answer, and those rows fall to the prefecture centroid (27 km) instead. The remaining
+15–19 km rows are municipality-centroid distances (`新潟市秋葉区`, `かすみがうら市`), the board tolerance's edge.
+
 ## 4. Artifacts of record
 
 - `$MAILWOMAN_DATA_ROOT/models/v8-cjk-full-s42/{step-024000, served-package/, train_log.csv, jp-board-score.txt, cn-board-score.txt}`
