@@ -26,7 +26,7 @@ import {
 	setEmailState,
 	setPlanCode,
 } from "#ledger/licenses"
-import type { EmailState, LicenseRow, LicenseTokenRow } from "#ledger/schema"
+import type { LicenseRow, LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
 import { AGREEMENT_METADATA_KEY, AGREEMENT_VERSION, LICENSEE_FIELD_KEY } from "#shop/catalog"
 import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
@@ -223,17 +223,25 @@ export async function fulfilInvoice(
 }
 
 /**
- * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while it is
- * still pending, so a re-send after a failed first attempt carries what the first would have. A provider failure is
- * recorded as `failed` for the reconciliation pass; it never fails the mint.
+ * What one send attempt came to. `failed` is the provider's refusal, recorded as such so the reconciliation pass sends
+ * again. A failure to record either answer throws instead: the row keeps its earlier state and the pass sends again,
+ * which after an accepted send is the one window in which a licensee can receive the message twice.
+ */
+export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string }
+
+/**
+ * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while the
+ * plaintext is still pending, so a re-send before the first claim carries what the first would have.
  */
 export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,
 	license: LicenseRow,
 	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires">
-): Promise<EmailState> {
+): Promise<SendOutcome> {
+	let messageID: string
+
 	try {
-		const { messageID } = await deps.email.send(
+		;({ messageID } = await deps.email.send(
 			{
 				to: license.email,
 				licensee: license.licensee,
@@ -244,14 +252,14 @@ export async function sendTokenEmail(
 				...(license.refresh_secret_pending ? { refreshSecret: license.refresh_secret_pending } : {}),
 			},
 			token.invoice_id
-		)
-
-		await setEmailState(deps.ledger, token.invoice_id, "sent", messageID)
-
-		return "sent"
-	} catch {
+		))
+	} catch (error) {
 		await setEmailState(deps.ledger, token.invoice_id, "failed")
 
-		return "failed"
+		return { state: "failed", reason: error instanceof Error ? error.message : String(error) }
 	}
+
+	await setEmailState(deps.ledger, token.invoice_id, "sent", messageID)
+
+	return { state: "sent" }
 }
