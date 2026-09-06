@@ -52,8 +52,22 @@ export interface CheckoutCollection {
 	 * The promotion-code field on the checkout page; the codes themselves live in the dashboard.
 	 */
 	allow_promotion_codes: true
+	/**
+	 * No card when nothing is due: a 100%-off first invoice collects none, and Stripe asks for one at the first invoice
+	 * that charges.
+	 */
+	payment_method_collection: "if_required"
 	metadata: Record<string, string>
 }
+
+/**
+ * The fields of the collection a Payment Link can change after creation; the provisioner holds an existing link to
+ * these, and a change to any other field is a new link.
+ */
+export const RECONCILED_LINK_FIELDS = {
+	allow_promotion_codes: true,
+	payment_method_collection: "if_required",
+} as const
 
 export function checkoutCollection(planCode: ShopPlan["code"]): CheckoutCollection {
 	return {
@@ -62,7 +76,7 @@ export function checkoutCollection(planCode: ShopPlan["code"]): CheckoutCollecti
 		],
 		billing_address_collection: "required",
 		consent_collection: { terms_of_service: "required" },
-		allow_promotion_codes: true,
+		...RECONCILED_LINK_FIELDS,
 		metadata: { [SHOP_METADATA_KEY]: SHOP_MARK, plan_code: planCode, [AGREEMENT_METADATA_KEY]: AGREEMENT_VERSION },
 	}
 }

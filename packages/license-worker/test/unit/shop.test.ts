@@ -128,6 +128,7 @@ describe("the shop provisioner", () => {
 		expect(link.form.get("metadata[agreement_version]")).toBe(AGREEMENT_VERSION)
 		expect(link.form.get("consent_collection[terms_of_service]")).toBe("required")
 		expect(link.form.get("allow_promotion_codes")).toBe("true")
+		expect(link.form.get("payment_method_collection")).toBe("if_required")
 
 		const webhook = stripe.calls.find((call) => call.method === "POST" && call.path === "/v1/webhook_endpoints")!
 
@@ -158,6 +159,7 @@ describe("the shop provisioner", () => {
 					metadata: { plan_code: plan.code },
 					consent_collection: { terms_of_service: "required" },
 					allow_promotion_codes: plan.code === "commercial-monthly-v1",
+					payment_method_collection: plan.code === "commercial-monthly-v1" ? "if_required" : "always",
 				})),
 			},
 			"POST /v1/payment_links/plink_commercial-yearly-v1": (form) => ({
@@ -206,9 +208,13 @@ describe("the shop provisioner", () => {
 
 		const writes = stripe.calls.filter((call) => call.method === "POST")
 
-		expect(writes.map((call) => [call.path, call.form.get("allow_promotion_codes")])).toEqual([
-			["/v1/payment_links/plink_commercial-yearly-v1", "true"],
-		])
+		expect(
+			writes.map((call) => [
+				call.path,
+				call.form.get("allow_promotion_codes"),
+				call.form.get("payment_method_collection"),
+			])
+		).toEqual([["/v1/payment_links/plink_commercial-yearly-v1", "true", "if_required"]])
 	})
 
 	it("leaves a Payment Link uncreated when Stripe refuses consent collection, and says so in the report", async () => {

@@ -16,6 +16,7 @@ import {
 	AGREEMENT_METADATA_KEY,
 	AGREEMENT_VERSION,
 	checkoutCollection,
+	RECONCILED_LINK_FIELDS,
 	SHOP_MARK,
 	SHOP_METADATA_KEY,
 	SHOP_PLANS,
@@ -141,13 +142,16 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 
 		if (existing) {
 			const linkConsent = existing.consent_collection?.terms_of_service === "required"
+
+			const drifted =
+				existing.allow_promotion_codes !== RECONCILED_LINK_FIELDS.allow_promotion_codes ||
+				existing.payment_method_collection !== RECONCILED_LINK_FIELDS.payment_method_collection
+
 			let promotionCodes = existing.allow_promotion_codes === true
 			let action: ProvisionAction = "exists"
 
-			// The one field a link reconciles after creation: everything else in the collection is fixed at creation
-			// and a change to it is a new link.
-			if (!promotionCodes && input.apply) {
-				await stripe.paymentLinks.update(existing.id, { allow_promotion_codes: true })
+			if (drifted && input.apply) {
+				await stripe.paymentLinks.update(existing.id, RECONCILED_LINK_FIELDS)
 				promotionCodes = true
 				action = "updated"
 			}
