@@ -35,10 +35,10 @@ import {
 } from "mailwoman/cli-kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
-import type { GeocodeResult } from "mailwoman/geocode"
 import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
 import { resolvePath } from "path-ts"
 
+import { forwardToResolved } from "#forward-address"
 import {
 	createNominatimApp,
 	type NominatimAddressDetails,
@@ -75,38 +75,6 @@ const BINARY_NAME = "mailwoman-nominatim"
 
 function joinNonEmpty(...parts: Array<string | undefined>): string {
 	return parts.filter((part) => part !== undefined && part.length > 0).join(", ")
-}
-
-/**
- * Map a forward geocode result (admin + coordinate) into the formatter's neutral shape.
- */
-function forwardToResolved(r: GeocodeResult): ResolvedAddress {
-	const address: NominatimAddressDetails = {}
-
-	if (r.locality) {
-		address.city = r.locality
-	}
-
-	if (r.region) {
-		address.state = r.region
-	}
-
-	if (r.postcode) {
-		address.postcode = r.postcode
-	}
-
-	for (const h of r.hierarchy) {
-		if (h.tag === "country") {
-			address.country = h.value
-		}
-	}
-
-	return {
-		lat: r.lat,
-		lon: r.lon,
-		address,
-		displayName: joinNonEmpty(address.city, address.state, address.postcode, address.country) || r.input,
-	}
 }
 
 async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {

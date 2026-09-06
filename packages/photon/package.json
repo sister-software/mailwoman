@@ -35,6 +35,11 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
+		"./projection": {
+			"node": "./lib/projection.ts",
+			"default": "./out/projection.js",
+			"types": "./out/projection.d.ts"
+		},
 		".": {
 			"node": "./lib/index.ts",
 			"default": "./out/index.js",

@@ -76,6 +76,11 @@ const FORWARD_TAG_PROJECTION: Record<
 	dependent_locality: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
 	borough: { key: "district", osmKey: "place", osmValue: "borough", type: "district" },
 	locality: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
+	// The JP tiers the character-path model emits (#2164): a municipality is Photon's city, a prefecture its state, a
+	// district (大字 / 町名) its district — the same keys Nominatim assigns those ranks.
+	municipality: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
+	prefecture: { key: "state", osmKey: "place", osmValue: "state", type: "state" },
+	district: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
 	// WOF placetypes the /reverse hierarchy uses (so both endpoints derive osm tags from ONE table).
 	localadmin: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
 	subregion: { key: "county", osmKey: "place", osmValue: "county", type: "county" },
