@@ -19,12 +19,11 @@
  *   first: a stale `out/` measures stale code and nothing here can tell.
  *
  *   WHAT IS NOT: `@mailwoman/neural/web-loader` composes those two into a `NeuralAddressClassifier`,
- *   which reaches `@mailwoman/core` and from there `env-paths` / `graceful-fs` / `node:*`. Bundling
- *   THAT needs the node-builtin shim policy the docs site keeps in `docs/plugins/demo-assets/`, and
- *   a second copy of it would be a maintenance hazard inside a harness whose subject is timing. The
- *   two node imports the reduced graph does meet (`node:fs/promises` in the tokenizer's
- *   `loadFromFile`, `node:module` in the emscripten preamble) are DYNAMIC and node-guarded, so
- *   marking them external is the entire shim. The cost of the reduction: the warm number is
+ *   which reaches `@mailwoman/core`. That the whole graph bundles under the `browser` condition is
+ *   what the `bundle-graph` health check proves; this harness keeps the reduced graph because its
+ *   subject is timing. The two node imports the reduced graph does meet (`node:fs/promises` in the
+ *   tokenizer's `loadFromFile`, `node:module` in the emscripten preamble) are DYNAMIC and
+ *   node-guarded, so marking them external is the entire accommodation. The cost of the reduction: the warm number is
  *   tokenize+infer, not tokenize+infer+decode — which is the model-only number the instrumentation
  *   plan asked for, and the decoder is platform-free TS running identically on both hosts.
  *

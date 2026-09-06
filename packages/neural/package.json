@@ -57,6 +57,12 @@
 			"default": "./out/onnx-runner.js",
 			"types": "./out/onnx-runner.d.ts"
 		},
+		"#classifier/loader": {
+			"browser": "./out/classifier/loader-browser.js",
+			"node": "./lib/classifier/loader.ts",
+			"default": "./out/classifier/loader.js",
+			"types": "./out/classifier/loader.d.ts"
+		},
 		"#weights": {
 			"node": "./lib/weights.ts",
 			"default": "./out/weights.js",

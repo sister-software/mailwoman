@@ -1,7 +1,7 @@
 # Browser export conditions: retire the bundler stubs in the owning packages
 
 **Status:** design approved 2026-09-06 (export conditions in the owning packages, never a new leaf package; the
-operator's call).
+operator's call). Implemented 2026-09-07 (PR #2192).
 **Builds on:** the platform-split rule that put `workerd`/`browser` conditions beside `node` in `@mailwoman/core`
 for the license worker (`packages/core/test/integration/worker-bundle.test.ts` is the proof shape), and the
 `browser` condition `@mailwoman/neural` already carries on `./onnx-runner`.
@@ -74,27 +74,36 @@ subpath that imported it is fixed under shape 1 or 3.
 
 ### The `#` imports map
 
-`@mailwoman/neural` aliases `#onnx-runner` in webpack because the package-private `imports` map is what
-the source reads. The `imports` map takes conditions the same way `exports` does, and the package already
-declares `"browser"` on `#onnx-runner`. The alias exists because webpack is not asked for the `browser`
-condition on `#` imports; the fix is in `docs/docusaurus.config.ts` resolution conditions, not in the
-package. Verify before removing.
+The `imports` map takes conditions the same way `exports` does, and `@mailwoman/neural` already declares
+`"browser"` on `#onnx-runner`. The docs alias for it applies to the SSR bundle only, which resolves the
+`node` condition and would otherwise bundle `onnxruntime-node`; that is a Docusaurus property, out of scope
+here. The `imports` entry that did need a condition is `#classifier/loader`: the classifier's lazy
+`import("#classifier/loader")` is followed by esbuild and by Vite regardless of `webpackIgnore`, so under
+`browser` it now resolves to `classifier/loader-browser.ts`, a refusing module.
 
 ### Proof
 
-Each fixed subpath gets a row in a bundle test in the owning package, shaped like
-`packages/core/test/integration/worker-bundle.test.ts`: `esbuild` bundles the subpath under
-`conditions: ["browser"]` with `platform: "browser"` and asserts no `node:` specifier in the output
-metafile. The test runs in ordinary CI with no data download. `packages/neural/test/integration/browser-slo.test.ts`
-already does this for the neural client graph and stays as the size budget.
+One home for every bundle walk: the `bundle-graph` check in `@mailwoman/repo-health`
+(`packages/repo-health/lib/checks/bundle-graph.ts`), run by `yarn health` in the CI static leg after
+`yarn compile`. It is a table of rows, each an entry specifier with the platform and conditions a consumer
+bundles it under; `esbuild` bundles the row, and the metafile is read for a builtin on a static edge, a dynamic
+builtin import no row lists, and files the row says the bundle must or must not carry. The two license-key
+rows under `["workerd", "worker", "browser"]` that `packages/core/test/integration/worker-bundle.test.ts`
+held, and the classifier row that `packages/neural/test/unit/browser-graph.test.ts` held, are rows in the
+same table; both files are gone, so there is one esbuild walk in the repository rather than three.
+`packages/neural/test/integration/browser-slo.test.ts` keeps its reduced graph because its subject is timing,
+and stays as the size budget. Subpaths in packages `neural` does not depend on (`react`, `spatial`,
+`cartographer`, `resolver-wof-wasm`, `resolver-wof-sqlite`) measured clean and are guarded by the Earth app's
+Vite build.
 
 ## Definition of done
 
 - The inventory table exists in the PR that opens the work.
-- `docs/plugins/demo-assets/webpack-policy.ts` carries zero `node:` stubs and zero `@mailwoman/*`
-  aliases. The `*-excel-file/node` shims are a third-party defect and stay until that dependency leaves
-  the docs graph.
-- Each owning package has a browser bundle test row per fixed subpath, green in CI.
+- `docs/plugins/demo-assets/webpack-policy.ts` carries zero `node:` stubs, zero fallbacks, and zero
+  client-side aliases for `@mailwoman/*`. The `*-excel-file/node` shims were the XLSX reader on the
+  `core/objects` chain and left with it. The SSR-only `onnx-runner` alias is a Docusaurus property and
+  leaves with the geocoder page in the Earth design.
+- Every fixed subpath is a row in the `bundle-graph` check, green in CI.
 - `rspackBundler: true` is retried in `docs/docusaurus.config.ts`; the result is recorded either way.
 - The docs site builds and the geocoder page works with the stubs gone. This is the last time the docs
   site is the integration test surface for the browser runtime; the Earth app takes that role next.

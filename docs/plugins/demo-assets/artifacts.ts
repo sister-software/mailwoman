@@ -17,11 +17,7 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
-import {
-	resolvePackageJSON,
-	resolvePackagePathFrom,
-	tryResolvePackageSpecifier,
-} from "@mailwoman/core/module/resolve-from"
+import { resolvePackagePathFrom, tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
 import { basename, dirname, resolvePath } from "path-ts"
 
 //#region Model artifact staging
@@ -64,15 +60,17 @@ export async function syncArtifact(sourcePath: string, destPath: string, label: 
  * @param destDir - E.g. static/mailwoman/sqljs
  */
 export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
-	let distDir: string
+	// The runtime files live under the package's `dist/`, so the anchor is the bundle inside it, not the manifest at
+	// the package root.
+	const entry = tryResolvePackageSpecifier(import.meta.url, "sql.js-httpvfs", "dist/index.js")
 
-	try {
-		distDir = dirname(resolvePackageJSON(import.meta.url, "sql.js-httpvfs"))
-	} catch {
+	if (!entry) {
 		console.warn("[demo-assets] sql.js-httpvfs not resolvable — HTTP-VFS assets not staged")
 
 		return false
 	}
+
+	const distDir = dirname(entry)
 
 	const files = ["index.js", "sqlite.worker.js", "sql-wasm.wasm"]
 	let copied = 0

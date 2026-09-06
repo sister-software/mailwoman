@@ -206,9 +206,10 @@ export class NeuralAddressClassifier {
 	/**
 	 * One-call factory — see `classifier-loader.ts`, where the whole resolution lives.
 	 *
-	 * **Node-only.** The dynamic import keeps the loader (and behind it `onnxruntime-node` + the fs-reading weights
-	 * resolver) out of the static graph, so this file stays bundlable for the browser; calling it there throws at
-	 * runtime. Browser callers use `loadNeuralClassifierFromURLs`.
+	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves to a refusing module, so a browser
+	 * bundle that follows this import stays free of `onnxruntime-node` and the fs-reading weights resolver, and calling
+	 * it there throws. The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the `node` condition, from
+	 * following the Node half. Browser callers use `loadNeuralClassifierFromURLs`.
 	 */
 	static async loadFromWeights(
 		...args: Parameters<typeof import("#classifier/loader").loadClassifierFromWeights>

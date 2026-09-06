@@ -15,13 +15,12 @@ import { bundleAliases, configureDemoWebpack } from "./webpack-policy.ts"
 export default async function demoAssetsPlugin(context: LoadContext): Promise<Plugin> {
 	const docsDir = context.siteDir
 	const staticDir = resolvePath(docsDir, "static", "mailwoman")
-	const emptyShim = resolvePath(docsDir, "src", "empty-shim.js")
 
 	// Both arms are resolved here, where awaiting is legal, because `configureWebpack` below is called synchronously and
 	// only learns which one it needs at that moment.
 	const aliases = {
-		client: await bundleAliases(false, emptyShim),
-		server: await bundleAliases(true, emptyShim),
+		client: await bundleAliases(false),
+		server: await bundleAliases(true),
 	}
 
 	return {
@@ -47,7 +46,7 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 		},
 
 		configureWebpack(config, isServer) {
-			return configureDemoWebpack(config, emptyShim, isServer ? aliases.server : aliases.client, isServer)
+			return configureDemoWebpack(config, isServer ? aliases.server : aliases.client, isServer)
 		},
 	}
 }
