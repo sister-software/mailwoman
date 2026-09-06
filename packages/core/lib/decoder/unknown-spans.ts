@@ -1,4 +1,3 @@
-import { walkNodes } from "#decoder/tree-shape"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -13,6 +12,7 @@ import { walkNodes } from "#decoder/tree-shape"
  *   It mutates nothing and changes no serializer — wiring `unknown` into the JSON/XML/tuple contracts + the
  *   demo is the focused follow-up (#493). Byte-stable by construction, so it ships ahead of that work.
  */
+import { walkNodes } from "#decoder/tree-walk"
 import type { AddressTree } from "#decoder/types"
 
 export interface UnknownSpan {

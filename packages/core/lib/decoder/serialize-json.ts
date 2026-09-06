@@ -13,7 +13,7 @@
  *   city-state. The shared span means every role gets the same `value`.
  */
 
-import { slotNodes } from "#decoder/tree-shape"
+import { slotNodes } from "#decoder/tree-walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
 import type { ComponentTag } from "#types/component"

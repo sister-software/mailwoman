@@ -1,0 +1,81 @@
+# === v8-cjk-kana — v8-cjk-full on the JP corpus that carries the kana_municipality register (#2165). ==============
+#
+# ONE change against v8-cjk-full (app ap-J0uaLu8mQutAWu4ZdtBNzZ, 0.9653 blended / 0.9757 municipality macro on the
+# 20,000-row JP board): the JP corpus is `v8-jp-kana-2026-09-06`, the same renderer, sampler and seed with a fifth
+# register, `kana_municipality`, weight 0.05 among the registers where the admin DB reads the municipality (12,857
+# of them): the municipality as its kana stem plus the kanji generic, 厚木市 → あつぎ市. The CN overlay (126 train /
+# 11 val / 14 board rows, `coarse-placer-cn-units` at source share 0.02) and the 49-label `stage3-cjk` head are
+# unchanged; the char vocabulary is re-sealed over the new JP train split plus the CN characters.
+#
+# WHY. Both 49-label runs (this recipe's JP + CN arm and its JP-only control) closed the municipality span before
+# the trailing 市 on かすみがうら市, the one official-kana municipality the board holds out: 598 and 398 of its 823
+# rows. The 47-label record missed 2. Hiragana + 市 as a municipality shape is what the corpus never showed the head
+# more than a handful of times; this register shows it on ~5% of rows.
+#
+# --- WHAT THE RUN MUST SHOW (pre-registered, same instruments as the v8-cjk-full read) ----------------------
+#   * `かすみがうら市` on the JP board: rows failed of 823, against 598 (shared head) / 398 (control) / 2 (record).
+#     The register is aimed at this class; fewer than 100 failed rows is the reading that says it worked.
+#   * JP board, blended coordinate-acceptability ≥ 0.9653 and municipality macro ≥ 0.9757 (the shared head's own
+#     reads): the register must not cost the rest of the board. More than 1 pp under either is the finding.
+#   * Per-register table: the new `kana_municipality` rows read beside native / arabic_chome / compact_folded /
+#     designator, so the register's own acceptability is a number and not an inference.
+#   * CN board: `locality_unit` span exact-match on the 14 rows, read beside 10/14 (PyTorch) and 12/14 (served).
+#   * Board scorer: `score_jp_probe_board.py --label-set stage3-cjk` over the NEW jp-board.jsonl with the NEW char
+#     vocabulary and the NEW centroid table if the held-out municipalities moved (the sampler's seed is unchanged, so
+#     the same municipalities are expected to be held out; the build report says).
+#
+# Launch:
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk_kana
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-kana.yaml --resume auto
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-kana-2026-09-06
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform. Same as v8-jp-full.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+    CN: 1.0
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart.
+  source_weights:
+    overture-jp: 0.98
+    coarse-placer-cn-units: 0.02
+  coarse_filter: false
+  # JP val 20,000 + CN val 11.
+  val_rows: 20011
+  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-kana-2026-09-06/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # v8-jp-full's geometry, unchanged, so the two deltas above are the only deltas.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-kana-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 24000
+  eval_every_steps: 2000
+  save_every_steps: 4000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

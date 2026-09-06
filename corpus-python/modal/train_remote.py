@@ -4701,6 +4701,58 @@ def sync_v530_reviewed_postcode_tail():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v8cjk_kana():
+    """Stage the v8 CJK kana corpus (#2165): the NEW JP corpus (all parts — its manifest paths point at it, not at the
+    2026-08-04 JP run), the CN overlay parts, the re-sealed vocabulary, the config and the training code."""
+    import os
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus-python/scripts/ {VOL_MOUNT}/corpus-python/scripts/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-jp-kana-2026-09-06/ {VOL_MOUNT}/corpus/versioned/v8-jp-kana-2026-09-06/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-cjk-kana-2026-09-06/ {VOL_MOUNT}/corpus/versioned/v8-cjk-kana-2026-09-06/ {retry}",
+    ]
+    for command in commands:
+        print(f"$ {command}")
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+    vol.commit()
+    jp = f"{VOL_MOUNT}/corpus/versioned/v8-jp-kana-2026-09-06"
+    overlay = f"{VOL_MOUNT}/corpus/versioned/v8-cjk-kana-2026-09-06"
+    checks = {
+        "v8-cjk-kana config": os.path.isfile(f"{package}/configs/v8-cjk-kana.yaml"),
+        "kana register in the renderer": _file_contains(f"{package}/build_jp_slice.py", "kana_municipality"),
+        "JP kana train parts": all(os.path.isfile(f"{jp}/train/part-{index:04d}.parquet") for index in range(8)),
+        "JP kana val part": os.path.isfile(f"{jp}/val/part-0000.parquet"),
+        "JP kana board": os.path.isfile(f"{jp}/jp-board.jsonl"),
+        "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),
+        "CN train part": os.path.isfile(f"{overlay}/train/cn-units-0000.parquet"),
+        "CN val part": os.path.isfile(f"{overlay}/val/cn-units-0000.parquet"),
+        "CJK char vocab": os.path.isfile(f"{overlay}/char-vocab-cjk.json"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"sync incomplete: {missing}")
+    print("\nv8-cjk-kana sync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=1800,
 )
 def sync_v8cjk():
