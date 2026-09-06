@@ -22,6 +22,10 @@ suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), 
 - **The kana-register run is the CJK base** (d363d1955, #2165 closed). Pre-registered board, same scorer both arms:
   0.9924 blended against 0.9653, municipality macro 0.9821 against 0.9757, `かすみがうら市` 0 of 823 failed against 598;
   CN `locality_unit` 11 of 14; ONNX parity 6.4e-6. One trade, `中新川郡上市町` 66 → 121 failed rows (#2178).
+- **The Hugging Face leg learned the family shape** (de5e8c28f): the fetch read every object flat from
+  `en-us/v<version>/` by basename, so the cjk `model.onnx` would have been refused or, worse, materialized as the Latin
+  graph under the cjk card. A family now reads from `<family>/v<card version>/` against its own card, once its
+  workspace is in the release list; `mailwoman release hf --char-vocab` stages it. Preflight `--source hf` unchanged.
 - **Release preflight found a real defect** (fa6965011): `@mailwoman/corpus` promised `./test-kit` exports its tsconfig
   never compiled; `manifest-targets` now reads each workspace's `include` / `exclude` and refuses the shape at PR time.
 - Records and docs: SCOPE's tier-5 row (JP, CN on the character path, 94.5% @15 km through the resolver), the CJK run
