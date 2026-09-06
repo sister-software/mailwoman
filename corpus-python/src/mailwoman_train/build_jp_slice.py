@@ -741,6 +741,25 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     train_source = selected[: args.train_rows]
     val_source = selected[args.train_rows : args.train_rows + args.val_rows]
 
+    # Attested-row weight (#2178): a municipality NAME shape the head under-serves — 市 inside a 町 / 村 name
+    # (市川三郷町, 市貝町, 余市町, 高市郡…) — is five municipalities and 21,043 of 19,587,889 source rows, about 0.1% of
+    # train after selection. `--upweight-pattern REGEX:K` appends K-1 further copies of every selected train row
+    # whose municipality matches, each rendered in its own draw of register, so the shape reaches the head at
+    # K× its natural share without a synthetic name. Val and the board are untouched, so the read stays honest.
+    upweighted = 0
+    if args.upweight_pattern:
+        pattern_text, _, factor_text = args.upweight_pattern.rpartition(":")
+        pattern = re.compile(pattern_text)
+        factor = int(factor_text)
+        matching = [row for row in train_source if pattern.search(row[1])]
+        for _ in range(factor - 1):
+            train_source.extend(matching)
+        upweighted = len(matching) * (factor - 1)
+        rng.shuffle(train_source)
+        print(
+            f"upweight {pattern_text!r} ×{factor}: {len(matching):,} matching train rows, {upweighted:,} copies appended"
+        )
+
     kenall_tiers: Counter[str] = Counter()
     register_unavailable: Counter[str] = Counter()
     kana_by_municipality = municipality_kana_from_admin_db(args.admin_db) if args.admin_db else {}
@@ -890,6 +909,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             "variant_hyphen": args.variant_hyphen_fraction,
         },
         "register_weights": REGISTER_WEIGHTS,
+        "upweight": {"pattern": args.upweight_pattern, "copies_appended": upweighted},
         "splits": splits,
         "board_coverage": coverage_stats(board_records),
     }
@@ -920,6 +940,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-field-chars", type=int, default=MAX_FIELD_CHARS)
     parser.add_argument(
         "--max-row-groups", type=int, default=None, help="smoke slice: read only the first N row groups"
+    )
+    parser.add_argument(
+        "--upweight-pattern",
+        default=None,
+        metavar="REGEX:K",
+        help="append K-1 copies of every selected train row whose municipality matches REGEX (#2178)",
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true", help="overwrite a non-empty --out-dir")

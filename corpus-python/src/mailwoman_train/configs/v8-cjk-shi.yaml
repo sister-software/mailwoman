@@ -1,0 +1,76 @@
+# === v8-cjk-shi — v8-cjk-kana with the 市-inside-name municipalities at five times their share (#2178). ============
+#
+# ONE change against v8-cjk-kana (the CJK base: 0.9924 blended / 0.9821 municipality macro on the pre-registered JP
+# board, かすみがうら市 0 of 823 failed, 中新川郡上市町 121 of 136 failed): the JP corpus is `v8-jp-shi-2026-09-06`, the
+# same renderer, registers, sampler and seed, with `--upweight-pattern '市.+[町村]$:5'` — every selected train row whose
+# municipality carries 市 inside a 町 / 村 name (市川三郷町, 市貝町, 余市町, 高市郡高取町, 高市郡明日香村: five municipalities,
+# 21,043 of 19,587,889 source rows) appended four more times, each in its own register draw. No synthetic name; the
+# held-out 上市町 stays held out. The CN overlay and the 49-label head are unchanged; the vocabulary is re-sealed.
+#
+# WHY. The kana register taught "…市 ends a municipality" on 5% of rows and the head closed 中新川郡上市町 at the inner
+# 市 (`中新川郡上市`) on 121 of 136 board rows, from 66 under the shared head. The shape is five real municipalities; the
+# corpus shows them at 0.1% of train, and this run shows them at 0.5%.
+#
+# --- WHAT THE RUN MUST SHOW (pre-registered, same scorer as the kana read) ---------------------------------------
+#   * `中新川郡上市町` on the JP board: failed rows of 136, against 121 (kana) / 66 (shared head). Fewer than 66 is the
+#     reading that says the weight reached the held-out name; fewer than 30 says it closed the class.
+#   * `かすみがうら市` failed rows ≤ 5 of 823 (kana: 0) — the weight must not undo the kana register.
+#   * JP board blended ≥ 0.9924 − 0.002 and municipality macro ≥ 0.9821; more than 0.5 pp under either is the finding.
+#   * CN board `locality_unit` ≥ 11 of 14.
+#   * Score the kana checkpoint beside it on the same scorer in the same session.
+#
+# Launch:
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk_shi
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-shi.yaml --resume auto
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-shi-2026-09-06
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform. Same as v8-jp-full.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+    CN: 1.0
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart.
+  source_weights:
+    overture-jp: 0.98
+    coarse-placer-cn-units: 0.02
+  coarse_filter: false
+  # JP val 20,000 + CN val 11.
+  val_rows: 20011
+  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-shi-2026-09-06/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # v8-jp-full's geometry, unchanged, so the two deltas above are the only deltas.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-shi-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 24000
+  eval_every_steps: 2000
+  save_every_steps: 4000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0
