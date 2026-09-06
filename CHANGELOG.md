@@ -54,6 +54,9 @@ not trust. `verifyConfiguredLicenseKey` reads the key file when `MAILWOMAN_LICEN
 --online` and `mailwoman doctor` report the per-license status as a fifth word beside the key-id publication: `active`,
 `lapsed`, `revoked`, `unknown`, or `unreachable`. New in core: `@mailwoman/core/license/status` (the worker client),
 `decodeLicenseKeyPayload`, and the env var `MAILWOMAN_LICENSE_URL`. `mailwoman --version` loads 136 modules, from 132.
+The key-id publication gains a word: `unpublished`, when mailwoman.ai answers and has no register at the well-known
+path (a 4xx, or a body that is not a register), kept apart from `unreachable`, which stays a network answer. Neither
+changes the branch; the doctor names which one it saw.
 
 ### Added — `@mailwoman/license-worker` (private)
 

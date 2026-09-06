@@ -565,7 +565,9 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 				? "key id confirmed by mailwoman.ai"
 				: o.publication === "unreachable"
 					? "mailwoman.ai unreachable, offline verification only"
-					: "verified offline"
+					: o.publication === "unpublished"
+						? "mailwoman.ai answers without a key register, offline verification only"
+						: "verified offline"
 
 		const expiry = key.payload.expires ? `expires ${key.payload.expires}` : "no expiry"
 
