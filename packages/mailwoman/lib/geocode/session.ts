@@ -482,7 +482,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// Load the neural classifier (required for street-level; weights must be present).
 	progress("Loading neural model…")
 
-	let routed: ScriptRoutedClassifier
+	let routed: ScriptRoutedClassifier<NeuralAddressClassifier>
 
 	try {
 		// #1732 reach half: the session's dataRoot is authoritative for EVERYTHING it loads, weights and

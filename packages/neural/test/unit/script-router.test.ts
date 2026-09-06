@@ -17,7 +17,7 @@ function stubClassifier(name: string, encoder: "sentencepiece" | "char") {
 
 	return {
 		encoder,
-		parse: vi.fn(async (text: string): Promise<AddressTree> => tree(`${name}:${text}`)),
+		parse: vi.fn<RoutableClassifier["parse"]>(async (text) => tree(`${name}:${text}`)),
 		traceParse: vi.fn<RoutableClassifier["traceParse"]>(),
 		fstPath: undefined,
 		streetMorphologyPath: undefined,

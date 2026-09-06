@@ -49,15 +49,15 @@ export type RoutableClassifier = Pick<
 	"encoder" | "parse" | "traceParse" | "fstPath" | "streetMorphologyPath" | "resolvedWeights" | "spanGrammar"
 >
 
-export interface ScriptRoutedClassifierOpts {
+export interface ScriptRoutedClassifierOpts<C extends RoutableClassifier = RoutableClassifier> {
 	/**
 	 * The classifier for the locale the caller asked for. Every input reaches it unless its script names a family.
 	 */
-	primary: RoutableClassifier
+	primary: C
 	/**
 	 * Load the family's classifier (`cjk`). Called once per family; a rejection marks the family unavailable.
 	 */
-	loadFamily: (family: string) => Promise<RoutableClassifier>
+	loadFamily: (family: string) => Promise<C>
 	/**
 	 * Told once per family whose load failed, with the cause, before the primary answers in its place.
 	 */
@@ -75,14 +75,14 @@ function withoutPrimaryArtifacts(opts: ParseOpts | undefined): ParseOpts | undef
 	return routed
 }
 
-export class ScriptRoutedClassifier {
-	readonly primary: RoutableClassifier
-	readonly #loadFamily: ScriptRoutedClassifierOpts["loadFamily"]
-	readonly #onFamilyUnavailable: ScriptRoutedClassifierOpts["onFamilyUnavailable"]
-	readonly #families = new Map<string, Promise<RoutableClassifier>>()
+export class ScriptRoutedClassifier<C extends RoutableClassifier = RoutableClassifier> {
+	readonly primary: C
+	readonly #loadFamily: ScriptRoutedClassifierOpts<C>["loadFamily"]
+	readonly #onFamilyUnavailable: ScriptRoutedClassifierOpts<C>["onFamilyUnavailable"]
+	readonly #families = new Map<string, Promise<C>>()
 	readonly #unavailable = new Set<string>()
 
-	constructor(opts: ScriptRoutedClassifierOpts) {
+	constructor(opts: ScriptRoutedClassifierOpts<C>) {
 		this.primary = opts.primary
 		this.#loadFamily = opts.loadFamily
 		this.#onFamilyUnavailable = opts.onFamilyUnavailable
@@ -116,7 +116,7 @@ export class ScriptRoutedClassifier {
 	 * The classifier this text will run on: the family's when the text's script names one the primary cannot read, else
 	 * the primary.
 	 */
-	async forInput(text: string): Promise<RoutableClassifier> {
+	async forInput(text: string): Promise<C> {
 		const family = scriptFamilyForText(text)
 
 		if (!family || this.primary.encoder === "char" || this.#unavailable.has(family)) {

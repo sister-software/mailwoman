@@ -226,7 +226,7 @@ export class NeuralAddressClassifier {
 	 */
 	static async loadRoutedFromWeights(
 		...args: Parameters<typeof import("#classifier/loader").loadScriptRoutedClassifier>
-	): Promise<ScriptRoutedClassifier> {
+	): Promise<ScriptRoutedClassifier<NeuralAddressClassifier>> {
 		const { loadScriptRoutedClassifier } = await import(/* webpackIgnore: true */ "#classifier/loader")
 
 		return loadScriptRoutedClassifier(...args)

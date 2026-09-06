@@ -97,7 +97,11 @@ const poiDatabasePath = values["poi-db"]
  * already on the data root — same selection `nominatim`/`photon`'s CLIs make.
  */
 let corePromise:
-	| Promise<{ classifier: ScriptRoutedClassifier; resolver: Resolver; databases: RegionDatabaseProvider }>
+	| Promise<{
+			classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
+			resolver: Resolver
+			databases: RegionDatabaseProvider
+	  }>
 	| undefined
 
 /**
@@ -153,7 +157,7 @@ function loadCore(): Promise<{
 		// nothing and every core-backed tool answered with `resolveWeights`' raw not-found text. The guard keeps
 		// that text (it already names the exact fix command) and adds what an agent mid-conversation needs next:
 		// which tools are down and which are not.
-		let classifier: ScriptRoutedClassifier
+		let classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
 
 		try {
 			classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale: "en-US" })
