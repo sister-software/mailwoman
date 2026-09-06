@@ -53,7 +53,7 @@ function stripeFor(mode: ShopMode): Stripe {
 
 const ProvisionedObjectSchema = z.object({
 	id: z.string().optional(),
-	action: z.enum(["exists", "created", "missing", "blocked"]),
+	action: z.enum(["exists", "updated", "created", "missing", "blocked"]),
 })
 
 const ReportSchema = z.object({
@@ -62,7 +62,7 @@ const ReportSchema = z.object({
 	prices: z.record(z.string(), ProvisionedObjectSchema),
 	paymentLinks: z.record(
 		z.string(),
-		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean() })
+		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean(), promotionCodes: z.boolean() })
 	),
 	portal: ProvisionedObjectSchema,
 	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().optional() }).optional(),

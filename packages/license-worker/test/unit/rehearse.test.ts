@@ -86,6 +86,7 @@ describe("the rehearsal purchase", () => {
 			"custom_fields[0][type]": "text",
 			billing_address_collection: "required",
 			"consent_collection[terms_of_service]": "required",
+			allow_promotion_codes: "true",
 			"metadata[mailwoman_shop]": "commercial-license",
 			"metadata[plan_code]": "commercial-monthly-v1",
 			"metadata[agreement_version]": AGREEMENT_VERSION,

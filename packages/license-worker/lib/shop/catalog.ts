@@ -48,6 +48,10 @@ export interface CheckoutCollection {
 	custom_fields: Array<{ key: string; label: { type: "custom"; custom: string }; type: "text" }>
 	billing_address_collection: "required"
 	consent_collection: { terms_of_service: "required" }
+	/**
+	 * The promotion-code field on the checkout page; the codes themselves live in the dashboard.
+	 */
+	allow_promotion_codes: true
 	metadata: Record<string, string>
 }
 
@@ -58,6 +62,7 @@ export function checkoutCollection(planCode: ShopPlan["code"]): CheckoutCollecti
 		],
 		billing_address_collection: "required",
 		consent_collection: { terms_of_service: "required" },
+		allow_promotion_codes: true,
 		metadata: { [SHOP_METADATA_KEY]: SHOP_MARK, plan_code: planCode, [AGREEMENT_METADATA_KEY]: AGREEMENT_VERSION },
 	}
 }

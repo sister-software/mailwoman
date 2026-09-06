@@ -127,6 +127,7 @@ describe("the shop provisioner", () => {
 		expect(link.form.get("custom_fields[0][key]")).toBe("licensee_legal_name")
 		expect(link.form.get("metadata[agreement_version]")).toBe(AGREEMENT_VERSION)
 		expect(link.form.get("consent_collection[terms_of_service]")).toBe("required")
+		expect(link.form.get("allow_promotion_codes")).toBe("true")
 
 		const webhook = stripe.calls.find((call) => call.method === "POST" && call.path === "/v1/webhook_endpoints")!
 
@@ -156,8 +157,14 @@ describe("the shop provisioner", () => {
 					url: `https://buy.stripe.com/test_${plan.code}`,
 					metadata: { plan_code: plan.code },
 					consent_collection: { terms_of_service: "required" },
+					allow_promotion_codes: plan.code === "commercial-monthly-v1",
 				})),
 			},
+			"POST /v1/payment_links/plink_commercial-yearly-v1": (form) => ({
+				id: "plink_commercial-yearly-v1",
+				object: "payment_link",
+				allow_promotion_codes: form.get("allow_promotion_codes") === "true",
+			}),
 			"GET /v1/billing_portal/configurations?": {
 				object: "list",
 				data: [
@@ -183,8 +190,25 @@ describe("the shop provisioner", () => {
 		expect(report.product).toEqual({ id: "prod_1", action: "exists" })
 		expect(report.portal).toEqual({ id: "bpc_1", action: "exists" })
 		expect(report.webhook).toEqual({ id: "we_1", url: `${WORKER}/v1/webhooks/stripe`, action: "exists" })
-		expect(Object.values(report.paymentLinks).every((link) => link.action === "exists" && link.consent)).toBe(true)
-		expect(stripe.calls.filter((call) => call.method === "POST")).toEqual([])
+
+		// The one link that lacked promotion codes is the one write of the run.
+		expect(report.paymentLinks["commercial-monthly-v1"]).toMatchObject({
+			action: "exists",
+			consent: true,
+			promotionCodes: true,
+		})
+
+		expect(report.paymentLinks["commercial-yearly-v1"]).toMatchObject({
+			action: "updated",
+			consent: true,
+			promotionCodes: true,
+		})
+
+		const writes = stripe.calls.filter((call) => call.method === "POST")
+
+		expect(writes.map((call) => [call.path, call.form.get("allow_promotion_codes")])).toEqual([
+			["/v1/payment_links/plink_commercial-yearly-v1", "true"],
+		])
 	})
 
 	it("leaves a Payment Link uncreated when Stripe refuses consent collection, and says so in the report", async () => {
@@ -200,8 +224,8 @@ describe("the shop provisioner", () => {
 		expect(report.terms.consent).toBe(false)
 
 		expect(Object.values(report.paymentLinks)).toEqual([
-			{ action: "blocked", consent: false },
-			{ action: "blocked", consent: false },
+			{ action: "blocked", consent: false, promotionCodes: false },
+			{ action: "blocked", consent: false, promotionCodes: false },
 		])
 
 		// One attempt per plan, each with consent required, and no retry without it.

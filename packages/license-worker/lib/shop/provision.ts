@@ -47,7 +47,7 @@ export interface ProvisionInput {
  * What the run did to one object: found it, created it, would have created it under `apply`, or could not create it
  * because Stripe refused a required part (a Payment Link's consent collection, until the terms URL is set).
  */
-type ProvisionAction = "exists" | "created" | "missing" | "blocked"
+type ProvisionAction = "exists" | "updated" | "created" | "missing" | "blocked"
 
 interface ProvisionedObject {
 	id?: string
@@ -63,7 +63,10 @@ export interface ProvisionReport {
 	terms: { url: string; consent: boolean }
 	product: ProvisionedObject
 	prices: Record<ShopPlan["code"], ProvisionedObject>
-	paymentLinks: Record<ShopPlan["code"], ProvisionedObject & { url?: string; consent: boolean }>
+	paymentLinks: Record<
+		ShopPlan["code"],
+		ProvisionedObject & { url?: string; consent: boolean; promotionCodes: boolean }
+	>
 	portal: ProvisionedObject
 	webhook?: ProvisionedObject & { url: string; secret?: string }
 }
@@ -126,16 +129,31 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 
 	// The Payment Links, one per plan, marked with the plan code.
 	const links = await stripe.paymentLinks.list({ active: true, limit: 100 })
-	const paymentLinks: ProvisionReport["paymentLinks"] = planRecord(() => ({ action: "missing", consent: false }))
+
+	const paymentLinks: ProvisionReport["paymentLinks"] = planRecord(() => ({
+		action: "missing",
+		consent: false,
+		promotionCodes: false,
+	}))
 
 	for (const plan of SHOP_PLANS) {
 		const existing = links.data.find((link) => link.metadata.plan_code === plan.code)
 
 		if (existing) {
 			const linkConsent = existing.consent_collection?.terms_of_service === "required"
+			let promotionCodes = existing.allow_promotion_codes === true
+			let action: ProvisionAction = "exists"
+
+			// The one field a link reconciles after creation: everything else in the collection is fixed at creation
+			// and a change to it is a new link.
+			if (!promotionCodes && input.apply) {
+				await stripe.paymentLinks.update(existing.id, { allow_promotion_codes: true })
+				promotionCodes = true
+				action = "updated"
+			}
 
 			consent &&= linkConsent
-			paymentLinks[plan.code] = { id: existing.id, url: existing.url, action: "exists", consent: linkConsent }
+			paymentLinks[plan.code] = { id: existing.id, url: existing.url, action, consent: linkConsent, promotionCodes }
 
 			continue
 		}
@@ -151,10 +169,16 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 				...checkoutCollection(plan.code),
 			})
 
-			paymentLinks[plan.code] = { id: created.id, url: created.url, action: "created", consent: true }
+			paymentLinks[plan.code] = {
+				id: created.id,
+				url: created.url,
+				action: "created",
+				consent: true,
+				promotionCodes: true,
+			}
 		} catch (error) {
 			consent = false
-			paymentLinks[plan.code] = { action: "blocked", consent: false }
+			paymentLinks[plan.code] = { action: "blocked", consent: false, promotionCodes: false }
 			log(`Payment Link ${plan.code} not created: ${error instanceof Error ? error.message : String(error)}`)
 		}
 	}
