@@ -65,7 +65,7 @@ name = "mailwoman-license"
 routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
 
 [env.production.vars]
-ISSUANCE_ENABLED = "false"
+ISSUANCE_ENABLED = "true"
 SITE_ORIGIN = "https://mailwoman.ai"
 AGREEMENT_VERSION = "commercial-2026-10"
 EMAIL_FROM = "licenses@mailwoman.ai"
