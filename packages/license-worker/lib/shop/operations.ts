@@ -18,10 +18,10 @@ import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwo
 import Stripe from "stripe"
 import { z } from "zod"
 
-import { SHOP_PLANS } from "#shop/catalog"
+import { SHOP_PLAN_CODES, SHOP_PLANS } from "#shop/catalog"
 import { $private } from "#shop/env"
 import { type ShopIDsByMode, type ShopMode, withShopIDs } from "#shop/ids"
-import { type ProvisionReport, provisionShop } from "#shop/provision"
+import { type ProvisionReport, ProvisionReportSchema, provisionShop } from "#shop/provision"
 import { advanceRehearsal, startRehearsal } from "#shop/rehearse"
 import { STRIPE_API_VERSION } from "#stripe/client"
 
@@ -42,23 +42,6 @@ function stripeFor(mode: ShopMode): Stripe {
 
 	return new Stripe(key, { apiVersion: STRIPE_API_VERSION, httpClient: Stripe.createFetchHttpClient() })
 }
-
-const ProvisionedObjectSchema = z.object({
-	id: z.string().optional(),
-	action: z.enum(["exists", "updated", "created", "missing", "blocked"]),
-})
-
-const ReportSchema = z.object({
-	terms: z.object({ url: z.string(), consent: z.boolean() }),
-	product: ProvisionedObjectSchema,
-	prices: z.record(z.string(), ProvisionedObjectSchema),
-	paymentLinks: z.record(
-		z.string(),
-		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean(), promotionCodes: z.boolean() })
-	),
-	portal: ProvisionedObjectSchema,
-	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().optional() }).optional(),
-})
 
 const ProvisionInputSchema = z.object({
 	mode: ShopModeSchema,
@@ -99,7 +82,7 @@ const provisionOperation = defineOperation({
 		"Reconcile the Stripe account against the shop catalog: the Product, the two Prices, the two Payment Links, the portal configuration and, given --worker-origin, the webhook destination. Reports what exists and what is missing; --apply creates the missing objects and writes their ids into lib/shop/ids.json.",
 	effect: OperationEffect.ExternalWrite,
 	inputSchema: ProvisionInputSchema,
-	outputSchema: ReportSchema.extend({
+	outputSchema: ProvisionReportSchema.extend({
 		written: z.string().optional(),
 	}),
 	async run(input, context) {
@@ -139,7 +122,7 @@ const statusOperation = defineOperation({
 		"site-origin": z.string().optional(),
 		"worker-origin": z.string().optional(),
 	}),
-	outputSchema: ReportSchema,
+	outputSchema: ProvisionReportSchema,
 	async run(input, context) {
 		return await provisionShop(stripeFor(input.mode), {
 			siteOrigin: input["site-origin"] ?? DEFAULT_SITE_ORIGIN,
@@ -149,10 +132,6 @@ const statusOperation = defineOperation({
 		})
 	},
 })
-
-const PLAN_CODES = SHOP_PLANS.map((plan) => plan.code) as [ShopPlanCode, ...ShopPlanCode[]]
-
-type ShopPlanCode = (typeof SHOP_PLANS)[number]["code"]
 
 const TokenDatesSchema = z.object({ issued: z.string(), expires: z.string() })
 
@@ -167,7 +146,7 @@ const rehearseOperation = defineOperation({
 		"Start a rehearsal purchase in Stripe's test mode: a customer on a test clock and a Checkout Session shaped as the Payment Link is. Prints the URL to pay with the test card; then run shop.rehearse-renewal with the session id.",
 	effect: OperationEffect.ExternalWrite,
 	inputSchema: z.object({
-		plan: z.enum(PLAN_CODES).optional(),
+		plan: z.enum(SHOP_PLAN_CODES).optional(),
 		licensee: z.string().optional(),
 		email: z.string().optional(),
 		"site-origin": z.string().optional(),

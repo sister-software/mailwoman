@@ -109,6 +109,14 @@ export const SHOP_PLANS: readonly ShopPlan[] = [
 ]
 
 /**
+ * The plan codes as a non-empty tuple, the shape a zod enum takes.
+ */
+export const SHOP_PLAN_CODES = [
+	"commercial-monthly-v1",
+	"commercial-yearly-v1",
+] as const satisfies readonly ShopPlan["code"][]
+
+/**
  * The route the webhook destination posts to, on the worker's origin.
  */
 export const WEBHOOK_PATH = "/v1/webhooks/stripe"

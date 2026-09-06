@@ -5,14 +5,14 @@
  *
  *   The shop provisioner against a scripted Stripe: an empty account reads as all missing and writes nothing without
  *   `apply`; with it, every object is created with the catalog's values; a second run finds them all and creates
- *   nothing. The wrangler rewrite is held to the file's own shape.
+ *   nothing; an object that differs from the catalog is reported, updated, or replaced by what the difference allows.
  */
 
 import { readEnv } from "@mailwoman/license-worker/env"
 import { AGREEMENT_VERSION, SHOP_PLANS, WEBHOOK_EVENTS } from "@mailwoman/license-worker/shop/catalog"
 import { withShopIDs } from "@mailwoman/license-worker/shop/ids"
 import { provisionShop } from "@mailwoman/license-worker/shop/provision"
-import { stripeClient } from "@mailwoman/license-worker/stripe/client"
+import { STRIPE_API_VERSION, stripeClient } from "@mailwoman/license-worker/stripe/client"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
@@ -29,6 +29,75 @@ function emptyAccount(): Record<string, StripeRoute> {
 		"GET /v1/payment_links?": { object: "list", data: [] },
 		"GET /v1/billing_portal/configurations?": { object: "list", data: [] },
 		"GET /v1/webhook_endpoints?": { object: "list", data: [] },
+	}
+}
+
+function shopProduct() {
+	return {
+		id: "prod_1",
+		object: "product",
+		metadata: { mailwoman_shop: "commercial-license", agreement_version: AGREEMENT_VERSION },
+	}
+}
+
+/**
+ * An account a first run provisioned, as the catalog describes it.
+ */
+function provisionedAccount(options: { agreementVersion?: string } = {}): Record<string, StripeRoute> {
+	return {
+		...emptyAccount(),
+		"GET /v1/products?": { object: "list", data: [shopProduct()] },
+		"GET /v1/prices?": (form) => ({
+			object: "list",
+			data: [
+				{
+					id: `price_${form.get("lookup_keys[]")}`,
+					object: "price",
+					lookup_key: form.get("lookup_keys[]"),
+					unit_amount: SHOP_PLANS.find((plan) => plan.code === form.get("lookup_keys[]"))?.unitAmount,
+					currency: "usd",
+					recurring: { interval: SHOP_PLANS.find((plan) => plan.code === form.get("lookup_keys[]"))?.interval },
+				},
+			],
+		}),
+		"GET /v1/payment_links?": {
+			object: "list",
+			data: SHOP_PLANS.map((plan) => ({
+				id: `plink_${plan.code}`,
+				object: "payment_link",
+				url: `https://buy.stripe.com/test_${plan.code}`,
+				metadata: { plan_code: plan.code, agreement_version: options.agreementVersion ?? AGREEMENT_VERSION },
+				consent_collection: { terms_of_service: "required" },
+				allow_promotion_codes: true,
+				payment_method_collection: "if_required",
+			})),
+		},
+		"GET /v1/billing_portal/configurations?": {
+			object: "list",
+			data: [
+				{
+					id: "bpc_1",
+					object: "billing_portal.configuration",
+					business_profile: {
+						headline: "Mailwoman commercial license",
+						terms_of_service_url: `${SITE}/license/terms/${AGREEMENT_VERSION}`,
+					},
+					default_return_url: `${SITE}/license`,
+				},
+			],
+		},
+		"GET /v1/webhook_endpoints?": {
+			object: "list",
+			data: [
+				{
+					id: "we_1",
+					object: "webhook_endpoint",
+					url: `${WORKER}/v1/webhooks/stripe`,
+					enabled_events: [...WEBHOOK_EVENTS],
+					api_version: STRIPE_API_VERSION,
+				},
+			],
+		},
 	}
 }
 
@@ -141,22 +210,15 @@ describe("the shop provisioner", () => {
 
 	it("finds everything on a second run and creates nothing", async () => {
 		const stripe = recordingStripeFetch({
-			...emptyAccount(),
-			"GET /v1/products?": {
-				object: "list",
-				data: [{ id: "prod_1", object: "product", metadata: { mailwoman_shop: "commercial-license" } }],
-			},
-			"GET /v1/prices?": (form) => ({
-				object: "list",
-				data: [{ id: `price_${form.get("lookup_keys[]")}`, object: "price", lookup_key: form.get("lookup_keys[]") }],
-			}),
+			...provisionedAccount(),
+			// The yearly link has fallen behind on the two fields an update can change.
 			"GET /v1/payment_links?": {
 				object: "list",
 				data: SHOP_PLANS.map((plan) => ({
 					id: `plink_${plan.code}`,
 					object: "payment_link",
 					url: `https://buy.stripe.com/test_${plan.code}`,
-					metadata: { plan_code: plan.code },
+					metadata: { plan_code: plan.code, agreement_version: AGREEMENT_VERSION },
 					consent_collection: { terms_of_service: "required" },
 					allow_promotion_codes: plan.code === "commercial-monthly-v1",
 					payment_method_collection: plan.code === "commercial-monthly-v1" ? "if_required" : "always",
@@ -167,20 +229,6 @@ describe("the shop provisioner", () => {
 				object: "payment_link",
 				allow_promotion_codes: form.get("allow_promotion_codes") === "true",
 			}),
-			"GET /v1/billing_portal/configurations?": {
-				object: "list",
-				data: [
-					{
-						id: "bpc_1",
-						object: "billing_portal.configuration",
-						business_profile: { headline: "Mailwoman commercial license" },
-					},
-				],
-			},
-			"GET /v1/webhook_endpoints?": {
-				object: "list",
-				data: [{ id: "we_1", object: "webhook_endpoint", url: `${WORKER}/v1/webhooks/stripe` }],
-			},
 		})
 
 		const report = await provisionShop(stripeClient(worker, stripe.fetch), {
@@ -244,6 +292,119 @@ describe("the shop provisioner", () => {
 
 		// The product and the prices were still created: they carry no consent.
 		expect(report.product.action).toBe("created")
+	})
+
+	it("a Payment Link on an older agreement is drift under a read-only run, and a replacement under apply", async () => {
+		const account = provisionedAccount({ agreementVersion: "commercial-2025-01" })
+		const readOnly = recordingStripeFetch(account)
+
+		const plan = await provisionShop(stripeClient(worker, readOnly.fetch), { siteOrigin: SITE, apply: false })
+
+		expect(plan.paymentLinks["commercial-monthly-v1"]).toMatchObject({
+			id: "plink_commercial-monthly-v1",
+			action: "exists",
+			drift: [expect.stringContaining("agreement_version is commercial-2025-01")],
+		})
+
+		expect(readOnly.calls.every((call) => call.method === "GET")).toBe(true)
+
+		const applying = recordingStripeFetch({
+			...account,
+			"POST /v1/payment_links": (form) => ({
+				id: `plink_new_${form.get("metadata[plan_code]")}`,
+				object: "payment_link",
+				url: `https://buy.stripe.com/test_new_${form.get("metadata[plan_code]")}`,
+				metadata: { plan_code: form.get("metadata[plan_code]") },
+				consent_collection: { terms_of_service: "required" },
+			}),
+			"POST /v1/payment_links/plink_commercial-monthly-v1": (form) => ({
+				id: "plink_commercial-monthly-v1",
+				object: "payment_link",
+				active: form.get("active") !== "false",
+			}),
+			"POST /v1/payment_links/plink_commercial-yearly-v1": (form) => ({
+				id: "plink_commercial-yearly-v1",
+				object: "payment_link",
+				active: form.get("active") !== "false",
+			}),
+		})
+
+		const report = await provisionShop(stripeClient(worker, applying.fetch), { siteOrigin: SITE, apply: true })
+
+		expect(report.paymentLinks["commercial-monthly-v1"]).toEqual({
+			id: "plink_new_commercial-monthly-v1",
+			url: "https://buy.stripe.com/test_new_commercial-monthly-v1",
+			action: "replaced",
+			consent: true,
+			promotionCodes: true,
+		})
+
+		const writes = applying.calls.filter((call) => call.method === "POST")
+
+		// The successor is created before the old link is deactivated, so a refusal leaves the old one selling.
+		expect(
+			writes.map((call) => [call.path, call.form.get("active") ?? call.form.get("metadata[agreement_version]")])
+		).toEqual([
+			["/v1/payment_links", AGREEMENT_VERSION],
+			["/v1/payment_links/plink_commercial-monthly-v1", "false"],
+			["/v1/payment_links", AGREEMENT_VERSION],
+			["/v1/payment_links/plink_commercial-yearly-v1", "false"],
+		])
+	})
+
+	it("a webhook destination missing events is updated; an API version it cannot change stays as drift", async () => {
+		const stripe = recordingStripeFetch({
+			...provisionedAccount(),
+			"GET /v1/webhook_endpoints?": {
+				object: "list",
+				data: [
+					{
+						id: "we_1",
+						object: "webhook_endpoint",
+						url: `${WORKER}/v1/webhooks/stripe`,
+						enabled_events: ["invoice.paid"],
+						api_version: "2020-08-27",
+					},
+				],
+			},
+			"POST /v1/webhook_endpoints/we_1": () => ({ id: "we_1", object: "webhook_endpoint" }),
+		})
+
+		const report = await provisionShop(stripeClient(worker, stripe.fetch), {
+			siteOrigin: SITE,
+			workerOrigin: WORKER,
+			apply: true,
+		})
+
+		expect(report.webhook).toEqual({
+			id: "we_1",
+			url: `${WORKER}/v1/webhooks/stripe`,
+			action: "updated",
+			drift: [`api_version is 2020-08-27; the catalog says ${STRIPE_API_VERSION}`],
+		})
+
+		const update = stripe.calls.find((call) => call.method === "POST" && call.path === "/v1/webhook_endpoints/we_1")!
+
+		const enabledEvents = [...update.form.entries()]
+			.filter(([key]) => /^enabled_events\[\d+\]$/u.test(key))
+			.map(([, value]) => value)
+
+		expect(enabledEvents).toEqual([...WEBHOOK_EVENTS])
+	})
+
+	it("finds the Product on a later page of the list", async () => {
+		const stripe = recordingStripeFetch({
+			...provisionedAccount(),
+			"GET /v1/products?": (form) =>
+				form.get("starting_after") === "prod_other"
+					? { object: "list", has_more: false, data: [shopProduct()] }
+					: { object: "list", has_more: true, data: [{ id: "prod_other", object: "product", metadata: {} }] },
+		})
+
+		const report = await provisionShop(stripeClient(worker, stripe.fetch), { siteOrigin: SITE, apply: false })
+
+		expect(report.product).toEqual({ id: "prod_1", action: "exists" })
+		expect(stripe.calls.filter((call) => call.path === "/v1/products")).toHaveLength(2)
 	})
 })
 
