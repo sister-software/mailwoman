@@ -48,7 +48,7 @@
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
-import type { AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -166,11 +166,7 @@ interface StreetHit {
  * — neither of which the shared readers carry.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "street") {
 			const meta = n.metadata as Record<string, unknown> | undefined
 
@@ -191,8 +187,6 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 				}
 			}
 		}
-
-		stack.push(...n.children)
 	}
 
 	return null

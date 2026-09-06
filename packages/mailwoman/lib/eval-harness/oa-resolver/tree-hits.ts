@@ -6,7 +6,7 @@
  *   resolver-attributed places under it, and the tag presence the eval's preconditions test.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { mostSpecificResolved } from "@mailwoman/resolver"
 
 /**
@@ -33,14 +33,10 @@ export interface Resolved {
  * Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any.
  */
 export function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(tree.roots)) {
 		const ap = n.metadata?.address_point as { lat: number; lon: number } | undefined
 
 		if (n.tag === "street" && ap) return ap
-		stack.push(...n.children)
 	}
 
 	return null
@@ -50,14 +46,10 @@ export function findAddressPointHit(tree: AddressTree): { lat: number; lon: numb
  * Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any.
  */
 export function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | null {
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(tree.roots)) {
 		const ip = n.metadata?.interpolated_point as { lat: number; lon: number } | undefined
 
 		if (n.tag === "street" && ip) return ip
-		stack.push(...n.children)
 	}
 
 	return null
@@ -186,11 +178,8 @@ export function findInterpolationSpans(tree: AddressTree): {
 	let s: string | undefined
 	let hn: string | undefined
 	let pc: string | undefined
-	const stk = [...tree.roots]
 
-	while (stk.length) {
-		const n = stk.pop()!
-
+	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "street" && !s && n.value.trim()) {
 			s = n.value.trim()
 		}
@@ -202,8 +191,6 @@ export function findInterpolationSpans(tree: AddressTree): {
 		if (n.tag === "postcode" && !pc && n.value.trim()) {
 			pc = n.value.trim()
 		}
-
-		stk.push(...n.children)
 	}
 
 	return { street: s, houseNumber: hn, postcode: pc }

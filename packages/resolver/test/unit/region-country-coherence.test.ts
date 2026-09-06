@@ -14,7 +14,7 @@
  *   trigger never fires for "Springfield, IL" / "Portland, ME".
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
@@ -194,26 +194,16 @@ const regionLocalityTree = (city: string, region: string): AddressTree => ({
 })
 
 function localityOf(tree: AddressTree): AddressNode | undefined {
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "locality") return n
-		stack.push(...n.children)
 	}
 
 	return undefined
 }
 
 function regionOf(tree: AddressTree): AddressNode | undefined {
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === "region") return n
-		stack.push(...n.children)
 	}
 
 	return undefined

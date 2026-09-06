@@ -5,7 +5,7 @@
  * @file Depth-first flatten of a decoded parse tree, for the boards that grade spans rather than a resolved answer.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { walkNodes } from "@mailwoman/core/decoder"
 
 /**
  * The node shape the boards walk.
@@ -26,17 +26,7 @@ export interface FlatNode {
  * Every node in the tree, parents before children.
  */
 export function flattenNodes(nodes: readonly FlatNode[]): FlatNode[] {
-	const out: FlatNode[] = []
-	const stack = [...nodes]
-
-	while (stack.length) {
-		const node = stack.pop()
-
-		if (!isPresent(node)) break
-
-		out.push(node)
-		stack.push(...(node.children ?? []))
-	}
+	const out: FlatNode[] = [...walkNodes(nodes)]
 
 	return out
 }

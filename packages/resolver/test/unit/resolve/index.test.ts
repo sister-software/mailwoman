@@ -8,7 +8,7 @@
  */
 
 import type { AddressNode, Interpretation, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
-import { decodeAsXML } from "@mailwoman/core/decoder"
+import { decodeAsXML, walkNodes } from "@mailwoman/core/decoder"
 import type {
 	Ancestor,
 	AddressPointLookup,
@@ -1189,13 +1189,8 @@ const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (count
  * Pull the street node's stamped street-centroid tier out of a resolved tree, if any.
  */
 function streetTier(t: AddressTree): AddressNode | undefined {
-	const stack = [...t.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(t.roots)) {
 		if (n.tag === "street" && n.metadata?.["resolution_tier"] === "street") return n
-		stack.push(...n.children)
 	}
 
 	return undefined

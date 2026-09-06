@@ -1,3 +1,4 @@
+import { walkNodes } from "#decoder/tree-shape"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -12,7 +13,7 @@
  *   It mutates nothing and changes no serializer — wiring `unknown` into the JSON/XML/tuple contracts + the
  *   demo is the focused follow-up (#493). Byte-stable by construction, so it ships ahead of that work.
  */
-import type { AddressNode, AddressTree } from "#decoder/types"
+import type { AddressTree } from "#decoder/types"
 
 export interface UnknownSpan {
 	kind: "unknown"
@@ -43,19 +44,13 @@ export interface LosslessSegment {
 function coveredMask(tree: AddressTree): Uint8Array {
 	const len = tree.raw.length
 	const covered = new Uint8Array(len)
-	const stack: AddressNode[] = [...tree.roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(tree.roots)) {
 		const lo = Math.max(0, n.start)
 		const hi = Math.min(len, n.end)
 
 		for (let i = lo; i < hi; i++) {
 			covered[i] = 1
-		}
-
-		for (const c of n.children) {
-			stack.push(c)
 		}
 	}
 

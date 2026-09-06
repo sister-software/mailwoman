@@ -75,7 +75,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import type { AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -161,12 +161,9 @@ const gazetteerPresent = async () => (await pathExists(ADMIN_DB)) && (await path
  */
 function flatten(tree: AddressTree): AddressTree["roots"] {
 	const out: AddressTree["roots"] = []
-	const stack = [...tree.roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(tree.roots)) {
 		out.push(n)
-		stack.push(...n.children)
 	}
 
 	return out

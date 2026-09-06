@@ -55,6 +55,7 @@
  */
 
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
+import { walkNodes } from "@mailwoman/core/decoder"
 import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
@@ -304,15 +305,11 @@ export function forkedEntityCoherenceField(
 	roots: readonly AdminCoherenceTreeNode[],
 	entity: { name: string; country: string }
 ): { admin_coherence?: AdminCoherenceReport } {
-	const nodes: AdminCoherenceSourceNode[] = []
-	const stack: AdminCoherenceTreeNode[] = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		nodes.push({ tag: n.tag, value: n.value, metadata: n.metadata })
-		stack.push(...n.children)
-	}
+	const nodes: AdminCoherenceSourceNode[] = [...walkNodes(roots)].map((n) => ({
+		tag: n.tag,
+		value: n.value,
+		metadata: n.metadata,
+	}))
 
 	return adminCoherenceField(
 		nodes,

@@ -25,6 +25,7 @@
  *   the rerank ceiling tracker.
  */
 
+import { walkNodes } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"
@@ -353,12 +354,9 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 
 		const baseByTag = new Map<string, string[]>()
-		const stack = [...tree.roots]
 
-		while (stack.length) {
-			const node = stack.pop()!
+		for (const node of walkNodes(tree.roots)) {
 			baseByTag.set(node.tag, [...(baseByTag.get(node.tag) ?? []), node.value])
-			stack.push(...node.children)
 		}
 
 		// The trace MUST carry the same priors as the parse above: the segment decode scores spans out

@@ -7,7 +7,7 @@
  *   Split from `resolve.ts`, which owns `WOFResolver` — the walk itself over what this module provides.
  */
 
-import type { AddressNode } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
 	type CoincidentLocality,
 	compareReferential,
@@ -332,15 +332,10 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
  * top-down walk wouldn't otherwise let the locality lookup see it).
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
-	const stack = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(roots)) {
 		// #31 Mechanism 1: a shape-excluded span keeps its tag but contributes nothing — its code
 		// must never become the address's postcode (it would poison the country-scope pass's anchor).
 		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && n.value.trim().length) return n.value.trim()
-		stack.push(...n.children)
 	}
 
 	return undefined
@@ -441,11 +436,7 @@ async function recoverPostcodeNode(
 	country: string | undefined,
 	traceSink?: (record: ResolveNodeTrace) => void
 ): Promise<void> {
-	const stack: AddressNode[] = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(roots)) {
 		if (n.tag === "postcode" && !n.placeID && n.value.trim()) {
 			const code = postcodeCodeSubset(n.value)
 
@@ -469,10 +460,6 @@ async function recoverPostcodeNode(
 			}
 
 			return // first postcode node only — one recovery per tree
-		}
-
-		if (n.children?.length) {
-			stack.push(...n.children)
 		}
 	}
 }
@@ -500,29 +487,20 @@ async function recoverPostcodeNode(
 export function applyPostcodeConsistency(roots: readonly AddressNode[], thresholdKm: number): void {
 	// The resolved postcode anchor (first one with a real coordinate).
 	let anchor: { lat: number; lon: number } | null = null
-	const findAnchor: AddressNode[] = [...roots]
 
-	while (findAnchor.length) {
-		const n = findAnchor.pop()!
-
+	for (const n of walkNodes(roots)) {
 		// #31 Mechanism 1: a shape-excluded span never anchors the consistency re-pick either.
 		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && isResolvedWithCoord(n)) {
 			anchor = { lat: n.lat!, lon: n.lon! }
 
 			break
 		}
-
-		findAnchor.push(...n.children)
 	}
 
-	if (!anchor) return // no postcode→point — nothing to disambiguate against (check can't fire)
+	// No postcode→point — nothing to disambiguate against (the check cannot fire).
+	if (!anchor) return
 
-	const stack: AddressNode[] = [...roots]
-
-	while (stack.length) {
-		const node = stack.pop()!
-		stack.push(...node.children)
-
+	for (const node of walkNodes(roots)) {
 		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
 
 		if (haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!) <= thresholdKm) continue // already consistent

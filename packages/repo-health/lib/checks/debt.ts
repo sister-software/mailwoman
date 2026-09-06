@@ -61,6 +61,12 @@ export interface DebtCounters {
 	 * has no such blind spot.
 	 */
 	bannedVocabulary: number
+	/**
+	 * `stack.push(...node.children)` — a hand-rolled LIFO tree walk. The idiom yields siblings in reverse text order, and
+	 * a `find` over it picked the second of two same-tag spans (#2156, #2163); `walkNodes` in `@mailwoman/core/decoder`
+	 * is the one walk, in document order. Baseline zero.
+	 */
+	handRolledTreeWalks: number
 }
 
 /**
@@ -86,6 +92,7 @@ function emptyCounters(): DebtCounters {
 		synchronousFilesystemCalls: 0,
 		rawNULBytes: 0,
 		bannedVocabulary: 0,
+		handRolledTreeWalks: 0,
 	}
 }
 
@@ -182,6 +189,24 @@ function isSynchronousFilesystemCall(node: ts.Node): boolean {
 	)
 }
 
+/**
+ * `<stack>.push(...<expr>.children)` — the push half of a hand-rolled tree walk. The pop half is any `.pop()`, which
+ * too many honest stacks share; the spread of `.children` is the tell.
+ */
+function isChildrenSpreadPush(node: ts.Node): boolean {
+	return (
+		ts.isCallExpression(node) &&
+		ts.isPropertyAccessExpression(node.expression) &&
+		node.expression.name.text === "push" &&
+		node.arguments.some(
+			(argument) =>
+				ts.isSpreadElement(argument) &&
+				ts.isPropertyAccessExpression(argument.expression) &&
+				argument.expression.name.text === "children"
+		)
+	)
+}
+
 function visit(
 	source: ts.SourceFile,
 	counters: DebtCounters,
@@ -199,6 +224,10 @@ function visit(
 
 		if (ts.isAsExpression(node) && isUnknownCast(node.expression)) {
 			counters.doubleCast++
+		}
+
+		if (isChildrenSpreadPush(node)) {
+			counters.handRolledTreeWalks++
 		}
 
 		if (

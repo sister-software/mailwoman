@@ -13,7 +13,13 @@
  */
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
-import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
+import {
+	collectNodes,
+	type AddressNode,
+	type AddressTree,
+	type ComponentTag,
+	type Interpretation,
+} from "@mailwoman/core/decoder"
 import {
 	type BackendCapabilityGap,
 	type ResolveNodeTrace,
@@ -89,18 +95,7 @@ export function createWOFResolver(backend: ResolverBackend): Resolver {
  * existing coherence passes keep handling it). Returns the alpha-2 or null.
  */
 function explicitCountryScope(roots: readonly AddressNode[]): string | null {
-	const countryNodes: AddressNode[] = []
-	const stack = [...roots]
-
-	while (stack.length) {
-		const node = stack.pop()!
-
-		if (node.tag === "country" && node.value.trim()) {
-			countryNodes.push(node)
-		}
-
-		stack.push(...node.children)
-	}
+	const countryNodes = collectNodes(roots, (node) => node.tag === "country" && node.value.trim().length > 0)
 
 	if (countryNodes.length !== 1) return null
 	const value = countryNodes[0]!.value.trim()

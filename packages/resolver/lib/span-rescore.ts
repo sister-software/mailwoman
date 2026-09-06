@@ -25,7 +25,7 @@
  *   backend has postcode coverage).
  */
 
-import type { AddressNode } from "@mailwoman/core/decoder"
+import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -169,47 +169,25 @@ const BARE_TOPONYM_FETCH = 20
  * the hard filter keeps its say: this is what holds 'Berlin, Wisconsin' on Berlin, Wisconsin.
  */
 function hasAdminQualifier(roots: readonly AddressNode[]): boolean {
-	const stack: AddressNode[] = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (
-			(n.tag === "region" ||
-				n.tag === "subregion" ||
-				n.tag === "country" ||
-				n.tag === "postcode" ||
-				n.tag === "house_number") &&
-			n.value.trim().length
-		) {
-			return true
-		}
-
-		if (n.children?.length) {
-			stack.push(...n.children)
-		}
-	}
-
-	return false
+	return (
+		firstNodeWhere(
+			roots,
+			(n) =>
+				(n.tag === "region" ||
+					n.tag === "subregion" ||
+					n.tag === "country" ||
+					n.tag === "postcode" ||
+					n.tag === "house_number") &&
+				n.value.trim().length > 0
+		) !== undefined
+	)
 }
 
 /**
  * True if any node in the tree already carries a resolved place id — the #685 brake.
  */
 export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
-	const stack: AddressNode[] = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (n.placeID) return true
-
-		if (n.children?.length) {
-			stack.push(...n.children)
-		}
-	}
-
-	return false
+	return firstNodeWhere(roots, (n) => Boolean(n.placeID)) !== undefined
 }
 
 /**
@@ -233,11 +211,8 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
  */
 function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
 	const out: Array<[number, number]> = []
-	const stack: AddressNode[] = [...roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(roots)) {
 		if (
 			(n.tag === "country" || n.tag === "region") &&
 			Number.isFinite(n.start) &&
@@ -246,8 +221,6 @@ function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Ar
 		) {
 			out.push([n.start, n.end])
 		}
-
-		stack.push(...n.children)
 	}
 
 	return out
@@ -260,11 +233,8 @@ function confidentRanges(
 	postalCompoundRecovery: boolean
 ): Array<[number, number]> {
 	const out: Array<[number, number]> = []
-	const stack: AddressNode[] = [...roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(roots)) {
 		if (
 			(n.tag === "postcode" ||
 				n.tag === "house_number" ||
@@ -287,10 +257,6 @@ function confidentRanges(
 			} else {
 				out.push([n.start, n.end])
 			}
-		}
-
-		if (n.children?.length) {
-			stack.push(...n.children)
 		}
 	}
 

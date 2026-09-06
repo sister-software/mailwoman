@@ -28,16 +28,11 @@ import type { ComponentTag } from "#types/component"
  */
 export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 	let sawTag = false
-	const stack = [...tree.roots]
 
-	while (stack.length) {
-		const node = stack.pop()!
-
+	for (const node of walkNodes(tree.roots)) {
 		if (node.tag === tag) {
 			sawTag = true
 		} else if (node.value.trim() !== "") return false
-
-		stack.push(...node.children)
 	}
 
 	return sawTag
@@ -49,17 +44,12 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
  */
 export function loneValueBearingNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
-	const stack = [...tree.roots]
 
-	while (stack.length) {
-		const node = stack.pop()!
-
+	for (const node of walkNodes(tree.roots)) {
 		if (node.value.trim().length) {
 			if (lone !== null) return null
 			lone = node
 		}
-
-		stack.push(...node.children)
 	}
 
 	return lone
@@ -144,14 +134,16 @@ export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 }
 
 /**
- * Every node of a forest in DOCUMENT order: parent before children, siblings by their position in the input.
+ * Every node of a forest in DOCUMENT order: parent before children, siblings by their position in the input. Generic
+ * over any node shape carrying `children`, so the eval harness's flat nodes and the admin-coherence tree walk the same
+ * way the decoder's do — the one implementation the #2163 sweep replaced every hand-rolled LIFO walk with.
  *
  * The order is material, not a convenience. `find` over this walk decides which of two same-tag spans becomes a named
  * result slot, and the flat component map (`decodeAsJSON`) keeps the first span in text order. A LIFO walk once yielded
  * siblings reversed, so `Village of Fae, Camino Real, …` answered `venue: "Camino Real"` in the named slot while the
  * component map said `Village of Fae`, and four board rows failed on the slot alone. One order, the text's, for both.
  */
-export function* walkNodes(roots: readonly AddressNode[]): Generator<AddressNode> {
+export function* walkNodes<T extends { children?: readonly T[] }>(roots: readonly T[]): Generator<T> {
 	const stack = roots.toReversed()
 
 	while (stack.length) {
@@ -159,8 +151,10 @@ export function* walkNodes(roots: readonly AddressNode[]): Generator<AddressNode
 
 		yield node
 
-		for (let index = node.children.length - 1; index >= 0; index--) {
-			stack.push(node.children[index]!)
+		const children = node.children ?? []
+
+		for (let index = children.length - 1; index >= 0; index--) {
+			stack.push(children[index]!)
 		}
 	}
 }

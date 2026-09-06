@@ -25,7 +25,7 @@
  *   quietly stop testing what its name says.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import {
 	findPostcodeCountryScope,
@@ -369,14 +369,8 @@ const addressTree = (postcode: string | null, locality: string | null, street = 
 }
 
 function nodeByTag(tree: AddressTree, tag: string): AddressNode | undefined {
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(tree.roots)) {
 		if (n.tag === tag) return n
-
-		stack.push(...n.children)
 	}
 
 	return undefined

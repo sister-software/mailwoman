@@ -13,7 +13,7 @@
  */
 
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
-import { type AddressNode, walkNodes } from "@mailwoman/core/decoder"
+import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
 
 import { foldName } from "#fold-name"
@@ -31,18 +31,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
  * under street), order by span offset, and join.
  */
 function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressNode): string {
-	const parts: AddressNode[] = []
-	const stack = [streetNode]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
-			parts.push(n)
-		}
-
-		stack.push(...n.children)
-	}
+	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length > 0)
 
 	// #718 admin-tail: a directional quadrant the model mis-tagged `unit` ("1532 Taylor Street NE" →
 	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches the

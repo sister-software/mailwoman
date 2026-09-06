@@ -12,7 +12,7 @@
  *   so).
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -85,12 +85,9 @@ const tree = (...roots: AddressNode[]): AddressTree => ({ raw: roots.map((r) => 
 
 function flatten(roots: readonly AddressNode[]): AddressNode[] {
 	const out: AddressNode[] = []
-	const stack = [...roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(roots)) {
 		out.push(n)
-		stack.push(...n.children)
 	}
 
 	return out

@@ -77,7 +77,7 @@
 import { candidateSystemsForPostcode, SYSTEM_CODES } from "@mailwoman/codex"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isUSStateAbbreviation } from "@mailwoman/codex/us"
-import type { AddressNode } from "@mailwoman/core/decoder"
+import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
  * The codex address systems a sibling signal can speak for — the universe `candidateSystemsForPostcode` can return, in
@@ -120,12 +120,8 @@ export interface PostcodeShapeVerdict {
  */
 function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 	const out = new Set<string>()
-	const stack: AddressNode[] = [...roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
-		stack.push(...n.children)
-
+	for (const n of walkNodes(roots)) {
 		if (n.tag === "country") {
 			const matched = matchCountry(n.value)
 
@@ -170,20 +166,9 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): PostcodeShapeVerdict {
 	const verdict: PostcodeShapeVerdict = { confirmed: [], excluded: [], abstained: [] }
 
-	// The postcode spans in tree order — the same DFS `firstPostcodeValue` uses, so the verdict's
+	// The postcode spans in document order — the same walk `firstPostcodeValue` uses, so the verdict's
 	// "first confirmed" is the node `state.postcode` will read.
-	const postcodes: AddressNode[] = []
-	const stack: AddressNode[] = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (n.tag === "postcode" && n.value.trim().length) {
-			postcodes.push(n)
-		}
-
-		stack.push(...n.children)
-	}
+	const postcodes = collectNodes(roots, (n) => n.tag === "postcode" && n.value.trim().length > 0)
 
 	if (!postcodes.length) return verdict
 

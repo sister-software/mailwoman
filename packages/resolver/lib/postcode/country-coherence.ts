@@ -106,7 +106,7 @@
 // `postcode-systems` has no dedicated export subpath; the barrel is where every other consumer
 // (`neural/postcode-anchor.ts`) reaches it from.
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
-import type { AddressNode } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -579,13 +579,7 @@ async function holdsLocality(backend: ResolverBackend, locality: string, country
  * untouched, this only writes `metadata`.
  */
 export function stampPostcodeCountryScope(roots: readonly AddressNode[], scope: PostcodeCountryScope): void {
-	const stack: AddressNode[] = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		stack.push(...n.children)
-
+	for (const n of walkNodes(roots)) {
 		if (n.tag !== "postcode" && n.tag !== "locality" && n.tag !== "dependent_locality") continue
 
 		n.metadata = {

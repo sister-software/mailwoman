@@ -21,6 +21,7 @@
  */
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -159,20 +160,20 @@ interface FRRow {
 	postcode: string
 }
 
-function streetKeyOf(tree: {
-	roots: readonly { tag: string; value: string; start: number; children: readonly unknown[] }[]
-}): string {
+interface StreetKeyNode {
+	tag: string
+	value: string
+	start: number
+	children: readonly StreetKeyNode[]
+}
+
+function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 	const parts: Array<{ value: string; start: number }> = []
-	const stack = [...tree.roots]
 
-	while (stack.length) {
-		const n = stack.pop()! as { tag: string; value: string; start: number; children: readonly unknown[] }
-
+	for (const n of walkNodes(tree.roots)) {
 		if (STREET_TAGS.has(n.tag) && n.value.trim()) {
 			parts.push({ value: n.value.trim(), start: n.start })
 		}
-
-		stack.push(...(n.children as typeof stack))
 	}
 
 	parts.sort((a, b) => a.start - b.start)

@@ -13,7 +13,7 @@
  *   disagrees with the qualifier). Two call sites, one function, one ordering.
  */
 
-import type { AddressNode } from "@mailwoman/core/decoder"
+import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
  * Find the first non-empty region-tagged span anywhere in a tree — the qualifier the walk threads onto locality
@@ -23,16 +23,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
  * because containment is containment whatever tier the container sits at.
  */
 export function firstRegionQualifier(roots: readonly AddressNode[]): string | undefined {
-	const stack = [...roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (n.tag === "region" && n.value.trim().length) return n.value.trim()
-		stack.push(...n.children)
-	}
-
-	return undefined
+	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim().length > 0)?.value.trim()
 }
 
 /**

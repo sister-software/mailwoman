@@ -8,5 +8,6 @@
 	"selfPackageImports": 0,
 	"synchronousFilesystemCalls": 0,
 	"bannedVocabulary": 0,
-	"rawNULBytes": 0
+	"rawNULBytes": 0,
+	"handRolledTreeWalks": 0
 }

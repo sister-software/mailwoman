@@ -15,7 +15,7 @@
  *   - Postcode rows resolve, and placeholder 0,0-coord rows were dropped at build.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -762,16 +762,11 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 
 	function tagged(roots: readonly AddressNode[], tag: string): AddressNode[] {
 		const out: AddressNode[] = []
-		const stack = [...roots]
 
-		while (stack.length) {
-			const n = stack.pop()!
-
+		for (const n of walkNodes(roots)) {
 			if (n.tag === tag) {
 				out.push(n)
 			}
-
-			stack.push(...n.children)
 		}
 
 		return out
