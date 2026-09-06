@@ -16,7 +16,7 @@
 | Terms-of-service URL under the Stripe account's public details  | operator (dashboard, no API)                                                                                    | unset; test-mode Payment Links were still created with consent collection |
 | Stripe test-mode objects                                        | done: `mwops shop provision --mode test --apply` created six, a second run reads `exists`                       | done                                                                      |
 | Stripe live-mode objects                                        | `mwops shop provision --mode live --apply`, needs `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`                            | waiting on the key                                                        |
-| Cloudflare token with Workers Scripts, D1 and rate-limit scopes | operator; `CF_AUTH_TOKEN` in `.env` verifies but answers 401/403 on Workers and D1                              | blocked                                                                   |
+| Cloudflare token with Workers Scripts, D1 and rate-limit scopes | done: `CF_AUTH_TOKEN` in `.env` lists Workers and D1; the sandbox deployed with it                              | done                                                                      |
 | Sandbox signing pair                                            | done: `~/.config/mailwoman-sandbox/license/signing-key.pem`, kid `v9-ac522cf3`, in `wrangler.toml` sandbox vars | done                                                                      |
 | Production signing pair, registered `active`, released          | operator generates offline; the register entry and release are code steps below                                 | not started                                                               |
 | Transactional email account (Resend) and its key                | operator                                                                                                        | not started                                                               |
@@ -33,19 +33,19 @@
 
 ### Task 1 (operator): the Cloudflare credentials
 
-- [ ] Create an API token scoped to the account with Workers Scripts (edit), D1 (edit) and Workers Rate Limiting, and put it in the lab `.env` as `CLOUDFLARE_API_TOKEN` beside `CLOUDFLARE_ACCOUNT_ID`, or run `wrangler login` on the lab host. The same token goes into the two GitHub environments `license-worker-sandbox` and `license-worker-production` for `.github/workflows/license-worker.yml`.
+- [x] Create an API token scoped to the account with Workers Scripts (edit), D1 (edit) and Workers Rate Limiting, and put it in the lab `.env` as `CLOUDFLARE_API_TOKEN` beside `CLOUDFLARE_ACCOUNT_ID`, or run `wrangler login` on the lab host. The same token goes into the two GitHub environments `license-worker-sandbox` and `license-worker-production` for `.github/workflows/license-worker.yml`.
 
 ### Task 2: the sandbox worker
 
 **Files:** `packages/license-worker/wrangler.toml` (sandbox `database_id`)
 
-- [ ] **Step 1:** create the sandbox D1 and the three rate-limit namespaces; write the database id into `[env.sandbox.d1_databases]`.
+- [x] **Step 1:** create the sandbox D1 and the three rate-limit namespaces; write the database id into `[env.sandbox.d1_databases]`.
 
 ```bash
 yarn workspace @mailwoman/license-worker wrangler d1 create mailwoman-license-sandbox
 ```
 
-- [ ] **Step 2:** secrets for the sandbox: the test-mode `STRIPE_SECRET_KEY` (from `MAILWOMAN_STRIPE_SECRET_KEY`), `LICENSE_SIGNING_KEY_PEM` from `~/.config/mailwoman-sandbox/license/signing-key.pem`, `EMAIL_API_KEY` (a Resend test key, or a placeholder until Task 6: a failed send is recorded and re-sent by reconciliation).
+- [x] **Step 2:** secrets for the sandbox: the test-mode `STRIPE_SECRET_KEY` (from `MAILWOMAN_STRIPE_SECRET_KEY`), `LICENSE_SIGNING_KEY_PEM` from `~/.config/mailwoman-sandbox/license/signing-key.pem`, `EMAIL_API_KEY` (a Resend test key, or a placeholder until Task 6: a failed send is recorded and re-sent by reconciliation).
 
 ```bash
 yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_SECRET_KEY --env sandbox
@@ -53,7 +53,7 @@ yarn workspace @mailwoman/license-worker wrangler secret put LICENSE_SIGNING_KEY
 yarn workspace @mailwoman/license-worker wrangler secret put EMAIL_API_KEY --env sandbox
 ```
 
-- [ ] **Step 3:** deploy with migrations, and read `/health`.
+- [x] **Step 3:** deploy with migrations, and read `/health`.
 
 ```bash
 yarn workspace @mailwoman/license-worker migrate:sandbox
@@ -63,18 +63,18 @@ curl -s https://mailwoman-license-sandbox.<account>.workers.dev/health
 
 Expected: `{"issuance":false,"liveMode":false,"signing":"ok","ledger":"ok","email":"ok"}`. `signing: ok` here is the worker trusting its own sandbox key.
 
-- [ ] **Step 4:** the webhook destination against the deployed origin, then its secret.
+- [x] **Step 4:** the webhook destination against the deployed origin, then its secret.
 
 ```bash
 yarn mwops shop provision --mode test --apply --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev
 yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET --env sandbox
 ```
 
-- [ ] **Step 5:** set `ISSUANCE_ENABLED = "true"` in `[env.sandbox.vars]`, redeploy, commit the wrangler changes.
+- [x] **Step 5:** set `ISSUANCE_ENABLED = "true"` in `[env.sandbox.vars]`, redeploy, commit the wrangler changes.
 
 ### Task 3: the sandbox end to end
 
-- [ ] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which does not exist yet, so read the session id from the URL and claim it from the sandbox by hand:
+- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which does not exist yet, so read the session id from the URL and claim it from the sandbox by hand:
 
 ```bash
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/v1/checkout-sessions/cs_test_…/license
@@ -82,7 +82,7 @@ curl -s https://mailwoman-license-sandbox.<account>.workers.dev/v1/checkout-sess
 
 Expected within seconds of the redirect: `{"status":"issued","token":"mwl1.…","lid":"lic_…","licensee":"…","issued":"…","expires":"…","refresh_secret":"…"}`; a second call answers the same without `refresh_secret`.
 
-- [ ] **Step 2:** verify the token offline against the sandbox public key, which no release trusts:
+- [x] **Step 2:** verify the token offline against the sandbox public key, which no release trusts:
 
 ```bash
 MAILWOMAN_LICENSE_URL=https://mailwoman-license-sandbox.<account>.workers.dev node packages/mailwoman/out/cli.js license verify --key "mwl1.…" --online
@@ -90,9 +90,9 @@ MAILWOMAN_LICENSE_URL=https://mailwoman-license-sandbox.<account>.workers.dev no
 
 Expected: `status: unknown_key` (the shipped register does not carry `v9-ac522cf3`) and `license lic_…: active`. That pair of lines is the spec's demonstration that trust is release-bound. Then, in a script, `verifyLicenseKey(token, { trustedKeys: { "v9-ac522cf3": <sandbox public PEM> } })` reads `valid` with `expires` = the period end plus 14 days.
 
-- [ ] **Step 3:** `mailwoman license refresh --lid lic_… --secret …` against the sandbox reads `Not written: this release does not trust key id v9-ac522cf3`, exit 1: the refusal is the CLI holding the same line.
-- [ ] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates: `yarn mwops shop rehearse` prints a Checkout Session for a test-clock customer, pay it with the test card, then `yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev` advances the clock and reports both tokens' dates with `agrees: true`. A full refund in the dashboard flips `/v1/license-status` to `revoked`; the reconciliation cron's log names the ids only.
-- [ ] **Step 5:** the kill-switch drill: `ISSUANCE_ENABLED = "false"`, redeploy, pay again; the webhook answers 200 with `refused: issuance is disabled`, the claim reads `pending`, refresh still answers; flip back, and the next reconciliation mints the missed invoice.
+- [x] **Step 3:** `mailwoman license refresh --lid lic_… --secret …` against the sandbox reads `Not written: this release does not trust key id v9-ac522cf3`, exit 1: the refusal is the CLI holding the same line.
+- [x] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates: `yarn mwops shop rehearse` prints a Checkout Session for a test-clock customer, pay it with the test card, then `yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev` advances the clock and reports both tokens' dates with `agrees: true`. A full refund in the dashboard flips `/v1/license-status` to `revoked`; the reconciliation cron's log names the ids only.
+- [x] **Step 5:** the kill-switch drill: `ISSUANCE_ENABLED = "false"`, redeploy, pay again; the webhook answers 200 with `refused: issuance is disabled`, the claim reads `pending`, refresh still answers; flip back, and the next reconciliation mints the missed invoice.
 
 #### Receipt: the local run, 2026-09-06
 
@@ -124,6 +124,36 @@ is tracked and the local build emits it: `actions/upload-pages-artifact` exclude
 `include-hidden-files: true`, now set in `docs-build.yml`. And the email provider key was a placeholder, so each token's
 `email_state` read `failed` and every reconciliation retried it, which is the designed path.
 
+#### Receipt: the deployed sandbox, 2026-09-06
+
+Task 2 and Task 3 ran against `https://mailwoman-license-sandbox.sister-software.workers.dev` with Stripe delivering
+every event itself; nothing was replayed or signed by hand.
+
+| Step                                                                               | Observed                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `wrangler d1 create`, migrations `--remote`, three secrets, `deploy --env sandbox` | D1 `8c9f596d-1597-4f04-90a2-f1a8d2d6f82f`; `0001_ledger.sql` applied; `/health` `{"issuance":false,"liveMode":false,"signing":"ok","ledger":"ok","email":"ok"}`                                                          |
+| `mwops shop provision --mode test --apply --worker-origin …`                       | every object `exists`; webhook `we_1UCeYaANyI6tE9BzxHOYBzva` created; its secret stored with `wrangler secret put` and scrubbed from the report                                                                          |
+| Issuance on, redeploy                                                              | `/health` reads `"issuance":true`                                                                                                                                                                                        |
+| Monthly Payment Link paid, claim read ten seconds after the redirect               | `issued`, `lic_sPBnGqLDGKzPkdejQ0vhvg`, `expires 2026-10-20`, `refresh_secret` once; the second claim carries no secret, `Access-Control-Allow-Origin: https://mailwoman.ai`                                             |
+| `license verify --key … --online` on the shipped register and the sandbox          | `unknown_key`; `mailwoman.ai: unlisted` from the live register; `license lic_…: active` from the sandbox                                                                                                                 |
+| `license refresh --lid … --secret …`                                               | `Not written: this release does not trust key id v9-ac522cf3`, exit 1, no key file                                                                                                                                       |
+| Wrong secret on the refresh route; status route                                    | 404; `{"status":"active"}`                                                                                                                                                                                               |
+| `mwops shop rehearse`, paid; `mwops shop rehearse-renewal --worker-origin …`       | first `expires 2026-10-20`; clock advanced to 2026-10-08; renewed `issued 2026-10-06, expires 2026-11-20`; `periodEnd 2026-11-06`, `agrees: true`                                                                        |
+| Full refund through the API                                                        | status `revoked` five seconds after the refund; claim reads `revoked`                                                                                                                                                    |
+| Kill switch: issuance off, redeploy, yearly Payment Link paid                      | claim `pending`; refresh for the revoked license still answers `revoked`; issuance back on at 11:53 UTC                                                                                                                  |
+| The 12:00 UTC cron, issuance back on                                               | `{"minted":["in_1UCeciANyI6tE9Bzy2ftHTLp","in_1UCW8sANyI6tE9BzoWT7iV4f","in_1UCW4vANyI6tE9BzaAvybZrc"],"resent":[],"refused":[],"corrected":[],"failed":[]}`; the kill-switch claim reads `issued`, `expires 2027-09-20` |
+
+A defect the cron surfaced: the two older invoices it minted were the local run's purchases, which this ledger had
+never seen, and one of them (`in_1UCW4vANyI6tE9BzaAvybZrc`) had been fully refunded during that run. The drift sweep
+read only the subscription's status, which a refund leaves `active`, so the ledger issued `lic_cPAjF5Rawybt-3rDURvvMQ`
+for a refunded payment and reported nothing to correct. The sweep now reads the charge behind each active license's
+current token and revokes on a full refund, the same rule the `charge.refunded` handler applies; the deployed sandbox
+corrects that license at the next pass after the fix deploys.
+
+One edge finding: Cloudflare's browser integrity check on `workers.dev` refuses a request whose user agent is
+`Python-urllib` with error 1010 before the worker sees it; curl and the CLI's axios agent pass. The production zone
+owns that setting, so Task 7 confirms it does not refuse the CLI.
+
 ### Task 4: the production signing key and the trust release
 
 **Files:** `packages/core/lib/license/register.ts`, `docs/static/.well-known/mailwoman/license-keys.json`
@@ -147,6 +177,7 @@ is tracked and the local build emits it: `actions/upload-pages-artifact` exclude
 - [ ] Steps 1 to 8 of the README's "First deploy" against `--env production`, with the trust release published first (Task 4) and `ISSUANCE_ENABLED = "false"` throughout.
 - [ ] Alerts: on `/health` answering anything but 200, on `/health` reading `"email":"failing"` (a token whose email has stayed `failed` for over an hour), and on a reconciliation report with a non-empty `failed` list. Cloudflare's health check covers the first; a monitor that reads the body (an uptime check with a keyword, or a Worker cron that fetches it) covers the second; a Logpush query on the worker log for `"reconcile"` with `"failed":[` followed by anything but `]` covers the third.
 - [ ] The kill-switch drill once in production with a live card refunded afterwards, then `ISSUANCE_ENABLED = "true"`.
+- [ ] The zone's browser integrity check admits `mailwoman license verify --online` and `license refresh` (the CLI's axios user agent); a refusal reads as `unreachable` to the customer.
 
 ## Acceptance
 
