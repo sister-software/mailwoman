@@ -94,7 +94,7 @@ Beyond the 71 workspaces the repo root holds workspace config and six directorie
 
 - `apps/web-demo/` — a standalone Python + single-page-HTML parser demo (`server.py`, no `package.json`), served behind the playpen nginx
 - `corpus-python/` — the Python training code, including the Modal launcher
-- `hf-publish/` — three Hugging Face model/dataset card READMEs, nothing else
+- `hf-publish/` — four Hugging Face model/dataset card READMEs (en-us, cjk, the tokenizer, the WOF gazetteer), nothing else
 - `data/` — checked-in reference inputs (e.g. `data/gazetteer/anchor-lexicon-v1.json`, the copy `mailwoman eval promote` runs against)
 - `evals/` — the per-model score ledger (`evals/scores-by-version.json`)
 - `docker/` — the private `mailwoman-docker` dependency manifest for the ghcr image. It HAS a `package.json`, which makes it look like a workspace; it is not in the `workspaces` array, and it installs the PUBLISHED `@mailwoman/*` packages rather than the local ones
