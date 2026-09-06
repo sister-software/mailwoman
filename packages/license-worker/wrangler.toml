@@ -74,7 +74,7 @@ STRIPE_PRICE_YEARLY = "REPLACE"
 [[env.production.d1_databases]]
 binding = "LICENSE_LEDGER"
 database_name = "mailwoman-license"
-database_id = "REPLACE"
+database_id = "a5103543-e2e9-4177-8b6a-d3ea3ed88691"
 migrations_dir = "migrations"
 
 [[env.production.ratelimits]]
