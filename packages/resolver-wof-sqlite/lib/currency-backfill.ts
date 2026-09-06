@@ -66,8 +66,8 @@ export interface CurrencyBackfillOutcomes {
 }
 
 /**
- * One country's read of the gate — every dead name judged, by outcome and by the dead row's placetype — so a census can
- * say what a wider dead-row query admits before a build carries it.
+ * One country's read of the check — every dead name judged, by outcome and by the dead row's placetype — so a census
+ * can say what a wider dead-row query admits before a build carries it.
  */
 export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes {
 	country: string

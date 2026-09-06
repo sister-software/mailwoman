@@ -31,7 +31,7 @@ suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), 
   `en-us/v<version>/` by basename, so the cjk `model.onnx` would have been refused or, worse, materialized as the Latin
   graph under the cjk card. A family now reads from `<family>/v<card version>/` against its own card, once its
   workspace is in the release list; `mailwoman release hf --char-vocab` stages it. Preflight `--source hf` unchanged.
-- **The currency gate has a census mode** (#1746): `resurrectCurrencyHoles` judges in dry-run with a per-country
+- **The currency check has a census mode** (#1746): `resurrectCurrencyHoles` judges in dry-run with a per-country
   report split by the dead row's placetype, and the dead-row query takes the placetypes it admits. Read on the admin
   gazetteer, shipped query vs `+localadmin`: GB 2 → 3 resurrected (Newtownabbey), DE 1 → 155 (dissolved Gemeinden:
   Gleichamberg, Guttau, Kirschau …), FR / IT / ES / US / JP unchanged. The widening is one build option away and

@@ -130,7 +130,7 @@ export interface BuildCandidateOptions {
 		geonamesDir: string
 		countries: readonly string[]
 		/**
-		 * The dead placetypes the gate judges; `resurrectCurrencyHoles`'s default (`locality`) when absent. The
+		 * The dead placetypes the resurrection judges; `resurrectCurrencyHoles`'s default (`locality`) when absent. The
 		 * `localadmin` widening #1746 named is admitted here once its census is read.
 		 */
 		deadPlacetypes?: readonly string[]

@@ -2,12 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The currency gate's census mode: a dry run judges every dead row and stages nothing, the dead-row query admits
+ * @file The currency check's census mode: a dry run judges every dead row and stages nothing, the dead-row query admits
  *   the placetypes it is told to, and the report splits outcomes by the dead row's placetype (#1746).
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import {
 	type CurrencyBackfillCountryReport,
 	DEFAULT_DEAD_PLACETYPES,
@@ -84,9 +85,7 @@ async function census(
 		},
 		progress: () => {},
 		...(deadPlacetypes ? { deadPlacetypes } : {}),
-		...(options.dryRun
-			? { dryRun: true }
-			: { tx: src as unknown as Parameters<typeof resurrectCurrencyHoles>[0]["tx"] }),
+		...(options.dryRun ? { dryRun: true } : { tx: new DatabaseClient<CandidateDatabase>(":memory:") }),
 		onCountry: (report) => reports.push(report),
 	})
 
