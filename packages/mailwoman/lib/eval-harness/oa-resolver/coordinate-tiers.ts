@@ -7,7 +7,7 @@
  */
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
-import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
+import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/core/resolver"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
 import type { RegionDatabaseProvider } from "#geocode/regions"

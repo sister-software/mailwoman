@@ -4,23 +4,22 @@
 /**
  *   The body of `/license/issued`: poll the worker's claim route for the Checkout Session Stripe returned the buyer
  *   with, then show the key, the one-time refresh secret, the `.env` fragment and the two commands to run. The state is
- *   the pure reducer in `src/license/claim.ts`; this component owns only the timer, the abort, and the copy. Nothing the
+ *   the pure reducer in `@mailwoman/license-worker/sdk/claim`; this component owns only the timer, the abort, and the copy. Nothing the
  *   worker answers is stored anywhere but the DOM.
  */
 
+import {
+	CLAIM_INTERVAL_MS,
+	fetchClaim,
+	initialClaimState,
+	nextClaimState,
+	type ClaimState,
+	type IssuedClaim,
+} from "@mailwoman/license-worker/sdk/claim"
+import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "@mailwoman/license-worker/sdk/constants"
 import { useClipboard } from "@mailwoman/react"
 import type React from "react"
 import { useEffect, useReducer } from "react"
-
-import {
-	CLAIM_INTERVAL_MS,
-	type ClaimState,
-	fetchClaim,
-	initialClaimState,
-	type IssuedClaim,
-	nextClaimState,
-} from "../../license/claim.ts"
-import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "../../license/shop.ts"
 
 import styles from "./styles.module.css"
 

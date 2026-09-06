@@ -9,7 +9,6 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -20,6 +19,7 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import {
 	compactPostcode,
 	createNSULIndexes,

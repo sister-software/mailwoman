@@ -67,8 +67,6 @@ import { $private } from "#env"
 import { isFRN, type FRN } from "#frn"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 /**
  * Requests/second this client paces at by default.

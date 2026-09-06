@@ -8,5 +8,6 @@
  */
 
 export * from "#jp/address-unit"
+export * from "#jp/municipality-register"
 export * from "#jp/postal-code"
 export * from "#jp/prefecture"

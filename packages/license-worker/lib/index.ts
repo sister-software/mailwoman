@@ -10,6 +10,7 @@
 import type { ExportedHandler } from "@cloudflare/workers-types"
 
 import { type AppDependencies, createLicenseWorkerApp } from "#app"
+import { cloudflareEmailProvider } from "#email/cloudflare"
 import { resendProvider } from "#email/resend"
 import { type LicenseWorkerBindings, type LicenseWorkerEnv, readEnv } from "#env"
 import { openLedger } from "#ledger/client"
@@ -21,8 +22,9 @@ import { stripeClient } from "#stripe/client"
 const MISCONFIGURED = JSON.stringify({ error: "worker misconfigured" })
 
 /**
- * How far back each reconciliation pass lists paid invoices: a week, against a six-hour cron, so a pass that fails
- * leaves nothing unminted before the next one.
+ * How far back each reconciliation pass lists paid invoices by creation time: the bound on recovering a subscription
+ * the ledger has never seen (`reconcile.ts` says what is recovered without a bound). A week against a six-hour cron, so
+ * one failed pass costs nothing.
  */
 const RECONCILE_WINDOW_SECONDS = 7 * 24 * 3600
 
@@ -55,7 +57,7 @@ function isolateState(env: LicenseWorkerEnv): IsolateState {
 		deps: {
 			signingStatus: () => signing,
 			ledger: openLedger(env.LICENSE_LEDGER),
-			email: resendProvider(env),
+			email: env.EMAIL_SENDER ? cloudflareEmailProvider(env, env.EMAIL_SENDER) : resendProvider(env),
 		},
 	}
 

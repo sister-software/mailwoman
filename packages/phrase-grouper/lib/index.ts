@@ -33,13 +33,4 @@ export {
 
 export type { SegmentToken } from "#rules"
 
-export type {
-	GroupPhrasesOpts,
-	LocaleHint,
-	NormalizedInputLite,
-	PhraseGrouper,
-	PhraseKind,
-	PhraseProposal,
-	QueryShapeLike,
-	Section,
-} from "#types"
+export type { GroupPhrasesOpts } from "#types"

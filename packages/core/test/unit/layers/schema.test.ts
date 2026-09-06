@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readLayerCoverage, supportsExclusion, writeLayerCoverage } from "@mailwoman/core/layers/manifest"
+import { readLayerCoverage, writeLayerCoverage } from "@mailwoman/core/layers/manifest"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerTier,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
+import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"

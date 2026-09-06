@@ -286,6 +286,7 @@ export default {
 	rules: {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
+		"mailwoman/no-cross-package-reexport": "error",
 		"mailwoman/no-database-boundary-cast": "error",
 		"mailwoman/no-database-handle-cast": "error",
 		"mailwoman/no-import-meta-dirname-walk": "error",

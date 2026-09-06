@@ -92,12 +92,13 @@ const config: Config = {
 
 	future: {
 		v4: true,
-		// @docusaurus/faster is installed but its rspack bundler chokes on `node:` prefixed imports
-		// from isomorphic deps (sentencepiece-js, onnxruntime-web). Explicitly disable so standard
-		// webpack stays in charge. The other speedups (swc loader / minimizer, lightningcss, mdx
-		// cache) are stable on this build and worth keeping.
+		// rspack bundles the site now that every @mailwoman/* subpath the client reaches carries a
+		// browser condition; the geocoder page passes its cold-load and resolve specs on rspack's
+		// output. Both bundlers report maplibre-gl's dynamic `import()` of an expression twice as a
+		// "Critical dependency" warning, so that is not a bundler difference. The persistent cache
+		// stays off until a build has been measured with it.
 		faster: {
-			rspackBundler: false,
+			rspackBundler: true,
 			rspackPersistentCache: false,
 		},
 	},

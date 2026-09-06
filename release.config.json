@@ -87,9 +87,9 @@
 	},
 	"charWeights": {
 		"cjk": {
-			"model": "models/v8-cjk-kana-s42/served-package/model.onnx",
-			"charVocab": "models/v8-cjk-kana-s42/served-package/char-vocab.json",
-			"lineage": "v8-cjk-kana step-024000 — fp32 ONNX behind char_ids (#2164, #2165). JP board (pre-registered v8-jp-full-2026-08-04): PyTorch 0.9924 blended / 0.9821 municipality macro, かすみがうら市 0 of 823 failed; CN board locality_unit 11/14 PyTorch. Replaces v8-cjk-full (0.9653 / 0.9757). The 0.0.1 name reservation shipped without the graph; the first functional release materializes it here.",
+			"model": "models/v8-cjk-kr-s42/served-package/model.onnx",
+			"charVocab": "models/v8-cjk-kr-s42/served-package/char-vocab.json",
+			"lineage": "v8-cjk-kr step-024000 — fp32 ONNX behind char_ids (#2184): the kana base recipe plus the Korean road-name-address corpus at source share 0.38. JP board (v8-jp-kana-2026-09-06, same scorer as the base): 0.9359 blended against the base's 0.9362, native register 0.9921 / 0.9924, かすみがうら市 0 of 823 failed; KR board region 1.0000, subregion 0.9665, street 0.9900, house_number 1.0000, postcode 1.0000; CN locality_unit 12/14. Replaces v8-cjk-kana (cjk/v0.0.1/).",
 			"overlays": ["ja-jp", "zh-cn"]
 		}
 	}

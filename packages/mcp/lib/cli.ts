@@ -48,26 +48,23 @@
  */
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
+import type { PipelineResult } from "@mailwoman/core"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import { filerLookup } from "@mailwoman/filer/filer-lookup"
 import { toFRN, type FRN } from "@mailwoman/filer/frn"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman/neural"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
-import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { createRuntimePipeline, type PipelineResult } from "mailwoman"
+import { createRuntimePipeline } from "mailwoman"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
-import { emitOverpassQL } from "mailwoman/poi"
-import {
-	buildNoGazetteerMessage,
-	createResolverBackend,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	wofExtractPaths,
-} from "mailwoman/resolver-backend"
+import { buildNoGazetteerMessage, createResolverBackend, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 import {
 	assertBDCDatabaseExists,
@@ -99,7 +96,11 @@ const poiDatabasePath = values["poi-db"]
  * already on the data root — same selection `nominatim`/`photon`'s CLIs make.
  */
 let corePromise:
-	| Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; databases: RegionDatabaseProvider }>
+	| Promise<{
+			classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
+			resolver: Resolver
+			databases: RegionDatabaseProvider
+	  }>
 	| undefined
 
 /**
@@ -114,7 +115,7 @@ const CORE_FREE_TOOLS =
 	"mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family"
 
 function loadCore(): Promise<{
-	classifier: NeuralAddressClassifier
+	classifier: ScriptRoutedClassifier
 	resolver: Resolver
 	databases: RegionDatabaseProvider
 }> {
@@ -155,10 +156,10 @@ function loadCore(): Promise<{
 		// nothing and every core-backed tool answered with `resolveWeights`' raw not-found text. The guard keeps
 		// that text (it already names the exact fix command) and adds what an agent mid-conversation needs next:
 		// which tools are down and which are not.
-		let classifier: NeuralAddressClassifier
+		let classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
 
 		try {
-			classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+			classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale: "en-US" })
 		} catch (error) {
 			throw new Error(
 				`✗ ${error instanceof Error ? error.message : String(error)}\n\n` +

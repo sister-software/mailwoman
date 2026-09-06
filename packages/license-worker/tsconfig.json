@@ -10,7 +10,7 @@
 		"types": ["@cloudflare/workers-types"],
 		"resolveJsonModule": true
 	},
-	"include": ["./lib/**/*"],
+	"include": ["./lib/**/*", "./lib/**/*.json"],
 	"exclude": ["./out/**/*"],
 	"references": [{ "path": "../core" }, { "path": "../release-kit" }]
 }

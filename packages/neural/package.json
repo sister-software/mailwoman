@@ -57,6 +57,12 @@
 			"default": "./out/onnx-runner.js",
 			"types": "./out/onnx-runner.d.ts"
 		},
+		"#classifier/loader": {
+			"browser": "./out/classifier/loader-browser.js",
+			"node": "./lib/classifier/loader.ts",
+			"default": "./out/classifier/loader.js",
+			"types": "./out/classifier/loader.d.ts"
+		},
 		"#weights": {
 			"node": "./lib/weights.ts",
 			"default": "./out/weights.js",
@@ -190,6 +196,11 @@
 			"node": "./lib/street-morphology-prior.ts",
 			"default": "./out/street-morphology-prior.js",
 			"types": "./out/street-morphology-prior.d.ts"
+		},
+		"./jp-municipality-repair": {
+			"node": "./lib/jp-municipality-repair.ts",
+			"default": "./out/jp-municipality-repair.js",
+			"types": "./out/jp-municipality-repair.d.ts"
 		},
 		"./unit-repair": {
 			"node": "./lib/unit-repair.ts",

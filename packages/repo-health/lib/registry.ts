@@ -8,6 +8,7 @@
  */
 
 import type { RepoCheck } from "#check"
+import { bundleGraphCheck } from "#checks/bundle-graph"
 import { debtCheck } from "#checks/debt"
 import { exportsCheck } from "#checks/exports"
 import { licenseRegisterCheck } from "#checks/license-register"
@@ -23,7 +24,7 @@ import { vocabCensusCheck } from "#checks/vocab-census"
 
 /**
  * Every health check, in the order `mwops health all` runs them: the ones that only read files first, then the ones
- * that spawn Vale, knip and tsc.
+ * that bundle with esbuild or spawn Vale, knip and tsc.
  */
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
@@ -35,6 +36,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	privateNameShadowsCheck,
 	runtimeFlagsCheck,
 	debtCheck,
+	bundleGraphCheck,
 	vocabCensusCheck,
 	exportsCheck,
 	typecheckTestsCheck,

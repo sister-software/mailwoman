@@ -20,6 +20,16 @@ import { describe, expect, it } from "vitest"
 const repoRoot = String(repoRootPath())
 const CJK = "packages/neural-weights-cjk"
 
+/**
+ * The family's card version names its bucket directory (`cjk/v<version>/`), so the pins below follow the card rather
+ * than a literal a base swap would leave behind.
+ */
+async function cjkCardVersion(): Promise<string> {
+	const card = await readLocalJSONFile<{ version: string }>(resolvePath(repoRoot, CJK, "model-card.json"))
+
+	return card.version
+}
+
 describe("fetch-hf-weights — character-path families", () => {
 	it("plans the cjk family under its own directory, verified against its own card", async () => {
 		const card = await readLocalJSONFile<{ version: string; files_md5: Record<string, string> }>(
@@ -32,7 +42,7 @@ describe("fetch-hf-weights — character-path families", () => {
 		expect(model?.origin).toEqual({
 			kind: "hf",
 			remoteName: "model.onnx",
-			base: expect.stringMatching(/\/cjk\/v0\.0\.1$/u),
+			base: expect.stringMatching(new RegExp(String.raw`/cjk/v${card.version.replaceAll(".", "\\.")}$`, "u")),
 		})
 
 		expect(model?.expectedMD5).toBe(card.files_md5["model.onnx"])
@@ -50,7 +60,7 @@ describe("fetch-hf-weights — character-path families", () => {
 		for (const plan of plans) {
 			if (plan.origin.kind !== "hf") continue
 
-			expect(plan.origin.base).toBe(`${root}/cjk/v0.0.1`)
+			expect(plan.origin.base).toBe(`${root}/cjk/v${await cjkCardVersion()}`)
 		}
 	})
 
@@ -69,7 +79,7 @@ describe("fetch-hf-weights — character-path families", () => {
 			if (plan.origin.kind !== "hf") continue
 
 			expect(plan.origin.base).toBe(
-				family.has(plan.workspace) ? latin.split("/").slice(0, -2).join("/") + "/cjk/v0.0.1" : latin
+				family.has(plan.workspace) ? latin.split("/").slice(0, -2).join("/") + `/cjk/v${await cjkCardVersion()}` : latin
 			)
 		}
 	})

@@ -10,6 +10,7 @@
  *   PlaceEntry at terminals → return FSTMatcher.
  */
 
+import { allRows, getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
@@ -19,7 +20,6 @@ import { FSTMatcher, normalizeTokens } from "#fst/matcher"
 import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "#fst/types"
 import { loadImportanceSplit } from "#place-importance-schema"
 import type { WOFDatabase } from "#schema"
-import { allRows, getRow } from "#sqlite-utils"
 
 const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",

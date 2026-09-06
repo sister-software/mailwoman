@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { POIIntent } from "@mailwoman/core/pipeline"
-import { emitOverpassQL } from "mailwoman/poi"
+import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { describe, expect, it } from "vitest"
 
 const category = (anchor?: POIIntent["anchor"]): POIIntent => ({

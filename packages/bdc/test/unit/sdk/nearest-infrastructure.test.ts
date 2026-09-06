@@ -38,7 +38,6 @@ import {
 } from "@mailwoman/bdc/sdk/nearest-infrastructure"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	readLayerCoverage,
@@ -46,6 +45,7 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import {
 	POI_H3_RESOLUTION,
 	POILookup,

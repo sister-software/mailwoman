@@ -5,26 +5,15 @@
  *   The claim page's state, as a pure reducer over the worker's claim route, and the one fetch that feeds it. Only
  *   `polling` moves; every other phase is terminal. `pending` past the deadline is the page saying the email will arrive
  *   on its own; an unanswered worker past the deadline is `unreachable`, a different word, because a customer who sees
- *   it acts differently. The docs site is a browser bundle, so the request is a plain `fetch`: the worker's exact-origin
- *   CORS admits this site and answers `no-store`.
+ *   it acts differently, and a 200 whose body is not a claim counts as unanswered rather than as a claim with fields
+ *   missing. The docs site is a browser bundle, so the request is a plain `fetch`: the worker's exact-origin CORS
+ *   admits this site and answers `no-store`.
  */
 
-import { LICENSE_WORKER_URL } from "./shop.ts"
+import { type ClaimResponse, type IssuedClaim, parseClaimResponse } from "#claim-contract"
+import { LICENSE_WORKER_URL } from "#sdk/constants"
 
-export type ClaimResponse =
-	| { status: "pending" }
-	| { status: "revoked" }
-	| {
-			status: "issued"
-			token: string
-			lid: string
-			licensee: string
-			issued: string
-			expires: string
-			refresh_secret?: string
-	  }
-
-export type IssuedClaim = Extract<ClaimResponse, { status: "issued" }>
+export type { ClaimResponse, IssuedClaim } from "#claim-contract"
 
 export type ClaimState =
 	| { phase: "polling"; attempts: number; startedAt?: number }
@@ -37,6 +26,7 @@ export type ClaimState =
 export type ClaimEvent =
 	| { kind: "response"; response: ClaimResponse; now: number }
 	| { kind: "http"; status: number; now: number }
+	| { kind: "malformed"; now: number }
 	| { kind: "error"; now: number }
 
 /**
@@ -65,7 +55,9 @@ export function initialClaimState(): ClaimState {
 }
 
 export function nextClaimState(state: ClaimState, event: ClaimEvent): ClaimState {
-	if (state.phase !== "polling") return state
+	if (state.phase !== "polling") {
+		return state
+	}
 
 	const attempts = state.attempts + 1
 	const startedAt = state.startedAt ?? event.now
@@ -73,16 +65,30 @@ export function nextClaimState(state: ClaimState, event: ClaimEvent): ClaimState
 	const stillPolling: ClaimState = { phase: "polling", attempts, startedAt }
 
 	if (event.kind === "response") {
-		if (event.response.status === "issued") return { phase: "issued", claim: event.response }
+		if (event.response.status === "issued") {
+			return { phase: "issued", claim: event.response }
+		}
 
-		if (event.response.status === "revoked") return { phase: "revoked" }
+		if (event.response.status === "revoked") {
+			return { phase: "revoked" }
+		}
 
-		return overdue ? { phase: "waiting_too_long", attempts } : stillPolling
+		if (overdue) {
+			return { phase: "waiting_too_long", attempts }
+		}
+
+		return stillPolling
 	}
 
-	if (event.kind === "http" && event.status === HTTP_NOT_FOUND) return { phase: "not_found" }
+	if (event.kind === "http" && event.status === HTTP_NOT_FOUND) {
+		return { phase: "not_found" }
+	}
 
-	return overdue ? { phase: "unreachable", attempts } : stillPolling
+	if (overdue) {
+		return { phase: "unreachable", attempts }
+	}
+
+	return stillPolling
 }
 
 /**
@@ -94,9 +100,13 @@ export async function fetchClaim(sessionID: string, signal?: AbortSignal): Promi
 	try {
 		const response = await fetch(claimURL(sessionID), { headers: { accept: "application/json" }, signal })
 
-		if (!response.ok) return { kind: "http", status: response.status, now }
+		if (!response.ok) {
+			return { kind: "http", status: response.status, now }
+		}
 
-		return { kind: "response", response: (await response.json()) as ClaimResponse, now }
+		const claim = parseClaimResponse(await response.json())
+
+		return claim ? { kind: "response", response: claim, now } : { kind: "malformed", now }
 	} catch {
 		return { kind: "error", now }
 	}

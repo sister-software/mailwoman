@@ -3,4 +3,3 @@
 
 export * from "#poi/executor"
 export * from "#poi/intent"
-export * from "#poi/overpass"

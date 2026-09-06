@@ -6,7 +6,7 @@
  *   events', so the deadline is asserted by arithmetic rather than by waiting.
  */
 
-import { CLAIM_DEADLINE_MS, claimURL, initialClaimState, nextClaimState } from "@mailwoman/docs/license/claim"
+import { CLAIM_DEADLINE_MS, claimURL, initialClaimState, nextClaimState } from "@mailwoman/license-worker/sdk/claim"
 import { describe, expect, it } from "vitest"
 
 const T0 = 1_000_000
@@ -62,6 +62,16 @@ describe("the claim page's state", () => {
 		expect(state).toEqual({ phase: "polling", attempts: 1, startedAt: T0 })
 
 		state = nextClaimState(state, { kind: "http", status: 503, now: T0 + CLAIM_DEADLINE_MS + 1 })
+		expect(state).toEqual({ phase: "unreachable", attempts: 2 })
+	})
+
+	it("a 200 whose body is no claim counts as an unanswered worker, never as an issued key with fields missing", () => {
+		let state = initialClaimState()
+
+		state = nextClaimState(state, { kind: "malformed", now: T0 })
+		expect(state).toEqual({ phase: "polling", attempts: 1, startedAt: T0 })
+
+		state = nextClaimState(state, { kind: "malformed", now: T0 + CLAIM_DEADLINE_MS + 1 })
 		expect(state).toEqual({ phase: "unreachable", attempts: 2 })
 	})
 

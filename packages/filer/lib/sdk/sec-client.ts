@@ -77,8 +77,6 @@ import type { PathBuilderLike } from "path-ts"
 import { $private } from "#env"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 /**
  * The SEC fair-access policy's stated ceiling (https://www.sec.gov/os/accessing-edgar-data): "Current max request rate:

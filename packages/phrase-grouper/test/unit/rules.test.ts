@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import {
 	hasUnitMarker,
 	scoreHyphenatedCompound,
@@ -13,10 +14,8 @@ import {
 	type SegmentToken,
 	tokenizeSegment,
 } from "@mailwoman/phrase-grouper/rules"
-import type { PhraseProposal, QueryShapeLike } from "@mailwoman/phrase-grouper/types"
-import type { KnownFormat } from "@mailwoman/query-shape"
+import type { KnownFormat, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
-
 /**
  * Build the `SegmentToken[]` for a single segment string the same way `tokenizeSegment` does, but keep it explicit in
  * tests so each token's offsets are visible. `tokenizeSegment` is itself tested directly below; the other rule tests

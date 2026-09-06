@@ -28,8 +28,8 @@ import {
 	createKindClassifier,
 	type POIPhraseLookup,
 } from "@mailwoman/kind-classifier"
-import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-hint"
-import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
+import { detectLocale } from "@mailwoman/locale-hint"
+import { type NeuralAddressClassifier, type ParseOpts, scriptFamilyForText } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
@@ -364,10 +364,16 @@ export function createRuntimePipeline(
 
 	// The character-path CJK model was trained with the postal mark 〒 in front of every postcode and misreads the
 	// prefecture boundary without it; the SentencePiece path wants it stripped (`NormalizeOpts.postalMark`).
-	const postalMark = (opts.classifier as { encoder?: string } | undefined)?.encoder === "char" ? "keep" : undefined
+	// Decided per input: a script-routed classifier hands a kanji or Hangul line to the character path whatever the
+	// primary's encoder, so the mark is kept exactly when that path will read the text.
+	const classifierShape = opts.classifier as { encoder?: string; forInput?: unknown } | undefined
+
+	const keepPostalMark = (raw: string): boolean =>
+		classifierShape?.encoder === "char" || (!!classifierShape?.forInput && scriptFamilyForText(raw) === "cjk")
 
 	const stages: RuntimePipelineStages = {
-		normalize: postalMark ? (raw, normalizeOpts) => normalize(raw, { ...normalizeOpts, postalMark }) : normalize,
+		normalize: (raw, normalizeOpts) =>
+			normalize(raw, { ...normalizeOpts, ...(keepPostalMark(raw) ? { postalMark: "keep" } : {}) }),
 		computeQueryShape,
 		// Default kind classifier: rule-based from @mailwoman/kind-classifier. Caller can override.
 		// POI arc (default-ON since 2026-07-20). The poi-aware classifier only exists when the flag
@@ -399,8 +405,8 @@ export function createRuntimePipeline(
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
 		detectLocale:
 			opts.detectLocale ??
-			((input, shape, detectOpts) =>
-				defaultDetectLocale(input, shape, {
+			(async (_input, shape, detectOpts) =>
+				detectLocale(shape, {
 					...detectOpts,
 					...($public.MW_LOCALE ? { environmentLocale: $public.MW_LOCALE } : {}),
 					...(machinePreferences ? { machinePreferences } : {}),
@@ -566,24 +572,3 @@ export function createRuntimePipeline(
 // Re-export the types so consumers don't need to import from both `mailwoman` and `@mailwoman/core/pipeline`.
 // `ParseOpts` lives in `@mailwoman/neural` — re-export here so callers can type-check parse options
 // without reaching into internal workspace packages.
-export type {
-	AddressClassifier,
-	ClassifierOpts,
-	FSTMatcherLike,
-	LocaleHint,
-	MachinePreferences,
-	NormalizedInputLite,
-	PhraseGrouper,
-	PhraseKind,
-	PhraseProposal,
-	PipelineFault,
-	PipelineOpts,
-	PipelineResult,
-	PipelineTiming,
-	QueryKind,
-	QueryKindResult,
-	QueryShapeLite,
-	RuntimePipelineStages,
-} from "@mailwoman/core/pipeline"
-
-export type { ParseOpts } from "@mailwoman/neural"

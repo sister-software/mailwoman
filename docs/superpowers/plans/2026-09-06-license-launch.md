@@ -166,7 +166,7 @@ owns that setting, so Task 7 confirms it does not refuse the CLI.
 
 - [ ] The clickwrap agreement as `docs/src/pages/license/terms/commercial-2026-10.mdx`, never edited after publication; a new version is a new page and a new `AGREEMENT_VERSION` in `lib/shop/catalog.ts`.
 - [ ] The Stripe account's legal name matches the licensor the terms name; the terms URL under the account's public details.
-- [ ] `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` in the lab `.env`, then `yarn mwops shop provision --mode live --apply`, which writes the production Price ids into `wrangler.toml` and the Payment Links into `docs/src/license/shop.ts`. Commit both; the Buy section renders on the next site deploy. Add `BILLING_PORTAL_URL` (the no-code portal's login link from the dashboard) to `shop.ts` by hand: it is not an API object.
+- [ ] `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` in the lab `.env`, then `yarn mwops shop provision --mode live --apply`, which writes the production Price ids into `wrangler.toml` and the Payment Links into `packages/license-worker/lib/sdk/constants.ts`, which the site reads. Commit both; the Buy section renders on the next site deploy. Add `BILLING_PORTAL_URL` (the no-code portal's login link from the dashboard) to `constants.ts` by hand: it is not an API object.
 
 ### Task 6 (operator): the email account
 

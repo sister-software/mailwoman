@@ -33,8 +33,11 @@ import {
 	scoreVague,
 	scoreVenueLandmark,
 } from "@mailwoman/kind-classifier/rules"
-import type { NormalizedInputLite, QueryShapeLike } from "@mailwoman/kind-classifier/types"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import {
+	computeQueryShape,
+	type NormalizedInputLite,
+	type QueryShapeSegmentsView as QueryShapeLike,
+} from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 /**

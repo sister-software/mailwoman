@@ -7,16 +7,16 @@ import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PolicyMode } from "@mailwoman/core/policy"
+import type { Resolver } from "@mailwoman/core/resolver"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
-import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
-import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type React from "react"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	loadClassifierTolerant,
@@ -269,7 +269,8 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 async function resolveWithCandidates(
 	resolver: Resolver,
 	tree: AddressTree,
-	options: ParseOptions
+	options: ParseOptions,
+	routedAway = false
 ): Promise<AddressTree> {
 	const opts: {
 		candidatesPerLookup?: number
@@ -300,7 +301,11 @@ async function resolveWithCandidates(
 	}
 
 	const { resolveCandidateDBPath } = await import("#resolver-backend")
-	const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
+
+	const dc =
+		routedAway && !options.defaultCountry
+			? undefined
+			: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 	if (dc) {
 		opts.defaultCountry = dc
@@ -479,7 +484,14 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
 		const { resolveCandidateDBPath } = await import("#resolver-backend")
-		const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
+		// A script-routed input (a kanji or Hangul line under --locale en-US) ran on the family classifier, so the locale's
+		// inferred country is withheld; an explicit --default-country stays.
+		const routedAway = classifier ? (await classifier.forInput(input)) !== classifier.primary : false
+
+		const dc =
+			routedAway && !options.defaultCountry
+				? undefined
+				: resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 		if (dc) {
 			resolveOpts.defaultCountry = dc
@@ -678,7 +690,9 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
  * resolve; `npx mailwoman parse …` always produces output). The #1108 absent-vs-corrupt distinction lives in
  * {@link loadClassifierTolerant}; the warning goes to STDERR, never STDOUT, so piped stdout parsing is unaffected.
  */
-async function tryLoadNeural(options: ParseOptions): Promise<NeuralAddressClassifier | undefined> {
+async function tryLoadNeural(
+	options: ParseOptions
+): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
 	return await loadClassifierTolerant(options.locale, {
 		modelPath: options.model,
 		tokenizerPath: options.tokenizer,
@@ -725,11 +739,18 @@ async function runNeural(
 	const { proposalsToTree } = await import("@mailwoman/core/decoder")
 	const { createNeuralProposalClassifier, NeuralAddressClassifier } = await import("@mailwoman/neural")
 
-	const neural = await NeuralAddressClassifier.loadFromWeights({
+	// One input per invocation, so the script route is taken once, up front: the family classifier answers a kanji or
+	// Hangul line, the primary everything else.
+	const routedClassifier = await NeuralAddressClassifier.loadRoutedFromWeights({
 		locale: options.locale,
 		modelPath: options.model,
 		tokenizerPath: options.tokenizer,
 	})
+
+	const neural = await routedClassifier.forInput(input)
+	// Routed to another family, the locale says nothing about the address's country: its inferred resolver scope is
+	// withheld (an explicit --default-country stays).
+	const routedAway = neural !== routedClassifier.primary
 
 	// Fast path: no policy AND no resolve → preserve containment nesting via NeuralAddressClassifier
 	// 's direct projection helpers (returns the serialized string in one call).
@@ -773,7 +794,7 @@ async function runNeural(
 	}
 
 	if (options.resolve) {
-		tree = await withResolver(options, (resolver) => resolveWithCandidates(resolver, tree, options))
+		tree = await withResolver(options, (resolver) => resolveWithCandidates(resolver, tree, options, routedAway))
 	}
 
 	return await serializeTree(tree, options.format, { includeAlternatives: options.candidates != null })

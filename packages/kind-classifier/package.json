@@ -44,11 +44,6 @@
 			"default": "./out/classify.js",
 			"types": "./out/classify.d.ts"
 		},
-		"./types": {
-			"node": "./lib/types.ts",
-			"default": "./out/types.js",
-			"types": "./out/types.d.ts"
-		},
 		"./intent-rules": {
 			"node": "./lib/intent-rules.ts",
 			"default": "./out/intent-rules.js",

@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { assertAreaAgreement, CoverageBasis, sourcePresentCoverageCells } from "@mailwoman/core/layers"
+import { assertAreaAgreement, sourcePresentCoverageCells } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { describe, expect, it } from "vitest"
 
 describe("sourcePresentCoverageCells", () => {

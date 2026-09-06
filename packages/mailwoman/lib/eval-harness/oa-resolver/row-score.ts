@@ -5,7 +5,7 @@
  * @file Grade one row: the admin-match flags plus the great-circle error from the resolved place to OA's own point.
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/resolver"
+import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import type { LocalityMatcher } from "#eval-harness/oa-resolver/admin-match"

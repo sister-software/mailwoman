@@ -29,6 +29,7 @@ import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
@@ -37,7 +38,6 @@ import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path
 import { TextSpliterator } from "spliterator"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,
@@ -46,7 +46,6 @@ import {
 	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
-
 /**
  * A successful response; anything else is an error page or an unfollowed redirect.
  */

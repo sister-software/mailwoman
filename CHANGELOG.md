@@ -18,6 +18,18 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Fixed — every stamped response body is a named OpenAPI component
+
+`stampedResponseSchema` now takes the component name as a required second argument and registers it. Unnamed, the
+intersection it returns was inlined at all eleven call sites, and a generated client had no name to give the type: the
+Rust crate's `PhotonResponse` arms became `Variant0`/`Variant1` (positional), and each `/v1` operation grew a flattened
+clone of an outcome schema that already had a name. Photon's `/api` + `/reverse` union arm is now
+`StampedPhotonFeatureCollection`, Nominatim's three unions share `StampedNominatimResult` and
+`StampedNominatimFeatureCollection`, and the five `/v1` bodies are `Stamped{Parse,Geocode}Outcome`,
+`Stamped{Batch,Resolve,Format}Response`. The wire bodies are unchanged; the emitted documents gain those components,
+and the generated clients name their types after them. This is what turned the `clients` job red on the v9.3.0 release
+run — `cargo check --examples` against the drifted `examples/basic.rs`.
+
 ### Changed — each package declares the environment variables it reads
 
 `@mailwoman/core/env`'s `$public` now carries only what core reads (the four data roots, `MAILWOMAN_COARSE_PLACER_DIR`,

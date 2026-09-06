@@ -19,8 +19,6 @@ import { z } from "@hono/zod-openapi"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { DerivationProjection, Evidence } from "@mailwoman/evidence"
 
-export { APIErrorSchema } from "@mailwoman/api-kit"
-
 /**
  * `POST /v1/parse` request body.
  */

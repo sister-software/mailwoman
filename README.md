@@ -73,14 +73,15 @@ mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 ## Library
 
 ```ts
-import { createRuntimePipeline, decodeAsJson } from "mailwoman"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })
 
 const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
-console.log(decodeAsJson(tree))
+console.log(decodeAsJSON(tree))
 // { region: "CA", locality: "Mountain View", street: "Amphitheatre",
 //   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
 ```

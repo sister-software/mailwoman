@@ -19,7 +19,6 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -28,6 +27,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
+import { CoverageBasis } from "@mailwoman/evidence"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"

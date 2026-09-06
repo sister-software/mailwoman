@@ -24,9 +24,11 @@
 
 import { PipelineExplorer as ReactPipelineExplorer } from "@mailwoman/react"
 import type { ParseResult, PipelinePanels, PipelineRuntime, ResolvedPlaceView } from "@mailwoman/react"
-import { useMemo } from "react"
+import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 import "@mailwoman/react/styles.css"
+
+import { useMemo } from "react"
 
 import { AboutDemo } from "#components/AboutDemo/AboutDemo"
 import { BIOHighlight } from "#components/BIOHighlight/BIOHighlight"
@@ -45,7 +47,6 @@ import {
 	parseStageLabelsFor,
 	projectCascadeHits,
 	resolveDualRoles,
-	runCascade,
 	runClassifyStage,
 } from "#shared/demo-helpers"
 

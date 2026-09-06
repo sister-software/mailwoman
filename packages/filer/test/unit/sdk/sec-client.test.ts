@@ -59,14 +59,11 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 // Dynamic imports AFTER the reset so the module chain evaluates against the env mock.
-const {
-	createSECClient,
-	isImmutableArchiveURL,
-	isTransientResourceError,
-	ResourceError,
-	SEC_DEFAULT_REQUESTS_PER_SECOND,
-	SEC_MAX_REQUESTS_PER_SECOND,
-} = await import("@mailwoman/filer/sdk/sec-client")
+const { createSECClient, isImmutableArchiveURL, SEC_DEFAULT_REQUESTS_PER_SECOND, SEC_MAX_REQUESTS_PER_SECOND } =
+	await import("@mailwoman/filer/sdk/sec-client")
+
+const { isTransientResourceError } = await import("@mailwoman/core/api")
+const { ResourceError } = await import("@mailwoman/core/errors")
 
 const TEST_USER_AGENT = "Test Harness test@example.com"
 

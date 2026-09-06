@@ -38,6 +38,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { GeoPoint } from "@mailwoman/spatial"
@@ -45,7 +46,6 @@ import { Box, Text } from "ink"
 import type { PathBuilderLike } from "path-ts"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,

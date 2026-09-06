@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { LocaleHint } from "@mailwoman/core/pipeline"
 import { classifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
 import { matchPOISubject, type POIPhraseLookup } from "@mailwoman/kind-classifier/poi"
-import type { LocaleHint } from "@mailwoman/kind-classifier/types"
 import { describe, expect, it } from "vitest"
 
 /**

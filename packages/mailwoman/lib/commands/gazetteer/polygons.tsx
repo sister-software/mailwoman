@@ -31,6 +31,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -38,14 +39,12 @@ import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,
 	splitUpperList,
 	useCommandTask,
 } from "#cli-kit"
-
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
  */

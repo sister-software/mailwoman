@@ -34,7 +34,9 @@ import type {
 	ParseWithLogitsResult,
 	SpanProposerConfig,
 } from "#classifier/options"
+import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { buildFSTEmissionPriors } from "#fst-prior"
+import { repairJPMunicipalityLabels } from "#jp-municipality-repair"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype/census"
@@ -67,6 +69,13 @@ export type {
 	ParseWithLogitsResult,
 	SpanProposerConfig,
 } from "#classifier/options"
+
+export {
+	type RoutableClassifier,
+	ScriptRoutedClassifier,
+	scriptFamilyForText,
+	type ScriptRoutedClassifierOpts,
+} from "#classifier/script-router"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
@@ -196,9 +205,10 @@ export class NeuralAddressClassifier {
 	/**
 	 * One-call factory — see `classifier-loader.ts`, where the whole resolution lives.
 	 *
-	 * **Node-only.** The dynamic import keeps the loader (and behind it `onnxruntime-node` + the fs-reading weights
-	 * resolver) out of the static graph, so this file stays bundlable for the browser; calling it there throws at
-	 * runtime. Browser callers use `loadNeuralClassifierFromURLs`.
+	 * **Node-only.** `#classifier/loader` carries a `browser` condition that resolves to a refusing module, so a browser
+	 * bundle that follows this import stays free of `onnxruntime-node` and the fs-reading weights resolver, and calling
+	 * it there throws. The `webpackIgnore` comment keeps webpack's SSR bundle, which resolves the `node` condition, from
+	 * following the Node half. Browser callers use `loadNeuralClassifierFromURLs`.
 	 */
 	static async loadFromWeights(
 		...args: Parameters<typeof import("#classifier/loader").loadClassifierFromWeights>
@@ -206,6 +216,20 @@ export class NeuralAddressClassifier {
 		const { loadClassifierFromWeights } = await import(/* webpackIgnore: true */ "#classifier/loader")
 
 		return loadClassifierFromWeights(...args)
+	}
+
+	/**
+	 * {@link loadFromWeights} behind a {@link ScriptRoutedClassifier}: the caller's locale is the primary, and an input
+	 * whose script names another weights family runs on that family's classifier, loaded on first use. The served entry
+	 * points (`mailwoman geocode`, the drop-in servers, the batch worker) load through this one, so a bare kanji or
+	 * Hangul line reaches the character-path model without a `--locale`. Node-only, as {@link loadFromWeights} is.
+	 */
+	static async loadRoutedFromWeights(
+		...args: Parameters<typeof import("#classifier/loader").loadScriptRoutedClassifier>
+	): Promise<ScriptRoutedClassifier<NeuralAddressClassifier>> {
+		const { loadScriptRoutedClassifier } = await import(/* webpackIgnore: true */ "#classifier/loader")
+
+		return loadScriptRoutedClassifier(...args)
 	}
 	/**
 	 * Tokenize → infer → Viterbi (or argmax) → decoder tree.
@@ -727,6 +751,17 @@ export class NeuralAddressClassifier {
 		// fragments split at unlabeled punctuation ("P.O. Box" decoding as P + O + Box). Opt-in,
 		// declared in the ship config like the conventions mask. When the span proposer ran, its
 		// ANNOTATION/QUOTED boundaries become merge-crossing constraints (M2's second half).
+		// The char path only: the six JP towns whose name carries 市 (`@mailwoman/codex`'s `JP_INNER_SHI_TOWNS`), where the
+		// model closes the municipality one character early. Exact register names, so no other row can move.
+		if (this.cfg.charEncoder) {
+			const before = traceRepairs ? labelsPerPiece(tokens) : []
+			tokens = repairJPMunicipalityLabels(text, tokens).tokens
+
+			if (traceRepairs) {
+				recordRepair("jpMunicipality", before, labelsPerPiece(tokens))
+			}
+		}
+
 		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
 			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
 			// The bridge MERGES tokens (later fragments are dropped), so both snapshots go through the

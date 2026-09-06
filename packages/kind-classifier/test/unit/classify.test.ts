@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { classifyKindSync } from "@mailwoman/kind-classifier/classify"
-import type { NormalizedInputLite, QueryShapeLike } from "@mailwoman/kind-classifier/types"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 function input(normalized: string): NormalizedInputLite {

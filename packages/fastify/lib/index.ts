@@ -20,12 +20,12 @@
  *   Fastify-native, so it reuses those SHAPES rather than `@mailwoman/api-kit`'s Hono plumbing.
  */
 
+import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
 import fp from "fastify-plugin"
-import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "mailwoman"
 import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode"
 
 /**
@@ -168,7 +168,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 		import("@mailwoman/neural"),
 	])
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
+	const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale })
 
 	let resolver: ReturnType<(typeof import("@mailwoman/resolver"))["createWOFResolver"]> | undefined
 
