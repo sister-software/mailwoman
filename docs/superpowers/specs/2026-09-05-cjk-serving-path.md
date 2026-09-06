@@ -66,11 +66,11 @@ one held-out hiragana municipality did, and the control run says whether that is
 
 ## 6. What this does not decide
 
+Two items this section first listed have since landed: the CJK FST builders (#1493, `fst-{ja-jp,zh-cn,ko-kr}.bin` in
+`wof/fst-per-locale-curated/`) and the browser char runner (`web-onnx-runner.ts` `inferChars`, under `browser-graph.test.ts`).
+
 - Korean: the corpus build over the juso rows and its label set (`stage3-cjk` plus any KR tags) is its own plan.
 - Whether the aux locale head is switched on for CJK (`use_locale_conditioning`); off in every CJK run so far.
-- The FST autocomplete tier for CJK (#1493: `fst-{ja-jp,zh-cn,ko-kr}.bin` have no builder).
-- The browser bundle: the char runner has to exist in `web-onnx-runner.ts` too, under the same esbuild test the
-  Latin path passes.
 
 ## 7. Order of work
 
