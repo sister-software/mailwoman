@@ -18,17 +18,4 @@
  *   that establishes it.
  */
 
-export {
-	decodeRings,
-	encodeRings,
-	pointInEncodedRings,
-	RING_BLOB_VERSION,
-	ringAreaReadings,
-	ringSignedAreaM2,
-	ringsBoundingBox,
-	type DecodedRings,
-	type MultiPolygonRings,
-	type PolygonRings,
-} from "@mailwoman/spatial"
-
 export { resolveRingRoles, type ResolvedRingRoles } from "#ring-roles"

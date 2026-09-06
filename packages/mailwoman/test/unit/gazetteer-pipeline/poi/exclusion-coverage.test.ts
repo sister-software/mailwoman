@@ -9,18 +9,22 @@
  */
 
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	readLayerCoverage,
-	supportsExclusion,
 	writeLayerCoverage,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { type LineStringPath, type ParsedGeometry, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
+import {
+	type LineStringPath,
+	type ParsedGeometry,
+	shortCellToInt,
+	type H3Cell,
+	interiorCoverageCells,
+} from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToBoundary, latLngToCell } from "h3-js"
 import type { CaptureRow } from "mailwoman/gazetteer-pipeline/poi/capture-recapture"
-import { interiorCoverageCells } from "mailwoman/gazetteer-pipeline/poi/coverage-region"
 import { buildExclusionCoverage } from "mailwoman/gazetteer-pipeline/poi/exclusion-coverage"
 import { describe, expect, it } from "vitest"
 

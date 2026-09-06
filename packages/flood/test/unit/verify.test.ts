@@ -22,9 +22,9 @@ import {
 	fixtureExtentGeometry,
 	fixtureFeatures,
 	fixtureSource,
-	rectangleRing,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
+import { rectangleRing } from "@mailwoman/spatial"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**

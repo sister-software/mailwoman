@@ -25,11 +25,12 @@
  *   of it (`import/no-cycle`), and a second copy of a guard is a second place for it to drift.
  */
 
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { type MapFrame, MapRenderer, TileSource } from "@mailwoman/map-tui"
 import { render, Text, useApp } from "ink"
 import React, { useEffect } from "react"
 
-import { CommandError, useCommandTask, writeRawStdout } from "#cli-kit"
+import { useCommandTask, writeRawStdout } from "#cli-kit"
 import { renderInkToString } from "#debug-view/static-render"
 import { resolveTilesPath } from "#debug-view/tiles"
 import { assertDebugFormatSanity, assertDebugSizeFloor, initialZoomForTier } from "#debug-view/view-policy"

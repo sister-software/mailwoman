@@ -102,8 +102,6 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
 	return p && (await pathExists(p)) ? p : undefined
 }
 
-export { dataRootPath, mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
-
 /**
  * The #1009 "no gazetteer data found" preflight message, shared by every caller that checks on a candidate/WOF resolver
  * being present before it will boot (`photon/cli.ts`, `nominatim/cli.ts`, `mailwoman/api-engine.ts`'s `mailwoman

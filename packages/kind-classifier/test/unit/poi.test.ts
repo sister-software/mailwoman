@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { LocaleHint } from "@mailwoman/core/pipeline"
 import { classifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
 import { matchPOISubject, type POIPhraseLookup } from "@mailwoman/kind-classifier/poi"
-import type { LocaleHint } from "@mailwoman/kind-classifier/types"
 import { describe, expect, it } from "vitest"
 
 /**

@@ -22,7 +22,7 @@
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/resolver"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import { fixtureFeatures, fixtureSource, FIXTURE_ORIGIN, FIXTURE_PLANS, FIXTURE_SIDE } from "@mailwoman/zoning/test-kit"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"

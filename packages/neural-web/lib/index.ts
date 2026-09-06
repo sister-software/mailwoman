@@ -12,6 +12,7 @@
  *   the two specifiers.
  */
 
+// oxlint-disable mailwoman/no-cross-package-reexport -- this package IS the compatibility re-export of @mailwoman/neural's browser runtime; it is deprecated, and its removal is a release decision.
 export {
 	defaultGazetteerLexiconURL,
 	detectPairIndexCountry,

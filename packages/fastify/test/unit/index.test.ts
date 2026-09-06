@@ -8,9 +8,9 @@
  *   prefix encapsulation are all exercised over `fastify.inject`.
  */
 
+import type { AddressNode, AddressTree, PipelineOpts, PipelineResult } from "@mailwoman/core"
 import mailwomanFastify, { type MailwomanFastifyOptions, type RuntimePipeline } from "@mailwoman/fastify"
 import Fastify, { type FastifyInstance } from "fastify"
-import type { AddressNode, AddressTree, PipelineOpts, PipelineResult } from "mailwoman"
 import { describe, expect, it } from "vitest"
 
 /**

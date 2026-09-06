@@ -10,12 +10,14 @@
 
 import {
 	compareReferential,
+	REFERENTIAL_SATURATION_POPULATION,
+	referentialFromPopulation,
+} from "@mailwoman/core/resolver"
+import {
 	createPlaceImportanceTable,
 	IMPORTANCE_SPLIT_SOURCES,
 	loadImportanceSplit,
 	type PlaceImportanceDatabase,
-	REFERENTIAL_SATURATION_POPULATION,
-	referentialFromPopulation,
 	splitLegacyImportance,
 } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

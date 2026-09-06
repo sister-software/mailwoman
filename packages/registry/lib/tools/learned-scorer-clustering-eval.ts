@@ -31,6 +31,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { makeLcg } from "@mailwoman/core/random"
+import { mean } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 
 import {
@@ -47,7 +48,6 @@ import { buildNPPESSample } from "#tools/nppes/sample"
 import { scoreEntities } from "#tools/nppes/scoring"
 import {
 	bestOver,
-	mean,
 	MIN_MEANINGFUL_F1_DELTA,
 	pct,
 	quantileThresholds,

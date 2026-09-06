@@ -14,8 +14,6 @@
 
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 
-export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
-
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale a BAN extract was built with. FR-only: BAN is the
  * French national register. Adding a country here means shipping that country's national register on the shared schema

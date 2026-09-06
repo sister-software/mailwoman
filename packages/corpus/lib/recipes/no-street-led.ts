@@ -16,16 +16,10 @@
  *   3. pc-first   "«pc» «city», «st» «n»"   (the 7% floor — the anchor the others converge to)
  */
 
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import {
-	alignAndWrite,
-	foldNOSurface,
-	makeMulberry32,
-	readTuples,
-	type CorpusRecipe,
-	sliceSourceID,
-} from "#recipes/scaffold"
+import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 
 /**
  * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

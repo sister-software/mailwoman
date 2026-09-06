@@ -26,6 +26,7 @@ import {
 	recordTimed,
 	stampedResponseSchema,
 	withEngineStamp,
+	APIErrorSchema,
 } from "@mailwoman/api-kit"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { EngineStamp } from "@mailwoman/core/license"
@@ -34,7 +35,6 @@ import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOpti
 
 import type { MailwomanAPIEngine } from "#engine"
 import {
-	APIErrorSchema,
 	BatchRequestSchema,
 	BatchResponseSchema,
 	FormatRequestSchema,

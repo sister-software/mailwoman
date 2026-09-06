@@ -7,14 +7,15 @@
  */
 
 import {
+	pointInPolygon,
 	decodeRings,
 	encodeRings,
 	pointInEncodedRings,
 	ringAreaReadings,
 	ringSignedAreaM2,
-} from "@mailwoman/flood/rings"
-import { holeRing, rectangleRing } from "@mailwoman/flood/test-kit"
-import { pointInPolygon } from "@mailwoman/spatial"
+	reversedRing as holeRing,
+	rectangleRing,
+} from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 describe("ring blob", () => {

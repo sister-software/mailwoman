@@ -27,14 +27,13 @@ import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/
 import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import { md5Hex } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { $private } from "#env/index"
 import { literalFilesEntries } from "#pack/verify-tarball"
 import { releaseWorkspaces } from "#release/stage"
-import { readReleaseConfig, repoCommittedSoftFeedSources } from "#weights/weights-recipe"
-
 /**
  * The bucket's resolve root, when `$private.HF_BUCKET_RESOLVE_URL` does not name one. The bucket name itself comes from
  * `release.config.json`'s `assets.hfBucket`, so a bucket move is a config edit rather than a code edit.

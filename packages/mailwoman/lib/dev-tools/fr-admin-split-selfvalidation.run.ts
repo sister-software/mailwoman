@@ -29,6 +29,7 @@
  *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
+import type { ClassificationRecord } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -42,8 +43,6 @@ import { resolvePath } from "path-ts"
 
 import { collectResolved, mostSpecific } from "#eval-harness/oa-resolver/tree-hits"
 import { v0RecordToTree } from "#eval-harness/v0-tree-adapter"
-import type { ClassificationRecord } from "#index"
-
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 /**
  * Percentage-point collision reduction the split must deliver to be judged effective.

@@ -10,7 +10,8 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
+import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/core/resolver"
+import { allRows } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -51,7 +52,6 @@ import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#rank
 import type { WOFDatabase } from "#schema"
 import { fetchSearchRows, type RawSearchRow } from "#search-fetch"
 import { SqliteConventionSource } from "#sqlite-convention-source"
-import { allRows } from "#sqlite-utils"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 export interface WOFSQLitePlaceLookupOpts {

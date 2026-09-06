@@ -26,14 +26,9 @@
 
 import { Spinner } from "@inkjs/ui"
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
+import { CommandError } from "@mailwoman/core/scripting/command"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

@@ -29,8 +29,6 @@ import {
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
 import type { Score } from "#tools/nppes/scoring"
 
-export { mean } from "@mailwoman/core/utils"
-
 /**
  * One source a cross-source probe ingests: where it lives, the column mapping, and an in-state filter.
  */

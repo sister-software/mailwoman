@@ -8,8 +8,8 @@
  */
 
 import { outlineFromGeoJSON, realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
-import { rectangleRing } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
+import { rectangleRing } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 const GEOMETRY = { type: "Polygon", coordinates: [rectangleRing(-1, 52, 0, 53)] }

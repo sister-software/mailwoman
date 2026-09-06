@@ -40,9 +40,11 @@ import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
+import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
@@ -53,10 +55,8 @@ import {
 	buildNoGazetteerMessage,
 	createResolverBackend,
 	existingWOFDatabasePaths,
-	mailwomanDataRoot,
 	resolveCandidateDBPath,
 } from "#resolver-backend"
-
 /**
  * Default per-state database root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
  */

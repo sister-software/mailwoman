@@ -16,8 +16,8 @@ import {
 	AuthoritativeResponseStatus,
 	createFixtureAuthoritativeProvider,
 	fixtureExactMatch,
+	type Resolver,
 } from "@mailwoman/core/resolver"
-import type { Resolver } from "@mailwoman/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 

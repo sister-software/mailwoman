@@ -38,11 +38,11 @@ import { isPOBox } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator, TSVSpliterator } from "spliterator"
 
 import {
-	makeMulberry32,
 	readCSVRecords,
 	readZippedCSVRecords,
 	sliceSourceID,

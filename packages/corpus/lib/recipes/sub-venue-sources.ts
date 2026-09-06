@@ -28,12 +28,13 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import { readTuples as readLocaleTuples, type LocalePart } from "#recipes/locale"
-import { makeMulberry32, readTuples as readSliceTuples } from "#recipes/scaffold"
+import { readTuples as readSliceTuples } from "#recipes/scaffold"
 import type { LocaleBaseTuple } from "#synthesizers/german"
 import { pick, weightedPick } from "#synthesizers/utils"
 import {

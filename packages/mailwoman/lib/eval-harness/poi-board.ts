@@ -53,16 +53,17 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { Resolver } from "@mailwoman/core/resolver"
+import { dataRootPath, wofExtractPaths } from "@mailwoman/core/utils"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
-import { createResolverBackend, dataRootPath, wofExtractPaths } from "#resolver-backend"
-
+import { createResolverBackend } from "#resolver-backend"
 /**
  * Fixture set backing the POI query board.
  */

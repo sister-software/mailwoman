@@ -14,11 +14,10 @@
 import { readLocalBuffer, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { setTimestamps, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5Hex } from "@mailwoman/core/hash"
+import { md5Hex, md5File } from "@mailwoman/core/hash"
 import {
 	fstFreshnessWarning,
 	fstStaleReason,
-	md5File,
 	MIN_STAMPED_FORMAT_VERSION,
 	peekFSTStampFields,
 	readWOFSourceIdentity,

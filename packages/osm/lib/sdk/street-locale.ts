@@ -12,12 +12,6 @@
 
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 
-export {
-	normalizeStreetForKeyLocale,
-	streetLocaleForSurface,
-	type StreetLocale,
-} from "@mailwoman/resolver-wof-sqlite/street"
-
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale. Deliberately small: only the countries we actually
  * ship an OSM rooftop extract for. Adding a country is a one-line entry PLUS the matching per-locale branch in

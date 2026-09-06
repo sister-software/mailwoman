@@ -59,8 +59,6 @@ export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
  * source fingerprints travel WITH the database instead of in a document that can drift from it.
  */
 
-export type { ExtractMetaTable } from "@mailwoman/resolver-wof-sqlite/schema"
-
 /**
  * Kysely read/write contract for the database's provenance table.
  */

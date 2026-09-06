@@ -22,17 +22,6 @@
 import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
 import { getResolution } from "h3-js"
 
-export {
-	addCoverageCells,
-	CELL_ESTIMATE_BUDGET,
-	classifyFeatureCells,
-	coverageCellFor,
-	estimateCellCount,
-	MIN_INDEX_RESOLUTION,
-	resolutionForFeature,
-	type FeatureCells,
-} from "@mailwoman/spatial"
-
 /**
  * A zone's accumulated cell sets across every feature carrying that zone code.
  */

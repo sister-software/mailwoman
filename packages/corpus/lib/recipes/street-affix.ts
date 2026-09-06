@@ -35,14 +35,15 @@ import {
 	matchTrailingSuffix,
 	renderDirectional,
 	US_STREET_SUFFIX_PREFERRED_ABBR,
+	NAME_PRONE_US_SUFFIXES,
 } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { NAME_PRONE_US_SUFFIXES } from "#name-prone-us-suffixes"
-import { makeMulberry32, readCSVRecords, readOATuples, sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { readCSVRecords, readOATuples, sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"

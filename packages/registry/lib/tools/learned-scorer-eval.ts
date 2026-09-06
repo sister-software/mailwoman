@@ -38,13 +38,13 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { makeLcg } from "@mailwoman/core/random"
+import { mean } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
 
 import { buildDefaultModel, createMatchFeaturizer, defaultBlockingKeys, ingestRows, type ColumnMapping } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
 import { buildNPPESSample } from "#tools/nppes/sample"
-import { mean, pct, sgn, stateOption, std, trainLogisticRegression } from "#tools/shared"
-
+import { pct, sgn, stateOption, std, trainLogisticRegression } from "#tools/shared"
 /**
  * Smallest mean gap counted as a real difference rather than seed noise.
  */

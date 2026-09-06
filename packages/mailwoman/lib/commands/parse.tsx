@@ -10,16 +10,16 @@ import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PolicyMode } from "@mailwoman/core/policy"
+import type { Resolver } from "@mailwoman/core/resolver"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
-import type { ScriptRoutedClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
-import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type React from "react"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	loadClassifierTolerant,
@@ -693,7 +693,9 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
  * resolve; `npx mailwoman parse …` always produces output). The #1108 absent-vs-corrupt distinction lives in
  * {@link loadClassifierTolerant}; the warning goes to STDERR, never STDOUT, so piped stdout parsing is unaffected.
  */
-async function tryLoadNeural(options: ParseOptions): Promise<ScriptRoutedClassifier | undefined> {
+async function tryLoadNeural(
+	options: ParseOptions
+): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
 	return await loadClassifierTolerant(options.locale, {
 		modelPath: options.model,
 		tokenizerPath: options.tokenizer,

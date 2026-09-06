@@ -27,7 +27,7 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
-import type { InterpolationLookup } from "@mailwoman/resolver"
+import type { InterpolationLookup } from "@mailwoman/core/resolver"
 import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

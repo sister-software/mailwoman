@@ -12,12 +12,8 @@
  *   national set at resolution 9 that is most of them.
  */
 
-import {
-	classifyFeatureCells,
-	featureCellRows,
-	polyfillFindsNothing,
-	ZoningCellIndex,
-} from "@mailwoman/zoning/sdk/cells"
+import { classifyFeatureCells, featureCellRows } from "@mailwoman/spatial"
+import { polyfillFindsNothing, ZoningCellIndex } from "@mailwoman/zoning/sdk/cells"
 import { exteriorRing } from "@mailwoman/zoning/test-kit"
 import { describe, expect, it } from "vitest"
 

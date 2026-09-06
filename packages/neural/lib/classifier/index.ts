@@ -71,7 +71,12 @@ export type {
 	SpanProposerConfig,
 } from "#classifier/options"
 
-export { ScriptRoutedClassifier, scriptFamilyForText, type ScriptRoutedClassifierOpts } from "#classifier/script-router"
+export {
+	type RoutableClassifier,
+	ScriptRoutedClassifier,
+	scriptFamilyForText,
+	type ScriptRoutedClassifierOpts,
+} from "#classifier/script-router"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
@@ -221,7 +226,7 @@ export class NeuralAddressClassifier {
 	 */
 	static async loadRoutedFromWeights(
 		...args: Parameters<typeof import("#classifier/loader").loadScriptRoutedClassifier>
-	): Promise<ScriptRoutedClassifier> {
+	): Promise<ScriptRoutedClassifier<NeuralAddressClassifier>> {
 		const { loadScriptRoutedClassifier } = await import(/* webpackIgnore: true */ "#classifier/loader")
 
 		return loadScriptRoutedClassifier(...args)

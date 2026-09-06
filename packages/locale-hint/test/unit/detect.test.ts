@@ -4,13 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { detectLocaleSync } from "@mailwoman/locale-hint/detect"
-import type { NormalizedInputLite, QueryShapeLike } from "@mailwoman/locale-hint/types"
+import { detectLocale } from "@mailwoman/locale-hint/detect"
+import type { QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
-
-function input(normalized: string): NormalizedInputLite {
-	return { raw: normalized, normalized }
-}
 
 function shape(opts: Partial<QueryShapeLike> = {}): QueryShapeLike {
 	return { knownFormats: [], ...opts }
@@ -18,14 +14,14 @@ function shape(opts: Partial<QueryShapeLike> = {}): QueryShapeLike {
 
 describe("detectLocale — caller hint precedence", () => {
 	it("caller hint wins at confidence 1.0 with source=caller", () => {
-		const r = detectLocaleSync(input("anything"), shape({ characterClass: "cjk" }), { hint: "fr-FR" })
+		const r = detectLocale(shape({ characterClass: "cjk" }), { hint: "fr-FR" })
 		expect(r.locale).toBe("fr-FR")
 		expect(r.confidence).toBe(1)
 		expect(r.source).toBe("caller")
 	})
 
 	it("detector-derived candidates surface as alternatives when hint is set", () => {
-		const r = detectLocaleSync(input("東京駅"), shape({ characterClass: "cjk" }), { hint: "en-US" })
+		const r = detectLocale(shape({ characterClass: "cjk" }), { hint: "en-US" })
 		expect(r.locale).toBe("en-US")
 		const altLocales = r.alternatives.map((a) => a.locale)
 		expect(altLocales).toContain("ja-JP")
@@ -34,26 +30,25 @@ describe("detectLocale — caller hint precedence", () => {
 
 describe("detectLocale — script-based detection", () => {
 	it("CJK input → ja-JP", () => {
-		const r = detectLocaleSync(input("東京駅"), shape({ characterClass: "cjk" }))
+		const r = detectLocale(shape({ characterClass: "cjk" }))
 		expect(r.locale).toBe("ja-JP")
 		expect(r.source).toBe("detected")
 	})
 
 	it("Cyrillic input → ru-RU", () => {
-		const r = detectLocaleSync(input("Москва"), shape({ characterClass: "cyrillic" }))
+		const r = detectLocale(shape({ characterClass: "cyrillic" }))
 		expect(r.locale).toBe("ru-RU")
 	})
 
 	it("Arabic input → ar", () => {
-		const r = detectLocaleSync(input("دبي"), shape({ characterClass: "arabic" }))
+		const r = detectLocale(shape({ characterClass: "arabic" }))
 		expect(r.locale).toBe("ar")
 	})
 })
 
 describe("detectLocale — postcode-format detection", () => {
 	it("US ZIP+4 unambiguously → en-US", () => {
-		const r = detectLocaleSync(
-			input("10118-1234"),
+		const r = detectLocale(
 			shape({
 				knownFormats: [{ format: "us_zip4", span: { start: 0, end: 10 }, confidence: 0.95 }],
 				characterClass: "alphanumeric",
@@ -65,8 +60,7 @@ describe("detectLocale — postcode-format detection", () => {
 	})
 
 	it("UK postcode → en-GB", () => {
-		const r = detectLocaleSync(
-			input("SW1A 1AA"),
+		const r = detectLocale(
 			shape({
 				knownFormats: [{ format: "uk_postcode", span: { start: 0, end: 8 }, confidence: 0.9 }],
 				characterClass: "alphanumeric",
@@ -77,8 +71,7 @@ describe("detectLocale — postcode-format detection", () => {
 	})
 
 	it("CA postcode → en-CA", () => {
-		const r = detectLocaleSync(
-			input("K1A 0B1"),
+		const r = detectLocale(
 			shape({
 				knownFormats: [{ format: "ca_postcode", span: { start: 0, end: 7 }, confidence: 0.9 }],
 				characterClass: "alphanumeric",
@@ -89,8 +82,7 @@ describe("detectLocale — postcode-format detection", () => {
 	})
 
 	it("JP postcode → ja-JP", () => {
-		const r = detectLocaleSync(
-			input("100-0005"),
+		const r = detectLocale(
 			shape({
 				knownFormats: [{ format: "jp_postcode", span: { start: 0, end: 8 }, confidence: 0.95 }],
 				characterClass: "alphanumeric",
@@ -101,8 +93,7 @@ describe("detectLocale — postcode-format detection", () => {
 	})
 
 	it("ambiguous 5-digit → en-US at low confidence with alternatives present", () => {
-		const r = detectLocaleSync(
-			input("10118"),
+		const r = detectLocale(
 			shape({
 				knownFormats: [
 					{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 },
@@ -120,13 +111,13 @@ describe("detectLocale — postcode-format detection", () => {
 
 describe("detectLocale — fallback + always-decisive", () => {
 	it("falls back to en-US when nothing fires", () => {
-		const r = detectLocaleSync(input("Paris"), shape({ characterClass: "alpha" }))
+		const r = detectLocale(shape({ characterClass: "alpha" }))
 		expect(r.locale).toBe("en-US")
 		expect(r.confidence).toBeLessThanOrEqual(0.5)
 	})
 
 	it("uses machine locale only when input evidence reaches the fallback", () => {
-		const r = detectLocaleSync(input("Paris"), shape({ characterClass: "alpha" }), {
+		const r = detectLocale(shape({ characterClass: "alpha" }), {
 			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
 		})
 
@@ -141,7 +132,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 	})
 
 	it("keeps timezone independent and does not turn UTC into a locale", () => {
-		const r = detectLocaleSync(input("Paris"), shape({ characterClass: "alpha" }), {
+		const r = detectLocale(shape({ characterClass: "alpha" }), {
 			machinePreferences: { timeZone: "UTC" },
 		})
 
@@ -150,7 +141,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 	})
 
 	it("does not let machine preferences outrank script evidence", () => {
-		const r = detectLocaleSync(input("東京"), shape({ characterClass: "cjk" }), {
+		const r = detectLocale(shape({ characterClass: "cjk" }), {
 			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
 		})
 
@@ -158,7 +149,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 	})
 
 	it("gives an environment locale precedence over inferred machine preferences", () => {
-		const r = detectLocaleSync(input("Paris"), shape({ characterClass: "alpha" }), {
+		const r = detectLocale(shape({ characterClass: "alpha" }), {
 			environmentLocale: "fr-FR",
 			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
 		})
@@ -172,13 +163,13 @@ describe("detectLocale — fallback + always-decisive", () => {
 	})
 
 	it("empty shape still emits a decisive locale", () => {
-		const r = detectLocaleSync(input(""), shape())
+		const r = detectLocale(shape())
 		expect(r.locale).toBeDefined()
 		expect(r.source).toBe("detected")
 	})
 
 	it("alternatives are sorted descending by confidence", () => {
-		const r = detectLocaleSync(input("東京"), shape({ characterClass: "cjk" }))
+		const r = detectLocale(shape({ characterClass: "cjk" }))
 
 		for (let i = 1; i < r.alternatives.length; i++) {
 			expect(r.alternatives[i]?.confidence).toBeLessThanOrEqual(r.alternatives[i - 1]?.confidence ?? 1)
@@ -186,8 +177,7 @@ describe("detectLocale — fallback + always-decisive", () => {
 	})
 
 	it("no duplicate locales in alternatives", () => {
-		const r = detectLocaleSync(
-			input("10118"),
+		const r = detectLocale(
 			shape({
 				knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
 				characterClass: "numeric",
@@ -202,10 +192,10 @@ describe("detectLocale — fallback + always-decisive", () => {
 
 describe("detectLocale — source attribution", () => {
 	it("source=caller when hint set", () => {
-		expect(detectLocaleSync(input("x"), shape(), { hint: "en-US" }).source).toBe("caller")
+		expect(detectLocale(shape(), { hint: "en-US" }).source).toBe("caller")
 	})
 
 	it("source=detected when no hint", () => {
-		expect(detectLocaleSync(input("x"), shape()).source).toBe("detected")
+		expect(detectLocale(shape()).source).toBe("detected")
 	})
 })

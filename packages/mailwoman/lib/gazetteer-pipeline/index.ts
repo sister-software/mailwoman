@@ -29,7 +29,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
-import { isoDate } from "@mailwoman/core/utils"
+import { isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -51,7 +51,6 @@ import {
 	geonamesAdminGapCountries,
 } from "#gazetteer-pipeline/defaults"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
-import { mailwomanDataRoot } from "#resolver-backend"
 
 /**
  * The canonical postcode-database set (filenames under `<data-root>/wof/`): US + the WOF intl database (NL/FR/DE/ES/IT)

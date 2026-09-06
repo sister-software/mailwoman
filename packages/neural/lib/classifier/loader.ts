@@ -44,7 +44,7 @@ import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
  */
 export async function loadScriptRoutedClassifier(
 	opts: Parameters<typeof loadClassifierFromWeights>[0] = {}
-): Promise<ScriptRoutedClassifier> {
+): Promise<ScriptRoutedClassifier<NeuralAddressClassifier>> {
 	const primary = await loadClassifierFromWeights(opts)
 
 	return new ScriptRoutedClassifier({

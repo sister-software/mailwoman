@@ -5,8 +5,7 @@
  */
 
 import { scoreByPostcode, scoreByScript, scoreFallback } from "@mailwoman/locale-hint/rules"
-import type { QueryShapeLike } from "@mailwoman/locale-hint/types"
-import type { KnownFormat } from "@mailwoman/query-shape"
+import type { KnownFormat, QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 const fmt = (format: KnownFormat, confidence = 0.9, start = 0, end = 5) => ({

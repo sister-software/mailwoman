@@ -40,7 +40,6 @@ import { readFileSize } from "@mailwoman/core/fs/readers"
 import {
 	areaAgreementFrom,
 	assertNoNegativeClaim as assertCoverageNoNegativeClaim,
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerTier,
@@ -53,6 +52,7 @@ import {
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { M2_PER_KM2 } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
@@ -73,7 +73,6 @@ import {
 	GZT_LICENSE,
 	GZT_PLAN_LEVELS,
 } from "#vocabulary"
-
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
  * ignore.

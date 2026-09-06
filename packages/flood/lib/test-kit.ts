@@ -21,16 +21,14 @@
 
 // The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than this
 // product's geometry, and a second copy of it is a second place for a hole to stop being one.
-import { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
+import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
-import { ringAreaReadings } from "#rings"
-import type { FloodFeatureSource, FloodSourceFeature, MultiPolygonRings } from "#sdk/ingest"
+import type { FloodFeatureSource, FloodSourceFeature } from "#sdk/ingest"
 import { EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 
 /**
  * Re-exported so a fixture in another workspace builds its rings the same way this one does.
  */
-export { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
 
 /**
  * South-west corner of the fixture world, in the North Sea east of Great Yarmouth.

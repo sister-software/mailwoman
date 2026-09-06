@@ -27,20 +27,6 @@
 
 import { compactAcrossResolutions, type FeatureCells } from "@mailwoman/spatial"
 
-export {
-	addCoverageCells,
-	CELL_ESTIMATE_BUDGET,
-	classifyFeatureCells,
-	coverageCellFor,
-	estimateCellCount,
-	// The per-feature row builder is shared for the same reason the classifier is: compaction and the short-cell encoding
-	// are h3 arithmetic rather than anything this product knows, and `@mailwoman/zoning` builds its rows the same way.
-	featureCellRows,
-	MIN_INDEX_RESOLUTION,
-	resolutionForFeature,
-	type FeatureCells,
-} from "@mailwoman/spatial"
-
 /**
  * One scenario's accumulated cell sets across every feature in it.
  */

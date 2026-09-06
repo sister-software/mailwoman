@@ -38,22 +38,16 @@ import {
 	type QueryKindResult,
 	type FSTMatcherLike,
 } from "@mailwoman/core/pipeline"
-import type { ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
+import { type ResolveNodeTrace, type Resolver, countriesFromPostcodeFormat } from "@mailwoman/core/resolver"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { CommandError } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
-import {
-	countriesFromPostcodeFormat,
-	geocodeAddress,
-	geocodeParseInputs,
-	parseForGeocode,
-	type GeocodeDeps,
-} from "#geocode/core"
+import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps } from "#geocode/core"
 import { layerDatabasePath } from "#geocode/layer-paths"
 import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode/regions"
 import type { GeocodeResult } from "#geocode/result"
@@ -488,7 +482,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// Load the neural classifier (required for street-level; weights must be present).
 	progress("Loading neural model…")
 
-	let routed: ScriptRoutedClassifier
+	let routed: ScriptRoutedClassifier<NeuralAddressClassifier>
 
 	try {
 		// #1732 reach half: the session's dataRoot is authoritative for EVERYTHING it loads, weights and

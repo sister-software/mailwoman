@@ -27,7 +27,12 @@ import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address"
-import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import {
+	canonicalizeRouteKey,
+	normalizeLocalityForKey,
+	normalizeStreetForKeyLocale,
+	streetLocaleForSurface,
+} from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -42,7 +47,7 @@ import {
 	type OSMAddressPointDatabase,
 } from "#sdk/address-point-schema"
 import { extractAddrPoints } from "#sdk/extract"
-import { normalizeStreetForKeyLocale, streetLocaleForCountry, streetLocaleForSurface } from "#sdk/street-locale"
+import { streetLocaleForCountry } from "#sdk/street-locale"
 import { buildStreetRecoveryIndex } from "#sdk/street-recovery"
 
 interface BuildArgs {

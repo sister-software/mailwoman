@@ -31,12 +31,9 @@
  *   it total for any graph rather than for the graphs the validator happens to admit.
  */
 
-import {
-	ARTIFACT_SCHEMA_VERSION,
-	type CompiledGeographicModel,
-	compareIdentifiers,
-	type InheritanceClosureEntry,
-} from "#artifact"
+import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
+
+import { ARTIFACT_SCHEMA_VERSION, type CompiledGeographicModel, type InheritanceClosureEntry } from "#artifact"
 import {
 	type ConceptID,
 	type ConceptRecord,
@@ -50,7 +47,6 @@ import {
 	toDerivedFactID,
 } from "#schema"
 import { parseGeographicModelDocument } from "#validate"
-
 /**
  * The name a fact derived by `isA` inheritance carries in its `derivation` field. A consumer branches on this rather
  * than on where the record sits.

@@ -12,18 +12,17 @@
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import type { SliceRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,
 	stringOption,
 	useCommandTask,
 } from "#cli-kit"
-
 /**
  * Bare `mailwoman corpus slice` stays the recipe runner now that `slice/` hosts subcommands.
  */

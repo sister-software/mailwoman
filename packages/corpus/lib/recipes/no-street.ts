@@ -10,9 +10,10 @@
  *   scripts/build-no-street-slice.mjs.
  */
 
+import { makeLcg } from "@mailwoman/core/utils"
+
 import {
 	alignAndWrite,
-	makeLcg,
 	readTuples,
 	sliceSourceID,
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,

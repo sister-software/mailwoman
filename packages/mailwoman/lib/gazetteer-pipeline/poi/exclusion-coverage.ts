@@ -26,9 +26,9 @@
  *      is not a result that transfers to another region unmeasured.
  */
 
-import { CoverageBasis } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi"
-import { shortCellToInt, type ParsedGeometry, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt, type ParsedGeometry, type H3Cell, interiorCoverageCells } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 
 import {
@@ -38,7 +38,6 @@ import {
 	type CoverageCompleteness,
 	type MatchProtocol,
 } from "#gazetteer-pipeline/poi/capture-recapture"
-import { interiorCoverageCells } from "#gazetteer-pipeline/poi/coverage-region"
 
 export interface ExclusionCoverageCell {
 	h3Cell: number

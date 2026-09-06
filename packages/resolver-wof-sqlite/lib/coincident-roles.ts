@@ -38,14 +38,13 @@
  *   be wired as a post-step of the main `scripts/build-unified-wof.ts`.
  */
 
-import type { CoincidentLocality } from "@mailwoman/resolver"
+import type { CoincidentLocality } from "@mailwoman/core/resolver"
+import { allRows } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import type { WOFDatabase } from "#schema"
-import { allRows } from "#sqlite-utils"
-
 /**
  * Table of places that hold more than one admin role — a locality that is also its county seat. Written by the
  * gazetteer build, read by the resolver when a coincident locality has to be chosen.

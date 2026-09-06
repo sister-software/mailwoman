@@ -35,16 +35,10 @@
  *   list. Diacritic-KEEPING normalizer, matching the board (see the norm docstring).
  */
 
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import {
-	alignAndWrite,
-	foldNOSurface,
-	makeMulberry32,
-	readTuples,
-	type CorpusRecipe,
-	sliceSourceID,
-} from "#recipes/scaffold"
+import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 
 /**
  * Title-case a Kartverket ALL-CAPS locality (HELLVIK -> Hellvik); #690, all-caps is OOD.

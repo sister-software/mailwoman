@@ -14,12 +14,12 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { makeLcg } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { makeLcg, sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
 import { alignRow } from "#utils"
-
 /**
  * The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through the data-root
  * helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.

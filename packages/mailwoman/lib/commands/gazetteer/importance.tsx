@@ -35,6 +35,7 @@
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, cacheRootPath, streamToDisk } from "@mailwoman/core/utils"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { countRows } from "@mailwoman/sqlite/introspection"
@@ -42,15 +43,8 @@ import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 import { createReadStream } from "spliterator/node/fs"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import type { FanoutCandidate } from "#gazetteer-pipeline/importance-fanout"
-
 /**
  * Permanent redirect.
  */
@@ -92,8 +86,10 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
-		const { blendImportance, createPlaceImportanceTable, referentialFromPopulation } =
+		const { blendImportance, createPlaceImportanceTable } =
 			await import("@mailwoman/resolver-wof-sqlite/place-importance-schema")
+
+		const { referentialFromPopulation } = await import("@mailwoman/core/resolver")
 
 		const { TextSpliterator } = await import("spliterator")
 

@@ -12,7 +12,9 @@
  *   `synthesizeBoundaryStressRow` is NOT re-exported from the corpus index — imported directly here.
  */
 
-import { makeMulberry32, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+
+import { type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synthesizers/boundary-stress"
 import { alignRow } from "#utils"
 

@@ -186,7 +186,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 				(async function* () {
 					const { geocodeStream: stream } = await import("#geocode/stream")
 					const { dataRootPath } = await import("@mailwoman/core/utils")
-					const { mailwomanDataRoot } = await import("#resolver-backend")
+					const { mailwomanDataRoot } = await import("@mailwoman/core/data-root")
 
 					yield* stream(records, {
 						mapping: opts.mapping,

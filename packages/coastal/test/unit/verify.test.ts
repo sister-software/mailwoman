@@ -29,9 +29,9 @@ import {
 	FIXTURE_ORIGIN,
 	FIXTURE_SCENARIOS,
 	FIXTURE_SIDE,
-	rectangleRing,
 } from "@mailwoman/coastal/test-kit"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { rectangleRing } from "@mailwoman/spatial"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const NFI = FIXTURE_SCENARIOS.noIntervention.key

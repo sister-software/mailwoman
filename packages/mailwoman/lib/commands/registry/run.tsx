@@ -26,22 +26,16 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
 import type { RegionDatabaseResolver } from "#geocode/regions"
-
 /**
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
  */

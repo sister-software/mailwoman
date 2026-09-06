@@ -16,9 +16,9 @@
  *   `docs/articles/concepts/the-knowledge-ladder.md` for the design rationale.
  */
 
+import type { PhraseKind, PhraseProposal } from "@mailwoman/core/pipeline"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
-import type { NormalizedInputLite, PhraseKind, PhraseProposal } from "@mailwoman/phrase-grouper/types"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import { computeQueryShape, type NormalizedInputLite } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 function input(text: string): NormalizedInputLite {

@@ -11,9 +11,9 @@
  *   apart.
  */
 
-import { classifyFeatureCells, CoastalCellIndex, featureCellRows } from "@mailwoman/coastal/sdk/cells"
-import { FIXTURE_ORIGIN, FIXTURE_SIDE, rectangleRing } from "@mailwoman/coastal/test-kit"
-import type { MultiPolygonRings } from "@mailwoman/spatial"
+import { CoastalCellIndex } from "@mailwoman/coastal/sdk/cells"
+import { FIXTURE_ORIGIN, FIXTURE_SIDE } from "@mailwoman/coastal/test-kit"
+import { type MultiPolygonRings, classifyFeatureCells, rectangleRing, featureCellRows } from "@mailwoman/spatial"
 import { getResolution } from "h3-js"
 import { describe, expect, it } from "vitest"
 

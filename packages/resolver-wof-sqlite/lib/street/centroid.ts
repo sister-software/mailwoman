@@ -19,7 +19,7 @@
  *   exact-after-normalization only (no fuzzy street matching in this tier).
  */
 
-import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/resolver"
+import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

@@ -11,12 +11,16 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import type { ResolvedPlace } from "@mailwoman/core/resolver"
+import {
+	type ResolvedPlace,
+	type Resolver,
+	type ResolveOpts,
+	countryFromPostcodeFormat,
+} from "@mailwoman/core/resolver"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	geocodeAddress,
-	countryFromPostcodeFormat,
 	type GeocodeClassifier,
 	type GeocodeDeps,
 	parseForGeocode,

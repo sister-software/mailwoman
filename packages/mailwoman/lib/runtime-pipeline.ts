@@ -29,7 +29,7 @@ import {
 	createKindClassifier,
 	type POIPhraseLookup,
 } from "@mailwoman/kind-classifier"
-import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-hint"
+import { detectLocale } from "@mailwoman/locale-hint"
 import { type NeuralAddressClassifier, type ParseOpts, scriptFamilyForText } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
@@ -406,8 +406,8 @@ export function createRuntimePipeline(
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
 		detectLocale:
 			opts.detectLocale ??
-			((input, shape, detectOpts) =>
-				defaultDetectLocale(input, shape, {
+			(async (_input, shape, detectOpts) =>
+				detectLocale(shape, {
 					...detectOpts,
 					...($public.MW_LOCALE ? { environmentLocale: $public.MW_LOCALE } : {}),
 					...(machinePreferences ? { machinePreferences } : {}),
@@ -573,24 +573,3 @@ export function createRuntimePipeline(
 // Re-export the types so consumers don't need to import from both `mailwoman` and `@mailwoman/core/pipeline`.
 // `ParseOpts` lives in `@mailwoman/neural` — re-export here so callers can type-check parse options
 // without reaching into internal workspace packages.
-export type {
-	AddressClassifier,
-	ClassifierOpts,
-	FSTMatcherLike,
-	LocaleHint,
-	MachinePreferences,
-	NormalizedInputLite,
-	PhraseGrouper,
-	PhraseKind,
-	PhraseProposal,
-	PipelineFault,
-	PipelineOpts,
-	PipelineResult,
-	PipelineTiming,
-	QueryKind,
-	QueryKindResult,
-	QueryShapeLite,
-	RuntimePipelineStages,
-} from "@mailwoman/core/pipeline"
-
-export type { ParseOpts } from "@mailwoman/neural"

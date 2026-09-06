@@ -29,13 +29,6 @@
 import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-export {
-	type PairIndexInputs,
-	readReleaseConfig,
-	repoCommittedSoftFeedSources,
-	type SoftFeedRecipe,
-} from "@mailwoman/core/release-config"
-
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *

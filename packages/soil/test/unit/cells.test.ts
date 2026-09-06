@@ -15,7 +15,8 @@
 import { aggregateChunks } from "@mailwoman/soil/sdk/build-soil"
 import { classifyDelineationCells, SoilCellIndex } from "@mailwoman/soil/sdk/cells"
 import type { SoilChunkResult } from "@mailwoman/soil/sdk/ingest-chunk"
-import { FIXTURE_ORIGIN, rectangleRing } from "@mailwoman/soil/test-kit"
+import { FIXTURE_ORIGIN } from "@mailwoman/soil/test-kit"
+import { rectangleRing } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 const { lat, lon } = FIXTURE_ORIGIN

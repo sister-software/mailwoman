@@ -66,14 +66,9 @@
  *   fact about a place; the postcode is not, because it does.
  */
 
-import {
-	alignAndWrite,
-	makeMulberry32,
-	type PostcodePlacement,
-	readTuples,
-	type CorpusRecipe,
-	sliceSourceID,
-} from "#recipes/scaffold"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+
+import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 
 /**
  * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

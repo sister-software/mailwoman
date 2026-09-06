@@ -29,20 +29,14 @@ import { globPaths } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
-
 /**
  * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
  * selects its multiplier from (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`). Bump

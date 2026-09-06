@@ -52,23 +52,23 @@
 import {
 	assertCoverageLicensesNoExclusion,
 	assertNoCellsFinerThanIndex,
-	CoverageBasis,
 	parseManifestRows,
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import {
 	ancestorChainCells,
 	bboxContains,
 	recoverShortCellResolution,
 	shortCellToInt,
 	type H3Cell,
+	pointInEncodedRings,
 } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
-import { pointInEncodedRings } from "#rings"
 import type { ZoningDatabase } from "#schema"
 import { ZoningCellContainment } from "#schema"
 import {

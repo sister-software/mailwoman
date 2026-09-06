@@ -37,7 +37,6 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
-	CoverageBasis,
 	type CoverageCell,
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -45,6 +44,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import {
 	POI_H3_RESOLUTION,
 	createPOIBrandIndex,

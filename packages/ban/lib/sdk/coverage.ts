@@ -12,10 +12,10 @@
  *   cell inherits the weakest basis of the communes whose points fall in it.
  */
 
-import { CoverageBasis, type CoverageCell } from "@mailwoman/core/layers"
+import type { CoverageCell } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { type H3Cell, shortCellToInt } from "@mailwoman/spatial/h3/cell"
 import { latLngToCell } from "h3-js"
-
 /**
  * The resolution `layer_coverage` is written at — the same as the OSM and BDC address layers, so a consumer's probe
  * walks one cell size across the register-backed layers.

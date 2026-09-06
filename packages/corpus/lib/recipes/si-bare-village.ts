@@ -24,7 +24,9 @@
  *   trailing «V» = locality (the binding the resolver needs).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+
+import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 
 /**
  * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

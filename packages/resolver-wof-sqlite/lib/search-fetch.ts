@@ -12,14 +12,13 @@
  *   whole corpus, so an exact haversine over the survivors is cheap.
  */
 
+import { allRows } from "@mailwoman/core/utils"
 import { bboxAround } from "@mailwoman/spatial"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 
 import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "#fts/index"
 import type { RankingWeights } from "#ranking-weights"
-import { allRows } from "#sqlite-utils"
 import type { FindPlaceQuery, WOFPlacetype } from "#types"
-
 /**
  * Query length at or below which the FTS window is widened. A two- or three-character query is almost always a region
  * abbreviation, where the exact match can otherwise fall outside the window behind higher-bm25 partial hits — "NY"

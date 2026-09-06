@@ -17,7 +17,7 @@ import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import type { ScriptRoutedClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { Box, Text } from "ink"
 import { createElement as h, Fragment, useEffect, useState } from "react"
 import type * as React from "react"
@@ -419,7 +419,7 @@ export async function loadClassifierTolerant(
 		tokenizerPath?: string
 		onDegrade: (message: string) => void
 	}
-): Promise<ScriptRoutedClassifier | undefined> {
+): Promise<ScriptRoutedClassifier<NeuralAddressClassifier> | undefined> {
 	try {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 

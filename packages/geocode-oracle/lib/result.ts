@@ -32,7 +32,6 @@ import type { PostalAddress } from "@mailwoman/record"
  *
  * @see `ResolutionTier` in `@mailwoman/record` for the ordering (`address_point` > `interpolated` > `street` > `admin`).
  */
-export type { ResolutionTier } from "@mailwoman/record"
 
 /**
  * Which reference geocoder produced a result. A plain const object rather than an `enum` — `erasableSyntaxOnly` is on

@@ -29,7 +29,8 @@ function harness(thrown: string): string {
 	return `
 		import { createElement } from "react"
 		import { render } from "ink"
-		import { CommandError, lazyComponent } from "mailwoman/cli-kit"
+		import { CommandError } from "@mailwoman/core/scripting/command"
+		import { lazyComponent } from "mailwoman/cli-kit"
 
 		const Boom = lazyComponent(async () => {
 			throw ${thrown}

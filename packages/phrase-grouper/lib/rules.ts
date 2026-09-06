@@ -20,10 +20,9 @@ import { isFloorDesignatorToken } from "@mailwoman/codex/us/floor-designator"
 import { US_STATE_NAMES } from "@mailwoman/codex/us/state"
 import { isStreetSuffixToken } from "@mailwoman/codex/us/street-suffix"
 import { isUnitDesignatorToken } from "@mailwoman/codex/us/unit-designator"
+import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import { Span } from "@mailwoman/core/tokenization"
-import { isRegionAbbreviationToken } from "@mailwoman/query-shape"
-
-import type { PhraseProposal, QueryShapeLike } from "#types"
+import { isRegionAbbreviationToken, type QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
 
 /**
  * One token within a segment — absolute offsets into the normalized input. Built by `tokenizeSegment` from a

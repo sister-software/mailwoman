@@ -7,6 +7,7 @@
  *   (operator's adversarial examples) lives in `kryptonite.test.ts`.
  */
 
+import type { PhraseGrouper, PhraseProposal } from "@mailwoman/core/pipeline"
 import { groupPhrases, groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
 import {
 	scoreHyphenatedCompound,
@@ -18,12 +19,7 @@ import {
 	scoreVenuePhrase,
 	tokenizeSegment,
 } from "@mailwoman/phrase-grouper/rules"
-import type {
-	NormalizedInputLite,
-	PhraseGrouper,
-	PhraseProposal,
-	QueryShapeLike,
-} from "@mailwoman/phrase-grouper/types"
+import type { NormalizedInputLite, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 function input(normalized: string): NormalizedInputLite {

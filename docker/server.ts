@@ -36,16 +36,12 @@ import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResu
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { $public } from "mailwoman/env"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
-import {
-	createResolverBackend,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	resolveWOFDatabasePaths,
-} from "mailwoman/resolver-backend"
+import { createResolverBackend, resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
 import { AsyncSequence } from "spliterator"
 
 const PORT = 3000

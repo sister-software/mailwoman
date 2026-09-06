@@ -45,12 +45,11 @@ import {
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
-import { ancestorChainCells, bboxContains, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { ancestorChainCells, bboxContains, shortCellToInt, type H3Cell, pointInEncodedRings } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
-import { pointInEncodedRings } from "#rings"
 import type { FloodDatabase } from "#schema"
 import { FloodCellContainment } from "#schema"
 import { EA_FLOOD_LAYER_NAME, EA_PRODUCT_LIMITS, FLOOD_ZONE_1, type FloodZoneDefinition } from "#vocabulary"

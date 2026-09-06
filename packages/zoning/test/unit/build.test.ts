@@ -24,7 +24,8 @@
 
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { CoverageBasis, LayerTier, supportsExclusion } from "@mailwoman/core/layers"
+import { LayerTier } from "@mailwoman/core/layers"
+import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ZoningContainmentPath, ZoningLookup, ZoningReadingKind } from "@mailwoman/zoning"
 import type { ZoningDatabase } from "@mailwoman/zoning/schema"

@@ -4764,6 +4764,7 @@ __metadata:
   resolution: "@mailwoman/ban@workspace:packages/ban"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -4813,6 +4814,7 @@ __metadata:
   resolution: "@mailwoman/coastal@workspace:packages/coastal"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
@@ -5772,6 +5774,7 @@ __metadata:
   resolution: "@mailwoman/zoning@workspace:packages/zoning"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"

@@ -41,21 +41,14 @@
  */
 
 import { declaredFeatureCount } from "@mailwoman/core/layers"
-import { assertRingsInsideExtent, requireArealPolygons } from "@mailwoman/spatial"
+import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
 import { spawnOGR2OGR } from "@mailwoman/spatial/tools/ogr-stream"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/well-known-text"
 import { CSVSpliterator } from "spliterator"
 
-import { resolveRingRoles, type MultiPolygonRings, type ResolvedRingRoles } from "#rings"
+import { resolveRingRoles, type ResolvedRingRoles } from "#rings"
 import { GZT_DECLARED_BBOX, GZT_SOURCE_EPSG } from "#vocabulary"
-
-/**
- * The ring types and the PROJ guard, both re-exported from `@mailwoman/spatial`: neither is zoning-specific, and a
- * second copy of the `projinfo` parse would be a second place for the ballpark check to stop refusing.
- */
-export { assessDatumTransformation, type DatumTransformationVerdict } from "@mailwoman/spatial/projection-transform"
-export type { MultiPolygonRings, PolygonRings } from "#rings"
 
 /**
  * One zoning feature, reprojected to WGS84 with its hole roles resolved.

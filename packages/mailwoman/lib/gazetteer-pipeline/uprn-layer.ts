@@ -54,7 +54,6 @@ import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from 
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -63,6 +62,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { isoDate } from "@mailwoman/core/utils"
+import { CoverageBasis } from "@mailwoman/evidence"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import {
 	LATITUDE_MAX,
@@ -80,7 +80,6 @@ import { TextSpliterator } from "spliterator"
 
 import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
-
 /**
  * The OS Data Hub product id for Open UPRN.
  */

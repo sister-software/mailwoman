@@ -12,7 +12,7 @@
  *   `Gate` from `Briggate` are asserted directly, against the committed lexicon.
  */
 
-import { makeMulberry32 } from "@mailwoman/corpus/recipes/scaffold"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import {
 	allocate,
 	buildIdentifierModel,

@@ -21,9 +21,10 @@
  */
 
 import { FR_VOIE_TYPES } from "@mailwoman/codex/fr"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { decomposeFrStreet } from "#adapters/ban/street-decompose"
-import { alignAndWrite, makeMulberry32, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 
 /**
  * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation, from the codex table's first

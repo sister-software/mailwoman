@@ -8,16 +8,11 @@ import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
-import {
-	conventionCandidateDBPath,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	wofExtractPaths,
-} from "mailwoman/resolver-backend"
+import { conventionCandidateDBPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { join } from "path-ts"
 import { afterEach, expect, test, vi } from "vitest"
-
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
 const THIS_FILE = import.meta.filename
 

@@ -11,7 +11,7 @@ import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/resolver"
+import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"

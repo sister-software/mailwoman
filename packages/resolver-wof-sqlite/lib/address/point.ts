@@ -15,7 +15,7 @@
  *   scopes missed). Multiple hits return the first by rowid — unit siblings share the building coord.
  */
 
-import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
+import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { AddressPointDatabase, AddressPointTable } from "#address/point-schema"

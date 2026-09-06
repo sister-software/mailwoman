@@ -31,14 +31,3 @@ export {
 	scoreVague,
 	scoreVenueLandmark,
 } from "#rules"
-
-export { QueryIntentCode } from "#types"
-
-export type {
-	LocaleHint,
-	NormalizedInputLite,
-	QueryIntentMarker,
-	QueryKind,
-	QueryKindResult,
-	QueryShapeLike,
-} from "#types"

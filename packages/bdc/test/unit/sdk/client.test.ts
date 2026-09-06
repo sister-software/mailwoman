@@ -65,14 +65,11 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 // Dynamic imports AFTER the reset so the module chain evaluates against the env mock.
-const {
-	BDC_API_BASE_URL,
-	BDC_DEFAULT_REQUESTS_PER_MINUTE,
-	createBDCClient,
-	formatBDCThrottleStats,
-	isTransientResourceError,
-	ResourceError,
-} = await import("@mailwoman/bdc/sdk/client")
+const { BDC_API_BASE_URL, BDC_DEFAULT_REQUESTS_PER_MINUTE, createBDCClient, formatBDCThrottleStats } =
+	await import("@mailwoman/bdc/sdk/client")
+
+const { isTransientResourceError } = await import("@mailwoman/core/api")
+const { ResourceError } = await import("@mailwoman/core/errors")
 
 const { BDCFileCategory, BDCFilingDataType, BDCStateSubCategory } = await import("@mailwoman/bdc/sdk/common")
 const { downloadBDCFile } = await import("@mailwoman/bdc/sdk/download")

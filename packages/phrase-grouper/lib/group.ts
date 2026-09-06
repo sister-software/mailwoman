@@ -13,6 +13,9 @@
  *   and `phrase-grouper/rules.ts` for per-rule documentation.
  */
 
+import type { LocaleHint, PhraseProposal } from "@mailwoman/core/pipeline"
+import type { NormalizedInputLite, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
+
 import {
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
@@ -24,7 +27,7 @@ import {
 	tokenizeSegment,
 	type SegmentToken,
 } from "#rules"
-import type { GroupPhrasesOpts, LocaleHint, NormalizedInputLite, PhraseProposal, QueryShapeLike } from "#types"
+import type { GroupPhrasesOpts } from "#types"
 
 /**
  * Walk every QueryShape segment and emit one `tokens-by-segment` list. Falls back to treating the whole input as a

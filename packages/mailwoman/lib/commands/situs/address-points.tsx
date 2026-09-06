@@ -28,18 +28,12 @@
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

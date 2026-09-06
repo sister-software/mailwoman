@@ -25,11 +25,11 @@
  */
 
 import { clamp } from "@mailwoman/core/numeric"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import { CommandError } from "#cli-kit"
 import { outputLines } from "#debug-view/output-lines"
 import { QueryInput, type InputState } from "#debug-view/QueryInput"
 import { resolveTilesPath } from "#debug-view/tiles"

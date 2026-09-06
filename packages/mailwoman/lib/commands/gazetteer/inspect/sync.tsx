@@ -22,6 +22,7 @@ import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 import { useState } from "react"
@@ -29,7 +30,6 @@ import { useState } from "react"
 import {
 	type Check,
 	CheckList,
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,
@@ -42,7 +42,6 @@ import {
 	type DiscoveredRepo,
 	type RepoSelection,
 } from "#commands/gazetteer/inspect/sync-plan"
-
 /**
  * Concurrency for the clone fan-out.
  *

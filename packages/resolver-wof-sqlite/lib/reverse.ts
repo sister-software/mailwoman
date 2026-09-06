@@ -29,6 +29,7 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { allRows } from "@mailwoman/core/utils"
 import { bboxAround, geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
@@ -36,9 +37,7 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import { ancestorLineage, placetypeDepth } from "#ancestry/index"
 import { PLACE_BBOX_TABLE } from "#fts/index"
 import type { WOFDatabase } from "#schema"
-import { allRows } from "#sqlite-utils"
 import type { PlaceCandidate, WOFPlacetype } from "#types"
-
 /**
  * Largest absolute latitude in WGS-84 degrees.
  */

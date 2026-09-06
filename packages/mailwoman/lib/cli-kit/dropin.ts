@@ -29,17 +29,12 @@ import { printOpenAPIDocument } from "@mailwoman/api-kit"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { failScript } from "@mailwoman/core/scripting/utils"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from "#cli-kit/engine-stamp"
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
-import {
-	buildNoGazetteerMessage,
-	existingWOFDatabasePaths,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-} from "#resolver-backend"
-
+import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPath } from "#resolver-backend"
 /**
  * The docs page every drop-in's missing-gazetteer message points a stranger at (#1009). One constant so the three
  * messages cannot drift onto different pages when the docs move.

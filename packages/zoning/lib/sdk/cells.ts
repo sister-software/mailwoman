@@ -27,22 +27,14 @@
  *   downstream as an absence of zoning.
  */
 
-import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
-import { polygonToCells } from "h3-js"
-
-import type { MultiPolygonRings } from "#rings"
-
-export {
-	addCoverageCells,
-	CELL_ESTIMATE_BUDGET,
-	classifyFeatureCells,
-	coverageCellFor,
-	estimateCellCount,
-	featureCellRows,
-	MIN_INDEX_RESOLUTION,
-	resolutionForFeature,
+import {
+	compactAcrossResolutions,
+	shortCellToInt,
 	type FeatureCells,
+	type H3Cell,
+	type MultiPolygonRings,
 } from "@mailwoman/spatial"
+import { polygonToCells } from "h3-js"
 
 /**
  * Would a CENTRE-IN-POLYGON polyfill return nothing for this feature?

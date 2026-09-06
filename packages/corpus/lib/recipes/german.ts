@@ -27,12 +27,13 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { makeMulberry32, readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
+import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "#synthesizers/german"
 import { alignRow } from "#utils"
 

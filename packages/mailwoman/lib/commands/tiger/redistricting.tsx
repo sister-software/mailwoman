@@ -12,16 +12,11 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

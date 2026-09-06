@@ -14,6 +14,7 @@ import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
+import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
@@ -28,13 +29,7 @@ import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/c
 import { RegionDatabaseProvider } from "#geocode/regions"
 import type { GeocodeResult } from "#geocode/result"
 import { poiTaxonomyLookup } from "#poi/intent"
-import {
-	createResolverBackend,
-	loadCapitalIndex,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	wofExtractPaths,
-} from "#resolver-backend"
+import { createResolverBackend, loadCapitalIndex, resolveCandidateDBPath } from "#resolver-backend"
 
 export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>

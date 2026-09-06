@@ -23,9 +23,9 @@
  *   ending "near me" is not a locality and answering it as one is the bug.
  */
 
-import { isDisqualifyingStreetSuffix, MAX_LOCALITY_ONLY_LENGTH, wordsOf } from "#rules"
-import type { NormalizedInputLite, QueryShapeLike } from "#types"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 
+import { isDisqualifyingStreetSuffix, MAX_LOCALITY_ONLY_LENGTH, wordsOf } from "#rules"
 /**
  * `locality_only` scores 0.85. Both refinement kinds sit under it by a whole confidence step so no float-comparison
  * accident can flip the top slot, and so the gap reads as deliberate to the next person.

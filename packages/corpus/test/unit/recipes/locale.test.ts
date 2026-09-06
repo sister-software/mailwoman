@@ -14,6 +14,7 @@
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import {
 	applyCountryAppend,
 	applyDistrictAsLocalityOverride,
@@ -23,7 +24,6 @@ import {
 	readTuples,
 	resolveLocaleParts,
 } from "@mailwoman/corpus/recipes/locale"
-import { makeMulberry32 } from "@mailwoman/corpus/recipes/scaffold"
 import type { SynthesizedLocaleRow } from "@mailwoman/corpus/synthesizers/german"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"

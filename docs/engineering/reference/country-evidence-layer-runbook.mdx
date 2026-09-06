@@ -50,7 +50,7 @@ mechanism — stop here.
 1. **A dead or starved tag the model won't emit.** The worked case is `dependent_locality`: v385
    was trained into never emitting it (~93% of training rows carry no such tag). Confirm the deficit
    directly — grade the shipped model on a real board for the tag and read the **raw BIO**, not the
-   decoded JSON (`decodeAsJson` silently drops all-`O` spans; a 0% read there can hide a
+   decoded JSON (`decodeAsJSON` silently drops all-`O` spans; a 0% read there can hide a
    non-emitting head). The GB and NZ boards both read `0/N` emit before the prior.
 2. **The deficit is roughly UNIFORM.** Measure the classifier's per-position logit gap to the tag
    across the board. GB's gap mean was ~7.0 logits (4.95 min); NZ's ~7.8. A uniform deficit is what

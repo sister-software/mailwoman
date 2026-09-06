@@ -23,8 +23,9 @@
  */
 
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+import { classifyFeatureCells } from "@mailwoman/spatial"
 
-import { polyfillFindsNothing, ZoningCellIndex, classifyFeatureCells, type CellIndexMeasurement } from "#sdk/cells"
+import { polyfillFindsNothing, ZoningCellIndex, type CellIndexMeasurement } from "#sdk/cells"
 import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions } from "#sdk/ingest"
 
 export interface MeasureResolutionsOptions extends ZoningIngestOptions, ResolutionMeasurementOptions {

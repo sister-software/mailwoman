@@ -29,8 +29,8 @@ import {
 	fixtureAttributes,
 	fixtureDelineations,
 	fixtureSource,
-	rectangleRing,
 } from "@mailwoman/soil/test-kit"
+import { rectangleRing } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"

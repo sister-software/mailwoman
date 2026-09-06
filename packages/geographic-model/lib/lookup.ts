@@ -18,9 +18,10 @@
  *   concept it had never heard of.
  */
 
+import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
 import type { POICategoryID } from "@mailwoman/poi-taxonomy/types"
 
-import { type CompiledGeographicModel, compareIdentifiers } from "#artifact"
+import type { CompiledGeographicModel } from "#artifact"
 import type {
 	ConceptID,
 	ConceptRecord,

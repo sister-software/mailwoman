@@ -15,8 +15,7 @@ import {
 	scoreVague,
 	scoreVenueLandmark,
 } from "@mailwoman/kind-classifier/rules"
-import type { NormalizedInputLite, QueryShapeLike } from "@mailwoman/kind-classifier/types"
-import type { KnownFormat } from "@mailwoman/query-shape"
+import type { KnownFormat, NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 const input = (normalized: string): NormalizedInputLite => ({ raw: normalized, normalized })

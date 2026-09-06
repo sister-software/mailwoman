@@ -29,7 +29,6 @@ import type { SurveyAreaAttributes } from "#sdk/survey-area"
 /**
  * Re-exported so a fixture in another workspace builds its rings the same way this one does.
  */
-export { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
 
 /**
  * Where the fixture geometry sits — central Iowa, so the cells it produces are the ones a real build would use.
