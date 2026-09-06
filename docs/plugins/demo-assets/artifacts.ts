@@ -36,9 +36,10 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
+import { resolvePackageJSON, resolvePackageSpecifier } from "@mailwoman/core/module/resolvers"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolution.ts"
+import { resolvePackagePath } from "./workspace-resolution.ts"
 
 //#region Model artifact staging
 
@@ -83,7 +84,7 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	let distDir: string
 
 	try {
-		const entry = resolvePackageSpecifier("sql.js-httpvfs/dist/index.js")
+		const entry = resolvePackageJSON(import.meta, "sql.js-httpvfs")
 
 		if (!entry) throw new Error("sql.js-httpvfs is not resolvable")
 		distDir = dirname(entry)
@@ -157,7 +158,7 @@ export function relativeImportSpecifiers(source: string): string[] {
  * @param destDir - E.g. static/mailwoman/maplibre
  */
 export async function stageMapLibreWorker(destDir: string): Promise<string[]> {
-	const workerPath = resolvePackageSpecifier("maplibre-gl/dist/maplibre-gl-worker.mjs")
+	const workerPath = resolvePackageSpecifier(import.meta, "maplibre-gl/dist/maplibre-gl-worker.mjs")
 
 	if (!workerPath) {
 		console.warn("[demo-assets] maplibre-gl worker not resolvable — MapLibre worker not staged")

@@ -9,9 +9,7 @@
  *   from the caller's own location keeps the lookup inside the package that declares the dependency.
  */
 
-import { dirname, resolvePath } from "path-ts"
-
-import { createRequire } from "#module/resolvers"
+import { readPackageJSON, resolvePackageJSON, resolvePackageSpecifier } from "#module/resolvers"
 
 export interface ValeCommand {
 	/**
@@ -25,21 +23,25 @@ export interface ValeCommand {
 }
 
 interface ValeManifest {
-	bin?: string | Record<string, string>
+	bin: {
+		vale: string
+	}
 }
 
 /**
- * @param fromURL The caller's `import.meta.url`, so `@vvago/vale` resolves from the package that depends on it.
+ * @param meta The caller's `import.meta`.
  */
-export function valeCommand(fromURL: string): ValeCommand {
-	const require = createRequire(fromURL)
-	const manifestPath = require.resolve("@vvago/vale/package.json")
-	const manifest = require(manifestPath) as ValeManifest
-	const bin = typeof manifest.bin === "string" ? manifest.bin : manifest.bin?.vale
+export async function valeCommand(meta: ImportMeta): Promise<ValeCommand> {
+	const manifestPath = resolvePackageJSON(meta, "@vvago/vale")
+	const manifest = await readPackageJSON<ValeManifest>(manifestPath)
 
-	if (!bin) throw new Error(`${manifestPath} publishes no vale bin`)
+	const bin = typeof manifest.bin === "string" ? manifest.bin : manifest.bin.vale
 
-	const binPath = resolvePath(dirname(manifestPath), bin)
+	if (!bin) {
+		throw new TypeError(`@vvago/vale's package.json has no bin.vale entry`)
+	}
+
+	const binPath = resolvePackageSpecifier(meta, "@vvago/vale", bin)
 
 	return /\.[cm]?js$/u.test(bin) ? { file: process.execPath, argv: [binPath] } : { file: binPath, argv: [] }
 }

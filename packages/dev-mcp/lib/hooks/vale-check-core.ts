@@ -40,8 +40,8 @@ export interface ProseVerdict {
 	text: string
 }
 
-export function lintReply(reply: string): ValeAlert[] {
-	const vale = valeCommand(import.meta.url)
+export async function lintReply(reply: string): Promise<ValeAlert[]> {
+	const vale = await valeCommand(import.meta)
 	const configPath = repoRootPath("docs", ".vale-chat.ini")
 
 	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal —

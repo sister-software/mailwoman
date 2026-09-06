@@ -5,31 +5,15 @@
  * @file Package-aware source resolution for the docs webpack build.
  */
 
-// `node:module` directly: the Docusaurus config loader evaluates this file through a CommonJS transform that cannot
-// parse `import.meta.resolve`, which `@mailwoman/core/module/resolvers` carries.
-import { createRequire } from "node:module"
-
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { resolvePackageJSON } from "@mailwoman/core/module/resolvers"
 import { dirname, join } from "path-ts"
-
-const requireFromPlugin = createRequire(import.meta.url)
-
-/**
- * Resolve a package specifier using the plugin's dependency graph.
- */
-export function resolvePackageSpecifier(specifier: string): string | null {
-	try {
-		return requireFromPlugin.resolve(specifier)
-	} catch {
-		return null
-	}
-}
 
 /**
  * Resolve a file relative to an installed package without leaking its root directory to callers.
  */
 export function resolvePackagePath(packageName: string, ...segments: string[]): string | null {
-	const manifest = resolvePackageSpecifier(`${packageName}/package.json`)
+	const manifest = resolvePackageJSON(import.meta, packageName)
 
 	return manifest ? join(dirname(manifest), ...segments) : null
 }

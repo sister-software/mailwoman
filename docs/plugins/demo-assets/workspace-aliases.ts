@@ -5,12 +5,9 @@
  * @file Source aliases used by the interactive docs demo.
  */
 
-import {
-	resolvePackageDirectoryEntry,
-	resolvePackageEntry,
-	resolvePackageFile,
-	resolvePackageSpecifier,
-} from "./workspace-resolution.ts"
+import { resolvePackageSpecifier } from "@mailwoman/core/module/resolvers"
+
+import { resolvePackageDirectoryEntry, resolvePackageEntry, resolvePackageFile } from "./workspace-resolution.ts"
 
 const ROOT_PACKAGES = [
 	"@mailwoman/resolver-wof-wasm",
@@ -116,7 +113,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 
 	for (const subpath of CODEX_SUBPATHS) {
 		const specifier = subpath ? `@mailwoman/codex/${subpath}` : "@mailwoman/codex"
-		const target = resolvePackageSpecifier(specifier)
+		const target = resolvePackageSpecifier(import.meta, `@mailwoman/codex`, subpath)
 
 		if (!target) {
 			console.warn(`[demo-assets] ${specifier} not resolvable — alias skipped`)
