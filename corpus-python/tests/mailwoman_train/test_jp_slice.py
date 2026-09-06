@@ -124,7 +124,9 @@ RURAL = {"prefecture": "沖縄県", "municipality": "石垣市", "district": "�
 
 
 def render(base: dict, register: str, **kwargs) -> dict:
-    return render_row(**base, register=register, postcode=None, spaced=False, country=False, **kwargs)
+    # The kana register needs the reading the admin DB would supply; たかまつ市 stands in for 高松市 here.
+    kana = {"municipality_kana": "たかまつ市"} if register == "kana_municipality" else {}
+    return render_row(**base, register=register, postcode=None, spaced=False, country=False, **kana, **kwargs)
 
 
 def test_native_register_matches_the_source_surface() -> None:
@@ -211,7 +213,8 @@ def test_variant_hyphen_survives_into_the_rendered_number() -> None:
 
 
 def test_a_row_with_a_chome_and_a_clean_number_offers_every_register() -> None:
-    assert available_registers(2, "3-16") == tuple(REGISTER_WEIGHTS)
+    assert available_registers(2, "3-16", kana=True) == tuple(REGISTER_WEIGHTS)
+    assert "kana_municipality" not in available_registers(2, "3-16")
 
 
 def test_a_row_without_a_chome_cannot_offer_the_chome_registers() -> None:
@@ -359,3 +362,59 @@ def test_water_fill_caps_the_dominant_bucket() -> None:
     assert cap == 140_000  # 140,000 + 40,000 + 120,000 = 300,000 exactly
     assert sum(min(cap, n) for n in counts.values()) <= 300_000
     assert sum(min(cap + 1, n) for n in counts.values()) > 300_000  # and it is the LARGEST such cap
+
+
+# --- The kana municipality register (#2165) ------------------------------------------------------
+
+
+def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic() -> None:
+    from mailwoman_train.jp_kana import kana_surface, pick_kana_stem
+
+    stem = pick_kana_stem("厚木市", ["あつぎ", "あつぎし", "厚木", "厚木町"])
+    assert stem == "あつぎ"
+    assert kana_surface("厚木市", stem) == "あつぎ市"
+    # An official name that is already kana has nothing to substitute.
+    assert pick_kana_stem("かすみがうら市", ["かすみがうら"]) is None
+    # No hiragana variant at all → no register.
+    assert pick_kana_stem("大阪市", ["大阪"]) is None
+
+
+def test_kana_register_renders_the_reading_with_the_kanji_generic_and_spans_by_construction() -> None:
+    record = render_row(
+        prefecture="神奈川県",
+        municipality="厚木市",
+        district="中町",
+        chome=2,
+        number="3-16",
+        postcode=None,
+        register="kana_municipality",
+        spaced=False,
+        country=False,
+        municipality_kana="あつぎ市",
+    )
+    raw = record["raw"]
+    assert raw == "神奈川県あつぎ市中町二丁目3-16"
+    spans = {
+        t: raw[s:e] for s, e, t in zip(record["span_starts"], record["span_ends"], record["span_tags"], strict=True)
+    }
+    assert spans["municipality"] == "あつぎ市"
+    assert spans["prefecture"] == "神奈川県"
+    assert record["register"] == "kana_municipality"
+
+
+def test_kana_register_is_offered_only_when_the_municipality_has_a_reading() -> None:
+    assert "kana_municipality" not in available_registers(2, "3-16")
+    assert "kana_municipality" in available_registers(2, "3-16", kana=True)
+    assert available_registers(None, "362B-2", kana=True) == ("native", "kana_municipality")
+    with pytest.raises(ValueError, match="municipality_kana"):
+        render_row(
+            prefecture="神奈川県",
+            municipality="厚木市",
+            district="中町",
+            chome=2,
+            number="3-16",
+            postcode=None,
+            register="kana_municipality",
+            spaced=False,
+            country=False,
+        )

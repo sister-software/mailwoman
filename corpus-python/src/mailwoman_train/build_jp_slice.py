@@ -84,6 +84,7 @@ import json
 import os
 import random
 import re
+import sys
 import unicodedata
 from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
@@ -94,12 +95,14 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from .char_tokenizer import build_char_vocab, save_char_vocab
+from .jp_kana import municipality_kana_from_admin_db
 from .labels import resolve_label_set
 from .tokenizer import char_label_array_from_spans
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 DEFAULT_PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-jp.parquet"
 DEFAULT_KENALL = Path(DATA_ROOT) / "KEN_ALL_ROME" / "KEN_ALL_ROME.CSV"
+DEFAULT_ADMIN_DB = Path(DATA_ROOT) / "wof" / "admin-global-priority.db"
 
 LABEL_SET_NAME = "stage3-jp"
 
@@ -280,6 +283,10 @@ REGISTER_WEIGHTS: dict[str, float] = {
     "compact_folded": 0.20,
     # 3番16号 — designators in the surface, so the JP-seven number tags fire (D4's two-surface rule).
     "designator": 0.15,
+    # あつぎ市 — the municipality as its kana reading plus the kanji generic (#2165): the shape of the official kana
+    # names (かすみがうら市) that two from-scratch runs failed to close at the 市. Native rendering otherwise.
+    # Available only where the admin DB reads the municipality (jp_kana.py).
+    "kana_municipality": 0.05,
 }
 
 
@@ -317,6 +324,7 @@ def render_row(
     spaced: bool,
     country: bool,
     hyphen: str = "-",
+    municipality_kana: str | None = None,
 ) -> dict[str, Any]:
     """Render one JP row in one register, returning the #519 span-triple slice record.
 
@@ -336,7 +344,12 @@ def render_row(
         renderer.glue(sep)
     renderer.put("prefecture", prefecture)
     renderer.glue(sep)
-    renderer.put("municipality", municipality)
+    if register == "kana_municipality":
+        if not municipality_kana:
+            raise ValueError("kana_municipality register needs municipality_kana")
+        renderer.put("municipality", municipality_kana)
+    else:
+        renderer.put("municipality", municipality)
     renderer.glue(sep)
 
     parts = number.split("-") if number else []
@@ -394,19 +407,21 @@ def render_row(
     }
 
 
-def available_registers(chome: int | None, number: str) -> tuple[str, ...]:
+def available_registers(chome: int | None, number: str, kana: bool = False) -> tuple[str, ...]:
     """Which registers a row can honestly render.
 
     A row with no chōme has no chōme register to convert; a number that is not a clean part list
     (``362B-2``, ``761乙号-2`` — 103,299 rows) cannot be re-rendered as designators at all, so it
-    stays whole-span in its native surface.
+    stays whole-span in its native surface. ``kana`` says whether the municipality has a kana
+    reading to render (#2165); without one the kana register is not on offer.
     """
     clean = bool(_COMPACT.match(number)) if number else False
+    kana_extra = ("kana_municipality",) if kana else ()
     if not clean:
-        return ("native",)
+        return ("native", *kana_extra)
     if chome is None:
-        return ("native", "designator")
-    return tuple(REGISTER_WEIGHTS)
+        return ("native", "designator", *kana_extra)
+    return tuple(name for name in REGISTER_WEIGHTS if kana or name != "kana_municipality")
 
 
 def choose_register(rng: random.Random, options: Sequence[str]) -> str:
@@ -728,12 +743,15 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
 
     kenall_tiers: Counter[str] = Counter()
     register_unavailable: Counter[str] = Counter()
+    kana_by_municipality = municipality_kana_from_admin_db(args.admin_db) if args.admin_db else {}
+    print(f"[jp] kana readings for {len(kana_by_municipality):,} municipalities (#2165)", file=sys.stderr)
 
     def encode(rows: Sequence[tuple[str, str, str, str, float, float]]) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
         for prefecture, municipality, street, number, _lon, _lat in rows:
             district, chome = split_street(street)
-            options = available_registers(chome, number)
+            municipality_kana = kana_by_municipality.get(municipality)
+            options = available_registers(chome, number, kana=municipality_kana is not None)
             register_unavailable["full" if len(options) == len(REGISTER_WEIGHTS) else "reduced"] += 1
             register = choose_register(rng, options)
             postcode = None
@@ -752,6 +770,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 spaced=rng.random() < args.spaced_fraction,
                 country=rng.random() < args.country_fraction,
                 hyphen=hyphen,
+                municipality_kana=municipality_kana,
             )
             verify_record(record, tag_set)
             out.append(record)
@@ -789,7 +808,8 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     with board_path.open("w", encoding="utf-8") as handle:
         for prefecture, municipality, street, number, lon, lat in board:
             district, chome = split_street(street)
-            register = choose_register(rng, available_registers(chome, number))
+            municipality_kana = kana_by_municipality.get(municipality)
+            register = choose_register(rng, available_registers(chome, number, kana=municipality_kana is not None))
             postcode = None
             if rng.random() < args.postcode_fraction:
                 postcode, tier = kenall.lookup(prefecture, municipality, district)
@@ -804,6 +824,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 register=register,
                 spaced=rng.random() < args.spaced_fraction,
                 country=rng.random() < args.country_fraction,
+                municipality_kana=municipality_kana,
             )
             verify_record(record, tag_set)
             board_records.append(record)
@@ -881,6 +902,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--parquet", default=str(DEFAULT_PARQUET))
     parser.add_argument("--kenall", default=str(DEFAULT_KENALL))
+    parser.add_argument(
+        "--admin-db",
+        default=str(DEFAULT_ADMIN_DB),
+        help="WOF admin DB for the municipality kana readings (#2165); an empty string disables the register",
+    )
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--train-rows", type=int, default=2_000_000)
     parser.add_argument("--val-rows", type=int, default=20_000)
