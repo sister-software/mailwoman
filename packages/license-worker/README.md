@@ -120,6 +120,28 @@ sweep for the rest.
 
 Public status answers carry no reason, no name and no date.
 
+## Running it locally
+
+`wrangler dev --env sandbox` runs the worker on the local Workers runtime with a local D1 and the sandbox rate limiters;
+no Cloudflare credential is needed. Secrets and overrides come from `.dev.vars` (gitignored; `.dev.vars.example` is
+the shape): the test-mode Stripe key, any string as the webhook secret, the sandbox signing pair's private half, and
+`ISSUANCE_ENABLED=true` to mint. Then:
+
+```bash
+yarn workspace @mailwoman/license-worker wrangler d1 migrations apply LICENSE_LEDGER --env sandbox --local
+yarn workspace @mailwoman/license-worker wrangler dev --env sandbox --test-scheduled
+curl -s http://localhost:8787/health
+curl -s "http://localhost:8787/__scheduled?cron=0+*/6+*+*+*"     # one reconciliation pass
+```
+
+Stripe cannot deliver a webhook to localhost. A local end to end pays through a test-mode Payment Link in a browser,
+reads the session id off the success URL, fetches the resulting events from `/v1/events`, and posts each to
+`/v1/webhooks/stripe` signed the way Stripe signs (`t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>" under the local
+webhook secret>`). The worker re-reads every object from Stripe by id, so only the delivery is simulated. A renewal needs a
+customer on a Stripe test clock, which a Payment Link cannot create: build a Checkout Session through the API for that
+customer with the same price, custom field, consent and metadata the Link carries, pay it, advance the clock past the
+period end, and replay the renewal's `invoice.paid`. The launch plan's receipt records one such run.
+
 ## Tests
 
 `yarn test:license-worker` runs the workspace's suite under `@cloudflare/vitest-pool-workers`: Miniflare's D1 with the
