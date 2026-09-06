@@ -1,15 +1,15 @@
 {
 	"name": "neural-weights-cjk",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"locale": "cjk",
-	"phase": "First functional release (0.0.1 was the name reservation): the v8-cjk-kana 24k graph and vocabulary, staged at cjk/v0.0.1/ on the Hugging Face bucket (#2164, #2165).",
+	"phase": "Second functional graph: the v8-cjk-kr 24k run (Japanese + Korean + Chinese under the 49-label head), staged at cjk/v0.0.2/ on the Hugging Face bucket (#2184). Replaces the v8-cjk-kana graph (cjk/v0.0.1/).",
 	"encoder": "char",
 	"char_vocab": "char-vocab.json",
 	"max_units": 96,
 	"max_unit_width": 7,
 	"char_ctx": 3,
 	"format": {
-		"model": "ONNX fp32 (opset 17), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (2,337 entries, <pad> 0, <unk> 1, code-point order).",
+		"model": "ONNX fp32 (opset 17), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (3,165 entries, <pad> 0, <unk> 1, code-point order).",
 		"tokenizer": null
 	},
 	"architecture": {
@@ -81,29 +81,44 @@
 	},
 	"files_md5": {
 		"$comment": "The candidate artifacts' md5s — what a materialized package is verified against.",
-		"model.onnx": "f0bb12e0c021fab19998759cc32dab30",
-		"char-vocab.json": "6f2d7efdbcd6c36edd186bf871336b13"
+		"model.onnx": "7a24dba39ee8b0a26aef62162b9fad3e",
+		"char-vocab.json": "e7ada09fe92d0c0fc480f748528d580c"
 	},
 	"training": {
-		"run": "v8-cjk-kana seed 42, 24,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-kana.yaml)",
-		"corpus": "v8-cjk-kana-2026-09-06 overlay: the v8-jp-kana-2026-09-06 JP corpus (2,000,000 train rows, Overture-JP, five registers — native, arabic_chome, compact_folded, designator, kana_municipality) plus 126 CN organizational-unit rows; source mixture overture-jp 0.98 / coarse-placer-cn-units 0.02",
-		"modal_app": "ap-PWNbrv0yjoQiEfzY19fuDV"
+		"run": "v8-cjk-kr seed 42, 24,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-kr.yaml)",
+		"corpus": "v8-cjk-kr-2026-09-06 overlay: the v8-jp-kana-2026-09-06 JP corpus (2,000,000 train rows, Overture-JP, five registers) plus the v8-kr-2026-09-06 Korean road-name-address corpus (2,000,000 train rows from juso.go.kr, five registers, 27 held-out 시군구) plus 126 CN organizational-unit rows; source mixture overture-jp 0.60 / juso-kr 0.38 / coarse-placer-cn-units 0.02; vocabulary re-sealed over the union",
+		"modal_app": "ap-zmeeIk4rQpF2FcBftt6JCW"
 	},
 	"eval": {
 		"jp_board_20000": {
-			"$comment": "Held-out municipalities, coordinate-acceptability at 15 km via the municipality centroid table (corpus-python/scripts/score_jp_probe_board.py --label-set stage3-cjk), on the pre-registered v8-jp-full-2026-08-04 board. PyTorch read; the shared head (v8-cjk-full) read 0.9653 / 0.9757 on the same instrument.",
-			"coordinate_acceptability": 0.9924,
-			"municipality_macro": 0.9821,
-			"municipality_exact": 0.994,
-			"district_exact": 0.987,
+			"$comment": "Held-out municipalities on the v8-jp-kana-2026-09-06 board, coordinate-acceptability at 15 km via the municipality centroid table (corpus-python/scripts/score_jp_probe_board.py --label-set stage3-cjk --all-municipalities), PyTorch read, the v8-cjk-kana base re-scored beside it on the same scorer. The kana_municipality register (1,127 rows) is unresolved by the kanji-keyed centroid table on both arms (1,125 gold-exact), which is why the blended number sits under the native register's.",
+			"coordinate_acceptability": 0.9359,
+			"coordinate_acceptability_base": 0.9362,
+			"native_register": 0.9921,
+			"native_register_base": 0.9924,
+			"municipality_macro": 0.6098,
+			"municipality_macro_base": 0.6104,
+			"municipality_exact": 0.9937,
+			"district_exact": 0.9857,
 			"prefecture_exact": 1.0,
 			"block_exact": 1.0,
-			"house_number_exact": 0.9933,
-			"note": "かすみがうら市 (823 held-out rows) fails 0 (the shared head failed 598); 中新川郡上市町 fails 121 of 136 (the shared head 66) — the model closes the municipality at the inner 市. On the v8-jp-kana-2026-09-06 board the 1,127 kana_municipality rows read 1,125 gold-exact."
+			"house_number_exact": 0.992,
+			"note": "かすみがうら市 (823 held-out rows) fails 0 on both arms; 中新川郡上市町 fails 124 of 130 (the base 120) — the model closes the municipality at the inner 市, which the runtime's JP municipality register repair closes for the six such towns (#2178)."
+		},
+		"kr_board_20000": {
+			"$comment": "27 held-out 시군구, five registers (official, no_dong, postcode_first, short_region, unspaced); per-tag span exact-match, PyTorch read (score_jp_probe_board.py --resolve-tags region,subregion --centroids kr-sigungu-centroids.json). Pre-registered bars: street and house_number ≥ 0.99, subregion ≥ 0.97, dependent_locality ≥ 0.95, region and postcode ≥ 0.99.",
+			"region_exact": 1.0,
+			"subregion_exact": 0.9665,
+			"dependent_locality_exact": 0.9984,
+			"street_exact": 0.99,
+			"house_number_exact": 1.0,
+			"postcode_exact": 1.0,
+			"coordinate_acceptability": 0.7752,
+			"note": "subregion misses the 0.97 bar by 0.0035: 669 of the 671 misses are one held-out city, 해운대구 (669 of its 681 rows), emitted as 해 or 해운대 — zero training rows by design and 해남군 (9,614 rows) the only frequent 해-initial 시군구 in training. The other 26 held-out cities read 19,317 of 19,319. Coordinate acceptability carries the short_region register (2,992 rows, 서울 for 서울특별시) unresolved by the centroid key on every row, 2,722 of them gold-exact."
 		},
 		"cn_board_14": {
-			"$comment": "locality_unit span exact-match, PyTorch per-unit argmax; the shared head read 10 (PyTorch) / 12 (served, Viterbi).",
-			"locality_unit_exact": "11/14"
+			"$comment": "locality_unit span exact-match, PyTorch per-unit argmax.",
+			"locality_unit_exact": "12/14"
 		}
 	},
 	"model_lineage": "0.0.1: v8-cjk-full step-024000 (fp32 ONNX md5 e14ef4c426dabb22e9433ab04b584d48). Decision record: docs/superpowers/specs/2026-09-05-cjk-serving-path.md; receipts on #1176, #2034, #2164.",
@@ -111,6 +126,10 @@
 	"notes": [
 		"One CJK package a consumer installs as a unit (#1177 Phase B): Japanese and Chinese ride one 49-label head; ja-jp and zh-cn data-only overlays follow.",
 		"Channel-free by contract (D5): no postcode-anchor, gazetteer, country or evidence channels; the graph declares only char_ids and attention_mask.",
-		"The locale hint routes a cjk character class to ja-JP; until the ja-jp overlay exists, load this package explicitly: NeuralAddressClassifier.loadFromWeights({ modelPath, charVocabPath, modelCardPath })."
+		"Korean rides the same head with no new tag: 시/도 → region, 시군구 → subregion (WOF counties), 읍면동 → dependent_locality, 도로명 → street, 건물번호 → house_number, 우편번호 → postcode (docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md)."
+	],
+	"attribution": [
+		"Japanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0); administrative names from Who's On First.",
+		"Korean road-name address data: 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (KOGL Type 1) — attribution required; commercial use, derivatives and redistribution permitted."
 	]
 }

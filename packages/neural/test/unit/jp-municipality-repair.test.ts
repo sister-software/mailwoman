@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The JP municipality boundary repair over char-aligned tokens: the model's cut at the inner 市 of `中新川郡上市町`
+ *   The JP municipality boundary repair over char-aligned tokens: the model's early close at the inner 市 of `中新川郡上市町`
  *   is closed by the register, a real city followed by a 町-initial district is untouched, and a surface that is
  *   already a register name absorbs nothing.
  */

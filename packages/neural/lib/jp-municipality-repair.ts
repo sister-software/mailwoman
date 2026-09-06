@@ -7,7 +7,7 @@
  *
  *   The character model closes a `municipality` span at 市 and opens the next span on 町: `富山県中新川郡上市町北島` decodes
  *   as prefecture `富山県`, municipality `中新川郡上市`, district `町北島`. The register in `@mailwoman/codex`
- *   (`JP_INNER_SHI_TOWNS`) names the six towns for which that cut is wrong, so this pass extends the municipality by
+ *   (`JP_INNER_SHI_TOWNS`) names the six towns for which that boundary is wrong, so this pass extends the municipality by
  *   exactly the characters a register name needs and re-opens the following span after them. It fires only when the
  *   extended surface IS a register name, so a real city followed by a 町-initial district (`富山市町村`) is untouched.
  *
