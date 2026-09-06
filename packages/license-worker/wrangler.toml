@@ -27,7 +27,7 @@ STRIPE_PRICE_YEARLY = "REPLACE"
 name = "mailwoman-license-sandbox"
 
 [env.sandbox.vars]
-ISSUANCE_ENABLED = "false"
+ISSUANCE_ENABLED = "true"
 SITE_ORIGIN = "https://mailwoman.ai"
 AGREEMENT_VERSION = "commercial-2026-10"
 EMAIL_FROM = "licenses@mailwoman.ai"
@@ -39,7 +39,7 @@ STRIPE_PRICE_YEARLY = "price_1UCTF8ANyI6tE9BzmJnVxNiS"
 [[env.sandbox.d1_databases]]
 binding = "LICENSE_LEDGER"
 database_name = "mailwoman-license-sandbox"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "8c9f596d-1597-4f04-90a2-f1a8d2d6f82f"
 migrations_dir = "migrations"
 
 [[env.sandbox.ratelimits]]

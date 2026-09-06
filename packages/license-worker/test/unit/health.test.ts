@@ -24,7 +24,8 @@ beforeAll(async () => {
 })
 
 function app(now: () => number = () => NOW) {
-	return createLicenseWorkerApp(readEnv(env), {
+	// Pinned rather than read from the sandbox vars, which flip with the deployment.
+	return createLicenseWorkerApp(readEnv({ ...env, ISSUANCE_ENABLED: "false" }), {
 		signingStatus: () => "unchecked",
 		ledger: openLedger(env.LICENSE_LEDGER),
 		email: { send: async () => ({ messageID: "msg_unused" }) },
