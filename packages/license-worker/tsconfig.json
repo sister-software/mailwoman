@@ -12,5 +12,5 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*"],
-	"references": [{ "path": "../core" }]
+	"references": [{ "path": "../core" }, { "path": "../release-kit" }]
 }

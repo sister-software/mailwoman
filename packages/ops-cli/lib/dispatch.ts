@@ -13,7 +13,8 @@
  *   registered; this is the only caller.
  */
 
-import { findOperation, operations, type ReleaseContext } from "@mailwoman/release-kit"
+import { shopOperations } from "@mailwoman/license-worker/shop"
+import { operations, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"
 import {
 	checkPassed,
 	checks,
@@ -65,13 +66,15 @@ export function parseOptions(args: readonly string[]): { options: Record<string,
 function usage(io: DispatchIO): number {
 	io.stderr(
 		[
-			"mwops — the private operator CLI (a view over the release-kit and repo-health registries)",
+			"mwops — the private operator CLI (a view over the release-kit, shop and repo-health registries)",
 			"",
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
+			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
 			"  mwops health baseline debt        (the one mutation: rewrite packages/repo-health/baseline.json)",
 			"",
 			`release operations: ${operations.length ? operations.map((operation) => `${operation.id} (${operation.effect})`).join(", ") : "(none registered yet)"}`,
+			`shop operations:    ${shopOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
 			"",
 		].join("\n")
@@ -80,17 +83,27 @@ function usage(io: DispatchIO): number {
 	return 2
 }
 
-async function runRelease(args: readonly string[], io: DispatchIO): Promise<number> {
+/**
+ * Run one operation of a registry: the release registry under `mwops release`, the shop's under `mwops shop`. The
+ * contract is the same object, so the view is one function.
+ */
+async function runOperation(
+	verb: "release" | "shop",
+	registry: ReadonlyArray<ReleaseOperation<unknown, unknown>>,
+	args: readonly string[],
+	io: DispatchIO
+): Promise<number> {
 	const { options, rest } = parseOptions(args)
 	const id = rest[0]
 
 	if (!id) return usage(io)
 
-	const operation = findOperation(id.includes(".") ? id : `release.${id}`)
+	const qualified = id.includes(".") ? id : `${verb}.${id}`
+	const operation = registry.find((candidate) => candidate.id === qualified)
 
 	if (!operation) {
 		io.stderr(
-			`mwops release: no operation ${JSON.stringify(id)}; registered: ${operations.map((o) => o.id).join(", ") || "(none)"}\n`
+			`mwops ${verb}: no operation ${JSON.stringify(id)}; registered: ${registry.map((o) => o.id).join(", ") || "(none)"}\n`
 		)
 
 		return 2
@@ -108,7 +121,7 @@ async function runRelease(args: readonly string[], io: DispatchIO): Promise<numb
 	const parsed = operation.inputSchema.safeParse(input)
 
 	if (!parsed.success) {
-		io.stderr(`mwops release ${operation.id}: invalid input — ${parsed.error.message}\n`)
+		io.stderr(`mwops ${verb} ${operation.id}: invalid input — ${parsed.error.message}\n`)
 
 		return 2
 	}
@@ -213,7 +226,9 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 
 	switch (verb) {
 		case "release":
-			return await runRelease(rest, io)
+			return await runOperation("release", operations, rest, io)
+		case "shop":
+			return await runOperation("shop", shopOperations, rest, io)
 		case "health":
 			return await runHealth(rest, io)
 		default:
