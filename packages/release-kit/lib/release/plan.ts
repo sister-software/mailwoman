@@ -46,7 +46,17 @@ export interface ReleasePlan {
 	gitHead: string
 	version: string
 	packages: ReleasePlanPackage[]
-	artifacts: Array<{ workspace: string; filename: string; origin: ArtifactOrigin["kind"]; expectedMD5?: string }>
+	artifacts: Array<{
+		workspace: string
+		filename: string
+		origin: ArtifactOrigin["kind"]
+		/**
+		 * The bucket directory a `hf` artifact is read from when it is not `destinations.hfBase` — a character-path
+		 * family's own directory.
+		 */
+		base?: string
+		expectedMD5?: string
+	}>
 	destinations: ReleasePlanDestinations
 	planDigest: string
 }
@@ -66,21 +76,25 @@ export async function computeReleasePlan(repoRoot: string): Promise<ReleasePlan>
 		packages.push({ workspace, name: manifest.name, version: manifest.version })
 	}
 
-	const artifacts: ReleasePlan["artifacts"] = (await planWeightsMaterialization(repoRoot)).map((artifact) => ({
+	const modelVersion = await readBaseModelVersion(repoRoot)
+	const hfBase = await hfVersionBase(repoRoot, modelVersion)
+
+	const artifacts: ReleasePlan["artifacts"] = (
+		await planWeightsMaterialization(repoRoot, { version: modelVersion })
+	).map((artifact) => ({
 		workspace: artifact.workspace,
 		filename: artifact.filename,
 		origin: artifact.origin.kind,
+		...(artifact.origin.kind === "hf" && artifact.origin.base !== hfBase ? { base: artifact.origin.base } : {}),
 		...(artifact.expectedMD5 ? { expectedMD5: artifact.expectedMD5 } : {}),
 	}))
-
-	const modelVersion = await readBaseModelVersion(repoRoot)
 
 	const body = {
 		gitHead: head,
 		version: root.version,
 		packages,
 		artifacts,
-		destinations: { npmRegistry: NPM_REGISTRY, hfBase: await hfVersionBase(repoRoot, modelVersion) },
+		destinations: { npmRegistry: NPM_REGISTRY, hfBase },
 	}
 
 	return { ...body, planDigest: sha256Hex(canonicalJSON(body)) }

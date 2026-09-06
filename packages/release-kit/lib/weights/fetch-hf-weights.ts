@@ -32,6 +32,7 @@ import { resolvePath } from "path-ts"
 
 import { $private } from "#env/index"
 import { literalFilesEntries } from "#pack/verify-tarball"
+import { releaseWorkspaces } from "#release/stage"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "#weights/weights-recipe"
 
 /**
@@ -49,11 +50,13 @@ const MODEL_FILENAME = "model.onnx"
 /**
  * Where one declared artifact comes from.
  *
- * `hf` names a bucket object by basename: `mailwoman release hf` uploads with a single `--locale`, flat, so an
- * overlay's `pair-index-de.bin` lives under the BASE locale's version directory rather than its own. `repo` names a
- * committed file the checkout already carries (see `repoCommittedSoftFeedSources`).
+ * `hf` names a bucket object by basename under `base`, the versioned bucket directory it is read from: `mailwoman
+ * release hf` uploads with a single `--locale`, flat, so an overlay's `pair-index-de.bin` lives under the BASE locale's
+ * version directory rather than its own, and a character-path family (`cjk`) lives under its OWN directory, because its
+ * `model.onnx` shares a basename with the Latin base's and is not the same bytes. `repo` names a committed file the
+ * checkout already carries (see `repoCommittedSoftFeedSources`).
  */
-export type ArtifactOrigin = { kind: "hf"; remoteName: string } | { kind: "repo"; sourcePath: string }
+export type ArtifactOrigin = { kind: "hf"; remoteName: string; base: string } | { kind: "repo"; sourcePath: string }
 
 /**
  * One artifact a weights package declares in `files` that no `git archive` of this repo can supply.
@@ -257,6 +260,24 @@ async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string)
  */
 export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
+	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
+
+	return `${await hfResolveRoot(repoRoot)}/${baseLocale}/v${version}`
+}
+
+/**
+ * The versioned bucket directory of a character-path family: `<root>/<family>/v<version>`, the family's own card
+ * version, beside the Latin base's directory rather than inside it.
+ */
+export async function hfFamilyBase(repoRoot: string, family: string, version: string): Promise<string> {
+	return `${await hfResolveRoot(repoRoot)}/${family}/v${version}`
+}
+
+/**
+ * The `<host>/<bucket>/resolve` prefix every versioned directory hangs off.
+ */
+async function hfResolveRoot(repoRoot: string): Promise<string> {
+	const config = await readReleaseConfig(repoRoot)
 	const bucket = config.assets?.hfBucket
 
 	if (!bucket && !$private.HF_BUCKET_RESOLVE_URL) {
@@ -269,10 +290,8 @@ export async function hfVersionBase(repoRoot: string, version: string): Promise<
 	// Trailing slashes are stripped rather than trusted: the override is operator-supplied configuration and the lab's
 	// copy ends in one, which would otherwise put an empty path segment between the root and the locale.
 	const configured = $private.HF_BUCKET_RESOLVE_URL ?? `${DEFAULT_HF_RESOLVE_ROOT}/${bucket}/resolve`
-	const resolveRoot = configured.replace(/\/+$/, "")
-	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
 
-	return `${resolveRoot}/${baseLocale}/v${version}`
+	return configured.replace(/\/+$/, "")
 }
 
 /**
@@ -281,41 +300,111 @@ export async function hfVersionBase(repoRoot: string, version: string): Promise<
  * Derived from three machine-readable owners and nothing else: `release.config.json` names the locales, each package's
  * `files` array names its artifacts, and `git ls-files` says which are already here.
  */
-export async function planWeightsMaterialization(repoRoot: string): Promise<WeightsArtifactPlan[]> {
+export async function planWeightsMaterialization(
+	repoRoot: string,
+	options: { version?: string } = {}
+): Promise<WeightsArtifactPlan[]> {
 	const config = await readReleaseConfig(repoRoot)
 	const repoSources = repoCommittedSoftFeedSources(repoRoot, config.softFeed ?? {})
 	const workspaces = config.locales.map((locale) => weightsWorkspace(locale))
 	const tracked = await trackedWorkspaceFiles(repoRoot, workspaces)
 	const checksums = await declaredChecksums(repoRoot, workspaces)
+	const base = await hfVersionBase(repoRoot, options.version ?? (await readBaseModelVersion(repoRoot)))
 	const plans: WeightsArtifactPlan[] = []
 
 	for (const workspace of workspaces) {
 		const manifest = await readWorkspaceManifest(repoRoot, workspace)
 
-		for (const filename of literalFilesEntries(manifest.files)) {
-			if (tracked.has(`${workspace}/${filename}`)) continue
-
-			if (filename.includes("/")) {
-				throw new Error(
-					`fetch-hf-weights: ${workspace} declares the untracked nested entry "${filename}". The bucket stages ` +
-						"artifacts flat by shipped name and this recipe has no rule for a nested one — add one here rather than " +
-						"letting the tarball audit report it missing after 49 packages have published."
-				)
-			}
-
+		for (const filename of untrackedDeclaredArtifacts(workspace, manifest, tracked)) {
 			const sourcePath = repoSources.get(filename)
 			const expectedMD5 = checksums.get(filename)
 
 			plans.push({
 				workspace,
 				filename,
-				origin: sourcePath ? { kind: "repo", sourcePath } : { kind: "hf", remoteName: filename },
+				origin: sourcePath ? { kind: "repo", sourcePath } : { kind: "hf", remoteName: filename, base },
 				...(expectedMD5 ? { expectedMD5 } : {}),
 			})
 		}
 	}
 
+	// Character-path families (`release.config.json` `charWeights`): each is its own base, staged under its own bucket
+	// directory at its own card version, verified against its own card — and planned only once its workspace is in the
+	// release list, because a planned object the bucket does not hold refuses every release until it is staged.
+	const released = new Set(await releaseWorkspaces(repoRoot))
+
+	for (const family of Object.keys(config.charWeights ?? {})) {
+		const workspace = weightsWorkspace(family)
+
+		if (!released.has(workspace)) continue
+
+		plans.push(...(await planCharFamilyArtifacts(repoRoot, family, workspace)))
+	}
+
 	return plans
+}
+
+/**
+ * The `files` entries of `workspace` that git does not track — what the bucket (or the checkout's soft-feed sources)
+ * has to supply. A nested entry is refused here rather than reported missing by the tarball audit after most of the
+ * release has published.
+ */
+function untrackedDeclaredArtifacts(
+	workspace: string,
+	manifest: { files?: unknown },
+	tracked: ReadonlySet<string>
+): string[] {
+	const artifacts: string[] = []
+
+	for (const filename of literalFilesEntries(manifest.files)) {
+		if (tracked.has(`${workspace}/${filename}`)) continue
+
+		if (filename.includes("/")) {
+			throw new Error(
+				`fetch-hf-weights: ${workspace} declares the untracked nested entry "${filename}". The bucket stages ` +
+					"artifacts flat by shipped name and this recipe has no rule for a nested one — add one here rather than " +
+					"letting the tarball audit report it missing after 49 packages have published."
+			)
+		}
+
+		artifacts.push(filename)
+	}
+
+	return artifacts
+}
+
+/**
+ * The plans of one character-path family: its untracked `files` entries, read from `<root>/<family>/v<card version>`
+ * and checked against the family's own `files_md5`. The Latin cards are not consulted — a family's `model.onnx` is a
+ * different graph under the same name.
+ */
+export async function planCharFamilyArtifacts(
+	repoRoot: string,
+	family: string,
+	workspace: string
+): Promise<WeightsArtifactPlan[]> {
+	const cardPath = resolvePath(repoRoot, workspace, "model-card.json")
+	const card = await readLocalJSONFile<{ version?: unknown }>(cardPath)
+
+	if (typeof card.version !== "string") {
+		throw new TypeError(`fetch-hf-weights: ${cardPath} declares no string "version" — cannot name a bucket directory.`)
+	}
+
+	const base = await hfFamilyBase(repoRoot, family, card.version)
+	const checksums = await declaredChecksums(repoRoot, [workspace])
+	const tracked = await trackedWorkspaceFiles(repoRoot, [workspace])
+	const manifest = await readWorkspaceManifest(repoRoot, workspace)
+
+	return untrackedDeclaredArtifacts(workspace, manifest, tracked).map((filename) => {
+		const expectedMD5 = checksums.get(filename)
+
+		return {
+			workspace,
+			filename,
+			origin: { kind: "hf", remoteName: filename, base },
+			...(expectedMD5 ? { expectedMD5 } : {}),
+		}
+	})
 }
 
 /**
@@ -410,38 +499,41 @@ export async function fetchHFWeights(
 	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
 	const resolvedVersion = version ?? (await readBaseModelVersion(repoRoot))
 	const base = await hfVersionBase(repoRoot, resolvedVersion)
-	const plans = await planWeightsMaterialization(repoRoot)
-	const remoteNames = new Set<string>()
+	const plans = await planWeightsMaterialization(repoRoot, { version: resolvedVersion })
+	// Distinct bucket objects by URL: several packages share one Latin object, and a family's object shares only a
+	// basename with it.
+	const objects = new Map<string, { base: string; remoteName: string }>()
 
 	for (const plan of plans) {
 		if (plan.origin.kind === "hf") {
-			remoteNames.add(plan.origin.remoteName)
+			objects.set(`${plan.origin.base}/${plan.origin.remoteName}`, plan.origin)
 		}
 	}
 
-	const probeOnly = await distributionOnlyRemoteNames(repoRoot, baseLocale)
+	const probeOnly = (await distributionOnlyRemoteNames(repoRoot, baseLocale)).map((name) => `${base}/${name}`)
+	const familyBases = [...new Set([...objects.values()].map((object) => object.base))].filter((b) => b !== base)
 
-	log(`hf weights: v${resolvedVersion} → ${base}`)
+	log(`hf weights: v${resolvedVersion} → ${base}${familyBases.length ? ` (+ ${familyBases.join(", ")})` : ""}`)
 
 	log(
-		`hf weights: ${plans.length} declared artifacts, ${remoteNames.size} distinct bucket objects, ` +
+		`hf weights: ${plans.length} declared artifacts, ${objects.size} distinct bucket objects, ` +
 			`${probeOnly.length} distribution-only (probed, never fetched)`
 	)
 
 	const probes = await Promise.all(
-		[...remoteNames, ...probeOnly].map(async (remoteName) => {
-			const failure = await probeRemote(`${base}/${remoteName}`)
+		[...objects.keys(), ...probeOnly].map(async (url) => {
+			const failure = await probeRemote(url)
 
-			return { remoteName, failure }
+			return { url, failure }
 		})
 	)
 
 	const unreachable = probes.filter((probe) => probe.failure)
 
 	if (unreachable.length) {
-		const lines = unreachable.map((probe) => `  ✗ ${base}/${probe.remoteName}: ${probe.failure}`)
+		const lines = unreachable.map((probe) => `  ✗ ${probe.url}: ${probe.failure}`)
 
-		const probed = remoteNames.size + probeOnly.length
+		const probed = objects.size + probeOnly.length
 
 		throw new Error(
 			`fetch-hf-weights: ${unreachable.length} of ${probed} artifacts are not readable for v${resolvedVersion}. ` +
@@ -465,15 +557,20 @@ export async function fetchHFWeights(
 
 	const undeclared = new Set<string>()
 
-	for (const remoteName of remoteNames) {
-		const url = `${base}/${remoteName}`
+	for (const [url, object] of objects) {
 		const bytes = await downloadRemote(url)
 
 		report.downloaded += 1
 		report.bytes += bytes.byteLength
 
 		for (const plan of plans) {
-			if (plan.origin.kind !== "hf" || plan.origin.remoteName !== remoteName) continue
+			if (
+				plan.origin.kind !== "hf" ||
+				plan.origin.remoteName !== object.remoteName ||
+				plan.origin.base !== object.base
+			) {
+				continue
+			}
 
 			verifyChecksum(plan, bytes, url)
 
@@ -487,7 +584,10 @@ export async function fetchHFWeights(
 			report.written += 1
 		}
 
-		log(`  ✓ ${remoteName} (${bytes.byteLength.toLocaleString("en-US")} bytes)`)
+		const shown =
+			object.base === base ? object.remoteName : `${object.base.split("/").slice(-2).join("/")}/${object.remoteName}`
+
+		log(`  ✓ ${shown} (${bytes.byteLength.toLocaleString("en-US")} bytes)`)
 	}
 
 	for (const plan of plans) {

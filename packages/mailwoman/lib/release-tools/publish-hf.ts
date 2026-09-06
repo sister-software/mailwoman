@@ -45,7 +45,7 @@ import { runProcessOrFail, splitList } from "#cli-kit/shared"
 /**
  * The parseArgs option names of the required per-release artifacts.
  */
-type RequiredFileOption = "model" | "tokenizer" | "model-card"
+type RequiredFileOption = "model" | "tokenizer" | "char-vocab" | "model-card"
 
 /**
  * The camelCase {@linkcode PublishHFOptions} field for each required-file option id.
@@ -53,10 +53,17 @@ type RequiredFileOption = "model" | "tokenizer" | "model-card"
 const OPTION_TO_FIELD = {
 	model: "model",
 	tokenizer: "tokenizer",
+	"char-vocab": "charVocab",
 	"model-card": "modelCard",
 } as const satisfies Record<RequiredFileOption, keyof PublishHFOptions>
 
-const REQUIRED_FILES: Array<{ option: RequiredFileOption; remoteName: string; description: string }> = [
+interface RequiredFile {
+	option: RequiredFileOption
+	remoteName: string
+	description: string
+}
+
+const REQUIRED_FILES: RequiredFile[] = [
 	{ option: "model", remoteName: "model.onnx", description: "ONNX classifier" },
 	{ option: "tokenizer", remoteName: "tokenizer.model", description: "SentencePiece tokenizer" },
 	{ option: "model-card", remoteName: "model-card.json", description: "Model card JSON" },
@@ -66,6 +73,25 @@ const REQUIRED_FILES: Array<{ option: RequiredFileOption; remoteName: string; de
 	// RELEASING.md + project-candidate-table-byte-range. `hasWOFDB` in releases.json stays true (it now
 	// means "this version has admin resolution", which the version-independent gazetteer always provides).
 ]
+
+/**
+ * A character-path family (`@mailwoman/neural-weights-cjk`) ships a graph behind `char_ids` and a sealed character
+ * vocabulary; there is no SentencePiece tokenizer to require. Staged under the family's own directory
+ * (`<family>/<version>/`), the shape `fetch-hf-weights` reads a family from, and never into the Latin base's, because
+ * the graph shares a basename with the base's and is not the same bytes.
+ */
+const REQUIRED_CHAR_FILES: RequiredFile[] = [
+	{ option: "model", remoteName: "model.onnx", description: "ONNX classifier (char_ids graph)" },
+	{ option: "char-vocab", remoteName: "char-vocab.json", description: "sealed character vocabulary" },
+	{ option: "model-card", remoteName: "model-card.json", description: "Model card JSON" },
+]
+
+/**
+ * `--char-vocab` selects the character-path shape; its presence is the whole of the switch.
+ */
+function requiredFilesFor(args: PublishHFOptions): RequiredFile[] {
+	return args.charVocab ? REQUIRED_CHAR_FILES : REQUIRED_FILES
+}
 
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
 
@@ -96,6 +122,11 @@ export interface PublishHFOptions {
 	description?: string
 	model?: string
 	tokenizer?: string
+	/**
+	 * The sealed character vocabulary of a character-path family; given, the release is staged as that family (no
+	 * tokenizer, no `releases.json` entry — the demo does not serve it).
+	 */
+	charVocab?: string
 	modelCard?: string
 	fst?: string
 	modelSize?: string
@@ -212,7 +243,7 @@ async function verifyFlatByBasename(paths: string[], remoteBase: string): Promis
  * which a bad release can be stopped for free — after this the bucket has partial state.
  */
 async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
-	for (const f of REQUIRED_FILES) {
+	for (const f of requiredFilesFor(args)) {
 		const localPath = args[OPTION_TO_FIELD[f.option]]
 
 		if (!localPath) {
@@ -317,7 +348,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
 
-	for (const f of REQUIRED_FILES) {
+	for (const f of requiredFilesFor(args)) {
 		// Existence already enforced in Phase 1's guard loop, so this flag is present.
 		const localPath = args[OPTION_TO_FIELD[f.option]]!
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
@@ -390,9 +421,11 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	uploadFlatByBasename(fisherArtifacts, remoteBase)
 
 	// --- Phase 3: verify each artifact is reachable via the resolve URL ---
-	console.error(`Verifying ${REQUIRED_FILES.length} artifacts via HTTPS...`)
+	const required = requiredFilesFor(args)
 
-	for (const f of REQUIRED_FILES) {
+	console.error(`Verifying ${required.length} artifacts via HTTPS...`)
+
+	for (const f of required) {
 		const url = `${BUCKET_RESOLVE}/${remoteBase}/${f.remoteName}`
 		const ok = await checkRemoteFileExists(url)
 
@@ -422,6 +455,12 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	await verifyFlatByBasename(fisherArtifacts, remoteBase)
 
 	// --- Phase 4: update releases.json ---
+	if (args.charVocab) {
+		console.error(`\n✓ ${args.version} (${args.locale}) staged as a character-path family — no releases.json entry.`)
+
+		return
+	}
+
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
 	const res = await hfClient.fetch<ReleaseManifest>({ url: releasesURL, validateStatus: () => true })
 
