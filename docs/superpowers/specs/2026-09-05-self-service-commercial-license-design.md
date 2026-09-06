@@ -57,7 +57,7 @@ A function that becomes async is awaited by every caller in the same change.
 key then retires without touching hand-issued licenses.
 
 **Offline verification stays the anchor.** Online status can tighten a verdict, never manufacture trust. A network
-failure reads `unreachable`, and the doctor says so.
+failure reads `unreachable`, a site that answers without a register reads `unpublished`, and the doctor says which.
 
 ## Prerequisites the code cannot supply
 

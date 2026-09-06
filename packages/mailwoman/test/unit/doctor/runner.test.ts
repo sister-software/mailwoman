@@ -304,6 +304,20 @@ describe("runDoctor (injected boundaries)", () => {
 		expect(unreachableCheck.status).toBe(CheckStatus.OK)
 		expect(unreachableCheck.detail).toContain("license status unreachable")
 
+		// The site answered without a register: the same posture as unreachable, named for what it is.
+		const unpublished = await runDoctor({
+			...healthyDeps(),
+			licenseKey: async () => selfService,
+			confirmLicenseKeyPublished: async () => "unpublished",
+			checkLicenseStatus: async () => "active",
+		})
+
+		const unpublishedCheck = byID(unpublished.checks, "license-mailwoman")
+
+		expect(unpublishedCheck.status).toBe(CheckStatus.OK)
+		expect(unpublishedCheck.detail).toContain("answers without a key register")
+		expect(unpublishedCheck.license).toMatchObject({ applied: "LicenseRef-Commercial", keyStatus: "valid" })
+
 		const handIssued = await runDoctor({
 			...healthyDeps(),
 			licenseKey: async () => ({
