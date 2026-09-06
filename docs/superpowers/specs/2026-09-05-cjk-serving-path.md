@@ -1,8 +1,9 @@
 # The CJK weights package and its serving path — proposal
 
-Status: proposal, written 2026-09-05 after the operator's distribution decision on #2034 / #1176 ("a consumer
-can choose to engage with CJK entirely"). Measured on `main` at 1d23433e9. Nothing here ships until section 7's
-order is confirmed.
+Status: steps 1–5 and the release wiring of step 7 landed on `main` 2026-09-06 (epic #2164; record
+`docs/records/evals/2026-09-06-v8-cjk-shared-head.md`); the release-list move and the `ja-jp` / `zh-cn` overlays are
+the operator's. Written 2026-09-05 after the operator's distribution decision on #2034 / #1176 ("a consumer can
+choose to engage with CJK entirely"), measured on `main` at 1d23433e9.
 
 ## 1. The decision this serves
 
