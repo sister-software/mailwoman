@@ -5200,7 +5200,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-cjk@workspace:packages/neural-weights-cjk":
+"@mailwoman/neural-weights-cjk@workspace:*, @mailwoman/neural-weights-cjk@workspace:packages/neural-weights-cjk":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-cjk@workspace:packages/neural-weights-cjk"
   dependencies:
@@ -5289,6 +5289,24 @@ __metadata:
   resolution: "@mailwoman/neural-weights-it-it@workspace:packages/neural-weights-it-it"
   dependencies:
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/neural-weights-ja-jp@workspace:packages/neural-weights-ja-jp":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-ja-jp@workspace:packages/neural-weights-ja-jp"
+  dependencies:
+    "@mailwoman/neural-weights-cjk": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/neural-weights-zh-cn@workspace:packages/neural-weights-zh-cn":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-zh-cn@workspace:packages/neural-weights-zh-cn"
+  dependencies:
+    "@mailwoman/neural-weights-cjk": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft

@@ -333,12 +333,22 @@ export async function planWeightsMaterialization(
 	// release list, because a planned object the bucket does not hold refuses every release until it is staged.
 	const released = new Set(await releaseWorkspaces(repoRoot))
 
-	for (const family of Object.keys(config.charWeights ?? {})) {
+	for (const [family, recipe] of Object.entries(config.charWeights ?? {})) {
 		const workspace = weightsWorkspace(family)
 
 		if (!released.has(workspace)) continue
 
 		plans.push(...(await planCharFamilyArtifacts(repoRoot, family, workspace)))
+
+		// A family's data-only overlays live in the family's directory too: their objects (the locale FSTs) are
+		// staged beside the graph with `--fsts`, and their own cards declare whatever md5s they have.
+		for (const overlay of recipe.overlays ?? []) {
+			const overlayWorkspace = weightsWorkspace(overlay)
+
+			if (!released.has(overlayWorkspace)) continue
+
+			plans.push(...(await planCharFamilyArtifacts(repoRoot, family, overlayWorkspace)))
+		}
 	}
 
 	return plans
@@ -383,7 +393,8 @@ export async function planCharFamilyArtifacts(
 	family: string,
 	workspace: string
 ): Promise<WeightsArtifactPlan[]> {
-	const cardPath = resolvePath(repoRoot, workspace, "model-card.json")
+	// The directory is named by the FAMILY card's version, for the base and for every overlay that inherits it.
+	const cardPath = resolvePath(repoRoot, weightsWorkspace(family), "model-card.json")
 	const card = await readLocalJSONFile<{ version?: unknown }>(cardPath)
 
 	if (typeof card.version !== "string") {

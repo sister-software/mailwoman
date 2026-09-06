@@ -1,0 +1,31 @@
+{
+	"name": "@mailwoman/neural-weights-ja-jp",
+	"version": "9.2.0",
+	"description": "ja-JP weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-cjk.",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/neural-weights-ja-jp"
+	},
+	"files": [
+		"model-card.json",
+		"fst-ja-jp.bin",
+		"README.md",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts",
+		"!scripts/**"
+	],
+	"type": "module",
+	"dependencies": {
+		"@mailwoman/neural-weights-cjk": "workspace:*"
+	},
+	"devDependencies": {
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-cjk"
+	}
+}

@@ -2,7 +2,7 @@
 	"name": "neural-weights-cjk",
 	"version": "0.0.1",
 	"locale": "cjk",
-	"phase": "NAME RESERVATION (0.0.1). The graph and vocabulary below are the v8-cjk-kana 24k candidate (2026-09-06, #2165); the first functional release ships with the next mailwoman minor once the ja-jp / zh-cn overlays exist.",
+	"phase": "First functional release (0.0.1 was the name reservation): the v8-cjk-kana 24k graph and vocabulary, staged at cjk/v0.0.1/ on the Hugging Face bucket (#2164, #2165).",
 	"encoder": "char",
 	"char_vocab": "char-vocab.json",
 	"max_units": 96,

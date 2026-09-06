@@ -55,6 +55,11 @@ export interface CharWeightsRecipe {
 	model: string
 	charVocab: string
 	lineage?: string
+	/**
+	 * The data-only overlays that inherit this family's graph through `mailwoman.baseWeights` (`ja-jp`, `zh-cn`): each
+	 * ships its locale FST and nothing of the model, and is staged and fetched under the FAMILY's bucket directory.
+	 */
+	overlays?: string[]
 }
 
 export interface ReleaseConfig {

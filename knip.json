@@ -54,7 +54,7 @@
 		},
 		"packages/neural-weights-*": {
 			"entry": ["index.ts", "scripts/**/*.ts"],
-			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
+			"ignoreDependencies": ["@mailwoman/neural-weights-en-us", "@mailwoman/neural-weights-cjk"]
 		},
 		"packages/registry": {
 			"entry": ["lib/index.ts", "lib/cli.ts", "lib/models/**/*.ts", "lib/tools/**/*.ts"]

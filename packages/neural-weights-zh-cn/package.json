@@ -1,0 +1,31 @@
+{
+	"name": "@mailwoman/neural-weights-zh-cn",
+	"version": "9.2.0",
+	"description": "zh-CN weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-cjk.",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/neural-weights-zh-cn"
+	},
+	"files": [
+		"model-card.json",
+		"fst-zh-cn.bin",
+		"README.md",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts",
+		"!scripts/**"
+	],
+	"type": "module",
+	"dependencies": {
+		"@mailwoman/neural-weights-cjk": "workspace:*"
+	},
+	"devDependencies": {
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-cjk"
+	}
+}

@@ -49,9 +49,16 @@ export interface ScaffoldWeightsOverlayOptions {
 	 */
 	locale: string
 	/**
-	 * The one artifact the overlay adds; defaults to `pair-index-<cc>.bin`.
+	 * The one artifact the overlay adds; defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
 	 */
 	artifact?: string
+	/**
+	 * A character-path family (`cjk`) to inherit from instead of the Latin base: the overlay declares
+	 * `mailwoman.baseWeights` on `@mailwoman/neural-weights-<base>`, carries its locale FST, and registers in
+	 * `release.config.json`'s `charWeights.<base>.overlays` rather than `locales` — the family's bucket directory is
+	 * where it is staged and fetched.
+	 */
+	base?: string
 	log: (line: string) => void
 }
 
@@ -84,7 +91,9 @@ export async function scaffoldWeightsOverlay(
 	const country = slug.split("-")[1] ?? ""
 	const pkgDir = repoPath("packages", `neural-weights-${slug}`)
 	const packageName = `@mailwoman/neural-weights-${slug}`
-	const artifact = options.artifact ?? `pair-index-${country}.bin`
+	const base = options.base
+	const basePackage = base ? `@mailwoman/neural-weights-${base}` : "@mailwoman/neural-weights-en-us"
+	const artifact = options.artifact ?? (base ? `fst-${slug}.bin` : `pair-index-${country}.bin`)
 
 	if (await tryStat(pkgDir)) {
 		throw new Error(`scaffold-weights-overlay: ${pkgDir} already exists — refusing to overwrite`)
@@ -103,7 +112,7 @@ export async function scaffoldWeightsOverlay(
 		{
 			name: packageName,
 			version: rootVersion,
-			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-en-us.`,
+			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with ${basePackage}.`,
 			license: "AGPL-3.0",
 			type: "module",
 			// `directory` names THIS package. It is the field that has been wrong every time an overlay was
@@ -111,7 +120,7 @@ export async function scaffoldWeightsOverlay(
 			repository: {
 				type: "git",
 				url: "https://github.com/sister-software/mailwoman.git",
-				directory: `neural-weights-${slug}`,
+				directory: `packages/neural-weights-${slug}`,
 			},
 			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
 			// relative path, which does not resolve once unpacked — and a data-only overlay has no use
@@ -126,15 +135,17 @@ export async function scaffoldWeightsOverlay(
 				"!**/*.test.ts",
 				"!scripts/**",
 			],
-			dependencies: { "@mailwoman/neural-weights-en-us": "workspace:*" },
-			mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
+			dependencies: { [basePackage]: "workspace:*" },
+			// The dev linker imports the shared builder; knip refuses an import no manifest declares.
+			devDependencies: { "@mailwoman/resolver-wof-sqlite": "workspace:*" },
+			mailwoman: { baseWeights: basePackage },
 		},
 		pkgDir,
 		"package.json"
 	)
 
 	await writeLocalTextFile(
-		`# Derived artifacts — built by scripts/link-dev-weights.ts for local dev, fetched from the HF\n# bucket at publish time. Never committed.\n/${artifact.replace(/-[a-z]{2}\.bin$/, "-*.bin")}\n`,
+		`# Derived artifacts — built by scripts/link-dev-weights.ts for local dev, fetched from the HF\n# bucket at publish time. Never committed.\n/${base ? artifact : artifact.replace(/-[a-z]{2}\.bin$/, "-*.bin")}\n`,
 		pkgDir,
 		".gitignore"
 	)
@@ -150,8 +161,28 @@ export async function scaffoldWeightsOverlay(
 	// de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
 	// leaves nothing to copy; the magnitudes below are placeholders the author is told to calibrate.
 	await writeLocalTextFile(
-		resolvePath(pkgDir, "scripts", "link-dev-weights.ts"),
-		`/**
+		base
+			? `/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Dev-weights linker for \`${packageName}\`.
+ *
+ *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` and this file is the manifest — the
+ *   overlay declares \`mailwoman.baseWeights\` on \`${basePackage}\`, so the graph and the character vocabulary are the
+ *   family's and this links only the per-locale FST (\`${artifact}\`) from the shared build area, so
+ *   \`resolveWeights({locale: "${slug}"})\` surfaces \`fstPath\` in local dev.
+ */
+import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+
+await materializeDevOverlay({
+	locale: "${slug}",
+	model: { kind: "inherit" },
+	localeFST: true,
+})
+`
+			: `/**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
@@ -182,7 +213,8 @@ await materializeDevOverlay({
 		transitionBeta: 5,
 	},
 })
-`
+`,
+		resolvePath(pkgDir, "scripts", "link-dev-weights.ts")
 	)
 
 	await writeLocalTextFile(
@@ -198,7 +230,7 @@ await materializeDevOverlay({
 			locale: localeTag,
 			license: "AGPL-3.0",
 			$comment:
-				"Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights. " +
+				`Data-only overlay. Shares model.onnx + ${base ? "char-vocab.json" : "tokenizer.model"} with ${base ?? "en-us"} via mailwoman.baseWeights. ` +
 				"Deliberately carries NO `labels`: the vocabulary belongs to the shared MODEL, so it is inherited " +
 				"from the base card at resolve time. Copying it here creates a second copy to go stale on the next " +
 				"retrain, and an overlay whose labels disagree with its model throws on the first parse.",
@@ -252,13 +284,25 @@ await materializeDevOverlay({
 		registered.push(".release-it.json")
 	}
 
-	// 3. release.config.json locales.
+	// 3. release.config.json: the Latin `locales` list, or the family's `overlays` list.
 	const cfgPath = repoPath("release.config.json")
 	const cfgText = await readLocalTextFile(cfgPath)
 
-	if (!cfgText.includes(`"${slug}"`)) {
-		await writeLocalTextFile(cfgText.replace(`"en-nz"`, `"${slug}",\n\t\t"en-nz"`), cfgPath)
+	if (base) {
+		const cfg = await readLocalJSONFile<{ charWeights?: Record<string, { overlays?: string[] }> }>(cfgPath)
+		const family = cfg.charWeights?.[base]
 
+		if (!family) {
+			throw new Error(`scaffold-weights-overlay: release.config.json declares no charWeights.${base} to inherit from`)
+		}
+
+		if (!(family.overlays ??= []).includes(slug)) {
+			family.overlays.push(slug)
+			await writeLocalTextFile(`${JSON.stringify(cfg, null, "\t")}\n`, cfgPath)
+			registered.push(`release.config.json charWeights.${base}.overlays`)
+		}
+	} else if (!cfgText.includes(`"${slug}"`)) {
+		await writeLocalTextFile(cfgText.replace(`"en-nz"`, `"${slug}",\n\t\t"en-nz"`), cfgPath)
 		registered.push("release.config.json locales")
 	}
 
@@ -268,11 +312,11 @@ await materializeDevOverlay({
 
 	if (!smokeText.includes(packageName)) {
 		await writeLocalTextFile(
-			smokePath,
 			smokeText.replace(
 				`\t"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",`,
 				`\t"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",\n\t"${packageName}": "packages/neural-weights-${slug}",`
-			)
+			),
+			smokePath
 		)
 
 		registered.push("smoke pack set")

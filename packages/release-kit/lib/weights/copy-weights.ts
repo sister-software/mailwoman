@@ -260,6 +260,16 @@ export async function copyWeights({
 
 		log(`copied char weights → ${workspace}/{model.onnx,char-vocab.json}`)
 		targets.push(workspace)
+
+		// The family's data-only overlays inherit the graph and carry their locale FST.
+		for (const overlay of recipe.overlays ?? []) {
+			const overlayWorkspace = `packages/neural-weights-${overlay}`
+			const overlayDir = resolvePath(destRoot, overlayWorkspace)
+
+			await makeDirectories(overlayDir)
+			await materializeFST(context, overlayWorkspace, overlayDir)
+			targets.push(overlayWorkspace)
+		}
 	}
 
 	return { skipped: false, workspaces: targets }
