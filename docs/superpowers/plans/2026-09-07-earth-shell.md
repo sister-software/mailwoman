@@ -4,7 +4,7 @@
 
 **Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.ai`. No real runtime moves in this plan; that is the second Earth plan.
 
-**Architecture:** One Vite app with three client routes read from `location.pathname`, no router. `vite-plugin-pwa` in `injectManifest` mode owns the manifest and a precache-only service worker that the runtime plan later extends with the range cache. A small Vite plugin emits `build.json` from `@mailwoman/core/git`. `wrangler.toml` declares `assets` and no `main`. The fake runtime the app mounts is the one `@mailwoman/react`'s stories and tests already use, moved from a test helper to a public subpath so nothing is copied.
+**Architecture:** One Vite app with three client routes read from `location.pathname`, no router. `vite-plugin-pwa` in `injectManifest` mode owns the manifest and a precache-only service worker that the runtime plan later extends with the range cache. A small Vite plugin emits `build.json` from `@mailwoman/core/git`. The plugin, the PWA identity and the Playwright preview config live in `packages/site-kit`, a private workspace the planetary app imports too, so neither app writes them twice. `wrangler.toml` declares `assets` and no `main`. The fake runtime the app mounts is the one `@mailwoman/react`'s stories and tests already use, moved from a test helper to a public subpath so nothing is copied.
 
 **Tech Stack:** React 19, Vite 8, `vite-plugin-pwa` 1.3 (workbox 7), `react-map-gl` 8 over MapLibre 6, wrangler 4, Playwright for the browser smoke, vitest for the pure modules.
 
@@ -29,9 +29,9 @@ packages/earth/
   package.json            @mailwoman/earth, private, scripts dev/build/preview/test:browser/deploy:dry-run
   tsconfig.json           extends @sister.software/tsconfig/web, rootDir ./lib
   tsconfig.test.json      extends ../../tsconfig.test-base.json, adds test/, vite.config.ts, playwright.config.ts
-  vite.config.ts          react(), VitePWA(injectManifest), the build.json plugin
+  vite.config.ts          react(), installablePWA(), buildInfoPlugin() from site-kit
   wrangler.toml           assets only
-  playwright.config.ts    webServer: yarn build && yarn preview
+  playwright.config.ts    previewConfig() from site-kit
   index.html
   README.md               what the app is, the Workers Builds settings table
   public/
@@ -41,12 +41,17 @@ packages/earth/
     App.tsx               route → view
     routes.ts             routeForPath, queryFromSearch            (pure; tested)
     config.ts             the three production origins             (pure)
-    build-info.ts         BuildInfo type, renderBuildInfo          (pure; tested)
     service-worker.ts     precacheAndRoute(self.__WB_MANIFEST)
   test/
     unit/routes.test.ts
-    unit/build-info.test.ts
     browser/shell.spec.ts
+
+packages/site-kit/                        @mailwoman/site-kit, private: the static-site build conventions both apps share
+  lib/build-info.ts                       BuildInfo type, renderBuildInfo                       (pure; tested)
+  lib/vite/build-info.ts                  buildInfoPlugin({ app }) — emits build.json
+  lib/vite/pwa.ts                         installablePWA({ id, name, shortName, themeColor }) — VitePWA options
+  lib/playwright.ts                       previewConfig({ port, remoteURLVariable }) — the Playwright config both apps use
+  test/unit/build-info.test.ts
 
 packages/react/lib/map/fake-runtime.ts    moved from packages/react/test/mocks.tsx (the DemoRuntime half)
 packages/react/package.json                exports "./map/fake-runtime"
@@ -179,11 +184,6 @@ git commit -m "feat(react): the fake geocoder runtime is a public subpath, map/f
 			"default": "./out/routes.js",
 			"types": "./out/routes.d.ts"
 		},
-		"./build-info": {
-			"node": "./lib/build-info.ts",
-			"default": "./out/build-info.js",
-			"types": "./out/build-info.d.ts"
-		},
 		"./config": {
 			"node": "./lib/config.ts",
 			"default": "./out/config.js",
@@ -200,6 +200,7 @@ git commit -m "feat(react): the fake geocoder runtime is a public subpath, map/f
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/react": "workspace:*",
+		"@mailwoman/site-kit": "workspace:*",
 		"maplibre-gl": "^6.7.0",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
@@ -241,7 +242,7 @@ The ranges above are the ones `docs/package.json` and `packages/react/package.js
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./dist/**/*", "./test/**", "./vite.config.ts", "./playwright.config.ts"],
-	"references": [{ "path": "../core" }, { "path": "../react" }]
+	"references": [{ "path": "../core" }, { "path": "../react" }, { "path": "../site-kit" }]
 }
 ```
 
@@ -260,19 +261,65 @@ Compare against `packages/license-worker/tsconfig.test.json` and copy any field 
 
 - [ ] **Step 3: Register the workspace in the four registers**
 
-Root `package.json`: insert `"packages/earth"` into `workspaces` in alphabetical position (after `packages/dev-mcp`, before `packages/evidence`).
+Two workspaces register here: `packages/earth` and `packages/site-kit`. `packages/site-kit/package.json`:
+
+```json
+{
+	"name": "@mailwoman/site-kit",
+	"version": "1.0.0",
+	"private": true,
+	"description": "The static-site build conventions the Earth and planetary apps share: the build.json Vite plugin, the installable-PWA manifest options, the Playwright preview configuration.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [{ "name": "Teffen Ellis", "email": "teffen@sister.software" }],
+	"type": "module",
+	"imports": { "#*": { "node": "./lib/*.ts", "default": "./out/*.js", "types": "./out/*.d.ts" } },
+	"exports": {
+		"./package.json": "./package.json",
+		"./build-info": {
+			"node": "./lib/build-info.ts",
+			"default": "./out/build-info.js",
+			"types": "./out/build-info.d.ts"
+		},
+		"./vite/build-info": {
+			"node": "./lib/vite/build-info.ts",
+			"default": "./out/vite/build-info.js",
+			"types": "./out/vite/build-info.d.ts"
+		},
+		"./vite/pwa": { "node": "./lib/vite/pwa.ts", "default": "./out/vite/pwa.js", "types": "./out/vite/pwa.d.ts" },
+		"./playwright": {
+			"node": "./lib/playwright.ts",
+			"default": "./out/playwright.js",
+			"types": "./out/playwright.d.ts"
+		}
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@playwright/test": "^1.63.0",
+		"vite": "^8.2.2",
+		"vite-plugin-pwa": "^1.3.0"
+	},
+	"engines": { "node": ">=24.18.0" }
+}
+```
+
+with a `tsconfig.json` in the shape of `packages/tile-worker/tsconfig.json` (no workers types, reference `../core`) and a `tsconfig.test.json` in the shape of Task 2 Step 2's.
+
+Root `package.json`: insert `"packages/earth"` (after `packages/dev-mcp`, before `packages/evidence`) and `"packages/site-kit"` (after `packages/sentencepiece-wasm`, before `packages/soil`) into `workspaces`.
 
 Root `tsconfig.json`: add, next to the `tile-worker` and `license-worker` entries,
 
 ```json
 		{ "path": "./packages/earth" },
 		{ "path": "./packages/earth/tsconfig.test.json" },
+		{ "path": "./packages/site-kit" },
+		{ "path": "./packages/site-kit/tsconfig.test.json" },
 ```
 
 `packages/release-kit/lib/release/stage.ts`, in `SANCTIONED_RELEASE_ABSENCES` after the `license-worker` line:
 
 ```ts
 	"packages/earth": "private Earth map app — Cloudflare infrastructure, never publishes",
+	"packages/site-kit": "private static-site build conventions for the Earth and planetary apps — never publishes",
 ```
 
 `dependency-cruiser.config.cjs`, the `no-serve-package-to-build-tooling` rule's `from.path`:
@@ -336,23 +383,23 @@ yarn vitest --run --config vitest.slow.config.ts packages/release-kit/test/integ
 yarn mwops health manifest-targets
 ```
 
-Expected: the absence list prints 14 names and includes `packages/earth`; `release-stage.test.ts` passes with `publishCount` 60; `manifest-targets` reports nothing (every `exports` target names a file Task 3 creates, so run this step again after Task 3 if it reports the three `lib/*.ts` files missing).
+Expected: the absence list prints 15 names and includes `packages/earth` and `packages/site-kit`; `release-stage.test.ts` passes with `publishCount` 60; `manifest-targets` reports nothing (every `exports` target names a file Task 3 creates, so run this step again after Task 3 if it reports the three `lib/*.ts` files missing).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add package.json yarn.lock tsconfig.json packages/earth packages/release-kit/lib/release/stage.ts dependency-cruiser.config.cjs
-git commit -m "feat(earth): the @mailwoman/earth workspace, private, registered in the four registers"
+git add package.json yarn.lock tsconfig.json packages/earth packages/site-kit packages/release-kit/lib/release/stage.ts dependency-cruiser.config.cjs
+git commit -m "feat(earth,site-kit): the two private workspaces, registered in the four registers"
 ```
 
 ---
 
-### Task 3: Routes, config and build info, test-first
+### Task 3: Routes and config in the app, build info in site-kit, test-first
 
 **Files:**
 
-- Create: `packages/earth/lib/routes.ts`, `packages/earth/lib/config.ts`, `packages/earth/lib/build-info.ts`
-- Test: `packages/earth/test/unit/routes.test.ts`, `packages/earth/test/unit/build-info.test.ts`
+- Create: `packages/earth/lib/routes.ts`, `packages/earth/lib/config.ts`, `packages/site-kit/lib/build-info.ts`
+- Test: `packages/earth/test/unit/routes.test.ts`, `packages/site-kit/test/unit/build-info.test.ts`
 
 **Interfaces:**
 
@@ -403,7 +450,7 @@ describe("queryFromSearch", () => {
 })
 ```
 
-`packages/earth/test/unit/build-info.test.ts`:
+`packages/site-kit/test/unit/build-info.test.ts`:
 
 ```ts
 /**
@@ -412,11 +459,12 @@ describe("queryFromSearch", () => {
  * @author Teffen Ellis, et al.
  */
 
-import { renderBuildInfo } from "@mailwoman/earth/build-info"
+import { renderBuildInfo } from "@mailwoman/site-kit/build-info"
 import { expect, test } from "vitest"
 
 test("renderBuildInfo emits the three fields as tab-indented JSON with a trailing newline", () => {
 	const text = renderBuildInfo({ app: "mailwoman-earth", revision: "abc1234", buildTime: "2026-09-07T10:00:00Z" })
+	// `app` is any string: the planetary builds write "mailwoman-moon" and "mailwoman-mars" through the same function.
 
 	expect(JSON.parse(text)).toEqual({ app: "mailwoman-earth", revision: "abc1234", buildTime: "2026-09-07T10:00:00Z" })
 	expect(text.endsWith("\n")).toBe(true)
@@ -426,10 +474,10 @@ test("renderBuildInfo emits the three fields as tab-indented JSON with a trailin
 - [ ] **Step 2: Run them to see the failure**
 
 ```bash
-yarn vitest --run --config vitest.fast.config.ts packages/earth/test/unit
+yarn vitest --run --config vitest.fast.config.ts packages/earth/test/unit packages/site-kit/test/unit
 ```
 
-Expected: both files fail to resolve `@mailwoman/earth/routes` and `@mailwoman/earth/build-info` (the root vitest config aliases every workspace's `exports` to source, so once the files exist the alias resolves).
+Expected: both files fail to resolve `@mailwoman/earth/routes` and `@mailwoman/site-kit/build-info` (the root vitest config aliases every workspace's `exports` to source, so once the files exist the alias resolves).
 
 - [ ] **Step 3: Write the three modules**
 
@@ -516,7 +564,7 @@ export const PRODUCTION_CONFIG: EarthConfig = {
 }
 ```
 
-`packages/earth/lib/build-info.ts`:
+`packages/site-kit/lib/build-info.ts`:
 
 ```ts
 /**
@@ -529,7 +577,10 @@ export const PRODUCTION_CONFIG: EarthConfig = {
  */
 
 export interface BuildInfo {
-	app: "mailwoman-earth"
+	/**
+	 * The deployment's name: `mailwoman-earth`, `mailwoman-moon`, `mailwoman-mars`.
+	 */
+	app: string
 	/**
 	 * The short git revision the build was made from.
 	 */
@@ -548,19 +599,19 @@ export function renderBuildInfo(info: BuildInfo): string {
 - [ ] **Step 4: Run the tests and the checks**
 
 ```bash
-yarn vitest --run --config vitest.fast.config.ts packages/earth/test/unit
-yarn oxlint packages/earth
+yarn vitest --run --config vitest.fast.config.ts packages/earth/test/unit packages/site-kit/test/unit
+yarn oxlint packages/earth packages/site-kit
 yarn compile
 yarn mwops health manifest-targets
 ```
 
-Expected: 8 tests pass; oxlint reports nothing; `tsc -b` emits `packages/earth/out/{routes,config,build-info}.js`; `manifest-targets` reports nothing.
+Expected: 8 tests pass; oxlint reports nothing; `tsc -b` emits `packages/earth/out/{routes,config}.js` and `packages/site-kit/out/build-info.js`; `manifest-targets` reports nothing.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/earth
-git commit -m "feat(earth): routes, origins and build-info as pure modules with tests"
+git add packages/earth packages/site-kit
+git commit -m "feat(earth,site-kit): routes and origins in the app, build-info in site-kit, all pure and tested"
 ```
 
 ---
@@ -577,7 +628,99 @@ git commit -m "feat(earth): routes, origins and build-info as pure modules with 
 - Consumes: `renderBuildInfo` from Task 3; `gitHead` from `@mailwoman/core/git`; `repoRootPath` from `@mailwoman/core/paths`; `isoSeconds` from `@mailwoman/core/utils`.
 - Produces: `dist/index.html`, `dist/build.json`, `dist/manifest.webmanifest`, `dist/sw.js`, the hashed assets.
 
-- [ ] **Step 1: Write the Vite config**
+- [ ] **Step 1: The two site-kit Vite modules**
+
+`packages/site-kit/lib/vite/build-info.ts`:
+
+```ts
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Emit `build.json` beside a Vite bundle: the static deployment record a production smoke fetches instead of a
+ *   health endpoint. The revision is the repository's HEAD at build; Workers Builds checks out the commit it deploys.
+ */
+
+import { gitHead } from "@mailwoman/core/git"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { isoSeconds } from "@mailwoman/core/utils"
+import type { Plugin } from "vite"
+
+import { renderBuildInfo } from "#build-info"
+
+export function buildInfoPlugin(options: { app: string }): Plugin {
+	return {
+		name: "mailwoman-build-info",
+		async generateBundle() {
+			const revision = await gitHead(repoRootPath(), { short: true })
+
+			this.emitFile({
+				type: "asset",
+				fileName: "build.json",
+				source: renderBuildInfo({ app: options.app, revision, buildTime: isoSeconds() }),
+			})
+		},
+	}
+}
+```
+
+`isoSeconds` is defined in `packages/core/lib/utils/time.ts` and reaches consumers through the `@mailwoman/core/utils` barrel; there is no `./utils/time` subpath.
+
+`packages/site-kit/lib/vite/pwa.ts`:
+
+```ts
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The installable-PWA options every mailwoman site shares: `injectManifest` over `lib/service-worker.ts`, a precache
+ *   of the shell and its hashed assets only, and a manifest whose identity is the origin. A model, a gazetteer
+ *   database or a tile is never precached; those stay range-fetched on demand.
+ */
+
+import type { VitePWAOptions } from "vite-plugin-pwa"
+
+export interface PWAIdentity {
+	/**
+	 * The origin with a trailing slash, e.g. `https://earth.mailwoman.ai/`. It is the manifest `id`, which is what
+	 * keeps the three sites' installations distinct.
+	 */
+	origin: string
+	name: string
+	shortName: string
+	themeColor: string
+}
+
+export function installablePWA(identity: PWAIdentity): Partial<VitePWAOptions> {
+	return {
+		strategies: "injectManifest",
+		srcDir: "lib",
+		filename: "service-worker.ts",
+		registerType: "prompt",
+		injectManifest: {
+			globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}"],
+		},
+		manifest: {
+			id: identity.origin,
+			name: identity.name,
+			short_name: identity.shortName,
+			start_url: "/",
+			scope: "/",
+			display: "standalone",
+			background_color: identity.themeColor,
+			theme_color: identity.themeColor,
+			icons: [
+				{ src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+				{ src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+			],
+		},
+	}
+}
+```
+
+- [ ] **Step 1b: Write the Vite config**
 
 `packages/earth/vite.config.ts`:
 
@@ -591,61 +734,24 @@ git commit -m "feat(earth): routes, origins and build-info as pure modules with 
  *   output is a static asset Cloudflare serves without invoking a Worker.
  */
 
-import { gitHead } from "@mailwoman/core/git"
-import { repoRootPath } from "@mailwoman/core/paths"
-import { isoSeconds } from "@mailwoman/core/utils"
+import { buildInfoPlugin } from "@mailwoman/site-kit/vite/build-info"
+import { installablePWA } from "@mailwoman/site-kit/vite/pwa"
 import react from "@vitejs/plugin-react"
-import { defineConfig, type Plugin } from "vite"
+import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
-
-import { renderBuildInfo } from "./lib/build-info.ts"
-
-/**
- * Emit `build.json` beside the bundle: the deployment record a production smoke fetches.
- */
-function buildInfo(): Plugin {
-	return {
-		name: "mailwoman-build-info",
-		async generateBundle() {
-			const revision = await gitHead(repoRootPath(), { short: true })
-
-			this.emitFile({
-				type: "asset",
-				fileName: "build.json",
-				source: renderBuildInfo({ app: "mailwoman-earth", revision, buildTime: isoSeconds() }),
-			})
-		},
-	}
-}
 
 export default defineConfig({
 	plugins: [
 		react(),
-		VitePWA({
-			strategies: "injectManifest",
-			srcDir: "lib",
-			filename: "service-worker.ts",
-			registerType: "prompt",
-			injectManifest: {
-				// The shell, its hashed assets, icons and the manifest. A model, a gazetteer or a tile is never precached.
-				globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}"],
-			},
-			manifest: {
-				id: "https://earth.mailwoman.ai/",
+		VitePWA(
+			installablePWA({
+				origin: "https://earth.mailwoman.ai/",
 				name: "Mailwoman Earth",
-				short_name: "Earth",
-				start_url: "/",
-				scope: "/",
-				display: "standalone",
-				background_color: "#0b1020",
-				theme_color: "#0b1020",
-				icons: [
-					{ src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-					{ src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
-				],
-			},
-		}),
-		buildInfo(),
+				shortName: "Earth",
+				themeColor: "#0b1020",
+			})
+		),
+		buildInfoPlugin({ app: "mailwoman-earth" }),
 	],
 	build: {
 		outDir: "dist",
@@ -654,8 +760,6 @@ export default defineConfig({
 	server: { port: 7781, strictPort: true },
 })
 ```
-
-`isoSeconds` is defined in `packages/core/lib/utils/time.ts` and reaches consumers through the `@mailwoman/core/utils` barrel; there is no `./utils/time` subpath.
 
 - [ ] **Step 2: The service worker, the HTML, the icons**
 
@@ -760,8 +864,8 @@ Expected: no error. `vite/client` and `vite-plugin-pwa/client` in `types` supply
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/earth
-git commit -m "feat(earth): Vite build with the PWA manifest, a precache service worker, and build.json"
+git add packages/earth packages/site-kit
+git commit -m "feat(earth,site-kit): Vite build with the PWA manifest, a precache service worker, and build.json"
 ```
 
 ---
@@ -973,7 +1077,7 @@ git commit -m "feat(earth): assets-only wrangler configuration; the tile worker 
 
 - [ ] **Step 1: The Playwright configuration**
 
-`packages/earth/playwright.config.ts`:
+`packages/site-kit/lib/playwright.ts`:
 
 ```ts
 /**
@@ -981,28 +1085,46 @@ git commit -m "feat(earth): assets-only wrangler configuration; the tile worker 
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Earth smoke runs against `vite preview` over a fresh build, which serves `dist/` with the same SPA fallback
- *   Cloudflare applies. Set `MAILWOMAN_EARTH_URL` to run the same specs against a deployment instead.
+ *   The Playwright configuration a static site's smoke runs under: `vite preview` over a fresh build, which serves
+ *   `dist/` with the same SPA fallback Cloudflare applies, or a deployment when the named variable carries its URL.
  */
 
-import { defineConfig, devices } from "@playwright/test"
+import { defineConfig, devices, type PlaywrightTestConfig } from "@playwright/test"
 
-// oxlint-disable-next-line sister-software/no-process-globals -- Playwright loads this outside the module graph, as docs/playwright.config.ts explains
-const env = process.env
-const remoteURL = env["MAILWOMAN_EARTH_URL"]
-const baseURL = remoteURL ?? "http://localhost:7780"
-const CI = Boolean(env["CI"])
+export interface PreviewConfigOptions {
+	port: number
+	/**
+	 * The environment variable that, when set, points the specs at a deployment instead of the preview server.
+	 */
+	remoteURLVariable: string
+}
 
-export default defineConfig({
-	testDir: "./test/browser",
-	timeout: 60_000,
-	retries: CI ? 1 : 0,
-	use: { baseURL, ...devices["Desktop Chrome"] },
-	projects: [{ name: "chromium" }],
-	webServer: remoteURL
-		? undefined
-		: { command: "yarn build && yarn preview", url: baseURL, timeout: 300_000, reuseExistingServer: !CI },
-})
+export function previewConfig(options: PreviewConfigOptions): PlaywrightTestConfig {
+	// oxlint-disable-next-line sister-software/no-process-globals -- Playwright loads this outside the module graph, as docs/playwright.config.ts explains
+	const env = process.env
+	const remoteURL = env[options.remoteURLVariable]
+	const baseURL = remoteURL ?? `http://localhost:${options.port}`
+	const CI = Boolean(env["CI"])
+
+	return defineConfig({
+		testDir: "./test/browser",
+		timeout: 60_000,
+		retries: CI ? 1 : 0,
+		use: { baseURL, ...devices["Desktop Chrome"] },
+		projects: [{ name: "chromium" }],
+		webServer: remoteURL
+			? undefined
+			: { command: "yarn build && yarn preview", url: baseURL, timeout: 300_000, reuseExistingServer: !CI },
+	})
+}
+```
+
+`packages/earth/playwright.config.ts`:
+
+```ts
+import { previewConfig } from "@mailwoman/site-kit/playwright"
+
+export default previewConfig({ port: 7780, remoteURLVariable: "MAILWOMAN_EARTH_URL" })
 ```
 
 The one `process.env` read carries the same scoped disable `docs/playwright.config.ts` carries, for the same reason: Playwright loads this file with its own loader, outside the typed `$public` view.
@@ -1091,8 +1213,8 @@ That leg installs Chromium with `yarn workspace @mailwoman/react exec playwright
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/earth .github/workflows/test.yml
-git commit -m "test(earth): the shell smoke under Playwright, on the preview server and in the react CI leg"
+git add packages/earth packages/site-kit .github/workflows/test.yml
+git commit -m "test(earth,site-kit): the shell smoke under Playwright, on the preview server and in the react CI leg"
 ```
 
 ---
@@ -1120,7 +1242,8 @@ gh pr create --title "Earth shell: packages/earth, the geocoder on a fake runtim
 Implements the shell half of docs/superpowers/specs/2026-09-06-earth-app-design.md by docs/superpowers/plans/2026-09-07-earth-shell.md.
 
 - `@mailwoman/react/map/fake-runtime`: the stories' and tests' fake geocoder runtime is a public subpath; the app mounts it
-- `packages/earth` (`@mailwoman/earth`, private): Vite + React, `vite-plugin-pwa` (injectManifest, precache-only worker), `build.json` from `@mailwoman/core/git`, routes `/`, `/debug`, `/trace` with `?q=`, a not-found view
+- `packages/site-kit` (private): the build.json plugin, the installable-PWA options and the Playwright preview config, written once for this app and the planetary app
+- `packages/earth` (`@mailwoman/earth`, private): Vite + React, `vite-plugin-pwa` (injectManifest, precache-only worker), `build.json`, routes `/`, `/debug`, `/trace` with `?q=`, a not-found view
 - `wrangler.toml` with `assets` only; the tile worker admits `earth`, `moon`, `mars` origins
 - Playwright smoke on `vite preview`, added to the react CI leg
 - Registered in `workspaces`, both `tsconfig.json` references, `SANCTIONED_RELEASE_ABSENCES`, the dependency-cruiser browser list
