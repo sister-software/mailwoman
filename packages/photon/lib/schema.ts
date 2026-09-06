@@ -103,12 +103,21 @@ export const SchemaOrgPlaceSchema = z
 	.openapi("SchemaOrgPlace")
 
 /**
+ * The FeatureCollection as a route returns it — the collection plus the optional `engine` stamp. Named because it is a
+ * union arm: an unnamed arm is inlined, and a generated client then names the variant after its position.
+ */
+export const StampedPhotonFeatureCollectionSchema = stampedResponseSchema(
+	PhotonFeatureCollectionSchema,
+	"StampedPhotonFeatureCollection"
+)
+
+/**
  * The real `/api` + `/reverse` 200 response union (#1052 doc accuracy): a GeoJSON FeatureCollection by default, or an
  * array of schema.org `Place` JSON-LD objects when `format=jsonld` — see `routes.ts`'s handlers (`photonToSchemaOrg`).
  * Doc-only; the wire behavior is unchanged.
  */
 export const PhotonResponseSchema = z
-	.union([stampedResponseSchema(PhotonFeatureCollectionSchema), z.array(SchemaOrgPlaceSchema)])
+	.union([StampedPhotonFeatureCollectionSchema, z.array(SchemaOrgPlaceSchema)])
 	.openapi("PhotonResponse")
 
 /**
