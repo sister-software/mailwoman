@@ -5,7 +5,7 @@
  * @file `mwdev_sources` — what data we hold, per country, per artifact.
  *
  *   The tests that matter are the ones about ABSENCE, because every one of them corresponds to a wrong conclusion
- *   somebody could draw from a row count: a shard with rows but no join tables reads as usable and is not; a country
+ *   somebody could draw from a row count: a extract with rows but no join tables reads as usable and is not; a country
  *   asked for and missing must come back as a zero rather than as a missing key; and an unreadable file is a finding,
  *   never an exception that takes the whole census down with it.
  */
@@ -20,7 +20,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 let root: TemporaryDirectory
 
 /**
- * A shard with `spr` and the ancestry tables — the shape a corpus builder can extract triples from.
+ * A extract with `spr` and the ancestry tables — the shape a corpus builder can extract triples from.
  */
 function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -71,8 +71,8 @@ beforeAll(async () => {
 afterAll(() => root[Symbol.asyncDispose]())
 
 describe("censusArtifact", () => {
-	it("reports rows AND what the shard can be joined through", () => {
-		const row = censusArtifact(root.resolve("wof", "postalcode-intl.db"))
+	it("reports rows AND what the extract can be joined through", async () => {
+		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ FR: 3, DE: 2 })
@@ -80,38 +80,38 @@ describe("censusArtifact", () => {
 		expect(row.parentLinked).toBe(true)
 	})
 
-	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", () => {
-		// 395,544 PT postcodes in a shard with no ancestry table is not 395,544 usable triples. This is the exact
+	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", async () => {
+		// 395,544 PT postcodes in a extract with no ancestry table is not 395,544 usable triples. This is the exact
 		// shape that made a real config declare PT unbuildable while the rows were sitting there.
-		const row = censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))
+		const row = await censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ PT: 5 })
 		expect(row.join).toEqual([])
 	})
 
-	it("reports parent_id being the -1 sentinel, which no row count can show", () => {
-		expect(censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db")).parentLinked).toBe(false)
+	it("reports parent_id being the -1 sentinel, which no row count can show", async () => {
+		expect((await censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))).parentLinked).toBe(false)
 	})
 
-	it("reports a country asked for and ABSENT as a zero, not a missing key", () => {
+	it("reports a country asked for and ABSENT as a zero, not a missing key", async () => {
 		// A missing key reads as "not measured". The caller is deciding whether to go and acquire data, and those are
 		// opposite conclusions.
-		const row = censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
+		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
 
 		expect(row.countries).toEqual({ FR: 3, VE: 0 })
 	})
 
-	it("treats a zero-byte shard as a FINDING, not an exception", () => {
-		const row = censusArtifact(root.resolve("wof", "postalcode-fr.db"))
+	it("treats a zero-byte extract as a FINDING, not an exception", async () => {
+		const row = await censusArtifact(root.resolve("wof", "postalcode-fr.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toMatch(/zero bytes/)
 		expect(row.bytes).toBe(0)
 	})
 
-	it("reports a file that is not there rather than throwing", () => {
-		const row = censusArtifact(root.resolve("wof", "nothing-here.db"))
+	it("reports a file that is not there rather than throwing", async () => {
+		const row = await censusArtifact(root.resolve("wof", "nothing-here.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toBe("not on disk")
@@ -119,7 +119,7 @@ describe("censusArtifact", () => {
 })
 
 describe("gazetteerArtifacts", () => {
-	it("lists the .db shards and skips .prev / .bak siblings", async () => {
+	it("lists the .db extracts and skips .prev / .bak siblings", async () => {
 		// A `.prev` reports the same country a second time under a name nobody can act on.
 		const names = (await gazetteerArtifacts(root.path)).map((path: string) => path.split("/").pop())
 

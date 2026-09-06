@@ -3,7 +3,7 @@
 
 /**
  *   Contract tests for `AddressTree.system` + the `containmentFor` indirection — the forward-compat
- *   anti-lock-in seam (DeepSeek resolver consult, 2026-05-30). These lock in two guarantees:
+ *   anti-lock-in boundary (DeepSeek resolver consult, 2026-05-30). These lock in two guarantees:
  *
  *   1. The discriminator round-trips: `buildAddressTree(..., { system })` stamps `tree.system`, and
  *        omitting it leaves `system` absent (the default Western path).
@@ -17,14 +17,9 @@ import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import { containmentFor, PARENT_OF, WESTERN_PARENT_OF } from "@mailwoman/core/decoder/containment"
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import { validateTree } from "@mailwoman/core/decoder/validate-tree"
-import type { BIOLabel } from "@mailwoman/core/types/component"
 import { describe, expect, test } from "vitest"
 
-function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
-	return { piece, start, end, label, confidence: 1 }
-}
-
-const RAW = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
+import { tok, WHITE_HOUSE_RAW } from "./fixtures.ts"
 
 function tokens(): DecoderToken[] {
 	return [
@@ -53,19 +48,19 @@ function shape(nodes: readonly ShapedNode[]): string {
 
 describe("AddressTree.system + containmentFor", () => {
 	test("system is absent by default", () => {
-		const tree = buildAddressTree(RAW, tokens())
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, tokens())
 		expect(tree.system).toBeUndefined()
 	})
 
 	test("buildAddressTree stamps the requested system onto the tree", () => {
-		expect(buildAddressTree(RAW, tokens(), { system: "western" }).system).toBe("western")
-		expect(buildAddressTree(RAW, tokens(), { system: "japanese" }).system).toBe("japanese")
+		expect(buildAddressTree(WHITE_HOUSE_RAW, tokens(), { system: "western" }).system).toBe("western")
+		expect(buildAddressTree(WHITE_HOUSE_RAW, tokens(), { system: "japanese" }).system).toBe("japanese")
 	})
 
 	test("system is behavior-neutral today — identical structure regardless of system", () => {
-		const base = shape(buildAddressTree(RAW, tokens()).roots)
-		const western = shape(buildAddressTree(RAW, tokens(), { system: "western" }).roots)
-		const japanese = shape(buildAddressTree(RAW, tokens(), { system: "japanese" }).roots)
+		const base = shape(buildAddressTree(WHITE_HOUSE_RAW, tokens()).roots)
+		const western = shape(buildAddressTree(WHITE_HOUSE_RAW, tokens(), { system: "western" }).roots)
+		const japanese = shape(buildAddressTree(WHITE_HOUSE_RAW, tokens(), { system: "japanese" }).roots)
 		expect(western).toBe(base)
 		expect(japanese).toBe(base)
 	})
@@ -81,7 +76,7 @@ describe("AddressTree.system + containmentFor", () => {
 	})
 
 	test("validateTree honors the tree's system (a valid Western tree stays valid when tagged)", () => {
-		const tree = buildAddressTree(RAW, tokens(), { system: "western" })
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, tokens(), { system: "western" })
 		expect(validateTree(tree).valid).toBe(true)
 	})
 })

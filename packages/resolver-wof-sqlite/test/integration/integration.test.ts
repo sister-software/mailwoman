@@ -4,7 +4,7 @@
 /**
  *   Integration tests for `WOFSQLitePlaceLookup` against a real Who's On First SQLite distribution.
  *
- *   These are gated on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
+ *   These are conditioned on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
  *   message) if the path doesn't exist. CI runs against the fixture-only suites; operators with the
  *   real DB locally get an extra layer of validation.
  *
@@ -18,9 +18,9 @@
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
-import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { $public } from "@mailwoman/resolver-wof-sqlite/env"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -81,7 +81,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 			}
 		})
 
-		test("country: 'FR' filter returns empty against the US-only admin shard", async () => {
+		test("country: 'FR' filter returns empty against the US-only admin extract", async () => {
 			const candidates = await lookup.findPlace({ text: "Paris", country: "FR" })
 			expect(candidates).toEqual([])
 		})
@@ -141,7 +141,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 	})
 
 	describe("performance budget", () => {
-		test("`findPlace` against the full US admin shard returns in <250ms", async () => {
+		test("`findPlace` against the full US admin extract returns in <250ms", async () => {
 			const start = Date.now()
 			await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 			const elapsed = Date.now() - start

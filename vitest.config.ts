@@ -13,9 +13,9 @@
 
 /// <reference types="vitest/config" />
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
-import { resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { resolvePath } from "path-ts"
 import type { Alias } from "vite"
 import { defineConfig } from "vite"
 
@@ -41,22 +41,24 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * Read a workspace manifest.
  *
  * `parseJSONStrict` lives behind the very aliases {@link workspaceAliases} generates, so importing it here would make
- * the config depend on its own output. A malformed manifest should abort the run, which is what a bare throw does.
+ * the config depend on its own output. A malformed manifest should abort the run, which is what a bare throw does. The
+ * local `escapeRegExp` above is inlined for the same reason: `@mailwoman/core/strings/regexp` sits behind the very
+ * aliases this file exists to generate.
  */
-function readManifest<T>(path: string): T {
+async function readManifest<T>(path: string): Promise<T> {
 	// oxlint-disable-next-line no-restricted-properties -- see above.
-	return readLocalJSONFileSync<T>(path)
+	return await readLocalJSONFile<T>(path)
 }
 
-function workspaceAliases(): Alias[] {
-	const root = readManifest<{ workspaces: string[] }>(resolve(here, "package.json"))
+async function workspaceAliases(): Promise<Alias[]> {
+	const root = await readManifest<{ workspaces: string[] }>(resolvePath(here, "package.json"))
 	const aliases: Array<Alias & { specificity: number; wildcard: boolean }> = []
 
 	for (const workspace of root.workspaces) {
-		const manifest = readManifest<{
+		const manifest = await readManifest<{
 			name?: string
 			exports?: Record<string, string | Record<string, string>>
-		}>(resolve(here, workspace, "package.json"))
+		}>(resolvePath(here, workspace, "package.json"))
 
 		if (!manifest.name || !manifest.exports) continue
 
@@ -71,7 +73,7 @@ function workspaceAliases(): Alias[] {
 
 			aliases.push({
 				find: new RegExp(`^${specifier.split("*").map(escapeRegExp).join("(.+)")}$`),
-				replacement: resolve(here, workspace, file).replace("*", "$1"),
+				replacement: resolvePath(here, workspace, file).replace("*", "$1"),
 				specificity: specifier.length,
 				wildcard,
 			})
@@ -86,7 +88,7 @@ function workspaceAliases(): Alias[] {
 export default defineConfig({
 	resolve: {
 		alias: [
-			...workspaceAliases(),
+			...(await workspaceAliases()),
 			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()
 			// their Emscripten loader as a file:// URL (undici rejects the scheme) and then import() a
 			// blob: URL (Node's ESM loader rejects that too). The root export carries a `node`
@@ -95,7 +97,7 @@ export default defineConfig({
 			// module graph, where WebGPU is unavailable anyway.
 			//
 			// ASK THE PACKAGE, don't hand-assemble the dist path (2026-08-06 triage). This read
-			// `resolve(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` — a literal that
+			// `resolvePath(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` — a literal that
 			// says the same thing the comment above says, except it says it in a form the package
 			// cannot correct. `import.meta.resolve("onnxruntime-web")` applies the `node` condition of
 			// the exports map the comment is describing, so an ORT upgrade that renames or relocates
@@ -105,7 +107,7 @@ export default defineConfig({
 			// the only one that reaches it.
 			{
 				find: /^onnxruntime-web\/webgpu$/,
-				replacement: fileURLToPath(import.meta.resolve("onnxruntime-web")),
+				replacement: resolveModulePath("onnxruntime-web"),
 			},
 		],
 	},
@@ -142,7 +144,7 @@ export default defineConfig({
 			// Playwright e2e specs live under docs/test/browser/ + docs/test/build/. They use
 			// @playwright/test as the runner, not vitest, but vitest's default `*.spec.ts` glob would
 			// pick them up and crash on the unfamiliar `test.describe` API. (The build/ entry
-			// — the `docusaurus build` health gate — was missing here, so it surfaced the moment CI
+			// — the `docusaurus build` health check — was missing here, so it surfaced the moment CI
 			// could reach the test phase again.)
 			"**/docs/test/browser/**",
 			"**/docs/test/build/**",
@@ -167,6 +169,10 @@ export default defineConfig({
 			// Mode"), which is exactly what broke CI's Test leg from #1215 onward. CI runs the
 			// browser leg as its own step (test.yml "Test react (browser mode)").
 			"**/react/**/*.test.{ts,tsx}",
+			// @mailwoman/license-worker's tests import `cloudflare:test` and run under the Workers pool through the
+			// workspace's own vitest.config.ts (`yarn test:license-worker`); this forks pool cannot load them. CI runs them
+			// as their own step, beside the react browser leg.
+			"**/license-worker/**/*.test.ts",
 		],
 	},
 })

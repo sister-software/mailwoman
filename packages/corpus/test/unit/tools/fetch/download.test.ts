@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { createServer, type Server } from "node:http"
+import type { AddressInfo } from "node:net"
+
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
@@ -10,8 +13,6 @@ import {
 	readManifest,
 	writeManifest,
 } from "@mailwoman/corpus/tools/fetch/download"
-import { createServer, type Server } from "@mailwoman/platform/http"
-import type { AddressInfo } from "@mailwoman/platform/net"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let server: Server

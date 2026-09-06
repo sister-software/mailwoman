@@ -27,7 +27,7 @@
  *   registers, computed against a from-scratch replay of the PRE-§4 scorer set. That is a stronger
  *   receipt than a sample of parses would be — it is every row, it is exact rather than
  *   within-tolerance, and it needs no weights, so it runs in CI on every commit rather than on the
- *   days someone has the ~9 GB shard set mounted.
+ *   days someone has the ~9 GB database set mounted.
  *
  *   ## Why the baseline is replayed rather than snapshotted
  *
@@ -53,12 +53,13 @@ import {
 import type { NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
-import { poiTaxonomyLookup } from "mailwoman/poi-intent"
+import { poiTaxonomyLookup } from "mailwoman/poi"
 import { beforeAll, describe, expect, test } from "vitest"
 
 /**
  * The scorer set as it stood BEFORE ROAD_TO_V9 §4 — a verbatim replay of `classify.ts`'s list at commit `4ebd955`,
- * minus the three intent scorers and the POI pair (which are lexicon-gated and unreachable from `classifyKindSync`).
+ * minus the three intent scorers and the POI pair (which are lexicon-restricted and unreachable from
+ * `classifyKindSync`).
  */
 const PRE_INTENT_SCORERS: ReadonlyArray<{
 	kind: QueryKind
@@ -205,7 +206,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	 */
 	// 2026-08-10: grew 4 → 19 with the operator-supplied street-name-boundaries and
 	// world-structures boards (306 → 514 cases). The 15 additions are all bare famous-street
-	// rows ('Avenida Alvear', 'Savile Row', 'Gran Vía' …) — single street-name surfaces with no
+	// rows ('Avenida Alvear', 'Gran Vía' …) — single street-name surfaces with no
 	// structural anchor, exactly the declared-fork shape the marker exists for. Deliberate pin
 	// move, reviewed row-by-row; not silent growth.
 	// 2026-08-11: corpus 514 → 523 with the bare-foreign-postcode board (#1589) — 9 postcode
@@ -228,13 +229,9 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		"Petaling Jaya",
 		"Rua Augusta",
 		"Rua Garrett",
-		"Rue Saint-Honoré",
-		"Rue Sainte-Catherine",
-		"Savile Row",
-		"Via Laietana",
 	]
 
-	test("the fork population over the corpus is the 19 rows structure cannot resolve", () => {
+	test("the fork population over the corpus is the 15 rows structure cannot resolve", () => {
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
@@ -263,7 +260,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		expect(new Set(marked.flatMap((m) => m.codes))).toEqual(new Set(["declared_fork"]))
 
 		// `landmark` and `locality_only`, and the split is by REGISTER: `scoreVenueLandmark` requires a capital letter
-		// (`rules.ts`'s `/[A-Z]/` gate) and scores 0.88, so "Diego Garcia" is a landmark and "diego garcia" is a
+		// (`rules.ts`'s `/[A-Z]/` check) and scores 0.88, so "Diego Garcia" is a landmark and "diego garcia" is a
 		// locality. That is a PRE-EXISTING case-keyed rule, unchanged here and recorded because it is exactly the kind
 		// of thing this receipt would otherwise be read as having introduced. What matters for the D-rule is that the
 		// same two kinds come out with and without §4 — which the byte-identical routing test above already pinned.

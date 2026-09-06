@@ -1,0 +1,192 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Path builders for Mailwoman's platform-native application directories.
+ */
+
+import {
+	createPathBuilderResolver,
+	type PathBuilder,
+	type PathBuilderLike,
+	type PathBuilderResolver,
+	resolvePath,
+	resolvePathBuilder,
+} from "path-ts"
+
+import { $public } from "#env/index"
+
+/**
+ * The Mailwoman data root from the typed public environment.
+ */
+export function mailwomanDataRoot(): string {
+	return $public.MAILWOMAN_DATA_ROOT
+}
+
+/**
+ * The per-user configuration root (`$MAILWOMAN_CONFIG_ROOT`, defaulting to the platform config directory): where the
+ * license signing key lives, and anything else that is the operator's rather than the data's.
+ */
+export function mailwomanConfigRoot(): string {
+	return $public.MAILWOMAN_CONFIG_ROOT
+}
+
+/**
+ * A path under the config root — the sibling of {@link dataRootPath}, so no caller composes `$MAILWOMAN_CONFIG_ROOT` by
+ * hand.
+ */
+export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
+	const resolver = createPathBuilderResolver(mailwomanConfigRoot())
+
+	return segments.length ? resolver(...(segments as [PathBuilderLike, ...string[]])) : resolver()
+}) as PathBuilderResolver
+
+/**
+ * Build a path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`.
+ *
+ * Reads the env on each call, so a late environment change (or a test stub) is honored — a resolver bound once at
+ * module evaluation would freeze the root to whatever the first importer's environment held. The result is a
+ * {@link PathBuilder}: call it to descend, `resolvePath(...)` or `.toString()` it at a string boundary.
+ */
+export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
+	const resolver = createPathBuilderResolver(mailwomanDataRoot())
+
+	return segments.length ? resolver(...(segments as [PathBuilderLike, ...string[]])) : resolver()
+}) as PathBuilderResolver
+
+/**
+ * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
+ *
+ * ONE definition of the convention, because it is written by ten `link-dev-weights.ts` scripts and read by
+ * `@mailwoman/neural`'s `resolveWeights`, and a reader that disagreed with the writers about the directory would report
+ * the artifacts absent rather than misplaced — every sibling degrades `existsSync → undefined`.
+ *
+ * It lives OUTSIDE git deliberately. The binaries are not committed, so materializing them into the tracked package
+ * directory is what made a fresh worktree unable to geocode, made `yarn test` mutate tracked directories as a side
+ * effect, and put a symlink in a publish tarball (`YN0035`). The data root is shared across every checkout on the
+ * machine and is not packed by anything.
+ */
+export function weightsOverlayPath(locale: string, ...segments: string[]): PathBuilder {
+	return dataRootPath("weights", locale.toLowerCase(), ...segments)
+}
+
+/**
+ * The Mailwoman temporary-file root from the typed public environment.
+ */
+export function mailwomanTempRoot(): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_TEMP_ROOT)
+}
+
+/**
+ * Path builder under Mailwoman's temporary-file root, e.g. `tempRootPathBuilder("reg", "fr-communes.tsv")`. Reads the
+ * env on each call, so a late environment change (or a test stub) is honored.
+ */
+export function tempRootPathBuilder(...segments: string[]): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_TEMP_ROOT, ...segments)
+}
+
+/**
+ * Absolute-path-string resolver under the temporary-file root — the string-returning sibling of
+ * {@link tempRootPathBuilder}, for handing paths straight to `node:fs` and other string APIs without a `.toString()`.
+ */
+export function tempRootPath(...segments: string[]): string {
+	return resolvePath($public.MAILWOMAN_TEMP_ROOT, ...segments)
+}
+
+/**
+ * The Mailwoman cache root from the typed public environment.
+ */
+export function mailwomanCacheRoot(): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_CACHE_ROOT)
+}
+
+/**
+ * Path builder under Mailwoman's application cache directory.
+ */
+export function cacheRootPathBuilder(...segments: string[]): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_CACHE_ROOT, ...segments)
+}
+
+/**
+ * Absolute-path-string resolver under the cache directory — the string-returning sibling of
+ * {@link cacheRootPathBuilder}.
+ */
+export function cacheRootPath(...segments: string[]): string {
+	return resolvePath($public.MAILWOMAN_CACHE_ROOT, ...segments)
+}
+
+/**
+ * The default WOF extract list the FTS backend probes when no single `--wof-db` is given: the global admin-priority
+ * extract plus the postcode extracts, with country-aware routing in `pickExtractForPlacetype` sending each postcode
+ * query to the extract that claims its country (#920). All under `dataRoot` (defaults to the configured
+ * {@link mailwomanDataRoot}; callers thread a `--data-root` option through). A fresh array each call; callers filter
+ * with `existsSync`, so a deployment missing any of them degrades to whatever is present.
+ *
+ * This list is DELIBERATELY SMALLER than `DEFAULT_POSTCODE_EXTRACTS` (`mailwoman/gazetteer-pipeline/index.ts`), which
+ * is the set the candidate gazetteer is BUILT from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
+ * These are attached live per query, so the cost of a member is paid at every boot rather than once at build time;
+ * membership here is earned by a extract the runtime cannot resolve its locales without.
+ *
+ * Two notes on specific members, because both look like mistakes and are not:
+ *
+ * - The tail extract's own contents moved on 2026-08-05. It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until
+ *   Code-Point Open replaced those rows under a clean licence; it is now the nine-country namesake set
+ *   FI/CZ/SK/SI/DK/NO/HR/PL/SE at 26 MB. Rebuild: `mailwoman gazetteer build postcode-geonames`.
+ * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL, never published, so on any machine that
+ *   did not build it the `existsSync` filter simply drops it and GB postcode queries behave as they did before. It is
+ *   listed rather than special-cased because that filter IS the tier's enforcement. It is also the only GB-claiming
+ *   extract in this list — the Code-Point Open extract is not here — so nothing competes with it for `BT` routing.
+ */
+export function wofExtractPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
+	return Object.values(wofExtractPathsByName(dataRoot))
+}
+
+/**
+ * The extract set {@link wofExtractPaths} lists, keyed by role so a caller can name one without indexing a tuple.
+ */
+export interface WOFExtractPaths {
+	/**
+	 * The global admin-priority extract — every admin lookup starts here.
+	 */
+	adminGlobalPriority: string
+	/**
+	 * US ZIP codes.
+	 */
+	postalcodeUS: string
+	/**
+	 * The nine-country namesake set FI/CZ/SK/SI/DK/NO/HR/PL/SE (see {@link wofExtractPaths}).
+	 */
+	postalcodeGeonamesTail: string
+	/**
+	 * The international postcode extract (FR/DE/ES/IT/NL, and the others `pickExtractForPlacetype` routes here).
+	 */
+	postalcodeIntl: string
+	/**
+	 * The NL PC6 full-postcode extract (CBS via PDOK; `scripts/build-postalcode-nl-pc6.ts`) — the data the lookup's NL
+	 * PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
+	 */
+	postalcodeNLPC6: string
+	/**
+	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %), the only coverage that exists
+	 * for the hole Code-Point Open leaves. ODbL, build-local, 2.5 MB. A miss on a BT code means NOT ATTESTED IN OSM; an
+	 * unknown postcode abstains (#1480), so the extract is strictly additive. Rebuild: `mailwoman gazetteer build
+	 * postcode-ni-osm`.
+	 */
+	postalcodeNIOSM: string
+}
+
+/**
+ * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
+ */
+export function wofExtractPathsByName(dataRoot: PathBuilderLike = mailwomanDataRoot()): WOFExtractPaths {
+	const wof = resolvePathBuilder(dataRoot, "wof")
+
+	return {
+		adminGlobalPriority: wof("admin-global-priority.db").toString(),
+		postalcodeUS: wof("postalcode-us.db").toString(),
+		postalcodeGeonamesTail: wof("postalcode-geonames-tail.db").toString(),
+		postalcodeIntl: wof("postalcode-intl.db").toString(),
+		postalcodeNLPC6: wof("postalcode-nl-pc6.db").toString(),
+		postalcodeNIOSM: wof("postalcode-ni-osm.db").toString(),
+	}
+}

@@ -8,7 +8,7 @@ behavior change** on every input whose segmentation never used a pruned piece.
 ## Mechanism (decided before measuring)
 
 1. **Fired-set measurement over the FULL v0.15.0-venue feed** (684,103,970 rows, all 704 train
-   shards — no sampling: a sampled fired-set risks pruning a rare-but-practiced piece, the exact
+   extracts — no sampling: a sampled fired-set risks pruning a rare-but-practiced piece, the exact
    tail this probe exists to keep) plus every eval surface (eval-harness fixtures, golden sets,
    gauntlet cases, P0 boards). Counted at the unit the model reads: `encode()` output ids.
 2. **Keep set** `K` = specials (pad/unk/bos/eos) ∪ all 256 byte-fallback pieces ∪ every
@@ -33,7 +33,7 @@ behavior change** on every input whose segmentation never used a pruned piece.
 - **B2 — logit bit-parity**: original vs pruned ONNX on ≥200 eval inputs (ids remapped): logits
   **bitwise equal**. The graph is unchanged except the gather table; kept rows are byte-identical;
   anything non-equal means the surgery touched something it shouldn't have.
-- **B3 — the full battery**: gauntlet (regression + metamorphic) + the `v7.0.0-base` gate on the
+- **B3 — the full battery**: gauntlet (regression + metamorphic) + the `v7.0.0-base` check on the
   pruned pair — **PASS with scores identical** to the shipped pair (not merely within margins:
   B1+B2 imply identical parses; any score delta is a defect).
 - **Receipt**: artifact sizes before/after (int8 onnx + tokenizer.model), % params removed,

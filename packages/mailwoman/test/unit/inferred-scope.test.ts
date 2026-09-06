@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #1684 gate pins. The absent-verdict and explicit-scope cases ARE the contract: unknown is not foreign, and an
+ *   #1684 check pins. The absent-verdict and explicit-scope cases ARE the contract: unknown is not foreign, and an
  *   explicit caller scope is never second-guessed here.
  */
 

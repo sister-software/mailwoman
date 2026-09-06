@@ -53,7 +53,7 @@ We measure these things against coordinates, not labels, because a name-match me
 
 Forty-five countries that used to need a hint and now don't, a twenty-four-point jump on the query shape people actually use, and the cost on the GPU meter was zero. The thing we'd budgeted a retrain for was a hundred-odd lines in the resolver.
 
-The cost it does carry is the honest kind: it can only re-pick to a place the gazetteer actually has. Where we don't carry a city, the country in the address can't summon it from nothing, and the fix correctly does nothing rather than guess. That's a coverage problem, and it's a different lever for a different day.
+The cost it does carry is the honest kind: it can only re-pick to a place the gazetteer actually has. Where we don't carry a city, the country in the address can't summon it from nothing, and the fix correctly does nothing rather than guess. That's a coverage problem, and it's a different change for a different day.
 
 ## The part worth keeping
 
@@ -61,4 +61,4 @@ We almost retrained a model to fix a bug the model didn't have. The diagnostic t
 
 The reflex says train. The discipline says look first. The model knew it was Austria the whole time; we just had to teach the rest of the system to listen.
 
-(One more for the honesty file: the test that proves Sydney now lands in Australia failed the first time I ran it — by 7,532 kilometers. The fix was fine. I'd dropped the minus sign on Sydney's latitude and parked it in the northern hemisphere. The gate caught my typo before it caught a real regression, which is exactly the order you want.)
+(One more for the honesty file: the test that proves Sydney now lands in Australia failed the first time I ran it — by 7,532 kilometers. The fix was fine. I'd dropped the minus sign on Sydney's latitude and parked it in the northern hemisphere. The check caught my typo before it caught a real regression, which is exactly the order you want.)

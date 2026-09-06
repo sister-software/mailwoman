@@ -1,30 +1,30 @@
 # The relabel probe — #511 confirms the #492 contradiction theory (2026-06-10 evening)
 
-Same-day sequel to [the width gate + affix audit](./2026-06-10-width-gate-affix-audit.md). That
+Same-day sequel to [the width check + affix audit](./2026-06-10-width-check-affix-audit.md). That
 note ended with a theory (the affix ceiling is contradictory base-corpus labels at ≥ 1,039:1) and
 a fix design (#511, a loader-level relabel pass). This note records the probe that tested it.
 
 ## Design
 
 `v1.0.6-relabel-probe`: single-variable contrast against probe 0 (v1.0.4) — same clean
-consolidation step-040000 checkpoint, same shard weights (synth-affix 20.0), same +4k steps,
+consolidation step-040000 checkpoint, same extract weights (synth-affix 20.0), same +4k steps,
 choreography off, ONE change: `data.affix_relabel_lexicon_path` set. Probe 0 is the measured
 control: prefix 81.0 at +2k decaying to 61.1 at +4k with relabel off.
 
-The relabel pass (`corpus-python/src/mailwoman_train/relabel.py`) applies the affix shard
+The relabel pass (`corpus-python/src/mailwoman_train/relabel.py`) applies the affix extract
 builder's exact split semantics to every street span at load time, after augmentation. Builder
 parity is the critical property — "W Park Ave" gets NO split because the builder rejects
 affix-shaped names, and a looser pass would introduce a third labeling. Vocab is codex-derived
 (`scripts/build-affix-relabel-lexicon.mjs`, 16 directional + 549 suffix variants). Pre-train
-audit on 250K real base rows across five shards: every sampled split correct, per-shard split
+audit on 250K real base rows across five databases: every sampled split correct, per-extract split
 rates 8–87% consistent with the 69.4% aggregate measurement.
 
 Design was pressure-tested in a 3-turn DeepSeek consult (curl fallback — the `pi` wrapper timed
 out again at 180s): concurrence on all-rows scope (GB splits are schema-correct; a country filter
 adds brittleness), relabel probability 1.0 (partial relabeling is a weaker dose of the same
 contradiction — p=0.9 still leaves ~156:1), and probe decisiveness. Its push-back we adopted: the
-32-row affix eval is too small to gate on (one instance ≈ 4pp); expand to ≥100/≥100 instances
-before the full-run gate. One correction ours: the probe keeps shard weight 20.0 for probe-0
+32-row affix eval is too small to check on (one instance ≈ 4pp); expand to ≥100/≥100 instances
+before the full-run check. One correction ours: the probe keeps extract weight 20.0 for probe-0
 parity — the weight-reduction discussion belongs to the full run.
 
 ## Result: HOLD
@@ -54,7 +54,7 @@ has not migrated; the full run owns it.
 `v1.1.0-relabel-consolidation` launched the same evening (from scratch, 40k): the v4.2.0 recipe
 on the consistent mix with both anti-contradiction compensations REVERTED as stated decisions —
 synth-affix 17.0 → 2.0 and affix tag class-weights 2.0/4.0 → 1.5/1.5 (suffix now appears on ~65%
-of base street rows; a 4× boost on a majority tag risks over-fire). Gate: the v4.2.0 ship floors
+of base street rows; a 4× boost on a majority tag risks over-fire). Check: the v4.2.0 ship floors
 unchanged, affix measured at 20k AND 40k (stability is the claim under test), plus the consult
 watches (folded-street invariance, short-street recall, house_number→street_prefix transition).
 The expanded NAD-native affix eval re-baselines before the verdict; the 32-row result is recorded

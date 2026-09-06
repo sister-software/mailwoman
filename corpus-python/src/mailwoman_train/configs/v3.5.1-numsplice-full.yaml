@@ -18,18 +18,18 @@
 #     continuations than before, so postcode recognition COULD regress. The 6 demo presets (20500,
 #     10118, 94133, 60613, 98109, 90210) and board 3 bare-pc (Norwegian 4-digit postcodes, the
 #     negative class) MUST hold. If US 5-digit postcode drops, the splice range needs 5-digit pieces
-#     or a different cut.
+#     or a different reduce.
 #   DO-NO-HARM — FR fragment board + global parity hold.
 #   NEGATIVE — if the digit rows do NOT improve after single-piece-ing the numbers, the vocab is NOT
 #     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).
 #
 # THE 2k PROBE PASSED THE MECHANISM TEST: board 3 bare-street-hn 0.693 -> 0.825 (+13.2pp, 8x the
-# fr-fragment shard's +1.7pp); the PL defect row `aleja Wojska Polskiego 178` FIXED (postcode ->
+# fr-fragment slice's +1.7pp); the PL defect row `aleja Wojska Polskiego 178` FIXED (postcode ->
 # house_number); US 5-digit postcodes + all 6 demo presets HELD. The only regression was the board-3
 # Norwegian CONTEXTFUL classes (city-first/pc-first/street-led, -5..-8.5pp) — US contextful held, so
 # it is under-convergence of the fresh tokenizer, not a trade. This 8k gives the model time to
 # re-learn contextful number handling with the new vocab while keeping the bare-street win.
-#   SHIP GATE: bare-street-hn holds its +13pp AND the contextful classes recover to ~ceiling AND
+#   SHIP CHECK: bare-street-hn holds its +13pp AND the contextful classes recover to ~ceiling AND
 #   US/5-digit/demo presets + FR fragment board + parity hold -> v6.5.0 candidate (first real
 #   house_number improvement). Promotion is the operator's act.
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.5.0-numsplice-probe.yaml --resume none
@@ -62,7 +62,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -91,7 +91,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

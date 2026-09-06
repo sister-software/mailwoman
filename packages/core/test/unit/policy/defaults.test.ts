@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { buildDefaultPolicies, defaultPolicyFor } from "@mailwoman/core/policy/defaults"
+import { COMPONENT_TAGS } from "@mailwoman/core/types"
 import { expect, test } from "vitest"
-
-import { COMPONENT_TAGS } from "#types"
 
 test("buildDefaultPolicies: one entry per ComponentTag, all rule_only by default", () => {
 	const policies = buildDefaultPolicies()

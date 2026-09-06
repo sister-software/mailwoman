@@ -5,7 +5,7 @@ by `mailwoman eval score-trends` — do not hand-edit; regenerate after each led
 
 Numbers are per-tag scores as recorded per release (eval sets, channels, and quantization
 evolve across eras — adjacent columns are comparable, distant ones directional; the dated
-ship-gate docs carry each column's exact conditions). "—" = not measured that release.
+ship-check docs carry each column's exact conditions). "—" = not measured that release.
 
 ## US
 

@@ -1,0 +1,307 @@
+#!/usr/bin/env node
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman-nominatim` — boot a Nominatim-compatible endpoint via the `serve` command. Usage +
+ *   examples live in the package README.
+ *
+ *   Wires the real engine: `/search` over `geocodeAddress` (parse → resolve), `/reverse` over
+ *   `WOFReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the same
+ *   resolver-backend selector GeocodeRouter uses. Results carry the OpenCage-style `annotations`
+ *   block — coordinate formats, flag, calling code, currency, and (when their DBs are present)
+ *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
+ */
+
+import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
+import { serveNode } from "@mailwoman/api-kit"
+import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { coordinateFormatAnnotator } from "@mailwoman/spatial"
+import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
+import { makeUNLocodeAnnotator, UNLocodeLookup } from "@mailwoman/un-locode-lookup"
+import {
+	corsBannerLine,
+	gazetteerBannerLines,
+	gazetteerFreshness,
+	loadClassifierOrExit,
+	openAPICommand,
+	resolveGazetteerOrExit,
+	runDropInCLI,
+} from "mailwoman/cli-kit/dropin"
+import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
+import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { resolvePath } from "path-ts"
+
+import { forwardToResolved } from "#forward-address"
+import {
+	createNominatimApp,
+	type NominatimAddressDetails,
+	type NominatimEngine,
+	nominatimStatus,
+	NOMINATIM_DOC_INFO,
+	type ResolvedAddress,
+	toNominatimResult,
+} from "#index"
+
+/**
+ * WOF placetype → Nominatim address key.
+ */
+const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
+	venue: "road",
+	street: "road",
+	locality: "city",
+	localadmin: "city",
+	borough: "city_district",
+	neighbourhood: "suburb",
+	county: "county",
+	region: "state",
+	macroregion: "state",
+	country: "country",
+}
+
+/**
+ * A real address fits comfortably; anything longer is malformed input (and would exceed the model's input window). Cap
+ * defensively so a giant query returns no results instead of faulting.
+ */
+const MAX_QUERY_LEN = 512
+
+const BINARY_NAME = "mailwoman-nominatim"
+
+function joinNonEmpty(...parts: Array<string | undefined>): string {
+	return parts.filter((part) => part !== undefined && part.length > 0).join(", ")
+}
+
+async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
+	const { values } = parseArguments({
+		options: {
+			port: { type: "string", default: "8080" },
+			host: { type: "string", default: "0.0.0.0" },
+			"candidate-db": { type: "string" },
+			// Permissive CORS is on by default (browser geocoder clients need it). `--no-cors` turns it off for
+			// deployments where a reverse proxy already sets the headers.
+			cors: { type: "boolean", default: true },
+		},
+		allowNegative: true,
+		allowPositionals: true,
+	})
+
+	const port = Number(values.port) || 8080
+	const host = values.host ?? "0.0.0.0"
+
+	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
+	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"])
+	const { adminDBPath, candidateDB, wofPaths } = gazetteer
+	const classifier = await loadClassifierOrExit()
+
+	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
+	const resolver = createWOFResolver(backend)
+	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
+	// when the extract isn't on disk (conditioned on existsSync inside the provider), so the endpoint degrades cleanly.
+	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
+	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
+	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
+	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH). We let the
+	// placer decide instead. This is the fallback used ONLY to annotate the flag/currency/calling-code
+	// when the resolved hierarchy omits the country tag — which on US-centric data (no candidate DB)
+	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
+	// the fallback never mislabels them.
+	const annotationCountryFallback = candidateDB ? undefined : "US"
+	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
+	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
+	const tzDBPath = dataRootPath("timezone", "timezone.db")
+
+	if (await pathExists(tzDBPath)) {
+		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: resolvePath(tzDBPath) })))
+	}
+
+	const ulDBPath = dataRootPath("un-locode", "un-locode.db")
+
+	if (await pathExists(ulDBPath)) {
+		annotators.push(makeUNLocodeAnnotator(new UNLocodeLookup({ databasePath: resolvePath(ulDBPath) })))
+	}
+
+	const nutsDBPath = dataRootPath("nuts", "nuts.db")
+
+	if (await pathExists(nutsDBPath)) {
+		annotators.push(makeNUTSAnnotator(new NUTSLookup({ databasePath: resolvePath(nutsDBPath) })))
+	}
+
+	const annotate = composeAnnotators(annotators)
+
+	// Read once, at boot, from the artifacts THEMSELVES (#997). The handles above are held for the life of
+	// the process, so this describes what the endpoint is serving from for as long as it serves — and every
+	// artifact appears, including one carrying no manifest, which says so rather than being left out.
+	const status = nominatimStatus(await gazetteerFreshness(gazetteer))
+
+	const engine: NominatimEngine = {
+		async search(params) {
+			const query = (
+				params.q ?? joinNonEmpty(params.street, params.city, params.state, params.postalcode, params.country)
+			)?.trim()
+
+			// Empty/whitespace → no query; absurdly long → not an address (and would blow the model's input).
+			if (!query || query.length > MAX_QUERY_LEN) return []
+			// A caller-supplied `countrycodes` is an explicit hard restriction (Nominatim semantics): honor
+			// it as the country constraint, even to the point of no result. It doubles as the manual override
+			// for the #822 placer frontier — `countrycodes=au` lands Sydney in Australia. One country is the
+			// common (geopy) case; for a list we apply the first.
+			const userCountry = params.countrycodes?.[0]?.toUpperCase()
+
+			const result = await geocodeAddress(query, {
+				classifier,
+				resolver,
+				databases: extracts.for,
+				nationalDatabases: banExtracts.for,
+				defaultCountry: userCountry,
+			})
+
+			if (result.lat == null || result.lon == null) return []
+			const resolved = forwardToResolved(result)
+
+			// #1041: a rooftop (`address_point`) / house-number-estimate (`interpolated`) tier is HOUSE-GRADE — tag the
+			// result `class: place` / `type: house` (upstream Nominatim's own class/type for a house), so a client that
+			// keys on `class`/`type`/`addresstype` treats it as a building, not an untyped admin hit. The admin tier
+			// (a locality centroid) carries no class/type here, as before.
+			if (
+				result.resolution_tier === "address_point" ||
+				result.resolution_tier === "interpolated" ||
+				result.resolution_tier === "plus_code"
+			) {
+				resolved.category = "place"
+				resolved.type = "house"
+			}
+
+			// The geocode result already carries the parse's street spans (#1041) — no second parse.
+			if (result.house_number) {
+				resolved.address.house_number = result.house_number
+			}
+
+			if (result.street) {
+				resolved.address.road = result.street
+			}
+
+			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
+			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
+			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
+			const country = matchCountry(countryName)
+
+			if (country) {
+				if (!resolved.address.country && country.canonical) {
+					resolved.address.country = country.canonical
+				}
+
+				resolved.address.country_code = country.iso2.toLowerCase()
+			}
+
+			if (result.house_number || result.street) {
+				resolved.displayName =
+					joinNonEmpty(
+						result.house_number ?? undefined,
+						result.street ?? undefined,
+						resolved.address.city,
+						resolved.address.state,
+						resolved.address.postcode,
+						resolved.address.country
+					) || resolved.displayName
+			}
+
+			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
+
+			out.annotations = toOpenCage(
+				await annotate({
+					lat: result.lat,
+					lon: result.lon,
+					countryCode: country?.iso2,
+					placeName: result.locality ?? undefined,
+				})
+			)
+
+			return [out].slice(0, params.limit)
+		},
+
+		async reverse(params) {
+			if (!reverseGeo) return null
+			const { hierarchy } = await reverseGeo.reverseGeocode(params.lat, params.lon)
+
+			if (!hierarchy.length) return null
+			const address: NominatimAddressDetails = {}
+
+			for (const place of hierarchy) {
+				const key = PLACETYPE_TO_KEY[place.placetype]
+
+				if (key && !address[key]) {
+					address[key] = place.name
+				}
+			}
+
+			const deepest = hierarchy[0]!
+
+			if (deepest.country) {
+				address.country_code = deepest.country.toLowerCase()
+			}
+
+			const resolved: ResolvedAddress = {
+				lat: params.lat,
+				lon: params.lon,
+				address,
+				displayName: hierarchy.map((p) => p.name).join(", "),
+				placeID: deepest.id,
+				boundingbox: deepest.bbox
+					? [
+							String(deepest.bbox.minLat),
+							String(deepest.bbox.maxLat),
+							String(deepest.bbox.minLon),
+							String(deepest.bbox.maxLon),
+						]
+					: undefined,
+			}
+
+			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
+
+			out.annotations = toOpenCage(
+				await annotate({ lat: params.lat, lon: params.lon, countryCode: address.country_code })
+			)
+
+			return out
+		},
+
+		async status() {
+			return status
+		},
+	}
+
+	const app = createNominatimApp(engine, { cors: values.cors, engine: engineStamp.stamp })
+
+	await serveNode({
+		fetch: app.fetch,
+		port,
+		hostname: host,
+		onListen: () => {
+			console.error(`[@mailwoman/nominatim] listening on http://${host}:${port}`)
+
+			for (const line of gazetteerBannerLines(gazetteer)) {
+				console.error(line)
+			}
+
+			console.error(corsBannerLine(values.cors))
+			console.error(`  endpoints: GET /  GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json`)
+		},
+	})
+}
+
+await runDropInCLI({
+	binaryName: BINARY_NAME,
+	openapi: openAPICommand(BINARY_NAME, createNominatimApp, NOMINATIM_DOC_INFO, {}),
+	serve,
+	usage: [
+		"  serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]",
+		"  openapi [--flavor 3.1|3.0] [--out <path>]",
+	],
+})

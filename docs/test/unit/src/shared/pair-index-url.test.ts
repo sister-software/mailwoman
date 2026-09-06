@@ -3,11 +3,11 @@
 
 /**
  *   Pair-index asset URL construction (2026-08-05). History: the binaries were published flat at
- *   `mailwoman/pair-index/pair-index-<cc>.bin` and re-cut IN PLACE for PIX schema 3 — the objects
+ *   `mailwoman/pair-index/pair-index-<cc>.bin` and rebuilt IN PLACE for PIX schema 3 — the objects
  *   carry `immutable` Cache-Control, so the CDN served the schema-1 bytes for a week while the
  *   site's reader threw on them (`schemaVersion 1 predates the typed parent record`), and the fix
  *   was a manual purge. Every other model-independent artifact (gazetteer, poi, national street
- *   shards) avoids that with a generation segment plus a site-side version constant; these tests
+ *   extracts) avoids that with a generation segment plus a site-side version constant; these tests
  *   pin the same scheme here.
  *
  *   The 2026-08-05 transition HEAD probe (`resolvePairIndexBaseURL`) is gone: its own removal
@@ -16,9 +16,9 @@
  *   strict e2e run against production.
  */
 
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { PAIR_INDEX_VERSION, pairIndexBaseURL, pairIndexURLs } from "@mailwoman/docs/shared/resources"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, test } from "vitest"
 
 describe("pair-index URL construction", () => {
@@ -42,13 +42,13 @@ describe("pair-index URL construction", () => {
 	})
 })
 
-describe("the demo loader owns no pair-index URL of its own", () => {
-	// The regression the versioning scheme undoes was a bare base URL string literal in the loader
-	// (`const pairIndexBaseURL = "https://public.mailwoman.ai/mailwoman/pair-index"`), which is
-	// how the path escaped the versioning discipline the sibling assets follow. Keep the literal in
-	// resources/, where the version constant lives next to it.
-	const source = readLocalTextFileSync(fileURLToPath(import.meta.resolve("@mailwoman/docs/shared/demo-loader")))
+// The regression the versioning scheme undoes was a bare base URL string literal in the loader
+// (`const pairIndexBaseURL = "https://public.mailwoman.ai/mailwoman/pair-index"`), which is
+// how the path escaped the versioning discipline the sibling assets follow. Keep the literal in
+// resources/, where the version constant lives next to it.
+const source = await readLocalTextFile(resolveModulePath("@mailwoman/docs/shared/demo-loader"))
 
+describe("the demo loader owns no pair-index URL of its own", () => {
 	test("the loader does not build a bucket pair-index path itself", () => {
 		expect(source).not.toMatch(/"https:\/\/public\.sister\.software\/mailwoman\/pair-index/)
 	})

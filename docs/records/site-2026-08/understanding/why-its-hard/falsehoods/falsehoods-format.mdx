@@ -79,7 +79,7 @@ Middlesex, Scunthorpe, Penistone, and many others are real English place names. 
 
 **[The tokenizer](../../../concepts/tokenization.mdx)** uses SentencePiece with byte-fallback. Characters in the trained vocabulary (16K for A0, 48K for A1) produce subword tokens with known embeddings. Characters outside the vocabulary fall back to byte-level encoding — the model sees raw bytes and learns byte-level patterns. This means the tokenizer can handle any Unicode character, even scripts that were not in the training data, without crashing or producing garbage.
 
-**The locale gate (Stage 2)** detects the script family before classification. CJK characters → `ja-JP`, Cyrillic → `ru`, Arabic → `ar`. The locale detection biases the classifier's expectations: a Japanese-formatted address triggers Japanese ordering expectations, a Cyrillic address triggers Russian postcode patterns. The classifier does not need to handle every script's ordering simultaneously.
+**The locale check (Stage 2)** detects the script family before classification. CJK characters → `ja-JP`, Cyrillic → `ru`, Arabic → `ar`. The locale detection biases the classifier's expectations: a Japanese-formatted address triggers Japanese ordering expectations, a Cyrillic address triggers Russian postcode patterns. The classifier does not need to handle every script's ordering simultaneously.
 
 **The phrase grouper (Stage 2.7)** uses structural cues (punctuation, whitespace, capitalization) that are script-agnostic. An apostrophe in `Bo'ness` does not confuse the grouper — it proposes `Bo'ness` as a single span because the apostrophe is word-internal punctuation, not a token boundary. An exclamation mark in `Westward Ho!` is similarly treated as part of the token, not a separator.
 

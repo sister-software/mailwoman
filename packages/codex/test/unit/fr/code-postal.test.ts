@@ -7,7 +7,7 @@ import {
 	isCodePostal,
 	normalizeCodePostal,
 	regionForCodePostal,
-} from "@mailwoman/codex/fr/code-postal"
+} from "@mailwoman/codex/fr"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeCodePostal", () => {

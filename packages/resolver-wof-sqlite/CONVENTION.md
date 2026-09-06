@@ -37,7 +37,7 @@ address_convention(
 meta(key TEXT, value TEXT)         -- name/description/schema_version/source/rows/strategies_known
 ```
 
-The resolver attaches the asset as a shard and auto-detects it (the same mechanism as the
+The resolver attaches the asset as a extract and auto-detects it (the same mechanism as the
 `postcode_locality` table — adding `conventions.db` to `databasePath` enables it). Conventions can also
 be injected directly via `new WofSqlitePlaceLookup({ conventions })` (a ready `ConventionSource` or a
 `{ wofId: Convention }` seed map) for tests and embedding.

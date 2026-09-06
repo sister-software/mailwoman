@@ -29,11 +29,11 @@ import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/
 // arrives via the post-reset dynamic import below; a `const` carries no type side, so the type position
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
+import { crc32 } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile, readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
-import { crc32 } from "@mailwoman/platform/zlib"
+import { join } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
@@ -43,8 +43,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // below is isolated from whatever the ambient environment actually contains (live-data finding — this
 // broke the first time real credentials landed in `.env`). Every OTHER test in this file passes explicit
 // `username`/`apiKey` options and never reads `$private`, so this mock doesn't affect them.
-vi.mock("@mailwoman/core/env", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/core/env")>()
+vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@mailwoman/bdc/env")>()
 
 	return {
 		...actual,
@@ -53,7 +53,7 @@ vi.mock("@mailwoman/core/env", async (importOriginal) => {
 })
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./client.ts` may already sit
-// in the worker's cache — evaluated WITHOUT this file's `@mailwoman/core/env` mock by an earlier file
+// in the worker's cache — evaluated WITHOUT this file's `@mailwoman/bdc/env` mock by an earlier file
 // (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset
 // on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in
 // this fork never inherits our mocked env module from the cache.
@@ -111,7 +111,7 @@ beforeEach(async () => {
 	// Created up front so "the cache is empty" is a readable directory rather than an ENOENT — the
 	// distinction the never-cached assertions below depend on.
 	await makeDirectoryExclusive(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
 
 afterEach(() => {
@@ -121,8 +121,8 @@ afterEach(() => {
 })
 
 /**
- * A client with every timing seam pinned: an immediately-resolving clock, an isolated cache directory, and the stub
- * transport as its only route to "the network".
+ * A client with every timing dependency pinned: an immediately-resolving clock, an isolated cache directory, and the
+ * stub transport as its only route to "the network".
  */
 function clientFor(transport: StubTransport, overrides: Parameters<typeof createBDCClient>[0] = {}) {
 	return createBDCClient({
@@ -242,7 +242,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 	it("never lets more than the configured budget arrive inside any sliding minute", async () => {
 		// ARRIVALS, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
 		// rate limiter sees, and asserting it is how a throttle bug hides: sleeps can be spaced correctly
-		// while requests still land in a burst. `runUntilSettled` is required because the throttle gate sits
+		// while requests still land in a burst. `runUntilSettled` is required because the throttle sits
 		// DOWNSTREAM of the on-disk cache lookup, so each request spends real event-loop turns in `readFile`
 		// before it registers its sleep.
 		const FAN_OUT = 12
@@ -317,8 +317,8 @@ describe("createBDCClient: the throttle meter", () => {
 		// `78m 0s (2000%)` for a 40-call fan-out that finished in 3m54s. What the operator is assessing is
 		// what SHARE of the wall clock went to the throttle, which only the union answers.
 		//
-		// Deliberately UNDER `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval gate fires and `waits` is exactly
-		// one per call after the first. At 12 this also crossed the per-minute budget, and once that gate's cooldown was
+		// Deliberately UNDER `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires and `waits` is exactly
+		// one per call after the first. At 12 this also crossed the per-minute budget, and once that limit's cooldown was
 		// corrected to a full window (it had been releasing N back to back every `60000/N` ms — a 10x overrun) the extra
 		// budget waits made the count ambiguous. Union-vs-sum is what this test is for; isolate it.
 		const FAN_OUT = 8
@@ -337,8 +337,8 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	it("counts a per-minute budget cooldown once the budget is spent", async () => {
-		// The BUDGET gate (`requestsPerMinute`) is declared alongside the interval gate; this is what proves
-		// it is actually wired, since the interval gate alone produces identical arrival spacing.
+		// The BUDGET limit (`requestsPerMinute`) is declared alongside the interval limit; this is what proves
+		// it is actually wired, since the interval limit alone produces identical arrival spacing.
 		const BUDGET = 2
 
 		const clock = new VirtualClock()
@@ -351,15 +351,15 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	/**
-	 * The composed steady state of BOTH gates, at the shipped defaults — pinned because `createBDCClient` and
+	 * The composed steady state of BOTH limits, at the shipped defaults — pinned because `createBDCClient` and
 	 * {@link BDCThrottleStats.cooldowns} both describe it in prose, and both used to describe it WRONGLY: they claimed
-	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the interval gate has spaced the
+	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the interval limit has spaced the
 	 * dispatches, so the budget was said to cost nothing. It is a real 6 s wait. `APIClient` measures the cooldown to the
 	 * end of the MINUTE the window opened in, and after nine 6 s intervals only 54 s of that minute is spent.
 	 *
 	 * Nothing checked either claim, which is how they survived. This is the check.
 	 */
-	it("both gates composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {
+	it("both checks composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {
 		const WINDOWS = 2
 		const FAN_OUT = BDC_DEFAULT_REQUESTS_PER_MINUTE * WINDOWS + 1
 
@@ -380,7 +380,7 @@ describe("createBDCClient: the throttle meter", () => {
 		// One cooldown per budget's worth of requests, and it is a WAIT, not a zero-length rollover marker.
 		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
 
-		// The composed rate lands BELOW the published limit — conservative, which is why the two gates are left
+		// The composed rate lands BELOW the published limit — conservative, which is why the two limits are left
 		// composed rather than dropping the budget.
 		expect(maxCountInSlidingWindow(transport.dispatchTimes, 60_000)).toBeLessThanOrEqual(
 			BDC_DEFAULT_REQUESTS_PER_MINUTE
@@ -520,7 +520,7 @@ describe("createBDCClient: the binary download path", () => {
 		// A multi-hundred-megabyte zip through a JSON-validating disk cache is wrong twice over: it cannot
 		// be read back, and `downloadBDCFile` already writes the extracted CSV to disk itself.
 		//
-		// An empty cache directory alone would NOT prove this — the storage layer's own `validate` gate
+		// An empty cache directory alone would NOT prove this — the storage layer's own `validate` check
 		// rejects a zip too, so the directory stays empty either way and the assertion would pass with
 		// `cache: false` deleted. What distinguishes "the request bypassed the cache" from "the cache
 		// refused the write" is the rejection itself: `buildDiskStorage` warns on every write it drops, so

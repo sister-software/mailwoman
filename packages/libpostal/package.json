@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/libpostal",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "libpostal drop-in — a libpostal-compatible parse/expand HTTP API over Mailwoman's neural address parser. The lowest-dependency drop-in: parse needs no gazetteer. Run it with `npx @mailwoman/libpostal serve`.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -27,12 +27,16 @@
 	],
 	"type": "module",
 	"imports": {
-		"#package.json": "./package.json"
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		}
@@ -41,15 +45,14 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/zod-openapi": "^1.5.1",
+		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
-		"hono": "^4.13.0",
+		"hono": "^4.13.7",
 		"mailwoman": "workspace:*",
-		"zod": "^4.4.3"
+		"zod": "^4.5.4"
 	}
 }

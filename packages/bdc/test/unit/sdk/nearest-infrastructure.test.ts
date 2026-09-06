@@ -3,12 +3,12 @@
 
 /**
  *   Tests for {@link nearestInfrastructure} (decision 7). The fixture `poi.db` is built via
- *   the rows seam directly against `poi-schema.ts` — the SAME idiom
+ *   the rows injection point directly against `poi-schema.ts` — the SAME idiom
  *   `resolver-wof-sqlite/poi-lookup.test.ts` uses (a tiny hand-built `poi`/`poi_category_codes` fixture,
  *   no DuckDB/network) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
  *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package
  *   already depends on `@mailwoman/bdc`, so the reverse edge would be circular). `bdc`'s only POI-side
- *   dependency is `@mailwoman/resolver-wof-sqlite`, and the rows-seam idiom (inject synthetic rows, skip
+ *   dependency is `@mailwoman/resolver-wof-sqlite`, and the injected-rows idiom (inject synthetic rows, skip
  *   DuckDB entirely) is preserved exactly.
  *
  *   Fixture rows, all telecom_exchange/tower_comms (`@mailwoman/poi-taxonomy` categories) except one
@@ -46,16 +46,17 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { POI_H3_RESOLUTION, POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
+	POI_H3_RESOLUTION,
+	POILookup,
 	createPOIBrandIndex,
 	createPOINameKeyIndex,
 	createPOISearchFTS,
 	createPOIStagingTables,
 	createPOITable,
 	type POIDatabase,
-} from "@mailwoman/resolver-wof-sqlite/poi-schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/poi"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"

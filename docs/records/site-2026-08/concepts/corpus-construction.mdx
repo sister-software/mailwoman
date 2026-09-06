@@ -109,9 +109,9 @@ The split is **locality-aware**: rows that share a locality stay in the same spl
 
 The split assignment is written to `SPLIT_MANIFEST.json` — every later step can reproduce which rows went where. If the same input goes through two different build runs, it ends up in the same split (deterministic hash on `source_id`).
 
-## Stage 5 — Sharding
+## Stage 5 — Extracting
 
-Final output is Parquet files with about 1 million rows per shard. Parquet is columnar — the training data loader streams one column group at a time without loading the whole file. Total v0.3.0 output: ~30 train shards + 1 val + 1 test = 32 files, ~30 GB.
+Final output is Parquet files with about 1 million rows per extract. Parquet is columnar — the training data loader streams one column group at a time without loading the whole file. Total v0.3.0 output: ~30 train extracts + 1 val + 1 test = 32 files, ~30 GB.
 
 The training pipeline picks up from here. See [Training pipeline](./training-pipeline.mdx) for what happens next.
 
@@ -124,7 +124,7 @@ The training pipeline picks up from here. See [Training pipeline](./training-pip
 ## What corpus building is bad at
 
 - **Incremental updates.** Today, adding a new source means a full rebuild. ~6 hours of wall-clock.
-- **Wall-clock cost scales with synthesis.** The 5x synthesis multiplier doubles the alignment + sharding time vs. a synth-off build. v0.3.0 added more sources without bumping max_steps, so the corpus is now under-utilized: a 50K-step training run sees only 6.4 million examples (~1% of the corpus per pass).
+- **Wall-clock cost scales with synthesis.** The 5x synthesis multiplier doubles the alignment + extract routing time vs. a synth-off build. v0.3.0 added more sources without bumping max_steps, so the corpus is now under-utilized: a 50K-step training run sees only 6.4 million examples (~1% of the corpus per pass).
 - **Disk pressure.** The intermediate NDJSON dumps land at ~400 GB and stay until the next build. The host is on a 1 TB nvme; this is fine but tight.
 
 ## Where this lives in the code
@@ -133,7 +133,7 @@ The training pipeline picks up from here. See [Training pipeline](./training-pip
 - **Aligner:** `corpus/src/align.ts`
 - **Synthesis:** `corpus/src/synthesize.ts`
 - **Splitter:** `corpus/src/split.ts`
-- **Sharder:** `corpus/src/parquet.ts`
+- **Extracter:** `corpus/src/parquet.ts`
 - **Build orchestrator:** `corpus/src/build.ts` + `corpus/scripts/run-corpus-build.ts`
 - **Schema reference:** `corpus/src/types.ts` (`CanonicalRow`, `LabeledRow`, `QuarantinedRow`)
 - **Plan doc:** [PHASE_1_corpus.md](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_1_corpus.mdx)

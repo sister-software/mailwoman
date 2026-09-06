@@ -8,16 +8,15 @@
  *   overwhelming majority align (no quarantine).
  */
 
-import { mulberry32 } from "@mailwoman/core/utils"
+import { mulberry32 } from "@mailwoman/core/random"
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
 	type SynthesizedBoundaryStressRow,
 } from "@mailwoman/corpus/synthesizers/boundary-stress"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
-import { alignRow } from "#utils"
 
 function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 	return {

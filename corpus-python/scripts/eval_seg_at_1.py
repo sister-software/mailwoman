@@ -1,4 +1,4 @@
-"""#727 stage-2 Phase 1 GATE: does a segment decode over LEARNED span scores beat the token decode?
+"""#727 stage-2 Phase 1 CHECK: does a segment decode over LEARNED span scores beat the token decode?
 
 Baselines to beat (v264, ship config, triaged parity corpus): street token@1 0.573. A segment decode
 over the SUMMED-BIO stand-in scored 0.453 — WORSE — which is exactly why a trained span scorer is
@@ -34,7 +34,7 @@ STREET_TYPES = {"street", "street_prefix", "street_prefix_particle", "street_suf
 
 
 def fold(value: str) -> str:
-    """Case-fold + collapse whitespace — the same comparison the JS parity gate uses."""
+    """Case-fold + collapse whitespace — the same comparison the JS parity check uses."""
     return " ".join(value.lower().split())
 
 
@@ -142,7 +142,7 @@ def main() -> int:
         "\nNOTE: these numbers are CHANNEL-STARVED and are NOT comparable to the JS harness's\n"
         "  `mailwoman eval parity --weights-cache` (v264 street token@1 0.573). This script feeds no\n"
         "  anchor/gazetteer/country channels, no postcodeRepair, no word-consistency heal — the #718\n"
-        "  trap — so token@1 here reads ~0.35 on the same model. The GATE is still valid as a RELATIVE\n"
+        "  trap — so token@1 here reads ~0.35 on the same model. The CHECK is still valid as a RELATIVE\n"
         "  comparison: both heads read the same starved encoder state. Do not quote these absolutes."
     )
 

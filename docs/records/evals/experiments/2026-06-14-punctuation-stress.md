@@ -1,6 +1,6 @@
 # Punctuation-stress + paired-delimiter eval — the span proposer doesn't earn its revival (2026-06-14)
 
-_Closes the measurement half of #518. The question was narrow and gated: our eval surfaces (OA/NAD/golden)
+_Closes the measurement half of #518. The question was narrow and conditional: our eval surfaces (OA/NAD/golden)
 are government data, punctuation-poor by construction, so neither engine had ever been graded on the
 quadrant where real user input lives — quoted venue names, parenthetical annotations, `c/o` lines,
 unbalanced delimiters. #518 said: measure the class first, and only revive the abandoned Stage 2.7
@@ -84,7 +84,7 @@ The head-to-head is the real takeaway:
   (86.9 vs 80.8), slash (71.8 vs 61.5). Its rules handle `123 1/2`, `O'Brien`, `St.` precisely; neural
   wobbles on fractional house numbers and absorbs trailing tokens.
 
-The implication for the roadmap: the highest-leverage punctuation-stress lever is **not** a new span
+The implication for the roadmap: the highest-changeage punctuation-stress change is **not** a new span
 proposer — it's reducing neural's span **over-extension at delimiters** (a boundary/decode problem, kin to
 the Saint-Albans fragmentation and the #555 `locateSpan` over-run). That's where the paired-delimiter rows
 actually break, and it's a sharper, cheaper target than reviving Stage 2.7.

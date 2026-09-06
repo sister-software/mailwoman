@@ -14,7 +14,7 @@ Gold conventions, decided once here:
    component (`(Australia)` → country), it is labeled as that component, delimiters excluded.
 3. **c/o & attention lines**: the schema has no `attention`/`care_of` tag the current model emits;
    the c/o phrase is left UNLABELED in gold and the row grades the neighbors. These rows measure
-   poisoning, not c/o extraction (that capability is a separate future lever).
+   poisoning, not c/o extraction (that capability is a separate future change).
 4. **Unbalanced delimiters** (operator ruling 2026-06-11): a stray, unpaired delimiter is
    EXCLUDED from the component value (`Joe's "Pizza` → `venue: Joe's Pizza`), and the component is
    still graded — never omitted. BALANCED quotes that are part of a name as written stay

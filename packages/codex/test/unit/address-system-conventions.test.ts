@@ -11,7 +11,7 @@
  */
 
 import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/codex/address-system-conventions"
-import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb/postcode"
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("FR address-system conventions (#719)", () => {
@@ -56,7 +56,7 @@ describe("GB address-system conventions (#1275)", () => {
 		}
 	})
 
-	it("forbids NO tags — the row exists for the postcode snap-repair gate only", () => {
+	it("forbids NO tags — the row exists for the postcode snap-repair check only", () => {
 		// A forbid needs measured zero-cost receipts (the FR street_prefix lesson, #719). GB has none.
 		expect(conventionsForSystem("gb")!.forbiddenTags).toBeUndefined()
 	})

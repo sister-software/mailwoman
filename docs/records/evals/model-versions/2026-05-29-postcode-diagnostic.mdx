@@ -174,14 +174,14 @@ node scripts/harness-postcode.ts \
   --out-json /tmp/postcode-harness-v060.json
 ```
 
-For gate use in CI:
+For check use in CI:
 
 ```bash
-node scripts/harness-postcode.ts ... --gate --floor 0.9 --min-count 10
+node scripts/harness-postcode.ts ... --check --floor 0.9 --min-count 10
 ```
 
 Exits nonzero on any country with ≥ 10 samples and accuracy below the
-floor. v0.6.0's US (80.5%, 1765 samples) fails this gate today; v0.7's
+floor. v0.6.0's US (80.5%, 1765 samples) fails this check today; v0.7's
 target is for it to pass.
 
 ## See also

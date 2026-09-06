@@ -29,7 +29,7 @@ import {
 } from "@mailwoman/core/layers"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
@@ -433,8 +433,10 @@ describe("recovering the coverage resolution from the cells themselves", () => {
 	})
 })
 
+const frozenAbsenceDefinition = await loadAbsenceProbeDefinition()
+
 describe("the frozen pre-registration", () => {
-	const definition = loadAbsenceProbeDefinition()
+	const definition = frozenAbsenceDefinition
 
 	it("loads, and its content hash matches the committed freeze record", () => {
 		expect(definition.probeID).toBe("absence-observation-pharmacy-idf-v1")

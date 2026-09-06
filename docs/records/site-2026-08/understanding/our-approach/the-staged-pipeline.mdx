@@ -11,7 +11,7 @@ tags:
 
 Reading [Addresses that break geocoders](../why-its-hard/addresses-that-break-geocoders.mdx) makes one thing obvious: no single model handles every failure class well. Different failures want different fixes. Some want preprocessing rules, some want a small classifier, some want a transformer, some want a resolver that returns candidates instead of pretending to be sure.
 
-This article sketches the runtime as **six stages**, three of which are learned (ML) and three of which are deterministic. As of 2026-05-23, the current Mailwoman ships stages 1, 2.5 (kind classifier), 3, 4a (Viterbi + structural mask), 5, and 6 with candidate-list output — plus the coordinator that composes them. Stage 2 (locale gate beyond the caller's hint) and Stage 4b (span re-reader) remain ahead. A small **coarse-placer** model (Stage 1.5, #244) was added after this sketch: it runs right after normalization, guesses the country, and hands that guess to the resolver as a soft prior — it never feeds the classifier.
+This article sketches the runtime as **six stages**, three of which are learned (ML) and three of which are deterministic. As of 2026-05-23, the current Mailwoman ships stages 1, 2.5 (kind classifier), 3, 4a (Viterbi + structural mask), 5, and 6 with candidate-list output — plus the coordinator that composes them. Stage 2 (locale check beyond the caller's hint) and Stage 4b (span re-reader) remain ahead. A small **coarse-placer** model (Stage 1.5, #244) was added after this sketch: it runs right after normalization, guesses the country, and hands that guess to the resolver as a soft prior — it never feeds the classifier.
 
 ## The picture
 
@@ -21,7 +21,7 @@ flowchart LR
     I --> S1["Stage 1<br>Normalize<br>(rules) ✅"]
     S1 --> CP["Stage 1.5<br>Coarse-placer<br>country guess ✅"]
     CP --> QS["compute<br>QueryShape ✅"]
-    QS --> S2["Stage 2<br>Locale gate<br>(stub today)"]
+    QS --> S2["Stage 2<br>Locale check<br>(stub today)"]
     S2 --> S25["Stage 2.5<br>Kind classifier ✅"]
     S25 -->|"fast-path"| S6
     S25 -->|"full pipeline"| S3["Stage 3<br>Token classify ✅"]
@@ -49,14 +49,14 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the inverse direction). Locale-aware case-folding for Turkish `İ` + Greek final sigma. Bidirectional offset map.
 
-## Stage 2 — Locale gate (small ML)
+## Stage 2 — Locale check (small ML)
 
 **What it does.** Looks at the normalized input and decides which downstream weights to load and which normalisation rules to keep applying. The decision could be a tiny character-level classifier ("Latin / Cyrillic / CJK / Arabic / mixed?") followed by a per-script locale guess.
 
 **Failures it owns.**
 
 - Unicode/transliteration script-handling ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)) — picks the right tokenizer and weights for the script.
-- Language-switch hybrids ([#7](../why-its-hard/addresses-that-break-geocoders.mdx#7-language-switch-hybrids)) — when the input mixes scripts, the gate either picks a hybrid-trained weights package or falls back to a multi-locale ensemble.
+- Language-switch hybrids ([#7](../why-its-hard/addresses-that-break-geocoders.mdx#7-language-switch-hybrids)) — when the input mixes scripts, the check either picks a hybrid-trained weights package or falls back to a multi-locale ensemble.
 
 **Today.** Caller-trust stub — the runtime coordinator accepts the caller's locale hint at confidence 1.0 (or `und` with confidence 0.0 if absent). The companion **QueryShape sub-system** (`@mailwoman/query-shape`) shipped 2026-05-23: character-class detection, punctuation-bounded segmentation, known postcode/PO-box format hits — all the structural priors a future locale detector would consume. The **kind classifier** (Stage 2.5 — `@mailwoman/kind-classifier`) also shipped: categorizes inputs as `postcode_only` / `locality_only` / `structured_address` / `intersection` / `po_box` / `landmark` / `vague` and drives fast-path routing in the coordinator.
 
@@ -139,7 +139,7 @@ The cost: each handoff is a place signal can be dropped, an interface that needs
 | Stage                                 | What ships in…                                                                                                                                       |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 — Normalize                         | Shipped 2026-05-23 (`@mailwoman/normalize`). Future: shared dicts with corpus synthesis, locale-aware case folding.                                  |
-| 2 — Locale gate                       | Caller-trust stub today. QueryShape sub-system + kind classifier (Stage 2.5) shipped. Future: small detector model (v0.6.0+).                        |
+| 2 — Locale check                      | Caller-trust stub today. QueryShape sub-system + kind classifier (Stage 2.5) shipped. Future: small detector model (v0.6.0+).                        |
 | 3 — Token classify                    | v3.0.0 today. v0.4.0 improves CE/CRF balance; v0.5.0 expands vocabulary.                                                                             |
 | 4 — Sequence correct (CRF)            | Viterbi shipped to JS runtime 2026-05-23 (structural mask). Learned transitions pending a future weights release.                                    |
 | 4 — Sequence correct (span re-reader) | Future. Earliest v0.6.0; needs ambiguity-annotated corpus slice.                                                                                     |

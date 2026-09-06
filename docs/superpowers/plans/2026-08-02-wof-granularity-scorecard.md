@@ -15,7 +15,7 @@ This plan covers **PR A and PR B only** from the spec's four-PR split
 to the originating question on its own and is independently shippable.
 
 PR C (gap attribution + name match) and PR D (pair yield + manifest emission) get their own plan
-after B's numbers land, for two reasons recorded in the spec: C's source-gap leg is gated on Open
+after B's numbers land, for two reasons recorded in the spec: C's source-gap leg is blocked on Open
 Question 1 (whether the cloned `whosonfirst-data*` repos are available anywhere — `wof/global` is
 empty), and the 5% parent-coverage floor wants a second calibration point, which B produces.
 
@@ -27,7 +27,7 @@ empty), and the 5% parent-coverage floor wants a second calibration point, which
 - **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `/mnt/playpen/mailwoman-data`; reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
 - **Databases are read-only artifacts.** This plan only ever opens the admin DB with `{ readOnly: true }`.
 - **The meaning-of-zero rule is structural.** A measured-and-empty rung is a present row with a zero count; a never-measured rung is an absent row. These must never collapse into the same representation.
-- **Positive evidence only.** Nothing in this plan gates, masks, or forbids anything at decode time. It measures and reports.
+- **Positive evidence only.** Nothing in this plan checks, masks, or forbids anything at decode time. It measures and reports.
 - Every new file carries the standard header: `@copyright Sister Software`, `@license AGPL-3.0`, `@author Teffen Ellis, et al.`, followed by a prose docstring explaining why the file exists.
 
 ---

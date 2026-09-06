@@ -1,4 +1,4 @@
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — resolution cascade", () => {
 	test("Chicago, IL → resolves to the Chicago locality", async ({ demo }) => {
@@ -26,40 +26,32 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	test("German address — postcode 10115 country-gates into Berlin, not New York", async ({ demo }) => {
+	test("German address — postcode 10115 country-restricts into Berlin, not New York", async ({ demo }) => {
 		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US
 		// ZIP, and the gazetteer now carries US + DE/FR/EU postcodes. The locality must resolve first
-		// (Berlin → DE by population) and country-gate the postcode, so it resolves to the DE 10115 point —
+		// (Berlin → DE by population) and country-restrict the postcode, so it resolves to the DE 10115 point —
 		// IN Berlin — never the NYC ZIP. Grade the COORDINATE (postcode-precise now): Berlin ≈ 52.5, 13.4,
 		// not Manhattan ≈ 40.8, -74.0.
 		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
 		await demo.submit()
 
-		const { resolved, markerCount } = await demo.readResult()
+		const { markerCount } = await demo.readResult()
 		expect(markerCount).toBeGreaterThan(0)
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-		expect(lat, `resolved lat ${lat} should be in Berlin`).toBeGreaterThan(52.3)
-		expect(lat).toBeLessThan(52.7)
-		expect(lon, `resolved lon ${lon} should be in Berlin`).toBeGreaterThan(13)
-		expect(lon).toBeLessThan(13.8)
+		demo.expectNear(await demo.readCoords(), { lat: 52.5, lon: 13.4 }, 0.4)
 		demo.console.assertNoFailEvents()
 	})
 
 	test("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async ({ demo }) => {
 		// -20f folds Canada's Overture divisions into the admin gazetteer (Toronto, Montréal, … — absent
 		// before) PLUS 843k CA postcode centroids. So "Toronto" resolves to Ontario (top by population),
-		// the cascade country-gates to CA, and the CA postcode is reachable. Grade the COORDINATE:
+		// the cascade country-restricts to CA, and the CA postcode is reachable. Grade the COORDINATE:
 		// downtown Toronto ≈ 43.6, -79.4 — not Toronto, Ohio (40.46), where it landed pre-CA-admin.
 		await demo.goto("100 Queen Street West, Toronto, ON M5H 2N2")
 		await demo.submit()
 
-		const { resolved, markerCount } = await demo.readResult()
+		const { markerCount } = await demo.readResult()
 		expect(markerCount).toBeGreaterThan(0)
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-		expect(lat, `resolved lat ${lat} should be in Toronto`).toBeGreaterThan(43.5)
-		expect(lat).toBeLessThan(43.9)
-		expect(lon, `resolved lon ${lon} should be in Toronto`).toBeGreaterThan(-79.7)
-		expect(lon).toBeLessThan(-79.1)
+		demo.expectNear(await demo.readCoords(), { lat: 43.7, lon: -79.4 }, 0.3)
 		demo.console.assertNoFailEvents()
 	})
 
@@ -69,13 +61,9 @@ test.describe("Demo — resolution cascade", () => {
 		// 26k-pop US homonym. Grade the COORDINATE: Moscow ≈ 55.7, 37.6 — not Idaho (46.7, -117).
 		await demo.goto("Moscow, Russia")
 		await demo.submit()
-		const { resolved, markerCount } = await demo.readResult()
+		const { markerCount } = await demo.readResult()
 		expect(markerCount).toBeGreaterThan(0)
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-		expect(lat, `resolved lat ${lat} should be Moscow RU`).toBeGreaterThan(55.3)
-		expect(lat).toBeLessThan(56.1)
-		expect(lon).toBeGreaterThan(37.2)
-		expect(lon).toBeLessThan(38)
+		demo.expectNear(await demo.readCoords(), { lat: 55.7, lon: 37.6 }, 0.4)
 		demo.console.assertNoFailEvents()
 	})
 
@@ -83,47 +71,41 @@ test.describe("Demo — resolution cascade", () => {
 		// Cairo's Overture primary is القاهرة; the en alias + GeoNames population (9.6M) put it on the map.
 		await demo.goto("Cairo, Egypt")
 		await demo.submit()
-		const { resolved, markerCount } = await demo.readResult()
+		const { markerCount } = await demo.readResult()
 		expect(markerCount).toBeGreaterThan(0)
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-		expect(lat, `resolved lat ${lat} should be Cairo EG`).toBeGreaterThan(29.7)
-		expect(lat).toBeLessThan(30.4)
-		expect(lon).toBeGreaterThan(31)
-		expect(lon).toBeLessThan(31.6)
+		demo.expectNear(await demo.readCoords(), { lat: 30.05, lon: 31.3 }, 0.35)
 		demo.console.assertNoFailEvents()
 	})
 
 	test("Australian address — Sydney resolves to NSW (-20g Latin-primary coverage)", async ({ demo }) => {
 		await demo.goto("Sydney, NSW, Australia")
 		await demo.submit()
-		const { resolved, markerCount } = await demo.readResult()
+		const { markerCount } = await demo.readResult()
 		expect(markerCount).toBeGreaterThan(0)
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-		expect(lat, `resolved lat ${lat} should be Sydney AU`).toBeGreaterThan(-34.3)
-		expect(lat).toBeLessThan(-33.5)
-		expect(lon).toBeGreaterThan(150.8)
-		expect(lon).toBeLessThan(151.5)
+		demo.expectNear(await demo.readCoords(), { lat: -33.9, lon: 151.15 }, 0.4)
 		demo.console.assertNoFailEvents()
 	})
 
 	// -20j (2026-06-24a) adds postcodes for PT/PL/CZ/AU — absent from the prior -20h build, so these
 	// countries had no postcode tier on the demo at all. Each case feeds locality + postcode + country
-	// and grades the resolved coordinate against the city bbox: the cascade country-gates and the new
+	// and grades the resolved coordinate against the city bbox: the cascade country-restricts and the new
 	// postcode (or its locality) is reachable. Pairs with the v4.14.0 AU model (postcode-first format).
-	const newPostcodeCases: { name: string; query: string; lat: [number, number]; lon: [number, number] }[] = [
+	const newPostcodeCases: { name: string; query: string; lat: number; lon: number; tolDeg: number }[] = [
 		{
 			name: "Portuguese postcode 1000-001 → Lisbon",
 			query: "Lisboa 1000-001, Portugal",
-			lat: [38.6, 38.9],
-			lon: [-9.3, -9],
+			lat: 38.75,
+			lon: -9.15,
+			tolDeg: 0.15,
 		},
-		{ name: "Polish postcode 00-002 → Warsaw", query: "Warszawa 00-002, Poland", lat: [52.1, 52.4], lon: [20.9, 21.2] },
-		{ name: "Czech postcode 100 00 → Prague", query: "Praha 100 00, Czechia", lat: [49.9, 50.2], lon: [14.3, 14.6] },
+		{ name: "Polish postcode 00-002 → Warsaw", query: "Warszawa 00-002, Poland", lat: 52.25, lon: 21.05, tolDeg: 0.15 },
+		{ name: "Czech postcode 100 00 → Prague", query: "Praha 100 00, Czechia", lat: 50.05, lon: 14.45, tolDeg: 0.15 },
 		{
 			name: "Australian postcode 2000 → Sydney",
 			query: "Sydney NSW 2000, Australia",
-			lat: [-34, -33.7],
-			lon: [151, 151.4],
+			lat: -33.85,
+			lon: 151.2,
+			tolDeg: 0.2,
 		},
 	]
 
@@ -131,13 +113,9 @@ test.describe("Demo — resolution cascade", () => {
 		test(`-20j postcode coverage — ${c.name}`, async ({ demo }) => {
 			await demo.goto(c.query)
 			await demo.submit()
-			const { resolved, markerCount } = await demo.readResult()
+			const { markerCount } = await demo.readResult()
 			expect(markerCount).toBeGreaterThan(0)
-			const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-			expect(lat, `resolved lat ${lat} for "${c.query}"`).toBeGreaterThan(c.lat[0])
-			expect(lat).toBeLessThan(c.lat[1])
-			expect(lon, `resolved lon ${lon} for "${c.query}"`).toBeGreaterThan(c.lon[0])
-			expect(lon).toBeLessThan(c.lon[1])
+			demo.expectNear(await demo.readCoords(), { lat: c.lat, lon: c.lon }, c.tolDeg)
 			demo.console.assertNoFailEvents()
 		})
 	}

@@ -14,12 +14,11 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
-import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"
-import type { ParquetRow } from "@mailwoman/corpus/utils/parquet"
-import { join } from "@mailwoman/platform/path"
+import { streamParquetRows, type ParquetRow } from "@mailwoman/corpus/utils/parquet"
+import { join } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -36,7 +35,7 @@ afterEach(async () => {
 })
 
 describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
-	it("produces top-level MANIFEST.json + parquet shards + splits + quarantine pile", async () => {
+	it("produces top-level MANIFEST.json + parquet slices + splits + quarantine pile", async () => {
 		const outDir = scratch.resolve("build")
 		const stages: BuildStage[] = []
 
@@ -50,13 +49,13 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		})
 
 		// Stages fire in order
-		expect(stages).toEqual(expect.arrayContaining(["adapter-run", "align", "split", "shard", "manifest"]))
+		expect(stages).toEqual(expect.arrayContaining(["adapter-run", "align", "split", "slice", "manifest"]))
 
 		expect(manifest.corpus_version).toBe("0.1.0")
 		expect(manifest.adapters).toHaveLength(1)
 		expect(manifest.adapters[0]!.adapter_id).toBe("wof-admin")
 		expect(manifest.total_aligned_rows).toBeGreaterThan(0)
-		expect(manifest.shards.total_rows).toBe(manifest.total_aligned_rows)
+		expect(manifest.slices.total_rows).toBe(manifest.total_aligned_rows)
 		expect(manifest.splits.counts.train).toBeGreaterThan(0)
 
 		// Top-level manifest written
@@ -66,11 +65,11 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		// Per-stage artifacts exist
 		const corpusManifest = await readLocalJSONFile<{
 			total_rows: number
-			shards: Array<{ split: string; format: string; path: string }>
+			slices: Array<{ split: string; format: string; path: string }>
 		}>(join(outDir, "corpus-v0.1.0", "MANIFEST.json"))
 
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
-		expect(corpusManifest.shards.length).toBeGreaterThanOrEqual(1)
+		expect(corpusManifest.slices.length).toBeGreaterThanOrEqual(1)
 
 		const splitManifest = await readLocalJSONFile<{ corpus_version: string; holdouts: Record<string, string[]> }>(
 			join(outDir, "splits", "SPLIT_MANIFEST.json")
@@ -79,14 +78,13 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(splitManifest.corpus_version).toBe("0.1.0")
 		expect(splitManifest.holdouts.US).toContain("Vermont")
 
-		// At least one `.parquet` shard exists and round-trips through `ParquetReader`.
-		const trainShard = corpusManifest.shards.find((s) => s.split === "train")!
-		expect(trainShard).toBeDefined()
-		expect(trainShard.format).toBe("parquet")
-		expect(trainShard.path).toMatch(/\.parquet$/)
-		await using reader = await ParquetReader.openFile<ParquetRow>(trainShard.path)
-		const cursor = reader.getCursor()
-		const firstRow = (await cursor.next()) as ParquetRow | null
+		// At least one `.parquet` slice exists and round-trips through DuckDB.
+		const trainSlice = corpusManifest.slices.find((s) => s.split === "train")!
+		expect(trainSlice).toBeDefined()
+		expect(trainSlice.format).toBe("parquet")
+		expect(trainSlice.path).toMatch(/\.parquet$/)
+		const firstRow = (await streamParquetRows<ParquetRow>(trainSlice.path).next()).value ?? null
+
 		expect(firstRow).not.toBeNull()
 		expect(firstRow!.corpus_version).toBe("0.1.0")
 		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)

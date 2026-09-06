@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/normalize",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "Stage 1 of the runtime pipeline — deterministic input preprocessing (Unicode NFC, punctuation, whitespace, abbreviation). Pure functions, no ML.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -24,45 +24,63 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./abbreviations": {
-			"node": "./abbreviations.ts",
+			"node": "./lib/abbreviations.ts",
 			"default": "./out/abbreviations.js",
 			"types": "./out/abbreviations.d.ts"
 		},
 		"./cjk": {
-			"node": "./cjk.ts",
+			"node": "./lib/cjk.ts",
 			"default": "./out/cjk.js",
 			"types": "./out/cjk.d.ts"
 		},
 		"./compute": {
-			"node": "./compute.ts",
+			"node": "./lib/compute.ts",
 			"default": "./out/compute.js",
 			"types": "./out/compute.d.ts"
 		},
 		"./nfc": {
-			"node": "./nfc.ts",
+			"node": "./lib/nfc.ts",
 			"default": "./out/nfc.js",
 			"types": "./out/nfc.d.ts"
 		},
 		"./offset-map": {
-			"node": "./offset-map.ts",
+			"node": "./lib/offset-map.ts",
 			"default": "./out/offset-map.js",
 			"types": "./out/offset-map.d.ts"
 		},
 		"./punctuation": {
-			"node": "./punctuation.ts",
+			"node": "./lib/punctuation.ts",
 			"default": "./out/punctuation.js",
 			"types": "./out/punctuation.d.ts"
 		},
+		"./comma-spacing": {
+			"node": "./lib/comma-spacing.ts",
+			"default": "./out/comma-spacing.js",
+			"types": "./out/comma-spacing.d.ts"
+		},
+		"./fold": {
+			"node": "./lib/fold.ts",
+			"default": "./out/fold.js",
+			"types": "./out/fold.d.ts"
+		},
 		"./whitespace": {
-			"node": "./whitespace.ts",
+			"node": "./lib/whitespace.ts",
 			"default": "./out/whitespace.js",
 			"types": "./out/whitespace.d.ts"
 		}

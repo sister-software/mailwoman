@@ -1,0 +1,237 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Assemble a balanced (address → country) dataset for the #244 coarse-placer from the v0.5.0
+ *   corpus. STRATIFIED: a flat random sample is 94% US+FR, so we sample up to N rows PER country
+ *   and union.
+ *
+ *   Two gotchas this handles:
+ *
+ *   - DuckDB `USING SAMPLE n ROWS` samples the TABLE, then WHERE filters the sample — so we
+ *       filter-THEN-sample in a subquery to get a true per-country sample.
+ *   - The corpus val/test extracts only carry US/FR/DE, so we draw ALL splits from the rich `train`
+ *       extracts and do our OWN per-country 80/10/10 split (dedup on raw → no row crosses splits).
+ *
+ *   Run: `mailwoman placer build-dataset [--per-country 50000]` Output:
+ *   `<repo>/data/coarse-placer/{train,val,test}.jsonl` (rows: {raw, country})
+ */
+
+import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
+
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
+import { COUNTRIES, IN_MAP_EU, NEW_EU } from "#coarse-placer/tools/country-sets"
+import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { errorMessage } from "#errors/schema"
+import { writeLocalTextFile, makeDirectories } from "#fs/writers"
+import { dataRootPath } from "#utils"
+
+interface DatasetRow {
+	raw: string
+	country: string
+}
+
+/**
+ * Options for {@linkcode buildDataset}.
+ */
+export interface BuildDatasetOptions {
+	/**
+	 * Rows sampled per country. Default 50000.
+	 */
+	perCountry?: number
+	/**
+	 * Dataset output dir. Default `<repo>/data/coarse-placer`.
+	 */
+	data?: PathBuilderLike
+}
+
+/**
+ * Result of {@linkcode buildDataset}.
+ */
+export interface BuildDatasetResult {
+	outDir: string
+	train: number
+	val: number
+	test: number
+}
+
+const VAL_FRAC = 0.1
+const TEST_FRAC = 0.1
+
+// #743 EU expansion: draw the new in-map countries from the Overture per-country addresses theme.
+// The raw fields are formatted into native address strings with FORMAT VARIETY (4 templates picked
+// deterministically per row) so the model can't shortcut on a single template shape — it must use
+// the actual street-type words + locality n-grams (Finnish "katu/tie", Polish "ul.", Norwegian
+// "veien") that carry the country signal. Same 80/10/10 dedup split as the corpus path.
+/**
+ * Format a (street, number, postcode, locality) quad into a native address string.
+ */
+function formatEU(street: unknown, number: unknown, postcode: unknown, loc: string, t: number): string {
+	const s = String(street).trim()
+	const num = number != null && String(number).trim() !== "" ? ` ${String(number).trim()}` : ""
+	const pc = postcode != null && String(postcode).trim() !== "" ? String(postcode).trim() : ""
+
+	switch (t) {
+		case 1:
+			return `${s}${num} ${loc}` // no postcode, no comma
+		case 2:
+			return `${s}${num}, ${loc}${pc ? `, ${pc}` : ""}` // postcode trailing
+		case 3:
+			return `${s}, ${pc ? `${pc} ` : ""}${loc}` // no house number
+		default:
+			return `${s}${num}, ${pc ? `${pc} ` : ""}${loc}` // {street number, postcode locality}
+	}
+}
+
+/**
+ * Coarse-placer dataset builder — see the module doc.
+ */
+export async function buildDataset(
+	options: BuildDatasetOptions = {},
+	report?: (line: string) => void
+): Promise<BuildDatasetResult> {
+	const PER = options.perCountry ?? 50_000
+	const OUT_DIR = resolvePathBuilder(options.data || defaultDataDir())
+
+	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
+
+	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows; the v0.9.2 G-NAF extract carries
+	// 150k real Australian addresses. AU rides the SAME corpus sampling path as COUNTRIES, just from its
+	// own glob — the (country, glob) pairs below unify the two.
+	const AU_GLOB = dataRootPath(
+		"corpus",
+		"versioned",
+		"v0.9.2-multilocale-au",
+		"corpus-v0.9.2-multilocale-au",
+		"train",
+		"*.parquet"
+	)
+
+	const OVERTURE_DIR = dataRootPath("overture", "2026-06-17.0")
+	await makeDirectories(OUT_DIR)
+
+	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
+	const { DuckDBInstance } = await import("@duckdb/node-api")
+	const duck = await (await DuckDBInstance.create()).connect()
+
+	await duck.run("SET memory_limit='4GB'; SET threads=4;")
+
+	const train: DatasetRow[] = [],
+		val: DatasetRow[] = [],
+		test: DatasetRow[] = []
+
+	const CORPUS_SOURCES: ReadonlyArray<[string, string]> = [
+		...COUNTRIES.map((c): [string, string] => [c, String(TRAIN_GLOB)]),
+		["AU", String(AU_GLOB)],
+	]
+
+	for (const [country, glob] of CORPUS_SOURCES) {
+		// filter-THEN-sample: the subquery restricts to the country, SAMPLE draws from that filtered set.
+		const q = `SELECT raw FROM (
+				SELECT raw FROM read_parquet('${glob}') WHERE country = '${country}' AND nullif(trim(raw), '') IS NOT NULL
+			) USING SAMPLE ${Math.ceil(PER * 1.3)} ROWS`
+
+		const res = await duck.runAndReadAll(q)
+		const seen = new Set<string>()
+		const rows: string[] = []
+
+		for (const r of res.getRowObjects()) {
+			if (rows.length >= PER) break
+			const raw = String(r.raw).trim()
+
+			if (!raw || seen.has(raw)) continue
+			seen.add(raw)
+			rows.push(raw)
+		}
+
+		const nVal = Math.floor(rows.length * VAL_FRAC)
+		const nTest = Math.floor(rows.length * TEST_FRAC)
+		const valRows = rows.slice(0, nVal)
+		const testRows = rows.slice(nVal, nVal + nTest)
+		const trainRows = rows.slice(nVal + nTest)
+
+		for (const raw of trainRows) {
+			train.push({ raw, country })
+		}
+
+		for (const raw of valRows) {
+			val.push({ raw, country })
+		}
+
+		for (const raw of testRows) {
+			test.push({ raw, country })
+		}
+
+		report?.(`  ${country}: train ${trainRows.length}  val ${valRows.length}  test ${testRows.length}`)
+	}
+
+	for (const country of [...NEW_EU, ...IN_MAP_EU]) {
+		const parquet = `${OVERTURE_DIR}/addresses-${country.toLowerCase()}.parquet`
+
+		const q = `SELECT street, number, postcode,
+				COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS loc
+			FROM read_parquet('${parquet}')
+			WHERE street IS NOT NULL AND trim(street) <> ''
+			USING SAMPLE ${Math.ceil(PER * 1.4)} ROWS`
+
+		let res
+
+		try {
+			res = await duck.runAndReadAll(q)
+		} catch (error) {
+			report?.(`  ${country}: SKIPPED — ${errorMessage(error)}`)
+
+			continue
+		}
+
+		const seen = new Set<string>()
+		const rows: string[] = []
+
+		for (const r of res.getRowObjects()) {
+			if (rows.length >= PER) break
+			const loc = r.loc == null ? "" : String(r.loc).trim()
+
+			if (!loc) continue
+
+			const raw = formatEU(r.street, r.number, r.postcode, loc, hashFNV1a(`${r.street}|${loc}`) % 4)
+
+			if (!raw || seen.has(raw)) continue
+
+			seen.add(raw)
+			rows.push(raw)
+		}
+
+		const nVal = Math.floor(rows.length * VAL_FRAC)
+		const nTest = Math.floor(rows.length * TEST_FRAC)
+
+		for (const raw of rows.slice(0, nVal)) {
+			val.push({ raw, country })
+		}
+
+		for (const raw of rows.slice(nVal, nVal + nTest)) {
+			test.push({ raw, country })
+		}
+
+		for (const raw of rows.slice(nVal + nTest)) {
+			train.push({ raw, country })
+		}
+
+		report?.(`  ${country} (overture): train ${rows.length - nVal - nTest}  val ${nVal}  test ${nTest}`)
+	}
+
+	const splits: [string, DatasetRow[]][] = [
+		["train", train],
+		["val", val],
+		["test", test],
+	]
+
+	for (const [name, rows] of splits) {
+		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country)) // deterministic class-interleave
+		const p = resolvePath(OUT_DIR, `${name}.jsonl`)
+
+		await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", p)
+		report?.(`→ ${p}  (${rows.length} rows)`)
+	}
+
+	return { outDir: resolvePath(OUT_DIR), train: train.length, val: val.length, test: test.length }
+}

@@ -1,7 +1,7 @@
 """Terminal-only feed audit (#1569) — reconstruction of the 2026-08-09 250k selectable-feed
 audit as a permanent module (the original was ad-hoc and not committed).
 
-Definitions mirror ``classifySuffixBoundaryStreet`` (corpus/src/shard-recipes/street-affix.ts)
+Definitions mirror ``classifySuffixBoundaryStreet`` (corpus/src/recipes/street-affix.ts)
 via the v2 lexicon's vocabulary: a row's street-family group (street span + immediately
 following authored suffix span) is assembled into surface words;
 

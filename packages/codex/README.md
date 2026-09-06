@@ -23,7 +23,7 @@ fr.postcodePattern // → /^\d{5}$/
 
 // US ZIP code branded type
 import { us } from "@mailwoman/codex"
-const zip: us.ZipCode = "94043" // branded, not just string
+const zip: us.ZipCode = "94043" // branded, not string alone
 ```
 
 ## Supported address systems
@@ -66,7 +66,7 @@ clothes.
 
 One `postalcode` placetype covers systems that are not comparable. An Irish Eircode
 names a single address; an Australian postcode names a locality. Between them sit
-most of the world, and the distinction that actually changes an answer is narrower:
+most of the world, and the distinction that changes an answer is narrower:
 **is this code finer than the locality that contains it?**
 
 That is a fact about a country's _administrative_ geography, not its postal system,
@@ -106,7 +106,7 @@ nothing noticed.
   no network. Suitable for bundling into browser and edge environments.
 - **Branded types.** ZIP codes, postcodes, and abbreviations carry nominal types
   so the type system catches locale mismatches at compile time.
-- **Single source of truth.** The resolver, the decoder's convention masks, the
+- **One definition.** The resolver, the decoder's convention masks, the
   corpus synthesis layer, and the matcher all import from `@mailwoman/codex`.
 
 ## The normative tier (codex vs the libpostal dictionaries)
@@ -120,7 +120,7 @@ be merged:
   invariance transforms, and formatting (rendering `N` vs `North` requires knowing
   which form the authority prints).
 - **The libpostal dictionaries** (`core/data/libpostal/dictionaries/`, Pelias
-  lineage) **are descriptive**: everything people actually write, including forms no
+  lineage) **are descriptive**: everything people write, including forms no
   authority recognizes (`en/directionals.txt` lists `lower`/`upper`/`central`).
   Their consumers are recall-shaped — evidence-lexicon curation laws, street
   decomposition for training gold, the street-morphology FST. See the README in

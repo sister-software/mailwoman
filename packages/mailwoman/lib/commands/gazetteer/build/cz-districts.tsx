@@ -1,0 +1,41 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman gazetteer build cz-districts` — the Prague municipal-district locality database (the
+ *   `Praha 9` coherence class) from the GeoNames CZ places file (CC-BY 4.0, attribution GeoNames).
+ *   Sealed 0444. The pipeline module is lazy-imported so `--help` never faults without the optional
+ *   `@mailwoman/resolver-wof-sqlite` peer.
+ */
+
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "cz-districts",
+	description: "Build the Prague municipal-district locality database.",
+	options: {
+		source: { type: "string", description: "GeoNames CZ places file. Default <data-root>/geonames/CZ.txt" },
+		out: { type: "string", description: "Output database. Default <data-root>/wof/localities-cz-districts.db" },
+	},
+} as const satisfies CommandSpec
+
+interface Options {
+	source?: string
+	out?: string
+}
+
+const GazetteerBuildCZDistricts: ParsedCommandComponent<Options> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { buildCZDistrictsDatabase } = await import("#gazetteer/cz-districts")
+		const r = await buildCZDistrictsDatabase({ sourcePath: options.source, out: options.out })
+
+		return `cz-districts: ${r.inserted} district rows (source md5 ${r.sourceMD5.slice(0, 8)}) → ${r.out} — sealed 0444`
+	})
+
+	return <CommandTaskResult state={state} />
+}
+
+export default GazetteerBuildCZDistricts

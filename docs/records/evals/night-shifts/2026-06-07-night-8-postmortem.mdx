@@ -19,13 +19,13 @@ GPU). German moved off the A100: a principled resolver name-match fix (#386) for
 city-state locality recovery (#387) for Berlin. DeepSeek signed off across 4 turns under delegated authority.
 
 **Both fixes are now MEASURED on real data** (v0.9.4 model over the DE intl set, 3000 rows, PIP-containment),
-not just unit-tested — the gated re-measure happened this shift:
+not just unit-tested — the conditional re-measure happened this shift:
 
 - **#387 city-state recovery: Berlin PIP-containment 36.3% → 80.9% (+44.6pp)**, overall 56.1% → 78.4%,
   resolved-rate 65.2% → 87.5%. Sachsen unchanged at 75.9% — the centroid-coincidence guard fires only on
   genuine city-states, zero collateral damage. ~669 rows recovered.
 - **#386 Saxony credit: Sachsen name-match 51.1% → 65.5% (+14.4pp)** on real resolved output.
-- The DE re-measure was NOT actually symlink-gated (#397) — it runs against the explicit v0.9.4 model in
+- The DE re-measure was NOT actually symlink-conditional (#397) — it runs against the explicit v0.9.4 model in
   `/tmp/v094-eval`, independent of the en-us symlink. The recompile WAS the catch: the eval loads compiled
   `core/out/`, so the flag was a silent no-op until `tsc -p core/tsconfig.json`.
 - Residual: ~12.5% of Berlin still unresolved because the model mangles those parses outright
@@ -44,7 +44,7 @@ not just unit-tested — the gated re-measure happened this shift:
 - **#385** v0.9.4 + the PIP pivot (#327): the headline reframe.
 - **#389** abstention curve (#368 S2): coverage-vs-accuracy at confidence thresholds.
 - **#390** `--anchor-rerank` flag on `oa-resolver-eval` (#369 S8): measured the re-ranker via real
-  `resolveTree` + PIP — it HURTS (uniform posterior), so it stays gated on a sharp posterior.
+  `resolveTree` + PIP — it HURTS (uniform posterior), so it stays blocked on a sharp posterior.
 - **#391** per-locale calibration tables (#368): NL ECE 0.047→0.010, DE 0.089→0.041 vs the global table.
 - **#392** calibration drift guard (#368): CI regression check on ECE regression >0.02.
 - **#393** ship calibration tables in `@mailwoman/neural-weights-en-us` (#368 L1): global + per-locale JSON
@@ -55,17 +55,17 @@ not just unit-tested — the gated re-measure happened this shift:
 - **#396** opt-in `cityStateFallback` resolver recovery (#387): the Berlin city-state half — synthesizes the
   dropped locality from the region's centroid-coincident same-name descendant. Default-off, 25/25 tests.
 - **#398** `--city-state-fallback` flag on `oa-resolver-eval` (#387): the measurement handle for the above.
-- **#399** per-locale F1 floor gate (#375 S48): non-blocking CI regression check, self-tested.
+- **#399** per-locale F1 floor check (#375 S48): non-blocking CI regression check, self-tested.
 - **#400** split-conformal coordinate intervals + eval report (#374): FR 90%@5.5km / NL @4.6km / DE @14.7km,
   realized coverage validated; the DE 34.8% abstention independently re-surfaces #387.
 - Issues filed: #368–#379 (12 backlog), #386 (Saxony), #387 (Berlin city-state), **#397** (the en-us symlink
   root cause — `link-dev-weights.sh` pins stale v0.5.3). Groomed/advanced #371, #373, #375, #377.
-- **Both halves of the German finding shipped + measurable** (#395 + #396 + #398); the symlink-gated live
+- **Both halves of the German finding shipped + measurable** (#395 + #396 + #398); the symlink-conditional live
   re-measure is the only remaining step, tracked in #397.
 
 ## What went well
 
-- The pre-registered gates + DeepSeek's decision trees made every retrain verdict mechanical, including the
+- The pre-registered checks + DeepSeek's decision trees made every retrain verdict mechanical, including the
   pivot AWAY from retraining — no debate, no sunk-cost.
 - Used the ~30-min training windows for backlog (after an early idle slip DeepSeek flagged), so the GPU and
   the human were never both waiting.
@@ -93,7 +93,7 @@ not just unit-tested — the gated re-measure happened this shift:
 
 - The German pivot reframes the v0.6.x→v0.9.x saga: the "collapse" was substantially a name-match artifact.
   Worth a blog post? (The "which Berlin" post already opens this thread.)
-- No MODEL promoted (no retrain cleared its gate); the deployed model default is unchanged. But two RESOLVER
+- No MODEL promoted (no retrain cleared its check); the deployed model default is unchanged. But two RESOLVER
   fixes shipped and measured (#386/#387), both opt-in/default-off — see the recommendation below.
 
 ## Concrete next steps
@@ -126,5 +126,5 @@ not just unit-tested — the gated re-measure happened this shift:
 - The shift's second half (post the German pivot) shipped, all off the A100: the full calibration program
   (per-tag/locale ECE, abstention curve, per-locale tables, drift guard, in-package tables), BOTH halves of
   the German finding (#386 Saxony name-match + #387 city-state recovery + the measurement flag), the
-  per-locale F1 floor gate, split-conformal coordinate intervals, two blogs, and an eval report. No GPU
+  per-locale F1 floor check, split-conformal coordinate intervals, two blogs, and an eval report. No GPU
   spent after the pivot — all CPU / eval / resolver / docs work.

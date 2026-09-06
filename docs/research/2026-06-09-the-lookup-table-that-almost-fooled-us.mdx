@@ -22,7 +22,7 @@ the entire premise of the project.
 
 Here's what the morning's comparison actually was. In one corner: a flat lookup,
 matching the trailing chunk of an address against the ISO country list. In the other: a
-model we had retrained on a synthetic shard where _every single row_ ended in a country.
+model we had retrained on a synthetic extract where _every single row_ ended in a country.
 That model learned exactly what we taught it — "the last thing in an address is a
 country" — and started promoting cities and states to nationhood. Precision: 23%.
 
@@ -46,7 +46,7 @@ rules-based parsing to escape.
 
 So we did what we should have done in the morning: gave the model a fair fight.
 
-We rebuilt the training shard with the homographs _in_ it, both ways. "Tbilisi, Georgia"
+We rebuilt the training extract with the homographs _in_ it, both ways. "Tbilisi, Georgia"
 labeled as a country, "Atlanta, Georgia 30309" labeled as a state, the same surface
 form pulling in opposite directions until the only way to win is to read the
 neighbors. We added addresses with no country at all, so abstaining stays on the menu.

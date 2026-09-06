@@ -3,8 +3,8 @@
 # the Fifth-Ave metamorphic hold, resolved by training the invariant rather than waiving it.)
 #
 # WHAT THE 8.2.0 PRE-SHIP GAUNTLET CAUGHT on v3.23-4k (record: progress.md 2026-07-29):
-#   1. World-city rotation on fed bare lookups — FIXED CODE-SIDE (the street-context gate at the
-#      soft-features seam; locality evidence needs street context; every measured win class carries
+#   1. World-city rotation on fed bare lookups — FIXED CODE-SIDE (the street-context check at the
+#      soft-features boundary; locality evidence needs street context; every measured win class carries
 #      street words). Ships regardless of this run.
 #   2. "350 Fifth Ave, New York, NY" → locality absorbed into region (283km resolve). v385-clean ⇒
 #      a real model regression; 1/8 in the targeted sweep (point brittleness, not a class — the
@@ -15,13 +15,13 @@
 # The num-ordinal BAND relation is a STATED gauntlet invariant; v385 satisfied it by luck of the
 # draw, v3.23 lost it by the same luck — this trains it.
 #
-# PRE-REGISTERED GATES: G1-G6 VERBATIM from the v3.23 header (P0 grid --lexicon
+# PRE-REGISTERED CHECKS: G1-G6 VERBATIM from the v3.23 header (P0 grid --lexicon
 # locality-surface-lexicon-v6.json --street-lexicon street-type-lexicon-v3.json per save; G5
 # ablated ALL floors incl. fr.cedex 82.2; G6 canary formatted-clean) PLUS:
 #   G7 THE FULL PRE-SHIP GAUNTLET on the dev-linked flip (regression + metamorphic + held-out) —
-#      the exact instrument that stopped the 8.2.0 cut; the Fifth-Ave INV/BAND pair must clear and
-#      the world-city fixtures stay clear under the street-context gate.
-#   VERDICT: all seven ⇒ resume the 8.2.0 cut at the metadata surfaces. A save passing G1-G6 but
+#      the exact instrument that stopped the 8.2.0 reduce; the Fifth-Ave INV/BAND pair must clear and
+#      the world-city fixtures stay clear under the street-context check.
+#   VERDICT: all seven ⇒ resume the 8.2.0 reduce at the metadata surfaces. A save passing G1-G6 but
 #   not G7 ⇒ STOP, back to the operator (no further augment iteration without a fresh decision).
 #
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.24.0-bundle-ordinal-8k.yaml --resume none
@@ -57,7 +57,7 @@ data:
     CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture slices. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -86,13 +86,13 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000

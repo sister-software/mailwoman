@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -56,13 +57,13 @@ class FisherAccumulator:
             raise RuntimeError("FisherAccumulator.finalize() with zero accumulated batches — capture window never ran")
         return {name: (s / self.count).cpu().numpy() for name, s in self._sums.items()}
 
-    def save(self, out_dir: Path | str, meta: dict) -> Path:
+    def save(self, out_dir: Path | str, meta: dict[str, Any]) -> Path:
         """Write ``fisher-diag-v1.npz`` + the provenance sidecar into ``out_dir``."""
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         arrays = self.finalize()
         path = out_dir / FISHER_ARTIFACT
-        np.savez_compressed(path, **arrays)
+        np.savez_compressed(path, **cast(dict[str, Any], arrays))
         sidecar = {
             "version": "fisher-diag-v1",
             "kind": "diagonal-empirical-fisher",

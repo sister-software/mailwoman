@@ -1,14 +1,14 @@
 # === v1.1.0-relabel-consolidation (#511 — THE FULL RUN) ==========================================
 # The v4.2.0 consolidation recipe on a LABEL-CONSISTENT mix: data.affix_relabel_lexicon_path makes
-# the base corpus agree with the affix shard (trailing USPS suffix -> street_suffix, leading
-# directional -> street_prefix, exact shard-builder semantics — see relabel.py / #511).
+# the base corpus agree with the affix slice (trailing USPS suffix -> street_suffix, leading
+# directional -> street_prefix, exact slice-builder semantics — see relabel.py / #511).
 #
 # PROBE-VALIDATED (v1.0.6, 2026-06-10): single-variable vs probe 0, relabel ON ended the transient
 # decay — prefix 88.0R@+2k -> 84.0R@+4k (one eval instance, vs the control's 81 -> 61.1 collapse),
 # suffix F1 96.7 -> 100.0, street flat 87.5. The #492 contradiction theory is CONFIRMED.
 #
 # TWO deliberate changes vs the shipped Run B (v1.0.2) — both REVERSIONS of anti-contradiction
-# compensation that a consistent mix no longer needs (stated here per no-silent-gate-drift):
+# compensation that a consistent mix no longer needs (stated here per no-silent-check-drift):
 #   1. synth-affix 17.0 -> 2.0 (the v1.0.0 base value). 17.0 was calibrated to outshout a 1,000:1
 #      contradiction that no longer exists; the probe held affix at high-80s/100 even resuming a
 #      20.0-weight model. If affix lands short at 2.0, sweep UP (4.0) — do not restore 17.0 blind.
@@ -17,7 +17,7 @@
 # From scratch (--resume none, NO init_from): the equilibrium claim is that a consistent mix
 # produces affix-stable weights natively, not that a rescued checkpoint can keep them.
 #
-# PRE-REGISTERED GATE — the v4.2.0 ship-gate floors, UNCHANGED (scripts/eval/gates/v4.2.0-ship.json,
+# PRE-REGISTERED CHECK — the v4.2.0 ship-check floors, UNCHANGED (scripts/eval/checks/v4.2.0-ship.json,
 # fp32-to-fp32, ship-config channels: gazetteer lexicon + suppress-gaz-near-postcode + anchor):
 #   - affix: street_prefix >= 78, street_suffix >= 67 — measured at 20k AND 40k (STABILITY is the
 #     claim under test; a 20k peak that decays by 40k is a MISS even if 40k clears the floor).
@@ -27,7 +27,7 @@
 #   - NEW watches (DeepSeek consult 2026-06-10): folded-street invariance, short-street ("Main St")
 #     recall, house_number->street_prefix CRF transition sanity. The EXPANDED affix eval (#511
 #     task: >=100 prefix / >=100 suffix instances from NAD native fields) re-baselines BEFORE the
-#     gate verdict; the 32-row eval result is recorded alongside, not substituted.
+#     check verdict; the 32-row eval result is recorded alongside, not substituted.
 #   DECISION: all hold -> ship candidate (int8 -> v4.3.0). Affix short at 2.0 -> one weight sweep
 #   (4.0), nothing else. Any spine regression -> STOP, the relabel pass gets re-audited before any
 #   weight surgery (a relabel bug presents as boundary noise, not as a dilution problem).
@@ -60,7 +60,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven lever rides at its solo-validated weight.
+    # Every proven change rides at its solo-validated weight.
     synth-unit: 1.5
     synth-affix: 2.0
     synth-country: 2.0
@@ -74,7 +74,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 lever: end the base-vs-shard affix label contradiction (probe-validated v1.0.6).
+  # THE #511 change: end the base-vs-slice affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

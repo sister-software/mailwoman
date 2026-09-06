@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `/status` over the real freshness reader (#997) — the seam between the artifacts on disk and the wire.
+ *   `/status` over the real freshness reader (#997) — the boundary between the artifacts on disk and the wire.
  *
  *   The reader's own states are covered next door, in `mailwoman`'s `freshness.test.ts`. What is under test
  *   here is the one thing only this side can get wrong: `data_updated` must be OMITTED when no artifact
@@ -13,10 +13,10 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createNominatimApp, type NominatimStatus, nominatimStatus } from "@mailwoman/nominatim"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -30,7 +30,7 @@ interface FreshnessFixtureDatabase {
 	rows: { id: number }
 }
 
-async function scratch(): Promise<string> {
+async function scratch(): Promise<PathBuilderLike> {
 	const root = fixtures.use(await temporaryDirectory("mw-nominatim-status-")).path
 
 	return root
@@ -47,7 +47,7 @@ async function stamped(path: string, createdAt: string): Promise<string> {
 		tier: "build-local",
 		license: "ODbL-1.0",
 		source: "admin-global-priority@2026-08-17",
-		sourceVintage: "postcode-shards=24",
+		sourceVintage: "postcode-extracts=24",
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: "abc1234",
 		freshnessPolicy: "sealed",
@@ -70,7 +70,7 @@ function bare(path: string): string {
 }
 
 async function statusBody(paths: Array<{ name: string; path: string }>): Promise<NominatimStatus> {
-	const status = nominatimStatus(readFreshness(paths))
+	const status = nominatimStatus(await readFreshness(paths))
 	const app = createNominatimApp({ status: async () => status })
 	const res = await app.request("/status")
 

@@ -12,9 +12,9 @@
  * Node runs the `.ts` entry directly, which is the same thing the repo's other source-first tooling relies on.
  */
 
-import { isExecutableSync } from "@mailwoman/core/fs/readers-sync"
-import { spawn } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { isExecutable } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { spawnProcess } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
 const ESC = "\u001B"
@@ -33,8 +33,8 @@ const BRAILLE_PATTERN = /[⠀-⣿]/u
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 
-const CLI = fileURLToPath(new URL("../../cli.ts", import.meta.url))
-const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))
+const CLI = resolvePackagePath("@mailwoman/map-tui", "lib", "cli.ts")
+const FIXTURE = resolvePackagePath("@mailwoman/map-tui", "test", "fixtures", "portland.pmtiles")
 
 const PTY_COLUMNS = 100
 const PTY_ROWS = 30
@@ -47,11 +47,13 @@ const TEST_TIMEOUT_MS = 40_000
  * `script` is util-linux's, and this test's `-e` / `-c` spelling is too. macOS ships a BSD `script` with different
  * flags; rather than maintain two invocations for a smoke test, the suite runs where CI runs.
  */
-function hasLinuxScript(): boolean {
+async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false
 
-	return isExecutableSync("/usr/bin/script")
+	return await isExecutable("/usr/bin/script")
 }
+
+const HAS_LINUX_SCRIPT = await hasLinuxScript()
 
 interface PTYRun {
 	output: string
@@ -73,7 +75,7 @@ async function driveMap(keys: string[]): Promise<PTYRun> {
 		`node '${CLI}' --tiles '${FIXTURE}' --lat 45.5034 --lon=-122.6023 --zoom 12`,
 	].join("; ")
 
-	const child = spawn("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
+	const child = spawnProcess("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
 
 	let output = ""
 
@@ -128,7 +130,7 @@ function mouseReport(button: number, column: number, row: number, final: "M" | "
 	return `${ESC}[<${button};${column};${row}${final}`
 }
 
-describe.skipIf(!hasLinuxScript())("map-tui bin (pty)", () => {
+describe.skipIf(!HAS_LINUX_SCRIPT)("map-tui bin (pty)", () => {
 	it(
 		"draws a braille map, responds to keys, and hands the terminal back on quit",
 		async () => {

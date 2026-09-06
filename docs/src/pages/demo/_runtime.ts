@@ -44,7 +44,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ReleaseInfo, ResolveBias, StreetResolution } from "#shared/demo-helpers"
 import {
 	DEFAULT_LOCALE,
-	normalizeReleasesManifest,
+	fetchReleasesManifest,
+	parseStageLabelsFor,
+	projectCascadeHits,
 	resolveDualRoles,
 	resolveStreet,
 	runCascade,
@@ -60,7 +62,7 @@ import {
 	NATIONAL_STREET_FALLBACK_SLUG,
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
-	streetShardURL,
+	streetExtractURL,
 } from "#shared/resources"
 import type { ParseTraceLike, ResolvedHit } from "#shared/resources"
 
@@ -84,7 +86,7 @@ const INTERP_RADIUS_DEFAULT = 1.95
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
- * The per-state street lookups, loaded together (lazy by region). National (country) shards carry no interp.
+ * The per-state street lookups, loaded together (lazy by region). National (country) extracts carry no interp.
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
@@ -137,11 +139,11 @@ export interface UseDemoMapRuntime {
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
 	 * Trace the current input through the decode path (for the dev-mode ModelVisualizer drawer). Resolves `null` when the
-	 * classifier bundle predates the `traceParse` seam or the trace fails. Feature-detect via {@link supportsTrace}.
+	 * classifier bundle predates the `traceParse` hook or the trace fails. Feature-detect via {@link supportsTrace}.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**
-	 * Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle).
+	 * Whether the loaded classifier exposes the `traceParse` decode-path hook (enables the dev-mode toggle).
 	 */
 	supportsTrace: boolean
 }
@@ -172,15 +174,7 @@ export function useDemoMapRuntime({
 	initialCenter,
 }: UseDemoMapRuntimeOptions): UseDemoMapRuntime {
 	// ── Injected loaders ──────────────────────────────────────────────────────
-	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => {
-		// `cache: "reload"` bypasses the (immutable-Cache-Control) HTTP cache for the version pointer so a
-		// returning visitor sees a defaultVersion bump — the same guard `_app.tsx` uses.
-		const res = await fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
-			cache: "reload",
-		})
-
-		return res.ok ? normalizeReleasesManifest(await res.json()) : null
-	}, [])
+	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => fetchReleasesManifest(), [])
 
 	// Delegates to the shared `loadDemoAssets` (the ONE docs-side loader, also used by the MDX-embed context) so the
 	// two demo entry points can't drift on the classifier/calibration/FST/WOF load sequence.
@@ -281,7 +275,7 @@ export function useDemoMapRuntime({
 		setPolygonCache(new Map())
 	}, [rt.selectedVersion])
 
-	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state shard. Ported from `_app.tsx`.
+	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state extract. Ported from `_app.tsx`.
 	const ensureStreetLookups = useCallback(
 		async (slug: string): Promise<StreetLookups | null> => {
 			let p = streetLookupsRef.current.get(slug)
@@ -293,14 +287,14 @@ export function useDemoMapRuntime({
 					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("#shared/httpvfs-street")
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
-						const situsW = await loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL)
+						const situsW = await loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL)
 
 						return { situs: new HTTPVFSAddressPointLookup(situsW, { streetLocale: slug as "fr" }), interp: undefined }
 					}
 
 					const [situsW, interpW] = await Promise.all([
-						loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL),
-						loadHTTPVFSDatabase(streetShardURL(slug, "interp"), sqljsBaseURL),
+						loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL),
+						loadHTTPVFSDatabase(streetExtractURL(slug, "interp"), sqljsBaseURL),
 					])
 
 					return { situs: new HTTPVFSAddressPointLookup(situsW), interp: new HTTPVFSInterpolator(interpW) }
@@ -324,7 +318,7 @@ export function useDemoMapRuntime({
 			if (!classifier) throw new Error("Classifier not ready")
 			hooks.onStage(0)
 
-			// Shared classify front-half (#861 / #1278 seam): 4-way pipeline import → query-shape/kind → neural
+			// Shared classify front-half (#861 / #1278 boundary): 4-way pipeline import → query-shape/kind → neural
 			// runPipeline → flatten, with the two front-half timings captured. `onStage(1)` fires between shape and
 			// classify, exactly as before.
 			const { tree, nodes, kindResult, timing } = await runClassifyStage(
@@ -462,14 +456,7 @@ export function useDemoMapRuntime({
 				}
 			}
 
-			const candidates: ResolvedPlaceView[] = cascadeHits.map((c) => ({
-				id: c.id,
-				name: c.name,
-				placetype: c.placetype,
-				lat: c.lat,
-				lon: c.lon,
-				score: c.score,
-			}))
+			const candidates: ResolvedPlaceView[] = projectCascadeHits(cascadeHits)
 
 			// Stash the map-render extras (bbox) keyed by the candidate object.
 			cascadeHits.forEach((c, i) => {
@@ -534,7 +521,7 @@ export function useDemoMapRuntime({
 		if (!fst) return []
 
 		try {
-			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
+			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
 
 			const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
 				maxSuggestions: 6,
@@ -637,10 +624,7 @@ export function useDemoMapRuntime({
 	)
 
 	const parseStageLabels = useMemo(
-		() =>
-			rt.selectedRelease?.hasWOFDB
-				? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
-				: ["Analyzing input shape…", "Running neural classifier…"],
+		() => parseStageLabelsFor(rt.selectedRelease?.hasWOFDB ?? false),
 		[rt.selectedRelease]
 	)
 

@@ -2,7 +2,7 @@
 
 Branch `feat/placetype-pair-prior` (unswitched throughout the arc). This is the ship-PREP
 scorecard for Task 8 — no release was dispatched, nothing was promoted, no npm version was
-bumped. It documents every number gating the decision, both checkpoints, and the one new
+bumped. It documents every number blocking the decision, both checkpoints, and the one new
 ship-blocking finding this task surfaced (the Gauntlet). Full battery/ablation source:
 `.superpowers/sdd/task-7-report.md`; this task's own additions (Gauntlet, model cards, release
 wiring): `.superpowers/sdd/task-8-prep-report.md`.
@@ -22,12 +22,12 @@ wiring): `.superpowers/sdd/task-8-prep-report.md`.
 > - 6 demo presets byte-identical to v385
 > - val macro_f1 within 1.0pp of v385's 0.7047
 >
-> SHIP GATE: full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet
+> SHIP CHECK: full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet
 > PASS. Ship path (HF upload → promote → npm CI → demo) is OPERATOR-AUTHORIZED for the 2026-07-22
 > night shift CONDITIONAL on every bar above passing. Any bar fails → stage only, report, no
-> promote (no silent gate drift; treadmill guard: no knob iteration).
+> promote (no silent check drift; treadmill guard: no knob iteration).
 
-## Digit gate revision (operator-ratified 2026-07-23, Teffen Ellis)
+## Digit check revision (operator-ratified 2026-07-23, Teffen Ellis)
 
 The pre-registered digit bar above (`flat vs 0.902`) was written against the sibling en-gb-locale
 probe lineage's own 8k checkpoint (`v3.10.1-gb-probe2`) — a same-lineage probe number, not a real
@@ -89,7 +89,7 @@ miss: a hallucinated-street regression, the same shape as the sibling en-gb-loca
 probe-2 checkpoint at its equivalent step (bare-locality collapsed 0.978→0.603 there too). feed-8k
 avoids it and beats v385's own 0.983.
 
-### Digit board `bare-street-hn` — see the gate-revision block above
+### Digit board `bare-street-hn` — see the check-revision block above
 
 |                                         |              feed-2k |              feed-8k |
 | --------------------------------------- | -------------------: | -------------------: |
@@ -113,7 +113,7 @@ cross-validating the harness.
 
 `gb-golden` via en-gb weights + prior ON @ δ\*; `nz-suburb-golden`/`es-pedania-golden`/`fr-lieudit-golden`
 via en-us control weights (no prior possible for these three — they measure the checkpoint's own
-multi-locale resurrection, the actual reason these shards were fed into this training run).
+multi-locale resurrection, the actual reason these extracts were fed into this training run).
 
 | Board                                      |   n | feed-2k emit/tag-correct                | feed-8k emit/tag-correct                |
 | ------------------------------------------ | --: | --------------------------------------- | --------------------------------------- |
@@ -230,10 +230,10 @@ Not run by Task 6 or Task 7; this task closed that gap and found a real ship blo
 
 | Layer           | feed-8k verdict        | Detail                                                                                                                                                                                                                                        |
 | --------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| regression      | PASS                   | 33/33 gated cases; 1 tracked known_fail now passes (should be promoted to `status=pass`)                                                                                                                                                      |
+| regression      | PASS                   | 33/33 counted cases; 1 tracked known_fail now passes (should be promoted to `status=pass`)                                                                                                                                                    |
 | **metamorphic** | **FAIL**               | NEW violation: `INV[comma-drop]` — `"1600 Pennsylvania Ave NW, Washington DC 20500"` → comma-dropped form loses the rooftop resolution entirely (38.8977,-77.0365 → **0,0**). v385 HOLDS this exact case (confirmed same session, same board) |
 | held-out        | PASS                   | z=0.00 (candidate not significantly worse), n=300 fresh FR/BAN draw                                                                                                                                                                           |
-| **combined**    | **FAIL — do not ship** | per the recipe's own pre-registered ship gate                                                                                                                                                                                                 |
+| **combined**    | **FAIL — do not ship** | per the recipe's own pre-registered ship check                                                                                                                                                                                                |
 
 **This is not checkpoint-specific.** feed-2k independently FAILS the same layer with DIFFERENT
 violations: `BAND[num-ordinal]` and `INV[comma-drop]`/`INV[abbrev]` all mis-resolve `"350 Fifth
@@ -244,7 +244,7 @@ transcripts: `.superpowers/sdd/task-8-prep-report.md`.
 
 **Ship-checkpoint choice is unaffected by this finding** — the operator-ratified reasoning
 (feed-2k's FR-fragment failure is the more dangerous, unbounded class; feed-8k's digit miss is
-narrower and now covered by the gate revision) stands regardless of which checkpoint also happens
+narrower and now covered by the check revision) stands regardless of which checkpoint also happens
 to fail the Gauntlet. Both do. The Gauntlet failure blocks promotion of **either** checkpoint until
 triaged — it is a new, independent finding layered on top of the existing checkpoint decision, not
 a tiebreaker between the two.
@@ -253,18 +253,18 @@ a tiebreaker between the two.
 
 ## Coverage numbers
 
-| Locale/board                       |                                     Rows | Source                                                                                |
-| ---------------------------------- | ---------------------------------------: | ------------------------------------------------------------------------------------- |
-| GB held-out (δ-calibration)        |                                    2,000 | PPD tail, disjoint from `synth-gb-v1` (800k) + `gb-golden`/`gb-venue-confound` boards |
-| GB venue-confound                  |                                    6,500 | FSA-sampled                                                                           |
-| gb-golden                          |         120 total, 69 dependent_locality | `mailwoman/eval-harness/fixtures/gb-golden.jsonl`                                     |
-| nz-suburb-golden                   |                   246 dependent_locality | promoted NZ suburb board                                                              |
-| es-pedania-golden                  |                    65 dependent_locality |                                                                                       |
-| fr-lieudit-golden                  |                    80 dependent_locality |                                                                                       |
-| synth-gb-v1 training shard         | 800,000 rows, 32.8% B-dependent_locality | HM Land Registry PPD (OGL v3.0)                                                       |
-| synth-nz-v2 training shard         |              800,000 rows, 79.2% density | LINZ-derived OpenAddresses NZ (CC-BY 4.0)                                             |
-| synth-es-pedania-v1 training shard |              800,000 rows, 30.3% density | OpenAddresses ES (CC-BY per OA source)                                                |
-| synth-fr-lieudit-v1 training shard |   100% density (every row is a lieu-dit) | BAN `nom_ld` (Licence Ouverte 2.0)                                                    |
+| Locale/board                         |                                     Rows | Source                                                                                |
+| ------------------------------------ | ---------------------------------------: | ------------------------------------------------------------------------------------- |
+| GB held-out (δ-calibration)          |                                    2,000 | PPD tail, disjoint from `synth-gb-v1` (800k) + `gb-golden`/`gb-venue-confound` boards |
+| GB venue-confound                    |                                    6,500 | FSA-sampled                                                                           |
+| gb-golden                            |         120 total, 69 dependent_locality | `mailwoman/eval-harness/fixtures/gb-golden.jsonl`                                     |
+| nz-suburb-golden                     |                   246 dependent_locality | promoted NZ suburb board                                                              |
+| es-pedania-golden                    |                    65 dependent_locality |                                                                                       |
+| fr-lieudit-golden                    |                    80 dependent_locality |                                                                                       |
+| synth-gb-v1 training extract         | 800,000 rows, 32.8% B-dependent_locality | HM Land Registry PPD (OGL v3.0)                                                       |
+| synth-nz-v2 training extract         |              800,000 rows, 79.2% density | LINZ-derived OpenAddresses NZ (CC-BY 4.0)                                             |
+| synth-es-pedania-v1 training extract |              800,000 rows, 30.3% density | OpenAddresses ES (CC-BY per OA source)                                                |
+| synth-fr-lieudit-v1 training extract |   100% density (every row is a lieu-dit) | BAN `nom_ld` (Licence Ouverte 2.0)                                                    |
 
 ---
 
@@ -315,7 +315,7 @@ applies to both candidates and was not part of the original six pre-registered g
 The Gauntlet finding above was not left open indefinitely: the operator authorized ONE
 pre-registered repair attempt per the arc's treadmill guard, `v3.11.1-deploc-consolidate` — resume
 feed-8k +2k steps at a damped classifier learning rate, targeting the comma-drop regression
-mechanistically (the resurrection lever that likely over-fit the comma-structured dep-loc shards).
+mechanistically (the resurrection change that likely over-fit the comma-structured dep-loc extracts).
 
 **CONSOLIDATION VERDICT: NOT CLEAN.** The comma-drop break is byte-identical between the 8k and
 10k checkpoints — a stable learned behavior, not training-run churn that a couple more steps would
@@ -329,7 +329,7 @@ model remains v385 (6.6.0); `neural-weights-en-us/model-card.json`'s `version` f
 back to 6.6.0 accordingly (it had briefly carried an unshipped 6.7.0), with the intended candidate
 number preserved as `staged_candidate_version`.
 
-**Root-cause hypothesis for the redesign:** the four dependent_locality feed shards (GB/NZ/ES/
+**Root-cause hypothesis for the redesign:** the four dependent_locality feed extracts (GB/NZ/ES/
 FR-lieudit) are ~100% comma-structured — every training row delimits its fields with commas. This
 plausibly pushed the model toward treating a comma as required boundary evidence, at the cost
 of robustness on comma-free US input (the White House / Pennsylvania Ave case) — the same coin as
@@ -343,7 +343,7 @@ model of its own by design, so shipping the code introduces no behavior change u
 explicitly wires a candidate). Model promotion itself waits for a clean checkpoint under a NEW,
 separately pre-registered recipe: **v3.12**, sketched at
 `docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md` — a comma-drop augmentation share
-extended to the new locale shards (the augmentation implementation already exists from v381), gated on
+extended to the new locale extracts (the augmentation implementation already exists from v381), blocked on
 its own why-3 verification step before any GPU spend. See that document for the full pre-
 registration. `neural-weights-en-us/model-card.json`'s `phase` field carries this same verdict for
 lockstep — read it, not just this scorecard, for the authoritative current status.

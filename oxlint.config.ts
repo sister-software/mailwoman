@@ -80,9 +80,6 @@ const config = createOxlintConfig({
 		"**/*.egg-info/**",
 		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
-		// A codemod's fixtures ARE the shape it rewrites, so they are data rather than source. Linting the forbidden
-		// form out of an `input.ts` would leave the codemod asserting a transformation nothing still needs.
-		"codemods/*/tests/**",
 	],
 })
 
@@ -100,18 +97,19 @@ const config = createOxlintConfig({
  * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle. Only the
  * separate docs-build workflow does, which is minutes later and in another run.
  */
-const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/*.ts"]
+const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 
 /**
  * The Node tier, exempt from the rule below. `index.ts` is the Node entry and re-exports the other three as values;
  * `test/**` and the nested directories fall outside the single-segment glob above on their own.
  */
 const NODE_TIER_NEURAL_FILES = [
-	"packages/neural/index.ts",
-	"packages/neural/onnx-runner.ts",
-	"packages/neural/scorer.ts",
-	"packages/neural/weights.ts",
-	"packages/neural/*.test.ts",
+	"packages/neural/lib/index.ts",
+	"packages/neural/lib/env.ts",
+	"packages/neural/lib/onnx-runner.ts",
+	"packages/neural/lib/scorer.ts",
+	"packages/neural/lib/weights.ts",
+	"packages/neural/lib/*.test.ts",
 	"packages/neural/vitest.config.ts",
 ]
 
@@ -128,8 +126,11 @@ const NODE_ONLY_NEURAL_MODULES = [
 	"./scorer.ts",
 	"onnxruntime-node",
 	// `$public` reaches node:util/node:fs/node:path. The `node:*` pattern below cannot catch it: the rule matches
-	// specifiers, and this module launders the builtins behind its own name.
+	// specifiers, and this module launders the builtins behind its own name. `./env.ts` extends it and is the same
+	// module one hop further away.
 	"@mailwoman/core/env",
+	"./env.ts",
+	"#env",
 ]
 
 /**
@@ -137,49 +138,6 @@ const NODE_ONLY_NEURAL_MODULES = [
  * the module is called.
  */
 const NODE_BUILTIN_PATTERN = "node:*"
-
-/**
- * `mkdtemp` answers a STRING, so nothing owns the directory and nothing removes it. A 2026-08-29 census of the 205 call
- * sites outside `@mailwoman/platform` found 89 that never removed theirs — 43%, and none of them looked wrong at the
- * call site, because a leaked scratch directory has no symptom a test can see.
- *
- * `@mailwoman/core/fs/temporary` answers a handle instead, rooted at `$MAILWOMAN_TEMP_ROOT` rather than the operating
- * system's `tmpdir()`: `path`, `resolve(...)`, `use(...)` for whatever must be released before the directory goes, and
- * `move()`/`moveWith(...)` for a factory handing one to a caller that outlives it. Reaching the builtin through the
- * platform mirror is the correct FIRST hop and the wrong LAST one, which is why this names the second.
- */
-const TEMPORARY_DIRECTORY_REDIRECTS = ["@mailwoman/platform/fs", "@mailwoman/platform/fs/promises"].map((name) => ({
-	name,
-	importNames: ["mkdtemp", "mkdtempSync", "mkdtempDisposable", "mkdtempDisposableSync"],
-	message:
-		"A temporary directory is owned, not named. Use `await temporaryDirectory(prefix)` from " +
-		"`@mailwoman/core/fs/temporary` and bind it with `await using`, so the directory is removed when the scope " +
-		"ends. It carries `resolve(...)` for a path inside it, `use(...)` for a resource that must be released first, " +
-		"and `moveWith(...)` for a fixture handed to a longer-lived scope. Where the lifetime is a suite rather than a " +
-		"scope, register it on a file-level `AsyncDisposableStack` that one `afterAll` disposes.",
-}))
-
-/**
- * `@mailwoman/platform/fs` and `/fs/promises` mirror `node:fs` one name for one name, because a mirror that omitted a
- * builtin would lie about the runtime. `@mailwoman/core/fs/*` is the house idiom over that mirror, and after the
- * 2026-08-30 migration it is the only importer left — the same posture `@mailwoman/platform/sqlite` has toward
- * `@mailwoman/sqlite`.
- *
- * Both surfaces exist, and the name carries the contract on each: `statPath` raises where `tryStat` answers null,
- * `removePath` raises where `removePathIfPresent` forgives, `makeDirectories` is idempotent where
- * `makeDirectoryExclusive` raises EEXIST — which is what holds a lock. Reach for `readers`/`writers` first;
- * `readers-sync`/`writers-sync` are for the slots whose caller is synchronous and not ours to change.
- */
-const FILESYSTEM_MIRROR_REDIRECT = ["@mailwoman/platform/fs", "@mailwoman/platform/fs/promises"].map((name) => ({
-	name,
-	allowTypeImports: true,
-	message:
-		"`@mailwoman/core/fs` is the house filesystem surface, and the only importer of this mirror. Use " +
-		"`@mailwoman/core/fs/readers` + `/writers` (asynchronous, preferred), `/readers-sync` + `/writers-sync` where " +
-		"the caller is synchronous and not yours to change, `/streams` for `createReadStream`/`createWriteStream`, or " +
-		"`/temporary` for a scratch directory. Every helper takes a `PathBuilderLike` and states its contract in its " +
-		"name. File-DESCRIPTOR work has no helper yet and is the one reason to reach past this.",
-}))
 
 export default {
 	...config,
@@ -217,13 +175,6 @@ export default {
 			},
 		},
 		{
-			files: ["packages/platform/**/*.ts"],
-			rules: {
-				"sister-software/require-constant-doc": "off",
-				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
 			// `@mailwoman/sqlite` is where a connection comes into being, so it is the one place that names the builtin.
 			files: ["packages/sqlite/**/*.ts"],
 			rules: {
@@ -231,54 +182,104 @@ export default {
 			},
 		},
 		{
-			// `packages/core/fs/*` IS the idiom the redirects below point AT, so it is the one place that reaches the
-			// `node:fs` mirror directly.
-			files: ["packages/core/fs/**/*.ts"],
+			// `packages/core/lib/fs/*` IS the idiom the redirects below point AT, so it is the one place that reaches
+			// `node:fs` directly.
+			files: ["packages/core/lib/fs/**/*.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// These workspaces do not depend on `@mailwoman/core`, so for them the mirror IS the filesystem surface.
-			// Three of them say so at the call site, next to a `JSON.parse` that reaches for no wrapper for the same
-			// reason. The dependency is what the exemption buys back: `@mailwoman/core` ships ~9 MB of libpostal + WOF
-			// data under `packages/core/data/`, and npm installs a tarball whether or not a subpath import touches it —
-			// so adding it to a small alias table or a point-in-polygon lookup is a shipped-artifact cost, not a style
-			// one. `@mailwoman/platform` itself is already exempt above, and must be: it declares NO dependencies, and
-			// core depends on IT.
+			// `packages/core/lib/module/*` owns ESM plumbing — package-directory resolution and `file:` URL conversion — and
+			// is the one place `node:url` is reached for it.
+			files: ["packages/core/lib/module/**/*.ts"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+				"mailwoman/no-import-meta-resolve": "off",
+			},
+		},
+		{
+			// The homes `prefer-home` points at are the one place each shape is typed out: the clock helpers, the seeded
+			// generators, and `@mailwoman/spatial`, which owns Earth's radius and every reading of it.
+			// The table that names each shape, and its test, spell the constants out by necessity.
 			files: [
-				"packages/api-kit/openapi.ts",
-				"packages/nuts-lookup/build.ts",
-				"packages/timezone-lookup/build.ts",
-				"packages/un-locode-lookup/build.ts",
-				"packages/variant-aliases/lookup.ts",
+				"packages/core/lib/utils/time.ts",
+				"packages/core/lib/random.ts",
+				"packages/core/lib/git.ts",
+				"packages/spatial/**/*.ts",
+				"oxlint.plugin.ts",
+				"oxlint.plugin.test.ts",
+			],
+			rules: {
+				"mailwoman/prefer-home": "off",
+			},
+		},
+		{
+			// A test file imports the package under test through its public exports and a helper by relative path; the
+			// `#` map is the package's private naming and stays inside `lib/`.
+			files: ["packages/*/test/**/*.ts", "packages/*/test/**/*.tsx", "docs/test/**/*.ts", "docs/test/**/*.tsx"],
+			rules: {
+				"mailwoman/no-private-import-in-test": "error",
+			},
+		},
+		{
+			// `packages/core/lib/process.ts` is the child-process idiom and the one place `node:child_process` is reached.
+			files: ["packages/core/lib/process.ts"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// `core/scripting/arguments.ts` is the argv boundary (`parseArguments`, `cliArguments`) and reaches `node:util`
+			// for the one builtin it wraps.
+			files: ["packages/core/lib/scripting/arguments.ts"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// The remaining core homes, each the one place its builtin is reached: host facts (`node:os`), a timed wait
+			// (`node:timers/promises`), an emitter's next event (`node:events`), digests (`node:crypto`), the compile
+			// cache (`node:module`).
+			files: [
+				"packages/core/lib/utils/system.ts",
+				"packages/core/lib/utils/sleep.ts",
+				"packages/core/lib/utils/events.ts",
+				"packages/core/lib/hash.ts",
+				"packages/core/lib/module/runtime.ts",
+				"packages/core/lib/crypto/**/*.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// File-DESCRIPTOR work no helper covers: a `FileHandle` held across calls, and a log opened in append mode for
-			// a child's stdio. A handle is OWNED, and moving ownership is not a rename — so these keep the mirror, and
-			// each says so in place. The two shapes that DID have an idiom left this list: a positional header peek is
-			// `readFileRangeSync`, and a chunked hash is `readFileChunksSync` under `md5FileSync`.
+			// Builtins with no idiom to wrap yet, each reached directly by the one file that needs it: a line reader over
+			// a fixed-width feed, a worker's `workerData`, the cluster primary, a test-local HTTP server and the two
+			// `https.get` downloads that predate `APIClient`.
 			files: [
-				"corpus-python/scripts/train_with_resume.ts",
-				"packages/bdc/sdk/build-bdc.ts",
-				"packages/core/tools/generate-language-types.ts",
-				"packages/corpus/src/tools/fetch/geonames-dump.ts",
-				"packages/map-tui/tile-source.ts",
+				"packages/corpus/test/unit/tools/fetch/download.test.ts",
+				"packages/corpus/test/unit/tools/fetch/geonames-dump.test.ts",
+				"packages/corpus/test/unit/tools/fetch/geonames-postal.test.ts",
+				"packages/corpus/test/unit/tools/fetch/state-hi-schools.test.ts",
+				"packages/filer/lib/sdk/form499.ts",
+				"packages/filer/lib/sdk/provider-list.ts",
+				"packages/mailwoman/lib/cli-native/commands/geocode.ts",
+				"packages/mailwoman/lib/commands/gazetteer/importance.tsx",
+				"packages/mailwoman/lib/commands/serve.tsx",
+				"packages/api-kit/test/fixtures/cluster-serve.ts",
+				"packages/mailwoman/lib/commands/situs/interpolation.tsx",
+				"packages/mailwoman/lib/geocode/worker.ts",
+				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
+				"docs/static/examples/mailwoman-server.mjs",
+				"docs/plugins/demo-assets/workspace-resolution.ts",
+				"packages/map-tui/test/unit/tile-source.test.ts",
+				"packages/neural/test/integration/browser-slo.test.ts",
+				"packages/resolver-wof-sqlite/test/integration/lookup-readonly-open.test.ts",
+				"packages/tiger/lib/tools/serve-range.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// A codemod reads argument COUNTS to tell one builtin overload from another. `args.length === 3` is an arity,
-			// not a tuned threshold, and naming each one costs a constant per overload and explains nothing.
-			files: ["codemods/**/*.ts"],
-			rules: {
-				"sister-software/no-unnamed-threshold": "off",
 			},
 		},
 	],
@@ -287,23 +288,29 @@ export default {
 		"guard-for-in": "error",
 		"mailwoman/no-database-boundary-cast": "error",
 		"mailwoman/no-database-handle-cast": "error",
+		"mailwoman/no-import-meta-dirname-walk": "error",
+		"mailwoman/no-import-meta-resolve": "error",
+		"mailwoman/no-relative-dynamic-import": "error",
 		"mailwoman/no-sync-fs-in-async": "error",
 		"mailwoman/require-database-schema-argument": "error",
 		"mailwoman/require-disable-reason": "error",
 		"typescript/no-restricted-imports": [
 			"error",
 			{
-				paths: [...TEMPORARY_DIRECTORY_REDIRECTS, ...FILESYSTEM_MIRROR_REDIRECT],
 				patterns: [
 					{
 						group: [NODE_BUILTIN_PATTERN],
 						message:
-							"Node builtins are isolated behind @mailwoman/platform. Import the matching platform subpath instead — " +
-							"and where the subpath carries a house idiom (a scratch directory, a database connection), reach for " +
-							"the idiom rather than the raw builtin it is built on.",
+							"`@mailwoman/core` is the only package that reaches a Node builtin, and each has a home there: `node:fs` → " +
+							"`@mailwoman/core/fs/*` (`/temporary` for a scratch directory), `node:path` → `path-ts`, `node:url` → " +
+							"`import.meta.dirname` / `@mailwoman/core/module/file-url`, `node:child_process` → `@mailwoman/core/process`, " +
+							"`parseArgs` → `@mailwoman/core/scripting/arguments`, `node:crypto` → `@mailwoman/core/hash`, `node:os` → " +
+							"`@mailwoman/core/utils/system`, `node:timers/promises` → `@mailwoman/core/utils/sleep`, `node:events` → " +
+							"`@mailwoman/core/utils/events`, `node:stream` → `@mailwoman/core/fs/streams`, `node:zlib` → " +
+							"`@mailwoman/core/fs/compression`, `node:sqlite` → `@mailwoman/sqlite`.",
 					},
 					{
-						group: ["@mailwoman/platform/sqlite"],
+						group: ["node:sqlite"],
 						message:
 							"A caller says WHICH FILE and WHICH SCHEMA; opening the connection is the library's job. Use " +
 							"`new DatabaseClient<Schema>(path)` (@mailwoman/sqlite/client), or `openBuiltClient` " +
@@ -319,6 +326,9 @@ export default {
 		// read — the whole-buffer parse spliterator exists to avoid. Bounded-input sites keep split
 		// behind a scoped disable saying why their bound is durable.
 		"mailwoman/prefer-spliterator": "error",
+		// A helper shape that already has a home (`HELPER_HOMES` in `oxlint.plugin.ts`) is reported at the copy, with
+		// the import that replaces it. The home files themselves are exempted in `overrides`.
+		"mailwoman/prefer-home": "error",
 		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site either
 		// wraps it in its own try/catch or lets the exception escape untyped. `tryParsingJSON<T>`
 		// (`@mailwoman/core/objects`) is the house wrapper: typed result, non-throwing, explicit

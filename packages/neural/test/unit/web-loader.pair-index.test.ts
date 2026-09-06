@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Loader wiring for the PIX1 placetype-pair index (#1278 phase 2 — locale-gate wiring): fetch
- *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time gate),
+ *   Loader wiring for the PIX1 placetype-pair index (#1278 phase 2 — locale-hint wiring): fetch
+ *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time check),
  *   and the OPTIONAL config-default posture pin the `country` load-option now sets.
  *
  *   Strategy mirrors `web-loader.tolerance.test.ts`: mock onnxruntime-web (no model file) +
  *   partial-mock `./tokenizer.ts` / `./classifier.ts` to stub the tokenizer + capture the classifier
  *   config, while keeping the REAL `serializePairIndex` / `PairIndexResolver`, so the fetch-construct
  *   path under test runs for real. The per-parse SELECTION among the loaded indexes lives in
- *   `web-loader.locale-gate.test.ts` (pure); the decode-level behavior (prior applied on selection,
+ *   `web-loader.locale-hint.test.ts` (pure); the decode-level behavior (prior applied on selection,
  *   byte-stability without) lives in `web-loader.pair-prior-decode.test.ts`, which runs the REAL
  *   classifier end-to-end.
  */
 
-import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
@@ -51,13 +51,13 @@ let capturedConfig: {
 } | null = null
 
 // The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
-vi.mock("../../tokenizer.ts", async (importOriginal) => ({
+vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
 // Capture-only stub: we only care that the load reached construction and WHAT placetypePair config it received.
-vi.mock("../../classifier.ts", async (importOriginal) => ({
+vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
 		constructor(cfg: NonNullable<typeof capturedConfig>) {
@@ -76,8 +76,8 @@ afterAll(() => vi.resetModules())
 
 // Import AFTER the mock declarations + reset. `pair-index-resolver.ts` is NOT mocked, so the
 // binaries built here decode through the real reader.
-const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair-index-resolver")
-const { loadNeuralClassifierFromURLs, resolvePairGateCountry } = await import("@mailwoman/neural/web-loader")
+const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
+const { loadNeuralClassifierFromURLs, resolvePairIndexCountry } = await import("@mailwoman/neural/web-loader")
 
 const SEQ = 128
 
@@ -126,7 +126,8 @@ function nzIndexBytes(): Uint8Array {
 
 /**
  * A fake `fetch` whose per-URL response is decided by `respond`. Model/tokenizer URLs get dummy bytes (the ORT session
- * + tokenizer are mocked, so the content is irrelevant).
+ *
+ * - Tokenizer are mocked, so the content is irrelevant).
  */
 function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch {
 	return async (input) => {
@@ -164,13 +165,13 @@ beforeEach(() => {
 	capturedConfig = null
 })
 
-describe("resolvePairGateCountry", () => {
+describe("resolvePairIndexCountry", () => {
 	test("mirrors the node localeCountry derivation, widened to accept a bare country code", () => {
-		expect(resolvePairGateCountry(undefined)).toBe("us") // the node `opts.locale ?? "en-us"` default
-		expect(resolvePairGateCountry("en-gb")).toBe("gb")
-		expect(resolvePairGateCountry("EN-GB")).toBe("gb")
-		expect(resolvePairGateCountry("gb")).toBe("gb")
-		expect(resolvePairGateCountry("fr-fr")).toBe("fr")
+		expect(resolvePairIndexCountry(undefined)).toBe("us") // the node `opts.locale ?? "en-us"` default
+		expect(resolvePairIndexCountry("en-gb")).toBe("gb")
+		expect(resolvePairIndexCountry("EN-GB")).toBe("gb")
+		expect(resolvePairIndexCountry("gb")).toBe("gb")
+		expect(resolvePairIndexCountry("fr-fr")).toBe("fr")
 	})
 })
 
@@ -216,7 +217,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		// No `country` load-option → no config-default posture pin. The per-parse selection is the only path
 		// (byte-stable when nothing selected — asserted end-to-end in loader.pair-prior-decode.test.ts).
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		// But the index is LIVE and retained (phase 2: load all, don't gate) — the same instance the per-parse
+		// But the index is LIVE and retained (phase 2: load all, don't check) — the same instance the per-parse
 		// selection can return.
 		const [gb] = result.pairIndexes
 		expect(result.pairIndexes).toHaveLength(1)
@@ -224,7 +225,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		expect(gb!.country).toBe("gb")
 		expect(gb!.resolver).toBeInstanceOf(PairIndexResolver)
 		expect(gb!.resolver.probe("shoreditch", "london")?.tag).toBe("dependent_locality")
-		// Omitting the posture is NOT a misconfiguration — no warn (contrast #1300's gate).
+		// Omitting the posture is NOT a misconfiguration — no warn (contrast #1300's check).
 		expect(warn).not.toHaveBeenCalled()
 
 		warn.mockRestore()
@@ -290,7 +291,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		const wired = capturedConfig?.placetypePair?.index
 		expect(wired).toBeInstanceOf(PairIndexResolver)
-		// BOTH load live now — nz is no longer gated to null; it is available for a per-parse nz pick.
+		// BOTH load live now — nz is no longer restricted to null; it is available for a per-parse nz pick.
 		const [gb, nz] = result.pairIndexes
 		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
 		expect(nz!.country).toBe("nz")

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { CA_PROVINCES, isCanadianProvinceCode, lookupCanadianProvince } from "@mailwoman/codex/ca/province"
+import { CA_PROVINCES, isCanadianProvinceCode, lookupCanadianProvince } from "@mailwoman/codex/ca"
 import { describe, expect, it } from "vitest"
 
 describe("CA_PROVINCES", () => {

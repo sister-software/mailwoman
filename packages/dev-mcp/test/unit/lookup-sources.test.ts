@@ -29,9 +29,9 @@ import {
 	createPOISearchFTS,
 	createPOITable,
 	type POIDatabase,
-} from "@mailwoman/resolver-wof-sqlite/poi-schema"
+} from "@mailwoman/resolver-wof-sqlite/poi"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aroundAll, describe, expect, it } from "vitest"
@@ -278,7 +278,7 @@ describe("lookupWOF", () => {
 		const [row] = lookupWOF([{ name: "admin.db", db }], ["Porto Petro"])
 
 		expect(row).toMatchObject({ hit: true })
-		expect(row!.entries).toMatchObject([{ route: "fts", name: "Porto Petro", shard: "admin.db" }])
+		expect(row!.entries).toMatchObject([{ route: "fts", name: "Porto Petro", extract: "admin.db" }])
 	})
 
 	it("reports a deprecated-only name as the THIRD state, not as absence", async () => {
@@ -302,7 +302,7 @@ describe("lookupWOF", () => {
 		expect(row!.note).toContain("case- and punctuation-sensitive")
 	})
 
-	it("names a shard it could not query instead of counting it as a miss", async () => {
+	it("names a extract it could not query instead of counting it as a miss", async () => {
 		const broken = memoryDatabase<POIDatabase>()
 		const [row] = lookupWOF([{ name: "broken.db", db: broken }], ["Vaduz"])
 
@@ -371,7 +371,7 @@ describe("lookupCodex", () => {
 	it("answers the shape question and says it is not a membership question", () => {
 		const [row] = lookupCodex(["68161"])
 
-		expect(row!.entries).toMatchObject([{ table: "postcode_systems", systems: ["us", "de", "fr"] }])
+		expect(row!.entries).toMatchObject([{ table: "postcode_systems", systems: ["us", "de", "fr", "es", "it"] }])
 		expect(row!.note).toContain("SHAPE test, not gazetteer membership")
 	})
 

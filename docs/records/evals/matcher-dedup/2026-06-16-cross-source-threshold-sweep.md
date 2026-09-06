@@ -5,7 +5,7 @@ _Measurement for #655. The default-on GBT (#603) is pinned **off** for cross-dat
 "same facility, different operational name across sources" links those flows exist to find. The open
 question: is that a **threshold** artifact (option 1 — keep the GBT, recalibrate a lower link
 threshold for the cross-source objective) or structural (the GBT can't do this job, so a
-cross-objective **retrain** (option 2) is the only lever)? This determines the result with a sweep._
+cross-objective **retrain** (option 2) is the only change)? This determines the result with a sweep._
 
 ## Method
 
@@ -61,7 +61,7 @@ opposite — which is the definition of needing a different model, not a differe
 **FS stays pinned for the cross-source flows** — it is the recall-correct _and_ best-precision tool
 here, by design. The only way to "do better than FS" (#655) is a **cross-objective retrain**
 (option 2): a GBT trained on the cross-source objective, where `spatial-exact × name-disagree` carries
-the _opposite_ sign. That is gated on cross-source labels, which don't exist (no shared key) — it
+the _opposite_ sign. That is blocked on cross-source labels, which don't exist (no shared key) — it
 needs a weak-label pipeline (e.g. phone/NPI-corroborated FS-high-confidence links as positive seeds,
 non-co-located pairs as negatives). That is a project, not a tweak; it is **not** started here.
 
@@ -82,5 +82,5 @@ non-co-located pairs as negatives). That is a project, not a tweak; it is **not*
 
 Option 1 (re-threshold the dedup GBT) **does not work** — measured, not assumed. Keep FS pinned for
 cross-source discovery. #655's remaining content is option 2 (a weak-label cross-objective retrain),
-which is a scoped project gated on building cross-source weak labels — or, equally defensible, close
+which is a scoped project blocked on building cross-source weak labels — or, equally defensible, close
 #655 as "the GBT is dedup-only by design; FS is the correct cross-source tool."

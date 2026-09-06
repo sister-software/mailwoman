@@ -4,7 +4,7 @@
  *   visualizer, and the plain /demo has no drawer until dev mode is toggled.
  */
 
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — model-visualizer debug drawer", () => {
 	test("/debug opens the drawer and traces the parsed address", async ({ demo, page }) => {

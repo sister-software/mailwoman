@@ -5,21 +5,20 @@
  *   Tests for {@linkcode buildCandidateTable} — the FTS-free byte-range candidate gazetteer the
  *   browser demo resolves against. Builds a tiny fixture admin WOF (the production source shape:
  *   `spr` + `place_population` + `place_search` alt-name bags + `place_abbr` + `ancestors`) plus a
- *   postcode shard, then asserts the four disciplines the resolver depends on:
+ *   postcode extract, then asserts the four disciplines the resolver depends on:
  *
  *   1. **Denormalized single-probe shape** — every candidate row carries name + centroid + bbox +
  *        country/placetype codes, so a resolve is one statement (no join to spr).
  *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the SAME
  *        function the query side uses; a diacritic name keys to its folded form by construction.
  *   3. **page_size = 8192** — set right before VACUUM (node:sqlite creates the file at 4096).
- *   4. **The passes** — primaries, alias bags, region abbreviations, postcode shards (with the
- *        `latitude!=0 AND longitude!=0` placeholder-coord filter), and each shard's `names`-table
+ *   4. **The passes** — primaries, alias bags, region abbreviations, postcode extracts (with the
+ *        `latitude!=0 AND longitude!=0` placeholder-coord filter), and each extract's `names`-table
  *        delivery-city aliases (#1495).
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import {
 	buildCandidateTable,
 	type PlaceAttrs,
@@ -28,11 +27,11 @@ import {
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { allRows } from "@mailwoman/resolver-wof-sqlite/sqlite-utils"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-
-import { allRows } from "#sqlite-utils"
 
 let scratch: TemporaryDirectory
 
@@ -88,11 +87,11 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * A postcode shard: `spr` with placetype='postalcode', plus the `names` table `createUnifiedSchema` gives every real
- * shard — that's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495). One real-coord ZIP
- * + one placeholder 0,0.
+ * A postcode extract: `spr` with placetype='postalcode', plus the `names` table `createUnifiedSchema` gives every real
+ * extract — that's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495). One real-coord
+ * ZIP + one placeholder 0,0.
  *
- * @param withNames Build the shard WITHOUT a `names` table, to cover the tolerate-and-say-so path.
+ * @param withNames Build the extract WITHOUT a `names` table, to cover the tolerate-and-say-so path.
  */
 function buildFixturePostcodes(path: string, withNames = true): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -123,7 +122,7 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 			-- what geonamesNameFill() writes: official = 0, because a delivery city is what the postal
 			-- system calls the place, not an official name OF it
 			INSERT INTO names VALUES (11201, 'Brooklyn', 'postalcode', 'US', '', '', 0, 0);
-			-- the shard's own display form for the same id — must not become a second alias row
+			-- the extract's own display form for the same id — must not become a second alias row
 			INSERT INTO names VALUES (11201, '11201', 'postalcode', 'US', '', '', 0, 0);
 			-- an alias on a row the coord filter dropped: no primary was staged, so it has nothing to hang on
 			INSERT INTO names VALUES (20500, 'The White House', 'postalcode', 'US', '', '', 0, 0);
@@ -332,7 +331,7 @@ describe("buildCandidateTable", () => {
 		expect(il?.placetype).toBe("region")
 	})
 
-	test("folds postcode shards in, dropping placeholder 0,0-coord rows", async () => {
+	test("folds postcode extracts in, dropping placeholder 0,0-coord rows", async () => {
 		const input = scratch.resolve("admin.db")
 		const pc = scratch.resolve("postcodes.db")
 		const output = scratch.resolve("candidate.db")
@@ -359,7 +358,7 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// Only "Brooklyn". The shard's own '11201' names row keys to the primary and is skipped, and
+		// Only "Brooklyn". The extract's own '11201' names row keys to the primary and is skipped, and
 		// 'The White House' hangs off 20500, which the coord filter never staged.
 		expect(result.postcodeAliases).toBe(1)
 
@@ -388,7 +387,7 @@ describe("buildCandidateTable", () => {
 		expect(probe(db, normalizeLocalityForKey("The White House"))).toHaveLength(0)
 	})
 
-	test("a shard with no `names` table reports the absence instead of a silent zero", async () => {
+	test("a extract with no `names` table reports the absence instead of a silent zero", async () => {
 		const input = scratch.resolve("admin.db")
 		const pc = scratch.resolve("postcodes.db")
 		const output = scratch.resolve("candidate.db")
@@ -443,9 +442,9 @@ describe("buildCandidateTable", () => {
 				INSERT INTO spr VALUES (7000000000200, 'Chicago', 'locality', 'US', 41.88, -87.63, -1, 0);
 				INSERT INTO spr VALUES (7000000000202, 'Saint-Étienne', 'locality', 'FR', 45.43, 4.39, -1, 0);
 				-- Same name + country + placetype as the admin fixture's Springfield, but 1,500 km away:
-				-- a DIFFERENT town, so the gate must refuse it rather than lend it the score.
+				-- a DIFFERENT town, so the check must refuse it rather than lend it the score.
 				INSERT INTO spr VALUES (7000000000201, 'Springfield', 'locality', 'US', 42.10, -72.59, -1, 0);
-				-- A postcode-shaped row: the shard fold must not pick it up either way.
+				-- A postcode-shaped row: the extract fold must not pick it up either way.
 				INSERT INTO spr VALUES (7000000060601, '60601', 'postalcode', 'US', 41.885, -87.62, -1, 0);
 
 				INSERT INTO place_importance VALUES (7000000000200, 0.8125);
@@ -471,7 +470,7 @@ describe("buildCandidateTable", () => {
 
 			const result = await buildCandidateTable({ input, output, importance })
 			expect(result.importanceScored).toBe(2) // Chicago + Saint-Étienne
-			expect(result.importanceGated).toBe(1) // Springfield — same key, wrong town
+			expect(result.importanceFiltered).toBe(1) // Springfield — same key, wrong town
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
@@ -496,7 +495,7 @@ describe("buildCandidateTable", () => {
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// Springfield's only same-key scored place is 1,500 km away — a different town. The gate
+			// Springfield's only same-key scored place is 1,500 km away — a different town. The check
 			// refuses it, and the refusal is recorded as ABSENCE, not as a zero a consumer could rank on.
 			expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
 			// Illinois (region) and the US (country) were never scored at all.
@@ -530,7 +529,7 @@ describe("buildCandidateTable", () => {
 			const result = await buildCandidateTable({ input, output })
 			// `undefined`, not 0: the pass did not run. A 0 would claim the source matched nothing.
 			expect(result.importanceScored).toBeUndefined()
-			expect(result.importanceGated).toBeUndefined()
+			expect(result.importanceFiltered).toBeUndefined()
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
@@ -736,7 +735,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		;(await db).destroy()
 	})
 
-	test("keeps the gates: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
+	test("keeps the checks: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
 		await using db = await buildWithBackfill(true)
 
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {

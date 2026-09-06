@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The corpus loader's gate, and the receipt for the 2026-08-05 TS-array → per-country-JSONL migration.
+ *   The corpus loader's check, and the receipt for the 2026-08-05 TS-array → per-country-JSONL migration.
  *
  *   THE MIGRATION PROOF, in two legs. While both representations existed, this suite deep-equalled the
  *   loaded corpus against `REGRESSION_CASES` row for row — see the commit that added `cases/<cc>/*.jsonl`,
@@ -22,10 +22,10 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { ablationBoardID } from "mailwoman/eval-harness/gauntlet/ablation"
 import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { canonicalizeSeedCase, SeedCaseSchema } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -45,7 +45,7 @@ afterAll(() => fixtures.disposeAsync())
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 651
+const CORPUS_SIZE = 674
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -85,9 +85,9 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-11 (fifth) — → this — by the #1585 MECHANISM landing: the sacremento row flips improvement_target →
  * pass with its measured receipt. Row count and every `id`+`input` untouched, so the board id stays.
  *
- * Moved 2026-08-11 (sixth) — → this — by the NZ re-pins after the LINZ shard promote (#1617): the two Stanmore Bay rows
- * flip improvement_target → pass with the shard's real coordinates replacing their pre-shard abstain pins. Row count
- * and every `id`+`input` untouched, so the board id stays.
+ * Moved 2026-08-11 (sixth) — → this — by the NZ re-pins after the LINZ database promote (#1617): the two Stanmore Bay
+ * rows flip improvement_target → pass with the database's real coordinates replacing their pre-database abstain pins.
+ * Row count and every `id`+`input` untouched, so the board id stays.
  *
  * Moved 2026-08-11 (seventh) — → this — by the 2-row `fork_entity` board (the declared_fork → entity-probe wire's
  * freeze): the COMER primary (poi.db holds the worldwide-unique entity 6 m from truth; the fork abstains with no
@@ -111,14 +111,14 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-12 (seventh) — → this — by the ANTI-ROT PROMOTION SWEEP: 218 improvement_target rows whose now-PASSES
  * flags were byte-identical across three same-corpus production boards (the sweep baseline, the register-scope-tags
  * board, and the range-fallback board) flip to pass in one reviewed batch. Status-only — every id, input, and note
- * untouched, so the board id stays; the gated set grows 107 → 325.
+ * untouched, so the board id stays; the conditional set grows 107 → 325.
  *
  * Moved 2026-08-12 (sixth) — → this — by the range-surface fallback landing with its 1-row pin ('32-36 Osborne Drive,
  * Burpengary QLD 4505' — the reader's null-only low-end retry keys the register's NUMBER_FIRST). 537 → 538, so the
  * board id moves too.
  *
  * Moved 2026-08-12 (fifth) — → this — by the 2-row `au_rooftop` board riding the G-NAF lane: the WA state-slug
- * collision witness ('47 Renegade Way, Kingsley WA 6026' — the parsed region 'WA' opened the US Washington shard and
+ * collision witness ('47 Renegade Way, Kingsley WA 6026' — the parsed region 'WA' opened the US Washington database and
  * starved the AU rooftop until the non-US pre-resolve country learned to outrank the state-slug match) and the rural
  * LOT class ('LOT 373 Clifton Street, Sandstone WA 6639'). Both land status=pass with register-point receipts. 535 →
  * 537, so the board id moves too.
@@ -144,7 +144,7 @@ const CORPUS_SIZE = 651
  * Moved again the same day — by the label-centroid swap (#1726): nine bare-country/region tolerances tighten to the
  * label-point era (fr 700→100 km, jp 1000→50 km, de 500→100 km, cn 1500→600 km, tx/ca/ga), and `us-athens-ga-30601`
  * re-pins its expectation to the Athens label centroid at city scale — the old expectation was the artifact's own math
- * centroid, and no rooftop is coverable (the GA shard holds no `1 Broad St`). Tolerance and note edits only, so the
+ * centroid, and no rooftop is coverable (the GA database holds no `1 Broad St`). Tolerance and note edits only, so the
  * board id holds — content-addressing working as intended.
  *
  * Moved 2026-08-18 evening — by the promotion sweep: the two board-flagged newly-passing rows promote to status=pass,
@@ -152,17 +152,17 @@ const CORPUS_SIZE = 651
  * resolved dependent-locality identity stays marked by `in_winner_lineage: false`, and the pinned outcome is
  * components-only per the outcomes-not-mechanisms rule) and `ni-ws-antiguo-cine-gonzalez-pluscode` (its own note
  * predicted "fix the explicit-country vs postcode-drag ordering and this row flips" — the #1735 explicit-country
- * pre-scope is that fix). Status flips only, so CORPUS_SIZE and the board id both hold; the gate grows 364 → 366.
+ * pre-scope is that fix). Status flips only, so CORPUS_SIZE and the board id both hold; the check grows 364 → 366.
  *
  * Moved again the same evening — by the #1650 country-population candidate swap: `sm-cs-san-marino` (was San Marino CA,
  * 9,997 km) and `sx-cs-sint-maarten` (was a St. Martin in Ohio, 3,094 km) flip improvement_target → pass — 147 of 237
  * country rows entered every prominence race at population 0, and the codex fallback ended that. Each passed twice (the
- * pre-swap A/B battery and the post-swap board). Status flips only again; the gate grows 366 → 368.
+ * pre-swap A/B battery and the post-swap board). Status flips only again; the check grows 366 → 368.
  *
  * Moved 2026-08-18 night — by the #1730 role guard (39d219e8c): `bf-gloss-to-accent` flips improvement_target → pass
  * with its note rewritten to the fix receipt (the bare-region race refuses abbr-stamped alias rows; `Tó` answers the
  * primary-named Tô BF at 0 km, was Toledo ES at 3,171 km). Stable across the D-rule battery and two consecutive
- * full-board runs. Status + note edit; the gate grows 368 → 369.
+ * full-board runs. Status + note edit; the check grows 368 → 369.
  *
  * Moved 2026-08-19 — → this — by `gb-cs-rochester-kent`: city-plus-county disambiguation lands improvement_target for
  * the live Rochester-Kent → Rochester-Northumberland miss (the Kent alternative sits flagged `regionScopeMiss` — the
@@ -171,7 +171,7 @@ const CORPUS_SIZE = 651
  *
  * Moved again the same day — → this — by the dj-cs-djibouti re-pin: `expectPlaceName` moves to the canonical "Republic
  * of Djibouti" (the #1650 country-population rebuild let the bare-country repick win, 9.9 km inside the 25 km bar; the
- * coordinate gate already excludes the 65.9-km city row, so the country row is the only admissible answer and
+ * coordinate check already excludes the 65.9-km city row, so the country row is the only admissible answer and
  * hierarchy[0].name carries its canonical resolver_name). The same commit also flipped dj's status to pass (now-PASSES
  * byte-identical across two runs; attribution #1650) and rewrote the Rochester note to its measured cause — the
  * paragraph above under-reported that. Board id held throughout.
@@ -180,7 +180,7 @@ const CORPUS_SIZE = 651
  * pass with the #1737 receipt (the candidate build's currency backfill resurrects the WOF-deprecated Kent locality
  * under a GeoNames attestation; the row answers wof:101750331 at ~2.5 km with region coherence flipping contradicted →
  * confirmed; now-PASSES byte-identical across two consecutive full-board runs on the swapped artifact). Status + note
- * edit; the board id holds; the row joins the gated set at its next run.
+ * edit; the board id holds; the row joins the conditional set at its next run.
  *
  * Moved again the same day — → this — by the 2-row `ca_qc_street` witness pair (#1738): the abbreviated form lands pass
  * (the surface-router receipt — 'boul St-Laurent' reaches the attested OSM rooftop) and the fully-French form lands
@@ -206,16 +206,27 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-19 (late) — → this — by the `gb-cs-brixton-hill` / `gb-cs-biggin-hill` pair (#1747): a `street_suffix`
  * with no `street` anywhere in the tree, so the resolver was handed a bare `Brixton` and answered Brixton, DEVON, 300.3
  * km away. 573 → 575, so the board id moves too. * Moved 2026-08-23 — → this — by the operator's Google Maps batch (57
- * rows, 36 gated) plus the #1764 accented-commune row. Truth is each place's own map pin, resolved from the supplied
- * short link. First VE and PG coverage the board has had, and the first rows for punctuation-led venue names
+ * rows, 36 conditional) plus the #1764 accented-commune row. Truth is each place's own map pin, resolved from the
+ * supplied short link. First VE and PG coverage the board has had, and the first rows for punctuation-led venue names
  * (`%ARABICA`, `¿Por Qué No?`, `@homePizza`, `Coffee#1`). 591 → 649, so the board id moves too.
  *
  * Moved 2026-08-24 — → this — by two same-day additions, the first of which shipped UNPINNED: the Brest referential
  * split (#1886; `by-cs-brest` scoped to Belarus, `fr-cs-brest-bare` pinning the oracle-ratified bare answer; 649 → 650)
  * merged with CI skipped, so nothing caught the stale pin until the next branch ran the suite. Then `gb-cs-whitby` (650
  * → 651), the row that brackets `ENCYCLOPEDIC_BOOST_CAP` from below.
+ *
+ * Moved 2026-09-01 — `9151f474…` → `8eacc945…` — by PROSE ONLY, which makes it the first move here that changes no
+ * measurement. Twelve `note` fields carried the retired four-way word; each now names what it meant (a per-state or
+ * per-country database, the LINZ promote, a training slice). Row count stays 651 and every `id`, `input`,
+ * `expectComponents`, `expectLat`/`expectLon` and tolerance is byte-identical, so the board id below does NOT move —
+ * the same reason it held across the 2026-08-06 `expectPlaceName` edit.
+ *
+ * It still has to move, because `note` is in {@link SEED_CASE_KEY_ORDER} and the hash is a function of the whole
+ * canonical row. That is the design working: a corpus edit cannot reach the board without someone re-pinning it on
+ * purpose. Every built `regression.db` carrying the old stamp is now stale and a runner will refuse to grade against it
+ * until it is rebuilt — also by design, and the reason this is prose-only rather than bundled with a row change.
  */
-const CORPUS_HASH = "9151f474c67bc435c4edeb6255f20276a6270b753b436fe5270427eea45be6f8"
+const CORPUS_HASH = "1e08c99e9a8865f9e865cd70a5bd887b8e14fa760f1a06712a9db093a5e6c182"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -236,7 +247,7 @@ const CORPUS_HASH = "9151f474c67bc435c4edeb6255f20276a6270b753b436fe5270427eea45
  * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → `@649:3df68a3c428a`), and for the Brest split plus
  * the Whitby cap-bound row (`@649:3df68a3c428a` → this).
  */
-const BOARD_ID = "gauntlet-regression@651:fa5092206aa4"
+const BOARD_ID = "gauntlet-regression@674:810b76e05026"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
@@ -255,7 +266,7 @@ const SAMPLE = {
  * Write a throwaway corpus tree and return its root.
  */
 async function scratchCorpus(files: Record<string, string>): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("gauntlet-cases-")).path
+	const root = fixtures.use(await temporaryDirectory("gauntlet-cases-")).path.toString()
 
 	for (const [relative, body] of Object.entries(files)) {
 		const path = join(root, relative)

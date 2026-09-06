@@ -24,7 +24,7 @@ import {
 	summarizeConformanceRun,
 	tracedGauntletObserver,
 } from "mailwoman/eval-harness/conformance/run"
-import type { GeocodeResult } from "mailwoman/geocode-result"
+import type { GeocodeResult } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
@@ -147,7 +147,7 @@ describe("summarizeConformanceRun", () => {
 		"10 DOWNING STREET, LONDON": { house_number: "10", street: "Whitehall" },
 	}
 
-	it("gates on pass rows only, and reports tracked violations without blocking", async () => {
+	it("checks on pass rows only, and reports tracked violations without blocking", async () => {
 		const { observe } = tableObserver(brokenTable)
 
 		const { findings } = await runConformanceFixtures(
@@ -157,7 +157,7 @@ describe("summarizeConformanceRun", () => {
 
 		const summary = summarizeConformanceRun(findings)
 
-		expect(summary.gated).toBe(1)
+		expect(summary.decided).toBe(1)
 		expect(summary.failures.map((finding) => finding.fixture.id)).toEqual(["cnf-sample-01"])
 		expect(summary.tracked.map((finding) => finding.fixture.id)).toEqual(["cnf-tracked-01"])
 		expect(summary.pass).toBe(false)
@@ -195,7 +195,7 @@ describe("summarizeConformanceRun", () => {
 		expect(summary.pass).toBe(true)
 	})
 
-	it("refuses to pass a run with no gating row at all", async () => {
+	it("refuses to pass a run with no enforcing row at all", async () => {
 		const { observe } = tableObserver(HELD_TABLE)
 
 		const { findings } = await runConformanceFixtures(
@@ -206,7 +206,7 @@ describe("summarizeConformanceRun", () => {
 		expect(summarizeConformanceRun(findings).pass).toBe(false)
 	})
 
-	it("marks a tracked violation apart from a gated one in the rendered line", async () => {
+	it("marks a tracked violation apart from a conditional one in the rendered line", async () => {
 		const { observe } = tableObserver(brokenTable)
 
 		const { findings } = await runConformanceFixtures(
@@ -267,6 +267,7 @@ describe("gauntletObserver", () => {
 			lat: 51.5034,
 			lon: -0.1276,
 			resolution_tier: "address_point",
+			epistemic_status: "observed",
 			uncertainty_m: 12,
 			locality: "London",
 			region: null,
@@ -308,6 +309,7 @@ describe("tracedGauntletObserver", () => {
 			lat: 39.797328,
 			lon: -89.645547,
 			resolution_tier: "admin",
+			epistemic_status: "observed",
 			uncertainty_m: 25_000,
 			locality: "Springfield",
 			region: null,
@@ -329,7 +331,7 @@ describe("tracedGauntletObserver", () => {
 				value: "Springfield",
 				placetype: "locality",
 				query: { limit: 5 },
-				gates: ["bare_race"],
+				checks: ["bare_race"],
 				candidates: [
 					{
 						id: 85_940_429,
@@ -389,7 +391,7 @@ describe("the unmeasured verdict bucket", () => {
 				value: "Springfield",
 				placetype: "locality",
 				query: { limit: query === "Springfield" ? 5 : 1 },
-				gates: [],
+				checks: [],
 				candidates:
 					query === "Springfield"
 						? [
@@ -418,7 +420,7 @@ describe("the unmeasured verdict bucket", () => {
 		expect(findings[0]!.reading.observed).toBe("unmeasured")
 		expect(summary.unmeasured).toHaveLength(1)
 		expect(summary.failures).toHaveLength(0)
-		expect(summary.gated).toBe(0)
+		expect(summary.decided).toBe(0)
 		// A suite that could measure nothing at all is not a clean suite — the same refusal an empty suite gets.
 		expect(summary.pass).toBe(false)
 	})
@@ -447,7 +449,7 @@ describe("the unmeasured verdict bucket", () => {
 		const summary = summarizeConformanceRun(findings)
 
 		expect(summary.unmeasured).toEqual([])
-		expect(summary.gated).toBe(1)
+		expect(summary.decided).toBe(1)
 		expect(summary.pass).toBe(true)
 	})
 })

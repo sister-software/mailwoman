@@ -235,7 +235,7 @@ Three honest caveats before anyone treats 186,469 as shippable:
 
 - **A pair count is not a parse improvement.** Every GB rung cleared a venue-confound board at 0 false
   positives before shipping; IN has had no board built. The doctrine that governed GB governs this.
-- **IN needs a carrier package.** The pair index is hard-gated on the resolved locale's country, so an
+- **IN needs a carrier package.** The pair index is hard-blocked on the resolved locale's country, so an
   artifact shipped inside another locale's package can never fire — IN needs its own
   `@mailwoman/neural-weights-*` overlay first, the same blocker `placetype-evidence.mdx` records for
   IE/DE/ES/IT.
@@ -431,12 +431,12 @@ Table DDL for any new manifest table goes through Kysely's schema builder with a
   cannot see. Revisit if a sub-municipality demand source appears — OSM `addr:suburb`, Overture
   places addresses, or per-country registers.
 - **Acting on the findings.** Widening `ADMIN_PLACETYPES`, ingesting Overture's hood tier, or
-  building new pair indexes are all separate work, gated by the doctrine that already governs them:
+  building new pair indexes are all separate work, blocked by the doctrine that already governs them:
   positive evidence only, bias never mask, a venue-confound board before any pair batch ships, and
   the D-rule (no default-on mechanism ships with a known regression on any tier-1 locale). The
   scorecard justifies and orders that work; it does not perform it.
-- **A standing verify gate.** Adding granularity checks to `verifyAdmin()` so a rebuild that loses
-  depth fails the gate is a natural follow-up once the baseline numbers exist and are trusted.
+- **A standing verify check.** Adding granularity checks to `verifyAdmin()` so a rebuild that loses
+  depth fails the check is a natural follow-up once the baseline numbers exist and are trusted.
 
 ## Suggested PR split
 

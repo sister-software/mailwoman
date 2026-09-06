@@ -1,0 +1,11 @@
+{
+	// Non-emitting companion to ./tsconfig.json — see ../../tsconfig.test-base.json for why it exists.
+	// The pool's `cloudflare:test` module types join the workers types here, where the tests that import it live.
+	"extends": ["./tsconfig.json", "../../tsconfig.test-base.json"],
+	"compilerOptions": {
+		"types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers/types"]
+	},
+	"include": ["./**/*.test.ts", "./test/**/*"],
+	"exclude": ["./out/**/*"],
+	"references": [{ "path": "./tsconfig.json" }]
+}

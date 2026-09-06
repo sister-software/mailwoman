@@ -146,11 +146,11 @@ describe("runInvarianceSuite", () => {
 
 		expect(result.counts.lost).toBe(1) // still recorded
 		expect(result.newCounts.lost).toBe(0) // but not NEW — baseline has it too
-		expect(result.pass).toBe(true) // so the gate passes
+		expect(result.pass).toBe(true) // so the check passes
 		expect(result.outcomes[0]?.preExisting).toBe(true)
 	})
 
-	it("--baseline regression mode: a NEW violation the baseline does NOT have fails the gate", async () => {
+	it("--baseline regression mode: a NEW violation the baseline does NOT have fails the check", async () => {
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
@@ -170,8 +170,8 @@ describe("runInvarianceSuite", () => {
 		expect(result.outcomes[0]?.preExisting).toBe(false)
 	})
 
-	it("--baseline severity gate: candidate LOST where baseline only DEGRADED is a NEW (gating) violation, not pre-existing", async () => {
-		// The case the severity gate exists for: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
+	it("--baseline severity check: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
+		// The case the severity check exists for: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
 		// candidate drops `house_number` on the SAME pair (LOST — critical). Severity-blind matching (both
 		// sides merely "non-INVARIANT") would wrongly call this pre-existing and let it through. A candidate
 		// verdict that is WORSE than the baseline's on the same (row, transform) must always be NEW.
@@ -194,12 +194,12 @@ describe("runInvarianceSuite", () => {
 		expect(result.outcomes[0]?.preExisting).toBe(false) // NOT pre-existing — the candidate is WORSE
 		expect(result.outcomes[0]?.gainedCapability).toBe(false) // baseline's original HAS criticals — not a gained row
 		expect(result.newCounts.lost).toBe(1)
-		expect(result.pass).toBe(false) // gates
+		expect(result.pass).toBe(false) // checks
 	})
 
 	it("the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
-		// Same case as the severity-gate test above (baseline DEGRADED, candidate LOST — a NEW,
-		// gating violation) — but this time asserting on the printed report LINE itself, not just the
+		// Same case as the severity-threshold test above (baseline DEGRADED, candidate LOST — a NEW,
+		// enforcing violation) — but this time asserting on the printed report LINE itself, not just the
 		// structured outcome. A violation line that hardcodes "baseline held INVARIANT" is false on its
 		// face here: the baseline was DEGRADED, so the line has to read the baseline's actual verdict.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
@@ -228,7 +228,7 @@ describe("runInvarianceSuite", () => {
 		expect(violationLine).not.toContain("held INVARIANT")
 	})
 
-	it("--baseline severity gate: same verdict both sides (e.g. both DEGRADED) is still pre-existing", async () => {
+	it("--baseline severity check: same verdict both sides (e.g. both DEGRADED) is still pre-existing", async () => {
 		const degradedRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
@@ -372,7 +372,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 		expect(result.newCounts.gained).toBe(1)
 		expect(result.counts.lost).toBe(0)
 		expect(result.newCounts.lost).toBe(0)
-		expect(result.pass).toBe(true) // a gain is never a gate failure
+		expect(result.pass).toBe(true) // a gain is never a check failure
 		expect(lines.some((l) => l.startsWith("  + GAINED") && l.includes("[baseline verdict was DEGRADED]"))).toBe(true)
 	})
 
@@ -417,7 +417,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 		expect(caseFold.verdict).toBe("DEGRADED")
 		expect(caseFold.gainedCapability).toBe(true)
 
-		// The register-flat tail does not touch the gate: nothing is NEW.
+		// The register-flat tail does not touch the check: nothing is NEW.
 		expect(result.newCounts.lost).toBe(0)
 		expect(result.newCounts.degraded).toBe(0)
 		expect(result.pass).toBe(true)

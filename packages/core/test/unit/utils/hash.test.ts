@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { md5File, sha256File, sha256Hex } from "@mailwoman/core/utils/hash"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { md5File, sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
-
-import { temporaryDirectory } from "#fs/temporary"
-import { writeLocalTextFile } from "#fs/writers"
 
 // echo -n "mailwoman" | sha256sum
 const MAILWOMAN_SHA256 = "d2594f1b25603175987fe47a442c3426f65b4572d4b82c8623daeb7bcc8c630d"

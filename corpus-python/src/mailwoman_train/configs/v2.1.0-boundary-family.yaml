@@ -9,10 +9,10 @@
 #   synth-cz-pcfirst-preposition(#897 close-out: leading postcode → house_number, "nad X" shatters)
 #
 # init_from (fresh optimizer over the surgery export — the v1.9.7 idiom; the nsplice-v2 export has
-# no optimizer state). Probe 2k FIRST; the probe gate covers EVERY graded locale at reduced n
-# (the run-1 lesson). Pre-registration in gate-v193/RESULTS.md before any grade.
+# no optimizer state). Probe 2k FIRST; the probe check covers EVERY graded locale at reduced n
+# (the run-1 lesson). Pre-registration in check-v193/RESULTS.md before any grade.
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to /data) + the 1 fr-bare-street shard.
+  # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
   corpus_dir: /data/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family
   tokenizer_dir: /data/models/tokenizer/v0.7.1-nsplice
   max_length: 128
@@ -40,7 +40,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street shard.
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -64,7 +64,7 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street shard. 6.0 = targeted-fix precedent.
+    # #251 NEW: the bare-no-postcode FR street slice. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 6.0
     synth-si-bare-village: 6.0 # the family, balanced polarity
     synth-no-street-led: 6.0
@@ -149,7 +149,7 @@ train: # v1.9.7 init_from idiom (fresh optimizer over the surgery export); data 
   warmup_steps: 200
   grad_clip_norm: 1.0
   # FULL RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
-  # Constant LR 1.5e-4; anchor-dropout curriculum at full strength. Eval every 2k → gate 84/86/88/90/92k and
+  # Constant LR 1.5e-4; anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
   # ship the best (FR street-intact up, US floors held).
   max_steps: 12000
   eval_every_steps: 2000

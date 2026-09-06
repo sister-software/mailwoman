@@ -68,7 +68,7 @@ interiors collapse by orders of magnitude. At resolution 7 it collapses zero of 
 
 That is why this layer carries the reduced `soil_capability_cell` **alongside** the index rather than
 relying on the index the way the flood layer can. The unsimplified geometry is still the truth and is
-still what the reduction weights by; it is simply not what answers a probe.
+still what the reduction weights by; it is not what answers a probe.
 
 **The two numbers move in opposite directions, and only one of them discriminates.** The `partial` share
 is 87–100% at every candidate, so it cannot choose a resolution here — which is itself the finding. The
@@ -113,7 +113,7 @@ definition** — capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, the
 classifications, the six component kinds. The layer reads its domain out of the file it ingested rather
 than transcribing it, stores it in `soil_vocabulary`, and throws on a value outside it.
 
-## Licence, and where the grant actually comes from
+## License, and where the grant comes from
 
 data.gov's entry carries `usa.gov/publicdomain/label/1.0/`, which redirects to a page that declines a
 blanket grant and tells the reader to check with the agency. The agency was checked at the strongest
@@ -123,7 +123,7 @@ available place — **the FGDC metadata NRCS ships inside every archive** — an
 > others based on needs; however, they are responsible for the appropriate application.
 
 The build asserts that sentence is present **per survey area**. An area whose use constraints no longer
-carry it is a licence change, and a build that absorbed one would ship an artifact under terms nobody
+carry it is a license change, and a build that absorbed one would ship an artifact under terms nobody
 checked. The acknowledgement the same metadata asks for rides in `layer_manifest.attribution`:
 _U.S. Department of Agriculture, Natural Resources Conservation Service._
 
@@ -187,10 +187,10 @@ because the traps are properties of h3-js rather than of either product.
 points drawn deterministically from the artifact, comparing **map unit against map unit** — comparing the
 derived class instead would let a wrong delineation agree by accident whenever two neighbours share a
 class. Disagreements carry the distance to the nearest **edge**, not to the nearest vertex: a point a
-centimetre from a long edge can be metres from every vertex, and the flood layer's one near-miss read
+centimeter from a long edge can be meters from every vertex, and the flood layer's one near-miss read
 1.58 m to vertices and 0.009 m to edges.
 
-The negative half samples points in every neighbouring state, two of them close to the Iowa border, and
+The negative half samples points in every neighboring state, two of them close to the Iowa border, and
 requires `unknown` — no coverage row — rather than a low-capability reading. The positive half alone would
 pass on an artifact that answered class 8 for the whole planet.
 

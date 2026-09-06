@@ -6,7 +6,7 @@
 # the `@smoke` browser spec against the DEPLOYED site (`MAILWOMAN_DEMO_URL`) so a functional
 # regression becomes visible the day it ships, not three days later via a bug report.
 #
-# The same spec also runs in the local build gate (test/browser, webServer mode) on every docs
+# The same spec also runs in the local build check (test/browser, webServer mode) on every docs
 # change — this workflow is the SCHEDULED production half. Grades the results (address_point tier +
 # WOF cascade + markers), not the absence of errors.
 name: Demo smoke

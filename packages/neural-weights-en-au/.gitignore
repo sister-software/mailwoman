@@ -13,8 +13,8 @@
 # anchor-lexicon-v1.json above).
 /country-surface-lexicon-v1.json
 
-# No postcode-nz.bin ships YET — no WOF NZ postcode shard exists (model-card follow-up).
-# The pattern is here so a future shard's build output never lands in git by accident.
+# No postcode-nz.bin ships YET — no WOF NZ postcode extract exists (model-card follow-up).
+# The pattern is here so a future extract's build output never lands in git by accident.
 /postcode-*.bin
 
 # The placetype-pair index (NZ arc, #1277) — built from the LINZ-derived OpenAddresses

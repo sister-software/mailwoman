@@ -19,7 +19,6 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { join } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	auditRefinementSuite,
@@ -33,6 +32,7 @@ import {
 } from "mailwoman/eval-harness/conformance/refinement-monotonicity"
 import { CASES_DIR, loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
+import { join } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 let fixtures: ConformanceFixture[]

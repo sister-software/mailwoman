@@ -9,11 +9,11 @@ every battery, every verdict).
 
 ## 1. What shipped (3 PRs, all merged)
 
-| PR        | What                                                                                                                                                                                                                                                                                                                                                                                                               | Shape                             |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
-| **#1315** | Street-context gate (`neural/fst-prior.ts`) — scales the _positive_ FST locality/region bias ×0.25 when a matched place span is syntactically street-headed: street-type adjacency via the **morphology FST** (prefix+suffix locales — never the US-only codex list) or house-number-left (`/^\d{1,6}[a-z]?$/`). Syntactic only, never importance magnitude; byte-identical absent street context (unit-asserted). | Inert-by-default code             |
-| **#1317** | Trailing-locality prior (`neural/trailing-locality-prior.ts`) — the comma-free "street + trailing city" mechanism. Geometry-gated (R1/R1b longest-admin-match, R2 particle transparency, R3 locality-present-silent, R4 comma-separated-silent).                                                                                                                                                                   | **Per-call opt-in ONLY** — see §3 |
-| **#1318** | FST distribution — per-locale `fst-<locale>.bin` ships in the en-us/fr-fr/en-gb weights packages; `resolveWeights` exposes `fstPath`; the runtime pipeline lazy-auto-loads + wires the gate (morph emission prior **always zeroed** at pipeline call sites). `fst: false` escapes; explicit FST wins; en-nz byte-stable.                                                                                           | **Default-on** (ratified)         |
+| PR        | What                                                                                                                                                                                                                                                                                                                                                                                                                | Shape                             |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **#1315** | Street-context check (`neural/fst-prior.ts`) — scales the _positive_ FST locality/region bias ×0.25 when a matched place span is syntactically street-headed: street-type adjacency via the **morphology FST** (prefix+suffix locales — never the US-only codex list) or house-number-left (`/^\d{1,6}[a-z]?$/`). Syntactic only, never importance magnitude; byte-identical absent street context (unit-asserted). | Inert-by-default code             |
+| **#1317** | Trailing-locality prior (`neural/trailing-locality-prior.ts`) — the comma-free "street + trailing city" mechanism. Geometry-conditional (R1/R1b longest-admin-match, R2 particle transparency, R3 locality-present-silent, R4 comma-separated-silent).                                                                                                                                                              | **Per-call opt-in ONLY** — see §3 |
+| **#1318** | FST distribution — per-locale `fst-<locale>.bin` ships in the en-us/fr-fr/en-gb weights packages; `resolveWeights` exposes `fstPath`; the runtime pipeline lazy-auto-loads + wires the check (morph emission prior **always zeroed** at pipeline call sites). `fst: false` escapes; explicit FST wins; en-nz byte-stable.                                                                                           | **Default-on** (ratified)         |
 
 Also: the 768k importance FST was **rebuilt and measured** (provenance byte-equivalent to the 07-18
 build: 768,643 importance matches) — and the reship was **rejected by the fragment board**. It stays
@@ -24,14 +24,14 @@ shipped gazetteer.
 
 **768k reship (STALE_FST Steps 2–4).** The handoff's core trap held: golden can only veto, the
 fragment board decides. 7-config matrix (~44k parses). The rebuilt FST **fails under every shippable
-config**: vs the designed config (homonym −13); vs the only veto-surviving config (gate-only:
+config**: vs the designed config (homonym −13); vs the only veto-surviving config (check-only:
 homonym **−28**, plus a hazard regression — "Avenue Montaigne" → `locality:"Avenue"`; the 768k
 population-fallback importance gives weight to a commune literally named Avenue). Its golden gains
 (US +41, FR +22) are exactly the channel that can't green-light. **Keep 220k.**
 
 **Comma-free fix (LEAD-HANDOFF §1, fork A→B).** Operator picked "measure A first." Fork A (activate
-the broad FST prior) **failed 3/7 pre-registered bars** — it's _geometrically opposed_ to the gate: a
-trailing city sits exactly where the gate suppresses ("Pennsylvania Ave Washington" ≡ "Washington
+the broad FST prior) **failed 3/7 pre-registered bars** — it's _geometrically opposed_ to the check: a
+trailing city sits exactly where the check suppresses ("Pennsylvania Ave Washington" ≡ "Washington
 Blvd" syntactically). Fork B (geometry-first trailing-locality) went through three pre-registered
 iterations: v1 failed bars 1/2/5 with precise anatomy; R1–R3 guards fixed collateral but V3 broke
 golden (1.15%); R1b+R4 (importance-aware presence + comma-separated-silent) cleared **all 7 bars**
@@ -39,7 +39,7 @@ golden (1.15%); R1b+R4 (importance-aware presence + comma-separated-silent) clea
 
 **#1143 retest (LEAD-HANDOFF §2).** Re-anchored: **0.605 v385 / 0.777 v3101** — training is closing
 it (the roadmap's 0.215 was stale; §3-F corrected). Residual anatomy (89 misses): 51 whole-span
-(training-only), 37 token-grabs (the gate's class — now live via #1318), 1 dropped. **Suffix prior
+(training-only), 37 token-grabs (the check's class — now live via #1318), 1 dropped. **Suffix prior
 not built** — training already ate its target class.
 
 **FST default-on battery (#1318, all on shipped v385).** Golden **US +56 / FR +20** (≤0.27% genuine
@@ -61,8 +61,8 @@ that's a standing obligation.
    NYC) structurally could not see the person-name-street collision class. Held-out generality or
    don't build — the BAN population caught what the curated board couldn't. (Same lesson as the
    768k's golden-vs-fragment asymmetry, one level down.)
-3. **The morphology _emission_ prior owns a US golden −48.** The gate and the emission prior share
-   a matcher but not a fate: gate-only is golden-flat and fragment-positive; the emission prior is
+3. **The morphology _emission_ prior owns a US golden −48.** The check and the emission prior share
+   a matcher but not a fate: check-only is golden-flat and fragment-positive; the emission prior is
    veto-failing broadly. The pipeline zeroes it at every call site; it stays reachable via direct
    `classifier.parse` for measured opt-in use. Don't enable it by default anywhere.
 4. **v3101-cache ≠ shipped v385.** Several early boards ran on the candidate cache (bare-street
@@ -87,12 +87,12 @@ that's a standing obligation.
   skill path), deliberately not in #1318.
 - **#1143 disposition:** my recommendation stands — waive-with-owner+board (owner: the #1102
   training campaign, verifiably closing the gap; board: ban-fragments-fr bare-street class re-scored
-  per candidate). The 37-row token-grab class is the gate's, now live in production via #1318.
+  per candidate). The 37-row token-grab class is the check's, now live in production via #1318.
 - **#1102 context** (recovered for the operator): the v25x promote blocker — fragment/twin training
   mass eroded US region+locality recall ~2.5pp (class-balance side effect). Same campaign that's
   closing #1143; the two are coupled through class balance.
-- **v8 cut items still parked on the operator:** breaking-batch green-light (Track A), Track B
-  overlay re-cut, demo repoint (strictly post-cut).
+- **v8 reduce items still parked on the operator:** breaking-batch green-light (Track A), Track B
+  overlay rebuilt, demo repoint (strictly post-reduce).
 - **Branch hygiene note:** #1316 was auto-closed when its stacked base branch was deleted on #1315's
   squash-merge — replaced by #1317 (identical, rebased). Worth knowing for future stacked PRs:
   `--delete-branch` on the base closes the stack.

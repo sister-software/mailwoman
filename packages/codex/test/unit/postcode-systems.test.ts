@@ -1,13 +1,22 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { candidateSystemsForPostcode } from "@mailwoman/codex/postcode-systems"
+import { candidateSystemsForPostcode, SYSTEM_CODES } from "@mailwoman/codex/postcode-systems"
 import { describe, expect, it } from "vitest"
 
 describe("candidateSystemsForPostcode", () => {
 	it("a bare 5-digit code is eligible for every numeric-postcode system (shape can't split them)", () => {
-		expect(candidateSystemsForPostcode("68161").toSorted()).toEqual(["de", "fr", "us"])
-		expect(candidateSystemsForPostcode("75001").toSorted()).toEqual(["de", "fr", "us"])
+		expect(candidateSystemsForPostcode("68161").toSorted()).toEqual(["de", "es", "fr", "it", "us"])
+		expect(candidateSystemsForPostcode("75001").toSorted()).toEqual(["de", "es", "fr", "it", "us"])
+	})
+
+	it("a Spanish código postal and an Italian CAP reach their own systems", () => {
+		expect(candidateSystemsForPostcode("28013")).toContain("es")
+		expect(candidateSystemsForPostcode("00184")).toContain("it")
+	})
+
+	it("SYSTEM_CODES is the universe candidateSystemsForPostcode draws from", () => {
+		expect(SYSTEM_CODES).toEqual(["us", "de", "fr", "es", "it", "ca", "gb", "jp", "au", "nz"])
 	})
 
 	it("the German D- prefix narrows to Germany alone", () => {

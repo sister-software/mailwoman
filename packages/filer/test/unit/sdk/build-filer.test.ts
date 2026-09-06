@@ -4,13 +4,14 @@
 /**
  *   Tests for {@linkcode buildFilerDatabase} — the stage/materialize/seal build of `filer.db`. Feeds
  *   the loader synthetic {@link Form499Row}/{@link ProviderListRow} sources directly (the
- *   `form499Rows`/`providerRows` seams), so the suite exercises the whole build WITHOUT touching the
+ *   `form499Rows`/`providerRows` injection points), so the suite exercises the whole build WITHOUT touching the
  *   filesystem — matches `build-bdc.test.ts`'s injected-row convention.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { toFRN } from "@mailwoman/filer/frn"
 import {
 	FilerEdgeAssertion,
 	FilerIdentifierType,
@@ -20,7 +21,6 @@ import {
 } from "@mailwoman/filer/schema"
 import { buildFilerDatabase, type BuildFilerResult, type EdgarSubsidiaryRow } from "@mailwoman/filer/sdk/build-filer"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
-import { toFRN } from "@mailwoman/filer/sdk/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
@@ -371,7 +371,7 @@ describe("buildFilerDatabase", () => {
 		expect(await pathExists(out)).toBe(false)
 	})
 
-	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / gate 1)", async () => {
+	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / criterion 1)", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
 		const out = scratch.resolve("filer.db")
 

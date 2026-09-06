@@ -12,13 +12,11 @@ import {
 	emissionColor,
 	matrixAbsMax,
 	pieceDisplay,
-	softmaxRow,
 	stripBIO,
 } from "@mailwoman/docs/components/ModelVisualizer/helpers"
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
-
-import type { ParseTraceLike } from "#shared/resources"
 
 // Compile-time tie (type-only, erased at build): the docs mirror must accept every real trace. A
 // NeuralParseTrace field rename/retype now fails HERE at typecheck instead of at runtime on /trace.
@@ -27,15 +25,6 @@ const _traceMirrorAccepts: ParseTraceLike = {} as NeuralParseTrace
 void _traceMirrorAccepts
 
 describe("ModelVisualizer helpers", () => {
-	it("softmaxRow sums to 1 and preserves argmax", () => {
-		const probs = softmaxRow([1, 3, 2])
-		const sum = probs.reduce((a, b) => a + b, 0)
-
-		expect(sum).toBeCloseTo(1, 6)
-		expect(probs[1]).toBeGreaterThan(probs[2]!)
-		expect(probs[2]).toBeGreaterThan(probs[0]!)
-	})
-
 	it("matrixAbsMax ignores the conventions-mask sentinel", () => {
 		expect(
 			matrixAbsMax([

@@ -1,0 +1,5 @@
+# The char graph is materialized at dev-link / publish time from $MAILWOMAN_DATA_ROOT/models/v8-cjk-*/served-package/
+# (per the `files` array in package.json); it is not committed. The sealed character vocabulary IS committed: it is
+# 29 KB, it is the model's whole tokenizer, and a graph without the exact vocabulary it was trained under encodes
+# every character wrong.
+/model.onnx

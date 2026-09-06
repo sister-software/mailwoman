@@ -64,7 +64,7 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 		expect(hardCountryFor("ES", 0.99, { hardCountry: "US" }, ON, undefined)).toBeUndefined()
 	})
 
-	it("honours a safelist override (how the eval measures ungated to grow the list)", () => {
+	it("honours a safelist override (how the eval measures unrestricted to grow the list)", () => {
 		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
 		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeUndefined()
 	})
@@ -129,7 +129,7 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 	})
 })
 
-describe("isBareLocalityTree — #912 lever 1 (placer abstention shape)", () => {
+describe("isBareLocalityTree — #912 change 1 (placer abstention shape)", () => {
 	const node = (tag: string, value: string, children: AddressNode[] = []): AddressNode =>
 		({ tag, value, children }) as AddressNode
 
@@ -179,7 +179,7 @@ describe("runPipeline — defaults", () => {
 		const result = await runPipeline("hello", {})
 		expect(result.timing["normalize"]).toBeGreaterThanOrEqual(0)
 		expect(result.timing["query-shape"]).toBeGreaterThanOrEqual(0)
-		expect(result.timing["locale-gate"]).toBeGreaterThanOrEqual(0)
+		expect(result.timing["locale-hint"]).toBeGreaterThanOrEqual(0)
 		expect(result.timing["kind-classifier"]).toBeGreaterThanOrEqual(0)
 	})
 })
@@ -535,13 +535,13 @@ describe("runPipeline — timing budget shape", () => {
 		alternatives: [],
 	}
 
-	it("full path with all stages: normalize / query-shape / locale-gate / kind-classifier / token-classify / resolve", async () => {
+	it("full path with all stages: normalize / query-shape / locale-hint / kind-classifier / token-classify / resolve", async () => {
 		const classifier = fakeClassifier(fakeTree("hello"))
 		const resolver = fakeResolver((t) => t)
 		const result = await runPipeline("hello", { classifier, resolver })
 
 		expect(Object.keys(result.timing).toSorted()).toEqual(
-			["kind-classifier", "locale-gate", "normalize", "query-shape", "resolve", "token-classify"].toSorted()
+			["kind-classifier", "locale-hint", "normalize", "query-shape", "resolve", "token-classify"].toSorted()
 		)
 	})
 

@@ -1,6 +1,6 @@
-# v5.0.0 — the from-scratch base that passed the gate and failed the board
+# v5.0.0 — the from-scratch base that passed the check and failed the board
 
-**Verdict: HOLD.** Not published. The model clears the promotion gate 18/18 and is blocked by iron
+**Verdict: HOLD.** Not published. The model clears the promotion check 18/18 and is blocked by iron
 rule 6 on the 649-row board.
 
 ## What was run
@@ -33,12 +33,12 @@ noisy rig.
 
 D-rule violations: **FR 2, GB 4, DE 1**. Iron rule 6 blocks a default-on ship regardless of net.
 
-## The gate disagrees — and the board is the one that matters
+## The check disagrees — and the board is the one that matters
 
-|                                                        | verdict        |
-| ------------------------------------------------------ | -------------- |
-| promotion gate `v9.0.0-base` (per-tag F1, golden sets) | **PASS 18/18** |
-| 649-row board (real addresses, truth coordinates)      | **HOLD**       |
+|                                                         | verdict        |
+| ------------------------------------------------------- | -------------- |
+| promotion check `v9.0.0-base` (per-tag F1, golden sets) | **PASS 18/18** |
+| 649-row board (real addresses, truth coordinates)       | **HOLD**       |
 
 Selected floors, all cleared, several by wide margins:
 
@@ -52,7 +52,7 @@ Selected floors, all cleared, several by wide margins:
 | de.native_locality    | 89.5 |   91.6 |
 | fr.bare_street_intact | 75.0 |   97.5 |
 
-**A gate-only promotion would have shipped this model.** `us.street` reads 73.8 — an improvement —
+**A check-only promotion would have shipped this model.** `us.street` reads 73.8 — an improvement —
 while `Unter den Linden` splits in half. Per-tag F1 over a golden set aggregates away seven specific
 addresses in three tier-1 countries. That is the argument for the board being part of the promotion
 path, not an adjunct to it.
@@ -122,14 +122,14 @@ Pre-registered reading, in the config header:
 > not re-run this with a different dose.
 
 The falsification clause is the required half. The 2026-08-23 trailing-region arc spent four runs
-re-dosing a lever that could not work; a dose is not a fix when the mechanism is wrong.
+re-dosing a change that could not work; a dose is not a fix when the mechanism is wrong.
 
 ## Defects found by running the controls first
 
-- **The gate was reporting a crash as a floor failure.** `fr.bare_street_intact` read
+- **The check was reporting a crash as a floor failure.** `fr.bare_street_intact` read
   `postcode-us.bin` from the tracked workspace, which is bare by design since the linkers moved to the
-  data-root overlay — so it threw ENOENT and the gate printed `✗ FAIL (floor 75%)`. The floor
-  actually reads 97.5. No candidate could clear the gate on a dev checkout. Fixed in #1843; found
+  data-root overlay — so it threw ENOENT and the check printed `✗ FAIL (floor 75%)`. The floor
+  actually reads 97.5. No candidate could clear the check on a dev checkout. Fixed in #1843; found
   because the failing arm was the SHIPPED model, which a candidate cannot be blamed for.
 - **`mwdev_coverage` answered about the wrong corpus.** A cached census of `0.26.0` was reported
   against a config training on `0.27.0`; a country the newer corpus added read as zero rows. Fixed in
@@ -205,13 +205,13 @@ Three findings:
    universal constant.
 2. **The cure worked, on exactly its target class.** Candidate minus null: net +2, regressions −3 —
    and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
-   `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary shard
+   `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary extract
    teaches. Mechanism-consistent, small, and honestly attributed. (Null↔cure share the same base
    init, seed, and steps, so the treatment comparison is not confounded by the separate country-admission change.)
 3. **The D-rule core is base-inherited and dose-immune.** FR 2 / GB 4 / DE 1 are identical across
    base, null, and cure: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
    `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More
-   suffix-boundary dose is not the lever for these — the venue-boundary class needs its own treatment
+   suffix-boundary dose is not the change for these — the venue-boundary class needs its own treatment
    (#1366's territory), or this lineage does not ship default-on.
 
 Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, cure int8 `f2d264f09b7d6f269158ab97d1843346`.
@@ -232,7 +232,7 @@ measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
 - The CJK-admission falsification — v5.0.0 vs v5.1.0 ran the SAME single-config path on both arms,
   so the matched comparison stands: dropping CN/JP/KR/TW did not clear the regressions.
 - The ~40-row churn floor — a same-path variance measurement between two matched arms.
-- The gate-vs-board divergence — the promotion gate is package-shaped en-US by design.
+- The check-vs-board divergence — the promotion check is package-shaped en-US by design.
 
 **What is superseded:**
 

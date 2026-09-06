@@ -15,6 +15,7 @@ import {
 	computeExitCode,
 	dataRootCheck,
 	gazetteerCheck,
+	layerLicenseCheck,
 	localeOverlayCheck,
 	nodeVersionCheck,
 	onnxRuntimeCheck,
@@ -138,10 +139,10 @@ describe("gazetteerCheck (optional)", () => {
 		expect(c.detail).toContain(ByteFormatter.formatSI(1_400_000_000))
 	})
 
-	it("ok on a discovered WOF shard", () => {
-		const c = gazetteerCheck({ wofShard: { path: "/wof/admin.db" }, probed: ["/wof/admin.db"] })
+	it("ok on a discovered WOF database", () => {
+		const c = gazetteerCheck({ wofDatabase: { path: "/wof/admin.db" }, probed: ["/wof/admin.db"] })
 		expect(c.status).toBe(CheckStatus.OK)
-		expect(c.detail).toContain("WOF admin shard")
+		expect(c.detail).toContain("WOF admin database")
 	})
 
 	it("ok on a convention-path candidate.db with no env set", () => {
@@ -159,16 +160,16 @@ describe("gazetteerCheck (optional)", () => {
 		expect(c.fix).toBeUndefined()
 	})
 
-	it("prefers a convention-path candidate.db over a WOF shard, matching resolution precedence", () => {
+	it("prefers a convention-path candidate.db over a WOF database, matching resolution precedence", () => {
 		const c = gazetteerCheck({
 			conventionCandidate: "/data/wof/candidate.db",
-			wofShard: { path: "/data/wof/admin.db" },
+			wofDatabase: { path: "/data/wof/admin.db" },
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
 		})
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
-		expect(c.detail).not.toContain("WOF admin shard")
+		expect(c.detail).not.toContain("WOF admin database")
 	})
 
 	it("missing with the data-pull hint when nothing found", () => {
@@ -184,7 +185,13 @@ describe("checkPOI (optional)", () => {
 		const c = checkPOI({
 			path: "/poi/poi.db",
 			exists: true,
-			manifest: { name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" },
+			manifest: {
+				name: "poi",
+				version: "2026-07-20a",
+				sourceVintage: "2026-07",
+				license: "CDLA-Permissive-2.0",
+				attribution: "Overture Maps Foundation",
+			},
 		})
 
 		expect(c.status).toBe(CheckStatus.OK)
@@ -316,5 +323,46 @@ describe("every failing check states its consequence (#1577)", () => {
 		const c = nodeVersionCheck({ nodeVersion: "24.18.0", enginesFloor: ">=24.18.0" })
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.consequence).toBeUndefined()
+	})
+})
+
+describe("layerLicenseCheck", () => {
+	it("reports an artifact built under another name as degraded, naming the file, and never as coverage absence", () => {
+		const check = layerLicenseCheck({
+			id: "soil",
+			label: "Soil capability (NRCS SSURGO)",
+			path: "/data/soil/soil.db",
+			alternates: ["soil-ia.db"],
+		})
+
+		expect(check.status).toBe("degraded")
+		expect(check.detail).toContain("soil-ia.db")
+		expect(check.consequence).toContain("attaches nothing")
+	})
+
+	it("summarizes a recognized license and reports an unrecognized one as degraded", () => {
+		const identity = {
+			name: "soil",
+			version: "2026-08",
+			sourceVintage: "2026-08",
+			license: "LicenseRef-USGov-Public-Domain",
+			attribution: "USDA NRCS",
+			path: "/data/soil/soil.db",
+			exists: true,
+		}
+
+		const ok = layerLicenseCheck({ id: "soil", label: "Soil", path: "/data/soil/soil.db", manifest: identity })
+
+		const odd = layerLicenseCheck({
+			id: "soil",
+			label: "Soil",
+			path: "/data/soil/soil.db",
+			manifest: { ...identity, license: "PDDL-1.0-USGov-NRCS" },
+		})
+
+		expect(ok.status).toBe("ok")
+		expect(ok.license?.recognized).toBe(true)
+		expect(odd.status).toBe("degraded")
+		expect(odd.license?.recognized).toBe(false)
 	})
 })

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { isWritableSync } from "@mailwoman/core/fs/readers-sync"
+import { isWritable } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -61,7 +61,7 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 
 	expect(result.ingested).toBe(0)
 	// The staging copy must carry the write bit even though the source is sealed.
-	expect(() => isWritableSync(adminOut)).not.toThrow()
+	await expect(isWritable(adminOut)).resolves.not.toThrow()
 })
 
 test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", async () => {

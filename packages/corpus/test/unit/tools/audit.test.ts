@@ -1,16 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
-// Re-export the internals for testing. The script's CLI entry is gated on
+// Re-export the internals for testing. The script's CLI entry is conditioned on
 // `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
 import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host. Skipped when the data
 // isn't present (CI / fresh clones); only the file-format-parsing tests run unconditionally.
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0")
@@ -41,7 +41,7 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 			configPath
 		)
 
-		expect(() => audit({ corpusDir: CORPUS_PATH, configPath })).not.toThrow()
+		await expect(audit({ corpusDir: CORPUS_PATH, configPath })).resolves.toBeUndefined()
 	})
 })
 
@@ -49,12 +49,12 @@ describe("audit — config parser", () => {
 	it("parses source_weights block without bleeding into sibling keys (val_rows etc.)", async () => {
 		// White-box: re-import the parser via dynamic import + grep on stdout would couple us to
 		// printer formatting. Instead, write a small config + call audit() against an empty corpus
-		// dir; we verify the warning-output for "no shards" mentions the right sources (proving the
+		// dir; we verify the warning-output for "no slices" mentions the right sources (proving the
 		// parser found exactly the configured ones and not val_rows).
 		await using tmpDirectory = await temporaryDirectory("audit-parser-test-")
 		const tmp = tmpDirectory.path
 		// Empty train/ subdir so the printer enters the per-source report block + emits the
-		// "weighted in config but no shards" warning where we can inspect what the parser saw.
+		// "weighted in config but no slices" warning where we can inspect what the parser saw.
 		await makeDirectoryExclusive(join(tmp, "train"))
 		const configPath = join(tmp, "test.yaml")
 
@@ -82,7 +82,7 @@ describe("audit — config parser", () => {
 		console.log = (...args: unknown[]) => logLines.push(args.join(" "))
 
 		try {
-			audit({ corpusDir: tmp, configPath })
+			await audit({ corpusDir: tmp, configPath })
 		} finally {
 			console.error = origError
 			console.log = origLog
@@ -90,7 +90,7 @@ describe("audit — config parser", () => {
 
 		const errOutput = errLines.join("\n")
 		const logOutput = logLines.join("\n")
-		// Configured sources should appear as warnings (no shards present).
+		// Configured sources should appear as warnings (no slices present).
 		expect(errOutput + logOutput).toContain("wof-admin")
 		expect(errOutput + logOutput).toContain("ban")
 		// Non-source keys must NOT appear — val_rows / train_rows_per_epoch / coarse_filter /

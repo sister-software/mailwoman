@@ -169,7 +169,7 @@ describe("robustness contract", () => {
 	})
 })
 
-describe("the normalizeToken seam", () => {
+describe("the normalizeToken boundary", () => {
 	it("the same normalizer on both sides makes cased queries meet folded entries", () => {
 		const fold = (token: string) => token.normalize("NFKC").toLowerCase()
 		const builder = new AncestrieBuilder({ normalizeToken: fold })
@@ -177,7 +177,7 @@ describe("the normalizeToken seam", () => {
 		const trie = Ancestrie.from(builder.seal())
 
 		expect(autocomplete(trie, ["NEW", "YOR"], { normalizeToken: fold }).suggestions.map((s) => s.id)).toEqual([1])
-		// Without the query-side normalizer the cased query misses — the seam is the caller's contract.
+		// Without the query-side normalizer the cased query misses — the normalization boundary is the caller's contract.
 		expect(autocomplete(trie, ["NEW", "YOR"]).suggestions).toEqual([])
 	})
 })

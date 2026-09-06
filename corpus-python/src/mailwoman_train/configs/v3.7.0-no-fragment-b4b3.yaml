@@ -14,20 +14,20 @@
 # 1285 -> postcode: the tokenizer length prior) and (2) number absorbed into street. Knob 3 attacks BOTH
 # directly — oversampling street + LONG number teaches the street/number boundary (kills absorption) and
 # fights the length prior with volume (the ONLY on-board fix for mode 1 was numsplice, which CLOSED as a
-# golden-gate trade — this is the corpus alternative, uphill against the same prior).
+# golden-check trade — this is the corpus alternative, uphill against the same prior).
 #
 # THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, SHIPPED v310, zero Norwegian rows pre-#1145):
 #     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)
 #
-# MOVE  : bare-street-hn CLEARS the bar the corpus lever has missed twice — clear motion, its lower CI
+# MOVE  : bare-street-hn CLEARS the bar the corpus change has missed twice — clear motion, its lower CI
 #         above v310's upper CI (0.736), so ~>=0.78. Falsifier: if long-number oversample ALSO misses,
-#         the corpus lever is exhaustively refuted and digit-ownership CLOSES (numsplice already a bad
+#         the corpus change is exhaustively refuted and digit-ownership CLOSES (numsplice already a bad
 #         trade, knob 1 falsified) — a real, decision-ending result. This is the last probe.
 # GUARD : bare-pc (negative class) HOLDS at 1.000 — the model must not stop emitting postcode.
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does NOT re-drift below FR OVERALL ~0.725 (v310 0.733).
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden gate delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
 #
 # NOT A SHIP. A PASS justifies a FULL 8k pre-registered against the same board. Promotion is operator's.
 #
@@ -92,13 +92,13 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000

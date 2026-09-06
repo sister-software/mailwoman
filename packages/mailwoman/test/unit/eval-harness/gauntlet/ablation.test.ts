@@ -3,7 +3,7 @@
 
 /**
  *   Tests for the Gauntlet ABLATION layer at fixture scale. Everything here is pure — variant generation, slot
- *   classification, cell aggregation, rendering — because the layer's own run needs the ~9 GB shard set and a loaded
+ *   classification, cell aggregation, rendering — because the layer's own run needs the ~9 GB database set and a loaded
  *   ONNX, and because every one of these three has a silent failure mode:
  *
  *   - a deletion that carves a span out of its NEIGHBOUR still produces a number, and the number looks like evidence
@@ -83,7 +83,7 @@ describe("boundedOccurrences — the guard that keeps a deletion attributable", 
 	})
 })
 
-describe("deleteSpan — the cut, and the separator debris it leaves", () => {
+describe("deleteSpan — the deletion, and the separator debris it leaves", () => {
 	it("closes the gap a mid-string deletion opens", () => {
 		const input = "181 Rue du Chevaleret, 75013 Paris"
 
@@ -254,7 +254,7 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 		expect(scored.broken).toBeNull()
 	})
 
-	it("reads the substituted slot off the SAME field the regression gate grades", () => {
+	it("reads the substituted slot off the SAME field the regression check grades", () => {
 		const scored = scoreAblation(result(), result({ postcode: "1600" }), "94043", "postcode", 5)
 
 		expect(scored.slot).toBe("substituted")
@@ -401,7 +401,7 @@ describe("the support-0-is-absence rendering rule", () => {
 			caseCount: 1,
 			variantCount: 1,
 			skips: [],
-			levers: "resolver levers: (none pinned — production defaults)",
+			pins: "resolver pins: (none pinned — production defaults)",
 			minLocaleRows: 1,
 		})
 
@@ -417,7 +417,7 @@ describe("the support-0-is-absence rendering rule", () => {
 			caseCount: 1,
 			variantCount: 1,
 			skips: [],
-			levers: "x",
+			pins: "x",
 		})
 
 		expect(md).toContain("No locale carries 3 or more measured rows")
@@ -439,7 +439,7 @@ describe("the support-0-is-absence rendering rule", () => {
 			caseCount: 3,
 			variantCount: 3,
 			skips: [],
-			levers: "x",
+			pins: "x",
 			minLocaleRows: 1,
 		})
 
@@ -469,12 +469,12 @@ describe("ablationBoardID — a cell without a board is not a measurement", () =
 })
 
 /**
- * The CLI → layer plumbing, pinned for the reason `lever-pin.test.ts` pins the resolver pin: a dropped option does not
+ * The CLI → layer plumbing, pinned for the reason `pin-pin.test.ts` pins the resolver pin: a dropped option does not
  * throw. A dropped `--components` runs the WHOLE corpus and prints a map that looks exactly like the one asked for; a
  * dropped `--limit` turns a smoke run into a forty-minute one.
  */
 describe("runAblationOptions — a CLI flag reaches the layer", () => {
-	it("carries the three ablation options alongside the shared model/lever ladder", () => {
+	it("carries the three ablation options alongside the shared model/pin ladder", () => {
 		const options = runAblationOptions({
 			candidate: "./out/v9/model.onnx",
 			postcodeCountryCoherence: false,
@@ -484,7 +484,7 @@ describe("runAblationOptions — a CLI flag reaches the layer", () => {
 		})
 
 		expect(options.model).toBe("./out/v9/model.onnx")
-		expect(options.levers).toEqual({ postcodeCountryCoherence: false })
+		expect(options.pins).toEqual({ postcodeCountryCoherence: false })
 		expect(options.outDir).toBe("/tmp/map")
 		expect(options.components).toEqual(["postcode", "street"])
 		expect(options.limit).toBe(12)

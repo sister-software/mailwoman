@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { firstDigitRegion, isJpPostalCode, normalizeJpPostalCode } from "@mailwoman/codex/jp/postal-code"
+import { firstDigitRegion, isJpPostalCode, normalizeJpPostalCode } from "@mailwoman/codex/jp"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeJpPostalCode", () => {

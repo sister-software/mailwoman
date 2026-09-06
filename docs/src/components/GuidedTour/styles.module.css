@@ -296,39 +296,6 @@
 	text-transform: uppercase;
 }
 
-/* Confidence mini-bars (scoped to tour) */
-
-.tourConfCell {
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	min-width: 60px;
-}
-
-.tourConfBar {
-	height: 5px;
-	border-radius: 2px;
-	min-width: 3px;
-	transition: width 0.2s ease;
-}
-
-.tourConfHigh {
-	background: #22c55e;
-}
-
-.tourConfMid {
-	background: #f59e0b;
-}
-
-.tourConfLow {
-	background: #ef4444;
-}
-
-.tourConfValue {
-	font-family: var(--ifm-font-family-monospace);
-	font-size: 0.7rem;
-}
-
 /* ---- Empty state ---- */
 
 .tourParsePrompt {

@@ -6,7 +6,7 @@
  *   component (`@theme/GlossaryTerm`), client modules, and remark auto-linking — but replaces the
  *   `/glossary` route with our own page component. The upstream plugin hard-codes its route
  *   component to a path inside the package (not a `@theme/*` component), so swizzling can't reach
- *   it; overriding the lifecycle hooks is the supported seam-free alternative to vendoring.
+ *   it; overriding the lifecycle hooks is the supported extension-free alternative to vendoring.
  *
  *   On top of the upstream data model this wrapper:
  *
@@ -25,7 +25,6 @@
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import * as path from "@mailwoman/platform/path"
 import type {
 	GlossaryData,
 	GlossaryPluginOptions as BaseGlossaryPluginOptions,
@@ -33,6 +32,7 @@ import type {
 } from "docusaurus-plugin-glossary"
 import baseGlossaryPlugin from "docusaurus-plugin-glossary"
 import { load as parseYAML } from "js-yaml"
+import { resolvePath } from "path-ts"
 
 import { isSuppressedSurface } from "./remark.ts"
 
@@ -179,7 +179,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 	const { noAutoLink = [], ...baseOptions } = options
 	const base = baseGlossaryPlugin(context, baseOptions as BaseGlossaryPluginOptions) as Plugin
 	const { routePath = "/glossary" } = options
-	const tagsPath = path.resolve(context.siteDir, "tags.yml")
+	const tagsPath = resolvePath(context.siteDir, "tags.yml")
 
 	// Computed in contentLoaded, consumed in allContentLoaded (lifecycle order guarantees this).
 	let glossary: GlossaryData = { terms: [] }
@@ -306,7 +306,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 
 			addRoute({
 				path: routePath,
-				component: path.resolve(context.siteDir, "src/components/GlossaryPage/index.tsx"),
+				component: resolvePath(context.siteDir, "src/components/GlossaryPage/index.tsx"),
 				exact: true,
 				modules: {
 					glossaryData: glossaryDataPath,

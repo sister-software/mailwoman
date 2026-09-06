@@ -14,14 +14,14 @@
 
 ### Task 2: nl-pc6 + pilot-anchor → pipeline + commands
 
-- `build-postalcode-nl-pc6.ts` → `gazetteer-pipeline/postcode/nl-pc6.ts` (`buildNLPC6Shard`); command `gazetteer build postcode-shard` gains `--recipe pc6` OR a sibling `nl-pc6.tsx` command (pick whichever keeps `postcode-shard.tsx` untouched — sibling preferred).
+- `build-postalcode-nl-pc6.ts` → `gazetteer-pipeline/postcode/nl-pc6.ts` (`buildNLPC6Extract`); command `gazetteer build postcode-extract` gains `--recipe pc6` OR a sibling `nl-pc6.tsx` command (pick whichever keeps `postcode-extract.tsx` untouched — sibling preferred).
 - `build-pilot-anchor-lookup.ts` → `gazetteer-pipeline/anchor-lookup.ts` (`buildAnchorLookup`, LIVE consumer: neural/scorer + evals); command `gazetteer build anchor-lookup`. JSON output isn't a DB — no seal, but write-once semantics noted.
 - Delete both scripts; commit.
 
 ### Task 3: corpus trio → `mailwoman corpus` commands
 
-- `build-corpus-stats.ts` → `corpus stats` command; `align-canonical-shard.ts` → `corpus align-shard`; `assemble-overlay-manifest.ts` → `corpus overlay-manifest`. Bodies move to `mailwoman/corpus-tools/` (or inline in the command file when under 100 lines and dependency-light — align/assemble qualify).
-- `lint-corpus-shard.ts` consumes `corpus-stats.json` via `--stats` — unchanged (stays as lint tooling).
+- `build-corpus-stats.ts` → `corpus stats` command; `align-canonical-extract.ts` → `corpus align-extract`; `assemble-overlay-manifest.ts` → `corpus overlay-manifest`. Bodies move to `mailwoman/corpus-tools/` (or inline in the command file when under 100 lines and dependency-light — align/assemble qualify).
+- `lint-corpus-extract.ts` consumes `corpus-stats.json` via `--stats` — unchanged (stays as lint tooling).
 - Delete the three scripts; commit.
 
 ### Task 4: `fst-query.ts` → `gazetteer inspect fst`; endgame
@@ -32,5 +32,5 @@
 
 ### Task 5: E2E + PR
 
-- E2E the cheap recipes: `gazetteer build postcode-shard` sibling nl-pc6 (fast, CBS source permitting) + `inspect fst` smoke vs the shipped FST. The heavy locality recipes (jp/kr/tw) are typecheck+compile-validated; their next data refresh runs through the commands (noted in #1029).
+- E2E the cheap recipes: `gazetteer build postcode-extract` sibling nl-pc6 (fast, CBS source permitting) + `inspect fst` smoke vs the shipped FST. The heavy locality recipes (jp/kr/tw) are typecheck+compile-validated; their next data refresh runs through the commands (noted in #1029).
 - Close #1029 via the PR; update the spec's status line.

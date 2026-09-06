@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Drift gate for the generated CLI reference (`generate-cli-reference.ts`). Three things are
+ *   Drift check for the generated CLI reference (`generate-cli-reference.ts`). Three things are
  *   asserted, and each fails for a different reason:
  *
  *   1. Two known commands render exactly as snapshotted. A flag added, removed, renamed or
@@ -18,7 +18,7 @@
  *
  *   The walk reads `mailwoman/out/commands`, so `yarn compile` is a prerequisite. That is already
  *   true of every CI test leg (each runs `yarn compile` before `vitest`), and a missing tree throws
- *   with that instruction rather than skipping — a silently-skipped drift gate is not a gate.
+ *   with that instruction rather than skipping — a silently-skipped drift check is not a check.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -64,7 +64,7 @@ describe("generate-cli-reference", () => {
 		expect(sectionFor(page, "doctor")).toMatchInlineSnapshot(`
 			"### \`mailwoman doctor\`
 
-			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is reported, never fatal, and every failing line carries the one command that closes it.
+			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is reported, never fatal, and every failing line carries the one command that closes it. Then the license posture: the branch of mailwoman's license that applies to this installation, and the obligations each attached layer's recorded license carries (attribution, share-alike, source offer).
 
 			\`\`\`
 			mailwoman doctor [options]

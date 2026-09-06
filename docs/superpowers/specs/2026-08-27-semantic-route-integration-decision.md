@@ -198,7 +198,7 @@ been typed. That property is what keeps the integration point one optional argum
 branch, and this record keeps it.
 
 **One move is required before the surface is supported.** The builder lives at
-`packages/mailwoman/eval-harness/semantic-utility/observation-route.ts`. A consumer must not reach
+`packages/mailwoman/lib/eval-harness/semantic-utility/observation-route.ts`. A consumer must not reach
 into an eval harness for a runtime capability, so the builder moves into the `mailwoman` runtime
 tree with a real export subpath, and the harness imports it from there. The probe's frozen
 definition and freeze record are untouched by that move — they must show an empty diff, the same
@@ -315,6 +315,19 @@ third place to look for the same answer and would let a mis-scoped assertion pas
 it. So the decision is to repair the two rather than add a third, and §8.2 makes that a
 prerequisite.
 
+**Amended 2026-09-05 (#1999).** The two scopes bind to different things, and the first
+implementation bound both to the caller. Recognition is the caller's: a phrase's locale scope says who
+uses that wording, so it is read against the caller's locale. Semantics are the place's: an
+assertion's `countries` says where the establishments it describes exist, so it is judged against the
+country the ANCHOR resolved to — the caller's locale is a lens through which the phrase is read, not a
+definition of where the claim holds. Under the caller binding an `en-US` caller asking about
+Garancières admitted the US-scoped `drugstore` claim into a French search (#1996's receipts, #1998's
+three refusals). The route now returns every reached kind with the assertion's scope on the match
+(`POIPhraseMatch.countryScope`); `createPOIIntentStage` binds it after the anchor parse and records
+the result on the intent (`countryBinding`), abstaining as `country_scope_excluded` when nothing the
+phrase reached holds there. An anchor that resolved to no country admits no scoped claim. §5 row 7
+already said "anchored"; the implementation now agrees with it.
+
 The route's phrase normalization is deliberately locale-independent — `toLowerCase` rather than
 `toLocaleLowerCase`, so a Turkish host locale cannot make the same query answer differently on two
 machines. That property is separate from locale scoping and stays as it is.
@@ -331,7 +344,7 @@ None of them is satisfied by inference from another.
 | **1** | The promoted POI board family      | `mailwoman eval poi-board --enforce`                       | The three reachable rows at `status: pass` and **counted**, not tracked; `sem-act-fr-01` no worse than its committed `known_fail`; all three floors met over the re-registered composition, arithmetic stated                                                                               |
 | **2** | The full regression board          | `mailwoman eval gauntlet` — regression **and** metamorphic | No new violation beyond the tracked expected failures, in either layer                                                                                                                                                                                                                      |
 | **3** | The five conformance laws          | `mailwoman eval conformance`                               | Every decided row holds; tracked and unmeasured counts unchanged or reduced. **Plus new rows**: the route normalizes NFKC, case and whitespace, so the case-folding, whitespace and punctuation laws each have a claim to make about an activity phrase and no committed row makes it today |
-| **4** | The parse promotion eval           | `mailwoman eval gate`                                      | **The D-rule.** No regression against the shipped model on any tier-1 locale. Measured on the address side: a query-kind change moves inputs off the address path, and the POI board cannot see that                                                                                        |
+| **4** | The parse promotion eval           | `mailwoman eval promote`                                   | **The D-rule.** No regression against the shipped model on any tier-1 locale. Measured on the address side: a query-kind change moves inputs off the address path, and the POI board cannot see that                                                                                        |
 | **5** | The false-claim census             | §11's instrument, re-run at the shipping phrase lexicon    | Zero subject-match changes on the board's address-guard rows; every change elsewhere adjudicated row by row. The positive control reported in the same run — a census that cannot detect a change reports the same zero as a real absence                                                   |
 | **6** | Multi-kind adjudication            | A test over an activity with two afforded kinds            | `mappedKindCount > 1` answered without an authored preference (§8.1). A default change while `hits[0]` decides by code point is refused outright                                                                                                                                            |
 | **7** | Country admission                  | A row anchored outside an assertion's `countries`          | The route stays silent there, and the receipt says which scope refused it                                                                                                                                                                                                                   |
@@ -377,7 +390,7 @@ structured diagnostic threshold, the admissible outcome is **the observation sur
 recognition change**, and this record names it now so it is not invented under pressure later.
 
 Today the provenance the whole program is built around does not reach a caller.
-`semanticObservations[]` appears only under `packages/mailwoman/eval-harness/semantic-utility/`; the
+`semanticObservations[]` appears only under `packages/mailwoman/lib/eval-harness/semantic-utility/`; the
 route hands them out through a `takeObservations()` drain the harness owns, and
 `POIIntentOutcome` has no field for them. A consumer of `createRuntimePipeline` gets the category
 and none of the authority behind it.
@@ -450,6 +463,13 @@ that stays silent outside its scope, per §5 row 7. This is a prerequisite for #
 surface — a scoped assertion authored against a route that ignores scope is a record that means
 something different from what it says.
 
+**Amended 2026-09-05 (#1999).** Consulted, and bound where §4.3's amendment says: the locale scope in
+the route's `lookup`, the country scope in the POI intent stage against the anchor's resolved
+country. The row for §5 row 7 is `abs-c-02` in the absence probe (a US anchor keeps `drugstore`, so
+the searched set exceeds the surveyed class and the route refuses `category_not_surveyed`) beside
+`abs-t-02`/`abs-t-05` (a French anchor drops it, and the observation fires); the probe registers the
+searched set per row so the binding is graded, not inferred.
+
 ### 8.3 Observations must reach the caller
 
 Per §7: the semantic observation rides as a `QueryIntentMarker` on `QueryKindResult.intentMarkers`,
@@ -509,7 +529,7 @@ after the run; each is short enough to rebuild from this description, and §5 ro
 one permanent.
 
 **The false-claim census.** Every distinct string in every committed `.jsonl` under
-`packages/mailwoman/eval-harness/gauntlet/cases/`, `…/conformance/` (both `base` and `variant`) and
+`packages/mailwoman/lib/eval-harness/gauntlet/cases/`, `…/conformance/` (both `base` and `variant`) and
 `…/fixtures/` — 9,324 distinct inputs: 915 gauntlet cases, 182 conformance, 8,227 fixtures
 (BAN FR fragments 2,800, Overture DE fragments 2,404, `no-digits` 2,400, the parity corpora, the
 golden sets, the venue confounds, the 51-row POI board). Each was passed to `matchPOISubject` twice

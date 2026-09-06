@@ -18,7 +18,7 @@ asks for one. The number of steps does not grant permission to write to GitHub.
 
 ## Step 1 — write the plan as a todo list FIRST
 
-State the steps before touching anything. Two situations, and be honest about which you are in:
+State the steps before touching anything. Two situations, and say which you are in:
 
 - **The session has the task tools** (`TodoWrite`, or `TaskCreate`/`TaskUpdate`). Use them; the hook
   below mirrors `TodoWrite` into the linked issue automatically.
@@ -50,7 +50,7 @@ gh issue create --label enhancement --label resolver \
 
 ## Scope
 
-<locales and tiers affected; tested contracts changed; gate or board rows touched>
+<locales and tiers affected; tested contracts changed; promotion-eval or board rows touched>
 
 ## Tradeoff
 
@@ -78,7 +78,7 @@ mkdir -p .claude/state && echo <issue-number> > .claude/state/linked-issue
 ```
 
 From here every `TodoWrite` rewrites the issue's marker-delimited block via the
-`packages/dev-mcp/hooks/todo-issue-sync.ts` PostToolUse hook. Its contract:
+`packages/dev-mcp/lib/hooks/todo-issue-sync.ts` PostToolUse hook. Its contract:
 
 - **Fail-open and silent** — it never blocks a turn, and the `gh` work runs detached.
 - **Markers required** — it never writes into an issue whose body lacks both

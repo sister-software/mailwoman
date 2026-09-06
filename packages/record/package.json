@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/record",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "Lean, plain-TypeScript record schema + per-field normalizers for the geocode-first matcher. Address-first: the canonical PostalAddress record composes parser components, the formatter's match key, and a resolved geocode; organization + contact records build on the same canonical record.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -24,25 +24,33 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./address": {
-			"node": "./address.ts",
+			"node": "./lib/address.ts",
 			"default": "./out/address.js",
 			"types": "./out/address.d.ts"
 		},
 		"./name": {
-			"node": "./name.ts",
+			"node": "./lib/name.ts",
 			"default": "./out/name.js",
 			"types": "./out/name.d.ts"
 		},
 		"./organization": {
-			"node": "./organization.ts",
+			"node": "./lib/organization.ts",
 			"default": "./out/organization.js",
 			"types": "./out/organization.d.ts"
 		}
@@ -54,6 +62,6 @@
 		"@mailwoman/formatter": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2"
+		"@types/node": "^26.4.1"
 	}
 }

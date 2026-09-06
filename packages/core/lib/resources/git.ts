@@ -1,0 +1,61 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+
+import { tryStat } from "#fs/readers"
+import { makeDirectories } from "#fs/writers"
+import { runFile } from "#process"
+
+/**
+ * Metadata for a repository source.
+ */
+export interface RepositorySource {
+	name: string
+	owner: string
+	url: string
+}
+
+export async function prepareRepositoryDirectories(
+	{ name, owner }: RepositorySource,
+	localRepoDirectory: PathBuilderLike
+) {
+	const ownerDirectory = PathBuilder.from(localRepoDirectory, owner)
+	const repoDirectory = ownerDirectory(name)
+
+	await makeDirectories(ownerDirectory.toString())
+
+	const exists = await tryStat(repoDirectory)
+
+	return { ownerDirectory, repoDirectory, exists }
+}
+
+/**
+ * What a synchronization did, so a caller can report it.
+ *
+ * A clone and a pull differ by orders of magnitude in both time and bytes — reporting them as one "synchronized" makes
+ * a first-time clone indistinguishable from a no-op refresh while it holds the progress display still.
+ */
+export type SynchronizeAction = "cloned" | "pulled" | "skipped"
+
+/**
+ * Synchronize a repository source, i.e. clone or pull the repository.
+ */
+export async function synchronizeRepo(
+	source: RepositorySource,
+	localRepoDirectory: PathBuilderLike
+): Promise<SynchronizeAction> {
+	if (source.name.includes("deprecated")) return "skipped"
+
+	const { ownerDirectory, repoDirectory, exists } = await prepareRepositoryDirectories(source, localRepoDirectory)
+
+	if (exists) {
+		await runFile("git", ["pull"], { cwd: repoDirectory.toString() })
+
+		return "pulled"
+	}
+
+	await runFile("git", ["clone", "--depth=1", source.url], { cwd: ownerDirectory.toString() })
+
+	return "cloned"
+}

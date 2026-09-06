@@ -1,0 +1,589 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Convenience factory that wires the default runtime-pipeline stages together.
+ *
+ *   Consumers who want the full happy-path (normalize → QueryShape → classify → resolve) can call
+ *   `createRuntimePipeline({ classifier, resolver })` and get a one-call entry point. All stages
+ *   have production-ready defaults: normalize, QueryShape, locale-hint (rule-based v1), kind
+ *   classifier (rule-based), phrase grouper (rule-based). Only the neural classifier and resolver
+ *   need explicit injection.
+ *
+ *   See `docs/engineering/reference/STAGES.md` for the full contract.
+ */
+
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import {
+	runPipeline,
+	type MachinePreferences,
+	type PipelineOpts,
+	type PipelineResult,
+	type POIIntent,
+	type POIIntentOutcome,
+	type RuntimePipelineStages,
+} from "@mailwoman/core/pipeline"
+import {
+	classifyKind as defaultClassifyKind,
+	createKindClassifier,
+	type POIPhraseLookup,
+} from "@mailwoman/kind-classifier"
+import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-hint"
+import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
+import { normalize } from "@mailwoman/normalize"
+import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
+import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
+import { computeQueryShape } from "@mailwoman/query-shape"
+import type { StreetLocalityEvidence } from "@mailwoman/resolver"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
+import { resolvePath, type PathBuilderLike } from "path-ts"
+
+import { loadDefaultPlaceCountry } from "#default/placer"
+import { loadDefaultReverseGeocoder } from "#default/reverse-geocoder"
+import { loadDefaultStreetEvidence } from "#default/street-evidence"
+import { $public } from "#env"
+import { rerankByStreetEvidence } from "#kbest-street-rerank"
+import { createPOIExecutor, type POIAncestryEntry } from "#poi/executor"
+import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi/intent"
+
+/**
+ * Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls.
+ */
+interface ReverseGeocoderLike {
+	reverseGeocodeSync(
+		latitude: number,
+		longitude: number
+	): { hierarchy: ReadonlyArray<{ id: number; name: string; placetype: string }> }
+}
+
+/**
+ * Adapt a `WOFReverseGeocoder` into the synchronous `reverseGeocode` fn `createPOIExecutor` expects (see
+ * `poi-executor.ts` — the executor's return type carries no `Promise`, so this can't `await` the async `reverseGeocode`
+ * method; `reverseGeocodeSync` is its already-synchronous core). Deepest-first `hierarchy` maps straight onto the
+ * compact ancestry triple, AS-IS (spec's design point 4). A throw (e.g. an out-of-range coordinate slipping past
+ * upstream validation) degrades to `undefined` — one bad point never fails the whole search. An empty `hierarchy` (e.g.
+ * a valid coordinate with no bbox candidates — open ocean) ALSO degrades to `undefined`, not `[]` — house
+ * meaning-of-zero: `decorateAncestry` only adds the `ancestry` key when there's something to add, and an empty array is
+ * truthy, so this has to collapse it here rather than let a length-0 array slip through as "present."
+ */
+function buildSyncReverseGeocode(
+	geocoder: ReverseGeocoderLike
+): (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined {
+	return (latitude, longitude) => {
+		try {
+			const { hierarchy } = geocoder.reverseGeocodeSync(latitude, longitude)
+
+			if (!hierarchy.length) return undefined
+
+			return hierarchy.map((place) => ({ placetype: place.placetype, name: place.name, wofID: place.id }))
+		} catch {
+			return undefined
+		}
+	}
+}
+
+export interface CreateRuntimePipelineOpts {
+	/**
+	 * Preferences used only when neither the caller nor input structure identifies a locale. `undefined` reads the
+	 * current Intl defaults; `false` disables host inference for servers/containers. `MW_LOCALE` remains the stronger
+	 * process-level override in either mode.
+	 */
+	machinePreferences?: MachinePreferences | false
+	/**
+	 * The Stage 3 classifier — typically a `NeuralAddressClassifier`.
+	 */
+	classifier?: RuntimePipelineStages["classifier"]
+	/**
+	 * The Stage 6 resolver — typically a `WOFResolver` from `@mailwoman/resolver-wof-sqlite`.
+	 */
+	resolver?: RuntimePipelineStages["resolver"]
+	/**
+	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification.
+	 *
+	 * DEFAULT-ON (2026-07-25 FST-distribution arc): when omitted AND the classifier's resolved weights package ships a
+	 * `fst-<locale>.bin` sibling ({@link NeuralAddressClassifier.fstPath}), the pipeline deserializes and wires it
+	 * automatically. Pass `false` to suppress both the auto-load and any explicit matcher (the byte-stable escape
+	 * hatch).
+	 */
+	fst?: RuntimePipelineStages["fst"] | false
+	/**
+	 * Street-morphology matcher — the signal source for the FST street-context check (#1315), always consumed with the
+	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative;
+	 * the check alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
+	 * `fst-street-morphology.bin` artifact when available (weights-package sibling, else the data-root staging copy),
+	 * degrading to a per-process build from core's bundled libpostal dictionaries; `false` suppresses it.
+	 */
+	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
+	/**
+	 * `@mailwoman/locale-hint` override — when shipped, replaces the default caller-trust stub.
+	 *
+	 * @see RuntimePipelineStages.detectLocale
+	 */
+	detectLocale?: RuntimePipelineStages["detectLocale"]
+	/**
+	 * Kind classifier override — when shipped, replaces the default no-fast-path stub.
+	 *
+	 * @see RuntimePipelineStages.classifyKind
+	 */
+	classifyKind?: RuntimePipelineStages["classifyKind"]
+	/**
+	 * Phrase grouper override (Stage 2.7). Defaults to the rule-based `@mailwoman/phrase-grouper`. v0.5.0 wires this in
+	 * as a required stage; callers should normally NOT override unless they have a learned span proposer (planned for
+	 * v0.5.1).
+	 *
+	 * @see RuntimePipelineStages.groupPhrases
+	 */
+	groupPhrases?: RuntimePipelineStages["groupPhrases"]
+	/**
+	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute check).** A confident in-map
+	 * guess becomes a soft country prior the resolver re-rank boosts (never filters).
+	 *
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded on the
+	 *   first pipeline call and applied (no prior if the model can't be resolved).
+	 * - A function → use it (a custom placer / threshold).
+	 * - `false` → disabled (no prior; byte-stable pre-M2 behavior).
+	 *
+	 * @see RuntimePipelineStages.placeCountry
+	 */
+	placeCountry?: RuntimePipelineStages["placeCountry"] | false
+	/**
+	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
+	 * model (helps on all-caps registry/compliance data; detection-restricted, mixed-case untouched). The classifier is
+	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it; set `false` here to pin the raw-case
+	 * parse for every call. A per-call `runOpts.normalizeCase` overrides this.
+	 */
+	normalizeCase?: boolean
+	/**
+	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a CONFIDENT coarse-placer guess from
+	 * the soft prior to a HARD country filter (empty→unresolved). **DEFAULT-ON** (#743, 2026-06-22): the built-in
+	 * coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
+	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no
+	 * recall regression. Pass `false` to opt out entirely; a per-call `runOpts.hardPlaceCountry` overrides this.
+	 */
+	hardPlaceCountry?: boolean
+	/**
+	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard
+	 * country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by the resolver eval to measure
+	 * unrestricted hard-resolve-rates (the full in-map set) when growing the list.
+	 */
+	hardCountrySafelist?: ReadonlySet<string>
+	/**
+	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a
+	 * positive-evidence-conditional street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR
+	 * fragment street, measured 2026-07-18).
+	 *
+	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
+	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
+	 *   and the Stage-3 classifier reranks the street. A pre-v3 (span-less) classifier, or a missing database, → no-op
+	 *   (byte-stable): the rerank can only ADD an atlas-confirmed street, never remove a model call.
+	 * - A `StreetLocalityEvidence` → use it (a custom / multi-country index).
+	 * - `false` → disabled (no rerank).
+	 */
+	streetEvidence?: StreetLocalityEvidence | false
+	/**
+	 * POI-query detection + intent extraction (spec §3.1, exotic-POI arc plans 2 + 4). **Default-ON since 2026-07-20**
+	 * (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets byte-identical — see
+	 * `docs/articles/evals/2026-07-20-poi-promotion-battery.md` and the runtime-flag register). When active: the kind
+	 * classifier gains the poi-taxonomy lexicon (`poi_query` kind), the poi-intent stage is wired, and the anchor
+	 * remainder parses through this same pipeline with the poi stage OFF (recursion guard). An explicit `classifyKind`
+	 * override wins over the poi-aware default.
+	 *
+	 * - `undefined` (default) — same as `true`: intent-only mode. The stage extracts the intent but never executes it
+	 *   (today's Plan-2 behavior), EXCEPT the build-local abstain still fires (`requires_build_local_layer` needs no db —
+	 *   see `poi-executor.ts`).
+	 * - `true` — explicit intent-only mode, same as the default.
+	 * - `{ poiDatabasePath }` — additionally executes: a `POILookup` is constructed lazily on the first pipeline call
+	 *   (mirrors the {@link placeCountry} lazy-load pattern so this factory stays synchronous) and wired into the
+	 *   executor, so a matched intent comes back with `results` attached (or an `anchor_required` abstain).
+	 * - `false` — disabled: the pipeline is byte-identical to pre-flag builds.
+	 */
+	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike }
+	/**
+	 * An ADDITIONAL positive-evidence phrase rung, consulted only after the committed category lexicon and the POI name
+	 * lookup have both returned nothing. Absent — the default everywhere — leaves the subject lookup exactly the two
+	 * rungs it has always been, and every query resolves as before.
+	 *
+	 * It is how a caller reaches a subject the shipped lexicon cannot name: `mailwoman/observations` builds one, where an
+	 * activity phrase reaches a category through the compiled geographic model. PRESENCE IS THE SWITCH, and deliberately
+	 * so — a boolean would make this factory construct the artifact reader itself, putting world semantics on the default
+	 * construction path and giving the pipeline knowledge of where the evidence came from. What arrives here is a plain
+	 * {@link POIPhraseLookup}, the same contract the committed lexicon satisfies, so a match is served by the existing
+	 * executor exactly as if the category had been typed. It supplies POSITIVE EVIDENCE ONLY — a miss returns `[]` and
+	 * changes nothing — and it can never displace a committed hit, because it is asked last.
+	 *
+	 * A change that ever made this rung auto-construct must widen the option to `… | false` in the SAME commit, with a
+	 * test that sets it `false` and asserts byte-stability against the composition before the change — the pattern
+	 * {@link fst} and {@link streetMorphology} already carry. A rollback that arrives after the change is not a
+	 * rollback.
+	 */
+	poiSemanticLookup?: POIPhraseLookup
+}
+
+/**
+ * #727 phase-4c: wrap the Stage-3 classifier so its `parse` reranks the STREET on street-name evidence — but ONLY when
+ * an evidence index is injected AND the classifier ships a span grammar (a v3+ span-head bundle). Otherwise the
+ * original classifier passes through untouched (byte-stable). The wrapper preserves the `AddressClassifier` contract:
+ * it returns exactly the reranked tree, which is the argmax tree with the street spliced in on atlas-confirmed
+ * evidence, else the plain argmax tree — the pipeline's downstream stages (resolver, etc.) see a normal `AddressTree`.
+ */
+function wrapWithStreetEvidence(
+	classifier: RuntimePipelineStages["classifier"],
+	evidence: StreetLocalityEvidence | undefined
+): RuntimePipelineStages["classifier"] {
+	if (!classifier || !evidence) return classifier
+	const grammar = (classifier as Partial<NeuralAddressClassifier>).spanGrammar
+
+	if (!grammar) return classifier // pre-v3 (span-less) bundle → nothing to rerank
+	const inner = classifier as NeuralAddressClassifier
+
+	return {
+		// `cOpts` is the core `ClassifierOpts`; `rerankByStreetEvidence` wants the neural `ParseOpts`. ClassifierOpts is a
+		// structural subset EXCEPT `placetypePair`, which core types opaquely (`object | false`, no neural dep — #1278)
+		// while ParseOpts types it as `PlacetypePairPriorOpts | false`; at runtime the passthrough value IS a valid
+		// PlacetypePairPriorOpts, so the narrowing cast at this core→neural bridge is sound.
+		parse: async (text, cOpts) =>
+			(await rerankByStreetEvidence(inner, text, evidence, grammar, { parseOpts: cOpts as ParseOpts | undefined }))
+				.tree,
+	}
+}
+
+/**
+ * Build a runtime pipeline pre-wired with the default normalize + queryShape implementations.
+ *
+ * Returns a function that takes raw input + per-call opts and runs the full pipeline.
+ *
+ * @example
+ * 	Const pipeline = createRuntimePipeline({ classifier: await
+ * 	NeuralAddressClassifier.loadFromWeights({ locale: "en-US" }), resolver:
+ * 	createWOFResolver(backend), }) const result = await pipeline("350 5th Ave, New York, NY 10118", {
+ * 	locale: "en-US" })
+ */
+/**
+ * FST-distribution arc (2026-07-25): deserialize the per-locale FST gazetteer shipped in the classifier's resolved
+ * weights package. The classifier surfaces the sibling PATH ({@link NeuralAddressClassifier.fstPath}); the deserialize
+ * lives here because `neural` deliberately carries no resolver-wof-sqlite dependency. Any failure (missing/corrupt
+ * binary, a non-neural classifier) degrades to `undefined` — the byte-stable no-FST default.
+ */
+async function autoLoadWeightsFST(
+	classifier: CreateRuntimePipelineOpts["classifier"]
+): Promise<FSTMatcher | undefined> {
+	const fstPath =
+		classifier && typeof classifier === "object" && "fstPath" in classifier
+			? (classifier as { fstPath?: string }).fstPath
+			: undefined
+
+	if (!fstPath) return undefined
+
+	try {
+		return deserializeFST(await readLocalBuffer(fstPath))
+	} catch (error) {
+		console.warn(
+			`[mailwoman] failed to load weights FST at ${fstPath}: ${(error as Error).message} — parsing without it`
+		)
+
+		return undefined
+	}
+}
+
+/**
+ * Load the street-morphology matcher — the street-context check's signal source (#1315), always consumed with the
+ * emission prior zeroed at the pipeline's classify call sites. Resolved on the first pipeline call through the shared
+ * ladder (`street-morphology-fst-loader`): the classifier's weights-package sibling (`fst-street-morphology.bin`,
+ * surfaced as {@link NeuralAddressClassifier.streetMorphologyPath}), else the data-root sealed artifact, else a
+ * per-process build from core's bundled libpostal dictionaries — the pre-artifact behavior kept as the degrade path.
+ * Failures degrade to `undefined` (check off, byte-stable).
+ */
+async function autoLoadStreetMorphology(
+	classifier: CreateRuntimePipelineOpts["classifier"]
+): Promise<FSTMatcher | undefined> {
+	const artifactPath =
+		classifier && typeof classifier === "object" && "streetMorphologyPath" in classifier
+			? (classifier as { streetMorphologyPath?: string }).streetMorphologyPath
+			: undefined
+
+	try {
+		const loaded = await loadStreetMorphologyFST({
+			...(artifactPath ? { artifactPath } : {}),
+			onWarn: (message) => console.warn(`[mailwoman] ${message}`),
+		})
+
+		return loaded.matcher
+	} catch (error) {
+		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — check off`)
+
+		return undefined
+	}
+}
+
+/**
+ * Read the JavaScript host's language and timezone as independent, diagnostic preference signals.
+ */
+export function getMachinePreferences(): MachinePreferences {
+	try {
+		const { locale, timeZone } = Intl.DateTimeFormat().resolvedOptions()
+
+		return {
+			...(locale ? { locale } : {}),
+			...(timeZone ? { timeZone } : {}),
+		}
+	} catch {
+		return {}
+	}
+}
+
+export function createRuntimePipeline(
+	opts: CreateRuntimePipelineOpts = {}
+): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
+	// #1177: default-ON since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo
+	// presets byte-identical). `undefined` → `true` (intent-only mode); an explicit `false` still
+	// disables; the object form (executes against a real poi.db) passes through unchanged. Follows
+	// the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
+	const poiQueryKindEffective = opts.poiQueryKind ?? true
+
+	const machinePreferences =
+		opts.machinePreferences === false ? undefined : (opts.machinePreferences ?? getMachinePreferences())
+
+	let poiNameLookup: POIPhraseLookup | undefined
+
+	// Rung order is the whole of the containment: the committed lexicon answers first, the POI name lookup second, and an
+	// injected semantic rung — absent by default — only where both returned nothing. Asked last, it can add a subject
+	// where there was none and can never take one away.
+	const poiSubjectLookup: POIPhraseLookup = (phrase, locale) => {
+		const lexical = poiTaxonomyLookup(phrase, locale)
+
+		if (lexical.length) return lexical
+
+		const named = poiNameLookup?.(phrase, locale) ?? []
+
+		if (named.length) return named
+
+		return opts.poiSemanticLookup?.(phrase, locale) ?? []
+	}
+
+	// The character-path CJK model was trained with the postal mark 〒 in front of every postcode and misreads the
+	// prefecture boundary without it; the SentencePiece path wants it stripped (`NormalizeOpts.postalMark`).
+	const postalMark = (opts.classifier as { encoder?: string } | undefined)?.encoder === "char" ? "keep" : undefined
+
+	const stages: RuntimePipelineStages = {
+		normalize: postalMark ? (raw, normalizeOpts) => normalize(raw, { ...normalizeOpts, postalMark }) : normalize,
+		computeQueryShape,
+		// Default kind classifier: rule-based from @mailwoman/kind-classifier. Caller can override.
+		// POI arc (default-ON since 2026-07-20). The poi-aware classifier only exists when the flag
+		// resolves truthy; an explicit classifyKind override always wins. The anchor re-parse runs THIS
+		// pipeline minus the poi stage: same stages object, but runPipeline never takes the poi branch
+		// because anchorStages.poiIntent is absent and anchorStages.classifyKind is the default.
+		classifyKind:
+			opts.classifyKind ??
+			(poiQueryKindEffective ? createKindClassifier({ poiLexicon: poiSubjectLookup }) : defaultClassifyKind),
+		// Default phrase grouper: rule-based from @mailwoman/phrase-grouper. Hard dep in v0.5.0 —
+		// not an opt-in shim. The plan doc framed Stage 2.7 as backward-compatible-opt-in for the
+		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
+		// stage. Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
+		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
+		// The #727 phase-4c rerank wrap is applied lazily on the first call (below): an explicitly-passed
+		// evidence index wraps immediately in spirit, but the DEFAULT (auto-load the bundled FR index) is async.
+		classifier: opts.streetEvidence ? wrapWithStreetEvidence(opts.classifier, opts.streetEvidence) : opts.classifier,
+		// FST-distribution arc (2026-07-25): explicit matcher wins; `false` suppresses; `undefined`
+		// auto-loads from the classifier's weights package on the first call (lazy, like placeCountry).
+		fst: opts.fst === false ? undefined : opts.fst,
+		streetMorphology: opts.streetMorphology === false ? undefined : opts.streetMorphology,
+		resolver: opts.resolver,
+		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here; the
+		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
+		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
+		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
+		// Default `@mailwoman/locale-check` stage: rule-based from @mailwoman/locale-hint. Derives locale from
+		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
+		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
+		detectLocale:
+			opts.detectLocale ??
+			((input, shape, detectOpts) =>
+				defaultDetectLocale(input, shape, {
+					...detectOpts,
+					...($public.MW_LOCALE ? { environmentLocale: $public.MW_LOCALE } : {}),
+					...(machinePreferences ? { machinePreferences } : {}),
+				})),
+	}
+
+	// Build-local abstain (`requires_build_local_layer`) needs no db, so the executor is wired in BOTH
+	// `poiQueryKind` modes — the poi-taxonomy touch (the one lexicon-aware bit) happens ONLY here in the
+	// wiring, never inside `poi-executor.ts` (it stays injectable/pure).
+	const requiresBuildLocal = (categoryID: string): boolean => {
+		const category = getPOICategory(categoryID)
+
+		return category ? requiresBuildLocalLayer(category) : false
+	}
+
+	// `poiQueryKind` undefined/`true` → intent-only executor (lookup undefined, build-local abstain
+	// still fires). `poiQueryKind: { poiDatabasePath }` → upgraded below, on the first call, once the
+	// lookup resolves. Reassigned in place (not a fresh `createPOIIntentStage` deps object) so the
+	// stage — wired once, synchronously, right below — always dispatches through the latest executor.
+	let poiExecute: ((intent: POIIntent) => POIIntentOutcome) | undefined = poiQueryKindEffective
+		? createPOIExecutor({ lookup: undefined, requiresBuildLocal, resolveOvertureCategories })
+		: undefined
+
+	if (poiQueryKindEffective) {
+		stages.poiIntent = createPOIIntentStage({
+			lookup: poiSubjectLookup,
+			// Inline spread, evaluated at CALL time: the factory's lazy stages (placeCountry,
+			// streetEvidence) mutate `stages` on first run, and this form always sees the final
+			// wiring. classifyKind reverts to the default (no poi lexicon) and poiIntent is
+			// stripped — the recursion guard.
+			parseAnchor: (text, runOpts) =>
+				runPipeline(text, { ...stages, classifyKind: defaultClassifyKind, poiIntent: undefined }, runOpts),
+			// Indirection for the same reason as `parseAnchor`'s spread above: `poiExecute` may be
+			// upgraded (undefined lookup → a real `POILookup`) on the first pipeline call, after this
+			// stage object is already built.
+			execute: (intent) => poiExecute!(intent),
+		})
+	}
+
+	// Default-on lazy wiring: when the caller neither supplied a placeCountry fn nor disabled it
+	// (`false`), load the bundled placer once on the first call and inject it. Done in the returned
+	// (async) function so the factory itself stays synchronous.
+	const autoPlaceCountry = opts.placeCountry === undefined
+	let placeCountryResolved = !autoPlaceCountry
+
+	// #727 phase-4c default-on: with no explicit `streetEvidence` (and not `false`), auto-load the bundled FR index once
+	// on the first call — but ONLY if the classifier ships a span grammar (else there is no k-best to rerank). Resolved
+	// lazily for the same reason placeCountry is: keep the factory synchronous. An explicitly-passed index already
+	// wrapped the classifier above.
+	let streetEvidenceResolved = opts.streetEvidence !== undefined
+
+	// FST-distribution arc: auto-load the weights-package gazetteer (and the check's morphology matcher) on the first
+	// call — same lazy convention (file I/O stays out of the synchronous factory). Skipped entirely on explicit
+	// opt-out (`fst: false`) or when the caller shipped their own matcher.
+	const autoFST = opts.fst === undefined
+	let fstResolved = !autoFST
+	let morphologyResolved = opts.streetMorphology !== undefined
+
+	// Object-form `poiQueryKind` additionally executes against a real `POILookup`. Resolved lazily
+	// (like placeCountry/streetEvidence above) so the factory stays synchronous — opening a sqlite
+	// handle is I/O. Boolean `true` (or an object with no `poiDatabasePath`) has nothing to resolve:
+	// `poiExecute` stays the no-lookup executor built above.
+	const poiDatabasePath = typeof opts.poiQueryKind === "object" ? opts.poiQueryKind.poiDatabasePath : undefined
+	let poiLookupResolved = !poiDatabasePath
+
+	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
+		if (!placeCountryResolved) {
+			placeCountryResolved = true
+			const fn = await loadDefaultPlaceCountry()
+
+			if (fn) {
+				stages.placeCountry = fn
+			}
+		}
+
+		if (!poiLookupResolved && poiDatabasePath) {
+			poiLookupResolved = true
+
+			try {
+				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi")
+				// Read-time WOF ancestry (poiQueryKind register row's second debt payment): lazily loaded
+				// alongside the lookup, same lazy-loader shape as placeCountry/streetEvidence above. A
+				// missing admin gazetteer (no `place_bbox` R*Tree on disk) degrades to `undefined` here —
+				// results still execute, they just carry no `ancestry` key (graceful, same spirit as the
+				// poi.db-missing catch below).
+				const reverseGeocoder = await loadDefaultReverseGeocoder()
+
+				const lookup = new POILookup({ databasePath: resolvePath(poiDatabasePath) })
+				poiNameLookup = createPOINameLookup(lookup)
+
+				poiExecute = createPOIExecutor({
+					lookup,
+					requiresBuildLocal,
+					resolveOvertureCategories,
+					reverseGeocode: reverseGeocoder ? buildSyncReverseGeocode(reverseGeocoder) : undefined,
+				})
+			} catch {
+				// Missing/unreadable poi.db → degrade to the intent-only executor already wired above
+				// (build-local abstain still works; everything else falls back to bare intent).
+			}
+		}
+
+		if (!streetEvidenceResolved) {
+			streetEvidenceResolved = true
+			const grammar = (opts.classifier as Partial<NeuralAddressClassifier> | undefined)?.spanGrammar
+
+			if (grammar) {
+				const evidence = await loadDefaultStreetEvidence()
+
+				if (evidence) {
+					stages.classifier = wrapWithStreetEvidence(opts.classifier, evidence)
+				}
+			}
+		}
+
+		if (!fstResolved) {
+			fstResolved = true
+			const matcher = await autoLoadWeightsFST(opts.classifier)
+
+			if (matcher) {
+				stages.fst = matcher
+			}
+		}
+
+		if (!morphologyResolved) {
+			morphologyResolved = true
+
+			// The check needs BOTH matchers — skip the load when there's no gazetteer for it to condition.
+			if (stages.fst) {
+				const morph = await autoLoadStreetMorphology(opts.classifier)
+
+				if (morph) {
+					stages.streetMorphology = morph
+				}
+			}
+		}
+
+		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call
+		// runOpts value overrides each. hardPlaceCountry is DEFAULT-ON (#743, 2026-06-22): the coverage
+		// safelist confines the hard filter to well-covered countries, so this is a pure win there and a
+		// no-op (soft) for the rest. A caller passes `hardPlaceCountry: false` to opt back out entirely.
+		const factoryHardPlaceCountry = opts.hardPlaceCountry ?? true
+		let effectiveRunOpts = runOpts
+
+		// Propagate the factory pin in BOTH directions (#895): the classifier is default-ON now, so an
+		// explicit factory `false` must reach it — swallowing false would break the opt-out.
+		if (opts.normalizeCase !== undefined && effectiveRunOpts?.normalizeCase === undefined) {
+			effectiveRunOpts = { ...effectiveRunOpts, normalizeCase: opts.normalizeCase }
+		}
+
+		if (factoryHardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {
+			effectiveRunOpts = { ...effectiveRunOpts, hardPlaceCountry: true }
+		}
+
+		if (opts.hardCountrySafelist && effectiveRunOpts?.hardCountrySafelist === undefined) {
+			effectiveRunOpts = { ...effectiveRunOpts, hardCountrySafelist: opts.hardCountrySafelist }
+		}
+
+		return runPipeline(raw, stages, effectiveRunOpts)
+	}
+}
+
+// Re-export the types so consumers don't need to import from both `mailwoman` and `@mailwoman/core/pipeline`.
+// `ParseOpts` lives in `@mailwoman/neural` — re-export here so callers can type-check parse options
+// without reaching into internal workspace packages.
+export type {
+	AddressClassifier,
+	ClassifierOpts,
+	FSTMatcherLike,
+	LocaleHint,
+	MachinePreferences,
+	NormalizedInputLite,
+	PhraseGrouper,
+	PhraseKind,
+	PhraseProposal,
+	PipelineFault,
+	PipelineOpts,
+	PipelineResult,
+	PipelineTiming,
+	QueryKind,
+	QueryKindResult,
+	QueryShapeLite,
+	RuntimePipelineStages,
+} from "@mailwoman/core/pipeline"
+
+export type { ParseOpts } from "@mailwoman/neural"

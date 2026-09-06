@@ -140,7 +140,7 @@ address.
 ## 4. What this changes downstream
 
 - **2b (now):** no change required. The bundle's `evidence_found` union and `coverage_detail` axis
-  states already accommodate additional axes; adding them later is additive, not a re-cut.
+  states already accommodate additional axes; adding them later is additive, not a rebuilt.
 - **3d competition surface:** the three-number progression of §1 becomes the headline output, and the
   benchmark filter is a first-class query parameter.
 - **C5:** the label scraper serves double duty — pricing _and_ availability corroboration.

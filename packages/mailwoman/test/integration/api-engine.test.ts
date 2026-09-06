@@ -21,18 +21,19 @@
  *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
  *   setup work eagerly, so paying that cost once per file (not once per test) matters. Error-path
  *   assertions run unconditionally: the validation-layer 400s never reach the engine, so they pass
- *   whether or not real WOF + shard data is present on this host. Success-path assertions gate on
- *   real WOF + TX shards being present (`describeIfStack`), same as the express predecessor.
+ *   whether or not real WOF + database data is present on this host. Success-path assertions check on
+ *   real WOF + TX databases being present (`describeIfStack`), same as the express predecessor.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
-import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { createServeEngine } from "mailwoman/api-engine"
+import { $public } from "mailwoman/env"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
@@ -42,7 +43,7 @@ const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
 const describeIfStack = describe.skipIf(!hasStack)
 
 /**
- * `/v1/parse` needs only the model weights — gate its own tests independently of the WOF/TX stack above.
+ * `/v1/parse` needs only the model weights — check its own tests independently of the WOF/TX stack above.
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -51,7 +52,7 @@ async function weightsPresent(): Promise<boolean> {
 		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
-		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
 	}
@@ -124,7 +125,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	// (`neural-weights-en-us/model-card.json`) which happens to exist when the suite runs from the repo root, so the
 	// /health assertion below would survive a broken resolution. This one would not.
 	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
-		expect(fileURLToPath(import.meta.resolve("@mailwoman/neural-weights-en-us/model-card.json"))).toBe(
+		expect(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json")).toBe(
 			workspacePath("neural-weights-en-us", "model-card.json")
 		)
 	})
@@ -143,7 +144,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 })
 
 // /v1/parse — native neural output; needs only the model weights, not the gazetteer, so
-// it's gated on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
+// it's conditioned on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(
 	"api-engine — /v1/parse (native neural output)",
@@ -175,9 +176,9 @@ describeIfWeights(
 	60_000
 )
 
-// MARK: Success paths — real WOF + TX shards
+// MARK: Success paths — real WOF + TX databases
 
-describeIfStack("api-engine — success path against real WOF + TX shards", () => {
+describeIfStack("api-engine — success path against real WOF + TX databases", () => {
 	test("POST /v1/geocode: resolves a TX address to a street-level coordinate", async () => {
 		const r = await postJSON("/v1/geocode", { address: "3075 Hill Street, Round Rock, TX 78664" })
 		expect(r.status).toBe(200)
@@ -257,7 +258,7 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 
 		resolved.roots.forEach(walk)
 		const street = flat.find((n) => n.tag === "street")
-		// The resolver service wired its own shards → the street node carries a coordinate tier.
+		// The resolver service wired its own databases → the street node carries a coordinate tier.
 		expect(street?.metadata?.["resolution_tier"]).toBeDefined()
 	}, 60_000)
 })

@@ -51,7 +51,7 @@ mailwoman doctor
 ✓ ONNX runtime: onnxruntime-node loadable
 ✗ Data root: /tmp/mw-trial/mailwoman-data ($MAILWOMAN_DATA_ROOT) does not exist (optional)
     fix: mkdir -p /tmp/mw-trial/mailwoman-data   (or set $MAILWOMAN_DATA_ROOT to an existing dir)
-✗ Admin gazetteer: no candidate.db or WOF shard found (probed 5 paths) (optional)
+✗ Admin gazetteer: no candidate.db or WOF extract found (probed 5 paths) (optional)
     fix: mailwoman data pull candidate
 ✗ POI layer: /tmp/mw-trial/mailwoman-data/poi/poi.db not found (optional)
     fix: mailwoman gazetteer build poi   (or: mailwoman data pull poi)
@@ -145,6 +145,7 @@ npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 	"lat": 40.694457,
 	"lon": -73.93045,
 	"resolution_tier": "admin",
+	"epistemic_status": "observed",
 	"uncertainty_m": null,
 	"locality": "New York",
 	"region": "NY",
@@ -202,6 +203,7 @@ npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris"
 	"lat": 48.856599,
 	"lon": 2.342841,
 	"resolution_tier": "admin",
+	"epistemic_status": "observed",
 	"uncertainty_m": null,
 	"locality": "Paris",
 	"region": null,
@@ -262,7 +264,7 @@ rather than reproduce. Same input, same machine:
 Paris, Texas. The tempting reading is that the older backend ranks worse, and it is wrong. What
 produced Texas is the **country filter**, not the ranking: `--locale` defaults to `en-US`, `en-US`
 implies `--default-country US`, and that filter is applied on the older backend and not on this one.
-Cross the two levers and the confound comes apart (measured 2026-08-04, this gazetteer, this model):
+Cross the two changes and the confound comes apart (measured 2026-08-04, this gazetteer, this model):
 
 | backend             | country filter US                      | no country filter |
 | ------------------- | -------------------------------------- | ----------------- |

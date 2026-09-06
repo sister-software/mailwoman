@@ -61,7 +61,7 @@ USA, Inc." to AlTi Global, Inc. at 0.829 and "WideOpenWest, Inc." to WidePoint
 Corp at 0.886. Neither is a telecom company.
 
 This run used `cik-lookup-data.txt` (130× the ticker file) plus the SIC
-corroboration gate plus five operator pins. Both false matches were excluded;
+corroboration check plus five operator pins. Both false matches were excluded;
 both registrants resolved correctly.
 
 | query                | resolved CIK | SIC  | how                                    |

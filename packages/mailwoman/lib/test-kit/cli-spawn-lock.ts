@@ -1,0 +1,110 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Serialize CLI spawns across vitest workers.
+ *
+ *   Vitest runs test FILES in parallel across forked workers, and several suites spawn the compiled CLI as a child.
+ *   One spawn costs ~5.6 s wall, 541 MB and 11 threads on a 16-core box — 2.7 s of it node boot and the CLI's import
+ *   graph, before any model loads — so a handful in parallel saturate the machine and every one of them slows down.
+ *
+ *   A lock rather than a vitest concurrency setting: the constraint is a property of the CHILD process, which the
+ *   runner cannot see. Timeouts alone buy margin without stopping the stacking.
+ *
+ *   The lock is a DIRECTORY, because `mkdir` is atomic on every platform we run on and needs no dependency. It carries
+ *   the holder's pid so a crashed worker's lock can be reclaimed rather than wedging the suite, and it always releases
+ *   in a `finally` — a leaked test lock turns one failure into a whole-suite timeout.
+ *
+ *   The lock is async because every caller now awaits its spawn: acquisition sleeps between probes rather than
+ *   blocking a thread.
+ */
+
+import { tempRootPath } from "@mailwoman/core/data-root"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectoryExclusive, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { sleep } from "@mailwoman/core/utils/sleep"
+import { join } from "path-ts"
+
+const LOCK_DIR = tempRootPath("mailwoman-cli-spawn.lock")
+const PID_FILE = join(LOCK_DIR, "pid")
+
+/**
+ * How long to wait for the lock before giving up and running anyway. Deliberately generous relative to a spawn (~6 s)
+ * and deliberately NOT infinite: a wedged lock must degrade to the old contended behaviour, never to a hang that reads
+ * as a mysterious suite timeout.
+ */
+const ACQUIRE_TIMEOUT_MS = 120_000
+const POLL_MS = 50
+
+/**
+ * Remove the lock directory, tolerating every failure.
+ *
+ * Two workers can race here — one reclaiming a stale lock while its holder releases, or two reclaiming at once — and
+ * the removal throws ENOTEMPTY when the pid file is rewritten between its scan and the rmdir. A lock whose BOOKKEEPING
+ * can throw is worse than no lock: it turns contention into a test failure in whichever suite happened to be holding
+ * it. A failed removal degrades to the next acquirer reclaiming it as stale, which is already the recovery path.
+ */
+async function releaseQuietly(): Promise<void> {
+	try {
+		await removePathIfPresent(LOCK_DIR)
+	} catch {
+		// Another worker is mid-removal or mid-write; its stale check will reclaim.
+	}
+}
+
+async function staleHolder(): Promise<boolean> {
+	try {
+		const pid = Number.parseInt(await readLocalTextFile(PID_FILE), 10)
+
+		if (!Number.isInteger(pid) || pid <= 0) return true
+		// Signal 0 tests for existence without delivering anything.
+		process.kill(pid, 0)
+
+		return false
+	} catch {
+		// Unreadable pid file, or a pid that no longer exists — either way the holder is gone.
+		return true
+	}
+}
+
+/**
+ * Run `fn` with the CLI-spawn lock held. Always releases, including when `fn` throws.
+ *
+ * Async because every caller now awaits its spawn: acquisition sleeps between probes rather than blocking a thread, and
+ * the release is awaited in `finally`.
+ */
+export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T> {
+	const deadline = Date.now() + ACQUIRE_TIMEOUT_MS
+	let held = false
+
+	// The catch path sleeps and retries; only a successful mkdir breaks out. oxlint reads the try/break as
+	// the loop's sole exit and misses the fallthrough, the same false positive packages/release-kit/lib/release/bless-package.ts
+	// suppressed for its OTP retry. The directive must sit immediately above the loop — on a multi-line
+	// note it lands on the next COMMENT line and silently does nothing.
+	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
+	while (Date.now() < deadline) {
+		try {
+			await makeDirectoryExclusive(LOCK_DIR)
+			await writeLocalTextFile(String(process.pid), PID_FILE)
+			held = true
+
+			break
+		} catch {
+			if (await staleHolder()) {
+				await releaseQuietly()
+
+				continue
+			}
+
+			await sleep(POLL_MS)
+		}
+	}
+
+	try {
+		return await fn()
+	} finally {
+		if (held) {
+			await releaseQuietly()
+		}
+	}
+}

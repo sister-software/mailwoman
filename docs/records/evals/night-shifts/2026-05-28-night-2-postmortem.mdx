@@ -58,7 +58,7 @@ The pattern I fell into was: "training launched → schedule check-in → wait �
 
 I uploaded v0.6.1 to HF before running the full error analysis. By the time I saw the locality -8.6pp regression, the artifact was already at `en-us/v0.6.1/*`. I rationalized it as "experimental, not default" but **the right discipline is: don't upload anything I'd be unhappy to promote.**
 
-Per DeepSeek: the gap isn't that v0.6.1 shipped — it's that the eval-vs-baseline check came after the upload, not before. A pre-publish gate (block on any tag regressing >2pp without explicit override) would have caught it. The `before/after` per-tag table should land in the commit body, not in a separate doc.
+Per DeepSeek: the gap isn't that v0.6.1 shipped — it's that the eval-vs-baseline check came after the upload, not before. A pre-publish check (block on any tag regressing >2pp without explicit override) would have caught it. The `before/after` per-tag table should land in the commit body, not in a separate doc.
 
 **Specifically:** the demo presets all passed (11/11), but demo presets are a happy-path check. Hostile examples like "6220 SE Salmon St" still came out as monolithic street — I noticed this and _ignored it_ because the upload was already in flight.
 
@@ -79,7 +79,7 @@ I shipped v0.6.0 CE-only because CRF training NaN'd twice. The hypothesis (bf16 
 
 When asked what a `/night-shift` skill should encode, DeepSeek's answer (verbatim):
 
-> 1. **Pre-publish eval gate** — run `eval-model` against the current release baseline; abort if any tag regresses >2pp. Would've caught the v0.6.1 locality drop before it went out.
+> 1. **Pre-publish eval check** — run `eval-model` against the current release baseline; abort if any tag regresses >2pp. Would've caught the v0.6.1 locality drop before it went out.
 > 2. **Comparative diff report** — every model change ships with a `before/after` per-tag accuracy table in the commit body. The -8.6pp locality number is good; the fact that it shipped _as_ a release rather than a labeled experiment is the gap.
 > 3. **Shift artifact** — wrap with a structured handoff note (what shipped, what regressed, open questions, next steps) committed to a known path. You got the data; the skill just codifies _where_ it lands so the next shift doesn't start cold.
 

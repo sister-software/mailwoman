@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixture-scale guard for the GeoNames-postal tail reproducer. The real gate is per-country row-count
+ *   Fixture-scale guard for the GeoNames-postal tail reproducer. The real check is per-country row-count
  *   parity against the frozen 946 MB artifact (see the module docstring); this holds the three things
- *   that gate cannot express cheaply — the #920 name law survives a rebuild, a country with no dump is
+ *   that eval cannot express cheaply — the #920 name law survives a rebuild, a country with no dump is
  *   REPORTED rather than silently zeroed, and the provenance `meta` table actually reaches the sealed
  *   artifact carrying source md5s.
  */
@@ -12,12 +12,12 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { join } from "@mailwoman/platform/path"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
 import { buildPostcodeGeonamesTail } from "mailwoman/gazetteer-pipeline/postcode/geonames-tail"
+import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory
@@ -105,7 +105,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	const anc = db.prepare("SELECT COUNT(*) AS n FROM ancestors").get() as { n: number }
 	expect(anc.n).toBe(3)
 
-	// Provenance travels IN the artifact — the licence obligation the frozen shard never carried.
+	// Provenance travels IN the artifact — the licence obligation the frozen database never carried.
 	const meta = new Map(
 		(db.prepare("SELECT key, value FROM meta").all() as Array<{ key: string; value: string }>).map((r) => [
 			r.key,
@@ -121,7 +121,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten, in its ingest order", () => {
-	// Order is recovered from the frozen shard's per-country spr.id ranges and is what makes a rebuild
+	// Order is recovered from the frozen database's per-country spr.id ranges and is what makes a rebuild
 	// id-comparable to it. GB last, and PRESENT — the docstrings that said eight or nine were wrong.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).toEqual(["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"])
 })

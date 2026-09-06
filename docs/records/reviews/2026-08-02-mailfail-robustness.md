@@ -3,7 +3,7 @@
 **Date:** 2026-08-02 · **Scope:** what the shipped stack does with input that is not an address.
 Read-only investigation; no production code changed. 111 probe inputs across seven classes, run on
 four paths, with the fixture committed at
-`mailwoman/eval-harness/fixtures/mailfail.jsonl` so these cases can become a gate.
+`mailwoman/eval-harness/fixtures/mailfail.jsonl` so these cases can become a check.
 
 ---
 
@@ -397,7 +397,7 @@ the time is flat at 0.1–0.6 ms with no growth. Ruled out; recording it so nobo
   behaviour. Neither reached a query engine in a way this investigation examined, and no claim is
   made about injection safety.
 - **The `size` class in the committed fixture is truncated.** Rows above ~10 KB are generated, not
-  committed — a 1 MB JSONL line is a hostile artifact for a test gate. The generator lives in
+  committed — a 1 MB JSONL line is a hostile artifact for a test check. The generator lives in
   `scripts/diagnostic/mailfail-probes.ts` (gitignored).
 
 ---

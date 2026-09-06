@@ -1,0 +1,13 @@
+{
+	"privateNameShadows": 31,
+	"asNever": 0,
+	"doubleCast": 5,
+	"deepRelativeImports": 0,
+	"filterBoolean": 0,
+	"productionFilesOver1000Lines": 0,
+	"selfPackageImports": 0,
+	"synchronousFilesystemCalls": 0,
+	"bannedVocabulary": 0,
+	"rawNULBytes": 0,
+	"handRolledTreeWalks": 0
+}

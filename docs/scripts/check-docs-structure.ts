@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Docs structural gate (docs-architecture cleanup, Phase 4; frontmatter contract rewrite, docs-reorg
+ *   Docs structural check (docs-architecture cleanup, Phase 4; frontmatter contract rewrite, docs-reorg
  *   Phase 0 task 2). Static frontmatter parse only — no install, no Docusaurus build — so it runs in
  *   seconds as the first step of the Docs workflow (`.github/workflows/docs-build.yml`) and locally
  *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check-docs-structure.ts`
@@ -34,7 +34,7 @@
 
 // Node builtins on purpose. The "Docs structure checks" step in .github/workflows/docs-build.yml runs this before
 // `yarn install`, so there is no node_modules and a workspace specifier cannot resolve.
-// scripts/preinstall-scripts.test.ts holds this whole import graph to builtins and relative paths.
+// packages/repo-health/test/unit/preinstall-scripts.test.ts holds this whole import graph to builtins and relative paths.
 // oxlint-disable-next-line typescript/no-restricted-imports -- runs before `yarn install`; see above
 import { parseArgs } from "node:util"
 

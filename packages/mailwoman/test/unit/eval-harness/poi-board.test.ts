@@ -26,6 +26,7 @@ import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
+const probeDefinition = await loadProbeDefinition()
 
 function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
 	return { path: "poi", poiIntent }
@@ -365,7 +366,7 @@ describe("the committed poi-board fixture set", () => {
 		}
 	})
 
-	it("gates at least one locale-synonym case to an exact locale, and at least one is ungated", () => {
+	it("checks at least one locale-synonym case to an exact locale, and at least one is unrestricted", () => {
 		const withLocale = fixtures.filter((f) => f.locale)
 
 		expect(withLocale.length).toBeGreaterThanOrEqual(1)
@@ -403,7 +404,7 @@ describe("the committed poi-board fixture set", () => {
 		}
 	})
 
-	it("carries at least 4 brand cases: brand+anchor results, locale-gated slang, and a bare-brand abstain", () => {
+	it("carries at least 4 brand cases: brand+anchor results, locale-restricted slang, and a bare-brand abstain", () => {
 		const brandResults = fixtures.filter((f) => f.expect.kind === "results" && f.expect.brandWikidata !== undefined)
 
 		expect(brandResults.length).toBeGreaterThanOrEqual(4)
@@ -628,7 +629,7 @@ describe("the tracked-row convention", () => {
 })
 
 describe("the promoted semantic-utility family (#1960)", () => {
-	const definition = loadProbeDefinition()
+	const definition = probeDefinition
 	const promoted = fixtures.filter((f) => f.rowRef?.startsWith("semantic-utility/probe-definition.json#"))
 
 	it("promotes all four frozen target rows, and nothing else", () => {

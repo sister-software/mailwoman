@@ -69,7 +69,7 @@ on the same field.
 
 ```ts
 // `score` stays the RAW population rank (`-neg_rank`) — it feeds the resolver walk's absolute
-// `minWinningScore` gate (`resolve.ts`), which must see real prominence, never a penalized value.
+// `minWinningScore` check (`resolve.ts`), which must see real prominence, never a penalized value.
 score: -Number(row.neg_rank),          // candidate-lookup.ts:482
 ```
 

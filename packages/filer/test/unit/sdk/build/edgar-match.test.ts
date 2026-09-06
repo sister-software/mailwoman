@@ -9,8 +9,6 @@
  *   the name pairs that produced them.
  */
 
-import { describe, expect, it } from "vitest"
-
 import {
 	EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS,
 	EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME,
@@ -18,7 +16,8 @@ import {
 	groupFRNsByCanonicalLegalName,
 	scoreEdgarSubsidiaryMatch,
 	strippedDesignationKey,
-} from "#sdk/build/edgar-match"
+} from "@mailwoman/filer/sdk/build/edgar-match"
+import { describe, expect, it } from "vitest"
 
 describe("strippedDesignationKey", () => {
 	it("sorts the deleted tokens, so token ORDER cannot make two equal names differ", () => {

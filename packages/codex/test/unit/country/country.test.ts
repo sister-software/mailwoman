@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { countrySurfaceForms, isCountryToken, matchCountry } from "@mailwoman/codex/country/country"
+import { countrySurfaceForms, isCountryToken, matchCountry } from "@mailwoman/codex/country"
 import { expect, test } from "vitest"
 
 test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {

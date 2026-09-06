@@ -1,6 +1,7 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		// The Ink commands are TSX — this package runs on Node AND renders JSX, so it declares
 		// the transform itself rather than inheriting one every non-rendering package would also get.
 		"jsx": "react-jsx",
@@ -9,12 +10,13 @@
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
-	"include": ["./**/*"],
+	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"references": [
 		{ "path": "../sqlite" },
 		{ "path": "../api" },
 		{ "path": "../api-kit" },
+		{ "path": "../evidence" },
 		{ "path": "../bdc" },
 		{ "path": "../coastal" },
 		{ "path": "../core" },
@@ -24,7 +26,7 @@
 		{ "path": "../resolver" },
 		{ "path": "../corpus" },
 		{ "path": "../kind-classifier" },
-		{ "path": "../locale-gate" },
+		{ "path": "../locale-hint" },
 		{ "path": "../match" },
 		{ "path": "../neural" },
 		{ "path": "../normalize" },

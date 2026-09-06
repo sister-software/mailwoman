@@ -31,7 +31,7 @@ This also retires an older open question. Direction D imagined a coarse-placer t
 
 The seductive idea is to throw out the semantic tags and have the parser emit positional levels (`L0…Ln`) that the convention names per locale. It's elegant and would serve every future country. It is also the highest-regret move on the board: it detonates four working locales, forces a from-scratch retrain plus a resolver-contract rewrite, with NL's 94.9% to re-earn from zero — and it breaks on partial queries, where the level _index_ of a bare "Berlin" is undefined until you've already resolved the country. We are **not** doing that, and Phase 3 below exists only to record the regression check that would ever reopen it.
 
-The additive cut that buys ~80% of the value with zero regression risk: keep every existing semantic tag, and add exactly one new multi-valued tag — **`locator[]`** — for sub-locality spatial units that aren't a Western street + number (chōme/banchi/gō, grid coordinates, block numbers). Street-based countries never emit it; block-based countries never emit `street`; the convention maps `locator[]` per locale. DE/FR/GB/NL never reference it, so they cannot regress.
+The additive reduce that buys ~80% of the value with zero regression risk: keep every existing semantic tag, and add exactly one new multi-valued tag — **`locator[]`** — for sub-locality spatial units that aren't a Western street + number (chōme/banchi/gō, grid coordinates, block numbers). Street-based countries never emit it; block-based countries never emit `street`; the convention maps `locator[]` per locale. DE/FR/GB/NL never reference it, so they cannot regress.
 
 ## Make it less special: Japan, South Korea, Taiwan together
 
@@ -43,7 +43,7 @@ Building only for Japan would bake Japanese quirks into something we'd call "gen
 
 **Phase 1 — resolver-side, additive, reversible, no parser change.** This is largely _reshaping what we already have_ — `addressing-conventions.json` is a primitive convention table, and coordinate-first _is_ `postcode_area_resolution` — into the general form, then adding rows for JP/KR/TW. Delivers coarse locality geocoding off the postcode alone, the same trick that got Dutch-OOD NL to 94.9%. Pure resolver work, the part of the stack that has never bitten us.
 
-**Phase 2 — parser-side, additive, gated.** Teach the parser to emit `locator[]` from a handful of JP/KR/TW examples. Existing tags untouched, model rollback-able. This inherits every retrain fragility we've hit (the German end-of-string collapse, the PR3 negative), so it's gated on per-locale-F1 + resolver utility exactly like every other retrain, and Phase 1 must prove the engine first.
+**Phase 2 — parser-side, additive, conditional.** Teach the parser to emit `locator[]` from a handful of JP/KR/TW examples. Existing tags untouched, model rollback-able. This inherits every retrain fragility we've hit (the German end-of-string collapse, the PR3 negative), so it's blocked on per-locale-F1 + resolver utility exactly like every other retrain, and Phase 1 must prove the engine first.
 
 **Phase 3 — deferred, decision-only.** Revisit `L0…Ln` _only_ if onboarding more systems (India, China, …) proves the additive scheme insufficient — by then with real data and a mature engine, as a migration rather than a leap.
 
@@ -67,6 +67,6 @@ Seed strategy registry: `postcode_area_resolution`, `block_area_lookup`, `inters
 ## Pre-registered decision rules
 
 - **Phase 1 promotion:** a locale ships when postcode-route PIP-containment clears ~85% on a real OA sample, with no regression to DE/FR/GB/NL (the existing coordinate-first numbers are byte-stable).
-- **Phase 2 gate:** the `locator[]` fine-tune promotes only on per-locale-F1 + resolver utility, and never if it drops an existing locale >2pp. Default to not promoting; live on Phase 1's coarse win.
+- **Phase 2 check:** the `locator[]` fine-tune promotes only on per-locale-F1 + resolver utility, and never if it drops an existing locale >2pp. Default to not promoting; live on Phase 1's coarse win.
 - **The `locator[]` shape, the first-ship scope, and the convention-asset format are open forks** to settle at Phase 1 kickoff (plain ordered slot vs typed; JP-only branch vs general refactor; WOF-id-keyed read-only sqlite asset like `postcode-locality-intl.db`).
 - **Phase 3 regression check (the only thing that reopens `L0…Ln`):** the additive `locator[]` scheme fails to express a newly-onboarded system _as data_ and forces per-country parser-output post-processing in ≥2 locales.

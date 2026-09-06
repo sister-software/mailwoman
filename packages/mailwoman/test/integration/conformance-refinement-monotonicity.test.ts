@@ -15,7 +15,7 @@
  *   WHAT THIS LEG ADDS OVER THE FAST ONE. The unit legs prove the instrument reads a candidate table
  *   correctly and that every chain is corpus-attested, both without loading anything. Neither can produce a
  *   candidate table, and the table is the whole subject: the fetch window, the country scope, the hierarchy
- *   path and the `gates` are things the resolver decides at run time, and no synthetic trace can attest what
+ *   path and the `checks` are things the resolver decides at run time, and no synthetic trace can attest what
  *   the shipped walk actually does with them.
  *
  *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT, AND CANNOT GO GREEN ON A BLIND ONE. `runConformanceCommand`
@@ -27,8 +27,8 @@
  *   is the refinement leg.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
 import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
@@ -40,8 +40,8 @@ import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK THE RESOLVER — see the module docstring, and `v1-parse-gate.test.ts`, which carries the incident.
-		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
+		// ASK THE RESOLVER — see the module docstring, and `v1-parse-eval.test.ts`, which carries the incident.
+		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
 	}

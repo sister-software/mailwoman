@@ -30,8 +30,9 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dirname, join } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { join } from "path-ts"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 
@@ -58,7 +59,7 @@ export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	gazetteer: "Builds every gazetteer artifact, including the candidate and admin databases.",
 	gnaf: "Assembles the Australian G-NAF address register.",
 	placer: "Trains and evaluates the coarse country placer.",
-	release: "Stages model weights for a release.",
+	release: "Stages model weights for a release and admin-merges a pull request behind its guards.",
 	situs: "Builds the US rooftop address-point and interpolation databases.",
 	tiger: "Processes US Census TIGER/Line road and boundary data.",
 	tiles: "Publishes vector tiles to the demo map's bucket.",
@@ -172,7 +173,7 @@ function renderFlag(name: string, option: OptionSpec): string {
 /**
  * The `Default` column. Absolute paths are suppressed: `geocode --data-root` defaults to the resolved data root, so
  * printing the value would bake the generating machine's filesystem into a published page. Each such flag's description
- * already names the variable it reads.
+ * already states which variable it reads.
  */
 export function renderDefault(value: unknown): string {
 	if (value === undefined) return "—"
@@ -195,7 +196,7 @@ export function renderDefault(value: unknown): string {
 /**
  * Make a source-authored help string safe as MDX table-cell text. Docusaurus compiles `.mdx` through micromark's JSX
  * extension, so a bare `<address>` is an element and a bare `{ checks: [...] }` is an expression — both build-breaking
- * or content-eating (the class `mailwoman dev lint mdx-angles` gates). Entities render as the literal characters and
+ * or content-eating (the class `mailwoman dev lint mdx-angles` catches). Entities render as the literal characters and
  * cannot be parsed as syntax. The pipe escape is the table's own requirement, and the asterisk escape is `oxfmt`'s: a
  * literal `*` in prose (`place_bbox R*Tree`) is emphasis syntax, and leaving it raw makes the emitted file fail
  * `--check`.
@@ -276,7 +277,10 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-const packagePath = dirname(fileURLToPath(new URL(import.meta.resolve("mailwoman"), import.meta.url)))
+// The PACKAGE ROOT, not the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
+// answered the same thing only while the entry sat at the package root; once source moved under `lib/` it started
+// answering `mailwoman/lib`, and the `out/` joins below silently became `mailwoman/lib/out/…`.
+const packagePath = resolvePackageDirectory("mailwoman")
 
 /**
  * The compiled command tree this generator reads, resolved from this file rather than a working directory so the script
@@ -329,7 +333,7 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 			collectCommands(child, [name], commands)
 		}
 
-		// A group whose own index.tsx is a command (`corpus shard`) contributes it too.
+		// A group whose own index.tsx is a command (`corpus extract`) contributes it too.
 		if (node.component) {
 			collectCommands({ ...node, commands: undefined }, [], commands)
 		}
@@ -466,7 +470,7 @@ export function renderCLIReference(surface: CLISurface): string {
 		"",
 		"- A flag written `--no-<name>` is on by default. Pass it to turn the behavior off.",
 		"- A default shown as `environment-dependent` resolves from the environment at run time. The flag's",
-		"  description names the variable it reads.",
+		"  description states which variable it reads.",
 		"- A value in angle brackets in a synopsis is required. A value in square brackets is optional.",
 		"",
 		"Commands are shown here, not run. For executed invocations with their real output, follow the",
@@ -485,7 +489,7 @@ export function renderCLIReference(surface: CLISurface): string {
 	sections.push(
 		"## Exit codes",
 		"",
-		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/cli-kit`.",
+		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/lib/cli-kit`.",
 		"",
 		renderTable(
 			["Code", "Meaning", "Next step"],
@@ -552,7 +556,7 @@ export function renderCLIReference(surface: CLISurface): string {
 /**
  * The page this generator owns.
  */
-export const OUTPUT_PATH = fileURLToPath(new URL("../articles/developers/reference/cli.mdx", import.meta.url))
+export const OUTPUT_PATH = repoRootPath("docs", "articles", "developers", "reference", "cli.mdx")
 
 /**
  * Render the page and write it. Returns the rendered text so a caller can compare rather than write.

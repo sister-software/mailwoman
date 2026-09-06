@@ -3,7 +3,7 @@
 # STAGED, NOT LAUNCHED. The ls=0.1 run (v0_7_0-calibration-label-smoothing.yaml)
 # reduced overconfidence-on-wrong 86.3%→66.6% but did NOT improve the primary
 # harness pass rate (14.6%→13.8%) and regressed house_number recall −6.0pp and
-# street −2.9pp on the held-out TEST (>2pp gate). See the night-3 postmortem §0c.
+# street −2.9pp on the held-out TEST (>2pp check). See the night-3 postmortem §0c.
 #
 # Hypothesis for this iteration: ls=0.1 over-smoothed, flattening the target
 # enough to cost recall on the confident-correct tags (house_number, street).

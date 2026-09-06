@@ -23,8 +23,10 @@ import math
 import random
 import shutil
 import time
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any, cast
 
 import torch
 from torch.optim import AdamW
@@ -32,7 +34,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
 from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, ID_TO_LOCALE, LABEL_TO_ID
+from .labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 
@@ -44,7 +46,7 @@ def _set_seed(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
+def _to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
     tb = {
         "input_ids": torch.tensor(batch["input_ids"], dtype=torch.long, device=device),
         "attention_mask": torch.tensor(batch["attention_mask"], dtype=torch.long, device=device),
@@ -183,7 +185,7 @@ def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> 
 
 
 def _linear_cooldown(optimizer: AdamW, cooldown_start: int, max_steps: int) -> LambdaLR:
-    """WSD-style decay branch (2026-08-10 recipe review, lever 11).
+    """WSD-style decay branch (2026-08-10 recipe review, setting 11).
 
     Resume a mid-schedule checkpoint at ``cooldown_start`` with the config's ``learning_rate``
     set to that checkpoint's CURRENT (tail) LR: the multiplier holds 1.0 through the start, so
@@ -215,7 +217,7 @@ def _constant_with_warmup(optimizer: AdamW, warmup_steps: int) -> LambdaLR:
 
 
 def build_optimizer(
-    model,
+    model: Any,
     *,
     learning_rate: float,
     weight_decay: float,
@@ -231,7 +233,7 @@ def build_optimizer(
     group lets the head run at ~1e-3 while the encoder keeps its gentle 1e-5.
 
     `classifier_learning_rate` carves the output head (`classifier.`) into its own group —
-    the dead-tag resurrection lever (#456/#1100): a re-initialized output row (see
+    the dead-tag resurrection setting (#456/#1100): a re-initialized output row (see
     `reinit_label_rows`) cannot climb out of a baked-negative neighborhood at the encoder's
     fine-tune LR, and Adam's gradient scale-invariance rules out hook-based row scaling.
 
@@ -255,7 +257,7 @@ def build_optimizer(
     clobber them.
 
     The "rest" (base) group is skipped entirely when empty — e.g. `train.trainable_only_prefixes`
-    (the cRT probe lever) freezes every param outside a carve-out prefix, so once that prefix is
+    (the cRT probe setting) freezes every param outside a carve-out prefix, so once that prefix is
     also carved out here nothing remains for "rest". `AdamW`/`LambdaLR` both tolerate a
     zero-params group fine (constructed, stepped, and state_dict-round-tripped clean in testing —
     a single shared `lr_lambda` is applied per group regardless of param count), so this is a
@@ -315,7 +317,7 @@ def build_optimizer(
     return AdamW(groups, lr=learning_rate, weight_decay=weight_decay), labels
 
 
-def reinit_label_rows(model, labels: list[str]) -> None:
+def reinit_label_rows(model: Any, labels: list[str]) -> None:
     """Reset the named BIO labels' classifier rows (weight + bias) to the mean of the LIVE rows.
 
     The dead-tag mechanism: init_from a checkpoint where a tag never fires leaves its output
@@ -334,7 +336,7 @@ def reinit_label_rows(model, labels: list[str]) -> None:
     print(f"[reinit_label_rows] rows {rows} ← live-row mean ({labels})")
 
 
-def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
+def _build_scheduler(optim: AdamW, cfg_train: Any) -> LambdaLR:
     schedule = getattr(cfg_train, "lr_schedule", "cosine")
     if schedule == "constant":
         return _constant_with_warmup(optim, cfg_train.warmup_steps)
@@ -477,7 +479,7 @@ def _cross_pollution(
     (``B-locality`` / ``B-region``) are predicted as a POSTCODE label (``B-`` / ``I-postcode``).
 
     Overall, plus per-locale when ``row_locale_ids`` (one id per sequence) is supplied. The
-    pre-registered PR3 gate wants this under 1% per locale by 20k steps — it is the direct readout
+    pre-registered PR3 check wants this under 1% per locale by 20k steps — it is the direct readout
     of a city's lead token bleeding into the postcode span, the failure self-conditioning exists to
     stop. Returns an empty dict when the val sample contains no city/region-start tokens.
     """
@@ -507,16 +509,42 @@ def _cross_pollution(
     return out
 
 
+def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequence[str]) -> list[str | int]:
+    """The train_log.csv eval row, one `f1.<tag>` cell per tag of the ACTIVE LABEL SET.
+
+    The header is written from the run's label set, so the row must be too: a row built from the
+    default 16-tag list against a 35-tag ``stage3-cjk`` header left every JP fine tag and
+    ``locality_unit`` unreadable and shifted the cells that were present under the wrong names. A tag
+    with no val support writes an empty cell so a chart draws a gap, not a zero.
+    """
+    cells: list[str | int] = [
+        step,
+        f"{elapsed:.1f}",
+        "",
+        "",
+        f"{val.get('val_loss', float('nan')):.6f}",
+        f"{val.get('macro_f1', 0.0):.6f}",
+    ]
+    for tag in tags:
+        supported = int(val.get(f"support_tag.{tag}", 0)) > 0
+        cells.append(f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" if supported else "")
+    return cells
+
+
 @torch.no_grad()
 def _eval_val(
     cfg: Config,
-    tokenizer: Tokenizer,
+    tokenizer: Tokenizer | None,
     model: torch.nn.Module,
     device: torch.device,
     max_rows: int | None,
 ) -> dict[str, float]:
     """Streaming val-set eval. Returns mean val loss + token-level macro F1 + (PR3) the
-    cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on."""
+    cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
+
+    ``tokenizer`` is None on the char path (``char_mode: char`` skips SentencePiece entirely) and
+    ``iter_batches`` encodes per character in that case; the val eval runs there like the train loop
+    does. A guard that refused a None tokenizer here stopped every char-mode run at its first eval."""
     model.eval()
     loss_total = 0.0
     seen_batches = 0
@@ -569,11 +597,11 @@ def save_checkpoint(
     model: torch.nn.Module,
     output_dir: Path,
     step: int,
-    extras: dict,
+    extras: dict[str, Any],
     *,
     optim: torch.optim.Optimizer | None = None,
-    scheduler: torch.optim.lr_scheduler._LRScheduler | None = None,
-    rng_state: dict | None = None,
+    scheduler: Any = None,
+    rng_state: dict[str, Any] | None = None,
 ) -> Path:
     """Save model + optimizer + scheduler + RNG state into ``output_dir/step-XXXXX/``.
 
@@ -594,7 +622,7 @@ def save_checkpoint(
     tmp.mkdir(parents=True)
     try:
         if hasattr(model, "save_pretrained"):
-            model.save_pretrained(tmp)  # type: ignore[arg-type]
+            cast(Any, model).save_pretrained(tmp)
         else:
             torch.save(model.state_dict(), tmp / "pytorch_model.bin")
         if optim is not None:
@@ -658,9 +686,10 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     if char_mode != "off":
         from .char_tokenizer import load_char_vocab
 
-        if not getattr(cfg.data, "char_vocab_path", None):
+        char_vocab_path = getattr(cfg.data, "char_vocab_path", None)
+        if not char_vocab_path:
             raise ValueError("data.char_mode requires data.char_vocab_path")
-        char_vocab_size = len(load_char_vocab(cfg.data.char_vocab_path))
+        char_vocab_size = len(load_char_vocab(char_vocab_path))
         tokenizer = None
         print(f"char_mode={char_mode}: char_vocab_size={char_vocab_size}, SentencePiece path skipped")
     else:
@@ -738,14 +767,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     # match stays trainable. Mirrors the freeze_encoder idiom above (explicit filtered param list,
     # loud count print, raise-if-empty). Mutually exclusive with freeze_encoder/freeze_token_embeddings:
     # all three exclude parts of the encoder from training, and combining them would make "which
-    # lever produced the effect" ambiguous. See build_optimizer for the empty-base-group handling
-    # this lever provokes when paired with a `classifier_learning_rate` carve-out (rest becomes empty).
+    # setting produced the effect" ambiguous. See build_optimizer for the empty-base-group handling
+    # this setting provokes when paired with a `classifier_learning_rate` carve-out (rest becomes empty).
     trainable_only_prefixes = tuple(getattr(cfg.train, "trainable_only_prefixes", []) or [])
     if trainable_only_prefixes:
         if getattr(cfg.train, "freeze_encoder", False) or getattr(cfg.train, "freeze_token_embeddings", False):
             raise ValueError(
                 "train.trainable_only_prefixes is mutually exclusive with freeze_encoder/"
-                "freeze_token_embeddings — combining them makes lever attribution ambiguous"
+                "freeze_token_embeddings — combining them makes setting attribution ambiguous"
             )
         frozen = trainable = 0
         for name, p in model.named_parameters():
@@ -797,14 +826,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         resume_from_path = Path(resume_from)
         opt_p = resume_from_path / "optimizer.pt"
         if opt_p.is_file():
-            optim.load_state_dict(torch.load(opt_p, weights_only=False))
+            optim.load_state_dict(torch.load(opt_p, weights_only=False))  # nosec B614 — resume loads optimizer state WE wrote under this output_dir
         ts_p = resume_from_path / "training_state.json"
         if ts_p.is_file():
             ts = json.loads(ts_p.read_text(encoding="utf-8"))
             resume_step = int(ts.get("step", 0))
             # Resume-drift audit (#480): every config field that differs from the checkpoint's
             # stamped state is printed LOUDLY. Deliberate resume-with-changes is the campaign's
-            # lever pattern (Run A/C); UNNOTICED drift is the Run-B-class confound. Visibility,
+            # setting pattern (Run A/C); UNNOTICED drift is the Run-B-class confound. Visibility,
             # not prohibition.
             saved_cfg = ts.get("config", {})
             live_cfg = {"data": asdict(cfg.data), "model": asdict(cfg.model), "train": asdict(cfg.train)}
@@ -825,7 +854,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 print("[resume-drift] none — live config matches the checkpoint's stamped state")
         sched_p = resume_from_path / "scheduler.pt"
         if sched_p.is_file():
-            scheduler.load_state_dict(torch.load(sched_p, weights_only=False))
+            scheduler.load_state_dict(torch.load(sched_p, weights_only=False))  # nosec B614 — same trusted checkpoint dir as the optimizer load above
         else:
             # Pre-resume-feature checkpoint: scheduler.pt didn't exist. Fast-forward the
             # scheduler so LR is correct for the resumed step. ``scheduler.step()`` is cheap.
@@ -852,10 +881,11 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         from .fisher import EWCPenalty
 
         ewc_reference = getattr(cfg.train, "ewc_reference", None) or getattr(cfg.train, "init_from", "")
-        if not getattr(cfg.train, "ewc_fisher_path", None) or not ewc_reference:
+        ewc_fisher_path = getattr(cfg.train, "ewc_fisher_path", None)
+        if not ewc_fisher_path or not ewc_reference:
             raise ValueError("train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from")
         ewc = EWCPenalty(
-            cfg.train.ewc_fisher_path,
+            ewc_fisher_path,
             ewc_reference,
             lam=float(cfg.train.ewc_lambda),
             device=device,
@@ -923,7 +953,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     )
                 # Gazetteer-anchor confidence curriculum (#464, v0.9.13): same ramped per-row zero-out
                 # so the model keeps label competence with AND without the clue (recovers the v0.9.12
-                # US postcode -3.7). Gated on the config flag so always-on runs stay reproducible.
+                # US postcode -3.7). Conditioned on the config flag so always-on runs stay reproducible.
                 if "gazetteer_confidence" in tb and getattr(cfg.train, "gazetteer_curriculum", False):
                     tb["gazetteer_confidence"] = perturb_gazetteer_confidence(
                         tb["gazetteer_confidence"], step, cfg.train.max_steps
@@ -968,7 +998,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 # Fisher capture window (base runs): read the accumulated gradient BEFORE clipping
                 # (the empirical Fisher is defined on ∂L/∂θ; the clipped surrogate understates
                 # curvature exactly where it is largest). Read-only — trajectory unaffected.
-                if fisher_acc is not None and step >= fisher_window_start:
+                if fisher_acc is not None and fisher_window_start is not None and step >= fisher_window_start:
                     fisher_acc.accumulate(model)
                 # Stage 2 ships CE + CRF NLL — the CRF leg can produce sharp gradients
                 # during warmup, especially under bf16. Clip global norm to 1.0 before
@@ -1011,7 +1041,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         f"  val_rows={val.get('val_rows', 0)}"
                         f"\n         {tag_summary}"
                     )
-                    # PR3 regression check: city/region-start → postcode rate (gate < 1% per locale), plus
+                    # PR3 regression check: city/region-start → postcode rate (check < 1% per locale), plus
                     # the aux locale-head accuracy. Only prints when self-conditioning is active.
                     if "cross_pollution" in val:
                         xpoll = "  ".join(
@@ -1026,21 +1056,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     elapsed = time.time() - started
                     # CSV: per-tag F1, but a blank cell ("") for tags with no val support so readers
                     # see NaN rather than a misleading 0.0.
-                    tag_f1_values = [
-                        (f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" if int(val.get(f"support_tag.{tag}", 0)) > 0 else "")
-                        for tag in ACTIVE_TAGS
-                    ]
-                    csv_writer.writerow(
-                        [
-                            step,
-                            f"{elapsed:.1f}",
-                            "",
-                            "",
-                            f"{val.get('val_loss', float('nan')):.6f}",
-                            f"{val.get('macro_f1', 0.0):.6f}",
-                            *tag_f1_values,
-                        ]
-                    )
+                    csv_writer.writerow(eval_csv_row(step, elapsed, val, _label_set.tags))
                     csv_fh.flush()
                     eval_metrics: dict[str, float] = {
                         "val_loss": float(val.get("val_loss", float("nan"))),
@@ -1053,7 +1069,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     # OMIT `f1.<tag>` when support is 0 so the dashboard draws a gap, not a flat-zero
                     # line that reads as a model failure.
                     tags_with_support = 0
-                    for tag in ACTIVE_TAGS:
+                    for tag in _label_set.tags:
                         sup = int(val.get(f"support_tag.{tag}", 0))
                         eval_metrics[f"support.{tag}"] = sup
                         if sup > 0:
@@ -1061,7 +1077,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             tags_with_support += 1
                     eval_metrics["val_tags_with_support"] = tags_with_support
                     # PR3: stream the cross-pollution regression check (overall + per-locale) and the aux
-                    # locale-head accuracy to the dashboard, so the 20k gate is watchable live.
+                    # locale-head accuracy to the dashboard, so the 20k check is watchable live.
                     for k, v in val.items():
                         if k.startswith("cross_pollution") or k == "locale_acc":
                             eval_metrics[k] = float(v)
@@ -1079,8 +1095,8 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         # (the model's own config carries char_vocab_size).
                         "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
                     }
-                    ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
-                    print(f"  [save] checkpoint → {ck}")
+                    saved_ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
+                    print(f"  [save] checkpoint → {saved_ck}")
         # Final save.
         extras = {
             "step": step,

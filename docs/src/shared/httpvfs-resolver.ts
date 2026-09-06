@@ -25,7 +25,8 @@
  *   contract test pins the library's export name against this file.
  */
 
-import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 // The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
@@ -41,11 +42,12 @@ import {
 	RERANK_FETCH,
 } from "@mailwoman/resolver-wof-sqlite/primary-preference"
 import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-rerank"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
+import { memoizeResettable, rowsFromExec, tableExists } from "./sqljs-rows.ts"
 
 /**
  * The candidate columns this reader probes — a typed projection of the shared {@link CandidateTable}.
@@ -102,18 +104,6 @@ function sanitizeFTS(text: string): string {
 	return prefix ? `"${cleaned}"*` : `"${cleaned}"`
 }
 
-/**
- * Sql.js exec result → row objects.
- */
-function rowsFromExec<Row = Record<string, unknown>>(
-	res: Array<{ columns: string[]; values: unknown[][] }> | undefined
-): Row[] {
-	if (!res || !res.length) return []
-	const { columns, values } = res[0]
-
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])) as Row)
-}
-
 export interface HTTPVFSWorker {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 	/**
@@ -134,8 +124,8 @@ interface RawWorkerHTTPVFS {
 export interface HTTPSVFSOptions {
 	/**
 	 * Bytes per HTTP range request. Default 65536 (64 KiB = 16 SQLite pages). Fetches inside the worker are SYNCHRONOUS
-	 * XHR, so cold latency ≈ uncached-chunk-count × RTT: bigger chunks cut round-trips on FTS-walk-heavy access (the hot
-	 * DB) at the cost of over-fetching on sparse single-row access (the polygon DB). Measure against the measured
+	 * XHR, so cold latency ≈ uncached-chunk-count × RTT: bigger chunks reduce round-trips on FTS-walk-heavy access (the
+	 * hot DB) at the cost of over-fetching on sparse single-row access (the polygon DB). Measure against the measured
 	 * baseline (38 req / 3.6 MB per session) before changing.
 	 */
 	requestChunkSize?: number
@@ -230,8 +220,6 @@ interface SchemaFacts {
  */
 export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	#worker: HTTPVFSWorker
-	#schemaProbe: Promise<SchemaFacts> | undefined
-	#dualRoles: Promise<Map<number, DualRole[]>> | undefined
 
 	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
@@ -243,92 +231,74 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	 * full network RTT. Memoized as the in-flight promise so concurrent callers share it; a rejection clears the memo so
 	 * a transient failure can retry.
 	 */
-	#schema(): Promise<SchemaFacts> {
-		if (!this.#schemaProbe) {
-			this.#schemaProbe = this.#worker.db
-				.exec(
-					`SELECT
-						(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_population') AS has_pop,
-						(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_abbr') AS has_abbr,
-						(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='coincident_roles') AS has_roles`
-				)
-				.then((res) => {
-					const row = rowsFromExec(res)[0] ?? {}
+	readonly #schema = memoizeResettable(() =>
+		this.#worker.db
+			.exec(
+				`SELECT
+					(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_population') AS has_pop,
+					(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_abbr') AS has_abbr,
+					(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='coincident_roles') AS has_roles`
+			)
+			.then((res): SchemaFacts => {
+				const row = rowsFromExec(res)[0] ?? {}
 
-					return {
-						hasPop: Number(row.has_pop) > 0,
-						hasAbbr: Number(row.has_abbr) > 0,
-						hasRoles: Number(row.has_roles) > 0,
-					}
-				})
-
-			this.#schemaProbe.catch(() => {
-				this.#schemaProbe = undefined
+				return {
+					hasPop: Number(row.has_pop) > 0,
+					hasAbbr: Number(row.has_abbr) > 0,
+					hasRoles: Number(row.has_roles) > 0,
+				}
 			})
-		}
-
-		return this.#schemaProbe
-	}
+	)
 
 	/**
 	 * The full dual-role relation, loaded once (in-flight-memoized; the relation is ~hundreds of rows).
 	 */
-	#dualRolesMap(): Promise<Map<number, DualRole[]>> {
-		if (!this.#dualRoles) {
-			this.#dualRoles = (async () => {
-				const map = new Map<number, DualRole[]>()
-				const { hasRoles } = await this.#schema()
+	readonly #dualRolesMap = memoizeResettable(async (): Promise<Map<number, DualRole[]>> => {
+		const map = new Map<number, DualRole[]>()
+		const { hasRoles } = await this.#schema()
 
-				if (!hasRoles) return map
+		if (!hasRoles) return map
 
-				const rows = rowsFromExec(
-					await this.#worker.db.exec(
-						`SELECT cr.admin_id AS adminID, cr.locality_id AS localityID, cr.relationship_type AS rel,
-							a.name AS adminName, a.placetype AS adminType, l.name AS locName, l.placetype AS locType
-						FROM coincident_roles cr JOIN spr a ON a.id = cr.admin_id JOIN spr l ON l.id = cr.locality_id`
-					)
-				)
+		const rows = rowsFromExec(
+			await this.#worker.db.exec(
+				`SELECT cr.admin_id AS adminID, cr.locality_id AS localityID, cr.relationship_type AS rel,
+					a.name AS adminName, a.placetype AS adminType, l.name AS locName, l.placetype AS locType
+				FROM coincident_roles cr JOIN spr a ON a.id = cr.admin_id JOIN spr l ON l.id = cr.locality_id`
+			)
+		)
 
-				const push = (key: number, role: DualRole): void => {
-					const arr = map.get(key) ?? []
-					arr.push(role)
-					map.set(key, arr)
-				}
+		const push = (key: number, role: DualRole): void => {
+			const arr = map.get(key) ?? []
+			arr.push(role)
+			map.set(key, arr)
+		}
 
-				for (const r of rows) {
-					const adminID = Number(r.adminID)
-					const localityID = Number(r.localityID)
-					const rel = String(r.rel)
+		for (const r of rows) {
+			const adminID = Number(r.adminID)
+			const localityID = Number(r.localityID)
+			const rel = String(r.rel)
 
-					// Resolved place is the locality → it ALSO acts as the region (the admin partner).
-					push(localityID, {
-						id: adminID,
-						name: String(r.adminName),
-						placetype: String(r.adminType),
-						relationshipType: rel,
-						role: "region",
-					})
+			// Resolved place is the locality → it ALSO acts as the region (the admin partner).
+			push(localityID, {
+				id: adminID,
+				name: String(r.adminName),
+				placetype: String(r.adminType),
+				relationshipType: rel,
+				role: "region",
+			})
 
-					// Resolved place is the admin → it ALSO acts as the locality.
-					push(adminID, {
-						id: localityID,
-						name: String(r.locName),
-						placetype: String(r.locType),
-						relationshipType: rel,
-						role: "locality",
-					})
-				}
-
-				return map
-			})()
-
-			this.#dualRoles.catch(() => {
-				this.#dualRoles = undefined
+			// Resolved place is the admin → it ALSO acts as the locality.
+			push(adminID, {
+				id: localityID,
+				name: String(r.locName),
+				placetype: String(r.locType),
+				relationshipType: rel,
+				role: "locality",
 			})
 		}
 
-		return this.#dualRoles
-	}
+		return map
+	})
 
 	/**
 	 * Dual-role lookup (#402): a city-state / capital-seat place holds two admin tiers under one name (Berlin is both a
@@ -464,8 +434,8 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 				// Alias tier: `alt_names` is the FTS row's alias bag, aliases joined on the
 				// boundary-preserving ALIAS_SEPARATOR (#523). The shared parser does a per-alias equality
-				// check, ungated; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
-				// to padded containment gated on "no strictly exact candidate" so interior fragments
+				// check, unrestricted; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
+				// to padded containment conditioned on "no strictly exact candidate" so interior fragments
 				// ("York" inside "New York City") can't be false-promoted. Mirrors WOFWasmPlaceLookup.
 				const aliasExact =
 					typeof row.alt_names === "string" && aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
@@ -523,19 +493,6 @@ interface CandidateCodeMaps {
  */
 export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	#worker: HTTPVFSWorker
-	#codes: Promise<CandidateCodeMaps> | undefined
-	/**
-	 * Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip).
-	 */
-	#hasPostalCity: Promise<boolean> | undefined
-	/**
-	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against EVERY
-	 * hosted artifact vintage — the live demo points at whatever `ADMIN_GAZETTEER_VERSION` names, which can trail this
-	 * code — so the probe SELECT names `population` / `is_primary` / `importance` only when the artifact carries them,
-	 * and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order, today's
-	 * behavior); no `importance` → no fame prior. Mirrors the Node reader's `hasColumn` guard.
-	 */
-	#candidateColumns: Promise<Set<string>> | undefined
 
 	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
@@ -544,70 +501,47 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	/**
 	 * Whether this candidate.db carries the #741 postal-city side-index. Memoized — absent (today's production demo DB)
 	 * the postal-city probe never fires, so resolution is byte-identical to pre-#741. Mirrors the Node
-	 * `WOFCandidateTableLookup`'s existence-gated probe.
+	 * `WOFCandidateTableLookup`'s existence-restricted probe.
 	 */
-	#postalCityPresent(): Promise<boolean> {
-		if (!this.#hasPostalCity) {
-			this.#hasPostalCity = this.#worker.db
-				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='postal_city_candidate'`)
-				.then((res) => Number(rowsFromExec(res)[0]?.n ?? 0) > 0)
-
-			this.#hasPostalCity.catch(() => {
-				this.#hasPostalCity = undefined
-			})
-		}
-
-		return this.#hasPostalCity
-	}
+	readonly #postalCityPresent = memoizeResettable(() => tableExists(this.#worker, "postal_city_candidate"))
 
 	/**
-	 * The candidate table's column names, memoized.
+	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against EVERY
+	 * hosted artifact vintage — the live demo points at whatever `ADMIN_GAZETTEER_VERSION` names, which can trail this
+	 * code — so the probe SELECT names `population` / `is_primary` / `importance` only when the artifact carries them,
+	 * and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order, today's
+	 * behavior); no `importance` → no fame prior. Mirrors the Node reader's `hasColumn` guard.
 	 */
-	#columns(): Promise<Set<string>> {
-		if (!this.#candidateColumns) {
-			this.#candidateColumns = this.#worker.db
-				.exec(`SELECT name FROM pragma_table_info('candidate')`)
-				.then((res) => new Set(rowsFromExec(res).map((r) => String(r.name))))
+	readonly #columns = memoizeResettable(async (): Promise<Set<string>> => {
+		const res = await this.#worker.db.exec(`SELECT name FROM pragma_table_info('candidate')`)
 
-			this.#candidateColumns.catch(() => {
-				this.#candidateColumns = undefined
-			})
+		return new Set(rowsFromExec(res).map((r) => String(r.name)))
+	})
+
+	/**
+	 * Cached id↔text maps from the candidate DB's tiny code tables (one probe, memoized).
+	 */
+	readonly #codeMaps = memoizeResettable(async (): Promise<CandidateCodeMaps> => {
+		const cc = rowsFromExec(await this.#worker.db.exec("SELECT id, code FROM country_codes"))
+		const pt = rowsFromExec(await this.#worker.db.exec("SELECT id, placetype FROM placetype_codes"))
+		const countryToID = new Map<string, number>()
+		const idToCountry = new Map<number, string>()
+
+		for (const r of cc) {
+			countryToID.set(String(r.code).toUpperCase(), Number(r.id))
+			idToCountry.set(Number(r.id), String(r.code).toUpperCase())
 		}
 
-		return this.#candidateColumns
-	}
+		const placetypeToID = new Map<string, number>()
+		const idToPlacetype = new Map<number, string>()
 
-	#codeMaps(): Promise<CandidateCodeMaps> {
-		if (!this.#codes) {
-			this.#codes = (async () => {
-				const cc = rowsFromExec(await this.#worker.db.exec("SELECT id, code FROM country_codes"))
-				const pt = rowsFromExec(await this.#worker.db.exec("SELECT id, placetype FROM placetype_codes"))
-				const countryToID = new Map<string, number>()
-				const idToCountry = new Map<number, string>()
-
-				for (const r of cc) {
-					countryToID.set(String(r.code).toUpperCase(), Number(r.id))
-					idToCountry.set(Number(r.id), String(r.code).toUpperCase())
-				}
-
-				const placetypeToID = new Map<string, number>()
-				const idToPlacetype = new Map<number, string>()
-
-				for (const r of pt) {
-					placetypeToID.set(String(r.placetype), Number(r.id))
-					idToPlacetype.set(Number(r.id), String(r.placetype))
-				}
-
-				return { countryToID, idToCountry, placetypeToID, idToPlacetype }
-			})()
-
-			this.#codes.catch(() => {
-				this.#codes = undefined
-			})
+		for (const r of pt) {
+			placetypeToID.set(String(r.placetype), Number(r.id))
+			idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
 
-		return this.#codes
-	}
+		return { countryToID, idToCountry, placetypeToID, idToPlacetype }
+	})
 
 	/**
 	 * Pull the code tables + a representative probe through the VFS during browser idle.
@@ -637,7 +571,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 		// #741: postcode-keyed postal-city alias. An exact (name_key, postcode) hit resolves a
 		// user-typed POSTAL city ("Antioch", 37013) to the geographic locality the postcode sits in
-		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Gated on
+		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Conditioned on
 		// the side-index being present, a postcode in the query, and a locality-tier request — so the
 		// common path is byte-identical, and inert on a candidate.db built without the side-index
 		// (today's production demo). Mirrors the Node WOFCandidateTableLookup probe.
@@ -752,12 +686,12 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),
 				placetype: idToPlacetype.get(Number(row.placetype_id)) ?? "",
-				// Surfaced so the cascade can country-gate a postcode by the resolved locality (an ambiguous
+				// Surfaced so the cascade can country-restrict a postcode by the resolved locality (an ambiguous
 				// international postcode like 10115 = Berlin DE AND New York US must not out-resolve the city).
 				country: idToCountry.get(Number(row.country_id)),
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
-				// `score` stays the RAW population rank — the walk's absolute `minWinningScore` gate must see
+				// `score` stays the RAW population rank — the walk's absolute `minWinningScore` floor must see
 				// real prominence, never a penalized value. `prominence` carries the bounded cross-country
 				// primary preference; the walk orders by `prominence ?? score`, same as the Node reader.
 				score: -(row.neg_rank as number),

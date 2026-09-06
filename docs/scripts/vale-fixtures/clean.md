@@ -19,3 +19,6 @@ The resolver falls back to the city centroid and marks the result as approximate
 </details>
 
 The demo ships two locales today, en-US and fr-FR, each backed by its own weights file.
+
+The trace names the stage that diverged, and the key names the reduction rather than the raw
+column. Both are the plain verb, which published prose is free to use.

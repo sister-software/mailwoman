@@ -1,12 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import {
-	isCaPostalCode,
-	isRuralPostalCode,
-	normalizeCaPostalCode,
-	provinceOfPostalCode,
-} from "@mailwoman/codex/ca/postal-code"
+import { isCaPostalCode, isRuralPostalCode, normalizeCaPostalCode, provinceOfPostalCode } from "@mailwoman/codex/ca"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeCaPostalCode", () => {

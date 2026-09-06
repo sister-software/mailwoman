@@ -1,16 +1,19 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"allowSyntheticDefaultImports": true,
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
+	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{ "path": "../sqlite" },
 		// ---
 		{ "path": "../core" },
+		{ "path": "../evidence" },
 		{ "path": "../filer" },
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../spatial" },

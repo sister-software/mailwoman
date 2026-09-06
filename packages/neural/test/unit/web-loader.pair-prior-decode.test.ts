@@ -6,7 +6,7 @@
  *   `NeuralAddressClassifier` + REAL fixture tokenizer, only onnxruntime-web mocked) must thread a
  *   country-matched index's emission matrix AND its TRANSITION-BETA adjustments into the shared decode
  *   (`buildPlacetypePairPriors` → `viterbi` — the same one-decoder-two-hosts path the node classifier
- *   runs), and must be BYTE-STABLE when no index matches the gate.
+ *   runs), and must be BYTE-STABLE when no index matches the eval.
  *
  *   The fixture is `neural/test/placetype-pair-decode.test.ts`'s task-8 path-fusion lattice on the same
  *   fixture tokenizer: "Shoreditch London" → ['▁Shore','d','itch','▁London'], with a fused street run
@@ -17,9 +17,9 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
-import { serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import { serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
@@ -164,7 +164,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		expect(result.pairIndexes[0]!.resolver).not.toBeNull() // LIVE despite no posture (phase 2 load-all)
 
 		// "Shoreditch London" has no postcode, so detection alone yields `us` (no bias); the `{ country }`
-		// override is the seam a preset uses to pin a posture the text shape can't reveal. The returned opt is
+		// override is the mechanism a preset uses to pin a posture the text shape can't reveal. The returned opt is
 		// spread as ParseOpts.placetypePair — exactly the demo's intended call site.
 		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
 		expect(placetypePair).toBeDefined()
@@ -182,7 +182,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		fusedLatticeSession() // fresh canned session for the second load
 		const priorFree = await loadNeuralClassifierFromURLs(baseOpts([]))
 
-		// Phase 2: the gb index is LIVE + retained (not gated to null), but no posture pin + a text that
+		// Phase 2: the gb index is LIVE + retained (not conditional to null), but no posture pin + a text that
 		// detects `us` (no UK postcode) means nothing selects it — byte-stable.
 		expect(loaded.pairIndexes).toHaveLength(1)
 		expect(loaded.pairIndexes[0]!.resolver).not.toBeNull()

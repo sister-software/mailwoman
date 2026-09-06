@@ -8,10 +8,10 @@ required finding. Verdicts first, receipts after.
 ## Verdicts
 
 1. **Latin: keep SentencePiece unigram.** Nothing better-fitting exists under our constraints
-   (browser WASM, deterministic char offsets, int8 ONNX, 40M-param scale). Two free levers found:
+   (browser WASM, deterministic char offsets, int8 ONNX, 40M-param scale). Two free changes found:
    **vocabulary pruning** (shipped-eval utilization ~6.7%, ceiling 24%; the embedding table is
    ~72.5% of model parameters) — **CORRECTION 2026-07-31: the 24% ceiling was falsified at the
-   full-feed measurement (86.27% fired over all 684M rows); the pruning lever is DEAD, see
+   full-feed measurement (86.27% fired over all 684M rows); the pruning change is DEAD, see
    `2026-07-31-sp-vocab-pruning-verdict.md`** — and a **WASM rebuild on SentencePiece 0.2.2**
    (native offsets; SHIPPED 2026-07-31, `@mailwoman/sentencepiece-wasm`, PR #1379).
 2. **CJK: character-level with a composition window confirmed** — the only browser-feasible class
@@ -29,7 +29,7 @@ required finding. Verdicts first, receipts after.
    (Apache-2.0, 8.3M downloads, F1 92.39 on GeoGLUE) — Python/ModelScope-only, no ONNX, no
    browser. Everything else in the JP/KR ecosystems is regex + dictionary, with runtime HTTP
    fetches or multi-GB local databases.
-5. **⚠ KR is legally gated; TW is the clean second CJK locale.** The juso bulk DB carries a
+5. **⚠ KR is legally conditional; TW is the clean second CJK locale.** The juso bulk DB carries a
    signed pledge: 국외 반출 금지 (no export from Korea) + no-commercial/no-redistribution ToS —
    the acquired 6.17M juso rows need counsel BEFORE any training touches them (G1 agenda item).
    OpenAddresses KR is dead (frozen 2017); Overture does not cover KR at all. Taiwan, by
@@ -69,7 +69,7 @@ required finding. Verdicts first, receipts after.
   class folds only U+FF0D — **U+2212 (IME minus), U+30FC (prolonged-sound mark typed as hyphen),
   U+2010/2015/FE63/FF70 all survive** into real JP input. A hyphen-equivalence class is
   mandatory.
-- The JP char vocab must be rebuilt from the FULL Phase-3 shard (probe vocab 1,918 vs 2,640
+- The JP char vocab must be rebuilt from the FULL Phase-3 extract (probe vocab 1,918 vs 2,640
   distinct kanji in full MLIT data; the tail is proper-noun kanji — the class an address parser
   exists for). Alternative under consideration: hash-bucket OOV fallback.
 - Non-BMP correctness: 49.5% of Japan's official administrative character set is outside the
@@ -131,7 +131,7 @@ hold change the Phase-6 picture:
 **The assembled KR recipe without juso:** parse corpus = localdata (dual-format, the mess is the
 signal) + synthetic-from-schema (지하 prefixes, closed-up road digit runs — the official rendering
 rules are public documentation) + NEIS/HIRA clean registers; gazetteer = WOF-KR admin ladder.
-What it cannot give: rooftop geocoding (house-number → point stays juso/partner-gated) — resolve
+What it cannot give: rooftop geocoding (house-number → point stays juso/partner-conditional) — resolve
 lands at admin/locality-centroid tier, the same shape several EU locales shipped with before
 their coverage arcs (the coverage-not-retrain precedent).
 
@@ -149,13 +149,13 @@ self-hosting is the only legal path to rooftop KR, which is the product.
 KOGL type on the specific localdata datasets and (b) confirm business-permit addresses are not
 captured by the address-register rule. Phase-6 sequencing becomes an ordinary product call again:
 TW = full-stack second CJK locale; KR parse capability = buildable now on the alternative vein,
-KR rooftop = gated.
+KR rooftop = conditional.
 
 ## Consequences folded into standing plans
 
 1. G1 counsel agenda += the juso export question + HK ALS adaptation + (already there) ODbL.
 2. CJK Phase 6 provisionally re-pointed KR → TW pending the juso answer (operator call).
-3. Phase-3 shard build: full-shard vocab rebuild + the normalization steal-list; Phase-5 runtime:
+3. Phase-3 extract build: full-extract vocab rebuild + the normalization steal-list; Phase-5 runtime:
    code-point-native decode + the cjk.ts folding fixes.
 4. v9 unification pre-registration must name the channels-attached condition.
-5. Vocab pruning + SP 0.2.2 WASM: banked as v8.4-class Latin levers (not this arc).
+5. Vocab pruning + SP 0.2.2 WASM: banked as v8.4-class Latin changes (not this arc).

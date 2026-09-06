@@ -1,6 +1,7 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"allowSyntheticDefaultImports": true,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
@@ -8,6 +9,7 @@
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
+	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---

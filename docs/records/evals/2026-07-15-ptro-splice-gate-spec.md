@@ -1,7 +1,7 @@
-# PT/RO diacritic splice — pre-registered gate spec (#900 accept-overlap)
+# PT/RO diacritic splice — pre-registered check spec (#900 accept-overlap)
 
-**Status: PRE-REGISTRATION**, per the #900 splice-safety-gate contract
-(`CONTRIBUTING_MODEL_WORK.mdx` § Splice safety gate): accepting a codepoint-overlapping locale is a
+**Status: PRE-REGISTRATION**, per the #900 splice-safety-check contract
+(`CONTRIBUTING_MODEL_WORK.mdx` § Splice safety check): accepting a codepoint-overlapping locale is a
 commitment to a per-locale non-inferiority leg, declared in advance. The FR n=3000 coordinate leg
 from v5.1.0 is the template.
 
@@ -63,7 +63,7 @@ Plus the standing battery, unchanged and non-negotiable:
 - **Target legs** (the point of the splice): PT + RO parity street-tag must IMPROVE; RO
   byte-fallback words must disappear from the tokenization.
 - Parity floors (`eval parity`, ship config): house_number / postcode / street must not regress.
-- Golden 2pp per-tag promote gate (`eval error-analysis`).
+- Golden 2pp per-tag promote check (`eval error-analysis`).
 - Gauntlet (regression + metamorphic) PASS.
 - Demo presets 6/6, zero grouper-audit nodes.
 - FR non-inferiority: `oa-fr-coord-150` — no overlap, so this is a control leg; a move here means
@@ -112,11 +112,11 @@ level:
 **But v267 is a different candidate with a wider blast surface**: its lowercase pieces overlap
 `fr` (`é`), `it` (`ã`), and `pl` (`ó`) — on top of cz/es/nl. FR is the largest trained locale and is
 exactly what the v5.1.0 "net-positive by luck" incident ran through. Accepting six locales requires a
-fresh pre-registration with six legs, graded before promotion; that is a new gate spec, not an
+fresh pre-registration with six legs, graded before promotion; that is a new check spec, not an
 amendment to this one, and it is deliberately NOT rushed to fit a shift boundary. Artifacts staged
 for it: `scratchpad/v267-cache` (package-shaped, vocab 75,207), int8 39.9 MB (v264: 39.8 MB, +0.3%).
 
-### v267 characterization (measured, NOT a gate run — the legs it needs aren't pre-registered yet)
+### v267 characterization (measured, NOT a check run — the legs it needs aren't pre-registered yet)
 
 Ship-config parity, full per-fixture diff vs v264 (`scratchpad/diff-v264-v267.mjs`, untruncated):
 
@@ -136,8 +136,8 @@ Net street +1 = **fixed 2, broke 1**. The two fixes are the exact target rows
 > `BR v1-address.bra-1` `"Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil"` —
 > street `"Rua Raul Leite Magalhães"` → **`""`** (emitted nowhere).
 
-**Brazilian** Portuguese — a PT-family locale that is not in the overlap gate's `--trained-samples`
-list at all, so the gate never saw it. That is a gap in the gate's locale inventory, not just this
+**Brazilian** Portuguese — a PT-family locale that is not in the overlap check's `--trained-samples`
+list at all, so the check never saw it. That is a gap in the check's locale inventory, not just this
 candidate's problem: `pt-BR` (and the OA `br` set) should join the standing sample list before any
 PT-touching splice is graded again.
 
@@ -149,7 +149,7 @@ between runs. The full diff shows zero ASCII drift. Never diff two runs through 
 ## Decision rule, fixed now
 
 Ship **only** on a clean sweep: every accepted-locale leg within its bar, PT/RO improved, no floor
-or gate regression, size within budget. Any accepted-locale leg outside its bar = the splice does
+or check regression, size within budget. Any accepted-locale leg outside its bar = the splice does
 not ship as-is (the honest outcome is a narrower splice — RO-only, which has no `Á/É/À/Ú/â`
 exposure — not a relaxed bar). Bars are not editable after the first measurement; a miss is an
 adjudication, and the revision protocol's human-in-the-loop is the buffer, not a constant.

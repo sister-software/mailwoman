@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { ResourceError } from "@mailwoman/core/errors"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { GeoFeature, GeoFeatureCollection, GeometryLiteral } from "@mailwoman/spatial"
 
 import "maplibre-gl/dist/maplibre-gl.css"

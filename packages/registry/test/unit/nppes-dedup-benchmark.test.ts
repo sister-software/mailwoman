@@ -3,28 +3,27 @@
 
 /**
  * @file Unit coverage for the NPPES dedup benchmark's pure stages — org-name tokens, the truth grains, the pairwise
- *   scorer, the lever progression, the adjudication packet, and the report renderer.
+ *   scorer, the setting progression, the adjudication packet, and the report renderer.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { jaccard, type TermFrequencyTable } from "@mailwoman/match"
-import { join } from "@mailwoman/platform/path"
-import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
-import { describe, expect, it } from "vitest"
-
-import { buildLevers } from "#tools/nppes/levers"
-import { ORG_TAU, orgTokens, type NPIPrimary } from "#tools/nppes/org-name"
-import { writeOvermergePacket } from "#tools/nppes/overmerge-packet"
-import { renderNPPESDedupReport, type NPPESReportInput, type SweepArm } from "#tools/nppes/report"
-import type { MessyRow } from "#tools/nppes/sample"
-import { choose2, scoreEntities, type Score } from "#tools/nppes/scoring"
+import { ORG_TAU, orgTokens, type NPIPrimary } from "@mailwoman/registry/tools/nppes/org-name"
+import { writeOvermergePacket } from "@mailwoman/registry/tools/nppes/overmerge-packet"
+import { renderNPPESDedupReport, type NPPESReportInput, type SweepArm } from "@mailwoman/registry/tools/nppes/report"
+import type { MessyRow } from "@mailwoman/registry/tools/nppes/sample"
+import { choose2, scoreEntities, type Score } from "@mailwoman/registry/tools/nppes/scoring"
+import { buildSettings } from "@mailwoman/registry/tools/nppes/settings"
 import {
 	buildOrgNameCoordGrain,
 	buildOrgNameGrain,
 	buildOrgNameH3Grain,
 	collectPrimaryCoordinates,
-} from "#tools/nppes/truth-grains"
+} from "@mailwoman/registry/tools/nppes/truth-grains"
+import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
+import { join } from "path-ts"
+import { describe, expect, it } from "vitest"
 
 function record(id: string, latitude?: number, longitude?: number): SourceRecord {
 	return {
@@ -194,23 +193,23 @@ describe("truth grains", () => {
 	})
 })
 
-describe("buildLevers", () => {
+describe("buildSettings", () => {
 	const table: TermFrequencyTable = { total: 10, distinct: 5, frequency: () => 0.1 }
-	const levers = buildLevers(table)
+	const settings = buildSettings(table)
 
-	it("opens on the bare baseline with both proven levers pinned off", () => {
-		expect(levers[0]!.config).toEqual({ collapseSpatial: false, addressFrequency: false })
+	it("opens on the bare baseline with both proven settings pinned off", () => {
+		expect(settings[0]!.config).toEqual({ collapseSpatial: false, addressFrequency: false })
 	})
 
 	it("sets collapseSpatial and addressFrequency EXPLICITLY on every row", () => {
-		for (const lever of levers) {
-			expect(Object.hasOwn(lever.config, "collapseSpatial")).toBe(true)
-			expect(Object.hasOwn(lever.config, "addressFrequency")).toBe(true)
+		for (const setting of settings) {
+			expect(Object.hasOwn(setting.config, "collapseSpatial")).toBe(true)
+			expect(Object.hasOwn(setting.config, "addressFrequency")).toBe(true)
 		}
 	})
 
 	it("ends on the taxonomy code-set discriminator, stacked on A1 + authorized-official", () => {
-		expect(levers.at(-1)!.config).toEqual({
+		expect(settings.at(-1)!.config).toEqual({
 			collapseSpatial: true,
 			addressFrequency: table,
 			discriminators: ["authorizedOfficial"],
@@ -332,7 +331,7 @@ describe("renderNPPESDedupReport", () => {
 		}
 	}
 
-	it("renders one progression row per lever and bolds the last", () => {
+	it("renders one progression row per setting and bolds the last", () => {
 		const md = renderNPPESDedupReport(input())
 
 		expect(md).toContain("| baseline | 50.0% | 50.0% | 40.0% | — |")

@@ -10,7 +10,7 @@ Subcommands:
 - ``smoke`` — run the entire pipeline at tiny scale on CPU. Validates the wiring; does
   NOT produce shippable weights.
 - ``verify-tokenizer`` — re-tokenize a sample of corpus rows and assert the SP encoder works.
-- ``tokenizer`` — train a versioned SentencePiece tokenizer from a corpus shard tree, with
+- ``tokenizer`` — train a versioned SentencePiece tokenizer from a corpus slice tree, with
   byte-fallback measurement + model card. v0.5.0 Thread A harness.
 """
 
@@ -21,6 +21,7 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 
 def _find_packages_root() -> Path:
@@ -51,7 +52,7 @@ def cmd_train(args: argparse.Namespace) -> int:
     return 0
 
 
-def _apply_smoke_mode(args: argparse.Namespace, cfg) -> None:
+def _apply_smoke_mode(args: argparse.Namespace, cfg: Any) -> None:
     """Translate the operator-facing ``--smoke-mode`` flag into ``cfg.train.lr_schedule``.
 
     Lives here (not in config.py) because the policy is CLI-shaped: ``constant`` overrides
@@ -129,10 +130,39 @@ def cmd_export(args: argparse.Namespace) -> int:
 
     cfg = load_config(args.config)
     ck_dir = Path(args.checkpoint)
-    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
-
     out = Path(args.output)
+
+    if getattr(cfg.data, "char_mode", "off") == "char":
+        # The char path has no SentencePiece tokenizer: the graph takes `char_ids (B, S, W)` where S is the
+        # config's max_units and W its max_unit_width, and the parity sample is real val rows encoded the way
+        # training encoded them.
+        from .export_onnx import verify_char_parity
+
+        if cfg.data.max_units is None or cfg.data.max_unit_width is None:
+            sys.stderr.write("char_mode: char needs data.max_units and data.max_unit_width to export\n")
+            return 2
+
+        export_to_onnx(
+            model,
+            out,
+            opset=args.opset,
+            max_length=cfg.data.max_units,
+            pad_token_id=0,
+            char_window=cfg.data.max_unit_width,
+        )
+        char_samples: list[tuple[list[list[int]], list[int]]] = []
+        for batch in iter_batches(cfg, None, split="val", batch_size=1, seed=0, row_limit=args.parity_samples):
+            char_samples.append((batch["char_ids"][0], batch["attention_mask"][0]))
+            if len(char_samples) >= args.parity_samples:
+                break
+        if not char_samples:
+            sys.stderr.write("warning: no val rows available for parity check\n")
+        metrics = verify_char_parity(model, out, char_samples, atol=args.tolerance)
+        print(json.dumps({"output": str(out), "encoder": "char", **metrics}, indent=2))
+        return 0
+
+    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     export_to_onnx(
         model,
         out,
@@ -182,7 +212,7 @@ def cmd_package(args: argparse.Namespace) -> int:
     ck_dir = Path(args.checkpoint)
     tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
-    eval_report_dict: dict
+    eval_report_dict: dict[str, Any]
     if args.golden_dir or cfg.eval.golden_dir:
         golden_dir = Path(args.golden_dir or cfg.eval.golden_dir)
         entries = load_golden_dir(golden_dir)
@@ -192,7 +222,7 @@ def cmd_package(args: argparse.Namespace) -> int:
         eval_report_dict = {
             "n_entries": 0,
             "full_parse_exact_match": 0.0,
-            "mean_token_confidence": 0.0,
+            "mean_token_confidence": 0.0,  # nosec B105 — numeric eval default, not a credential
             "per_component": {},
             "calibration": [],
             "note": "no golden_dir provided; eval skipped",
@@ -366,7 +396,7 @@ _CORPUS_VERSIONED_ROOT = Path("/data/corpus/versioned")
 
 
 def _resolve_corpus_dir(spec: str) -> Path:
-    """Resolve a ``--corpus`` argument into a concrete shard-tree path.
+    """Resolve a ``--corpus`` argument into a concrete slice-tree path.
 
     Accepts three forms:
 
@@ -464,7 +494,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m mailwoman_train", description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    def common(p):
+    def common(p: argparse.ArgumentParser) -> None:
         p.add_argument("--config", default=None, help="Path to YAML config (optional)")
 
     p = sub.add_parser("train", help="Train a Stage 1 coarse model")
@@ -553,7 +583,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--corpus",
         required=True,
         help='Corpus to train on. Accepts "v0.3.0" / "0.3.0" (resolves under '
-        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit shard-tree path "
+        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit slice-tree path "
         "(parent of train/, val/, test/).",
     )
     p.add_argument(
@@ -605,7 +635,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> Any:  # subcommand handlers return int; Namespace.func is set dynamically
     # Apply the gfx1103 SDPA workaround for every subcommand that touches torch.cuda. Math
     # SDPA is the only kernel that runs stably on Radeon 780M (flash + mem-efficient hang).
     # Importing torch lazily inside main keeps the CLI fast for help-only invocations.
@@ -613,7 +643,7 @@ def main(argv: list[str] | None = None) -> int:
         from .model import force_math_sdpa
 
         force_math_sdpa()
-    except Exception:  # pragma: no cover — torch/transformers may not be installed
+    except ImportError:  # pragma: no cover — torch/transformers may not be installed
         pass
     parser = build_parser()
     args = parser.parse_args(argv)

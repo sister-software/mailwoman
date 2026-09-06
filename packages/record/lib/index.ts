@@ -1,0 +1,15 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `@mailwoman/record` — the canonicalize layer for the geocode-first matcher.
+ *
+ *   Address-first: {@linkcode PostalAddress} is the canonical record. The per-field normalizers
+ *   ({@linkcode parsePersonName}, {@linkcode canonicalizeOrganizationName}) build on the same
+ *   plain-data pattern. Contact records and the comparator/Fellegi-Sunter layer land in the
+ *   matcher.
+ */
+
+export * from "#address"
+export * from "#name"
+export * from "#organization"

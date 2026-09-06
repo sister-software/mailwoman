@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/kind-classifier",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "Stage 2.5 of the runtime pipeline — categorize inputs by query shape (postcode_only / locality_only / structured_address / intersection / po_box / landmark / vague). Rule-based for v1.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -24,35 +24,43 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./classify": {
-			"node": "./classify.ts",
+			"node": "./lib/classify.ts",
 			"default": "./out/classify.js",
 			"types": "./out/classify.d.ts"
 		},
 		"./types": {
-			"node": "./types.ts",
+			"node": "./lib/types.ts",
 			"default": "./out/types.js",
 			"types": "./out/types.d.ts"
 		},
 		"./intent-rules": {
-			"node": "./intent-rules.ts",
+			"node": "./lib/intent-rules.ts",
 			"default": "./out/intent-rules.js",
 			"types": "./out/intent-rules.d.ts"
 		},
 		"./rules": {
-			"node": "./rules.ts",
+			"node": "./lib/rules.ts",
 			"default": "./out/rules.js",
 			"types": "./out/rules.d.ts"
 		},
 		"./poi": {
-			"node": "./poi.ts",
+			"node": "./lib/poi.ts",
 			"default": "./out/poi.js",
 			"types": "./out/poi.d.ts"
 		}
@@ -61,9 +69,8 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/core": "workspace:*"
-	},
-	"devDependencies": {
+		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*"
 	}
 }

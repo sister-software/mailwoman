@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Gate 4's structural requirements
+ *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Criterion 4's structural requirements
  *   live here — the truth field's absence from the withheld run's input (asserted against the SAME
- *   `buildFilteredEvalInputs()` seam the eval itself calls, not a parallel copy), and reproducibility — plus
+ *   `buildFilteredEvalInputs()` helper the eval itself calls, not a parallel copy), and reproducibility — plus
  *   a POSITIVE CONTROL: the control run's perfect score is asserted, so stubbing
  *   the prediction predicate kills a test instead of leaving 19/19 green. Runs the REAL
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { toFRN } from "@mailwoman/filer/frn"
 import { FilerEdgeAssertion, FilerRelationship, type FilerDatabase } from "@mailwoman/filer/schema"
-import { toFRN } from "@mailwoman/filer/sdk/frn"
 import {
 	buildControlEvalInputs,
 	buildFilteredEvalInputs,
@@ -32,7 +33,6 @@ import {
 	type FilerLinkageEvalResult,
 	type LinkageEvalRun,
 } from "@mailwoman/filer/tools/linkage-eval"
-import { join } from "@mailwoman/platform/path"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
@@ -47,9 +47,10 @@ const FRN_SHARED_REGISTRANT_1 = toFRN("9100000010")!
 const FRN_SHARED_REGISTRANT_2 = toFRN("9100000011")!
 const FRN_COMANAGED = toFRN("9100000012")!
 
-const PUBLISHED_REPORT_PATH = join(
-	import.meta.dirname,
-	"../../../../../docs/records/evals",
+const PUBLISHED_REPORT_PATH = repoRootPath(
+	"docs",
+	"records",
+	"evals",
 	`${PUBLISHED_LINKAGE_EVAL_DATE}-filer-linkage.md`
 )
 
@@ -76,7 +77,7 @@ async function runEval(): Promise<FilerLinkageEvalResult> {
 	return await cached
 }
 
-describe("buildFilteredEvalInputs — decision 4's leakage exclusion (gate 4)", () => {
+describe("buildFilteredEvalInputs — decision 4's leakage exclusion (criterion 4)", () => {
 	it("clears holdingCompany to an empty string on every Form499Row", () => {
 		const { form499Rows } = buildFilteredEvalInputs()
 
@@ -268,7 +269,7 @@ describe("the corpus's own invariants", () => {
 	it("never restates one row's holdingCompany inside another row's name fields", () => {
 		// The corpus docstring claims withholding cannot be defeated through a name field that happens to repeat a
 		// parent's name. Nothing checked it, and the leakage census could not see it: a legal name is an attribute, not
-		// an ownership row, so a restated parent would sail past the gate and quietly feed the entity-resolution pass.
+		// an ownership row, so a restated parent would sail past the check and quietly feed the entity-resolution pass.
 		const rows = buildLinkageEvalForm499Rows()
 		const parents = rows.map((row) => row.holdingCompany).filter((name) => name !== "")
 
@@ -309,7 +310,7 @@ describe("hashLinkageEvalInputs", () => {
 	})
 })
 
-describe("filerLinkageEval — reproducibility (gate 4)", () => {
+describe("filerLinkageEval — reproducibility (criterion 4)", () => {
 	it("reproduces identical scores and input SHAs across two independent runs", async () => {
 		const first = await runEval()
 		const second = await filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
@@ -433,7 +434,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	/**
 	 * The three Cascade registrants, joined to one ownership family by a relationship the BUILDER never emits —
 	 * `subsidiary`, the shape a corporate-filing importer is specified to produce. Injected into the withheld artifact
-	 * after the leakage gate has already passed on the untouched build, so the gate stays armed while the probe runs.
+	 * after the leakage check has already passed on the untouched build, so the check stays armed while the probe runs.
 	 */
 	const injectSubsidiaryFamily = async (db: DatabaseClient<FilerDatabase>): Promise<void> => {
 		for (const frn of [FRN_CASCADE_1, FRN_CASCADE_2, FRN_CASCADE_3]) {
@@ -496,8 +497,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		expect(injected.census.familyRows).toBe(5)
 	})
 
-	it("keeps the leakage gate armed while the probe runs — the gate sees the untouched build", async () => {
-		// The injection adds exactly the ownership rows the gate refuses. It does not throw, because the gate reads the
+	it("keeps the leakage check armed while the probe runs — the check sees the untouched build", async () => {
+		// The injection adds exactly the ownership rows the check refuses. It does not throw, because the check reads the
 		// census BEFORE the probe writes; break that ordering and this test starts throwing instead of scoring.
 		await expect(runInjected()).resolves.toBeDefined()
 	})
@@ -546,7 +547,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 
 		// The exhaustiveness refactor briefly folded unrecognized relationships in with `management_company`, because both
 		// simply failed the ownership test. That put the one class the eval cannot reason about on the SILENT side of the
-		// gate. It gets its own bucket so the gate can refuse on it and the published census cannot hide it.
+		// check. It gets its own bucket so the check can refuse on it and the published census cannot hide it.
 		expect(injected.census.unrecognizedFamilyRows).toBe(3)
 		expect(injected.census.nonOwnershipFamilyRows).toBe(2)
 		expect(injected.census.scoredFamilyRows).toBe(0)
@@ -631,8 +632,8 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	})
 
 	it("refuses to report a withheld build carrying a relationship it cannot classify", () => {
-		// The gate's default must be the OPPOSITE of the prediction's. The prediction ignores what it does not understand
-		// (never score an unrecognized assertion); the gate must refuse it (an assertion this eval cannot classify, in a
+		// The check's default must be the OPPOSITE of the prediction's. The prediction ignores what it does not understand
+		// (never score an unrecognized assertion); the check must refuse it (an assertion this eval cannot classify, in a
 		// build it did not write, is exactly what a leakage check exists to stop). One predicate cannot serve both.
 		expect(() =>
 			assertNoOwnershipLeak({
@@ -645,7 +646,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 			})
 		).toThrow(/unrecognized relationship/)
 
-		// …and stays quiet on the shape the withheld build actually produces, so the gate is not simply always-throwing.
+		// …and stays quiet on the shape the withheld build actually produces, so the check is not simply always-throwing.
 		expect(() =>
 			assertNoOwnershipLeak({
 				holdingCompanyNodes: 0,

@@ -7,11 +7,10 @@ import {
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/usgov-nppes/adapter"
-import { join } from "@mailwoman/platform/path"
+import { InMemoryAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
+import { writeDelimitedFixture } from "@mailwoman/corpus/test-kit"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
-
-import { InMemoryAdapterRegistry } from "#adapters/utils"
-import { writeDelimitedFixture } from "#test-kit"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -30,7 +29,7 @@ const CSV_HEADER = [
 	"Provider Business Practice Location Address Postcode",
 ].join(",")
 
-let scratch: string
+let scratch: PathBuilderLike
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-nppes-")).path

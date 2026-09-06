@@ -1,0 +1,95 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Canonical address component schema for the neural classifier pipeline.
+ *
+ *   This file is the single source of truth for `ComponentTag`. Any change here requires (per #5 of
+ *   the Mailwoman Neural plan):
+ *
+ *   1. A written rationale in the commit message.
+ *   2. A migration plan for corpus rows tagged with the prior schema.
+ *   3. A same-commit check that alignment, training, and inference code is updated to match.
+ *
+ *   The legacy `Classifications` set in `../classification/scheme.ts` is kept independent on purpose:
+ *   rule classifiers continue to emit those, the neural classifier emits these. The bridge between
+ *   the two lives in the adapter layer (see #6).
+ */
+
+/**
+ * The canonical address component tag union, ordered by phase and locale.
+ *
+ * - Universal (Phase 1): country, region, locality, dependent_locality, postcode, subregion
+ * - Street-level (Phase 2): house_number, street, street_prefix*, street_suffix, intersection_a/b, unit
+ * - Venue-level (Phase 3): venue, attention, po_box
+ * - FR-specific: cedex
+ * - JP-specific (ACTIVATED at CJK Phase 2, 2026-07-29 — the JP char model's 47-label head trains against them; the Latin
+ *   model never emits them): prefecture, municipality, district, block, sub_block, building_number, building_name
+ */
+export const COMPONENT_TAGS = [
+	// Universal
+	"country",
+	"region",
+	"locality",
+	"dependent_locality",
+	"postcode",
+	"subregion",
+	// Street-level
+	"house_number",
+	"street",
+	"street_prefix",
+	"street_prefix_particle",
+	"street_suffix",
+	"intersection_a",
+	"intersection_b",
+	"unit",
+	// Venue-level
+	"venue",
+	"attention",
+	"po_box",
+	// FR-specific
+	"cedex",
+	// JP-specific (ACTIVATED at CJK Phase 2 — the stage3-jp label set; Latin models never emit these)
+	"prefecture",
+	"municipality",
+	"district",
+	"block",
+	"sub_block",
+	"building_number",
+	"building_name",
+	// CN-specific (#2034): the organizational ladder China's rural addresses carry below the named settlement —
+	// state-farm sub-farms (分场), production brigades and teams (大队, 队, 生产队), XPCC regiments and companies (团, 连),
+	// villager groups (组). ONE contiguous span holds the whole ordinal chain (`三分场八队`); which rung each generic names
+	// is a deterministic reading of the suffix, not a label distinction, so the tag stays one and the split is derived.
+	// The named head unit (`孟定农场`, `新合`) is `dependent_locality`. Emitted by the CJK sibling model only.
+	"locality_unit",
+] as const
+
+/**
+ * Union of every recognized address component tag.
+ */
+export type ComponentTag = (typeof COMPONENT_TAGS)[number]
+
+/**
+ * BIO-encoded label set: one `O` plus a `B-` / `I-` pair per tag.
+ *
+ * Used as the per-token output alphabet for the sequence-labeling neural model. Inference decodes a stream of these
+ * back into character-aligned `ClassificationProposal`s.
+ */
+export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, `I-${tag}`] as const)] as const
+
+/**
+ * Union of every BIO label.
+ */
+export type BIOLabel = (typeof BIO_LABELS)[number]
+
+/**
+ * The street-name family in assembly order: prefix, particle, name, suffix. The order is part of the contract — a
+ * street surface is assembled by concatenating these tags' values in this order.
+ */
+export const STREET_FAMILY_TAGS = [
+	"street_prefix",
+	"street_prefix_particle",
+	"street",
+	"street_suffix",
+] as const satisfies readonly ComponentTag[]

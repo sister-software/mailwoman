@@ -4,7 +4,7 @@
 - **Status:** Approved design, pre-implementation
 - **Scope:** Phase 1 — `mw geocode "<address>" --debug` (interactive + static) backed by a new
   `@mailwoman/map-tui` library workspace. Phase 2 (the standalone full-screen `npx map-tui`
-  browser) is out of scope here beyond the seams this design leaves for it.
+  browser) is out of scope here beyond the boundaries this design leaves for it.
 
 ## Motivation
 
@@ -27,7 +27,7 @@ later ported verbatim, the notice travels with it.
    output pane, edit the input and re-run against the warm session. Quit with Esc/Ctrl+C.
 2. **Debug depth:** parse spans + resolution. The output pane answers "what did it parse and
    where did it land": colored labeled spans, then tier / coordinate / uncertainty / hierarchy
-   with attribution. Stage internals (query-shape, locale-gate, grouper hypotheses) are out of
+   with attribution. Stage internals (query-shape, locale-hint, grouper hypotheses) are out of
    v1 scope.
 3. **Build order:** `@mailwoman/map-tui` bootstraps first as a library-only workspace; the debug
    view is its first consumer. The standalone bin is phase 2. No throwaway map pane, no
@@ -99,7 +99,7 @@ bottom-right. Tiles are never shipped with any package; the path always comes fr
 
 Extract `runGeocode`'s dependency assembly (`mailwoman/commands/geocode.tsx`) into
 `createGeocodeSession(options)`, a sibling of `geocode-core.ts`. The session loads the
-classifier, opens the resolver backend, shard providers, placer, and poi deps once, and returns
+classifier, opens the resolver backend, extract providers, placer, and poi deps once, and returns
 `{geocode(input), close()}`. `geocode(input)` returns the flat `GeocodeResult` **plus** the
 parsed tree and the classifier's labeled char spans (the sentencepiece native-offsets path
 carries offsets end to end; the exact accessor is plan-time verification item 1).
@@ -171,7 +171,7 @@ pattern as the existing format-shorthand conflict in `resolveFormat`.
   Braille output is deterministic (Bayer is a fixed matrix; no randomness anywhere in the
   render path). Unit tests for mercator math, line/fill rasterization, style lookup, and label
   collision.
-- **mailwoman:** the session refactor's regression gate is the existing `geocode.test.ts`
+- **mailwoman:** the session refactor's regression check is the existing `geocode.test.ts`
   passing unmodified. Debug-view component tests run via `ink-testing-library` with a stubbed
   session (no model load). A static-frame smoke test runs where weights + gazetteer exist and
   asserts the frame carries the coordinate and braille content.

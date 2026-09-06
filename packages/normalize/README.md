@@ -46,7 +46,7 @@ identityMap(length: number): OffsetMap
 ## Pipeline position
 
 ```
-raw string → normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → ...
+raw string → normalize → query-shape → locale-hint → kind-classifier → phrase-grouper → ...
 ```
 
 Stage 1 in the [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx). No runtime dependencies.

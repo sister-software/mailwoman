@@ -13,17 +13,19 @@
 ##   seam  -> the named boundary: the package boundary, the `PlaceLookup`
 ##            interface, the call site, the module that owns it.
 ##   cut   -> publish (a release), branch (from origin/main), reduce, remove.
+##   lever -> the named change: the config key, the corpus recipe file, the
+##            weight, the run version; a gauntlet default-override is a pin.
 ##
 ## `shard(s)?` moved here from MailwomanChat/ProjectShorthand.yml so one list
 ## covers both surfaces; chat coverage is unchanged, because .vale-chat.ini
 ## loads the Mailwoman style too.
 ##
 ## Contracts survive by being written as contracts. Vale's markdown parser
-## skips inline code and fenced blocks natively, so `mailwoman eval gate`,
-## `packages/corpus/src/shard-recipes/`, `@mailwoman/locale-gate` and
-## `promotion-gate.ts` all pass when they are backticked — which is how an
+## skips inline code and fenced blocks natively, so `mailwoman eval promote`,
+## `packages/corpus/lib/shard-recipes/`, `@mailwoman/locale-hint` and
+## `promotion-eval.ts` all pass when they are backticked — which is how an
 ## identifier, a path, or a command the reader types should be written
-## anyway. A BARE `promotion-gate` in running prose does trip this rule:
+## anyway. A BARE `promotion-eval` in running prose does trip this rule:
 ## tokens carry word boundaries, and a hyphen is a word boundary, so the
 ## remedy is the backticks, not a rename. Renaming a contract-bearing
 ## identifier is a separate, operator-approved change.
@@ -36,3 +38,4 @@ tokens:
   - shard(?:s|ed|ing)?
   - cut(?:s|ting)?
   - gat(?:e|es|ed|ing)
+  - lever(?:s)?

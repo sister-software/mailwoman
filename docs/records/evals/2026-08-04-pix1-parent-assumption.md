@@ -72,7 +72,7 @@ the pair prior assumes it landed there.
 
 ## Two fixes, different philosophies
 
-1. **Gate the child bias on the parent's reading.** Thread the emissions into
+1. **Check the child bias on the parent's reading.** Thread the emissions into
    `buildPlacetypePairPriors` and skip the hit when the parent window's argmax is not in the
    locality family. Restriction-only: byte-identical wherever the assumption already holds, which is
    every pre-registered case above. Leaves `brooklyn, new york, ny` at the pre-prior tree

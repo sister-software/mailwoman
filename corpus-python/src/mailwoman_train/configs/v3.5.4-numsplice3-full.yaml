@@ -26,12 +26,12 @@
 #   DO-NO-HARM — FR fragment board + global parity hold.
 #
 # DECISION TABLE:
-#   win HOLDS + guard HOLDS -> SHIP CANDIDATE. 8k, then promote. The clean lever #727 wanted.
+#   win HOLDS + guard HOLDS -> SHIP CANDIDATE. 8k, then promote. The clean change #727 wanted.
 #   win HOLDS + guard DROPS -> the trade is intrinsic to single-piece numbers; shelve numsplice, take B4b.
 #   win ABSENT + guard HOLDS -> 3-digit too narrow; the win needs 4-digit (widen to 100-9999, re-probe).
 #
 # SHIP CANDIDATE. The 2k probe (v352) confirmed guard + win; this 8k is the promotable artifact.
-# On PASS: export int8, run the gate + boards, then the operator promotes. Promotion is the operator's act.
+# On PASS: export int8, run the check + boards, then the operator promotes. Promotion is the operator's act.
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.5.4-numsplice3-full.yaml --resume none
 
 data:
@@ -62,7 +62,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0

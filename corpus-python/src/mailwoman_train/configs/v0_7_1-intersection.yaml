@@ -1,6 +1,6 @@
 # v0.7.1 — intersection coverage retrain (DeepSeek-decided, night-3 2026-05-29).
 #
-# The v0.7 calibration experiment (ls=0.1) failed the gate: it cut overconfidence
+# The v0.7 calibration experiment (ls=0.1) failed the check: it reduce overconfidence
 # but left the PRIMARY harness pass rate flat, because the harness is COVERAGE-
 # bound. The single largest gap is INTERSECTIONS: 65/376 harness assertions (17%)
 # at 0% neural, because the model assigns intersection_a/b ~0.0001 probability —
@@ -9,11 +9,11 @@
 # postmortem §0c-§0d.
 #
 # SINGLE CHANGE vs v0_6_0-stage3.yaml (the clean base — no label smoothing, the
-# calibration verdict was "not the lever"): add the new synth-intersection shard
+# calibration verdict was "not the change"): add the new synth-intersection slice
 # at weight 0.2 (synthesis-as-supplement discipline: small, targeted, < 0.25,
 # one-and-done). Tokenizer v0.6.0-a0 (unchanged → comparisons valid).
 #
-# Shard: scripts/build-intersection-shard.mjs → jsonl-to-parquet.py → 2000 rows,
+# Slice: scripts/build-intersection-slice.mjs → jsonl-to-parquet.py → 2000 rows,
 # source=synth-intersection, dropped into the v0.4.0 train dir (operator-authorized).
 #
 # Success criterion (DeepSeek): harness pass rate WITH the #35 postcode repair

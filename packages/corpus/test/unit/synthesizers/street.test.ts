@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import { synthesizeStreetRow } from "@mailwoman/corpus/synthesizers/street"
 import { describe, expect, it } from "vitest"
 
@@ -20,7 +20,7 @@ describe("synthesizeStreetRow", () => {
 		// `country` is intentionally omitted from `components` — see the note in
 		// `synthesizers/street.ts` about the aligner's edit-distance-2 fuzzy match spuriously
 		// pairing "US" with arbitrary 2-char tokens (e.g. a house number "45"). The base country
-		// is consumed only to gate the synthesizer (US-only) and to select the locale tag.
+		// is consumed only to condition the synthesizer (US-only) and to select the locale tag.
 		expect(row!.components.country).toBeUndefined()
 		// At minimum a street name must be present
 		expect(row!.components.street).toBeDefined()

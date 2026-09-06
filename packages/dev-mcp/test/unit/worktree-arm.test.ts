@@ -13,9 +13,9 @@
 import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
 import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree-arm"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -25,12 +25,12 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * A minimal git repo whose "pipeline" is one file, plus a `node_modules` the farm can mirror.
  *
- * `mailwoman/geocode-session` is stubbed as a real package directory so the runner's import resolves without this test
- * needing the monorepo. That is the same resolution path the real arm uses — a stub here proves the farm and the
- * subprocess, and the engine is exercised for real by the tools that call this.
+ * `mailwoman/geocode` is stubbed as a real package directory so the runner's import resolves without this test needing
+ * the monorepo. That is the same resolution path the real arm uses — a stub here proves the farm and the subprocess,
+ * and the engine is exercised for real by the tools that call this.
  */
 async function fakeRepo(marker: string): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path
+	const root = String(fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path)
 
 	await makeDirectories(join(root, "packages", "mailwoman"))
 	await writeLocalJSONFile({ name: "root", workspaces: ["packages/mailwoman"] }, join(root, "package.json"))
@@ -38,7 +38,9 @@ async function fakeRepo(marker: string): Promise<string> {
 	await writeLocalJSONFile(
 		{
 			name: "mailwoman",
-			exports: { "./geocode-session": { node: "./geocode-session.ts", default: "./geocode-session.ts" } },
+			// Mirrors the real package after the prefix fold: `geocode-session.ts` became `geocode/session.ts`
+			// behind the `./geocode` directory entry, which is the subpath the arm runner imports.
+			exports: { "./geocode": { node: "./geocode/index.ts", default: "./geocode/index.ts" } },
 		},
 		join(root, "packages", "mailwoman", "package.json")
 	)
@@ -50,7 +52,7 @@ async function fakeRepo(marker: string): Promise<string> {
 				[Symbol.dispose]: () => {},
 			}
 		}\n`,
-		join(root, "packages", "mailwoman", "geocode-session.ts")
+		join(root, "packages", "mailwoman", "geocode", "index.ts")
 	)
 
 	// The workspace link yarn would have installed. Both arms need it and for different reasons: the WORKTREE arm
@@ -62,11 +64,11 @@ async function fakeRepo(marker: string): Promise<string> {
 	// status rather than to one this helper dirtied.
 	await writeLocalTextFile("node_modules\n", join(root, ".gitignore"))
 
-	execFileSync("git", ["init", "-q", "-b", "main"], { cwd: root })
-	execFileSync("git", ["config", "user.email", "t@example.com"], { cwd: root })
-	execFileSync("git", ["config", "user.name", "T"], { cwd: root })
-	execFileSync("git", ["add", "-A"], { cwd: root })
-	execFileSync("git", ["commit", "-qm", "initial"], { cwd: root })
+	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: root })
+	runFileSync("git", ["config", "user.email", "t@example.com"], { cwd: root })
+	runFileSync("git", ["config", "user.name", "T"], { cwd: root })
+	runFileSync("git", ["add", "-A"], { cwd: root })
+	runFileSync("git", ["commit", "-qm", "initial"], { cwd: root })
 
 	return root
 }
@@ -82,7 +84,7 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
@@ -100,7 +102,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({
@@ -128,7 +130,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() { throw new Error("boom") }\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		await expect(
@@ -145,7 +147,7 @@ describe("runWorktreeArm — cleanup", () => {
 
 		await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
 
-		const listed = execFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
+		const listed = runFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
 
 		// The main checkout is always listed; a leaked worktree would be a second line.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- the test creates at most one extra worktree
@@ -154,13 +156,13 @@ describe("runWorktreeArm — cleanup", () => {
 
 	it("does not touch the caller's HEAD or working tree", async () => {
 		const root = await fakeRepo("committed")
-		const before = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })
-		const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
+		const before = runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })
+		const head = runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
 
 		await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
 
-		expect(execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
-		expect(execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
+		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
+		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
 		// A stash-based arm would have moved these; a worktree cannot, which is why it is a worktree.
 		expect(await readDirectory(root)).toContain("packages")
 	})
@@ -180,7 +182,7 @@ describe("runWorktreeArm — per-input failures", () => {
 					[Symbol.dispose]: () => {},
 				}
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({

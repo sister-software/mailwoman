@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { GB_STREET_TYPES, isBritishStreetWord } from "@mailwoman/codex/gb/street-type"
+import { GB_STREET_TYPES, isBritishStreetWord } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("GB_STREET_TYPES", () => {

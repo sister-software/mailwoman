@@ -28,7 +28,7 @@ ran the existing harness (`scripts/eval/postcode-anchor-accuracy.ts`) on the 3,0
   reflects the **postcode's spatial extent** (a random address sits ~1 km from the postcode centroid),
   not centroid error — both methods place the centroid near the postcode's true center, so Overture's
   15.7M-point density buys no accuracy edge here. The anchor only needs centre-of-postcode; it has it.
-- **IT is blocked.** Overture's IT postcode fill is **0%** (the #474 ingest gate "≥80% else renegotiate"
+- **IT is blocked.** Overture's IT postcode fill is **0%** (the #474 ingest check "≥80% else renegotiate"
   fails for IT) — GeoNames stays IT's source. Documented as an Overture gap alongside GB (Overture has no
   GB either — Ordnance Survey licensing).
 

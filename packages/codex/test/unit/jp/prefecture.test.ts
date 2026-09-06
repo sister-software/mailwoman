@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "@mailwoman/codex/jp/prefecture"
+import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "@mailwoman/codex/jp"
 import { describe, expect, it } from "vitest"
 
 describe("JP_PREFECTURES", () => {

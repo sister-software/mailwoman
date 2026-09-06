@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country/subdivision"
+import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country"
 import { describe, expect, it } from "vitest"
 
 describe("matchSubdivision", () => {

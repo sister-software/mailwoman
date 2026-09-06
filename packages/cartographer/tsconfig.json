@@ -1,6 +1,7 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true,
@@ -12,6 +13,7 @@
 			"@mailwoman/mailwoman/sdk/*": ["./sdk/*"]
 		}
 	},
+	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---

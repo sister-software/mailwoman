@@ -192,7 +192,7 @@ def test_viterbi_respects_mask_length():
     emissions = torch.randn(2, 5, n)
     mask = torch.tensor([[1, 1, 1, 0, 0], [1, 1, 1, 1, 1]], dtype=torch.float)
     decoded = crf.viterbi_decode(emissions, mask)
-    assert len(decoded[0]) == 3  # mask cuts row 0 at length 3
+    assert len(decoded[0]) == 3  # mask truncates row 0 at length 3
     assert len(decoded[1]) == 5
 
 

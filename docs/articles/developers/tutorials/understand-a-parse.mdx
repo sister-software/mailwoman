@@ -119,7 +119,7 @@ the reason the first-parse page gives.
 ## 4. Ask the pipeline what it decided
 
 The tree is the answer. `--debug` is the record of the stages that produced it — normalization, the
-structural query shape, the `locale-gate` stage, the kind classifier, then the model.
+structural query shape, the `locale-hint` stage, the kind classifier, then the model.
 
 ```bash
 npx mailwoman parse --debug "1 madison ave madison wi 53703" | jq '{path, locale, kind, knownFormats: .queryShape.knownFormats, timing}'
@@ -182,7 +182,7 @@ npx mailwoman parse --debug "1 madison ave madison wi 53703" | jq '{path, locale
 		"normalize": 0.5091919999999845,
 		"place-country": 1.043992000000344,
 		"query-shape": 0.6537020000000666,
-		"locale-gate": 0.20217800000000352,
+		"locale-hint": 0.20217800000000352,
 		"kind-classifier": 0.6429920000000493,
 		"phrase-grouper": 1.0681070000000545,
 		"token-classify": 223.19595000000027,
@@ -197,7 +197,7 @@ Four things in there answer "why did that token go where it went".
 ZIP Code shape, the French postcode shape and the German postcode shape, all at 0.6, because a bare
 five-digit run is all three. This stage proposes; it does not pick.
 
-**`locale.source: "caller"` means the `locale-gate` stage was not consulted.** `mailwoman parse` defaults `--locale` to
+**`locale.source: "caller"` means the `locale-hint` stage was not consulted.** `mailwoman parse` defaults `--locale` to
 `en-US`, and a caller-pinned locale is taken as given — which is why the confidence reads 1 while the
 sole alternative sits at 0.5. Pass a different `--locale` and this is the field that records it.
 

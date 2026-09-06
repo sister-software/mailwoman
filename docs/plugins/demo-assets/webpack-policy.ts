@@ -5,8 +5,7 @@
  * @file Browser/SSR bundle policy for the docs demo.
  */
 
-import { createHash } from "@mailwoman/platform/crypto"
-import { resolve } from "@mailwoman/platform/path"
+import { md5Hex } from "@mailwoman/core/hash"
 import type { Configuration } from "webpack"
 import webpack from "webpack"
 
@@ -47,7 +46,7 @@ function hashAliases(alias: Record<string, string>): string {
 		.toSorted()
 		.map((key) => `${key}=${alias[key]}`)
 
-	return createHash("md5").update(entries.join("\n")).digest("hex")
+	return md5Hex(entries.join("\n"))
 }
 
 export async function bundleAliases(isServer: boolean, emptyShim: string): Promise<Record<string, string>> {
@@ -100,17 +99,21 @@ function fallbackMap(): NonNullable<NonNullable<Configuration["resolve"]>["fallb
 /**
  * Docusaurus calls `configureWebpack` SYNCHRONOUSLY, so the alias map is resolved by the caller — the plugin factory,
  * which Docusaurus does await — and handed in here. Resolving it at this point would return a promise the lifecycle
- * never unwraps.
+ * never unwraps. `emptyShim` is the caller's resolved `src/empty-shim.js` path, computed once beside the alias maps.
  */
 export function configureDemoWebpack(
 	config: Configuration,
-	docsDir: string,
-	alias: Record<string, string>
+	emptyShim: string,
+	alias: Record<string, string>,
+	isServer: boolean
 ): Configuration {
-	const emptyShim = resolve(docsDir, "src", "empty-shim.js")
-
 	return {
 		...filesystemCache(config, alias),
+		// isomorphic-dompurify's Node build constructs a jsdom window at import, and jsdom cannot be webpack-bundled
+		// (`__dirname is not defined` inside the SSR bundle). The server bundle requires the real package from
+		// node_modules at render time instead, so SSR sanitizes through the same jsdom-backed engine as any other Node
+		// process. The client bundle keeps bundling it — the package's `browser` build, plain DOMPurify.
+		...(isServer ? { externals: [{ "isomorphic-dompurify": "commonjs isomorphic-dompurify" }] } : {}),
 		plugins: [
 			new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
 				const shim = NODE_BUILTIN_SHIMS[resource.request as keyof typeof NODE_BUILTIN_SHIMS]

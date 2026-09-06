@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Register gating fence (Decision A): `parse(text, { inputMode: "formatted" })` must run the
+ *   Register enforcement fence (Decision A): `parse(text, { inputMode: "formatted" })` must run the
  *   evidence-bundle channels OFF (the curriculum-trained absence identity) while every other channel
  *   feeds unchanged; `"fragmented"` (and the bare-library default, unset) feeds them. Asserted at the
- *   runner boundary via a stub — the same seam the ONNX session sees.
+ *   runner boundary via a stub — the same interface the ONNX session sees.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 interface Fixture {
@@ -20,7 +20,9 @@ interface Fixture {
 	locality_lexicon: Parameters<typeof parseGazetteerLexicon>[0]
 }
 
-const fixture = await readLocalJSONFile<Fixture>(join(import.meta.dirname, "../fixtures/evidence-parity-v2.json"))
+const fixture = await readLocalJSONFile<Fixture>(
+	resolvePackagePath("@mailwoman/neural", "test", "fixtures", "evidence-parity-v2.json")
+)
 
 const LABELS = ["O", "B-street", "I-street", "B-locality", "I-locality"]
 
@@ -38,7 +40,7 @@ function stubRunner(seen: { evidence: unknown[] }): NeuralRunner {
 
 async function makeClassifier(seen: { evidence: unknown[] }) {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(
-		join(import.meta.dirname, "../fixtures/tokenizer-v0.1.0.model")
+		resolvePackagePath("@mailwoman/neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 	)
 
 	return new NeuralAddressClassifier({
@@ -50,7 +52,7 @@ async function makeClassifier(seen: { evidence: unknown[] }) {
 	})
 }
 
-describe("inputMode register gating (Decision A)", () => {
+describe("inputMode register enforcement (Decision A)", () => {
 	it("formatted mode withholds the evidence channels", async () => {
 		const seen = { evidence: [] as unknown[] }
 		const classifier = await makeClassifier(seen)
@@ -60,7 +62,7 @@ describe("inputMode register gating (Decision A)", () => {
 		expect(seen.evidence[0]).toBeUndefined()
 	})
 
-	it("street-context gate: a bare place name feeds NO locality evidence even in fragmented mode", async () => {
+	it("street-context check: a bare place name feeds NO locality evidence even in fragmented mode", async () => {
 		// The 8.2.0 pre-ship gauntlet catch: homograph-flagged locality evidence on a bare world-city
 		// lookup rotates the parse (locality → region/street). No street context → locality channel
 		// withheld (the declared-ablation identity); the street channel is inert on such input anyway.
@@ -70,7 +72,7 @@ describe("inputMode register gating (Decision A)", () => {
 		await classifier.parse("Springfield", { inputMode: "fragmented" })
 		expect(seen.evidence).toHaveLength(1)
 		// The street channel rides (all-zero confidence on a street-word-less input — inert by
-		// construction); the LOCALITY channel is what the gate withholds.
+		// construction); the LOCALITY channel is what the eval withholds.
 		const evidence = seen.evidence[0] as { streetType?: unknown; localitySurface?: unknown }
 		expect(evidence.localitySurface).toBeUndefined()
 		expect(evidence.streetType).toBeDefined()

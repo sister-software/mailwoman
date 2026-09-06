@@ -1,7 +1,7 @@
 # Address-point tier — VT prototype measurement (2026-06-10, night-10)
 
 The #476 prototype: exact `(street, number)` → exact situs point, in front of admin-centroid
-resolution. Shard from Overture release 2026-05-20.0 (NAD lineage), keyed by THE shared
+resolution. Extract from Overture release 2026-05-20.0 (NAD lineage), keyed by THE shared
 normalizer (`resolver-wof-sqlite/street-normalize.ts`) on both build and lookup sides.
 
 ## VT holdout (1,428 honest rows, v4.2.0 int8, tier on vs off)
@@ -15,13 +15,13 @@ The tier changes _where_, never _which place_ — admin flags are identical by c
 (the hook decorates the street node's metadata after the admin walk; it cannot alter
 attribution). On a hit, the resolved coordinate is the actual building: gold OA points and
 Overture NAD points agree to meters. The 6.9% miss population is exactly what house-number
-interpolation (#483) exists for — and this shard is its gold standard.
+interpolation (#483) exists for — and this extract is its gold standard.
 
 ## Rollout decision note
 
-- **Shard shape: per-state.** VT = 333,610 points → 56 MB (~168 B/point); full US
+- **Extract shape: per-state.** VT = 333,610 points → 56 MB (~168 B/point); full US
   extrapolates to ~21 GB — fine on the playpen as per-state files, a non-starter as one
-  artifact. Build is `scripts/build-address-point-shard.ts --state XX` (~1 min/small state),
+  artifact. Build is `scripts/build-address-point-extract.ts --state XX` (~1 min/small state),
   idempotent, release-pinned.
 - **Postcode scope first, locality fallback.** Postcode is the selective key and dodges the
   municipal-legal-name trap: NAD localities are charter names (`Barre City`,
@@ -35,6 +35,6 @@ interpolation (#483) exists for — and this shard is its gold standard.
   default absent = byte-stable. Server-side (Tier B) data; pocket-tier delivery is out of
   scope (#378's two-tier split).
 
-Next: DE/FR shards need the analogous Overture pulls (street/number fill ≈100% in both);
-US rollout = build the state list + a shard-routing wrapper (state → db path) behind the
+Next: DE/FR extracts need the analogous Overture pulls (street/number fill ≈100% in both);
+US rollout = build the state list + a extract-routing wrapper (state → db path) behind the
 same interface.

@@ -8,11 +8,11 @@
  *   leg (172s after the scan memoization), and it grows with the gazetteer. It runs in three places,
  *   each catching something the others cannot:
  *
- *   - `test.yml` job `lexicon-full`, path-gated — a PR that changes the builder or its inputs.
+ *   - `test.yml` job `lexicon-full`, path-conditional — a PR that changes the builder or its inputs.
  *   - `lexicon-nightly.yml` — DATA drift. The gazetteer is rebuilt outside any PR, so no path filter
  *       can see it. This is the only layer that catches that and the control for the fixture
  *       layer: if the fixture stops representing the real data, this is what says so.
- *   - `publish.yml` prepare — the release gate.
+ *   - `publish.yml` prepare — the release eval.
  *
  *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which asserts the same
  *   four laws against a seeded DB and is invariant to gazetteer size. What stays HERE is the
@@ -20,9 +20,8 @@
  *   claims about the gazetteer rather than about the laws.
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { tmpdir } from "@mailwoman/platform/os"
 import { describe, expect, it } from "vitest"
 
 const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
@@ -30,7 +29,7 @@ const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integration (admin DB)", () => {
 	it("applies all three laws end to end", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("mailwoman/gazetteer-pipeline/evidence-lexicons")
-		const tmp = `${tmpdir()}/locality-surface-lexicon-test.json`
+		const tmp = tempRootPath(`locality-surface-lexicon-test.json`)
 
 		// v3-parity placetypes for run-to-run comparability with the probe chain's numbers.
 		const built = await buildLocalitySurfaceLexicon({
@@ -53,7 +52,7 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 
 	it("v5: the census flip families are out, the legitimate entries stay", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("mailwoman/gazetteer-pipeline/evidence-lexicons")
-		const tmp = `${tmpdir()}/locality-surface-lexicon-v5-us-test.json`
+		const tmp = tempRootPath(`locality-surface-lexicon-v5-us-test.json`)
 
 		const built = await buildLocalitySurfaceLexicon({
 			countries: ["US"],

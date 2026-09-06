@@ -23,11 +23,11 @@ import { describe, expect, test } from "vitest"
 
 async function modelIsMaterialized(): Promise<boolean> {
 	try {
-		const weights = resolveWeights({ locale: "en-US" })
+		const weights = await resolveWeights({ locale: "en-US" })
 
 		return !!weights.modelPath && (await pathExists(weights.modelPath))
 	} catch {
-		// Lean checkout with no materialized weights — skip, like the other model-gated suites here.
+		// Lean checkout with no materialized weights — skip, like the other model-conditional suites here.
 		return false
 	}
 }

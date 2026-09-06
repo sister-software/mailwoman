@@ -243,7 +243,7 @@ export interface ModelCard {
 ### Canonical row
 
 ```ts
-// packages/corpus/src/types.ts
+// packages/corpus/lib/types.ts
 
 export interface CanonicalRow {
 	/** The full, rendered address as a user would type it. */
@@ -278,7 +278,7 @@ export interface CanonicalRow {
 ### Adapter interface
 
 ```ts
-// packages/corpus/src/adapter.ts
+// packages/corpus/lib/adapter.ts
 
 export interface CorpusAdapter {
 	readonly id: string
@@ -303,7 +303,7 @@ export interface AdapterOptions {
 ### Labeled row (post-alignment)
 
 ```ts
-// packages/corpus/src/labeled.ts
+// packages/corpus/lib/labeled.ts
 
 export interface LabeledRow {
 	raw: string

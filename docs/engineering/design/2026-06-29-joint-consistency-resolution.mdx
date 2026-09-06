@@ -51,7 +51,7 @@ The circle has two halves, and they are complementary:
 
 - **Forward** — format and script propose a system. A CJK script implies CJK address systems; a UK
   alphanumeric postcode implies GB; a bare five-digit implies one of a small set. Today this is
-  rule-based (`query-shape`, `locale-gate`'s script-class scorer), and deliberately so — it reads
+  rule-based (`query-shape`, `locale-hint`'s script-class scorer), and deliberately so — it reads
   character classes and known postcode formats, never place-name dictionaries.
 - **Backward** — the resolved place confirms the system. Once "Portland, ME" lands in Maine, "US"
   falls out of the result. You did not guess the country; you derived it.
@@ -89,7 +89,7 @@ locality missing under any candidate parent — joint consistency returns nothin
 is what keeps a sparsely-covered country from resolving to "no answer." The graph is the primary
 signal; the prior is the fallback. The `HARD_PLACE_COUNTRY_SAFELIST` is the piece this most directly undercuts; its
 job shrinks as the graph's grows, and the docs already half-disown it (the 2026-06-26 postmortem
-measured that widening it changes nothing, because the placer abstains and it never gates).
+measured that widening it changes nothing, because the placer abstains and it never checks).
 
 ## The quick cache reuses the gazetteer, not a list
 
@@ -108,7 +108,7 @@ _under_ Messina, so the locality is not unresolved, and both Messina **and** Mai
 Augusta. Two consistent pairs, and geography alone cannot break the tie. That is the forward
 address-system prior's job (US-format ⇒ prefer the US state), and it is the next section.
 
-## Future work, gated on a measured residual
+## Future work, blocked on a measured residual
 
 Build to a measured gap, not to a good idea. Once descendant-consistency lands (#263), measure where it
 still fails, bucketed by why — romanized or transliterated input, mixed script, ambiguous field

@@ -1,4 +1,4 @@
-# TW postcode-route gate + JP Overture eval gold (#473, unblocks #294)
+# TW postcode-route check + JP Overture eval gold (#473, unblocks #294)
 
 #473 asked for two CJK unblocks from Overture: the TW postcode→admin table #294 was parked on, and an
 independent Overture-based eval gold for the shipped JP resolver. Both shipped — but not the way the
@@ -8,12 +8,12 @@ after the 2026-05-20.0 probe in the issue comments; `fill-rates.md` now carries 
 Overture does carry — 29.3M points with coordinates, admin attribution, and (divisions theme) real
 district polygons — supplied the geometry both halves needed.
 
-## TW — postcode-route resolution, gate PASS
+## TW — postcode-route resolution, check PASS
 
 **Keying source** (the postal authority, since Overture/GeoNames have no TW postcodes): Chunghwa
 Post's 3-digit postal-code → district table with official district centers (data.gov.tw dataset
 25489, OGDL v1; 371 rows, all county-prefixed). The 3-digit code is the admin-granularity key — the
-"+3" tail is road-segment level, and the full 3+3 file has been account-gated at fpp.post.gov.tw
+"+3" tail is road-segment level, and the full 3+3 file has been account-conditional at fpp.post.gov.tw
 since 2025. Sub-district resolution is therefore out of reach for now (noted, not chased).
 
 **Build** (`scripts/build-postcode-locality-tw.ts` → `postcode-locality-tw.db`, standard
@@ -42,7 +42,7 @@ the wrong namesake), and bare containment must outrank the wikidata bridge (wd-f
 86.4→85.2% — WOF's TW wd concordances are themselves misattached, e.g. 890468273 "Zhongzheng Qu"
 carries Keelung's Q712871 while its point sits in Taipei).
 
-**Gate** (`scripts/eval/tw-postcode-route-eval.ts`, pre-registered from #288 Phase 1: postcode-route
+**Check** (`scripts/eval/tw-postcode-route-eval.ts`, pre-registered from #288 Phase 1: postcode-route
 PIP ≥~85%): held-out Overture address points, query = (district text + 3-digit postcode) against the
 shipped `admin-global-priority.db` + the new table, graded by true point-in-polygon against the
 Overture district polygons (WOF TW is point-only — every feature in the repo, `_pg` alts included,

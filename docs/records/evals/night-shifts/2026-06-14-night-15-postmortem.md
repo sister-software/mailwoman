@@ -1,7 +1,7 @@
 # Night 15 postmortem — the autonomous follow-on (2026-06-14)
 
 _The autonomous shift after the v4.7.0 geocoder-campaign ship. Plan: the six workstreams A–F of
-`nightshift/2026-06-14-NIGHT-SHIFT-PLAN.md` — reconcile re-gate, coarse-placer M3, multi-region interp
+`nightshift/2026-06-14-NIGHT-SHIFT-PLAN.md` — reconcile re-check, coarse-placer M3, multi-region interp
 recalibration, autocomplete, the marquee client-side demo geocoder, and issue housekeeping. All six
 landed (D was already shipped); the marquee shipped working and browser-verified. Then the back half
 turned into a bonus tail — a CI root-cause-and-fix, a keyboard-combobox typeahead, a 200-row
@@ -22,13 +22,13 @@ closures, zero self-merges** (PR-and-flag throughout); the operator returned ~13
   **compiled** CLI (`execFile out/cli.js parse`). `repo.ts`'s `__isCompiledTree` detection lands the
   core package root at `core/out`, so the compiled parser reads dictionaries from `core/out/data/…` —
   a path that only exists once something creates the `core/out/data → ../data` bridge. Locally that's a
-  side-effect of `promotion-gate.sh`; CI never ran the gate, so the first rule-path parse `ENOENT`s and
+  side-effect of `promotion-check.sh`; CI never ran the check, so the first rule-path parse `ENOENT`s and
   every `parse` fails (the same bridge issue behind night-13's `arena.perturb NOT FOUND`). Fix: mirror
   the sanctioned bridge as a Test-workflow step after compile — makes the suite pass **without**
   provisioning weights. Validated locally (pull the symlink → 5 fail; restore → 5 pass). The proper
   `repo.ts`-detection fix stays deferred to daylight review (#481). **This greens CI fully (225/225).**
 
-**A — reconcile re-gate (#580):** Graded the assembled pipeline (never raw neural) in argmax vs
+**A — reconcile re-check (#580):** Graded the assembled pipeline (never raw neural) in argmax vs
 reconcile mode after the #565 grouper fix. Reconcile is **strictly worse**: US street −2.4pp, FR street
 **−13.7pp** (the locale #427 claimed it helped), and it still breaks the geocoder precondition on 5.6%
 of OA rows where argmax never does. **Keep retired** — parked decision resolved, DeepSeek-concurred.
@@ -61,7 +61,7 @@ remains, deferred to **#587**.
 **E — the marquee: client-side street geocoder (#583 spec + #585 working demo):** **Shipped working and
 browser-verified.** Type a US address → exact building coordinate, fully in the browser, no server.
 
-- Spec (#583): byte-range proven on the **3.3 GB CA shard** (~24 KB/lookup, index B-tree depth 4); the
+- Spec (#583): byte-range proven on the **3.3 GB CA extract** (~24 KB/lookup, index B-tree depth 4); the
   sync/async architecture resolved (the demo's cascade is already async, so no worker needed for
   correctness).
 - Implementation (#585): async httpvfs situs/interp lookups (twins of the node tiers, lockstep) +
@@ -69,7 +69,7 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   (≤10 m)" / "≈ interpolated · ±N m"). Hosted the **full launch trio NY/MI/CA + DC** on R2 byte-range.
 - **Verified in-browser (Playwright/run-docs) on all four** — each resolves to its exact `address_point`,
   fully client-side, zero console errors: DC (the White House, 38.8977/-77.0365, 8.3 s), MI (4.8 s), NY
-  (5.8 s, 1.4 GB shard), and **CA (5.5 s on the 3.3 GB stress shard)** — closing the spec's go-wide
+  (5.8 s, 1.4 GB extract), and **CA (5.5 s on the 3.3 GB stress extract)** — closing the spec's go-wide
   latency question. Fixed a street-assembly bug CA exposed (the model splits `street`+`street_suffix`;
   now assembled in source order). The #377 UX cluster (span-highlight, hierarchy, candidates, timing) was
   already built; this shift added the live street tier + precision caption on top.
@@ -91,7 +91,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   _merges_ the parenthetical into the span — wrong direction). The bigger finding: **neural already beats
   v0 here (77.3 vs 75.7) and is far more robust (0 parse deaths vs 2)**; the engines fail _differently_ —
   v0 shatters on quotes and poisons neighbors (`(The White House)` → locality "White"), neural
-  _over-extends_ spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation lever is reducing neural
+  _over-extends_ spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation change is reducing neural
   span over-extension (kin to #555 / Saint-Albans), not a span proposer.
 - **#591 — reconcile-default docs sweep.** Three source-of-truth docs (`status.mdx`, `api.mdx`,
   `STAGES.mdx`) still called joint reconcile the default decode path — stale since #566 retired it. The
@@ -109,12 +109,12 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 - **Pre-flight caught the CI fire.** The `yarn install --immutable` check surfaced a fully-red `main`
   nobody had flagged. Fixing it first meant every PR opened tonight had a clean CI story (modulo the
   flagged pre-existing weights condition).
-- **Grade-the-pipeline discipline paid off again.** The A re-gate and the C non-circular holdout both
+- **Grade-the-pipeline discipline paid off again.** The A re-check and the C non-circular holdout both
   came from the same rule that caught the original reconcile regression — never trust raw-neural F1.
 - **Probe-before-build saved hours three times.** The byte-range _measurement_ (24 KB/lookup) de-risked
   the whole marquee before a line of demo wiring; the Overture off-map _probe_ found the data ceiling
   before a wasted retrain campaign; and the punctuation-stress eval (#590) answered "revive the span
-  proposer?" with a measured _no_ before anyone reopened that code — and reframed the lever (neural span
+  proposer?" with a measured _no_ before anyone reopened that code — and reframed the change (neural span
   over-extension, not a proposer) in the bargain.
 - **The marquee actually works.** The biggest risk item shipped browser-verified, not as a "foundation +
   guide." Reusing the existing httpvfs WOF pattern + the already-async demo cascade made it tractable.
@@ -178,7 +178,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 
 ## Concrete next steps
 
-- **Merge order (two CI gates to satisfy):**
+- **Merge order (two CI checks to satisfy):**
   - _Test/CI green_ needs **#579** (lockfile) **+ #589** (compiled-data bridge) — together they take the
     Test workflow to 225/225.
   - _docs-build green / marquee deploy_ needs **#579** (lockfile) **+ #585's `docusaurus.config.ts`**
@@ -189,26 +189,26 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
     branched off pre-#579 `main`, so each needs an "Update branch"/rebase to pick up the lockfile before
     its own CI can pass — that's expected, not a per-PR problem.
 - **E go-wide:** finish hosting NY + CA (uploading), add them to `HOSTED_STREET_SLUGS`, verify a CA
-  address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB shard).
+  address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB extract).
 - **E UX (#377):** tier caption ("exact" / "±N m") and place-level autocomplete typeahead are shipped;
   remaining is span-highlight, the resolved-hierarchy tree, the address-level (street-prefix) typeahead
   (#587), then lifting the cascade into a Web Worker + the capped Service Worker cache.
-- **B:** int8-quantize is done; the broad off-map pull is the next accuracy lever.
+- **B:** int8-quantize is done; the broad off-map pull is the next accuracy change.
 - **C:** finish the 50-state sweep (heat-managed) → complete the calibration table.
 
 ## Numbers
 
-| metric                  | value                                                                                                          |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| shift window            | 2026-06-14 03:47 → ~13:00 UTC (operator closed early)                                                          |
-| PRs opened              | 11 (#579–#591: 579/580/581/583/584/585/586/588/589/590/591) + #582/#587 filed                                  |
-| issues closed           | 6 (#483, #484, #523, #560, #397, #190) + #421/#374/#481/#368 triaged                                           |
-| models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                                                                         |
-| Modal / GPU time        | 0 (CPU-only shift, as planned)                                                                                 |
-| marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors                                                      |
-| R2 hosted street shards | DC + MI + NY + CA (the full launch trio + DC), all verified                                                    |
-| evals run               | reconcile re-gate, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP)         |
-| NaN incidents           | 0                                                                                                              |
-| self-merges to main     | 0 (PR-and-flag throughout)                                                                                     |
-| CI status               | Test: rescued 0 → 224/231 (#579) → 225/225 with #589. docs-build: red, needs #579 + #585-config (#590-finding) |
-| peak heat               | 92 °C (sweep; killed per the 85 °C rule)                                                                       |
+| metric                    | value                                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| shift window              | 2026-06-14 03:47 → ~13:00 UTC (operator closed early)                                                          |
+| PRs opened                | 11 (#579–#591: 579/580/581/583/584/585/586/588/589/590/591) + #582/#587 filed                                  |
+| issues closed             | 6 (#483, #484, #523, #560, #397, #190) + #421/#374/#481/#368 triaged                                           |
+| models trained            | 1 (coarse-placer M3 retrain, 34 s CPU)                                                                         |
+| Modal / GPU time          | 0 (CPU-only shift, as planned)                                                                                 |
+| marquee verification      | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors                                                      |
+| R2 hosted street extracts | DC + MI + NY + CA (the full launch trio + DC), all verified                                                    |
+| evals run                 | reconcile re-check, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP)        |
+| NaN incidents             | 0                                                                                                              |
+| self-merges to main       | 0 (PR-and-flag throughout)                                                                                     |
+| CI status                 | Test: rescued 0 → 224/231 (#579) → 225/225 with #589. docs-build: red, needs #579 + #585-config (#590-finding) |
+| peak heat                 | 92 °C (sweep; killed per the 85 °C rule)                                                                       |

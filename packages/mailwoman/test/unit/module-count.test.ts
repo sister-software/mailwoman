@@ -13,25 +13,26 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
-
-const exec = promisify(execFile)
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 /**
- * Current whole-process module count for `mailwoman --version`.
+ * Current whole-process module count for `mailwoman --version`. The license notice the launcher prints after every
+ * command verifies the configured key offline, and reading `MAILWOMAN_LICENSE_KEY` goes through the typed env boundary:
+ * zod is 94 of these modules, and the key payload schema shares it. Two things are NOT on this path and each once was:
+ * `@mailwoman/core/license/publication` carries the HTTP client and sits outside the `license` barrel (321 with it
+ * inside), and `spliterator` left when the JSON helpers moved to `core/json` (164 with it).
  */
-const MEASURED_MODULE_COUNT = 36
+const MEASURED_MODULE_COUNT = 136
 
 /**
  * The ceiling allows launcher changes while rejecting a command or UI graph entering the version path.
  */
-const MODULE_COUNT_CEILING = 100
+const MODULE_COUNT_CEILING = 200
 
 /**
  * `registerHooks` covers ESM and CJS. `node:` builtins are excluded — they are resident before the CLI starts and
@@ -55,7 +56,7 @@ const COUNTING_HOOK =
 
 describe.skipIf(!(await pathExists(cliBin)))("mailwoman --version module graph", () => {
 	test(`loads fewer than ${MODULE_COUNT_CEILING} modules`, async () => {
-		const { stdout, stderr } = await exec(process.execPath, ["--import", COUNTING_HOOK, cliBin, "--version"], {
+		const { stdout, stderr } = await runFile(process.execPath, ["--import", COUNTING_HOOK, cliBin, "--version"], {
 			cwd: repoRootPath(),
 			env: childEnv(),
 		})

@@ -73,7 +73,7 @@ That filter is the quiet win. Geocoding is the expensive stage, so every row you
 
 ## How the workers stay cheap
 
-A worker can't receive your geocoder — a 4 GB SQLite handle and a loaded neural model don't survive a `postMessage`. So they don't cross. `geocodeStream` sends each worker only the serializable `geocode` config (paths, locale), and the worker _rebuilds_ its own classifier, WOF lookup, resolver, and shard provider at startup. After that, only the config went out and only the enriched record comes back.
+A worker can't receive your geocoder — a 4 GB SQLite handle and a loaded neural model don't survive a `postMessage`. So they don't cross. `geocodeStream` sends each worker only the serializable `geocode` config (paths, locale), and the worker _rebuilds_ its own classifier, WOF lookup, resolver, and extract provider at startup. After that, only the config went out and only the enriched record comes back.
 
 Two consequences worth holding onto:
 
@@ -96,7 +96,7 @@ A sweep over real NPPES addresses on a 16-core box, single 4 GB gazetteer:
 
 Throughput peaks at two workers and _declines_ from there — by six, you're back to single-threaded, having spent six cores to get there. Capping per-worker inference threads didn't move it either; the ceiling is the shared database, not the CPU. So treat `concurrency` as something you sweep for your data and your disk, starting low. The win from threading geocode is real but modest (~1.4×), and the way to lose it is to ask for more.
 
-If your gazetteer fits in RAM, or you've sharded it across disks, your curve will sit higher — measure it. The default (`min(4, cores)`) is deliberately conservative so the out-of-the-box behavior helps rather than thrashes.
+If your gazetteer fits in RAM, or you've attached it across disks, your curve will sit higher — measure it. The default (`min(4, cores)`) is deliberately conservative so the out-of-the-box behavior helps rather than thrashes.
 
 ## When to stop at `normalize`
 

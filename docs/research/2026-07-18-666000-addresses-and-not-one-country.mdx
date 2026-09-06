@@ -19,9 +19,9 @@ Canada and Mexico went in clean. Mexico is the real win: the model's grasp of Me
 
 ## The guard that said no
 
-Every model change runs a gate before it's allowed anywhere near production. Most of it is the obvious stuff — did the new thing work — but the required half is the opposite question: did anything I wasn't looking at get worse. We hold a frozen set of graded addresses and we demand that no category of them regress by more than two points. It's a boring gate. It is also the entire reason we can move fast without shipping quiet damage.
+Every model change runs a check before it's allowed anywhere near production. Most of it is the obvious stuff — did the new thing work — but the required half is the opposite question: did anything I wasn't looking at get worse. We hold a frozen set of graded addresses and we demand that no category of them regress by more than two points. It's a boring check. It is also the entire reason we can move fast without shipping quiet damage.
 
-Brazil built clean. Brazil trained clean. And then the gate came back with one red line. Country recall — the model's ability to pull the country out of an address that names one — had dropped more than five points. Everything else held: cities, streets, postcodes, house numbers, all flat. Just country, and just enough to fail.
+Brazil built clean. Brazil trained clean. And then the check came back with one red line. Country recall — the model's ability to pull the country out of an address that names one — had dropped more than five points. Everything else held: cities, streets, postcodes, house numbers, all flat. Just country, and just enough to fail.
 
 The tell was in the comparison. The run with only Canada and Mexico had nicked country by about a point and a half — under the bar, easy to wave off as noise. Adding Brazil didn't introduce a new problem. It made the _existing_ one bigger. Two data points make a line, and the line pointed somewhere specific: the more of these addresses I added, the less the model believed in countries.
 
@@ -43,4 +43,4 @@ So Brazil isn't a wall; it's a reminder to put the border back on some of the pa
 
 June's version of this was _grade the coordinate the user sees, not the layer you happened to build._ This one is its sibling: **your training data teaches its silences, too.** Every field you consistently leave out is a field you are quietly teaching the model to leave out. Coverage isn't only what you put in the corpus. It's the shape of what you left absent, repeated a million times until the model mistakes it for a rule.
 
-The cheap, boring, two-point gate caught it before a single user did. That's twice now, same discipline, different disguise. I'll take boring.
+The cheap, boring, two-point check caught it before a single user did. That's twice now, same discipline, different disguise. I'll take boring.

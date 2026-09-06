@@ -7,15 +7,15 @@
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 
-import { stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
+import { stageMapLibreWorker, stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
 import { bundleAliases, configureDemoWebpack } from "./webpack-policy.ts"
 
 export default async function demoAssetsPlugin(context: LoadContext): Promise<Plugin> {
 	const docsDir = context.siteDir
-	const staticDir = resolve(docsDir, "static", "mailwoman")
-	const emptyShim = resolve(docsDir, "src", "empty-shim.js")
+	const staticDir = resolvePath(docsDir, "static", "mailwoman")
+	const emptyShim = resolvePath(docsDir, "src", "empty-shim.js")
 
 	// Both arms are resolved here, where awaiting is legal, because `configureWebpack` below is called synchronously and
 	// only learns which one it needs at that moment.
@@ -29,12 +29,15 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 
 		async loadContent() {
 			await makeDirectories(staticDir)
-			const sqljsDir = resolve(staticDir, "sqljs")
+			const sqljsDir = resolvePath(staticDir, "sqljs")
 			await makeDirectories(sqljsDir)
 			await stageSQLJSHTTPVFS(sqljsDir)
-			const pairIndexDir = resolve(staticDir, "pair-index")
+			const pairIndexDir = resolvePath(staticDir, "pair-index")
 			await makeDirectories(pairIndexDir)
 			await stagePairIndexes(pairIndexDir)
+			const maplibreDir = resolvePath(staticDir, "maplibre")
+			await makeDirectories(maplibreDir)
+			await stageMapLibreWorker(maplibreDir)
 
 			return {}
 		},
@@ -44,7 +47,7 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 		},
 
 		configureWebpack(config, isServer) {
-			return configureDemoWebpack(config, docsDir, isServer ? aliases.server : aliases.client)
+			return configureDemoWebpack(config, emptyShim, isServer ? aliases.server : aliases.client, isServer)
 		},
 	}
 }

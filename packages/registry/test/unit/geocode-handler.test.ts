@@ -10,13 +10,13 @@ const rec = (raw: Record<string, string>): SourceRecord => ({ id: "x", raw }) as
 
 describe("makeGeocodeHandler", () => {
 	it("recomputes the address from raw+mapping and attaches the geocode", async () => {
-		const seam: GeocodeAddress = async (raw) => ({
+		const geocodeForIngest: GeocodeAddress = async (raw) => ({
 			components: {},
 			canonicalKey: "",
 			formatted: raw.toUpperCase(),
 		})
 
-		const handle = makeGeocodeHandler(seam, { address: ["addr", "city", "state"] })
+		const handle = makeGeocodeHandler(geocodeForIngest, { address: ["addr", "city", "state"] })
 
 		const out = await handle(rec({ addr: "1 Main St", city: "Austin", state: "TX" }))
 
@@ -26,13 +26,13 @@ describe("makeGeocodeHandler", () => {
 	it("leaves a record with no mapped address untouched (no geocode call)", async () => {
 		let calls = 0
 
-		const seam: GeocodeAddress = async () => {
+		const geocodeForIngest: GeocodeAddress = async () => {
 			calls++
 
 			return null
 		}
 
-		const handle = makeGeocodeHandler(seam, { address: ["addr"] })
+		const handle = makeGeocodeHandler(geocodeForIngest, { address: ["addr"] })
 
 		const out = await handle(rec({ addr: "" }))
 
@@ -41,8 +41,8 @@ describe("makeGeocodeHandler", () => {
 	})
 
 	it("maps a null geocode result to undefined", async () => {
-		const seam: GeocodeAddress = async () => null
-		const handle = makeGeocodeHandler(seam, { address: ["addr"] })
+		const geocodeForIngest: GeocodeAddress = async () => null
+		const handle = makeGeocodeHandler(geocodeForIngest, { address: ["addr"] })
 
 		expect((await handle(rec({ addr: "nowhere" }))).address).toBeUndefined()
 	})

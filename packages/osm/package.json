@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/osm",
 	"version": "4.16.2",
-	"description": "OpenStreetMap rooftop address-point ingestion — builds per-country ODbL precision shards on the situs address-point schema.",
+	"description": "OpenStreetMap rooftop address-point ingestion — builds per-country ODbL precision extracts on the situs address-point schema.",
 	"keywords": [
 		"address-point",
 		"geocoding",
@@ -25,52 +25,39 @@
 		"directory": "packages/osm"
 	},
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./scripts/*": {
-			"node": "./scripts/*.ts",
+			"node": "./lib/scripts/*.ts",
 			"default": "./out/scripts/*.js",
 			"types": "./out/scripts/*.d.ts"
 		},
 		"./sdk": {
-			"node": "./sdk/index.ts",
+			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
+		"./sdk/*": {
+			"node": "./lib/sdk/*.ts",
+			"default": "./out/sdk/*.js",
+			"types": "./out/sdk/*.d.ts"
+		},
+		"./overpass/*": {
+			"node": "./lib/overpass/*.ts",
+			"default": "./out/overpass/*.js",
+			"types": "./out/overpass/*.d.ts"
+		},
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
-		},
-		"./sdk/address-point-schema": {
-			"node": "./sdk/address-point-schema.ts",
-			"default": "./out/sdk/address-point-schema.js",
-			"types": "./out/sdk/address-point-schema.d.ts"
-		},
-		"./sdk/street-locale": {
-			"node": "./sdk/street-locale.ts",
-			"default": "./out/sdk/street-locale.js",
-			"types": "./out/sdk/street-locale.d.ts"
-		},
-		"./sdk/extract-boundary": {
-			"node": "./sdk/extract-boundary.ts",
-			"default": "./out/sdk/extract-boundary.js",
-			"types": "./out/sdk/extract-boundary.d.ts"
-		},
-		"./sdk/extract-poi": {
-			"node": "./sdk/extract-poi.ts",
-			"default": "./out/sdk/extract-poi.js",
-			"types": "./out/sdk/extract-poi.d.ts"
-		},
-		"./sdk/extract-subvenue": {
-			"node": "./sdk/extract-subvenue.ts",
-			"default": "./out/sdk/extract-subvenue.js",
-			"types": "./out/sdk/extract-subvenue.d.ts"
-		},
-		"./sdk/representative-point": {
-			"node": "./sdk/representative-point.ts",
-			"default": "./out/sdk/representative-point.js",
-			"types": "./out/sdk/representative-point.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -81,14 +68,12 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.4",
-		"path-ts": "^2.1.0",
-		"spliterator": "^6.3.1"
+		"kysely": "^0.29.5",
+		"path-ts": "^2.3.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

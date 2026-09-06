@@ -50,7 +50,7 @@ and the lane's reference set is under separate review. Its open-register remaind
 here.
 
 What remains is **297 rows across six lanes**, all `rooftop` truth, published in full — the per-lane
-denominators below state exactly how many of each lane's 60 rows survived the provenance cut. The
+denominators below state exactly how many of each lane's 60 rows survived the provenance reduce. The
 internal 420-row aggregate is not restated here, because part of its reference set cannot be
 published; this record's numbers are computed only over rows whose truth a third party can check.
 

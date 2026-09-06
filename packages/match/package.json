@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/match",
-	"version": "9.2.0",
-	"description": "The geocode-first record matcher: block → score → cluster. This first cut ships the string comparators (Jaro / Jaro-Winkler + an edit-distance fallback for compound surnames) that the Fellegi-Sunter scorer is built on.",
+	"version": "9.3.0",
+	"description": "The geocode-first record matcher: block → score → cluster. This first reduce ships the string comparators (Jaro / Jaro-Winkler + an edit-distance fallback for compound surnames) that the Fellegi-Sunter scorer is built on.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -24,50 +24,58 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./blocking": {
-			"node": "./blocking.ts",
+			"node": "./lib/blocking.ts",
 			"default": "./out/blocking.js",
 			"types": "./out/blocking.d.ts"
 		},
 		"./clustering": {
-			"node": "./clustering.ts",
+			"node": "./lib/clustering.ts",
 			"default": "./out/clustering.js",
 			"types": "./out/clustering.d.ts"
 		},
 		"./comparators": {
-			"node": "./comparators.ts",
+			"node": "./lib/comparators.ts",
 			"default": "./out/comparators.js",
 			"types": "./out/comparators.d.ts"
 		},
 		"./distance": {
-			"node": "./distance.ts",
+			"node": "./lib/distance.ts",
 			"default": "./out/distance.js",
 			"types": "./out/distance.d.ts"
 		},
 		"./fellegi-sunter": {
-			"node": "./fellegi-sunter.ts",
+			"node": "./lib/fellegi-sunter.ts",
 			"default": "./out/fellegi-sunter.js",
 			"types": "./out/fellegi-sunter.d.ts"
 		},
 		"./em": {
-			"node": "./em.ts",
+			"node": "./lib/em.ts",
 			"default": "./out/em.js",
 			"types": "./out/em.d.ts"
 		},
 		"./tf": {
-			"node": "./tf.ts",
+			"node": "./lib/tf.ts",
 			"default": "./out/tf.js",
 			"types": "./out/tf.d.ts"
 		},
 		"./gbt": {
-			"node": "./gbt.ts",
+			"node": "./lib/gbt.ts",
 			"default": "./out/gbt.js",
 			"types": "./out/gbt.d.ts"
 		}
@@ -80,6 +88,6 @@
 		"fastest-levenshtein": "^1.0.16"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2"
+		"@types/node": "^26.4.1"
 	}
 }

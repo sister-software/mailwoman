@@ -2148,6 +2148,6 @@ git commit -m "docs: README — protocol, handles, registry, limitations, isolat
 
 ## Out of scope for this plan
 
-- **npm publish / GitHub repo creation** — operator-gated (release flow, npm auth). The package stays local until the operator cuts the release.
+- **npm publish / GitHub repo creation** — operator-conditional (release flow, npm auth). The package stays local until the operator reduces the release.
 - **mailwoman migration** — a separate plan per the spec (`core/scripting/utils`, `APIClient`, delete `core/lifecycle`, both exports maps): written after `lifecycle-ts` is reviewed.
 - The `AsyncDisposableLRUCache` decision (spec: default delete; decided in the migration PR).

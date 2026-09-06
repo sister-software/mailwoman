@@ -15,7 +15,7 @@
 			"source": "curated",
 			"attestation": {
 				"kind": "committed-query",
-				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-us-02",
+				"reference": "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl#sem-act-us-02",
 				"detail": "prescription near Denver CO"
 			},
 			"note": "The bare activity noun. Unscoped because the row that attests it carries no locale, and scoping a committed form past its own attestation would make the entry say more than the record does."
@@ -33,7 +33,7 @@
 			"source": "curated",
 			"attestation": {
 				"kind": "committed-query",
-				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-us-01",
+				"reference": "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl#sem-act-us-01",
 				"detail": "where can i pick up a prescription near Denver CO"
 			},
 			"note": "The verb phrase for collecting a dispensed prescription."
@@ -55,7 +55,7 @@
 			"source": "curated",
 			"attestation": {
 				"kind": "committed-query",
-				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-fr-01",
+				"reference": "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl#sem-act-fr-01",
 				"detail": "somewhere to fill a prescription near Toulouse"
 			},
 			"note": "The verb phrase for having a prescription dispensed."
@@ -66,7 +66,7 @@
 			"source": "curated",
 			"attestation": {
 				"kind": "committed-query",
-				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-mx-01",
+				"reference": "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl#sem-act-mx-01",
 				"detail": "i need my prescription refilled near Tijuana"
 			},
 			"note": "The inflected form, as it appears inside a first-person sentence."

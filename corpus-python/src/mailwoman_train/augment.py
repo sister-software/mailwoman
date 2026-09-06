@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import random
 from collections.abc import Iterator
+from typing import Any, cast
 
 from .tokenizer import whitespace_spans
 
@@ -149,7 +150,7 @@ US_STATES: dict[str, str] = {
 SPAN_KEYS = ("span_starts", "span_ends", "span_tags")
 
 
-def row_span_triple(row: dict) -> tuple[list[int], list[int], list[str]] | None:
+def row_span_triple(row: dict[str, Any]) -> tuple[list[int], list[int], list[str]] | None:
     """Return the row's char-offset span triple (#519), or None for a legacy (token-only) row.
 
     A PARTIAL triple — some keys present/non-null, others missing/null — is a corrupt row and
@@ -165,7 +166,7 @@ def row_span_triple(row: dict) -> tuple[list[int], list[int], list[str]] | None:
         raise ValueError(
             f"corrupt row: partial char-offset span triple (#519) — missing {missing} (raw={row.get('raw')!r})"
         )
-    starts, ends, tags = values
+    starts, ends, tags = cast(tuple[list[int], list[int], list[str]], values)  # all present, verified above
     if len(starts) != len(ends) or len(starts) != len(tags):
         raise ValueError(
             f"corrupt row: span triple arrays not parallel — "
@@ -174,7 +175,7 @@ def row_span_triple(row: dict) -> tuple[list[int], list[int], list[str]] | None:
     return starts, ends, tags
 
 
-def splice_expansion(row: dict, idx: int, expansion: str) -> dict:
+def splice_expansion(row: dict[str, Any], idx: int, expansion: str) -> dict[str, Any]:
     """Return a copy of ``row`` with token ``idx``'s surface in ``raw`` replaced by ``expansion``
     via character splicing — never a ``" ".join(tokens)`` rebuild, which would destroy whatever
     raw carries that the tokens don't (PR #534 open question 3). Tokens + labels are updated by
@@ -262,7 +263,7 @@ def _expand_token(
     return new_tokens, new_labels
 
 
-def glue_region_postcode(row: dict, idx: int) -> dict:
+def glue_region_postcode(row: dict[str, Any], idx: int) -> dict[str, Any]:
     """Return a copy of ``row`` with the whitespace between token ``idx`` (region) and
     token ``idx + 1`` (postcode) removed from ``raw``. Tokens + labels are untouched —
     the split labels project onto the fused surface via char offsets (see module doc).
@@ -295,7 +296,7 @@ def glue_region_postcode(row: dict, idx: int) -> dict:
     return out
 
 
-def lowercase_row(row: dict) -> dict | None:
+def lowercase_row(row: dict[str, Any]) -> dict[str, Any] | None:
     """Return a copy of ``row`` with ``raw`` + ``tokens`` lowercased; labels + char-offset spans
     pass through UNCHANGED. Lowercasing is length-preserving char-by-char, so every offset still
     lands on the same (now-lowercased) character — no splice, no re-target, the simplest augmentation.
@@ -320,7 +321,7 @@ def lowercase_row(row: dict) -> dict | None:
 DROP_PUNCT: frozenset[str] = frozenset(",\"'")
 
 
-def drop_separator_punct(row: dict, drop_chars: frozenset[str] = DROP_PUNCT) -> dict | None:
+def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_PUNCT) -> dict[str, Any] | None:
     """Return a copy of ``row`` with SEPARATOR punctuation (gap commas/quotes) removed from ``raw`` —
     the delimiter-free / whitespace-only form (#1101; whitespace-only is 64% of the parity gold).
 
@@ -392,7 +393,7 @@ def drop_separator_punct(row: dict, drop_chars: frozenset[str] = DROP_PUNCT) -> 
     }
 
 
-def upper_case_row(row: dict) -> dict | None:
+def upper_case_row(row: dict[str, Any]) -> dict[str, Any] | None:
     """Return a copy of ``row`` with ``raw`` + ``tokens`` upper-cased; labels + char-offset spans pass
     through UNCHANGED — the exact mirror of :func:`lowercase_row` (#829) for the ALL-CAPS direction.
 
@@ -413,7 +414,7 @@ def upper_case_row(row: dict) -> dict | None:
 
 
 def augment_row(
-    row: dict,
+    row: dict[str, Any],
     rng: random.Random,
     directional_prob: float = 0.3,
     region_prob: float = 0.3,
@@ -422,7 +423,7 @@ def augment_row(
     punct_drop_prob: float = 0.0,
     upper_case_prob: float = 0.0,
     ordinal_prob: float = 0.0,
-) -> Iterator[dict]:
+) -> Iterator[dict[str, Any]]:
     """Yield the original row, then optionally an augmented copy.
 
     Each augmentation fires independently with its configured probability. When an

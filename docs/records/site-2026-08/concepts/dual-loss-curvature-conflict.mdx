@@ -102,7 +102,7 @@ else:
     loss = ce_loss
 ```
 
-Gated on `self.crf_loss_weight > 0` so the change is backward-compatible: existing recipes that ship with `crf_loss_weight: 0.05` still compute CRF; the new behaviour activates only when a recipe explicitly sets `crf_loss_weight: 0.0`. No new config field, no coordination bugs between flags.
+Blocked on `self.crf_loss_weight > 0` so the change is backward-compatible: existing recipes that ship with `crf_loss_weight: 0.05` still compute CRF; the new behaviour activates only when a recipe explicitly sets `crf_loss_weight: 0.0`. No new config field, no coordination bugs between flags.
 
 Inference unchanged. The runtime still calls `model.crf.decode(emissions, mask)` for Viterbi over the frozen mask. Structural validity preserved; opposing-curvature problem gone.
 
@@ -114,7 +114,7 @@ A CE-only smoke run that has to convince you the repair works:
 - **val_macro_F1 ≥ 0.35 at step 2000.** v0.4.0-shipped is 0.36; h256-bisect peaked at 0.40 before diverging. 0.35 says "stable AND nearly as good as the best dual-loss checkpoint ever reached" — and the stability is the win that matters.
 - **Per-tag F1 trajectory.** Total macro_F1 hides tag-level collapse. If `venue` F1 drops from 0.39 to 0.05 while `house_number` climbs, you have a quality redistribution problem CE-only hasn't fixed. Cost: zero — confusion matrices for per-tag F1 are already computed during eval.
 
-If the smoke passes those gates, promote to a full 50K-step CE-only training run. Quality refinements (class weights, source weights, longer schedules) become safe to layer on top — they were unsafe under dual-loss because they amplified whichever loss was already aggressive.
+If the smoke passes those checks, promote to a full 50K-step CE-only training run. Quality refinements (class weights, source weights, longer schedules) become safe to layer on top — they were unsafe under dual-loss because they amplified whichever loss was already aggressive.
 
 ## What this technique generalises to
 

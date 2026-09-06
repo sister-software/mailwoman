@@ -1,0 +1,85 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Build the timezone polygon DB from a timezone-boundary-builder GeoJSON
+ *   (`combined-with-oceans.json`, features of `{ properties: { tzid }, geometry:
+ *   Polygon|MultiPolygon }`). One row per feature: the tzid, a bounding box (for the lookup's
+ *   prefilter), and the geometry normalized to MultiPolygon coordinates as JSON.
+ */
+
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { MultiPolygonCoords } from "#index"
+import type { TimezoneDatabase } from "#schema"
+
+export type TimezoneFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, { tzid: string }>
+
+/**
+ * Read the GeoJSON at `geojsonPath` and write the polygon DB to `dbPath` (overwriting its table).
+ *
+ * @returns The number of features written to the DB.
+ */
+export async function buildTimezoneDB(geojsonPath: string, dbPath: string): Promise<{ features: number }> {
+	const data = await readLocalJSONFile<InferGeoFeatureCollection<TimezoneFeature>>(geojsonPath)
+
+	using db = new DatabaseClient<TimezoneDatabase>(dbPath)
+
+	db.exec("DROP TABLE IF EXISTS timezone_polygons")
+
+	db.exec(
+		`CREATE TABLE timezone_polygons (tzid TEXT NOT NULL, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT NOT NULL)`
+	)
+
+	const insert = db.prepare(
+		"INSERT INTO timezone_polygons (tzid, minLat, maxLat, minLon, maxLon, geom) VALUES (?,?,?,?,?,?)"
+	)
+
+	db.exec("BEGIN")
+
+	for (const feature of data.features) {
+		const polygons: MultiPolygonCoords =
+			feature.geometry.type === "Polygon"
+				? [feature.geometry.coordinates as number[][][]]
+				: (feature.geometry.coordinates as number[][][][])
+
+		let minLat = 90
+		let maxLat = -90
+		let minLon = 180
+		let maxLon = -180
+
+		for (const polygon of polygons) {
+			for (const ring of polygon) {
+				for (const point of ring) {
+					const lon = point[0]!
+					const lat = point[1]!
+
+					if (lat < minLat) {
+						minLat = lat
+					}
+
+					if (lat > maxLat) {
+						maxLat = lat
+					}
+
+					if (lon < minLon) {
+						minLon = lon
+					}
+
+					if (lon > maxLon) {
+						maxLon = lon
+					}
+				}
+			}
+		}
+
+		insert.run(feature.properties.tzid, minLat, maxLat, minLon, maxLon, JSON.stringify(polygons))
+	}
+
+	db.exec("COMMIT")
+	db.exec("CREATE INDEX idx_tz_bbox ON timezone_polygons (minLat, maxLat, minLon, maxLon)")
+
+	return { features: data.features.length }
+}

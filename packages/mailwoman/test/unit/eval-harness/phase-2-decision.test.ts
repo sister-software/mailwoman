@@ -12,11 +12,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
-import { join } from "@mailwoman/platform/path"
 import {
 	ABSENCE_PROBE_FREEZE_PATH,
 	type AbsenceProbeFreezeRecord,
@@ -45,13 +43,14 @@ import {
 import { MARKER_PROBE_EXPECTED_CODE } from "mailwoman/eval-harness/phase-2-decision/run"
 import { PROBE_FREEZE_PATH, type ProbeFreezeRecord } from "mailwoman/eval-harness/semantic-utility/probe"
 import { SEMANTIC_AFFORDS_MECHANISM } from "mailwoman/observations"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const definition = loadPhase2Definition()
+const definition = await loadPhase2Definition()
 const freeze = await readLocalJSONFile<Phase2FreezeRecord>(PHASE2_FREEZE_PATH)
 
 /**
@@ -70,6 +69,8 @@ interface CommittedReceipt {
 	recorded: boolean
 	recordingNote: string
 }
+
+const receipt = await readLocalJSONFile<CommittedReceipt>(PHASE2_RECEIPT_PATH)
 
 /**
  * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
@@ -133,7 +134,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 		expect(phase2DefinitionHash(definition)).toBe(freeze.sha256)
 		expect(freeze.decisionID).toBe(definition.decisionID)
 		expect(freeze.version).toBe(definition.version)
-		expect(freeze.definition).toBe("packages/mailwoman/eval-harness/phase-2-decision/decision-definition.json")
+		expect(freeze.definition).toBe("packages/mailwoman/lib/eval-harness/phase-2-decision/decision-definition.json")
 	})
 
 	it("audits clean", async () => {
@@ -145,7 +146,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 			copy.thresholds.minimumResolutionChecks = 1
 		})
 
-		expect(() => loadPhase2Definition(definitionPath, PHASE2_FREEZE_PATH)).toThrow(/content hash .* !== frozen/)
+		await expect(loadPhase2Definition(definitionPath, PHASE2_FREEZE_PATH)).rejects.toThrow(/content hash .* !== frozen/)
 	})
 
 	it("refuses a freeze record pinning another version", async () => {
@@ -156,7 +157,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 			{ version: "1.0.0" }
 		)
 
-		expect(() => loadPhase2Definition(definitionPath, freezePath)).toThrow(
+		await expect(loadPhase2Definition(definitionPath, freezePath)).rejects.toThrow(
 			/pins version 1\.0\.0, definition is 1\.1\.0/
 		)
 	})
@@ -164,7 +165,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 	it("refuses a freeze record naming another decision", async () => {
 		const { definitionPath, freezePath } = await scratchPair(() => {}, { decisionID: "phase-3-decision" })
 
-		expect(() => loadPhase2Definition(definitionPath, freezePath)).toThrow(/freeze record names/)
+		await expect(loadPhase2Definition(definitionPath, freezePath)).rejects.toThrow(/freeze record names/)
 	})
 })
 
@@ -468,8 +469,6 @@ describe("the pre-registration agrees with the artifacts it names", () => {
 })
 
 describe("the committed receipt", () => {
-	const receipt = readLocalJSONFileSync<CommittedReceipt>(PHASE2_RECEIPT_PATH)
-
 	it("was measured against this exact ruler", async () => {
 		expect(receipt.decisionID).toBe(definition.decisionID)
 		expect(receipt.definitionVersion).toBe(definition.version)

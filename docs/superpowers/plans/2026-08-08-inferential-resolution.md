@@ -138,7 +138,7 @@ The relationships should be mined ahead of time, not derived per query — the r
 synchronous and per-keystroke. Naming families, per-locality street-set completeness, terrain
 exclusion masks and fitted CPT parameters are all build-time artifacts keyed to the existing H3/WOF
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
-the targeted-precompute lever already filed as
+the targeted-precompute change already filed as
 [#1549](https://github.com/sister-software/mailwoman/issues/1549) — with the caution recorded there
 intact: precompute freezes a query distribution, so only stable and hot query classes earn an
 artifact.
@@ -149,9 +149,9 @@ Pelias, Photon and Nominatim are not merely finish-line competitors. Each incumb
 instrument for discovering a class of claims that users reasonably expect a geocoder to handle out
 of the box. A benchmark discrepancy must terminate in one of four receipts:
 
-1. a parser/model lever;
-2. a resolver or ranking lever;
-3. a coverage/artifact lever; or
+1. a parser/model change;
+2. a resolver or ranking change;
+3. a coverage/artifact change; or
 4. a documented product boundary where abstention is the honest answer.
 
 Issue #1569 is the exemplar: the comparison exposed a terminal-suffix span failure, which became a
@@ -222,7 +222,7 @@ it reports the remaining public evidence and abstains where that evidence is ins
 an inferred or derived relationship never acquires the designation status of an authority merely
 because it agrees with one.
 
-This is the same architectural boundary already used for ODbL shards: isolate inputs by legal
+This is the same architectural boundary already used for ODbL databases: isolate inputs by legal
 posture, keep source assertions plural, and make distributability an artifact-manifest property
 rather than an assumption embedded in application code.
 
@@ -234,7 +234,7 @@ contract is:
 ```text
 acquire snapshot/replication sequence
   → bounded pilot and resource projection
-  → independent resumable shards
+  → independent resumable extracts
   → structural + geographic + licence validation
   → seal manifest and coverage assertions
   → immutable publish
@@ -246,7 +246,7 @@ replication sequence, source URL/hash, builder version, region, timestamps and O
 Current state and history are separate products. Deletes and redactions are events, not missing
 rows silently forgotten by a rebuild.
 
-Coverage is a first-class output distinct from row count. A shard may assert `observed_no_match` in
+Coverage is a first-class output distinct from row count. A extract may assert `observed_no_match` in
 a processed cell, `unsurveyed` outside its extract, or `layer_missing` when the artifact was not
 loaded; only a separately justified completeness claim can power hard negative evidence. OSM's
 crowdsourced absence almost never supplies that completeness by itself.
@@ -255,9 +255,9 @@ Source assertions remain plural. OSM, TIGER, BAN, Overture and future public add
 their own provenance and may disagree; ingestion does not overwrite them into one allegedly
 authoritative row. Reconciliation happens in the derivation graph. Users consume sealed artifacts
 and verified deltas rather than running the acquisition pipeline, while the build recipe remains
-reproducible subject to the source licence and the existing ODbL counsel gate on `@mailwoman/osm`.
+reproducible subject to the source licence and the existing ODbL counsel check on `@mailwoman/osm`.
 
-The current rooftop builder already has four sound foundations: it quarantines ODbL shards from the
+The current rooftop builder already has four sound foundations: it quarantines ODbL extracts from the
 permissive gazetteer, keeps countries independent, measures rather than guesses the street-association
 gap, and builds on a temporary database before atomic replacement. Before full-scale ingestion it
 still needs:
@@ -287,7 +287,7 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 **Speculative, needs a probe before any build:**
 
 - Naming-family mining. Does the presidents-block pattern generalize past anecdote? Measure the
-  proportion of localities with a detectable naming scheme before assuming it is a lever.
+  proportion of localities with a detectable naming scheme before assuming it is a change.
 - CPT parameter fitting. The residual on held-out POI regions IS the experiment; if it is wide, the
   prior is too weak to act on.
 - Terrain exclusion. How much candidate area does slope/land-cover actually remove in the places

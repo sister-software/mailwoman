@@ -2,18 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import {
 	WOF_ADMIN_ADAPTER_ID,
 	createWOFAdminAdapter,
 	nameSlotsFor,
 	variantsFor,
 } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
-import { join } from "@mailwoman/platform/path"
+import { runAdapter } from "@mailwoman/corpus/runner"
+import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
-
-import { runAdapter } from "#runner"
-import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("wof-admin-json")
 

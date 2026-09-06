@@ -8,8 +8,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { outputLines } from "mailwoman/debug-view/output-lines"
-import type { GeocodeResult } from "mailwoman/geocode-result"
-import type { GeocodeTrace } from "mailwoman/geocode-session"
+import type { GeocodeResult, GeocodeTrace } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 const TREE = {
@@ -31,6 +30,7 @@ const RESULT = {
 	lat: 45.50380788700005,
 	lon: -122.6322,
 	resolution_tier: "address_point",
+	epistemic_status: "observed",
 	uncertainty_m: 1,
 	countryCode: "US",
 	components: {},

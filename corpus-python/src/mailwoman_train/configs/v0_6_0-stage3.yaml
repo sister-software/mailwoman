@@ -66,7 +66,7 @@ model:
   # crf_loss_weight: 0.0 after THREE divergence attempts:
   # - attempt 1 (lr=1.5e-4, crf=0.5): NaN at step 950
   # - attempt 2 (lr=1.0e-4, crf=0.1): NaN at step 1700
-  # Both NaN'd post-warmup. PO box shard validated clean (no malformed BIO).
+  # Both NaN'd post-warmup. PO box slice validated clean (no malformed BIO).
   # The CRF transition table is 33x33 in STAGE3 (was 21x21 in STAGE2), and
   # bf16 + masked -inf transitions appear numerically unstable when training.
   # v0.5.4 used crf_loss_weight=0.0 (CE-only) and trained fine — match that.

@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - **Git on this machine:** `~/.gitconfig` is TCC-blocked. Every git write: `export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null` then `git -c user.name="Teffen Ellis" -c user.email="teffen@sister.software" commit …`. Commit messages end with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
-- **#481 invariant:** `#decode` stays the single decode path. Trace capture happens inside it, gated on a flag. `parse` / `parseWithLogits` must stay byte-stable — the existing neural suite is the guard and must pass untouched.
+- **#481 invariant:** `#decode` stays the single decode path. Trace capture happens inside it, blocked on a flag. `parse` / `parseWithLogits` must stay byte-stable — the existing neural suite is the guard and must pass untouched.
 - **File conventions:** every new `.ts`/`.tsx` file starts with the 4-line `@copyright Sister Software / @license AGPL-3.0 / @author Teffen Ellis, et al.` docblock plus a purpose paragraph. Indentation is tabs. Workspace files live at workspace root (no `src/`); docs components live in `docs/src/components/<Name>/`.
 - **Acronym casing:** whole-component caps (`parseJSON`, not `parseJson`). No new acronym identifiers are expected in this plan; if one appears, cap it whole.
 - **Docs type discipline:** `docs/src/shared/resources.tsx` uses locally-defined structural `*Like` types — do NOT import types from `@mailwoman/neural` into docs.
@@ -792,7 +792,7 @@ export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 	/**
 	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the
-	 * trace seam lack it — feature-detect before calling.
+	 * trace boundary lack it — feature-detect before calling.
 	 */
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }
@@ -1487,7 +1487,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
  *
  *   Live wrapper for <ModelVisualizer>: an input box + the demo-embed classifier (production
  *   Hugging Face assets via DemoEmbedProvider). Feature-detects `traceParse` — deployed bundles
- *   built before the trace seam lack it, in which case we say so instead of crashing.
+ *   built before the trace boundary lack it, in which case we say so instead of crashing.
  */
 
 import React, { useCallback, useState } from "react"
@@ -1523,7 +1523,7 @@ export function LiveModelVisualizer(): JSX.Element {
 	if (!ready) return <p>Loading model assets… {loadingProgress ?? ""}</p>
 
 	if (!classifier?.traceParse) {
-		return <p>This deployed model bundle predates the trace seam — trace introspection unavailable.</p>
+		return <p>This deployed model bundle predates the trace boundary — trace introspection unavailable.</p>
 	}
 
 	return (
@@ -1639,7 +1639,7 @@ Expected: PASS, including `trace-parse.test.ts`.
 Run: `yarn vitest --run docs/src/components/ModelVisualizer && yarn workspace @mailwoman/docs typecheck`
 Expected: PASS / clean.
 
-- [ ] **Step 3: Repo lint/format gates**
+- [ ] **Step 3: Repo lint/format checks**
 
 Run: `yarn lint:oxlint && yarn lint:oxfmt` (skip `lint:python` — no Python touched). If oxfmt flags the new files, run `yarn format` and re-check. Fix violations in the files this plan touched only.
 
@@ -1647,7 +1647,7 @@ Run: `yarn lint:oxlint && yarn lint:oxfmt` (skip `lint:python` — no Python tou
 
 Use the **run-docs skill**'s build/smoke flow (or `yarn workspace @mailwoman/docs build`). Expected: build succeeds; `/trace` present in the output.
 
-- [ ] **Step 5: Final commit (only if gates required fixes)**
+- [ ] **Step 5: Final commit (only if checks required fixes)**
 
 ```bash
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null

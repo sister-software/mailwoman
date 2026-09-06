@@ -5,7 +5,7 @@
 //
 // WHAT THIS MEASURES, AND WHAT IT DOES NOT
 //
-// The French rooftop tier IS the Base Adresse Nationale. `mailwoman data pull fr` downloads a shard
+// The French rooftop tier IS the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract
 // built from BAN, and this panel grades Mailwoman's answer against the same register the answer was
 // looked up in. That is circular, and it is stated on the published page beside every number it
 // touches. What survives the circularity is still worth measuring: whether the pipeline PARSES the
@@ -25,7 +25,7 @@
 // DETERMINISM
 //
 // The panel is a committed file (`fr-ban-sample.json`), not a fresh draw, so two runs on two machines
-// grade the same 100 rows. `--resample` regenerates it from a local BAN shard using the seed below;
+// grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below;
 // the draw is a seeded pass over rowids, so the same seed against the same BAN release reproduces the
 // same panel byte for byte. A different BAN release renumbers the rows and will produce a different
 // panel — which is why the sample is committed rather than drawn at run time.
@@ -41,26 +41,26 @@
 //   node fr-ban-panel.mjs --resample --data-root <DATA_ROOT>   # regenerate fr-ban-sample.json
 //
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
-// <DATA_ROOT>/wof/candidate.db and the BAN shard from <DATA_ROOT>/ban/address-points-fr.db.
+// <DATA_ROOT>/wof/candidate.db and the BAN extract from <DATA_ROOT>/ban/address-points-fr.db.
 
-import { BANShardProvider } from "@mailwoman/ban/sdk"
+import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { median, mulberry32, percentile } from "@mailwoman/core/utils"
+import { createRequire } from "@mailwoman/core/module/resolvers"
+import { mulberry32 } from "@mailwoman/core/random"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { median, percentile } from "@mailwoman/core/stats"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { createRequire } from "@mailwoman/platform/module"
-import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { geocodeAddress } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode"
+import { basename, join, resolvePath } from "path-ts"
 
-const HERE = dirname(fileURLToPath(import.meta.url))
+const HERE = import.meta.dirname
 
 /**
  * The weights locale. The `fr-FR` package is a data-only overlay: it ships the French postcode, pair-index and FST
@@ -103,7 +103,7 @@ const EXACT_ROW_KM = 0.001
  */
 const ROUTING_KM = 15
 
-const { values: flags } = parseArgs({
+const { values: flags } = parseArguments({
 	options: {
 		"data-root": { type: "string" },
 		out: { type: "string", default: join(HERE, "fr-ban-results.json") },
@@ -174,7 +174,7 @@ interface GradedRecord {
 //#region Address rendering
 
 /**
- * Title-case a BAN `locality_norm` value. The column is lowercased and accent-stripped by the shard builder, so
+ * Title-case a BAN `locality_norm` value. The column is lowercased and accent-stripped by the extract builder, so
  * `orleans` renders as `Orleans` and never as `Orléans`. That loss is real and the published page carries it as a
  * caveat: every panel row asks the pipeline for an unaccented commune.
  */
@@ -284,7 +284,7 @@ async function resample(): Promise<void> {
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)
-	const resolved = resolveWeights({ locale: LOCALE })
+	const resolved = await resolveWeights({ locale: LOCALE })
 
 	// `resolveWeights` answers `undefined` when the bundle ships no card. The stamp is the point of this function, so a
 	// missing card is a failure to report rather than a field to omit.
@@ -297,7 +297,7 @@ async function versionStamp() {
 		model: basename(await realPath(resolved.modelPath)),
 		modelCard: `${card.name}@${card.version}`,
 		gazetteer: basename(await realPath(candidatePath)),
-		nationalShard: basename(await realPath(banPath)),
+		nationalExtract: basename(await realPath(banPath)),
 	}
 }
 
@@ -344,7 +344,7 @@ async function run() {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
 	using lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
-	const banShards = new BANShardProvider(DATA_ROOT)
+	const banExtracts = new BANRegionDatabaseProvider(DATA_ROOT)
 
 	const arms: Record<string, (row: PanelRow) => string> = { clean: cleanForm, reordered: reorderedForm }
 	const results: Record<string, { summary: ReturnType<typeof summarize>; records: GradedRecord[] }> = {}
@@ -361,7 +361,7 @@ async function run() {
 				result = await geocodeAddress(input, {
 					classifier,
 					resolver,
-					nationalShards: banShards.for,
+					nationalDatabases: banExtracts.for,
 					// Pinned: this panel is a French dataset run through a French pipeline, so it measures
 					// resolution INSIDE France and makes no claim about country disambiguation.
 					defaultCountry: "FR",
@@ -423,7 +423,7 @@ async function run() {
 			locale: LOCALE,
 			defaultCountry: "FR",
 			gazetteer: "candidate.db",
-			nationalTier: "BAN FR rooftop shard",
+			nationalTier: "BAN FR rooftop extract",
 			routingRadiusKm: ROUTING_KM,
 		},
 		arms: Object.fromEntries(Object.entries(results).map(([arm, r]) => [arm, r.summary])),
@@ -442,7 +442,7 @@ async function run() {
 		console.log(`${" ".repeat(10)} tiers ${JSON.stringify(summary.tiers)}`)
 	}
 
-	console.log(`wrote ${resolve(flags.out)}`)
+	console.log(`wrote ${resolvePath(flags.out)}`)
 }
 
 await (flags.resample ? resample() : run())

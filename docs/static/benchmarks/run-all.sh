@@ -9,7 +9,7 @@
 # WHAT IT DOWNLOADS
 #
 #   candidate   the global admin gazetteer, about 1.65 GB. Both panels need it.
-#   fr          the French BAN rooftop shard, about 6.95 GB. The French panel needs it; the Belgian
+#   fr          the French BAN rooftop database, about 6.95 GB. The French panel needs it; the Belgian
 #               panel does not.
 #
 # That is roughly 8.6 GB before either panel runs. Downloads land under the data root and are skipped

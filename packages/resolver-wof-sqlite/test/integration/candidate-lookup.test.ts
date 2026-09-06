@@ -4,7 +4,7 @@
 /**
  *   Tests for {@link WOFCandidateTableLookup} — the Node {@link PlaceLookup} over the byte-range
  *   candidate.db (the SAME backend + ranking the browser demo uses). Builds a tiny fixture admin
- *   WOF with a HOMONYM (Moscow RU vs Moscow ID) + a postcode shard via the real
+ *   WOF with a HOMONYM (Moscow RU vs Moscow ID) + a postcode extract via the real
  *   {@link buildCandidateTable}, then asserts the resolver disciplines the CLI/server depend on:
  *
  *   - **population-first, country-agnostic** ranking — bare "Moscow" → the 10.4 M-pop Russian city, not
@@ -14,7 +14,7 @@
  *   - Postcode rows resolve, and placeholder 0,0-coord rows were dropped at build.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -95,7 +95,7 @@ function buildFixtureAdmin(path: string): void {
 
 		-- The #1717 stage-2 containment board, the Weimar shape: 'Marwei' DE (60 k, under region Thuria)
 		-- vs a MORE-populous US namesake (2.0 M, under region Texia). Population-first answers the US one
-		-- and a hard country=US filter hides the DE one entirely; the containment lever must answer the
+		-- and a hard country=US filter hides the DE one entirely; the containment setting must answer the
 		-- DE one in BOTH postures (reorder worldwide, inject under the scope).
 		INSERT INTO spr VALUES (900, 'Thuria', 'region', 'DE', 50.9, 11.0, 50.0, 10.0, 51.5, 12.0, -1, 0);
 		INSERT INTO spr VALUES (901, 'Marwei', 'locality', 'DE', 50.98, 11.32, 50.9, 11.2, 51.1, 11.4, -1, 0);
@@ -199,7 +199,7 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * A postcode shard: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House 20500 case).
+ * A postcode extract: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House 20500 case).
  */
 function buildFixturePostcodes(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -489,7 +489,7 @@ describe("WOFCandidateTableLookup", () => {
 		const alias = hits.find((h) => h.country === "CN")
 		expect(alias).toBeDefined()
 		expect(alias!.exactMatch).toBe(false)
-		// `score` stays the RAW population rank (for the walk's minWinningScore gate); `prominence` carries the
+		// `score` stays the RAW population rank (for the walk's minWinningScore check); `prominence` carries the
 		// penalty, so the primary's prominence now exceeds the more-populous alias's.
 		expect(hits[0]!.score).toBeLessThan(alias!.score)
 		expect(hits[0]!.prominence!).toBeGreaterThan(alias!.prominence!)
@@ -609,7 +609,7 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 	})
 })
 
-describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio lever, regression lock)", () => {
+describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio setting, regression lock)", () => {
 	// THE RULE, locked here so it can't silently drift: δ=1.0 (PRIMARY_PREFERENCE_LOG10) means a
 	// cross-country ALIAS must be ≥10x more populous than the same-key foreign PRIMARY to win; below 10x the
 	// primary wins and the alias is demoted out of the exact tier. This is a population-RATIO proxy for
@@ -626,7 +626,7 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 	const AT = 4
 
 	// A row from a raw population — build-candidate stores neg_rank = -log10(population + 1), so the pure
-	// lever sees exactly the ratios below (alias wins iff (aliasPop + 1) / (primaryPop + 1) > 10).
+	// setting sees exactly the ratios below (alias wins iff (aliasPop + 1) / (primaryPop + 1) > 10).
 	const pop = (population: number, is_primary: number, country_id: number) => ({
 		neg_rank: -Math.log10(population + 1),
 		is_primary,
@@ -660,10 +660,10 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 		expect(under[0]!.is_primary).toBe(1)
 	})
 
-	test("SAME-country collision is unaffected by the ratio lever — population-first at any ratio", () => {
+	test("SAME-country collision is unaffected by the ratio setting — population-first at any ratio", () => {
 		// primary US 100k vs alias US 950k (same country) → no penalty → the bigger alias wins even at ~9.5x
 		// (below the cross-country bar) and is never demoted. A naive `is_primary DESC` would wrongly pick the
-		// primary here — this is the guard that the lever stays CROSS-country-only.
+		// primary here — this is the guard that the setting stays CROSS-country-only.
 		const ranked = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
 		expect(ranked[0]!.is_primary).toBe(0)
 		expect(ranked[0]!.demoted).toBe(false)
@@ -761,16 +761,11 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 
 	function tagged(roots: readonly AddressNode[], tag: string): AddressNode[] {
 		const out: AddressNode[] = []
-		const stack = [...roots]
 
-		while (stack.length) {
-			const n = stack.pop()!
-
+		for (const n of walkNodes(roots)) {
 			if (n.tag === tag) {
 				out.push(n)
 			}
-
-			stack.push(...n.children)
 		}
 
 		return out
@@ -778,7 +773,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 
 	test("B2-1: the #741 postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
 		// Patch the built candidate DB with the #741 side-index carrying the exact hit; the lookup
-		// existence-gates its probe on the table, so this is the real fast-path configuration.
+		// conditions its probe on the table, so this is the real fast-path configuration.
 		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 
 		db.exec(
@@ -806,7 +801,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		expect(on[0]!.id).toBe(SANSOME_SMALL)
 	})
 
-	test("B2-2: in-gate rows sort by distance first, the out-gate tail keeps its population order", async () => {
+	test("B2-2: in-check rows sort by distance first, the out-check tail keeps its population order", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const hits = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
@@ -822,12 +817,12 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		const bare = await lk.findPlace(sansomeQuery())
 		expect(bare.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
-		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the gate).
+		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the check).
 		const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
 		expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
 		// The population-first winner is ~550 km from the postcode — removing the postcode moves the
-		// answer far outside the gate, so the mechanism is doing what the bar claims it does.
+		// answer far outside the check, so the mechanism is doing what the bar claims it does.
 		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
 	})
 
@@ -983,7 +978,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 		expect(hits.every((h) => h.importance === undefined)).toBe(true)
 	})
 
-	test("an artifact PREDATING the column still resolves — the probe is existence-gated", async () => {
+	test("an artifact PREDATING the column still resolves — the probe is existence-restricted", async () => {
 		// Reproduce a pre-#28 gazetteer by removing the column from a real build, rather than hand-writing
 		// an old DDL that could drift from what the old builder actually emitted.
 		const legacyPath = scratch.resolve("candidate-legacy.db")
@@ -1103,7 +1098,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 	// namesake (2.0 M). Population-first answers the US one; a country=US scope hides the DE one; the
 	// qualifier must answer the DE one in both postures. The board-measured mechanism (2026-08-18):
 	// the locale-inferred hard filter partitions the true instance out of the list BEFORE any
-	// comparator, so a reorder-only lever would be inert — the #1729 class, which is why these
+	// comparator, so a reorder-only setting would be inert — the #1729 class, which is why these
 	// fixtures pin INJECTION, not just ordering.
 
 	test("#1731: a contained NEIGHBOURHOOD is injected past the locality filter group", async () => {
@@ -1239,7 +1234,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 		expect(hits[1]!.containedByQualifier).toBe(false)
 	})
 
-	test("CAPABILITY-GATED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
+	test("CAPABILITY-RESTRICTED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
 		// Reproduce a pre-sidecar candidate.db by dropping the tables from a real build — the same
 		// vintage discipline as the pre-#28 importance-column test above.
 		const preSidecarPath = scratch.resolve("candidate-pre-sidecar.db")
@@ -1251,7 +1246,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 
 		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
-		// Population-first, unmoved — and NO stamp, so the walk reports the lever `unavailable`
+		// Population-first, unmoved — and NO stamp, so the walk reports the setting `unavailable`
 		// rather than reading the absence as "not contained" (meaning-of-zero).
 		expect(hits.map((h) => h.id)).toEqual([902, 901])
 		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)

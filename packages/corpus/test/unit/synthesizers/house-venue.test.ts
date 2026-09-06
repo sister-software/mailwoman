@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import {
 	type HouseVenueBaseTuple,
 	hasHouseNumberAndVenue,
@@ -133,13 +133,13 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(row!.components.region).toBe("Anzoátegui")
 		expect(row!.components.postcode).toBe("6001")
 		expect(row!.components.locality).toBe("Barcelona")
-		// And the classes the standalone admin-only shard destroyed are all present in the same row.
+		// And the classes the standalone admin-only slice destroyed are all present in the same row.
 		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
 		expect(row!.components.street).toBe("Avenida Country Club")
 	})
 
 	it("leaves every non-VE country's tail exactly as it was", () => {
-		// The branch is country-gated, and the shipped `house-venue` shard is FR + US only (116,244 rows, zero VE), so
+		// The branch is country-restricted, and the shipped `house-venue` slice is FR + US only (116,244 rows, zero VE), so
 		// this addition cannot move an existing row. Pinned rather than asserted.
 		for (const [country, pattern] of [
 			["US", /Boston, MA 02101/],

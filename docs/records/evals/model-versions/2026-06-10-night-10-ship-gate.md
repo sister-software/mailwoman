@@ -1,9 +1,9 @@
-# Night-10 ship gate — Run B → v4.2.0 (2026-06-10)
+# Night-10 ship check — Run B → v4.2.0 (2026-06-10)
 
 The execution record for the fork decision (operator-deferred, recorded in
 `2026-06-10-NIGHT-SHIFT-PLAN.md` §The decision): **re-baseline with reason + ship Run B
-(`v1.0.2-consolidation-runB` @ step-020000) as v4.2.0, conditional on this gate.** All four
-checks passed; the merge sequence and release followed. Training-gate numbers and the
+(`v1.0.2-consolidation-runB` @ step-020000) as v4.2.0, conditional on this check.** All four
+checks passed; the merge sequence and release followed. Training-check numbers and the
 capacity-wall evidence live in `2026-06-10-consolidation-session.md`; this doc is the SHIP
 side only.
 
@@ -50,7 +50,7 @@ libpostal-compat consumers.
 
 Native-order locality 90.9% (bar ≥83.8); US/FR no-regression held (96.7 / 84.5).
 
-## Arena refresh (scorecard lens 1 — NOT a gate; reported with caveats)
+## Arena refresh (scorecard lens 1 — NOT a check; reported with caveats)
 
 | arena             |   n |  v0 | v4.1.0 |   Run B | v0-only (B) |
 | ----------------- | --: | --: | -----: | ------: | ----------: |
@@ -70,7 +70,7 @@ true-config measurement.
 
 ## Repairs finding (#486)
 
-All per-tag gate numbers are **repairs-OFF** (`parse()` repairs are opt-in; the per-tag
+All per-tag check numbers are **repairs-OFF** (`parse()` repairs are opt-in; the per-tag
 harnesses never enable them). Run B clears postcode 97.3 and unit 90.6 unassisted. The
 resolver path (repairs hardcoded ON) passed identically — repairs neither carry nor harm
 this model. ON/OFF delta table rides #481.

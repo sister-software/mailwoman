@@ -46,7 +46,7 @@ to, and what the public record physically supports.
 | **FRN**                     | FCC CORES                          | Yes, bulk                   | **The hub.** Nearly every other FCC identity hangs off it                                  | 10-digit; entity + address + contact                                                                                       |
 | **499 Filer ID**            | FCC/USAC Form 499 filer database   | Yes, published file         | **Highest-value single file**: carries FRN, legal name, _holding company_, contacts        | The trench-coat decoder for carriers                                                                                       |
 | **SPIN (498 ID)**           | USAC                               | Yes                         | USF disbursements ↔ entity                                                                 | Ties subsidy money to filer                                                                                                |
-| **BDC provider_id**         | FCC BDC                            | Yes                         | Already in `bdc.db.provider_id`; `bdc_provider` sidecar exists unpopulated (2a task 7)     | The landing seam is already built                                                                                          |
+| **BDC provider_id**         | FCC BDC                            | Yes                         | Already in `bdc.db.provider_id`; `bdc_provider` sidecar exists unpopulated (2a task 7)     | The landing table is already built                                                                                         |
 | **ASR number**              | FCC Antenna Structure Registration | Yes, bulk + **coordinates** | **The crown jewel for physical nexus**: structure lat/lon + owner FRN                      | Registered structures only (height/lighting thresholds)                                                                    |
 | **ULS license**             | FCC Universal Licensing System     | Yes, weekly bulk            | Spectrum authority by FRN + geography; Part 101 microwave paths are strong backhaul signal | Enormous; scope by service code                                                                                            |
 | **ASN / org**               | ARIN, PeeringDB                    | Yes, API                    | Routing reality; PeeringDB `fac` gives facility presence                                   | This is C6's substrate — same spine                                                                                        |
@@ -203,7 +203,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
   cover pages, 990s); no dedicated ingest. A 990 pass can be reconsidered if rural co-ops become a
   focus, since that is where it would actually pay.
 - **D7 — v1 sources are licensing-clean.** CORES, Form 499, ASR, ULS, and EDGAR are all US federal
-  public domain, so **Phase 3 is not gated on counsel** — unlike the Fabric question hanging over 2a.
+  public domain, so **Phase 3 is not blocked on counsel** — unlike the Fabric question hanging over 2a.
   PeeringDB (API terms) is a 3c/C6-time check; LERG/OCN and OpenCorporates are out of scope by D4.
   Recorded in the counsel dossier as informational, not blocking.
 

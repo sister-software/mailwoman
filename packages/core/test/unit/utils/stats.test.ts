@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { formatPercent, median, percentile } from "@mailwoman/core/utils/stats"
+import { formatPercent, median, percentile } from "@mailwoman/core/stats"
 import { describe, expect, it } from "vitest"
 
 describe("stats", () => {
-	it("percentile matches the gate scripts' nearest-rank shape", () => {
-		// The exact copy migrated from oa-resolver-eval/resolver-eval — gate parity depends on THIS
+	it("percentile matches the check scripts' nearest-rank shape", () => {
+		// The exact copy migrated from oa-resolver-eval/resolver-eval — check parity depends on THIS
 		// semantics: sort ascending, index = floor(p/100 * n), clamped.
 		const xs = [10, 1, 5, 3, 8]
 		expect(percentile(xs, 50)).toBe(5)

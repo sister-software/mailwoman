@@ -7,80 +7,23 @@
  *
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
  *
- *   WHY `createRequire` AND NOT `import.meta.resolve` (2026-08-05 triage). Two reasons, and the
- *   second is the one that would bite.
- *
- *   What the callers want back is a package DIRECTORY, which `import.meta.resolve` does not return.
- *   It answers "which ONE file does this specifier import" — precisely the answer these aliases
- *   exist to OVERRIDE. They point webpack at source `.ts` rather than the `out/` JS the exports
- *   map's `default` condition selects, and at `core/resolver/types` rather than the
- *   `@mailwoman/resolver` barrel that re-exports it, so resolving them WITH the resolver is
- *   circular. The package-aware helpers therefore resolve source entries directly and keep package
- *   roots out of webpack-policy callers.
- *
- *   And this file does not run under plain Node; it runs under Docusaurus's config loader, where
- *   `import.meta.resolve` is not something to assume. `docs` declares no `"type": "module"`, and
- *   the sibling `plugin.ts` calls a BARE `require.resolve` (no `createRequire`) inside its
- *   `NormalModuleReplacementPlugin` hook — which only works if the loader hands these modules a CJS
- *   `require`, and CJS has no `import.meta` at all. `createRequire(import.meta.url)` survives that
- *   because transpilers rewrite `import.meta.url`; `import.meta.resolve` has no such rewrite.
- *   (Contrast `docs/scripts/generate-cli-reference.ts`, which the `prebuild` runs as `node <file>`
- *   — real ESM, and it uses `import.meta.resolve`.)
- *
- *   So the one sub-site here that IS a plain resolution — the `@mailwoman/codex` loop below, which
- *   deliberately asks the resolver instead of hand-deriving paths — stays on `require.resolve` too.
- *   Only a docs BUILD can verify a change to that, never a unit test.
+ *   Everything here resolves through `@mailwoman/core/module/resolve-from`, keyed on this file's `import.meta.url`,
+ *   and nothing here touches `import.meta.resolve`: this file runs under Docusaurus's config loader, whose CommonJS
+ *   transform rewrites `import.meta.url` and cannot parse `import.meta.resolve`, in this file or in anything it
+ *   imports. Only a docs BUILD can verify a change to that, never a unit test.
  */
 
-import { $public } from "@mailwoman/core/env"
-import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { dirname, resolve } from "@mailwoman/platform/path"
+import {
+	resolvePackageJSON,
+	resolvePackagePathFrom,
+	tryResolvePackageSpecifier,
+} from "@mailwoman/core/module/resolve-from"
+import { basename, dirname, resolvePath } from "path-ts"
 
-import type { ReleaseInfo } from "#shared/demo-helpers"
-
-import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolution.ts"
-
-//#region Model artifact resolution + validation
-
-/**
- * Read the model-card.json from the weights package to get version metadata.
- */
-export function readModelCard(): ReleaseInfo | null {
-	const cardPath = resolvePackagePath("@mailwoman/neural-weights-en-us", "model-card.json")
-
-	if (!cardPath || !pathExistsSync(cardPath)) return null
-
-	// Both generics: with only <ReleaseInfo>, F defaults to T and the null fallback fails to type.
-	return tryParsingJSON<ReleaseInfo, null>(readLocalTextFileSync(cardPath), null)
-}
-
-/**
- * Resolve a binary artifact from the weights package, dereferencing symlinks. Returns the real path to the file
- * (following symlinks from link-dev-weights.ts).
- *
- * @param filename - E.g. "model.onnx" or "tokenizer.model"
- */
-export async function resolveWeightsArtifact(filename: string): Promise<string | null> {
-	const filePath = resolvePackagePath("@mailwoman/neural-weights-en-us", filename)
-
-	if (!filePath || !(await pathExists(filePath))) return null
-
-	const st = await statLink(filePath)
-
-	if (st.isSymbolicLink()) {
-		const target = await readLink(filePath)
-		const resolved = resolve(dirname(filePath), target)
-
-		return (await pathExists(resolved)) ? resolved : null
-	}
-
-	return filePath
-}
+//#region Model artifact staging
 
 /**
  * Copy a file to the static directory, but only if it differs (by size) from what's already there.
@@ -105,10 +48,8 @@ export async function syncArtifact(sourcePath: string, destPath: string, label: 
 	}
 
 	await copyFileTo(sourcePath, destPath)
-	// TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
-	const sizeMB = (sourceSize / 1024 / 1024).toFixed(1)
 
-	console.log(`[demo-assets] ${label}: synced (${sizeMB} MB)`)
+	console.log(`[demo-assets] ${label}: synced (${ByteFormatter.formatIEC(sourceSize)})`)
 
 	return true
 }
@@ -125,10 +66,7 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	let distDir: string
 
 	try {
-		const entry = resolvePackageSpecifier("sql.js-httpvfs/dist/index.js")
-
-		if (!entry) throw new Error("sql.js-httpvfs is not resolvable")
-		distDir = dirname(entry)
+		distDir = dirname(resolvePackageJSON(import.meta.url, "sql.js-httpvfs"))
 	} catch {
 		console.warn("[demo-assets] sql.js-httpvfs not resolvable — HTTP-VFS assets not staged")
 
@@ -139,7 +77,7 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	let copied = 0
 
 	for (const f of files) {
-		const src = resolve(distDir, f)
+		const src = resolvePath(distDir, f)
 
 		if (!(await pathExists(src))) {
 			console.warn(`[demo-assets] sql.js-httpvfs: missing ${f} in dist`)
@@ -147,19 +85,18 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 			return false
 		}
 
-		const dest = resolve(destDir, f)
+		const dest = resolvePath(destDir, f)
 
-		// Idempotent stage: skip when the destination already matches (by size). This runs in
-		// loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload — and
-		// `destDir` lives under the watched `static/` tree. An UNCONDITIONAL copyFileSync rewrites the
-		// file (fresh mtime) even when the bytes are identical, the watcher sees a "change" and reloads,
-		// loadContent() re-runs and re-copies… a reload LOOP that shows up as the /demo page flickering
-		// during `start`. Skipping the no-op copy breaks the cycle. (Prod `build` runs loadContent once,
-		// so the loop is a dev-server-only hazard.)
-		if ((await pathExists(dest)) && (await statPath(dest)).size === (await statPath(src)).size) continue
-		await copyFileTo(src, dest)
-
-		copied++
+		// Idempotent stage — syncArtifact skips a size-identical copy. This runs in loadContent(), which
+		// the Docusaurus dev server (`yarn start`) re-invokes on reload — and `destDir` lives under the
+		// watched `static/` tree. An UNCONDITIONAL copy rewrites the file (fresh mtime) even when the
+		// bytes are identical, the watcher sees a "change" and reloads, loadContent() re-runs and
+		// re-copies… a reload LOOP that shows up as the /demo page flickering during `start`. Skipping
+		// the no-op copy breaks the cycle. (Prod `build` runs loadContent once, so the loop is a
+		// dev-server-only hazard.)
+		if (await syncArtifact(src, dest, `sql.js-httpvfs ${f}`)) {
+			copied++
+		}
 	}
 
 	if (copied > 0) {
@@ -167,6 +104,78 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	}
 
 	return true
+}
+
+/**
+ * Relative imports of a staged ES module, from its `from "./…"` and `import "./…"` specifiers. A worker's siblings must
+ * be staged beside it or the worker fails at its first import, which the browser reports nowhere useful.
+ */
+export function relativeImportSpecifiers(source: string): string[] {
+	const specifiers = new Set<string>()
+
+	for (const match of source.matchAll(/(?:from|import)\s*["'](\.\.?\/[^"']+)["']/g)) {
+		specifiers.add(match[1]!)
+	}
+
+	return [...specifiers]
+}
+
+/**
+ * Stage MapLibre's tile worker (`maplibre-gl-worker.mjs`) and the module it imports into `destDir`, and answer the
+ * staged file names.
+ *
+ * MapLibre derives its default worker URL from `import.meta.url` and answers an EMPTY string when that is not an
+ * `http(s):` URL. The docs client bundle is classic-script output, so webpack inlines `import.meta.url` as the `file:`
+ * path of `maplibre-gl.mjs` on the build host; the empty URL then spawns the PAGE ITSELF as the worker, which dies at
+ * its first byte of HTML. No error reaches the console, `map.loaded()` stays false, and no tile is ever requested. The
+ * demo sets `setWorkerUrl` to the staged copy (`docs/src/shared/maplibre-worker.ts`), which is same-origin and
+ * therefore loads as a module worker.
+ *
+ * Staging from the installed package, at build time, is what keeps the worker at the same version as the bundled main
+ * thread; a committed copy would drift on the next dependency bump.
+ *
+ * @param destDir - E.g. static/mailwoman/maplibre
+ */
+export async function stageMapLibreWorker(destDir: string): Promise<string[]> {
+	const workerPath = tryResolvePackageSpecifier(import.meta.url, "maplibre-gl", "dist/maplibre-gl-worker.mjs")
+
+	if (!workerPath) {
+		console.warn("[demo-assets] maplibre-gl worker not resolvable — MapLibre worker not staged")
+
+		return []
+	}
+
+	const distDir = dirname(workerPath)
+	const workerSource = await readLocalTextFile(workerPath)
+
+	const files = [
+		basename(workerPath),
+		...relativeImportSpecifiers(workerSource).map((specifier) => basename(specifier)),
+	]
+
+	const staged: string[] = []
+	let copied = 0
+
+	for (const file of files) {
+		const src = resolvePath(distDir, file)
+
+		if (!(await pathExists(src))) {
+			throw new Error(`[demo-assets] maplibre-gl worker imports ${file}, which is missing from ${distDir}`)
+		}
+
+		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): syncArtifact skips a size-identical copy.
+		if (await syncArtifact(src, resolvePath(destDir, file), `maplibre-gl ${file}`)) {
+			copied++
+		}
+
+		staged.push(file)
+	}
+
+	if (copied > 0) {
+		console.log(`[demo-assets] maplibre-gl: staged ${copied} worker asset(s)`)
+	}
+
+	return staged
 }
 
 /**
@@ -196,13 +205,7 @@ export async function stagePairIndexes(destDir: string): Promise<boolean> {
 	let copied = 0
 
 	for (const { pkg, file } of sources) {
-		const src = resolvePackagePath(pkg, file)
-
-		if (!src) {
-			console.warn(`[demo-assets] pair-index: ${pkg} not resolvable — ${file} not staged`)
-
-			continue
-		}
+		const src = resolvePackagePathFrom(import.meta.url, pkg, file)
 
 		if (!(await pathExists(src))) {
 			console.warn(
@@ -213,78 +216,17 @@ export async function stagePairIndexes(destDir: string): Promise<boolean> {
 			continue
 		}
 
-		const dest = resolve(destDir, file)
+		const dest = resolvePath(destDir, file)
 
-		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): skip a byte-identical copy.
-		if ((await pathExists(dest)) && (await statPath(dest)).size === (await statPath(src)).size) continue
-		await copyFileTo(src, dest)
-
-		copied++
+		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): syncArtifact skips a size-identical copy.
+		if (await syncArtifact(src, dest, `pair-index ${file}`)) {
+			copied++
+		}
 	}
 
 	if (copied > 0) {
 		console.log(`[demo-assets] pair-index: staged ${copied} index binary/binaries`)
 	}
-
-	return true
-}
-
-//#endregion
-
-//#region FST builder
-
-/**
- * Build the FST binary from the WOF admin SQLite database.
- *
- * @param fstPath - Destination path for the binary
- *
- * @returns True if built successfully
- */
-export async function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?: string }): Promise<boolean> {
-	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDB = dataRootPath("wof", "admin-global-priority.db")
-	const wofDB = opts.wofDB ?? $public.PLAYPEN_WOF_ADMIN_DB ?? globalDB
-
-	if (!(await pathExists(wofDB))) {
-		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDB} — skipping FST build`)
-
-		return false
-	}
-
-	const isGlobal = wofDB.includes("global")
-	const countries = isGlobal ? "['US', 'FR', 'JP', 'CN', 'KR', 'DE', 'GB']" : "['US']"
-	const languages = isGlobal ? "['*']" : "['eng', '']"
-
-	const script = `
-		import { buildFSTFromWOF } from '@mailwoman/resolver-wof-sqlite/fst-builder'
-		import { serializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
-		import { writeFileSync } from '@mailwoman/platform/fs'
-		const { matcher, provenance } = buildFSTFromWOF({
-			dbPath: ${JSON.stringify(wofDB)},
-			countries: ${countries},
-			languages: ${languages},
-			onProgress: (phase, msg) => process.stderr.write(phase + ': ' + msg + '\\n'),
-		})
-		const buf = serializeFST(matcher, provenance)
-		writeFileSync(${JSON.stringify(fstPath)}, buf)
-		process.stderr.write('FST binary: ' + (buf.length / 1024 / 1024).toFixed(2) + ' MB\\n')
-	`
-
-	console.log(`[demo-assets] FST: building from ${wofDB}`)
-
-	const result = spawnSync("node", ["--input-type=module", "-e", script], {
-		cwd: opts.repoRoot,
-		stdio: ["pipe", "inherit", "inherit"],
-		timeout: 120_000,
-	})
-
-	if (result.status !== 0) {
-		console.warn(`[demo-assets] FST: build failed (exit ${result.status})`)
-
-		return false
-	}
-
-	console.log(`[demo-assets] FST: built successfully`)
 
 	return true
 }

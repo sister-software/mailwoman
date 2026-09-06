@@ -7,7 +7,7 @@
 #
 # Triggers:
 #   - workflow_dispatch: manual run with an explicit `tag` input (e.g. "7.2.1"). Use this to (re)build
-#     against a specific published line, or to smoke-test the image plumbing without cutting a release.
+#     against a specific published line, or to smoke-test the image plumbing without reducing a release.
 #   - release published: an automatic rebuild whenever a GitHub release goes out, tagging the image
 #     with that release's version so ghcr tracks the npm line.
 #

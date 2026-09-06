@@ -38,7 +38,7 @@ One discipline holds the whole thing up: the key has to be normalized the _same_
 
 Now the catch. The candidate table carries US postcodes and not yet the rest of the world's, the same coverage the old slim build had. So when we first wired it up and typed a Berlin address — `10115` — the demo dropped a pin in Manhattan. `10115` is a real Berlin postcode _and_ a real New York ZIP, the table only knew the New York one, and the cascade had reached for the postcode first and taken the only match it found.
 
-The fix wasn't more postcodes. It was order. Resolve the locality first — "Berlin," which ranks to Germany by population — then let that resolved place gate the postcode lookup to its own country. No German `10115` in the table? Fine: fall through to Berlin's own centroid, which is exactly where the address wanted to be. An ambiguous postcode can't drag a German address across the Atlantic anymore, because it never gets to vote before the city does.
+The fix wasn't more postcodes. It was order. Resolve the locality first — "Berlin," which ranks to Germany by population — then let that resolved place check the postcode lookup to its own country. No German `10115` in the table? Fine: fall through to Berlin's own centroid, which is exactly where the address wanted to be. An ambiguous postcode can't drag a German address across the Atlantic anymore, because it never gets to vote before the city does.
 
 ## What it bought
 

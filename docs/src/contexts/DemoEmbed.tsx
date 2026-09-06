@@ -21,13 +21,13 @@ import { useDemoRuntime } from "@mailwoman/react"
 import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo } from "react"
 
+import { useSiteConfig } from "#hooks/site"
 import type { Calibrator, ReleaseInfo, ReleasesManifest, SelectPairIndex } from "#shared/demo-helpers"
-import { DEFAULT_LOCALE, normalizeReleasesManifest } from "#shared/demo-helpers"
+import { fetchReleasesManifest } from "#shared/demo-helpers"
 import type { DocsDemoAssets } from "#shared/demo-loader"
 import { loadDemoAssets } from "#shared/demo-loader"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
 import type { FSTMatcherLike, FSTProvenanceLike, MailwomanClassifierLike, MailwomanLookupLike } from "#shared/resources"
-import { assetURL } from "#shared/resources"
 
 //#region Types
 
@@ -55,7 +55,7 @@ export interface DemoEmbedState {
 	 */
 	fstProvenance: FSTProvenanceLike | null
 	/**
-	 * The street-morphology matcher (#1315 street-context gate) — `null` when the release ships no
+	 * The street-morphology matcher (#1315 street-context check) — `null` when the release ships no
 	 * `fst-street-morphology.bin`. `PipelineExplorer` threads it into `runClassifyStage` beside `fstMatcher`.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null
@@ -64,7 +64,7 @@ export interface DemoEmbedState {
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
-	 * Per-parse placetype-pair prior selector (#1278) — locale-gate over the input picks the GB/NZ dependent_locality
+	 * Per-parse placetype-pair prior selector (#1278) — locale-hint over the input picks the GB/NZ dependent_locality
 	 * index. `null` when this release staged no pair index. `PipelineExplorer` threads it into `runClassifyStage`.
 	 */
 	selectPairIndex: SelectPairIndex | null
@@ -142,14 +142,14 @@ export interface DemoEmbedProviderProps {
 }
 
 export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseURL, children }) => {
+	const { baseURL } = useSiteConfig()
+
 	// Fetch + normalize the releases manifest. `useDemoRuntime` runs this once on mount, then selects
 	// its `defaultVersion`. Returns the full `ReleasesManifest` (a structural superset of the package's
 	// `DemoManifest` — it also carries `locale`), so the value below can re-expose it as `ReleasesManifest`.
 	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => {
 		try {
-			const res = await fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"))
-
-			return res.ok ? normalizeReleasesManifest(await res.json()) : null
+			return await fetchReleasesManifest()
 		} catch (error) {
 			console.error("Failed to load releases manifest", error)
 
@@ -177,11 +177,10 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 	const rt = useDemoRuntime<DocsDemoAssets, ReleaseInfo>({ loadManifest, loadAssets })
 
 	// Mount: register the range-chunk service worker (docs-only; persists validated DB range chunks
-	// across visits; see static/range-cache-sw.js). The provider only receives sqljsBaseURL
-	// (`${baseURL}mailwoman/sqljs`), so the site base is recovered by stripping the staged suffix.
+	// across visits; see static/range-cache-sw.js).
 	useEffect(() => {
-		registerRangeCacheServiceWorker(sqljsBaseURL.replace(/mailwoman\/sqljs\/?$/, ""))
-	}, [sqljsBaseURL])
+		registerRangeCacheServiceWorker(baseURL)
+	}, [baseURL])
 
 	// Drop cached range chunks from other (immutable, never-expiring) versions.
 	useEffect(() => {

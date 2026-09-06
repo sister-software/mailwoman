@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { isUSStateAbbreviation } from "@mailwoman/codex/us/state"
 import {
 	isZipCode,
 	pluckStateZIPCode,
 	StateAbbreviationZipCodePrefixRecord,
 	ZipCodePatterns,
 	ZipCodePrefixAbbreviationMap,
-} from "@mailwoman/codex/us/zipcode"
+} from "@mailwoman/codex/us"
+import { isUSStateAbbreviation } from "@mailwoman/codex/us/state"
 import { describe, expect, it } from "vitest"
 
 describe("isZipCode", () => {

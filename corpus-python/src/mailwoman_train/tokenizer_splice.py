@@ -3,7 +3,7 @@
 Background. The en-heavy 48k SentencePiece unigram vocab has the diacritic *characters* but no multi-char
 *subwords* containing them, so every diacritic isolates into its own piece — "Vysoká" -> [▁V, ys, ok, á],
 CZ/PL localities at ~3.3x English fertility. That fragmentation breaks span boundaries and geocodes the
-address to the WRONG CITY (measured: ~44% of Czech, ~30% of Polish rows land >20km off). A data shard at
+address to the WRONG CITY (measured: ~44% of Czech, ~30% of Polish rows land >20km off). A data slice at
 the frozen tokenizer can't fix it (a unigram model physically cannot emit a subword absent from its piece
 table); v196-slavic-anchor confirmed this the expensive way — it REGRESSED CZ at 80k.
 
@@ -44,9 +44,10 @@ import glob
 import json
 import random
 from pathlib import Path
+from typing import Any
 
-import sentencepiece as spm  # type: ignore[import-not-found]
-from sentencepiece import sentencepiece_model_pb2 as sp_pb2  # type: ignore[import-not-found]
+import sentencepiece as spm
+from sentencepiece import sentencepiece_model_pb2 as sp_pb2
 
 # Deterministic sample size + seed so the corpus (and therefore the spliced vocab) is reproducible.
 _CORPUS_SAMPLE = 350_000
@@ -106,7 +107,7 @@ def build_slavic_corpus(
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)
     corpus = corpus[:_CORPUS_SAMPLE]
-    # Exonym awareness (#912 lever 4's Åbo lesson): OA STREET/CITY text carries only the NATIVE
+    # Exonym awareness (#912 change 4's Åbo lesson): OA STREET/CITY text carries only the NATIVE
     # names, so an exonym like "Åbo" (Swedish for Turku) never earns a piece and its decode drop
     # survives the splice. extra_text feeds gazetteer ALIAS names in, repeated extra_repeat× so a
     # once-per-name list has enough unigram mass to compete for vocab slots.
@@ -185,31 +186,31 @@ def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe
 def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) -> set[str]:
     """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
 
-    Deliberately format-agnostic (CSV/JSONL/plain all work): the #900 gate needs a locale's CHARACTER
-    inventory, not its parse — reading raw text keeps the gate free of per-format code.
+    Deliberately format-agnostic (CSV/JSONL/plain all work): the #900 check needs a locale's CHARACTER
+    inventory, not its parse — reading raw text keeps the check free of per-format code.
     """
     raw = sample_path.read_bytes()[:cap_bytes].decode("utf-8", errors="ignore")
     return {c for c in raw if ord(c) >= 128}
 
 
-def gate_codepoint_overlap(
+def check_codepoint_overlap(
     new_pieces: list[str],
     locale_samples: dict[str, Path],
     report_path: Path,
     *,
     accepted_overlap: set[str] | None = None,
 ) -> dict[str, list[str]]:
-    """#900 — the splice safety gate, pre-registered as a GATE rather than a postmortem note.
+    """#900 — the splice safety check, pre-registered as a CHECK rather than a postmortem note.
 
     The v5.1.0 splice shipped on a "byte-identical by construction" claim that turned out ASCII-only:
     FR/DE/ES share codepoints with the spliced pieces, so 52/15,000 EU rows re-tokenized — measured
-    AFTER the fact (net-positive, by luck and row-reads). This gate makes the overlap visible BEFORE
+    AFTER the fact (net-positive, by luck and row-reads). This check makes the overlap visible BEFORE
     grading: for every trained locale sample, compute the non-ASCII codepoints shared between the
     NEW pieces and that locale's character inventory, write the per-locale report artifact, and FAIL
     LOUD on any overlapping locale that was not explicitly accepted.
 
     "Accepted" is a commitment, not a waiver: per CONTRIBUTING_MODEL_WORK.mdx, accepting a locale
-    means a per-locale non-inferiority leg for it is pre-registered in the gate spec BEFORE the
+    means a per-locale non-inferiority leg for it is pre-registered in the check spec BEFORE the
     first measurement (the FR n=3000 leg from v5.1.0 is the template).
     """
     accepted = accepted_overlap or set()
@@ -238,7 +239,7 @@ def gate_codepoint_overlap(
     if offending:
         detail = "; ".join(f"{loc}: {''.join(report[loc][:12])}" for loc in offending)
         raise AssertionError(
-            f"#900 splice gate: codepoint overlap with trained locale(s) {offending} ({detail}). "
+            f"#900 splice check: codepoint overlap with trained locale(s) {offending} ({detail}). "
             f"Either the overlap is a bug, or pre-register a per-locale non-inferiority leg for each "
             f"and re-run with --accept-overlap {','.join(offending)}. Report: {report_path}"
         )
@@ -284,7 +285,7 @@ def mean_init_embeddings(
     return old_vocab, new_vocab
 
 
-def _fvt_rows(base_tokenizer: Path, spliced_tokenizer: Path, emb):  # -> np.ndarray
+def _fvt_rows(base_tokenizer: Path, spliced_tokenizer: Path, emb: Any) -> Any:
     """The FVT mean-init rows for the spliced-in pieces, computed from an existing embedding matrix.
 
     Mirrors the mean-init in ``mean_init_embeddings`` (the pytorch state-dict path) exactly, on numpy so
@@ -400,9 +401,9 @@ def _main() -> None:
     bt.add_argument(
         "--trained-samples",
         default="",
-        help="#900 gate: comma list of locale=samplePath pairs for every TRAINED locale "
+        help="#900 check: comma list of locale=samplePath pairs for every TRAINED locale "
         "(e.g. fr=data/eval/external/openaddresses-fr-sample.jsonl,de=...). When set, the "
-        "codepoint-overlap gate runs and FAILS on unaccepted overlap; the per-locale report "
+        "codepoint-overlap check runs and FAILS on unaccepted overlap; the per-locale report "
         "is written next to the spliced tokenizer either way.",
     )
     bt.add_argument(
@@ -415,8 +416,8 @@ def _main() -> None:
     bt.add_argument(
         "--accept-overlap",
         default="",
-        help="#900 gate: comma list of locales whose overlap is ACCEPTED — i.e. a per-locale "
-        "non-inferiority leg is pre-registered in the gate spec (CONTRIBUTING_MODEL_WORK.mdx).",
+        help="#900 check: comma list of locales whose overlap is ACCEPTED — i.e. a per-locale "
+        "non-inferiority leg is pre-registered in the eval spec (CONTRIBUTING_MODEL_WORK.mdx).",
     )
 
     mi = sub.add_parser("mean-init", help="expand a checkpoint's embeddings to the spliced vocab")
@@ -460,9 +461,9 @@ def _main() -> None:
             }
             accepted = {x.strip() for x in args.accept_overlap.split(",") if x.strip()}
             report_path = args.out_tokenizer.with_suffix(".overlap-report.json")
-            report = gate_codepoint_overlap(new_pieces, samples, report_path, accepted_overlap=accepted)
+            report = check_codepoint_overlap(new_pieces, samples, report_path, accepted_overlap=accepted)
             overlapping = [loc for loc, cps in report.items() if cps]
-            print(f"#900 overlap gate PASS — report {report_path}; overlapping (accepted): {overlapping or 'none'}")
+            print(f"#900 overlap check PASS — report {report_path}; overlapping (accepted): {overlapping or 'none'}")
     elif args.cmd == "mean-init":
         old_v, new_v = mean_init_embeddings(args.checkpoint, args.base_tokenizer, args.spliced_tokenizer, args.out_dir)
         print(f"expanded token_embeddings {old_v} -> {new_v}; wrote {args.out_dir}")

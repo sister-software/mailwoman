@@ -52,7 +52,7 @@ describe("computeQueryShape — end-to-end", () => {
 	})
 
 	it("accepts NormalizedInputLite shape", () => {
-		const shape = computeQueryShape({ normalized: "10118", appliedLocale: "en-US" })
+		const shape = computeQueryShape({ raw: "10118", normalized: "10118", appliedLocale: "en-US" })
 		expect(shape.characterClass).toBe("numeric")
 	})
 

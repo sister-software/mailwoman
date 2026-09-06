@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "@mailwoman/codex/de/postleitzahl"
+import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "@mailwoman/codex/de"
 import { describe, expect, it } from "vitest"
 
 describe("normalizePLZ", () => {

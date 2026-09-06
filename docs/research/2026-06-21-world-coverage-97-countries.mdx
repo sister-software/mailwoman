@@ -38,7 +38,7 @@ AL       0     25
 
 Hong Kong: a hundred and forty-one cities in the reference, zero in ours. That's not a tuning problem, that's a hole you could drive a continent through. We checked whether it was the candidate build filtering them out — maybe the data was there and we were dropping it — and no, the source admin DB itself stops at 97 countries. The gap was real and it was upstream.
 
-I'll editorialize for a second: this audit-against-an-external-yardstick move is the single most productive hour of the whole effort, and it's almost embarrassingly simple. We didn't need a model or a clever metric. We needed to stop trusting our own file and compare it to someone else's count. If you take one thing from this post, take that. Go diff your coverage against a reference you didn't build, per whatever dimension matters to you, _today_. The gap you can't see is the one that's been quietly setting your ceiling.
+I'll editorialize for a second: this audit-against-an-external-yardstick move is the single most productive hour of the whole effort, and it's almost embarrassingly simple. We didn't need a model or a cchange metric. We needed to stop trusting our own file and compare it to someone else's count. If you take one thing from this post, take that. Go diff your coverage against a reference you didn't build, per whatever dimension matters to you, _today_. The gap you can't see is the one that's been quietly setting your ceiling.
 
 ## Fixing it without retraining anything
 

@@ -1,17 +1,19 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
-	"include": ["./**/*"],
+	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{ "path": "../sqlite" },
 		{ "path": "../ancestrie" },
 		{ "path": "../core" },
+		{ "path": "../evidence" },
 		{ "path": "../resolver" },
 		{ "path": "../spatial" }
 	]

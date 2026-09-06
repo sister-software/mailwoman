@@ -7,7 +7,7 @@ title: "v0.6.3 step 100K — HOLD, dilution mechanism confirmed"
 
 The v0.6.3 retrain (per the
 [street-supplement architecture](../../concepts/street-supplement-architecture.mdx))
-reached step 100K and was evaluated. Verdict: **HOLD**, three gate violations,
+reached step 100K and was evaluated. Verdict: **HOLD**, three check violations,
 and the predicted dilution failure mode materialized.
 
 ## Setup
@@ -16,7 +16,7 @@ and the predicted dilution failure mode materialized.
 - **Training:** A100-SXM4-40GB, ~12.8 steps/s, ~130 min wall-clock. No NaN.
 - **Corpus changes from v0.6.2:** filtered venue pool (removed
   `5th Avenue Theatre`, `7th Street Bistro`); ADDED `synth-house-venue-v063`
-  shard at weight 1.0 (32K rows of house_number + venue + street
+  extract at weight 1.0 (32K rows of house_number + venue + street
   coexistence); dropped synth-no-street weight 1.0 → 0.5 (kept v0.6.2b's
   setting).
 - **Tokenizer:** v0.6.0-a0 (unchanged)
@@ -27,7 +27,7 @@ and the predicted dilution failure mode materialized.
 | Metric                              | v0.6.0 baseline | v0.6.2 step 100K | **v0.6.3 step 100K**         |
 | ----------------------------------- | --------------- | ---------------- | ---------------------------- |
 | Exact match                         | 21.1%           | 22.4%            | **21.8%**                    |
-| Gate violations                     | (ref)           | 1                | **3**                        |
+| Check violations                    | (ref)           | 1                | **3**                        |
 | `dependent_locality` hallucinations | 0               | 0 ✓              | **844** ❌                   |
 | `locality` recall                   | 40.0%           | 41.0%            | **34.7%** ❌ (-5.3pp)        |
 | `house_number` recall               | 79.0%           | 74.0%            | **77.0%** ✓ (+3pp vs v0.6.2) |
@@ -39,7 +39,7 @@ and the predicted dilution failure mode materialized.
 ## What worked
 
 - **`house_number` recovered by +3pp vs v0.6.2** (74.0% → 77.0%). The
-  `synth-house-venue` companion shard did exactly what it was designed to do
+  `synth-house-venue` companion extract did exactly what it was designed to do
   — taught the model that house_number and venue coexist, recovering most of
   the regression from v0.6.2.
 - **`street` recall improved** (27.1% → 29.2%, +1.5pp vs v0.6.2). The
@@ -57,7 +57,7 @@ golden set; the model emitted 844 hallucinations).
 This was DeepSeek's turn 10 dilution
 diagnosis: dropping
 synth-no-street weight 1.0 → 0.5 AND adding 32K rows of synth-house-venue at
-weight 1.0 changed the anti-decompose:companion-shard ratio from v0.6.2's
+weight 1.0 changed the anti-decompose:companion-extract ratio from v0.6.2's
 1.0:0 to v0.6.3's 0.5:1.0. The anti-decompose signal got proportionally
 weaker. Decompose mode came back over the 20K → 100K window.
 
@@ -79,18 +79,18 @@ dep_locality. The model is confusing the two tags more than v0.6.2 did.
 
 12.5% vs v0.6.0's 14.4%. v0.6.3 is **a sidegrade — worse than v0.6.0 on the
 breadth eval**. Per the decision tree, this alone is grounds for HOLD even
-if the gate passed.
+if the check passed.
 
-## Gate verdict: HOLD
+## Check verdict: HOLD
 
 Per the decision tree:
 
-| Gate eval | harness pass | Action               |
-| --------- | ------------ | -------------------- |
-| Pass      | ≥ 25%        | Promote to default   |
-| Pass      | 15-24%       | Ship as experimental |
-| Pass      | ≤ 14.4%      | HOLD (sidegrade)     |
-| **Fail**  | **any**      | **HOLD**             |
+| Check eval | harness pass | Action               |
+| ---------- | ------------ | -------------------- |
+| Pass       | ≥ 25%        | Promote to default   |
+| Pass       | 15-24%       | Ship as experimental |
+| Pass       | ≤ 14.4%      | HOLD (sidegrade)     |
+| **Fail**   | **any**      | **HOLD**             |
 
 v0.6.3 falls in row 4: **HOLD**. Two paths from here:
 

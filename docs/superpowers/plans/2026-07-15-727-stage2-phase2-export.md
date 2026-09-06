@@ -12,7 +12,7 @@ backward-compatible (a consumer that never asks for it pays nothing; ORT prunes 
 branches). The transition table follows the `export_crf_transitions` JSON-sidecar precedent —
 transitions are decode-time data, not graph.
 
-**Gate (pre-registered):**
+**Check (pre-registered):**
 
 1. ONNX `span_scores` ≈ torch `span_scores` (atol 1e-3 fp32) on random inputs — parity or no ship.
 2. int8 size delta vs v264's 39.8 MB within +1 MB (the head is 101k params ≈ +0.1 MB int8).
@@ -56,6 +56,6 @@ checkpoint; this phase proves the _path_, not the artifact.
 - Size: int8 vs v264's 39,838,216 bytes.
 - Latency: python onnxruntime, 128-token input, 200 iters — (a) v264 graph fetch `logits`,
   (b) v301 graph fetch `logits` only, (c) v301 graph fetch `logits`+`span_scores`.
-  Gate is (b) vs (a) ≤5%; (c)−(b) is the _decode cost budget_ Phase 3 inherits, record it.
+  Check is (b) vs (a) ≤5%; (c)−(b) is the _decode cost budget_ Phase 3 inherits, record it.
 
 ### Task 5: verdict doc + commit + PR update.

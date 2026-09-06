@@ -13,9 +13,8 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { normalizeReleasesManifest } from "@mailwoman/docs/shared/demo-helpers"
+import type { WireReleaseEntry } from "@mailwoman/docs/shared/demo-helpers"
 import { describe, expect, test } from "vitest"
-
-import type { WireReleaseEntry } from "#shared/demo-helpers"
 
 const entry = (over: Partial<WireReleaseEntry>) => ({
 	version: "vX",
@@ -70,7 +69,7 @@ describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 	for (const rel of [
 		"../../../../src/pages/demo/_runtime.ts",
 		"../../../../src/contexts/DemoEmbed.tsx",
-		"../../../../../packages/mailwoman/release-tools/publish-hf.ts",
+		"../../../../../packages/mailwoman/lib/release-tools/publish-hf.ts",
 	]) {
 		test(`${rel} is house-cased only`, async () => {
 			const src = await readLocalTextFile(new URL(rel, import.meta.url))

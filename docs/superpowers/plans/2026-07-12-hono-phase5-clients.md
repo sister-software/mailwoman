@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close the arc: type the flagship wire schemas (client generators need them), make spec emission a first-class CLI affordance (each surface prints its own document; the docs site regenerates its copies at build), stand up the Python/Rust client-generation pipeline as a GATED release-workflow job (generation + artifact always; registry publishing off until the operator provisions PyPI/crates.io), and pay down the docs debt. `feat/api-clients` is superseded, its layout/publishing notes salvaged.
+**Goal:** Close the arc: type the flagship wire schemas (client generators need them), make spec emission a first-class CLI affordance (each surface prints its own document; the docs site regenerates its copies at build), stand up the Python/Rust client-generation pipeline as a CONDITIONAL release-workflow job (generation + artifact always; registry publishing off until the operator provisions PyPI/crates.io), and pay down the docs debt. `feat/api-clients` is superseded, its layout/publishing notes salvaged.
 
 **Architecture:** Everything stays one-directional: route tables → emitted documents → generated clients, nothing committed downstream of the spec. Spec emission = an `openapi` subcommand on each drop-in CLI (each already owns its app; zero new deps) + a `mailwoman openapi` command for the native surface (`mailwoman` deps `@mailwoman/api` already). The docs site's static spec copies become build products (docs prebuild runs the emitters), killing the staleness class permanently. Client generation salvages the abandoned branch's layout decisions (`mailwoman_client` Python package with per-surface modules; progenitor compile-time Rust crate) — the operator authored those names; the difference is the specs now come from the emitters, and nothing generated lands in git.
 
-**Publishing gate (operator dependency, explicit):** PyPI/crates.io publishing requires accounts/tokens the operator hasn't provisioned. The workflow job GENERATES and uploads artifacts unconditionally on dispatch; the publish steps run only when `publish_clients=true` AND the secrets exist. RELEASING.md documents both halves.
+**Publishing check (operator dependency, explicit):** PyPI/crates.io publishing requires accounts/tokens the operator hasn't provisioned. The workflow job GENERATES and uploads artifacts unconditionally on dispatch; the publish steps run only when `publish_clients=true` AND the secrets exist. RELEASING.md documents both halves.
 
 **Tech Stack:** hono/zod stack as before; `uvx openapi-python-client@0.29` (present); `cargo` 1.96 + progenitor (salvage version pin from the branch); GitHub Actions.
 
@@ -56,17 +56,17 @@ Details:
 - Receipt: full local run — four specs emitted, Python package builds + imports, `cargo check` passes. Capture output.
 - Commit: `feat(mailwoman): client-generation pipeline — Python + Rust from the emitted specs (nothing committed downstream)`
 
-### Task 4: The gated CI job
+### Task 4: The conditional CI job
 
 **Files:**
 
-- Modify: `.github/workflows/publish.yml` (read its header docstring + RELEASING.md FIRST — this workflow has bitten before): add a `clients` job AFTER the npm publish steps: checkout, setup (node + uv + rust toolchain actions), compile, `mailwoman clients generate`, upload both artifacts (`actions/upload-artifact`); then two publish steps EACH gated `if: inputs.publish_clients == 'true'` AND secret-presence (`PYPI_API_TOKEN` / `CARGO_REGISTRY_TOKEN`) — `uv publish` / `cargo publish`. New workflow_dispatch input `publish_clients` (boolean, default false, description says operator must provision registry accounts first).
-- Modify: `RELEASING.md` — a "Client packages" section: the artifact-always/publish-gated split, the operator TODO (account provisioning, token secrets, first-publish name claims), and the local `mailwoman clients generate` receipt command.
+- Modify: `.github/workflows/publish.yml` (read its header docstring + RELEASING.md FIRST — this workflow has bitten before): add a `clients` job AFTER the npm publish steps: checkout, setup (node + uv + rust toolchain actions), compile, `mailwoman clients generate`, upload both artifacts (`actions/upload-artifact`); then two publish steps EACH conditional `if: inputs.publish_clients == 'true'` AND secret-presence (`PYPI_API_TOKEN` / `CARGO_REGISTRY_TOKEN`) — `uv publish` / `cargo publish`. New workflow_dispatch input `publish_clients` (boolean, default false, description says operator must provision registry accounts first).
+- Modify: `RELEASING.md` — a "Client packages" section: the artifact-always/publish-conditional split, the operator TODO (account provisioning, token secrets, first-publish name claims), and the local `mailwoman clients generate` receipt command.
 - Verification: `actionlint` if available (`npx --yes actionlint` or skip with a note); NO live workflow dispatch (publishing workflow — operator territory; the local Task-3 receipt is the generation proof).
-- Commit: `ci(publish): gated client-generation job — artifacts always, registry publish behind publish_clients + secrets`
+- Commit: `ci(publish): conditional client-generation job — artifacts always, registry publish behind publish_clients + secrets`
 
 ### Task 5: Wrap
 
 - Repo green (all suites, integration, smoke-clean-install, lint), fresh compile.
-- PR `feat: Hono API surface, phase 5 — typed schemas, spec emission, gated client generation` covering: the drift-pin mechanism; emission CLIs + docs build products (staleness class dead); jsonld doc unions; the salvage inventory from feat/api-clients + its formal supersession (branch left in place, unmerged, referenced); the publish gate + operator TODO list (PyPI/crates.io provisioning) called out prominently; docs sweep completion. Attribution line.
+- PR `feat: Hono API surface, phase 5 — typed schemas, spec emission, conditional client generation` covering: the drift-pin mechanism; emission CLIs + docs build products (staleness class dead); jsonld doc unions; the salvage inventory from feat/api-clients + its formal supersession (branch left in place, unmerged, referenced); the publish check + operator TODO list (PyPI/crates.io provisioning) called out prominently; docs sweep completion. Attribution line.
 - Controller: final whole-branch review (fable) → fixes → CI → merge under the standing grant. After merge: notify operator with the arc-complete summary + the two operator handoffs (registry provisioning; hosted drop-in unit redeploys).

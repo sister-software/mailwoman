@@ -1,0 +1,359 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman data pull <bundle...>` — the consumer download path (#task-6): fetch a named data
+ *   bundle (`candidate`, `us`, `fr`, `poi` — see `data-bundles.ts` for what each ships) from the
+ *   public R2 bucket into the local data root, atomically. This is the command `mailwoman doctor`'s
+ *   fix hints now point at instead of a bare `curl` line.
+ *
+ *   NETWORKING SPLIT (AGENTS.md's file-transfer carve-out, applied): the small per-artifact HEAD
+ *   probe (`Content-Length`, and — for a bundle that ships one — the `.md5` sidecar text) goes
+ *   through `APIClient` (paced, retried, mapped errors — the repo default for API requests). The
+ *   artifact BODY itself — every one of these is tens of MB to several GB — is streamed straight to
+ *   disk through the shared raw-`fetch` `streamToDisk` (`@mailwoman/core/utils`): response caching is nonsense at this
+ *   size, there's nothing to pace on a one-shot GET, and axios buffers a non-stream response type in
+ *   memory.
+ *
+ *   Download → verify → atomic move: each artifact lands at `<dataRoot>/tmp/` first, gets checked
+ *   against the sidecar md5 (when `BundleArtifact.md5Sidecar` is true — no shipped artifact publishes
+ *   one today, see `data-bundles.ts`'s docstring) or the HEAD `Content-Length` (with a loud warning
+ *   when neither signal is available), gets sealed (`sealDatabase`), then `swapDatabaseIntoPlace`
+ *   moves it into its final convention path — a crash mid-download can never corrupt an existing
+ *   install (`core/utils/sealed-db.ts`'s discipline, applied to a download instead of a local build).
+ *
+ *   `--dry-run` prints the plan with ZERO network calls: existing-file detection is a plain
+ *   filesystem stat (`resolveDatabasePath` for the versioned `us` per-state databases, `existsSync`
+ *   otherwise), never a HEAD. `--only <substring>` narrows a bundle to matching artifacts (e.g.
+ *   `data pull us --only nh` for one state instead of the whole ~41 GB tier).
+ *
+ *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line `mailwoman
+ *   doctor` used to be the only place showing — candidate.db resolution is env-restricted
+ *   (`resolver-backend.ts`'s `resolveCandidateDBPath`), so writing the file alone doesn't wire it up;
+ *   this is the ledgered product finding (FR addresses geocoding to the US on the FTS default) whose
+ *   fix path is the candidate backend, so the env line has to be impossible to miss.
+ */
+
+import type { APIClient } from "@mailwoman/core/api"
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { md5File } from "@mailwoman/core/hash"
+import { streamToDisk } from "@mailwoman/core/utils"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import { Text } from "ink"
+import { basename, dirname, resolvePath } from "path-ts"
+
+import {
+	type Check,
+	CheckList,
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
+import {
+	artifactURL,
+	BUNDLES,
+	filterArtifacts,
+	resolveBundleArtifacts,
+	type BundleArtifact,
+	type RemoteArtifactState,
+} from "#data/bundles"
+import { existingLocalPath, readReleaseManifest } from "#data/release"
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "pull",
+	description: "",
+	positionals: [
+		{
+			name: "bundle",
+			required: true,
+			multiple: true,
+			description: `Bundle name(s) to pull: ${Object.keys(BUNDLES).join(", ")}`,
+		},
+	],
+	options: {
+		"dry-run": {
+			type: "boolean",
+			default: false,
+			description: "Print the download plan; touch no network and write nothing",
+		},
+		only: {
+			type: "string",
+			description: "Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)",
+		},
+		force: {
+			type: "boolean",
+			default: false,
+			description: "Re-download even when a local copy already appears present",
+		},
+		"data-root": {
+			type: "string",
+			description: "Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)",
+		},
+		host: {
+			type: "string",
+			validate: (value: string) => URL.canParse(value),
+			description:
+				"Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket.",
+		},
+	},
+} as const satisfies CommandSpec
+
+interface Options {
+	dryRun: boolean
+	only?: string
+	force: boolean
+	dataRoot?: string
+	host?: string
+}
+
+/**
+ * HEAD the artifact (and, when it publishes one, GET its `.md5` sidecar) via the paced/retried `APIClient`. Failures
+ * degrade to an empty state rather than throwing — a HEAD that 404s or times out just means "can't verify", handled
+ * downstream as a warning, not a hard stop (the GET that follows is the real signal on whether the artifact exists).
+ *
+ * The sidecar GET carries the SAME `Range: bytes=0-` header `downloadToDisk` needs (see that function's docstring for
+ * the measured WAF behavior) — a `.md5` sidecar is a tiny text object on the SAME bucket, and nothing rules out the
+ * WAF's ranged-request rule applying to it too. No bundle publishes one today (`data-bundles.ts`'s docstring), so this
+ * path is UNEXERCISED against live data; a failure here is loud (`console.error`), not swallowed, so the day a sidecar
+ * ships, a wrong guess about which requests need `Range` shows up immediately instead of silently degrading forever.
+ */
+async function probeRemote(
+	client: APIClient,
+	artifact: BundleArtifact,
+	baseURL?: string
+): Promise<RemoteArtifactState> {
+	const url = artifactURL(artifact, baseURL)
+	const state: RemoteArtifactState = {}
+
+	try {
+		const res = await client.fetch({ method: "head", url })
+		const len = res.headers["content-length"]
+
+		if (len) {
+			state.contentLength = Number(len)
+		}
+	} catch {
+		// No live Content-Length — the caller falls back to a warning rather than forcing a re-fetch decision on it.
+	}
+
+	if (artifact.md5Sidecar) {
+		try {
+			const res = await client.fetch<string>({
+				method: "get",
+				url: `${url}.md5`,
+				responseType: "text",
+				headers: { range: "bytes=0-" },
+			})
+
+			state.md5 = String(res.data).trim().split(/\s+/)[0]
+		} catch (error) {
+			console.error(
+				`WARNING: md5 sidecar fetch failed for ${url}.md5 (${error instanceof Error ? error.message : String(error)}) — falling back to size verification`
+			)
+		}
+	}
+
+	return state
+}
+
+/**
+ * Stream a GET straight to disk — the raw-`fetch` half of the networking split (see the module docstring), through the
+ * shared `streamToDisk` (`@mailwoman/core/utils`): `.part` + rename, so an interrupted transfer never presents as a
+ * complete artifact. The one addition over the shared transfer is the `Range: bytes=0-` header.
+ *
+ * MEASURED 2026-08-03 against the live bucket: a plain GET with no `Range` header on `street/us/nh/situs.db` returned
+ * Cloudflare's own 403 "Attention Required" block page — reproduced identically with `curl`, native `fetch`, and
+ * `axios`, so it's not a client quirk. A HEAD on the same URL returns 200 fine, and a ranged GET (`curl -r 0-`, or this
+ * header) returns 206 and streams the complete object end to end (verified byte-for-byte against the known 20,480-byte
+ * size). The bucket's intended consumer (`sql.js-httpvfs` in the browser demo) always byte-ranges, so an unranged GET
+ * is exactly the request shape nothing else here ever makes — this is almost certainly a WAF rule scoped to that
+ * difference, not a fluke. `bytes=0-` (open-ended from the start) is the fix: satisfies the ranged-request requirement
+ * while still asking for, and receiving, the whole file.
+ */
+async function downloadToDisk(url: string, destPath: string): Promise<number> {
+	return await streamToDisk({
+		url,
+		destination: destPath,
+		context: "mailwoman data pull",
+		headers: { range: "bytes=0-" },
+	})
+}
+
+interface PullOutcome {
+	ok: boolean
+	checks: Check[]
+	pulledCandidate: boolean
+}
+
+async function pullBundles(
+	bundleNames: string[],
+	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: string; host?: string }
+): Promise<PullOutcome> {
+	const { dataRoot } = opts
+	const manifest = await readReleaseManifest(dataRoot)
+	const checks: Check[] = []
+	let ok = true
+	let pulledCandidate = false
+
+	const client = opts.dryRun
+		? null
+		: new (await import("@mailwoman/core/api")).APIClient({
+				displayName: "mailwoman data",
+				minRequestIntervalMs: 150,
+				retry: true,
+			})
+
+	for (const name of bundleNames) {
+		const bundle = BUNDLES[name]
+
+		if (!bundle) {
+			ok = false
+
+			checks.push({
+				ok: false,
+				check: name,
+				detail: `unknown bundle — known bundles: ${Object.keys(BUNDLES).join(", ")}`,
+			})
+
+			continue
+		}
+
+		const artifacts = filterArtifacts(resolveBundleArtifacts(bundle, manifest), opts.only)
+
+		if (!artifacts.length) {
+			ok = false
+			checks.push({ ok: false, check: `${name} --only ${opts.only}`, detail: "no artifacts matched --only" })
+
+			continue
+		}
+
+		for (const artifact of artifacts) {
+			const label = `${name}: ${artifact.remotePath}`
+			const localAbsPath = resolvePath(dataRoot, artifact.localPath)
+			const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
+
+			if (existing && !opts.force) {
+				checks.push({ ok: true, check: label, detail: `already present (${existing}) — skipped` })
+
+				if (name === "candidate") {
+					pulledCandidate = true
+				}
+
+				continue
+			}
+
+			if (opts.dryRun) {
+				checks.push({
+					ok: true,
+					check: label,
+					detail: `[dry-run] ${ByteFormatter.formatSI(artifact.approxBytes)} ${artifactURL(artifact, opts.host)} → ${localAbsPath}`,
+				})
+
+				continue
+			}
+
+			console.error(
+				`▸ pull ${artifactURL(artifact, opts.host)} (~${ByteFormatter.formatSI(artifact.approxBytes)}) → ${localAbsPath}`
+			)
+
+			try {
+				const remote = await probeRemote(client!, artifact, opts.host)
+				// Staged under THIS pull's data root (not necessarily the env-configured one — `--data-root`
+				// overrides it), so `dataRootPath` (which always reads `$MAILWOMAN_DATA_ROOT`) would be wrong here.
+				const stageDir = resolvePath(dataRoot, "tmp")
+
+				await makeDirectories(stageDir)
+				const tmpPath = resolvePath(stageDir, `${Date.now()}-${basename(artifact.localPath)}`)
+
+				const bytesWritten = await downloadToDisk(artifactURL(artifact, opts.host), tmpPath)
+
+				let verifyDetail: string
+
+				if (artifact.md5Sidecar && remote.md5) {
+					const gotMd5 = await md5File(tmpPath)
+
+					if (gotMd5 !== remote.md5) {
+						await removePathIfPresent(tmpPath)
+						throw new Error(`${artifact.remotePath}: md5 mismatch (expected ${remote.md5}, got ${gotMd5})`)
+					}
+
+					verifyDetail = "md5 verified"
+				} else if (remote.contentLength !== undefined) {
+					if (bytesWritten !== remote.contentLength) {
+						await removePathIfPresent(tmpPath)
+						throw new Error(
+							`${artifact.remotePath}: downloaded ${bytesWritten} bytes, expected ${remote.contentLength} (Content-Length) — aborting`
+						)
+					}
+
+					verifyDetail = `content-length verified (${ByteFormatter.formatSI(bytesWritten)})`
+				} else {
+					verifyDetail = `WARNING: no md5 sidecar and no Content-Length available — could not verify (${ByteFormatter.formatSI(bytesWritten)} written, trusting the transfer)`
+				}
+
+				await makeDirectories(dirname(localAbsPath))
+				await sealDatabase(tmpPath)
+				await swapDatabaseIntoPlace(tmpPath, localAbsPath)
+
+				checks.push({ ok: true, check: label, detail: `${verifyDetail} → ${localAbsPath}` })
+
+				if (name === "candidate") {
+					pulledCandidate = true
+				}
+			} catch (error) {
+				ok = false
+				checks.push({ ok: false, check: label, detail: error instanceof Error ? error.message : String(error) })
+			}
+		}
+	}
+
+	if (client) {
+		await client[Symbol.asyncDispose]()
+	}
+
+	return { ok, checks, pulledCandidate }
+}
+
+const DataPull: ParsedCommandComponent<Options> = ({ options, args }) => {
+	const state = useCommandTask(
+		async () => {
+			if (!args.length) {
+				throw new CommandError(`mailwoman data pull <bundle...> — known bundles: ${Object.keys(BUNDLES).join(", ")}`)
+			}
+
+			const dataRoot = options.dataRoot ?? mailwomanDataRoot()
+
+			const result = await pullBundles(args, {
+				dryRun: options.dryRun,
+				only: options.only,
+				force: options.force,
+				dataRoot,
+				host: options.host,
+			})
+
+			if (result.pulledCandidate) {
+				console.error(`\nexport MAILWOMAN_CANDIDATE_DB=${resolvePath(dataRoot, "wof/candidate.db")}`)
+			}
+
+			return result
+		},
+		(result) => (result.ok ? 0 : 1)
+	)
+
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<Text color="gray">pulling…</Text>} />
+
+	if (state.status === "done") {
+		return <CheckList checks={state.result.checks} verdict={state.result.ok} />
+	}
+
+	return null
+}
+
+export default DataPull

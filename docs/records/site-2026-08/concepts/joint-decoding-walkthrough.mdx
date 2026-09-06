@@ -28,7 +28,7 @@ If you have not read [The staged pipeline](../understanding/our-approach/the-sta
 
 Stage 1 normalises the bytes. Nothing interesting happens here for our input — no NFC fix-ups, no abbreviation expansion. The string passes through unchanged.
 
-Stage 2 is the locale gate. For Latin-only input like this, the default is `en-US` with a moderate confidence. The downstream resolver weights will tilt toward US gazetteer hits.
+Stage 2 is the locale check. For Latin-only input like this, the default is `en-US` with a moderate confidence. The downstream resolver weights will tilt toward US gazetteer hits.
 
 Stage 2.5 is the kind classifier. It looks at the shape of the string (commas, capitalisation, the trailing two-letter token after a final comma) and decides this is a `structured_address` — not a bare postcode, not a single locality. The full pipeline runs.
 

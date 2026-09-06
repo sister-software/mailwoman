@@ -36,7 +36,7 @@ of its own; it is loaded at inference time by `@mailwoman/neural`.
 The NZ-facing half of Mailwoman's retrieval side: real (child, parent)
 suburb/town pairs (e.g. "Plimmerton" is a real suburb of "Porirua") fed to the
 decoder as a soft `dependent_locality` bias, restricted to NZ input only. NZ's
-register genuinely repeats names across tiers — 21.6% of its pairs are
+register repeats names across tiers — 21.6% of its pairs are
 identity pairs (suburb == town, e.g. "Mangawhai, Mangawhai") — which is why
 `@mailwoman/neural` ≥7.8.0's identical-adjacent-segment rule exists; this
 bundle's index is that rule's data source.

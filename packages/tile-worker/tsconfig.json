@@ -1,6 +1,7 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"allowSyntheticDefaultImports": true,
 		"emitDecoratorMetadata": true,
 		"emitDeclarationOnly": false,
@@ -11,6 +12,7 @@
 		"types": ["@cloudflare/workers-types"],
 		"resolveJsonModule": true
 	},
+	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*"],
 	"references": [
 		// ---

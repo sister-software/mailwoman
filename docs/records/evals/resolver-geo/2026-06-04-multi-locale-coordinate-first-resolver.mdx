@@ -7,7 +7,7 @@ We started this stretch trying to teach a neural parser to read German. We're en
 
 ## Where this came from
 
-The German parser was stuck. A from-scratch self-conditioned retrain (PR3 Pilot A) came back at **25.6% locality resolver-match** against v0.7.2's 77.4% — the model learned German street order and then dropped the trailing city, the same end-of-string collapse that killed the v0.8.0 order-shard. We chased it into the decoder too: a postcode-boundary trim that produced string-perfect parses (`auen Vogtl` → `Plauen Vogtl`) and moved the resolver **zero**.
+The German parser was stuck. A from-scratch self-conditioned retrain (PR3 Pilot A) came back at **25.6% locality resolver-match** against v0.7.2's 77.4% — the model learned German street order and then dropped the trailing city, the same end-of-string collapse that killed the v0.8.0 order-extract. We chased it into the decoder too: a postcode-boundary trim that produced string-perfect parses (`auen Vogtl` → `Plauen Vogtl`) and moved the resolver **zero**.
 
 That zero was the tell. The parse was right and the resolver still missed, because the resolver name-matched the parsed locality against Who's On First, and OpenAddresses' gold carries region suffixes WOF doesn't store (`Plauen Vogtl` vs WOF's `Plauen`). We'd been polishing the wrong surface. **German was never a parser problem; it was a resolver problem, and the resolver was matching on names when it should have been matching on coordinates.** That's the reframe the whole multi-locale program is built on.
 

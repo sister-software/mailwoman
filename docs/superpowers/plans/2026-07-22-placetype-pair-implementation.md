@@ -62,7 +62,7 @@ TDD: round-trip test (serialize → construct → probe hits/misses), bad-magic 
 
 **Files:** Create `mailwoman/commands/gazetteer/pair-index.tsx` (template: `postcode-binary.tsx` — zod `options` export, `useCommandTask`, `dataRootPath`, value-import `serializePairIndex` from the resolver subpath). Options: `--out` (default `docs/static/mailwoman`), `--country` (default gb), `--source` (default the PPD tuples path), `--delta` (REQUIRED, no default — calibration task supplies it; refuse to default silently).
 
-Behavior: stream the tuples CSV (CSVSpliterator idiom from `shard-recipes/locale.ts`), fold child=CITY/parent=DISTRICT via `normalizeFSTToken`, skip empty-CITY rows, dedupe pairs, count; print the **CITY word-length distribution percentiles** (sets window N for Task 4 — record p99 in the output and the report); write `pair-index-gb.bin` with provenance header (source md5 via existing hash utils). Run it for real (expect ≈19,431 pairs — the rung-3 number is the cross-check; mismatch = STOP). Tests: builder unit on fixture CSV (dedupe, fold, empty-CITY skip). Commit incl. the real-run stats line.
+Behavior: stream the tuples CSV (CSVSpliterator idiom from `extract-recipes/locale.ts`), fold child=CITY/parent=DISTRICT via `normalizeFSTToken`, skip empty-CITY rows, dedupe pairs, count; print the **CITY word-length distribution percentiles** (sets window N for Task 4 — record p99 in the output and the report); write `pair-index-gb.bin` with provenance header (source md5 via existing hash utils). Run it for real (expect ≈19,431 pairs — the rung-3 number is the cross-check; mismatch = STOP). Tests: builder unit on fixture CSV (dedupe, fold, empty-CITY skip). Commit incl. the real-run stats line.
 
 ### Task 4: The prior module (sixth emission prior)
 
@@ -78,9 +78,9 @@ Behavior: stream the tuples CSV (CSVSpliterator idiom from `shard-recipes/locale
 
 Tests: matrix-cell exactness (query-shape-prior.test.ts style + the street-morphology mock idiom); the two registered decode-order classes (bias-united word survives the vote; encoder-confident word vetoes) — these exercise `#decode` end-to-end with a stub runner if the harness supports it, else at the documented unit boundary with a note; marker suppression; comma-free input (windows over "fishburn stockton on tees" — multi-word parent "stockton on tees" must match via 3-word window). Commit per piece (trace constant + module + wiring can be one reviewed commit if the trip-wire choreography demands it).
 
-### Task 5: Weights sibling + country gating
+### Task 5: Weights sibling + country blocking
 
-**Files:** Modify `neural/weights.ts` (add `resolvePairIndexSibling` mirroring `resolveAnchorLookupSibling:283–297`; `ResolvedWeights.pairIndexPath?: string`; spread in both the package-dir and overlay paths — the en-gb overlay resolves it locally like postcode-gb.bin). Modify `neural/classifier.ts` load path (`classifier.ts:296–304` region): construct `PairIndexResolver` when `pairIndexPath` present AND the resolved locale's country matches the index header's country (the hard country gate — mismatch = skip + one warn). Extend `neural/test/weights.test.ts` en-gb case: `pairIndexPath` resolves; parse smoke with a GB dep-loc address emits the tag (this is the arc's end-to-end proof).
+**Files:** Modify `neural/weights.ts` (add `resolvePairIndexSibling` mirroring `resolveAnchorLookupSibling:283–297`; `ResolvedWeights.pairIndexPath?: string`; spread in both the package-dir and overlay paths — the en-gb overlay resolves it locally like postcode-gb.bin). Modify `neural/classifier.ts` load path (`classifier.ts:296–304` region): construct `PairIndexResolver` when `pairIndexPath` present AND the resolved locale's country matches the index header's country (the hard country check — mismatch = skip + one warn). Extend `neural/test/weights.test.ts` en-gb case: `pairIndexPath` resolves; parse smoke with a GB dep-loc address emits the tag (this is the arc's end-to-end proof).
 Note: the runtime country context = the locale the weights resolved for (en-gb → gb). The plan's "no-country → no bias" case is structurally covered (base en-us package ships no pair index), but ALSO test: en-us weights + GB-looking input → prior inert.
 
 ### Task 6: Falsifier boards + holdout evals (data + scripts, minimal commits)
@@ -112,7 +112,7 @@ As rev-2 design §acceptance, with bars re-anchored to Task 6.3's holdout number
 
 **Explicit cases (table-driven, fixture tier + skipIf-production tier per the Task-4 pattern):** `"The Grange", Fishburn, Stockton-on-Tees` (quoted venue); `12 High St (rear entrance), Leeds` (parenthetical aside); `Unit 4 [Block B]` (bracketed designator); braces; curly vs straight quotes (what does NFKC map?); guillemets «»; UNBALANCED pairs (fail-open, never crash, never drop).
 
-**Gates:** zero crashes on any case; zero silent WORD DROPS (the Task-4 class — assert group recovery); span edges don't capture stray paired chars (characterize; fix if local to span trimming, else document-with-rationale). Same adjudication discipline: any "accepted behavior" verdict carries evidence, and anything in the drop/mangle class gets fixed, not documented.
+**Checks:** zero crashes on any case; zero silent WORD DROPS (the Task-4 class — assert group recovery); span edges don't capture stray paired chars (characterize; fix if local to span trimming, else document-with-rationale). Same adjudication discipline: any "accepted behavior" verdict carries evidence, and anything in the drop/mangle class gets fixed, not documented.
 
 **Sequencing:** final task — runs after Task 8, before the arc's whole-branch review, so it audits the SHIPPED configuration.
 

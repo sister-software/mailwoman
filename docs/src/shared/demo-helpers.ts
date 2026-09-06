@@ -12,12 +12,32 @@
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
 import { clampConfidence, type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
-import type { ParseResult } from "@mailwoman/react"
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/react"
 
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources/index.ts"
+import { releasesManifestURL } from "./resources/index.ts"
 
 // Moved into the package so the resolvers can reach it; re-exported for the demo's callers.
 export { type ResolveBias, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+
+/**
+ * Project the cascade's hits onto the package's {@link ResolvedPlaceView} — the shape `useParsePipeline` and the result
+ * panels consume. Shared by both demo parse paths so the projection cannot drift.
+ */
+export function projectCascadeHits(
+	hits: ReadonlyArray<{ id: number; name: string; placetype: string; lat: number; lon: number; score: number }>
+): ResolvedPlaceView[] {
+	return hits.map((c) => ({ id: c.id, name: c.name, placetype: c.placetype, lat: c.lat, lon: c.lon, score: c.score }))
+}
+
+/**
+ * Per-parse progress labels, keyed on whether a gazetteer lookup is wired for the selected release.
+ */
+export function parseStageLabelsFor(hasResolver: boolean): string[] {
+	return hasResolver
+		? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
+		: ["Analyzing input shape…", "Running neural classifier…"]
+}
 
 //#region Types
 
@@ -97,6 +117,16 @@ export function normalizeReleasesManifest(raw: {
 	}
 }
 
+/**
+ * Fetch + normalize the demo's releases manifest. `cache: "reload"` bypasses the (immutable-Cache-Control) HTTP cache
+ * for the version pointer so a returning visitor sees a `defaultVersion` bump.
+ */
+export async function fetchReleasesManifest(): Promise<ReleasesManifest | null> {
+	const res = await fetch(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })
+
+	return res.ok ? normalizeReleasesManifest(await res.json()) : null
+}
+
 export interface ParsedNode {
 	tag: string
 	value?: unknown
@@ -128,11 +158,14 @@ export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 /**
  * Demo preset addresses. Each carries its `country` (ISO code) — the placetype-pair-prior country pin (#1278 phase 2's
- * `{country}` override): structural routing (locale-gate) genuinely can't detect every locale from text shape (NZ's
+ * `{country}` override): structural routing (locale-check) genuinely can't detect every locale from text shape (NZ's
  * 4-digit postcode isn't distinctive), so a preset PINS its country and {@link pairCountryForInput} hands it to
  * `selectPairIndexForText` when the input still equals the preset text. Free-typed input (no exact preset match) falls
  * back to structural detection — GB-with-postcode auto-fires; NZ free-text stays unfired (the accepted consequence of
  * structural routing, the #1308-sibling reality).
+ *
+ * See also `PIPELINE_PRESETS` in `@mailwoman/react` (pipeline/presets.ts) — the package carries its own preset list;
+ * reconciling the two lists is tracked outside this file.
  */
 export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country: string }> = [
 	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500", country: "us" },
@@ -157,7 +190,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of Porirua. Postcode
 	// DELIBERATELY OMITTED: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode
 	// folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) —
-	// tracked as #1308. The `country: "nz"` pin is required here: locale-gate can't structurally detect NZ (4-digit
+	// tracked as #1308. The `country: "nz"` pin is required here: locale-check can't structurally detect NZ (4-digit
 	// postcode isn't a distinctive format), so ONLY the preset pin selects the nz index — free-typed NZ stays unfired.
 	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]
@@ -166,7 +199,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
  * The placetype-pair country PIN for one input (#1278 phase 2's `{country}` override). Returns a preset's `country`
  * when `input` still exactly equals that preset's text (trimmed), else `undefined` → the caller lets structural
  * detection decide. This is the stale-pin rule: the pin is tied to the preset's IDENTITY (its text), so the instant the
- * user edits the input it no longer matches and the parse drops to structural locale-gate detection — clean and
+ * user edits the input it no longer matches and the parse drops to structural locale-check detection — clean and
  * stateless (no "active preset" tracking to drift). GB-with-postcode still auto-fires structurally; NZ free-text stays
  * unfired.
  */
@@ -226,12 +259,12 @@ export interface ClassifyStageResult {
  * `runPipeline`, and the tree flatten — with the two front-half timings captured. The caller owns resolution
  * (`runCascade`, plus the map path's street tier / anchor fallback) and the staged `onStage` progress ticks.
  *
- * #1278: this is the single seam the locale-gate pre-parse plugs into. A future per-parse country / conventions hint is
- * threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
+ * #1278: this is the single point the locale-check pre-parse plugs into. A future per-parse country / conventions hint
+ * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
  */
 /**
  * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape `neural-web`'s
- * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs locale-gate over the text SHAPE (postcode
+ * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs locale-check over the text SHAPE (postcode
  * format / script, never place names) and returns the matching loaded index wrapped as an opaque `placetypePair` opt —
  * or `undefined` when no loaded index matches (byte-stable no-prior). Typed opaquely here because the docs bundle
  * carries no neural type dependency; `runClassifyStage` threads the result verbatim into the pipeline's `placetypePair`
@@ -249,9 +282,9 @@ export interface ClassifyStageDeps {
 	 */
 	fst?: FSTMatcherLike | null
 	/**
-	 * The optional street-morphology matcher — the #1315 street-context gate's signal source. The gate only fires when
-	 * BOTH this and `fst` are wired (core's `streetContextGateFor`), matching the node runtime pipeline's default; a
-	 * `null`/omitted matcher parses gate-off, exactly the pre-artifact demo behavior.
+	 * The optional street-morphology matcher — the #1315 street-context check's signal source. The check only fires when
+	 * BOTH this and `fst` are wired (core's `streetContextRequirementFor`), matching the node runtime pipeline's default;
+	 * a `null`/omitted matcher parses with the check off, exactly the pre-artifact demo behavior.
 	 */
 	streetMorphology?: FSTMatcherLike | null
 	/**
@@ -296,7 +329,7 @@ export async function runClassifyStage(
 	// Placetype-pair prior (#1278): pick the per-parse index. A preset PINS its country (pairCountryForInput) — the
 	// phase-2 `{country}` override — so a locale structural routing can't detect from text (NZ: 4-digit postcode isn't
 	// distinctive) still fires while the input equals the preset text; the moment the user edits, the pin drops and we
-	// fall back to structural locale-gate detection (GB-with-postcode auto-fires; NZ free-text stays unfired, the
+	// fall back to structural locale-check detection (GB-with-postcode auto-fires; NZ free-text stays unfired, the
 	// accepted #1308-sibling consequence of structural routing). No index / no match → undefined → byte-stable.
 	const pinnedCountry = pairCountryForInput(input)
 	const placetypePair = deps.selectPairIndex?.(input, pinnedCountry ? { country: pinnedCountry } : undefined)

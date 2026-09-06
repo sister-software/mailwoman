@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/api-kit",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "API plumbing for Mailwoman's HTTP surfaces — Hono node serve wrapper, OpenAPI emit helpers, shared wire atoms. Plumbing only: domain schemas live with their routes.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -25,15 +25,23 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./metrics": {
-			"node": "./metrics.ts",
+			"node": "./lib/metrics.ts",
 			"default": "./out/metrics.js",
 			"types": "./out/metrics.d.ts"
 		}
@@ -42,10 +50,10 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/node-server": "^2.0.12",
-		"@hono/zod-openapi": "^1.5.1",
-		"@mailwoman/platform": "workspace:*",
-		"hono": "^4.13.0",
-		"zod": "^4.4.3"
+		"@hono/node-server": "^2.1.1",
+		"@hono/zod-openapi": "^1.6.3",
+		"@mailwoman/core": "workspace:*",
+		"hono": "^4.13.7",
+		"zod": "^4.5.4"
 	}
 }

@@ -1,0 +1,65 @@
+{
+	"name": "@mailwoman/locale-hint",
+	"version": "9.3.0",
+	"description": "Stage 2 of the runtime pipeline — derive a LocaleHint from QueryShape (script + known-format hits). Rule-based v1; trained classifier deferred to v0.6.0.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/locale-hint"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx",
+		"!test/**"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./lib/index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./detect": {
+			"node": "./lib/detect.ts",
+			"default": "./out/detect.js",
+			"types": "./out/detect.d.ts"
+		},
+		"./types": {
+			"node": "./lib/types.ts",
+			"default": "./out/types.js",
+			"types": "./out/types.d.ts"
+		},
+		"./rules": {
+			"node": "./lib/rules.ts",
+			"default": "./out/rules.js",
+			"types": "./out/rules.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*"
+	}
+}

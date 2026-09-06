@@ -48,17 +48,19 @@
  *   ```
  */
 
-import { statPath, realPath, pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalBufferSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
+
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { gzipSync } from "@mailwoman/core/fs/compression"
+import { statPath, realPath, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
-import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
+import { createRequire } from "@mailwoman/core/module/resolvers"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { median, percentile } from "@mailwoman/core/stats"
+import { architecture, cpuCount, cpuModel, platformName, totalMemoryBytes } from "@mailwoman/core/utils/system"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
-import { createRequire } from "@mailwoman/platform/module"
-import { arch, cpus, platform, totalmem } from "@mailwoman/platform/os"
-import { basename, dirname, extname, normalize, resolve as resolveFilePath, sep } from "@mailwoman/platform/path"
-import { gzipSync } from "@mailwoman/platform/zlib"
 import { build } from "esbuild"
+import { basename, dirname, extname, normalize, resolvePath as resolveFilePath, sep } from "path-ts"
 import { type Browser, chromium } from "playwright"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -213,17 +215,17 @@ const CANDIDATE_PROBE_SQL =
 	"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, neg_rank, is_primary, population " +
 	`FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC LIMIT ${CANDIDATE_PROBE_LIMIT}`
 
-// MARK: Gates
+// MARK: Checks
 
 /**
- * Artifact-gated exactly like `weights.test.ts`: a checkout without the dev weights, or without Playwright's browser,
- * skips this suite rather than failing it.
+ * Artifact-conditional exactly like `weights.test.ts`: a checkout without the dev weights, or without Playwright's
+ * browser, skips this suite rather than failing it.
  */
 const requireFromHere = createRequire(import.meta.url)
 
-function tryResolveWeights(): ResolvedWeights | null {
+async function tryResolveWeights(): Promise<ResolvedWeights | null> {
 	try {
-		return resolveWeights({ locale: "en-us" })
+		return await resolveWeights({ locale: "en-us" })
 	} catch {
 		return null
 	}
@@ -253,7 +255,7 @@ async function tryChromiumExecutable(): Promise<string | null> {
 	}
 }
 
-const weights = tryResolveWeights()
+const weights = await tryResolveWeights()
 const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (await pathExists(weights.tokenizerPath))
 const haveBrowser = (await tryChromiumExecutable()) !== null
 
@@ -439,8 +441,8 @@ async function createAssetServer(
 		res.end(req.method === "HEAD" ? undefined : payload)
 	}
 
-	const serveRange = (req: IncomingMessage, res: ServerResponse, mount: RangeMount): void => {
-		const size = statPathSync(mount.file).size
+	const serveRange = async (req: IncomingMessage, res: ServerResponse, mount: RangeMount): Promise<void> => {
+		const size = (await statPath(mount.file)).size
 
 		if (req.method === "HEAD") {
 			res.writeHead(HTTP_OK, { "Content-Length": String(size), "Accept-Ranges": "bytes" })
@@ -473,23 +475,35 @@ async function createAssetServer(
 		openReadStream(mount.file, { start: range.start, end: range.end }).pipe(res)
 	}
 
-	const serveMount = (
+	const serveMount = async (
 		req: IncomingMessage,
 		res: ServerResponse,
 		mount: DirectoryMount,
 		requestPath: string
-	): boolean => {
+	): Promise<boolean> => {
 		const filePath = safeJoin(mount.directory, requestPath.slice(mount.prefix.length))
 
-		if (!filePath || !pathExistsSync(filePath) || !statPathSync(filePath).isFile()) return false
+		if (!filePath || !(await pathExists(filePath))) return false
+		const stats = await statPath(filePath)
+
+		if (!stats.isFile()) return false
 		const compressible = COMPRESSIBLE_EXTENSIONS.has(extname(filePath))
 		const assetClass = mount.classify(basename(filePath))
-		sendBuffer(req, res, requestPath, readLocalBufferSync(filePath), contentTypeFor(filePath), assetClass, compressible)
+
+		sendBuffer(
+			req,
+			res,
+			requestPath,
+			await readLocalBuffer(filePath),
+			contentTypeFor(filePath),
+			assetClass,
+			compressible
+		)
 
 		return true
 	}
 
-	const handler = (req: IncomingMessage, res: ServerResponse): void => {
+	const handler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
 		const requestPath = (req.url ?? "/").split("?")[0] ?? "/"
 		const inline = inlineRoutes.get(requestPath)
 
@@ -500,7 +514,7 @@ async function createAssetServer(
 		}
 
 		if (rangeMount && requestPath === rangeMount.path) {
-			serveRange(req, res, rangeMount)
+			await serveRange(req, res, rangeMount)
 
 			return
 		}
@@ -508,7 +522,7 @@ async function createAssetServer(
 		for (const mount of mounts) {
 			if (!requestPath.startsWith(mount.prefix)) continue
 
-			if (serveMount(req, res, mount, requestPath)) return
+			if (await serveMount(req, res, mount, requestPath)) return
 
 			break
 		}
@@ -704,7 +718,7 @@ async function bundleBrowserEntry(resolveDir: string): Promise<Buffer> {
 		write: false,
 		logLevel: "silent",
 		// Both are dynamic imports behind a node-environment guard; the browser never evaluates them.
-		external: ["@mailwoman/platform/fs/promises", "@mailwoman/platform/module"],
+		external: ["node:fs/promises", "node:module"],
 	})
 
 	const output = result.outputFiles[0]
@@ -773,11 +787,10 @@ function statsOf(durations: readonly number[]): WarmStats {
 }
 
 function describeDevice(): string {
-	const cores = cpus()
-	const model = cores[0]?.model.trim() ?? "unknown CPU"
-	const memory = (totalmem() / BYTES_PER_GIBIBYTE).toFixed(0)
+	const model = cpuModel()
+	const memory = (totalMemoryBytes() / BYTES_PER_GIBIBYTE).toFixed(0)
 
-	return `${model} × ${cores.length} · ${memory} GiB · ${platform()}/${arch()}`
+	return `${model} × ${cpuCount()} · ${memory} GiB · ${platformName()}/${architecture()}`
 }
 
 /**
@@ -919,7 +932,13 @@ async function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: stri
 		resolved.pairIndexPath,
 	]
 
-	const present = candidates.filter((path): path is string => typeof path === "string" && pathExistsSync(path))
+	const present: string[] = []
+
+	for (const path of candidates) {
+		if (typeof path === "string" && (await pathExists(path))) {
+			present.push(path)
+		}
+	}
 
 	return present.map((path) => `${origin}/weights/${path.slice(weightsDirectory.length + 1)}`)
 }

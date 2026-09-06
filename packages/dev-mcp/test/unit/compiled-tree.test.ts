@@ -5,7 +5,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, setTimestamps, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { assertCompiledFresh, checkCompiledFreshness } from "@mailwoman/dev-mcp/compiled-tree"
 import { FINGERPRINTED_WORKSPACES } from "@mailwoman/dev-mcp/tree-fingerprint"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -13,7 +13,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function checkout(): Promise<{ root: string; workspace: string }> {
-	const root = fixtures.use(await temporaryDirectory("mwdev-compiled-")).path
+	const root = String(fixtures.use(await temporaryDirectory("mwdev-compiled-")).path)
 
 	const workspace = join(root, FINGERPRINTED_WORKSPACES[0])
 
@@ -37,7 +37,7 @@ describe("checkCompiledFreshness", () => {
 		await touch(join(workspace, "thing.ts"), -60_000)
 		await touch(join(workspace, "out", "thing.js"), 0)
 
-		expect(checkCompiledFreshness(root).fresh).toBe(true)
+		expect((await checkCompiledFreshness(root)).fresh).toBe(true)
 	})
 
 	it("refuses when source is newer, and says how to fix it", async () => {
@@ -48,13 +48,13 @@ describe("checkCompiledFreshness", () => {
 		await touch(join(workspace, "out", "thing.js"), -60_000)
 		await touch(join(workspace, "thing.ts"), 0)
 
-		const freshness = checkCompiledFreshness(root)
+		const freshness = await checkCompiledFreshness(root)
 
 		expect(freshness.fresh).toBe(false)
 		expect(freshness.reason).toContain("yarn compile")
 		// It must say WHY this matters, not merely that it is stale: the gauntlet would report a verdict, not an error.
 		expect(freshness.reason).toContain("grade code you have replaced")
-		expect(() => assertCompiledFresh(root)).toThrow(/yarn compile/)
+		await expect(assertCompiledFresh(root)).rejects.toThrow(/yarn compile/)
 	})
 
 	it("distinguishes never-compiled from stale", async () => {
@@ -62,7 +62,7 @@ describe("checkCompiledFreshness", () => {
 
 		await writeLocalTextFile("export const x = 1\n", join(workspace, "thing.ts"))
 
-		expect(checkCompiledFreshness(root).reason).toContain("No compiled output found")
+		expect((await checkCompiledFreshness(root)).reason).toContain("No compiled output found")
 	})
 
 	it("ignores emitted .d.ts on the source side, so a compile is not an edit", async () => {
@@ -77,7 +77,7 @@ describe("checkCompiledFreshness", () => {
 		await touch(join(workspace, "out", "thing.js"), 0)
 		await touch(join(workspace, "out", "thing.d.ts"), 30_000)
 
-		expect(checkCompiledFreshness(root).fresh).toBe(true)
+		expect((await checkCompiledFreshness(root)).fresh).toBe(true)
 	})
 
 	it.each(["thing.test.ts", "thing.test.tsx"])("ignores non-emitting colocated test source %s", async (testName) => {
@@ -92,7 +92,7 @@ describe("checkCompiledFreshness", () => {
 		await touch(compiled, 0)
 		await touch(join(workspace, testName), 30_000)
 
-		const freshness = checkCompiledFreshness(root)
+		const freshness = await checkCompiledFreshness(root)
 
 		expect(freshness.fresh).toBe(true)
 		expect(freshness.newestSource?.path).toBe(source)
@@ -112,7 +112,7 @@ describe("checkCompiledFreshness", () => {
 		await touch(compiled, 0)
 		await touch(testHelper, 30_000)
 
-		const freshness = checkCompiledFreshness(root)
+		const freshness = await checkCompiledFreshness(root)
 
 		expect(freshness.fresh).toBe(true)
 		expect(freshness.newestSource?.path).toBe(source)
@@ -131,7 +131,7 @@ describe("checkCompiledFreshness", () => {
 			await touch(compiled, -60_000)
 			await touch(source, 0)
 
-			const freshness = checkCompiledFreshness(root)
+			const freshness = await checkCompiledFreshness(root)
 
 			expect(freshness.fresh).toBe(false)
 			expect(freshness.newestSource?.path).toBe(source)

@@ -16,7 +16,7 @@
  *   drifts.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	type ConceptID,
 	ConceptKind,

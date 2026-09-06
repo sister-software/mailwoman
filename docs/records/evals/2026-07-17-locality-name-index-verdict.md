@@ -50,13 +50,13 @@ prior cannot outvote a distribution it is added to uniformly.
 
 1. **Membership is identical across the boundary.** The target `…Chevaleret **Paris**` and the
    false-positive `15 Rue de **Paris**` carry the _same terminal token_ with the _same atlas hit_.
-   Any atlas-membership gate — a shipped lexicon or a runtime candidate probe — fires identically on
+   Any atlas-membership check — a shipped lexicon or a runtime candidate probe — fires identically on
    both. The only separator is grammatical attachment (does the place-word stand alone after a complete
    street, or complete a `Rue de …` name?), which membership cannot see and the model already encodes
-   weakly in exactly the overlapping gaps above. An atlas-gated flat bias throws that signal away and
+   weakly in exactly the overlapping gaps above. An atlas-conditional flat bias throws that signal away and
    replaces it with a constant.
 
-2. **The gate reads pieces, not surfaces.** The en-us SentencePiece tokenizer fragments the FR city
+2. **The check reads pieces, not surfaces.** The en-us SentencePiece tokenizer fragments the FR city
    names this defect targets: `Marseille→"e"`, `Nantes→"es"`, `Grenoble→"ble"`, `Strasbourg→"bourg"`,
    `Turin→"in"`. The terminal _piece_ the prior would key on is a subword, not the locality surface, so
    a piece-level lexicon lookup never fires on half the target class (count at the unit the model reads).

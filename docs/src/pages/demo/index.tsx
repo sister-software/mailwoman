@@ -11,7 +11,7 @@
  *
  *   The docs-only chrome (about box, permalink, result panel, geo-bias row, calibration + dev-mode
  *   toggles, model-visualizer drawer, version-compare) is injected through the package's `DemoPanels`
- *   seam — see the `_controls` / `_devDrawer` / `_mapControls` / `_compare` modules in this folder.
+ *   injection point — see the `_controls` / `_devDrawer` / `_mapControls` / `_compare` modules in this folder.
  *
  *   `/debug` (`../debug.tsx`) reuses this body via {@link DemoPageInner} with `debugDefault`, which opens
  *   the model-visualizer drawer by default.
@@ -19,6 +19,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/styles.css"
+import "#shared/maplibre-worker"
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
 import { GeocoderDemo } from "@mailwoman/react/map"
@@ -34,6 +35,7 @@ import { ResultPanel as DocsResultPanel } from "#components/ResultPanel/ResultPa
 import { useSiteConfig } from "#hooks/site"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "#shared/demo-helpers"
 import type { DemoResult } from "#shared/resources"
+import { sqljsBaseURL } from "#shared/resources"
 
 import { DemoCompare } from "./_compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./_controls.tsx"
@@ -64,10 +66,9 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 	debugDefault = false,
 }) => {
 	const { baseURL } = useSiteConfig()
-	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
 
 	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = useDemoMapRuntime({
-		sqljsBaseURL,
+		sqljsBaseURL: sqljsBaseURL(baseURL),
 		baseURL,
 		initialCenter,
 	})

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { inwardCode, isUkPostcode, normalizeUkPostcode, outwardCode, postcodeArea } from "@mailwoman/codex/gb/postcode"
+import { inwardCode, isUkPostcode, normalizeUkPostcode, outwardCode, postcodeArea } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeUkPostcode", () => {

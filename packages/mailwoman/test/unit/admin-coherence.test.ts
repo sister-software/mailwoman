@@ -10,7 +10,7 @@
 
 import { assessAdminCoherence, type AdminCoherenceWinner } from "mailwoman/admin-coherence"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import type { GeocodeResult } from "mailwoman/geocode-result"
+import type { GeocodeResult } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -210,6 +210,7 @@ describe("toGauntletResult threading (additive optional field)", () => {
 		lat: 29.7,
 		lon: -96.78,
 		resolution_tier: "admin",
+		epistemic_status: "observed",
 		uncertainty_m: null,
 		locality: "Weimar",
 		region: "Thüringen",

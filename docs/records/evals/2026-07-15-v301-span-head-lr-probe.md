@@ -1,10 +1,10 @@
 ---
-title: v3.0.1 span-head re-probe — GATE PASS, the arc's premise holds
+title: v3.0.1 span-head re-probe — CHECK PASS, the arc's premise holds
 ---
 
 # v3.0.1-span-head-lr — the trained span scorer beats the token decode
 
-**Gate (config-canonical, quoted verbatim from `v3.0.1-span-head-lr.yaml`):**
+**Check (config-canonical, quoted verbatim from `v3.0.1-span-head-lr.yaml`):**
 
 > `seg@1 > token@1` on the parity corpus, via `scripts/eval_seg_at_1.py`.
 > v3.0.0 read seg@1 0.004 vs token@1 0.348 (CHANNEL-STARVED numbers).
@@ -66,9 +66,9 @@ in Phase 2; not claimed as a shipped win here.
 
 - **These absolutes are channel-starved.** `eval_seg_at_1.py` feeds no anchor/gazetteer/country
   channels, no postcodeRepair, no word-consistency heal (the #718 trap). Its token@1 reads 0.4906
-  where the JS harness reads **0.573 on v264**. Do not compare across harnesses. The gate is valid
+  where the JS harness reads **0.573 on v264**. Do not compare across harnesses. The check is valid
   because it is a _relative_ comparison — both heads read the same starved encoder state.
-- **The 0.90 parity floor is untouched by this.** Phase 1 was never a promote gate; this checkpoint
+- **The 0.90 parity floor is untouched by this.** Phase 1 was never a promote check; this checkpoint
   ships nowhere. Whether seg@1 clears 0.90 under production config is a Phase-2 question, and the
   night-3 oracle@10 ceiling (0.749 over v264's emissions) says the floor needs the recall class too,
   not just the boundary class.
@@ -87,7 +87,7 @@ in Phase 2; not claimed as a shipped win here.
 
 ## Next
 
-Phase 2 (ONNX export of the span scores + the #378 SLO check) is now justified — it was gated on
+Phase 2 (ONNX export of the span scores + the #378 SLO check) is now justified — it was blocked on
 exactly this crossing. Then Phase 3 (JS k-best) and Phase 4 (resolver rerank + option C).
 
 The one thing worth deciding first: an **8k run at this LR** would tell us whether seg@1 keeps

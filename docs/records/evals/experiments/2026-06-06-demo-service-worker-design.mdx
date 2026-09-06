@@ -159,7 +159,7 @@ them are visible to `tsc` or a single-page render:
 5. **Signed-URL expiry** — the cached path must never re-hit the expiring CDN URL (covered by #2, but worth an
    explicit assertion that the SW served the body without a redirect).
 
-Playwright drives all five with a real Chromium + service-worker support; that's the gate this feature needs,
+Playwright drives all five with a real Chromium + service-worker support; that's the check this feature needs,
 and it's a session's worth of careful work, not an end-of-shift add-on.
 
 ## Recommendation

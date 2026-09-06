@@ -1,0 +1,90 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Order-preserving tuple projection.
+ *
+ *   Emits `Array<[tag, value]>` in source order (sorted by `start`). Preserves repeated tags (e.g.
+ *   two `locality` entries for "Springfield, IL — sent from Springfield, MA"). Hierarchy is lost —
+ *   use `decodeAsXML` when containment matters.
+ */
+
+import type { AddressNode, AddressTree } from "#decoder/types"
+import { unknownSpans } from "#decoder/unknown-spans"
+import type { ComponentTag } from "#types/component"
+
+/**
+ * Options for {@link decodeAsTuples}.
+ */
+export interface SerializeTuplesOpts {
+	/**
+	 * Interleave `["unknown", value]` tuples for the all-O spans the model left unclassified (#493), in source order.
+	 * Default false — keeps the existing tag-only shape unless the caller asks for the gaps.
+	 */
+	includeUnknown?: boolean
+}
+
+/**
+ * Recursively flattens an `AddressNode` tree into a source-ordered list of nodes.
+ *
+ * @param node The root node to flatten.
+ * @param out The output array to which flattened nodes will be appended.
+ */
+export function flatten(node: AddressNode, out: AddressNode[]): void {
+	out.push(node)
+
+	for (const child of node.children) {
+		flatten(child, out)
+	}
+}
+
+/**
+ * Project an `AddressTree` to a source-ordered list of (tag, value) pairs.
+ */
+export function decodeAsTuples(tree: AddressTree): Array<[ComponentTag, string]>
+export function decodeAsTuples(tree: AddressTree, opts: SerializeTuplesOpts): Array<[ComponentTag | "unknown", string]>
+
+export function decodeAsTuples(
+	tree: AddressTree,
+	opts: SerializeTuplesOpts = {}
+): Array<[ComponentTag | "unknown", string]> {
+	const all: AddressNode[] = []
+
+	for (const root of tree.roots) {
+		flatten(root, all)
+	}
+
+	const entries: Array<{ start: number; tuple: [ComponentTag | "unknown", string] }> = all.map((n) => ({
+		start: n.start,
+		tuple: [n.tag, n.value],
+	}))
+
+	if (opts.includeUnknown) {
+		for (const u of unknownSpans(tree)) {
+			entries.push({ start: u.start, tuple: ["unknown", u.value] })
+		}
+	}
+
+	entries.sort((a, b) => a.start - b.start)
+
+	return entries.map((e) => e.tuple)
+}
+
+/**
+ * The tuple projection grouped by tag, in tuple order.
+ */
+export function groupTuplesByTag(tree: AddressTree): Map<string, string[]> {
+	const byTag = new Map<string, string[]>()
+
+	for (const [tag, value] of decodeAsTuples(tree)) {
+		const values = byTag.get(tag)
+
+		if (values) {
+			values.push(value)
+		} else {
+			byTag.set(tag, [value])
+		}
+	}
+
+	return byTag
+}

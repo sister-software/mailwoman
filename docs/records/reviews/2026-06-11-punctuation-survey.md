@@ -410,7 +410,7 @@ before parsing for the same reason.
 M2 + M3 are one build (the Stage 2.7 proposer with three cue families: designators, paired
 delimiters, numeric punctuation) and need no retrain. M4's lookup folds are partially
 inference-side. M1 rides the next scheduled retrain with char-offset labels. M5 is an
-independent wof-build lever. Nothing in the survey contradicts the Stage 2.7 direction; the
+independent wof-build change. Nothing in the survey contradicts the Stage 2.7 direction; the
 survey's strongest external validation is that the two systems closest to our architecture
 (Pelias for parse-side, Nominatim for index-side) each independently converged on "record
 punctuation, defer the decision, generate variants" — and the one system that reduced

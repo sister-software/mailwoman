@@ -11,7 +11,7 @@
  *
  *   That literal held only while the dev linker materialized binaries into that package. The moment they
  *   live anywhere else — a data-root overlay, the user weights cache, a consumer's node_modules — the path
- *   misses, `existsSync` is false, the whole block is skipped, and the gate grades a model it never
+ *   misses, `existsSync` is false, the whole block is skipped, and the check grades a model it never
  *   verified. The classifier below it resolves properly and loads the model regardless, so nothing errors
  *   and nothing is reported: a silent ungating, which is #1024's own failure mode reproduced by the fix's
  *   own path literal.
@@ -22,10 +22,10 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-const HARNESS = String(repoRootPath("packages", "mailwoman", "eval-harness", "gauntlet", "harness.ts"))
+const HARNESS = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "harness.ts"))
 
 describe("the #1024 shipped-model guard", () => {
 	it("derives the graded model from the resolver, never from a package path literal", async () => {

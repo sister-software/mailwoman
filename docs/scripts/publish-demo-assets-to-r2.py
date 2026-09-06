@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""
+@copyright Sister Software
+@license AGPL-3.0
+@author Teffen Ellis, et al.
+
+Publish the public demo assets to the Cloudflare R2 bucket the demo serves from
+(mailwoman-public → https://public.mailwoman.ai/mailwoman/...). This codifies the
+hosting migration so a model release isn't a one-off manual rclone.
+
+The demo reads EVERYTHING from R2 at runtime (model, tokenizer, fst, postcode-*.bin,
+wof-hot.db, wof-polygons.db, releases.json) plus the same-origin sql.js-httpvfs
+worker that lives in the Pages deploy. This pushes the R2 half.
+
+Two R2 gotchas this handles (learned the hard way — see memory
+project-sqlite-over-http-spike):
+  - rclone's `copy` 501s on a post-PUT op against R2 (needs --s3-no-head
+    --s3-disable-checksum --no-update-modtime) AND its --header-upload silently
+    drops Cache-Control. boto3 `upload_file` with ExtraArgs sets Content-Type +
+    Cache-Control on the multipart create itself — one clean step, no 501.
+  - sql.js-httpvfs range-reads the DBs cross-origin, so the objects MUST carry a
+    sane Content-Type (octet-stream, NOT gzipped by Cloudflare) and a long
+    immutable Cache-Control so Cloudflare edge-caches the byte ranges.
+
+Credentials come from the RCLONE_S3_PUBLIC_* env vars (repo .env): source them
+first, e.g.  `set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py ...`
+
+Usage:
+  publish-demo-assets-to-r2.py --src <staged-dir> [--bucket mailwoman-public] [--prefix mailwoman] [--dry-run]
+
+  <staged-dir> mirrors the R2 layout under the prefix, e.g.
+    <src>/en-us/v4.0.0/{model.onnx,tokenizer.model,model-card.json,fst-en-US.bin,postcode-*.bin,wof-hot.db,wof-polygons.db}
+    <src>/en-us/releases.json
+    <src>/pair-index/2026-08-05/pair-index-{gb,nz}.bin
+  (The sql.js-httpvfs worker is staged into the Pages deploy by the demo-assets
+   plugin, NOT here — it must be same-origin.)
+
+THIS SCRIPT IS THE ONLY PRODUCER of the demo's R2 objects, including the
+placetype-pair indexes. Nothing assembles the pair-index staging dir for you:
+`mailwoman release hf --pair-indexes` uploads them to HUGGING FACE (flat under
+the version dir), and the docs demo-assets plugin copies them into the PAGES
+deploy for dev preview. The bucket copies the demo actually reads have always
+been hand-staged into a `--src` tree and pushed through here.
+"""
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+try:
+    import boto3
+    from botocore.config import Config
+except ImportError:
+    sys.exit("boto3 is required: pip install boto3")
+
+# Versioned assets live under en-us/<version>/ and never change → immutable, long-lived
+# (Cloudflare edge-caches the byte ranges sql.js-httpvfs reads).
+CACHE_CONTROL = "public, max-age=604800, immutable"
+# EXCEPTION: releases.json is the MUTABLE version pointer the demo reads to pick
+# defaultVersion. It must NOT be immutable — otherwise a `defaultVersion` flip never
+# reaches returning visitors (they stay pinned to the old version's assets for up to a
+# week, which on mobile Safari surfaces as a stale/torn cached DB → "database disk image
+# is malformed"). Short max-age + must-revalidate so flips propagate within ~a minute.
+MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
+# Basenames served with MUTABLE_CACHE_CONTROL instead of the immutable default.
+MUTABLE_FILES = {"releases.json"}
+# Top-level dirs whose objects MUST sit under a generation segment
+# (`<dir>/<generation>/<file>`), never directly at the dir root.
+#
+# `pair-index` earned this the hard way: the binaries were uploaded flat at
+# `mailwoman/pair-index/pair-index-<cc>.bin` and then OVERWRITTEN IN PLACE for the
+# PIX schema-3 rebuilt (2026-08-04). CACHE_CONTROL says immutable, so Cloudflare
+# kept serving the schema-1 bytes — which the site's reader rejects outright
+# (`schemaVersion 1 predates the typed parent record`) — until a manual purge.
+# The demo reads `pair-index/<generation>/` (docs/src/shared/resources.tsx →
+# PAIR_INDEX_VERSION); bump that constant in the same commit you stage a new one.
+#
+# The other model-independent artifacts (gazetteer/, poi/, street/) already carry
+# a dated segment by convention and are not listed — add one here only after it
+# has a version constant on the demo side to match.
+VERSIONED_DIRS = {"pair-index"}
+# Content-Type by extension. The DBs/model/binaries MUST be octet-stream so Cloudflare
+# doesn't gzip them (gzipped ranges break sql.js-httpvfs).
+CONTENT_TYPE = {
+    ".db": "application/octet-stream",
+    ".onnx": "application/octet-stream",
+    ".bin": "application/octet-stream",
+    ".model": "application/octet-stream",
+    ".json": "application/json",
+    ".js": "text/javascript",
+    ".wasm": "application/wasm",
+}
+
+
+def env(name: str) -> str:
+    v = os.environ.get(name)
+    if not v:
+        sys.exit(f"missing env var {name} (source the repo .env first)")
+    return v
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--src", required=True, help="staged asset dir mirroring the R2 layout under the prefix")
+    ap.add_argument("--bucket", default="mailwoman-public")
+    ap.add_argument("--prefix", default="mailwoman")
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+
+    src = Path(args.src)
+    if not src.is_dir():
+        sys.exit(f"--src is not a directory: {src}")
+
+    files = sorted(p for p in src.rglob("*") if p.is_file())
+    if not files:
+        sys.exit(f"no files under {src}")
+
+    # Layout guard BEFORE the credential read, so a mis-staged tree fails the same
+    # way with or without the .env sourced (and under --dry-run).
+    unversioned = [
+        r
+        for r in (p.relative_to(src).as_posix() for p in files)
+        if r.split("/")[0] in VERSIONED_DIRS and r.count("/") < 2
+    ]
+    if unversioned:
+        sys.exit(
+            "refusing to publish un-versioned objects under an immutable Cache-Control:\n  "
+            + "\n  ".join(unversioned)
+            + "\n\nThese dirs need a generation segment — `<dir>/<generation>/<file>`, e.g.\n"
+            "  pair-index/2026-08-05/pair-index-gb.bin\n"
+            "Overwriting a flat key leaves the CDN serving the old bytes for a week.\n"
+            "Bump PAIR_INDEX_VERSION in docs/src/shared/resources.tsx to match."
+        )
+
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=env("RCLONE_S3_PUBLIC_ENDPOINT"),
+        aws_access_key_id=env("RCLONE_S3_PUBLIC_ACCESS_KEY_ID"),
+        aws_secret_access_key=env("RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY"),
+        region_name=os.environ.get("RCLONE_S3_PUBLIC_REGION", "auto"),
+        config=Config(signature_version="s3v4"),
+    )
+
+    total = 0
+    for p in files:
+        rel = p.relative_to(src).as_posix()
+        key = f"{args.prefix}/{rel}"
+        ct = CONTENT_TYPE.get(p.suffix.lower(), "application/octet-stream")
+        cc = MUTABLE_CACHE_CONTROL if p.name in MUTABLE_FILES else CACHE_CONTROL
+        size_mb = p.stat().st_size / 1024 / 1024
+        total += p.stat().st_size
+        if args.dry_run:
+            print(f"  [dry-run] {key}  ({ct}, {cc}, {size_mb:.1f} MB)")
+            continue
+        s3.upload_file(
+            str(p),
+            args.bucket,
+            key,
+            ExtraArgs={"ContentType": ct, "CacheControl": cc},
+        )
+        print(f"  ✓ {key}  ({ct}, {cc}, {size_mb:.1f} MB)")
+
+    print(f"\n{'(dry-run) ' if args.dry_run else ''}{len(files)} objects, {total / 1024 / 1024:.1f} MB → {args.bucket}/{args.prefix}/")
+    print("Served at https://public.mailwoman.ai/{}/...".format(args.prefix))
+
+
+if __name__ == "__main__":
+    main()

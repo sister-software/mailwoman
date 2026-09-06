@@ -1,10 +1,11 @@
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 // A minimal geocoding server for the example Dockerfile: node:http, no framework, three routes.
 //
 // The classifier, the gazetteer handle and the resolver are built once at module scope. That is the
 // whole performance story of a container deploy — the model load is the expensive part and it is paid
 // once per process, not once per request.
-import { createServer } from "@mailwoman/platform/http"
+import { createServer } from "node:http"
+
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress } from "mailwoman/geocode-core"

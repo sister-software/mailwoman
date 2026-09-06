@@ -138,13 +138,13 @@ done
 7.3 MB of gzipped CSV. Then build:
 
 ```bash
-node node_modules/@mailwoman/ban/out/scripts/build-address-point-shard.js \
+node node_modules/@mailwoman/ban/out/scripts/build-address-point-extract.js \
   --csv-dir "$MAILWOMAN_DATA_ROOT/ban/sources" --depts 48,2A,05 \
   --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db"
 ```
 
 ```
-[ban] building fr rooftop shard from 3 départements in /tmp/mw-planet/ban/sources
+[ban] building fr rooftop extract from 3 départements in /tmp/mw-planet/ban/sources
 [ban]   dept 05: 81,258 cumulative
 [ban]   dept 2A: 138,573 cumulative
 [ban]   dept 48: 200,406 cumulative
@@ -168,7 +168,7 @@ Two things about that invocation. It is a script inside the installed package, n
 subcommand — there is no `mailwoman ban` group, the fetch is a `curl` against a documented URL pattern,
 and the build is the script above. And the path is a `node_modules` path because `@mailwoman/ban` is on
 npm; if you are working from a checkout instead, the same file is at
-`ban/out/scripts/build-address-point-shard.js` after `yarn compile`.
+`ban/out/scripts/build-address-point-extract.js` after `yarn compile`.
 
 ## 3. Build the same ground from OpenStreetMap
 
@@ -217,13 +217,13 @@ mkdir -p "$MAILWOMAN_DATA_ROOT/osm/geofabrik"
 curl -sL -o "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf" \
   "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
 
-node osm/out/scripts/build-rooftop-shard.js \
+node osm/out/scripts/build-rooftop-extract.js \
   --country fr --slug corse --release 260803 \
   --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
 ```
 
 ```
-[osm] building fr/corse rooftop shard from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
+[osm] building fr/corse rooftop extract from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
 [osm] indexing…
 [osm] DONE /tmp/mw-planet/osm/address-points-fr-corse.db
       total addr:housenumber features : 15,774
@@ -239,14 +239,14 @@ inventing a street, and that count is the input to the fix: rerun with `--recove
 attaches each orphan to the nearest named highway within 30 m.
 
 ```bash
-node osm/out/scripts/build-rooftop-shard.js \
+node osm/out/scripts/build-rooftop-extract.js \
   --country fr --slug corse --release 260803 --recover \
   --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
 ```
 
 ```
 [osm] recovery index: 369,423 highway vertices (radius 30m)
-[osm] building fr/corse rooftop shard from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
+[osm] building fr/corse rooftop extract from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
 [osm] indexing…
 [osm] DONE /tmp/mw-planet/osm/address-points-fr-corse.db
       total addr:housenumber features : 15,774

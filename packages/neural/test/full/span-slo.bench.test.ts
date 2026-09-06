@@ -8,16 +8,16 @@
  *   Reported, not asserted: a wall-clock threshold in CI is a flake generator. The number goes in the
  *   Phase-3 verdict; this file exists so it is reproducible.
  *
- *   Lives in `test/full` rather than `test/unit` because it never runs on the fast leg: it is gated on two staged
+ *   Lives in `test/full` rather than `test/unit` because it never runs on the fast leg: it is conditioned on two staged
  *   weights caches under `$MAILWOMAN_TEMP_ROOT` that no CI checkout carries, so it always skipped there while still
  *   pulling the onnxruntime web graph into the fast leg's shared module graph at collection time.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**

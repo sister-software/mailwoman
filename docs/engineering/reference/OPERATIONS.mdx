@@ -8,12 +8,12 @@
 
 ## Working norms
 
-You are an autonomous agent. Optimize for **legibility to a human checking in once a day**, not for clever one-shot completions.
+You are an autonomous agent. Optimize for **legibility to a human checking in once a day**, not for cchange one-shot completions.
 
 ### Pacing
 
 - Work in small, complete units. A "unit" is anything that ends with a green test suite or a working command.
-- Commit at every unit boundary. Better too many commits than too few.
+- Commit at every unit boundary. Better more commits than too few.
 - Do not start Phase N+1 until Phase N's success criteria checklist is fully green and committed.
 
 ### Decision discipline
@@ -97,7 +97,7 @@ Decisions that affect future code. One entry per decision. Format:
 
 ### `BLOCKERS.md`
 
-Only created if you have a genuine blocker. One entry per blocker.
+Only created if you have a blocker. One entry per blocker.
 
 ```
 ## YYYY-MM-DD — <blocker title>
@@ -156,7 +156,7 @@ Approved dependencies for this project:
 
 - `onnxruntime-node` — ONNX inference
 - `@bloomberg/sentencepiece-wasm` (or equivalent) — SentencePiece tokenization in JS. Verify and pick.
-- `@dsnp/parquetjs` — Parquet read/write in TS
+- `parquet-wasm` + `apache-arrow` — Parquet read/write in TypeScript
 - `osm-pbf-parser-node` (or equivalent) — OSM PBF streaming. Verify and pick.
 - `better-sqlite3` — for WOF SQLite reads
 - `fast-csv` — CSV parsing for government data
@@ -177,7 +177,7 @@ Approved dependencies for this project:
       openaddresses/
       usgov/
     intermediate/      # adapter outputs before alignment
-    aligned/           # post-alignment Parquet shards
+    aligned/           # post-alignment Parquet extracts
     versioned/         # frozen corpus versions, e.g. corpus-v0.1.0/
   models/
     checkpoints/       # PyTorch training checkpoints

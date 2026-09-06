@@ -40,7 +40,14 @@ import { SubwordExplorer } from "#components/SubwordExplorer/SubwordExplorer"
 import { TimingPanel } from "#components/TimingPanel/TimingPanel"
 import { TreeView } from "#components/TreeView/TreeView"
 import { useDemoEmbed } from "#contexts/DemoEmbed"
-import { DEFAULT_ADDRESS, resolveDualRoles, runCascade, runClassifyStage } from "#shared/demo-helpers"
+import {
+	DEFAULT_ADDRESS,
+	parseStageLabelsFor,
+	projectCascadeHits,
+	resolveDualRoles,
+	runCascade,
+	runClassifyStage,
+} from "#shared/demo-helpers"
 
 import styles from "./styles.module.css"
 
@@ -78,9 +85,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 	} = ctx
 
 	const runtime = useMemo<PipelineRuntime>(() => {
-		const parseStageLabels = lookup
-			? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
-			: ["Analyzing input shape…", "Running neural classifier…"]
+		const parseStageLabels = parseStageLabelsFor(lookup != null)
 
 		return {
 			ready,
@@ -92,7 +97,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 			async runParse(input, { onStage }): Promise<ParseResult> {
 				if (!classifier) throw new Error("classifier not ready")
 
-				// Shared classify front-half (#861 / #1278 seam) — identical to the `/demo` map path, minus the
+				// Shared classify front-half (#861 / #1278 boundary) — identical to the `/demo` map path, minus the
 				// map-only street tier / bias. `onStage(1)` fires between shape and classify, as before.
 				const { tree, nodes, kindResult, timing } = await runClassifyStage(
 					input,
@@ -120,14 +125,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 				const cascadeHits = await runCascade(lookup, tree, input)
 				const tResolve = performance.now()
 
-				const candidates: ResolvedPlaceView[] = cascadeHits.map((c) => ({
-					id: c.id,
-					name: c.name,
-					placetype: c.placetype,
-					lat: c.lat,
-					lon: c.lon,
-					score: c.score,
-				}))
+				const candidates: ResolvedPlaceView[] = projectCascadeHits(cascadeHits)
 
 				// Dual-role (#402), shared with the `/demo` map path.
 				const dualRoles = await resolveDualRoles(lookup, candidates[0])

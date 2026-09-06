@@ -25,9 +25,9 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
   400-row held-out BAN population: no decode geometry separates a trailing city from a person-name
   street surname (`Avenue Marceau Julien` ≡ `Rue des Lyonnais Paris`). Same open-vocab wall as
   #1287/#1288. The real fix is training (**#1102**). Do not attempt another decode mechanism for it.
-- **Shipped, merged, all on unchanged model bytes v385:** #1315 street-context gate (inert-by-default),
+- **Shipped, merged, all on unchanged model bytes v385:** #1315 street-context check (inert-by-default),
   #1317 trailing-locality prior (**opt-in only** — imported by `classifier.ts`, never the runtime
-  pipeline), #1318 per-locale FST distribution (**default-on**, gate wired at both classify sites with
+  pipeline), #1318 per-locale FST distribution (**default-on**, check wired at both classify sites with
   the morphology EMISSION prior zeroed).
 - **768k importance FST reship: REJECTED** by the fragment board (homonym −13 to −28 + an
   "Avenue Montaigne"→`locality:"Avenue"` hazard). The 220k FST stays shipped. Staged-but-unshipped at
@@ -88,7 +88,7 @@ is your reference implementation** — copy-weights.ts must materialize from the
 unlink-then-copy instead of symlink. (Confirmed: `copy-weights.ts` has zero `fst` references today;
 `link-dev-weights.ts` handles all three locales.) Blobs are the 2026-05-28 220k-importance per-locale
 build (en-us 22MB / fr-fr 10.7MB / en-gb 3.9MB); en-nz has none → byte-stable. This is the one item
-that can cause an outage; land it before any release is cut.
+that can cause an outage; land it before any release is published.
 
 ### 2. Make the #1318 default-on retirement obligation DURABLE (don't leave it in the ledger)
 
@@ -100,7 +100,7 @@ promotion expected to flip the sign). Right now that obligation lives only in `p
 **Task:** file a GitHub issue "Re-run the #1318 FST default-on battery at the next model promotion —
 retire or renew the homonym bar revision", linking the ledger entry and the exact battery
 (pre-registration #6). If the homonym flips positive as predicted, the revision retires; if it doesn't,
-we've shipped a durable regression and must decide whether to gate the prior harder or revert
+we've shipped a durable regression and must decide whether to check the prior harder or revert
 default-on. This is a standing obligation, not optional.
 
 ### 3. ~~Formalize the #1143 waive~~ — ✅ DONE (Claude, 2026-07-26)
@@ -112,16 +112,16 @@ training, no decode patch.** GitHub **#1143 CLOSED as not-planned**
 and **#1102 cross-linked** to carry the residual bare-street class + the `ban-fragments-fr` board as a
 training target. The fixture already existed; nothing was authored.
 
-**Only residual for the executor:** update `MAILWOMAN_ROAD_TO_V8.md` line ~209 (Track-F gate) to mark
+**Only residual for the executor:** update `MAILWOMAN_ROAD_TO_V8.md` line ~209 (Track-F check) to mark
 #1143's "waived with named owner + board" condition SATISFIED — this folds into Task 4. §3-F is already
-re-anchored (0.215 marked stale). The 37-row token-grab class is the gate's (live via #1318); the
+re-anchored (0.215 marked stale). The 37-row token-grab class is the check's (live via #1318); the
 51-row whole-span class is training's (#1102).
 
 ### 4. Reconcile the docs to the resolved state
 
 **Task (explicit — do exactly these edits to `MAILWOMAN_ROAD_TO_V8.md`, nothing open-ended):**
 
-- Mark **#1315 street-context gate**, **#1317 trailing-locality prior (opt-in)**, and **#1318 per-locale
+- Mark **#1315 street-context check**, **#1317 trailing-locality prior (opt-in)**, and **#1318 per-locale
   FST distribution (default-on)** as COMPLETE.
 - Remove/close any "future" or "open" entry that frames **decode-time gazetteer** or **comma-free
   trailing-locality** as a pending BUILD — it is a settled decode dead-end (training-side via #1102).
@@ -135,8 +135,8 @@ re-anchored (0.215 marked stale). The 37-row token-grab class is the gate's (liv
 
 ## Parked on the OPERATOR (awareness only — not yours to decide or force)
 
-- v8 cut go-aheads: Track A breaking-batch green-light, Track B overlay re-cut, demo repoint (strictly
-  post-cut). Surface them if relevant; don't action them.
+- v8 reduce go-aheads: Track A breaking-batch green-light, Track B overlay rebuilt, demo repoint (strictly
+  post-reduce). Surface them if relevant; don't action them.
 - Trailing-locality W1 cell re-verify **if the model changes** (future, tied to a promotion).
 
 ## Pointers
@@ -144,4 +144,4 @@ re-anchored (0.215 marked stale). The 37-row token-grab class is the gate's (liv
 - `docs/superpowers/plans/2026-07-25-SESSION-REPORT-fst-arcs.md` — the predecessor's report (start here).
 - `.superpowers/sdd/progress.md` — the dated ledger (pre-registrations, batteries, the bar revision at line 274).
 - `scripts/copy-weights.ts`, `mailwoman/release-tools/publish-hf.ts`, `.claude/skills/mailwoman-release/` — the release-staging files for task 1.
-- `neural/fst-prior.ts` (gate + emission prior), `neural/trailing-locality-prior.ts` (opt-in), `core/pipeline/runtime-pipeline.ts` (default-on wiring, emission zeroed) — the mechanism files.
+- `neural/fst-prior.ts` (check + emission prior), `neural/trailing-locality-prior.ts` (opt-in), `core/pipeline/runtime-pipeline.ts` (default-on wiring, emission zeroed) — the mechanism files.

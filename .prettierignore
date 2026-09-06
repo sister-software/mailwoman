@@ -75,7 +75,7 @@ docs/src/components/ModelVisualizer/fixtures/*.trace.json
 ## of truth; a formatter pass would be undone by the next regeneration.
 data/eval/golden/*/REVIEW-DECK.md
 
-## Generated SBOM artifacts (scripts/generate-sbom.ts) — SPDX 2.3 + CycloneDX 1.5 output regenerated
+## Generated SBOM artifacts (`mwops release sbom`) — SPDX 2.3 + CycloneDX 1.5 output regenerated
 ## per release; the generator's serialization is the source of truth, not oxfmt's.
 docs/static/sbom/*.json
 # Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
@@ -93,9 +93,3 @@ packages/filer/test-fixtures/cores/*.html
 
 ## Vendored FCC Form 499 workbook sample (binary XLSX).
 packages/filer/test-fixtures/form499/*.xlsx
-
-## Codemod fixtures
-## A codemod's `input.*`/`expected.*` pair is asserted byte-for-byte against the transform's own output. Formatting
-## either half rewrites the assertion rather than the code — oxfmt wrapping a long import in an `expected.ts` failed
-## two fixtures whose transform had not changed at all.
-codemods/*/tests/**

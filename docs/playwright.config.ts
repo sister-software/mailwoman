@@ -72,7 +72,7 @@ export default defineConfig({
 	},
 
 	projects: [
-		// Build-health gate: asserts `docusaurus build` succeeds with no warnings/errors. Builds into a
+		// Build-health check: asserts `docusaurus build` succeeds with no warnings/errors. Builds into a
 		// throwaway dir (independent of the webServer-built `build/` the browser specs are served from).
 		// Listed first so, with workers:1, it runs before the browser specs and a broken build fails
 		// fast. Skipped in remote mode (there's no local build to check).

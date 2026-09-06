@@ -71,7 +71,7 @@ Mannheim, Germany uses a grid system: `R 5, 6-13, D-68161 Mannheim` — block R,
 
 The staged pipeline addresses the falsehoods in layers:
 
-**Locale gate (Stage 2)** detects the language/script family before classification. A French address triggers French ordering expectations (postcode before locality, street type before street name). A Japanese address skips street classification entirely and routes to block-based component tags. The classifier does not need to handle every locale's ordering — it only needs to handle the locale the gate has detected.
+**Locale check (Stage 2)** detects the language/script family before classification. A French address triggers French ordering expectations (postcode before locality, street type before street name). A Japanese address skips street classification entirely and routes to block-based component tags. The classifier does not need to handle every locale's ordering — it only needs to handle the locale the check has detected.
 
 **Phrase grouper (Stage 2.7)** proposes spans based on structural cues, not dictionaries. `Gondel 2695` would be proposed as a single span (no whitespace, no punctuation boundary) — the grouper does not need to know that "26" and "95" have different semantic roles. The classifier then types the span, and the Joint Decoder (Stage 5) can split it if needed.
 

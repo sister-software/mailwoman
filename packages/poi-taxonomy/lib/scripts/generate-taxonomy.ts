@@ -1,0 +1,225 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Generator for `data/taxonomy.json` — merges the FULL Overture Places category taxonomy snapshot
+ *   with mailwoman's hand-maintained curated overlay. Two committed inputs, one committed output;
+ *   the merge is a PURE, deterministic function so a regenerate against the same inputs is
+ *   byte-identical (the {@link buildTaxonomyTable} → {@link prettyJSON} pair is what the
+ *   determinism test in `lookup.test.ts` exercises).
+ *
+ *   ── Provenance (the `overture-categories.csv` snapshot) ──────────────────────────────────────────
+ *   Source : https://raw.githubusercontent.com/OvertureMaps/schema/main/docs/schema/concepts/by-theme/places/overture_categories.csv
+ *   Schema : OvertureMaps/schema v1.17.0 (latest release 2026-05-19); CSV last-modified commit
+ *            ac891b7f22486a6c96c1f6232461e7193263b184
+ *   Fetched: 2026-07-20 (row count 2117 category rows, excluding the header)
+ *   Format : semicolon-delimited, BOM-prefixed — `<category code>; [<hierarchy,path,leaf>]`, where the
+ *            path's LAST element is always the code itself (asserted at parse time).
+ *   The old Overture `categories` PROPERTY on the Places feature is retired in Overture's Sept 2026
+ *   release; this snapshot is the NEW `taxonomy` property's category vocabulary, pinned as committed
+ *   data so the runtime never reaches the network. See `data/PROVENANCE.md`.
+ *
+ *   ── Merge rules ─────────────────────────────────────────────────────────────────────────────────
+ *   • Curated records (the 26 in `curated-overlay.json`) are preserved verbatim and WIN id collisions
+ *     with the snapshot (a curated `bank`/`school`/`cafe` keeps its curated hierarchy, `osmTag`, and
+ *     `overtureCategories` — the snapshot's same-id row is dropped).
+ *   • Overture leaves a curated record already ABSORBS via its `overtureCategories` (e.g. `coffee_shop`
+ *     → `cafe`, `grocery_store` → `supermarket`, `hiking_trail` → `trail`) are NOT emitted as
+ *     standalone snapshot records. Those leaves belong to their curated canonical id — emitting them
+ *     twice would let a snapshot id-phrase (`coffee shop`) shadow the curated synonym (`coffee shop` →
+ *     `cafe`) in the phrase index, which the POI board depends on NOT happening. The db still stores
+ *     the raw leaves; `resolveOvertureCategories` fans the curated id back out to them. Umbrella records may set
+ *     `retainOvertureLeaves` when each mapped leaf remains independently meaningful.
+ *   • Every other snapshot row becomes an identity Overture record (id = code, humanized label,
+ *     hierarchy path retained, `basicLabel: null`, no `osmTag`, no `overtureCategories`).
+ *   • Deterministic order: categories by id, synonyms by (phrase, categoryID) — code-point order, so two
+ *     machines with different ICU builds commit the same bytes.
+ *
+ *   Run: `node poi-taxonomy/scripts/generate-taxonomy.ts && npx oxfmt poi-taxonomy/data/taxonomy.json`
+ *   (reads the committed CSV; the oxfmt pass is the repo law — committed JSON is oxfmt-clean, which raw
+ *   `JSON.stringify` can't reproduce). Pass `--fetch` to refresh the CSV snapshot from the source URL
+ *   above first (records nothing new about provenance automatically — update this header +
+ *   `PROVENANCE.md` by hand when you do). The generator itself is byte-deterministic; oxfmt is too, so
+ *   the committed artifact is reproducible, and the merge's data is content-identical to a fresh run
+ *   (asserted by `lookup.test.ts`).
+ */
+
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { sentenceCaseSnake } from "@mailwoman/core/strings/case"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { resolvePath } from "path-ts"
+import { CSVSpliterator } from "spliterator"
+
+import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "#types"
+
+/**
+ * The Overture schema release the committed `overture-categories.csv` snapshot was taken from.
+ */
+export const OVERTURE_RELEASE = "v1.17.0"
+
+/**
+ * This taxonomy table's own data version — bump when the snapshot vintage or merge semantics change.
+ */
+export const TAXONOMY_VERSION = "0.4.0"
+
+/**
+ * Source URL for `--fetch` and provenance.
+ */
+export const OVERTURE_CATEGORIES_URL =
+	"https://raw.githubusercontent.com/OvertureMaps/schema/main/docs/schema/concepts/by-theme/places/overture_categories.csv"
+
+/**
+ * One parsed Overture snapshot row: a category code plus its top-down hierarchy path (ending with the code).
+ */
+export interface OvertureSnapshotRow {
+	code: string
+	path: string[]
+}
+
+/**
+ * The hand-maintained curated overlay — the shape of `data/curated-overlay.json`.
+ */
+export interface CuratedOverlay {
+	categories: CategoryRecord[]
+	synonyms: SynonymEntry[]
+}
+
+/**
+ * Parse the Overture categories CSV. Strips a leading BOM, skips the header row, and splits each `code; [a,b,c]` line.
+ * A handful of Overture rows (4 as of the v1.17.0 snapshot — `aircraft_repair`, `ev_charging_station`,
+ * `custom_t_shirt_store`, `community_services_non_profits`) carry a display path whose LEAF label differs from the
+ * category code the db actually stores; for those the code is APPENDED as the true leaf so the invariant `lookup.ts`'s
+ * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
+ * structurally broken row (no code / empty path) or a repeated code.
+ */
+export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
+	const rows: OvertureSnapshotRow[] = []
+	const seen = new Set<string>()
+	// The header is row 1; the first emitted record is row 2.
+	let rowNumber = 1
+
+	for (const fields of CSVSpliterator.from<string[]>(csvText.replace(/^\uFEFF/, ""), {
+		mode: "array",
+		columnDelimiter: ";",
+	})) {
+		rowNumber++
+
+		const [rawCode, rawPath, ...rest] = fields
+
+		if (rawCode === undefined || rawPath === undefined || rest.length) {
+			throw new Error(`generate-taxonomy: malformed CSV row ${rowNumber}: ${JSON.stringify(fields.join(";"))}`)
+		}
+
+		const code = rawCode.trim()
+		const pathText = rawPath.trim().replaceAll(/^\[|\]$/g, "")
+		const path = pathText.split(",").map((p) => p.trim())
+
+		if (!code || !path.length || path.some((p) => !p)) {
+			throw new Error(
+				`generate-taxonomy: malformed CSV row ${rowNumber}: code ${JSON.stringify(code)} path ${JSON.stringify(pathText)}`
+			)
+		}
+
+		if (seen.has(code)) throw new Error(`generate-taxonomy: duplicate Overture code ${JSON.stringify(code)}`)
+
+		// Normalize the leaf to the category code — the db stores the code, and `hierarchy.at(-1) === id` must hold.
+		if (path.at(-1) !== code) {
+			path.push(code)
+		}
+
+		seen.add(code)
+		rows.push({ code, path })
+	}
+
+	return rows
+}
+
+/**
+ * Merge the Overture snapshot with the curated overlay into a {@link POITaxonomyTable}. Pure — no I/O — so the
+ * determinism test can serialize it twice and the merge is unit-testable against fixtures. See the module header for
+ * the merge rules.
+ */
+export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: CuratedOverlay): POITaxonomyTable {
+	const curatedIDs = new Set<string>(overlay.categories.map((c) => c.id))
+
+	const absorbedLeaves = new Set<string>(
+		overlay.categories.flatMap((c) => (c.retainOvertureLeaves ? [] : (c.overtureCategories ?? [])))
+	)
+
+	const snapshotRecords: CategoryRecord[] = snapshot
+		.filter((row) => !curatedIDs.has(row.code) && !absorbedLeaves.has(row.code))
+		.map((row) => ({
+			id: row.code as POICategoryID,
+			label: sentenceCaseSnake(row.code),
+			hierarchy: row.path as POICategoryID[],
+			basicLabel: null,
+			source: "overture",
+		}))
+
+	const categories = [...overlay.categories, ...snapshotRecords].toSorted((a, b) => compareByCodePoint(a.id, b.id))
+
+	const synonyms = [...overlay.synonyms].toSorted(
+		(a, b) => compareByCodePoint(a.phrase, b.phrase) || compareByCodePoint(a.categoryID, b.categoryID)
+	)
+
+	return { version: TAXONOMY_VERSION, overtureRelease: OVERTURE_RELEASE, categories, synonyms }
+}
+
+/**
+ * Committed input/output paths, resolved off this module's own directory. This is a DEV generator — run from source
+ * (`node poi-taxonomy/scripts/generate-taxonomy.ts`) and imported from source by the tests — so `import.meta.dirname`
+ * is always `poi-taxonomy/scripts/` and `../data` is the package's data directory. It is never run from `out/`, so the
+ * source-vs-compiled path skew `build-brands.ts` guards against with `repoRootPath` doesn't apply here (and pulling in
+ * `@mailwoman/core` would add an undeclared dependency to this zero-runtime-dep package).
+ */
+export function taxonomyPaths() {
+	const dataDir = resolvePackagePath("@mailwoman/poi-taxonomy", "data")
+
+	return {
+		csv: resolvePath(dataDir, "overture-categories.csv"),
+		overlay: resolvePath(dataDir, "curated-overlay.json"),
+		out: resolvePath(dataDir, "taxonomy.json"),
+	}
+}
+
+/**
+ * Read the committed CSV + overlay, merge, and return the table (no write).
+ */
+export async function generateTaxonomyTable(): Promise<POITaxonomyTable> {
+	const paths = taxonomyPaths()
+	const snapshot = parseOvertureCSV(await readLocalTextFile(paths.csv))
+	const overlay = await readLocalJSONFile<CuratedOverlay>(paths.overlay)
+
+	return buildTaxonomyTable(snapshot, overlay)
+}
+
+async function main(): Promise<void> {
+	const { values } = parseArguments({ options: { fetch: { type: "boolean", default: false } } })
+	const paths = taxonomyPaths()
+
+	if (values.fetch) {
+		// `responseType: "text"` — the snapshot is CSV, written to disk verbatim.
+		const csv = await new APIClient({ displayName: "overture-categories", retry: true })
+			.fetch<string>({ url: OVERTURE_CATEGORIES_URL, responseType: "text" })
+			.then(pluckResponseData)
+
+		await writeLocalFile(csv, paths.csv)
+
+		console.log(`fetched snapshot → ${paths.csv}`)
+	}
+
+	const table = await generateTaxonomyTable()
+
+	await writeLocalJSONFile(table, paths.out)
+
+	console.log(
+		`wrote ${paths.out}: ${table.categories.length} categories (${table.synonyms.length} synonyms), Overture ${table.overtureRelease}`
+	)
+}
+
+runIfScript(import.meta, main)

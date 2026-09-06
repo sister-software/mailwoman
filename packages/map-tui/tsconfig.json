@@ -1,11 +1,17 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"allowSyntheticDefaultImports": true,
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
+	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./test/**/*", "./scripts/**/*"],
-	"references": []
+	"references": [
+		{
+			"path": "../core"
+		}
+	]
 }

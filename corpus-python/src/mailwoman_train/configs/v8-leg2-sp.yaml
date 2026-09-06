@@ -1,10 +1,10 @@
-# === v8-leg2-sp — CJK Leg 2 B (bare SP): the unification bake-off (gates v9's shape, NOT v8). ===
+# === v8-leg2-sp — CJK Leg 2 B (bare SP): the unification bake-off (checks v9's shape, NOT v8). ===
 # Controlled encoder pair on the PRODUCTION latam feed: identical data block (v385's mixture +
 # augmentations + affix relabel, channel painting STRIPPED from both legs), identical geometry
 # (384/4, the Leg-1 substrate), identical schedule — the ONE delta between v8-leg2-charword and
 # v8-leg2-sp is the embedding front-end. From scratch, 8k steps, no channels, no CRF.
 # PRIMARY READ: val token-F1 + per-tag F1 at 8k on the shared val stream (same seed); delta within
-# noise -> v9 may consider single-model unification. No gate — a measurement.
+# noise -> v9 may consider single-model unification. No check — a measurement.
 # Known asymmetries (recorded): the SP leg drops rows > 128 pieces while the char leg caps at 64
 # word units; the Latin char vocab (4,114 entries, min_count 2) was sealed from a 1M-row sample —
 # tail chars fall to UNK.
@@ -42,7 +42,7 @@ data:
     CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture slices. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -71,13 +71,13 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000

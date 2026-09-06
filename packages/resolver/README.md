@@ -2,7 +2,7 @@
 
 Walk a parsed `AddressTree` and decide, for each span, which real place it names — then hand back the tree with coordinates, attribution and ancestry stamped on it.
 
-This is the half of [mailwoman](https://www.npmjs.com/package/mailwoman) that turns _"the model thinks this run of characters is a locality"_ into _"this is Springfield, Illinois, at 39.7973/-89.6455, and here is why."_ It owns the ranking, the coherence passes and the ordering rules; it owns no data. The gazetteer lives behind a `ResolverBackend` you supply.
+This is the half of [mailwoman](https://www.npmjs.com/package/mailwoman) that turns _"the model assigns this run of characters to the locality label"_ into _"this is Springfield, Illinois, at 39.7973/-89.6455, and here is why."_ It owns the ranking, the coherence passes and the ordering rules; it owns no data. The gazetteer lives behind a `ResolverBackend` you supply.
 
 ## Installation
 
@@ -28,7 +28,7 @@ const decorated = await resolver.resolveTree(tree)
 
 `createWOFResolver` takes a `ResolverBackend` — a structural interface, not a class. `@mailwoman/resolver-wof-sqlite` implements it over `node:sqlite`, `@mailwoman/resolver-wof-wasm` over `@sqlite.org/sqlite-wasm` in a browser, and `RemoteResolver` over HTTP. Nothing here imports any of them.
 
-Backends differ in what they can answer, and that is visible rather than silent: `describeCapabilityGaps(backend)` reports which optional methods are missing, so a default-on feature that quietly no-ops on your backend says so instead of looking like a bad result.
+Backends differ in what they can answer, and that is visible rather than silent: `describeCapabilityGaps(backend)` reports which optional methods are missing, so a default-on feature that no-ops without logging on your backend says so instead of looking like a bad result.
 
 ## Absence is a value
 
@@ -42,7 +42,7 @@ Two rules run through this package, and both exist because their opposites shipp
 
 `admin-winner.ts` owns one ordering, and it is the only one whose rungs are not fixed.
 
-`PLACETYPE_SPECIFICITY` ranks placetypes by how much ground they cover, which is the right question for most of them and the wrong one for `postalcode`. A GB unit postcode covers ~15 addresses and is tighter than any locality centroid; a French _code postal_ often spans several communes and is coarser than the one you want. One number cannot be both.
+`PLACETYPE_SPECIFICITY` ranks placetypes by how much ground they cover, which is the right question for most of them and the wrong one for `postalcode`. A GB unit postcode covers ~15 addresses and is tighter than any locality centroid; a French _code postal_ can span several communes and be coarser than the one you want. One number cannot be both.
 
 So the rank of a resolved postcode is computed, from two independent routes:
 
@@ -68,7 +68,7 @@ Ranking a span in isolation gets Portland, Maine to Messina, Italy. These run ov
 
 | Pass                         | Question                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------ |
-| `admin-coherence-passes`     | Do the resolved places actually contain one another?                           |
+| `admin-coherence-passes`     | Do the resolved places contain one another?                                    |
 | `postcode-country-coherence` | Does the postcode's shape agree with the country the rest of the tree implies? |
 | `postcode-shape-coherence`   | Is this span a postcode at all, in any system the query could be in?           |
 | `admin-containment`          | Split candidates by whether they sit inside an established parent.             |

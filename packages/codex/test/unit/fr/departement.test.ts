@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { departementInfo, FR_DEPARTEMENTS } from "@mailwoman/codex/fr/departement"
+import { departementInfo, FR_DEPARTEMENTS } from "@mailwoman/codex/fr"
 import { expect, test } from "vitest"
 
 test("departementInfo: metropolitan code → name + région", () => {

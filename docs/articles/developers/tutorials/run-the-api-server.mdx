@@ -170,6 +170,7 @@ curl -s -X POST http://127.0.0.1:7788/v1/geocode \
 	"lat": 41.837235,
 	"lon": -87.685969,
 	"resolution_tier": "admin",
+	"epistemic_status": "observed",
 	"uncertainty_m": null,
 	"locality": "Chicago",
 	"region": "IL",
@@ -212,13 +213,15 @@ curl -s -X POST http://127.0.0.1:7788/v1/batch \
     "input": "11 W 53rd St, New York, NY 10019",
     "lat": 40.694457,
     "lon": -73.93045,
-    "resolution_tier": "admin"
+    "resolution_tier": "admin",
+    "epistemic_status": "observed"
   },
   {
     "input": "465 Huntington Ave, Boston, MA 02115",
     "lat": 42.317974,
     "lon": -71.088246,
-    "resolution_tier": "admin"
+    "resolution_tier": "admin",
+    "epistemic_status": "observed"
   }
 ]
 ```

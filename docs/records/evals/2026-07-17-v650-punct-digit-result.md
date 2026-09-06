@@ -1,7 +1,7 @@
 # 2026-07-17 — v6.5.0 (v381): the comma-free rooftop fix (#1101) + digit ownership, the first Gauntlet-clean model
 
 v6.5.0 ships `v3.8.1-punct-fix-full` (v381): a fine-tune off v310 (the shipped 6.4.0) with two folded
-changes, both one variable at a time on top of the prior recipe — the no-fragment digit-ownership shard
+changes, both one variable at a time on top of the prior recipe — the no-fragment digit-ownership extract
 and the `augment_punct_drop_prob` delimiter-free augmentation (#1101). Tokenizer (`v0.9.0-multisplice`,
 73,143), every lexicon, the FST, and the architecture are unchanged. It is the first model to pass the
 full Gauntlet clean: shipped 6.4.0 fails it.
@@ -42,16 +42,16 @@ the original xfail list). Regression, metamorphic, and held-out all pass: **VERD
 
 ## Digit ownership
 
-The second change is the `synth-no-fragment` shard at its all-length long-number boost — the corpus lever
+The second change is the `synth-no-fragment` extract at its all-length long-number boost — the corpus change
 that teaches the street/number boundary, so a bare `Nordtømmesvegen 178` reads `house_number 178` rather
 than a postcode. On the Norwegian digit board, `bare-street-hn` moves 0.693 → 0.733 (+4pp), the `bare-pc`
 negative guard holds at 1.000, and the contextful classes hold. The gain is a clean net-positive, not a
 trade — the tokenizer-level alternative (a number-piece vocab splice) cleared more on-board but failed the
-golden gate on five tags, so it was not shipped.
+golden check on five tags, so it was not shipped.
 
-## The gates
+## The checks
 
-- **Golden gate** (`v6.0.0-shipped-baseline`, package-shaped `--weights-cache`, int8 candidate vs int8
+- **Golden check** (`v6.0.0-shipped-baseline`, package-shaped `--weights-cache`, int8 candidate vs int8
   shipped): PASS. Zero tags regress more than 2 pp below shipped; the only >2 pp mover is
   `us.country_homograph_f1` **+2.3**. `fr.house_number` and the postcode tags hold.
 - **Gauntlet**: PASS — the first green run. 6.4.0 fails the same metamorphic comma-drop invariant.

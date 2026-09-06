@@ -5,17 +5,18 @@
  * @file `fetchGeonamesPostal` — and specifically what it does with a country GeoNames does not publish.
  *
  *   That is the behaviour worth a test. GeoNames covers ~80 countries, not all of them, so a caller planning a postcode
- *   shard needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
+ *   slice needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
  *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s and the country the
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
  */
 
+import { createServer, type Server } from "node:http"
+import type { AddressInfo } from "node:net"
+
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
-import { createServer, type Server } from "@mailwoman/platform/http"
-import type { AddressInfo } from "@mailwoman/platform/net"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -24,7 +25,7 @@ afterAll(() => fixtures.disposeAsync())
 
 let server: Server
 let baseURL: string
-let outRoot: string
+let outRoot: PathBuilderLike
 
 /**
  * The manifest as written. `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is a test failure,

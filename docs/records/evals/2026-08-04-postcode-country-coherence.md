@@ -22,7 +22,7 @@ record lands the mechanism and measures it.
 surfaced as `--postcode-country-coherence` on `parse` and `geocode` and as an opt-in pin on
 `eval oa-resolver`.
 
-**The seam is a pre-walk SCOPE decision, not a post-walk re-pick.** Its three sibling coherence passes
+**The boundary is a pre-walk SCOPE decision, not a post-walk re-pick.** Its three sibling coherence passes
 (`applyAdminCoherence` #263, `applyExplicitCountryCoherence` #822, `applyRegionCountryCoherence`) run
 after the greedy walk and swap the wrong node pair for the right one. That shape cannot work here.
 What needs correcting is the walk's country _scope_, and the scope poisons three things a post-walk
@@ -42,7 +42,7 @@ replaces `state.defaultCountry` for the whole walk.
    (a genuine geographic tie) both abstain.
 
 Consistency = the postcode resolves in that country AND an EXACT-matching same-named locality sits
-within `gateKm` (default 25) of it. Non-exact locality hits contribute nothing — a generous FTS match
+within `thresholdKm` (default 25) of it. Non-exact locality hits contribute nothing — a generous FTS match
 ("Paris" → "Parish") is evidence about the index, not about the country.
 
 Two bounds fall out of the candidate set being codex-shaped. A country with no codex slice can never
@@ -55,16 +55,16 @@ postcode and a locality.
 
 ### The geocode-path wrinkle
 
-Rooftop and street-centroid shards are selected BEFORE the resolve — they are resolver inputs — off
-`defaultCountry ?? placedCountry`. A US-scoped call therefore picks no BAN/OSM shard, and a corrected
+Rooftop and street-centroid extracts are selected BEFORE the resolve — they are resolver inputs — off
+`defaultCountry ?? placedCountry`. A US-scoped call therefore picks no BAN/OSM extract, and a corrected
 FR address would sit at its commune centroid with the national register never consulted. So when the
 resolver reports an override (the `postcode_country_scope` stamp it writes onto the postcode and
-locality nodes), `geocodeAddress` re-selects the shards for the corrected country and resolves once
-more. Self-gating: unreachable unless an override fired, and bounded at one extra resolve.
+locality nodes), `geocodeAddress` re-selects the extracts for the corrected country and resolves once
+more. Self-blocking: unreachable unless an override fired, and bounded at one extra resolve.
 
 ## 2. Blocker 2, verified from this end
 
-The 2026-08-04 rebuild attached the postal shards. Counted directly against
+The 2026-08-04 rebuild attached the postal extracts. Counted directly against
 `$MAILWOMAN_DATA_ROOT/wof/candidate.db` (the `candidate.db` symlink → `candidate-global.db`):
 
 | placetype    | rows          |
@@ -82,11 +82,11 @@ and the four-way `75001` collision the diagnosis predicted is present verbatim:
 | DE      | 48.843796, 9.367177   | 421285019                   |
 | PL      | 54.1903, 16.1879      | 8000048250 (+ a second row) |
 
-**The postal shards are NOT attached everywhere, and the difference is required** — see §4 and §5.
+**The postal extracts are NOT attached everywhere, and the difference is required** — see §4 and §5.
 
 ## 3. The Rivoli case, end to end
 
-Compiled CLI, production defaults (locale `en-US` → `defaultCountry: "US"`), full shard set:
+Compiled CLI, production defaults (locale `en-US` → `defaultCountry: "US"`), full extract set:
 
 ```
 $ node mailwoman/out/cli.js geocode "12 Rue de Rivoli, 75001 Paris"
@@ -123,7 +123,7 @@ nearest is 143.8 km) and falling the locality back onto the ZIP point.
 22 cases × 2 backends × 2 case-registers, through the compiled CLI. Every row is `en-US` locale.
 `OFF`/`ON` are the resolved `countryCode`; the coordinate and tier are in the raw dumps.
 
-### Leg A — production default shard set (`wofShardPaths()`, 5 shards)
+### Leg A — production default extract set (`wofExtractPaths()`, 5 extracts)
 
 | #   | input                                           | expect  | OFF                    | ON                   | verdict                    |
 | --- | ----------------------------------------------- | ------- | ---------------------- | -------------------- | -------------------------- |
@@ -180,7 +180,7 @@ it gets measured rather than assumed.
 
 Isolating the one variable: same panel, `--candidate-db candidate.db --default-country US`.
 
-Identical to Leg A except three rows, all of which resolve to the shard set rather than the mechanism:
+Identical to Leg A except three rows, all of which resolve to the extract set rather than the mechanism:
 
 - **P04 Munchen → FIXED (DE 48.153,11.547).** See §4.1.
 - **P07 Toronto → already CA, OFF and ON.** `applyRegionCountryCoherence` rescues the "ON" region
@@ -190,7 +190,7 @@ Identical to Leg A except three rows, all of which resolve to the shard set rath
 
 **7 fixed, 15 unchanged, 0 made worse.**
 
-### 4.1 Why P04 and P07 abstain on the production shard set
+### 4.1 Why P04 and P07 abstain on the production extract set
 
 Both are DATA abstentions, not mechanism failures, and each was measured rather than reasoned to:
 
@@ -198,7 +198,7 @@ Both are DATA abstentions, not mechanism failures, and each was measured rather 
   with `exactMatch: FALSE` — the FTS exact-match tier does not fold `ü` → `u`. The pass requires an
   exact match, so it abstains. The candidate backend keys on `name_key = "munchen"` and does fold it,
   which is why Leg B fixes the row. The gap is in the FTS exact-match tiering, not here.
-- **P07 `M5V 3L9`.** The production shard set has **zero** CA postcode rows reachable as
+- **P07 `M5V 3L9`.** The production extract set has **zero** CA postcode rows reachable as
   `placetype: "postalcode"`. Nothing to be coherent with. `candidate.db` carries 843,739 of them.
 
 Both fail toward abstention, which is the designed direction.
@@ -213,7 +213,7 @@ Both fail toward abstention, which is the designed direction.
   The four adversarial rows that would hurt most (Addison TX, Paris TX, Berlin NH, Athens GA) are all
   untouched, and untouched _by the cheap exit_ — the pass never even asks the foreign country.
 - The abstention behaviour is real, not theoretical: P04, P07, P20 and P21 abstain for four different
-  reasons (diacritic folding, missing shard, contradictory pair, contradictory pair).
+  reasons (diacritic folding, missing extract, contradictory pair, contradictory pair).
 - The cost is bounded and mostly zero: 2 lookups when the default is coherent, ≤8 when it is not,
   none at all without a postcode + locality + `defaultCountry`.
 
@@ -227,9 +227,9 @@ is **byte-identical** between flag OFF and ON — md5 `4a98e68f17daf90605354b15c
 files, and the aggregate table matches to the digit (locality-match 98.2%, region 100.0%, coord p50
 3.3 / p90 9.8 / p99 87.9 km).
 
-That number is **vacuous as written.** The eval's default shard set is
+That number is **vacuous as written.** The eval's default extract set is
 `admin-global-priority.db,postcode-locality-intl.db`, and probing it directly for the panel's own ZIPs
-returns `pc-MISS` on every one — the intl shard carries GB/NL/JP/FR/DE/ES/IT and no US rows at all. So
+returns `pc-MISS` on every one — the intl extract carries GB/NL/JP/FR/DE/ES/IT and no US rows at all. So
 the pass abstained on all 10,000 rows for want of a postcode, and the identical dump proves only that
 the mechanism costs nothing where there is no postcode coverage. A magnitude never carries its own
 absence; this one had to be asked directly.
@@ -242,9 +242,9 @@ test. That leg's result is in §6.
 §6 re-runs it in the regime that matters, and adds an FR and a GB panel. Those close the aggregate
 question. What remains open is narrower:
 
-1. **The gauntlet has not seen this.** `mailwoman eval gauntlet` carries no resolver-lever pin, so the
-   D-rule's standard gate has no leg for it. §6 is an oa-resolver measurement, which is the right
-   instrument for a resolver lever but is not the gate the release process runs.
+1. **The gauntlet has not seen this.** `mailwoman eval gauntlet` carries no resolver-change pin, so the
+   D-rule's standard check has no leg for it. §6 is an oa-resolver measurement, which is the right
+   instrument for a resolver change but is not the check the release process runs.
 2. **`exactMatch` is required and backend-dependent.** P04 shows the FTS backend and the candidate
    backend disagree about what an exact match is (`Munchen` → `München` is exact on one, not the
    other). Every §6 number is candidate-backend. A default-on mechanism whose firing rate depends on
@@ -279,7 +279,7 @@ addresses".
 **Separately, and worth its own ticket:** this is now the only thing in the tree that can override
 `defaultCountry`. The coarse placer's 0.9999908844-confidence FR call on the very same address still
 cannot — `hardCountryFor` returns `undefined` whenever a `defaultCountry` is set, and geocode-core's
-#928 postcode-format prior is gated on `!opts.defaultCountry`. The diagnosis argued those are the same
+#928 postcode-format prior is blocked on `!opts.defaultCountry`. The diagnosis argued those are the same
 decision as this one. This lands the geometric half; the placer half is untouched.
 
 ## 6. Scale: 14,000 pairs, three countries, three mis-scope directions
@@ -344,7 +344,7 @@ within-tier ranking), so the "before" assertion genuinely lands on Paris, Texas 
 
 The safety properties have direct tests: coherent-default-wins, abstain-on-zero, abstain-on-tie,
 abstain-without-a-locality, abstain-on-an-unrecognized-shape, never-propose-a-country-without-a-codex-
-slice (the PL row), exact-match-only, gate-respected, backend-throw-degrades-to-no-override, and a
+slice (the PL row), exact-match-only, check-respected, backend-throw-degrades-to-no-override, and a
 byte-identical flag-on-vs-off assertion on the domestic control.
 
 Repo-wide: unit suite 4,637 passed / 1 failed (`geocode.test.ts` "missing address argument" — a 15 s

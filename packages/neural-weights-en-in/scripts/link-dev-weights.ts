@@ -17,15 +17,21 @@
  *
  *   THE FILE THIS BUILDS IS THE PACKAGE'S ENTIRE PAYLOAD. It is gitignored (derived), and a workspace
  *   that has never run this script packs to three metadata files describing an artifact that is not
- *   there — which is exactly how v8.6.0 shipped. `scripts/verify-tarball.ts` now refuses that publish,
+ *   there — which is exactly how v8.6.0 shipped. `packages/release-kit/lib/pack/verify-tarball.ts` now refuses that publish,
  *   but the fix is to run this first.
  */
 
-import { buildPairIndexOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import {
+	materializeDevOverlay,
+	PAIR_INDEX_DELTA,
+	PAIR_INDEX_TRANSITION_BETA,
+} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
-await buildPairIndexOverlay({
-	packageDir: "neural-weights-en-in",
-	country: "in",
-	delta: 10,
-	transitionBeta: 5,
+await materializeDevOverlay({
+	locale: "en-in",
+	pairIndex: {
+		country: "in",
+		delta: PAIR_INDEX_DELTA,
+		transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+	},
 })

@@ -9,9 +9,8 @@
  *   window makes obvious.
  */
 
+import { closeableCessationDate } from "@mailwoman/filer/sdk/build/form499-rows"
 import { describe, expect, it } from "vitest"
-
-import { closeableCessationDate } from "#sdk/build/form499-rows"
 
 describe("closeableCessationDate", () => {
 	it("closes the window when the filer ceased after its last filing", () => {

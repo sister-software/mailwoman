@@ -1,0 +1,121 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Address-system detection from the model's locale head (#511 Tier A — the consumer the head never
+ *   had). The PR3 self-conditioning head predicts which country an address belongs to from the
+ *   pooled sequence; v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
+ *   turns that posterior into a `SystemCode` the conventions layer can act on.
+ *
+ *   Conservative by contract: below the confidence threshold, or for locales without a codex system
+ *   slice, detection returns null and the parse proceeds exactly as before. The mask must never
+ *   fire on a guess.
+ */
+
+import type { SystemCode } from "@mailwoman/codex"
+
+import { LOCALE_COUNTRIES } from "#labels"
+import { softmax } from "#viterbi"
+
+// The pinned array lives in labels.ts beside the label vocabulary it mirrors; this module keeps its
+// historical export name.
+export { LOCALE_COUNTRIES } from "#labels"
+
+/**
+ * The locale head's confident argmax over {@link LOCALE_COUNTRIES}, or null below the threshold — the shared core of
+ * {@link detectAddressSystem} and {@link confidentLocaleCountry}.
+ */
+function localeVerdict(
+	localeLogits: readonly number[] | undefined,
+	threshold: number
+): { country: (typeof LOCALE_COUNTRIES)[number]; confidence: number } | null {
+	if (!localeLogits || localeLogits.length !== LOCALE_COUNTRIES.length) return null
+	const probs = softmax(localeLogits)
+	let best = 0
+
+	for (let i = 1; i < probs.length; i++)
+		if (probs[i]! > probs[best]!) {
+			best = i
+		}
+
+	const confidence = probs[best]!
+
+	if (confidence < threshold) return null
+
+	return { country: LOCALE_COUNTRIES[best]!, confidence }
+}
+
+/**
+ * ISO-2 country → codex address-system slice. Unmapped locales have no conventions yet.
+ */
+const COUNTRY_TO_SYSTEM: Partial<Record<(typeof LOCALE_COUNTRIES)[number], SystemCode>> = {
+	US: "us",
+	FR: "fr",
+	DE: "de",
+	CA: "ca",
+	GB: "gb",
+	JP: "jp",
+}
+
+export interface DetectedSystem {
+	system: SystemCode
+	country: (typeof LOCALE_COUNTRIES)[number]
+	confidence: number
+}
+
+/**
+ * Read the locale head's posterior into a confident `SystemCode`, or null.
+ *
+ * @param localeLogits The raw `locale_logits` output (LOCALE_COUNTRIES order).
+ * @param threshold Minimum softmax probability to act on (default 0.8 — the head's held-out accuracy is ~0.98, so 0.8
+ *   trades a little recall for never masking on a coin flip).
+ */
+export function detectAddressSystem(
+	localeLogits: readonly number[] | undefined,
+	threshold = 0.8
+): DetectedSystem | null {
+	const verdict = localeVerdict(localeLogits, threshold)
+
+	if (!verdict) return null
+	const system = COUNTRY_TO_SYSTEM[verdict.country]
+
+	if (!system) return null
+
+	return { system, country: verdict.country, confidence: verdict.confidence }
+}
+
+/**
+ * The locale head's confident COUNTRY verdict, or null — {@link detectAddressSystem} minus the system mapping, so the
+ * three head countries without a `SystemCode` (ES/IT/NL) still yield a verdict. Same threshold posture: below it the
+ * head abstains rather than acting on a coin flip. The head is a 9-way classifier — its verdict is evidence that the
+ * text is shaped like THAT country's addressing, never a resolved country (a Chinese address may read GB: right about
+ * "not the locale's country", wrong about which).
+ */
+export function confidentLocaleCountry(
+	localeLogits: readonly number[] | undefined,
+	threshold = 0.8
+): { country: (typeof LOCALE_COUNTRIES)[number]; confidence: number } | null {
+	return localeVerdict(localeLogits, threshold)
+}
+
+/**
+ * Resolve which addressing system's conventions apply for one parse (#511 Tier A): a caller-pinned `SystemCode` wins;
+ * `"auto"` reads the locale head under {@link detectAddressSystem}'s confidence bar; `undefined` = conventions off —
+ * null system, no constraints, and the parse stays byte-identical to the pre-conventions path.
+ */
+export function resolveSystemVerdict(
+	conventionsOpt: SystemCode | "auto" | undefined,
+	localeLogits: readonly number[] | undefined
+): { detectedSystem: SystemCode | null; systemSource: "off" | "auto" | "pinned" } {
+	const detectedSystem =
+		conventionsOpt === undefined
+			? null
+			: conventionsOpt === "auto"
+				? (detectAddressSystem(localeLogits)?.system ?? null)
+				: conventionsOpt
+
+	return {
+		detectedSystem,
+		systemSource: conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned",
+	}
+}

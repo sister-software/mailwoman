@@ -31,7 +31,7 @@ trace JSON ───┼─ mailwoman parse --trace json|mermaid        … need 
               └─ attached to bug reports / support threads    … need 1
 ```
 
-- **Producer seam:** a new `traceParse(text, opts)` method on `NeuralAddressClassifier`,
+- **Producer boundary:** a new `traceParse(text, opts)` method on `NeuralAddressClassifier`,
   implemented by _retaining_ what `#decode` already computes. `#decode` remains the single decode
   path (#481 invariant) — trace retention happens inside it, never beside it. `parse` and
   `parseWithLogits` stay byte-stable.
@@ -85,7 +85,7 @@ small (≤ seq×11 floats) so no truncation is needed.
 Increment 1 ships only `NeuralParseTrace`; the envelope type is declared alongside the CLI/pipeline
 threading in increment 3, keyed so earlier consumers never break (`resolve` reserved from day one).
 
-## 2. Producer seam — `traceParse`
+## 2. Producer boundary — `traceParse`
 
 - `#decode` gains a private `trace?: boolean` parameter; when set, its return widens to include
   the intermediates listed above. Non-trace calls must not pay for copies — retention is

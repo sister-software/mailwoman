@@ -55,7 +55,7 @@ disagreement found Cause B.
   Validated on the honest harness; cross-locale no-regression (DE/FR identical); neural beats v0 on
   the honest slice (p99 277 vs 2120km); slim/demo propagation analyzed; **+ a regression suite**
   (`region-abbrev.test.ts`, 8 tests) hardening the abbrev→region + constraint path.
-  **DB not promoted** (canonical swap is operator-gated/blocked — see below).
+  **DB not promoted** (canonical swap is operator-conditional/blocked — see below).
 - **#443** `research blog: "The right name in the wrong state"` — the eval-honesty narrative, house voice,
   humanizer-passed.
 - **#445** this postmortem (living draft).
@@ -75,8 +75,8 @@ disagreement found Cause B.
   ("Champs-Élysées" → 2 spans), postcode-glued locality drop. Per-tag F1 table + proposed fix.
 - **#240 comment** — survey: ~60% built; de-prioritized because the region fix subsumes the
   anchor's disambiguation value (residual value = sub-km precision only).
-- **#387 comment** — the city-state retrain recipe + pre-registered gate, **deferred** to sign-off
-  (no turnkey synth/config; no DE honest-slice gate; merge wall; 3 prior reverts).
+- **#387 comment** — the city-state retrain recipe + pre-registered check, **deferred** to sign-off
+  (no turnkey synth/config; no DE honest-slice check; merge wall; 3 prior reverts).
 
 ## Pre-flight fixes (done before any eval)
 
@@ -95,9 +95,9 @@ disagreement found Cause B.
 - Did NOT promote the abbrev fix on functional-preset evidence; root-caused the regression to a WOF
   ancestry gap and built the backfill rather than shipping a half-fix.
 - Kept the abbrev+backfill gazetteer as a **validation copy** (`admin-abbrev-test.db`); did not
-  swap the canonical (the swap was classifier-blocked, and matches the operator-gated posture).
+  swap the canonical (the swap was classifier-blocked, and matches the operator-conditional posture).
 - **Deferred the Modal #387 retrain** (logged a sign-off recipe) rather than launching: merge wall
-  blocks model promotion, no turnkey city-state synth/config exists, no DE honest-slice gate, and
+  blocks model promotion, no turnkey city-state synth/config exists, no DE honest-slice check, and
   the recipe has 3 prior reverts. "Prepped recipe = success" per the plan's Tier-7.
 - **De-prioritized #189/#240/#369** after surveying them — the region fix subsumed the wrong-state
   failure they targeted; their residual value (sub-km precision) is lower than estimated pre-fix.
@@ -142,7 +142,7 @@ disagreement found Cause B.
 6. Corpus growth (Tier 12): three adapters added (#446 — geonames, geonames-postal, usgov-irs-bmf).
    Configure their inputs in `adapterInputs` + re-run `corpus build` to ingest (downloads documented in
    each adapter's README). Further sources (G-NAF AU street-level; NCES/EPA US venue) are diminishing
-   or need a large-format download to build correctly; military/rural-route formats are schema-gated.
+   or need a large-format download to build correctly; military/rural-route formats are schema-conditional.
 
 ## Numbers
 

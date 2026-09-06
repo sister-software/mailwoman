@@ -4,7 +4,7 @@ The v8 plans all carry the #727 head-expansion rule ("a freshly-added head/label
 param-group LR… bake this into the JP training config"). ``test_resurrection.py`` already pins the
 generic mechanism on a 33-label toy. What was missing, and what burned a launch cycle in the 2026-07-22
 en-GB run A, is proof that a REAL config file actually produces the groups it means to: that YAML's
-levers were silently dropped by a stale volume-side config and the run proceeded with everything
+settings were silently dropped by a stale volume-side config and the run proceeded with everything
 inert. So these tests read ``configs/v8-jp-full.yaml`` off disk and assert on what
 ``build_model`` + ``build_optimizer`` do with it.
 
@@ -14,7 +14,7 @@ tensors, so the 14 fresh JP rows (ids 33..46) CANNOT be given a different LR fro
 — they share a tensor. The carve-out is the whole head or nothing, and a gradient hook is not a
 substitute (Adam's update is scale-invariant in the gradient). ``test_the_fourteen_fresh_rows_share_
 one_tensor_with_the_other_thirty_three`` states that in code so the next reader does not go looking
-for a row-level lever that does not exist.
+for a row-level setting that does not exist.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "con
 FULL = CONFIGS / "v8-jp-full.yaml"
 PROBE_2K = CONFIGS / "v8-jp-full-2k.yaml"
 
-# The full shard's sealed train-split char vocab (build-report.json: char_vocab_size 2237). The
+# The full slice's sealed train-split char vocab (build-report.json: char_vocab_size 2237). The
 # vocab file lives on the data root; the size is all `build_model` needs, so the test stays offline.
 CHAR_VOCAB_SIZE = 2237
 

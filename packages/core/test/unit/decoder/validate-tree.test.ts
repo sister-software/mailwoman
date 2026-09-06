@@ -8,13 +8,11 @@
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
-import type { AddressNode, BIOLabel, DecoderToken } from "@mailwoman/core/decoder/types"
+import type { AddressNode } from "@mailwoman/core/decoder/types"
 import { validateTree } from "@mailwoman/core/decoder/validate-tree"
 import { describe, expect, test } from "vitest"
 
-function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
-	return { piece, start, end, label, confidence: 1 }
-}
+import { tok } from "./fixtures.ts"
 
 function node(tag: AddressNode["tag"], value: string, children: AddressNode[] = []): AddressNode {
 	return { tag, value, start: 0, end: value.length, confidence: 1, children }
@@ -75,7 +73,7 @@ describe("validateTree", () => {
 	})
 
 	test("a unit anchored by a VENUE is valid — the sub-venue case the contract used to omit", () => {
-		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape and is a GATED PASS on the
+		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape and is a CONDITIONAL PASS on the
 		// board. Before `venue` joined PARENT_OF[unit] the checker called it a stranded dependent, so the contract was
 		// narrower than the capability already being tested — the checker was wrong, not the parse.
 		const tree = {

@@ -1,0 +1,46 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   GeoJSON Line String
+ */
+
+import type { GeoObjectLiteral } from "#objects"
+import type { Coordinates2D, Coordinates3D } from "#position"
+
+/**
+ * An array of positions forming a line, such as a road or a path.
+ */
+export type LineStringPath = [...points: Array<Coordinates2D | Coordinates3D>]
+
+/**
+ * A collection of points forming a line, such as a road or a path.
+ */
+export interface LineStringLiteral extends GeoObjectLiteral {
+	/**
+	 * Declares the type of GeoJSON object as a `LineString` geometry.
+	 */
+	type: "LineString"
+	/**
+	 * An array of positions for each point in the geometry.
+	 *
+	 * @see {@linkcode GeoJSONPosition} for more information.
+	 */
+	coordinates: LineStringPath
+}
+
+/**
+ * A collection of points forming a line, such as a road or a path.
+ */
+export interface MultiLineStringLiteral extends GeoObjectLiteral {
+	/**
+	 * Declares the type of GeoJSON object as a `MultiLineString` geometry.
+	 */
+	type: "MultiLineString"
+	/**
+	 * An array for each line in the geometry.
+	 *
+	 * @see {@linkcode GeoJSONPosition} for more information.
+	 */
+	coordinates: LineStringPath[]
+}

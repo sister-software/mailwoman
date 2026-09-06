@@ -11,7 +11,7 @@
 #     Epleskogen 39A / Tindvegen nedre 44B / Ovste Skogen 121 -> street (+ hopefully house_number).
 #   DO-NO-HARM — the FR fragment board (board 2), global parity, and the 6 demo presets HOLD. This
 #     is v310's recipe + Norway; French/US must not regress (v310 shipped them).
-#   SHIP GATE — if the Norwegian rows fix AND do-no-harm holds, this is a v6.5.0 candidate (the
+#   SHIP CHECK — if the Norwegian rows fix AND do-no-harm holds, this is a v6.5.0 candidate (the
 #     v6.4.0 promote's successor), pre-registered against the same rows + the v6.0.0-shipped-baseline.
 #   NEGATIVE — if the Norwegian rows STILL read locality at 8k off v264, coverage alone is not the
 #     fix and the street->locality defect is deeper than the YAML bug. That would be a genuine finding.
@@ -47,7 +47,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -76,7 +76,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

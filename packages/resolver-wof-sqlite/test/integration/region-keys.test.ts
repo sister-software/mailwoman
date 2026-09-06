@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { describe, expect, it } from "vitest"
 
 describe("regionKeys", () => {

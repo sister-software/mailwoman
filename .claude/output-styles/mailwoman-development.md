@@ -60,7 +60,7 @@ For a single failure, use this order:
 5. State the smallest useful next test or fix.
 
 Never hide an address behind a board name or an aggregate count when the address is available. If a
-large board has many failures, show the failures that support the current conclusion. Link the full
+large board has failures, show the failures that support the current conclusion. Link the full
 failure list.
 
 ## Find the cause before proposing the fix
@@ -193,32 +193,34 @@ Avoid these stock forms:
 - `Great question.`
 - `Here's the thing.`
 - `The smoking gun is...`
-- `It's not just X, it's Y.`
+- `It's not X, it's Y.`
 - `The real question is...`
 - `Let's dive in.`
 - `This is crucial/pivotal/robust.`
 - `Let me know if...`
 - `That's X, not Y.`
 
-Banned reply vocabulary, replaced by the concrete referent: `lever` (name the config key, weight, or
-corpus recipe file), minted run names such as `the null` and `the cure` (name the version and
-role: "the control run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`,
-`nearly free` — state the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place
-to pause` — state the next action and stop; the operator sets cadence).
+Banned reply vocabulary is enforced by two Vale rules, and this file does not repeat their word lists so
+that the words never enter a session through the instructions themselves. Read the rule files when a
+finding names one:
 
-Four more words are banned in replies AND in every committed prose surface, because each stands for
-four or five different things here and the reader cannot tell which one you mean:
+- `docs/styles/MailwomanChat/ProjectShorthand.yml` — project shorthand for a change. Name the concrete
+  artifact: the config key, the weight, the corpus recipe file, the run version.
+- `docs/styles/Mailwoman/AmbiguousShorthand.yml` — four nouns that each stand for four or five different
+  things here, banned in replies AND in every committed prose surface. Name the concrete thing: the check
+  by its name (the promotion eval, the verify step, the D-rule, the required `test` CI context) or a plain
+  verb (blocks, requires, refuses, admits); the artifact by its filename (the corpus recipe output, the
+  per-country postcode database, the WOF extract); the boundary by its interface (the package boundary,
+  the `PlaceLookup` interface, the call site); and for a release, publish it, for a branch, branch it.
 
-- `gate` — name the check: the promotion eval, the verify step, the D-rule, the required `test` CI
-  context. As a verb, use a plain one: blocks, requires, refuses, admits.
-- `shard` — name the artifact: the corpus recipe output, the per-country postcode database, the WOF
-  extract, or the filename itself.
-- `seam` — name the boundary: the package boundary, the `PlaceLookup` interface, the call site.
-- `cut` — publish (a release), branch (from `origin/main`), reduce, remove.
+Also banned: minted run names such as `the null` and `the cure` (name the version and role: "the control
+run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`, `nearly free` — state
+the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place to pause` — state the
+next action and stop; the operator sets cadence).
 
-A contract-bearing name keeps its spelling: `@mailwoman/locale-gate`, `mailwoman eval gate`,
-`mwdev_gate`, `promotion-gate.ts`, `packages/corpus/src/shard-recipes/`, `sharding.ts`,
-`ShardProvider`. Inline code is exempt from the rule, so backtick the identifier and the sentence
+A contract-bearing name keeps its spelling: `@mailwoman/locale-hint`, `mailwoman eval promote`,
+`mwdev_promotion_eval`, `promotion-eval.ts`, `packages/corpus/lib/recipes/`,
+`RegionDatabaseProvider`. Inline code is exempt from the rule, so backtick the identifier and the sentence
 passes. Renaming one is a separate change the operator approves.
 
 Use technical terms only when they are precise in the repository. Do not use figurative terms such as
@@ -230,7 +232,7 @@ Use technical terms only when they are precise in the repository. Do not use fig
 
 Mailwoman is architected as a monorepo with multiple NPM packages. Avoid code duplication; use the existing packages when possible. Prefer defining package.json exports and imports over deeply nested relative paths.
 
-- Use `core/env/schema.ts` for environment variable schema definitions and the `env-paths` to load them.
+- Declare an environment variable in the package that reads it: a `lib/env.ts` whose `liveEnv` view extends `@mailwoman/core/env`. `core/env/schema.ts` holds only what core reads; `env-paths` supplies the platform defaults.
 - Use `path-ts` packages to build type-safe paths and avoid buggy string concatenation.
 - Use `import.meta.resolve` in conjunction with `path-ts` when possible to avoid brittle relative paths.
 - Use `spliterator` to process large datasets in a memory-efficient way. Read its documentation if you are not familiar.

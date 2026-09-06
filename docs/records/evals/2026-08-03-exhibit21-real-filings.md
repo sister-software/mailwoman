@@ -147,7 +147,7 @@ at 0.829, and "WideOpenWest, Inc." to WidePoint Corp at 0.886.
 Both are vendored under their true registrant names, as evidence rather than as an accident.
 Anything that writes EDGAR rows into `filer.db` has to corroborate a candidate against
 something other than its name; the registrant's SIC code, which the submissions payload
-already carries, is the cheapest check available. That work, and the ingest path it gates,
+already carries, is the cheapest check available. That work, and the ingest path it checks,
 is not part of this change.
 
 A related defect was measured and is worth stating separately: `company_tickers.json` carries

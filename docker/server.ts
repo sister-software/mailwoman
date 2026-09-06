@@ -11,8 +11,8 @@
  *   degraded (parse+health only)" — so `docker run` with no data volume still answers `/v1/parse`.
  *
  *   The wiring MIRRORS `mailwoman/api-engine.ts` (`createServeEngine`) using only that package's own
- *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `ShardProvider`) and
- *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofShardPaths`,
+ *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `RegionDatabaseProvider`) and
+ *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofExtractPaths`,
  *   `mailwomanDataRoot`) — so the geocode path does not drift from the real server. Model WEIGHTS ship
  *   IN the image via `@mailwoman/neural-weights-en-us`; the gazetteer / resolver DBs are volume-mounted
  *   read-only at `$MAILWOMAN_DATA_ROOT` (the image sets it to `/data`).
@@ -20,8 +20,8 @@
  *   Boot policy:
  *     - `parse` + `health` are ALWAYS wired (weights-only, no gazetteer needed).
  *     - `geocode` + `batch` are wired ONLY when a gazetteer is resolvable (a candidate.db under
- *       `$MAILWOMAN_DATA_ROOT/wof`, an explicit `$MAILWOMAN_CANDIDATE_DB`, or FTS admin shards via
- *       `$MAILWOMAN_WOF_DB` / the conventional `wof/` shard paths). Absent → `@mailwoman/api` answers
+ *       `$MAILWOMAN_DATA_ROOT/wof`, an explicit `$MAILWOMAN_CANDIDATE_DB`, or FTS admin extracts via
+ *       `$MAILWOMAN_WOF_DB` / the conventional `wof/` extract paths). Absent → `@mailwoman/api` answers
  *       `503` on `/v1/geocode` + `/v1/batch` (a clean degrade, not a crash).
  *     - When the weights themselves are unresolvable, `parse` is absent and `/v1/parse` answers `501`.
  *
@@ -34,38 +34,34 @@ import { createMailwomanAPI } from "@mailwoman/api"
 import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResultEntry } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
-import { $public } from "@mailwoman/core/env"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress } from "mailwoman/geocode-core"
-import { ShardProvider } from "mailwoman/geocode-shards"
+import { $public } from "mailwoman/env"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
 import {
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	wofShardPaths,
+	resolveWOFDatabasePaths,
 } from "mailwoman/resolver-backend"
+import { AsyncSequence } from "spliterator"
 
 const PORT = 3000
 const HOST = "0.0.0.0"
 const DATA_ROOT = mailwomanDataRoot()
 
 /**
- * Same WOF-path resolution as `mailwoman/api-engine.ts`: the `$MAILWOMAN_WOF_DB` comma-separated override, else the
- * conventional per-shard `wof/` paths that actually exist on disk.
+ * The WOF extract set to attach: {@link resolveWOFDatabasePaths} selects it (the `$MAILWOMAN_WOF_DB` comma-separated
+ * override, else the conventional per-extract `wof/` paths). An explicit list is the operator's statement and passes
+ * through unfiltered; the conventional set is probed, so a deployment missing a extract degrades to what is present.
  */
-function wofPaths() {
-	const env = $public.MAILWOMAN_WOF_DB
+function wofPaths(): Promise<string[]> {
+	const paths = resolveWOFDatabasePaths()
 
-	if (env) {
-		return env
-			.split(",")
-			.map((p) => p.trim())
-			.filter((p) => p.length > 0)
-	}
+	if ($public.MAILWOMAN_WOF_DB) return Promise.resolve(paths)
 
-	return wofShardPaths().filter((p) => pathExistsSync(p))
+	return AsyncSequence.from(paths).parallelFilter(pathExists).toArray()
 }
 
 /**
@@ -73,7 +69,7 @@ function wofPaths() {
  */
 async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() {
 	const engine: MailwomanAPIEngine<T> = {
-		health: () => ({
+		health: async () => ({
 			data: {
 				data_root: DATA_ROOT,
 			},
@@ -107,20 +103,20 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 	// gazetteer leaves these methods undefined so @mailwoman/api answers 503 (the clean degrade) — and,
 	// in its own try, never takes parse down with it.
 	if (classifier) {
-		const candidateDB = resolveCandidateDBPath()
-		const paths = wofPaths()
+		const candidateDB = await resolveCandidateDBPath()
+		const paths = await wofPaths()
 
 		if (candidateDB || paths.length) {
 			try {
 				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-				const backend = createResolverBackend(resolverMod, { wofPaths: paths })
+				const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 				const resolver = createWOFResolver(backend)
-				const shards = new ShardProvider(resolverMod, DATA_ROOT)
+				const extracts = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
 				// Candidate backend → country-agnostic (population-first, demo parity); FTS backend keeps US.
 				const defaultCountry = candidateDB ? undefined : "US"
 
 				const oneGeocode: GeocodeCallback<T> = (address: string) =>
-					geocodeAddress(address, { classifier, resolver, shards: shards.for, defaultCountry }) as Promise<T>
+					geocodeAddress(address, { classifier, resolver, databases: extracts.for, defaultCountry }) as Promise<T>
 
 				engine.geocode = async (address) => oneGeocode(address)
 

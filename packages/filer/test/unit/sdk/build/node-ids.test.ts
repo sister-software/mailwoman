@@ -9,8 +9,6 @@
  *   collision it is. These assert the mint's output and the shape of what it refuses.
  */
 
-import { describe, expect, it } from "vitest"
-
 import {
 	assertLastFiledAt,
 	assertProviderValidFrom,
@@ -21,7 +19,8 @@ import {
 	mintManagementCompanyNodeID,
 	mintProviderNodeID,
 	mintSubsidiaryNameNodeID,
-} from "#sdk/build/node-ids"
+} from "@mailwoman/filer/sdk/build/node-ids"
+import { describe, expect, it } from "vitest"
 
 describe("identifier mints", () => {
 	it("namespaces the raw identifier", () => {

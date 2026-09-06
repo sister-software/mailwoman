@@ -19,7 +19,7 @@ done)
 
 if [ -n "$STAGED" ]; then
 	# oxlint errors on paths it can't lint, so scope it to code files. Config discovery
-	# (oxlint.config.ts, incl. the sister-software/no-process-globals raw-access gate) is
+	# (oxlint.config.ts, incl. the sister-software/no-process-globals raw-access check) is
 	# path-independent — verified: explicit paths keep every rule active.
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
 	if [ -n "$CODE" ]; then
@@ -54,21 +54,30 @@ if [ -n "$STAGED" ]; then
 	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add
 fi
 
-# CLI-reference freshness (2026-08-05): the docs CI gate asserts docs/articles/developers/reference/
+# CLI-reference freshness (2026-08-05): the docs CI check asserts docs/articles/developers/reference/
 # cli.mdx byte-for-byte against the command schemas, and it fired four times in one day because the
 # regeneration step lives a 20-minute CI round-trip away. Staged-scoped: only runs when this commit
 # touches the command surface. The generator reads the COMPILED tree (packages/mailwoman/out/commands — the
 # commands are TSX, which node cannot type-strip), so a stale out/ would silently regenerate WRONG
 # bytes; the mtime guard turns that into an instruction instead.
-if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailwoman/(commands|cli-kit)/'; then
+if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailwoman/lib/(commands|cli-kit)/'; then
 	if [ -f packages/mailwoman/out/cli.js ]; then
 		# Freshness reference: the tsbuildinfo, not cli.js — an incremental `tsc -b` that finds
 		# cli.js byte-identical does not rewrite it, so an mtime check against cli.js blocks
 		# forever after an unrelated source edit (bit the ablation-harness worktree 2026-08-05).
 		# tsc always touches the buildinfo when it runs; fall back to cli.js on trees without one.
-		REF=packages/mailwoman/out/tsconfig.tsbuildinfo
+		# tsc writes the buildinfo NEXT TO THE TSCONFIG, not into outDir — `packages/mailwoman/tsconfig.tsbuildinfo`.
+		# This named `out/tsconfig.tsbuildinfo`, which has not existed for some time, so the guard silently fell
+		# through to the cli.js branch below and lost the property it was reaching for: tsc touches the buildinfo
+		# on every run, including one that finds every output byte-identical, whereas cli.js is only rewritten
+		# when its bytes change. A formatter that rewrites a source without changing it then trips the guard
+		# forever, and `yarn compile` cannot clear it because there is nothing to rebuild.
+		REF=packages/mailwoman/tsconfig.tsbuildinfo
+		[ -f "$REF" ] || REF=packages/mailwoman/out/tsconfig.tsbuildinfo
 		[ -f "$REF" ] || REF=packages/mailwoman/out/cli.js
-		NEWEST_SRC=$(find packages/mailwoman/commands packages/mailwoman/cli-kit \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
+		# cli-native holds the specs of the native commands (license, doctor, geocode …); the reference reads them from
+		# the compiled CLI too, so a spec edit there is the same staleness as one under commands/.
+		NEWEST_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli-kit packages/mailwoman/lib/cli-native \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
 		if [ -n "$NEWEST_SRC" ]; then
 			echo "pre-commit: $NEWEST_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
 			exit 1
@@ -82,14 +91,14 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 		# The SECOND generated artifact, same freshness contract: the man page's CI drift test fired on
 		# 2026-08-17 (cli.mdx prose) and again on 2026-08-18 (a new flag) because only cli.mdx was
 		# hook-covered. Same guard, same remediation shape.
-		node scripts/generate-man.ts
+		node packages/mailwoman/out/cli.js dev generate man-page
 		if ! git diff --quiet -- packages/mailwoman/man/mailwoman.1; then
 			echo "pre-commit: the man page moved — it has been regenerated in your worktree; stage it and retry:" >&2
 			echo "  git add packages/mailwoman/man/mailwoman.1" >&2
 			exit 1
 		fi
 	else
-		echo "pre-commit: packages/mailwoman/out/cli.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still gates)" >&2
+		echo "pre-commit: packages/mailwoman/out/cli.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still checks)" >&2
 	fi
 fi
 
@@ -97,7 +106,7 @@ fi
 # docs prose is a build-breaking MDX-JSX parse error; this class broke three builds on 2026-06-10.
 # The lint tool lives at mailwoman/dev-tools/lint-mdx-angles.ts
 # and needs the compiled CLI (`yarn compile`). An uncompiled tree (fresh clone) skips with a warning
-# rather than blocking every commit — CI's full lint still gates this class.
+# rather than blocking every commit — CI's full lint still checks this class.
 if [ -f packages/mailwoman/out/cli.js ]; then
 	node packages/mailwoman/out/cli.js dev lint mdx-angles
 else

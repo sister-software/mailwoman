@@ -1,5 +1,5 @@
 /**
- * Full-data gates kept separate from the ordinary fast and integration sweeps.
+ * Full-data checks kept separate from the ordinary fast and integration sweeps.
  */
 import { defineConfig, mergeConfig } from "vitest/config"
 

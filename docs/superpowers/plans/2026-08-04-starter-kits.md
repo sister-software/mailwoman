@@ -4,7 +4,7 @@
 
 **Goal:** Four single-sourced starter templates, an `npm init @mailwoman` engine with four shims, generated template repos in the mailwoman org, and the CI that keeps all of it true.
 
-**Architecture:** `templates/` in the monorepo is the only hand-edited copy; the `create` package ships rendered templates; a release job syncs them to `mailwoman/starter-*`; pack-based cold-scaffold smokes gate every change.
+**Architecture:** `templates/` in the monorepo is the only hand-edited copy; the `create` package ships rendered templates; a release job syncs them to `mailwoman/starter-*`; pack-based cold-scaffold smokes check every change.
 
 **Tech Stack:** Node 24+, plain `node:util` parseArgs + prompts (no framework), zx for the sync job, GitHub Actions.
 
@@ -15,10 +15,10 @@
 - Register rules and the writing system bind all template READMEs and printed CLI text (they are public copy; CLI help source strings are public copy — the wave-2 standing rule).
 - Templates never download data at scaffold time; the next-steps print offers `mailwoman data pull` and names sizes.
 - Version stamping: rendered templates pin exact published versions; no `latest`, no `workspace:*` in rendered output.
-- Every commit leaves repo gates green: `yarn compile`, `yarn lint`, `yarn install --immutable`, docs build where docs change, and the new template smokes.
+- Every commit leaves repo checks green: `yarn compile`, `yarn lint`, `yarn install --immutable`, docs build where docs change, and the new template smokes.
 - Repos outside the monorepo go under the `mailwoman` GitHub org (operator directive 2026-08-04).
 - Commit trailers: Co-Authored-By: Claude Fable 5 <noreply@anthropic.com> + Claude-Session link, every commit.
-- First-publish of the five npm packages is OPERATOR-GATED (Trusted Publishing cannot create packages): the plan prepares everything; the blessing session is a handoff item, never automated.
+- First-publish of the five npm packages is OPERATOR-CONDITIONAL (Trusted Publishing cannot create packages): the plan prepares everything; the blessing session is a handoff item, never automated.
 
 ## Phase overview
 
@@ -85,7 +85,7 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 
 **Files:** Create `scripts/sync-starter-repos.ts` (zx; renders with the RELEASE version map; force-pushes each kit to `mailwoman/starter-<kit>`; asserts template flag via gh api; writes the generated banner), `.github/workflows/publish.yml` gains the post-publish sync step; each rendered repo carries `.github/workflows/smoke.yml` (weekly cron: scaffold-from-npm + smoke — the publish-reality canary).
 
-- [ ] Repo creation is operator-gated (org admin): the script CHECKS for repo existence and reports missing ones rather than creating them — the runbook (Task 8) lists the `gh repo create mailwoman/starter-* --template` commands for the operator.
+- [ ] Repo creation is operator-conditional (org admin): the script CHECKS for repo existence and reports missing ones rather than creating them — the runbook (Task 8) lists the `gh repo create mailwoman/starter-* --template` commands for the operator.
 - [ ] Dry-run mode renders + diffs against the remote without pushing; the real push only in the publish workflow.
 - [ ] Commit `feat(release): starter-repo sync + scheduled npm-reality smoke`.
 
@@ -93,7 +93,7 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 
 **Files:** Modify `docs/articles/developers/get-started/ten-minute-trial.mdx` (the one-liner entry, offered before the manual path), the four tutorials (skip-the-setup link each), `docs/articles/product/capabilities.mdx` (starter repos link).
 
-- [ ] Pages re-verified per the standing rules (bare fences, executed one-liner transcript once the tarball path works); Vale/gate/build green.
+- [ ] Pages re-verified per the standing rules (bare fences, executed one-liner transcript once the tarball path works); Vale/check/build green.
 - [ ] Commit `docs: starter kits join the getting-started paths`.
 
 ### Task 8: publish runbook + handoff
@@ -106,4 +106,4 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 
 - Spec Decisions 1–5 → Tasks 1–2 (kits), 3–4 (engine+shims), 6 (org repos + canary), 5 (executed-before-shipped), 7 (docs). Acceptance bullets: cold-scaffold smoke (5), repos byte-match (6's dry-run diff), publish blessing (8, operator), docs (7).
 - No placeholders; interfaces named; the renderer is the single composition point so kits cannot drift from _shared.
-- Operator-gated steps (repo creation, first publishes) are explicitly fenced as handoffs, never automated.
+- Operator-conditional steps (repo creation, first publishes) are explicitly fenced as handoffs, never automated.

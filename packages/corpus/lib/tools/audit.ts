@@ -1,0 +1,402 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman corpus audit` — per-source slice-count vs source_weight diagnostic.
+ *
+ *   Reads a corpus dir's MANIFEST.json (or scans slices directly), counts slices per source,
+ *   optionally loads a training config to pair the counts with the configured source_weights, and
+ *   reports the estimated sampled-row distribution at training time.
+ *
+ *   Would have caught v0.3.0's "NAD = 411/674 train slices × 2.0 weight = ~75% of sampled mix"
+ *   finding before the v0.3.0 retrospective surfaced it.
+ *
+ *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
+ */
+
+import { pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { basename, join, type PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
+
+/**
+ * Share of a slice one source may hold before the mix is flagged as dominated by it.
+ */
+const DOMINANT_SOURCE_SHARE = 0.4
+
+/**
+ * How far the leading source may outweigh the runner-up before the mix is flagged. Catches the case where no single
+ * source clears {@link DOMINANT_SOURCE_SHARE} but the distribution is still lopsided.
+ */
+const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
+
+export interface AuditOpts {
+	corpusDir: PathBuilderLike
+	configPath?: string
+	/**
+	 * Sample at most N slices per split when counting sources. Default 100 for speed; bump to read the full set on a slow
+	 * run. The first row of each slice determines its source — corpus-v0.2.0+ slices are 100% source-segregated, so a
+	 * one-row read is authoritative.
+	 */
+	sampleSliceCount?: number
+}
+
+interface SliceStats {
+	/**
+	 * Slices per source per split
+	 */
+	bySplit: Record<string, Record<string, number>>
+	/**
+	 * Total slices counted (may be less than file count if sampleSliceCount caps reads)
+	 */
+	totalSlices: number
+	/**
+	 * Total slices on disk (file count) — equals totalSlices unless capped
+	 */
+	totalFiles: number
+}
+
+interface ParsedConfig {
+	sourceWeights: Record<string, number>
+}
+
+/**
+ * Try parsing a training YAML's source_weights as a minimal regex-based extract. We don't pull in a YAML lib for this
+ * script — the syntax is so small that a regex over the source_weights block is sufficient + keeps the script
+ * dep-free.
+ */
+async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
+	if (!(await pathExists(configPath))) return null
+	const weights: Record<string, number> = {}
+	let inBlock = false
+	let blockIndent = -1
+
+	for (const raw of TextSpliterator.from(await readLocalBuffer(configPath))) {
+		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
+
+		if (sourceWeightsMatch) {
+			inBlock = true
+			blockIndent = sourceWeightsMatch[1]!.length
+
+			continue
+		}
+
+		if (!inBlock) continue
+
+		// Skip blank lines and comments.
+		if (/^[\t ]*(#|$)/.test(raw)) continue
+		// Lines indented MORE than `source_weights:` are entries; lines with ≤ indent end the block.
+		const indent = raw.match(/^[\t ]*/)![0].length
+
+		if (indent <= blockIndent) {
+			inBlock = false
+
+			continue
+		}
+
+		const m = raw.match(/^[\t ]+([\w-]+):\s*([\d.]+)/)
+
+		if (m) {
+			weights[m[1]!] = Number.parseFloat(m[2]!)
+		}
+	}
+
+	return { sourceWeights: weights }
+}
+
+/**
+ * Scan a corpus directory's slices (typically under <corpus_dir>/train, /val, /test) and count slices per source per
+ * split.
+ */
+async function scanSlices(corpusDir: PathBuilderLike, sampleCount: number): Promise<SliceStats> {
+	const stats: SliceStats = { bySplit: {}, totalSlices: 0, totalFiles: 0 }
+
+	for (const split of ["train", "val", "test"]) {
+		const splitDir = join(corpusDir, split)
+
+		if (!(await pathExists(splitDir))) continue
+
+		const files = (await readDirectory(splitDir)).filter((f) => f.endsWith(".parquet")).toSorted()
+
+		stats.totalFiles += files.length
+		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))
+		const sampled = files.filter((_, i) => i % sampleEvery === 0).slice(0, sampleCount)
+		const splitMap: Record<string, number> = {}
+
+		// We can't read parquet without a dep, so we infer source from filenames where possible.
+		// The corpus build typically writes deterministically by source — fall back to "<unknown>"
+		// when filename gives no hint. For accurate per-source counts on real corpora, the
+		// MANIFEST.json route below is preferred.
+		for (const f of sampled) {
+			const inferred = inferSourceFromFilename(f)
+			splitMap[inferred] = (splitMap[inferred] ?? 0) + 1
+		}
+
+		// Scale to estimated full-slice counts.
+		const scale = files.length / Math.max(sampled.length, 1)
+
+		for (const k of Object.keys(splitMap)) {
+			splitMap[k] = Math.round(splitMap[k]! * scale)
+		}
+
+		stats.bySplit[split] = splitMap
+		stats.totalSlices += files.length
+	}
+
+	return stats
+}
+
+function inferSourceFromFilename(filename: string): string {
+	// Many corpus builds write part-<source>-<n>.parquet or part-<n>.parquet. The latter (current
+	// build at corpus-v0.3.0) gives no source signal in the filename — see manifestScan() for the
+	// authoritative path. Return "<unknown>" so the caller flags this case.
+	const m = basename(filename).match(/part-([\w-]+)-\d+\.parquet$/)
+
+	if (m && m[1] !== undefined) return m[1]
+
+	return "<unknown>"
+}
+
+/**
+ * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes; matching against the longest prefix
+ * that fits a given `first_source_id` recovers the canonical source name.
+ *
+ * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches `usgov-nad` rather than `usgov`. Sorted
+ * descending by length at use site.
+ */
+const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
+	"wof-admin",
+	"wof-postalcode",
+	"ban",
+	"tiger",
+	"usgov-nad",
+	"usgov-nppes",
+	"usgov-hrsa-fqhc",
+	"usgov-imls-pls",
+	"state-ia-contractors",
+	"state-tx-notaries",
+	"state-ny-notaries",
+	"openaddresses",
+	// Synthetic adversarial sources (corpus-v0.4.0+, Thread B).
+	"deepseek-kryptonite",
+	"deepseek-translit-cyrl",
+	"deepseek-translit-jpan",
+	"deepseek-translit-hans",
+	"deepseek-translit-hang",
+	"deepseek-translit-armn",
+]
+
+/**
+ * Extract the source-name prefix from a `first_source_id` value.
+ */
+function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): string {
+	// Sort longest-first so usgov-nad beats usgov, wof-admin beats wof.
+	const sorted = [...knownPrefixes].toSorted((a, b) => b.length - a.length)
+
+	for (const prefix of sorted) {
+		if (sourceID.startsWith(prefix + "-") || sourceID === prefix) return prefix
+	}
+
+	return "<unknown>"
+}
+
+/**
+ * Prefer reading MANIFEST.json when present — uses each slice's `first_source_id` + prefix matching to recover the
+ * source name. Falls back to scanSlices when MANIFEST is absent.
+ *
+ * NOTE: corpus-v0.3.0 slices can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
+ * source is an approximation; reading the parquet's full source column would be authoritative but requires a parquet
+ * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most slices
+ * are >95% one source).
+ */
+async function manifestScan(corpusDir: PathBuilderLike, knownPrefixes: readonly string[]): Promise<SliceStats | null> {
+	const manifestPath = join(corpusDir, "MANIFEST.json")
+
+	if (!(await pathExists(manifestPath))) return null
+
+	const manifest = await readLocalJSONFile<{
+		slices?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
+	}>(manifestPath)
+
+	if (!Array.isArray(manifest.slices)) return null
+	const bySplit: Record<string, Record<string, number>> = {}
+
+	for (const slice of manifest.slices) {
+		const split = slice.split
+		const src = slice.source ?? sourceFromID(slice.first_source_id ?? "", knownPrefixes)
+		bySplit[split] ??= {}
+		bySplit[split][src] = (bySplit[split][src] ?? 0) + 1
+	}
+
+	const total = Object.values(bySplit).reduce((sum, m) => sum + Object.values(m).reduce((a, b) => a + b, 0), 0)
+
+	return { bySplit, totalSlices: total, totalFiles: total }
+}
+
+interface AuditRow {
+	source: string
+	slices: number
+	slicePct: number
+	weight: number | "—"
+	effectiveSamplePct: number | "—"
+	overweightFactor?: number
+}
+
+function buildAuditRows(stats: Record<string, number>, weights: Record<string, number>): AuditRow[] {
+	const totalSlices = Object.values(stats).reduce((a, b) => a + b, 0)
+	const allSources = new Set([...Object.keys(stats), ...Object.keys(weights)])
+	const rows: AuditRow[] = []
+	// Compute effective sample weight: slice_count × source_weight. Sources with no weight get the
+	// "—" marker (loader skips them).
+	const sampleWeights: Array<[string, number]> = []
+
+	for (const src of allSources) {
+		const slices = stats[src] ?? 0
+		const weight = weights[src]
+		const effective = weight !== undefined ? slices * weight : 0
+		sampleWeights.push([src, effective])
+	}
+
+	const totalSampleWeight = sampleWeights.reduce((a, [, w]) => a + w, 0)
+
+	for (const src of allSources) {
+		const slices = stats[src] ?? 0
+		const weight = weights[src] ?? "—"
+		const effective = typeof weight === "number" ? (slices * weight) / Math.max(totalSampleWeight, 1) : "—"
+
+		rows.push({
+			source: src,
+			slices,
+			slicePct: totalSlices > 0 ? slices / totalSlices : 0,
+			weight,
+			effectiveSamplePct: typeof effective === "number" ? effective : "—",
+		})
+	}
+
+	// Flag the dominator: empirically calibrated against the v0.3.0 → v0.4.0 retrospective.
+	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space dilution
+	// was responsible for the coarse-F1 regression. So flag a source as "concentration warning"
+	// when it's above 40% effective sample OR more than 1.5× the next-highest.
+	const numeric = rows.filter((r) => typeof r.effectiveSamplePct === "number") as Array<
+		AuditRow & { effectiveSamplePct: number }
+	>
+
+	numeric.sort((a, b) => b.effectiveSamplePct - a.effectiveSamplePct)
+
+	if (numeric.length) {
+		const top = numeric[0]!
+		const next = numeric[1]?.effectiveSamplePct ?? 0
+
+		if (
+			top.effectiveSamplePct > DOMINANT_SOURCE_SHARE ||
+			(next > 0 && top.effectiveSamplePct / next > MAX_TOP_TO_RUNNER_UP_RATIO)
+		) {
+			top.overweightFactor = next > 0 ? top.effectiveSamplePct / next : Infinity
+		}
+	}
+
+	rows.sort((a, b) => b.slices - a.slices)
+
+	return rows
+}
+
+function formatPct(v: number | "—"): string {
+	if (v === "—") return "—"
+
+	return `${(v * 100).toFixed(1)}%`
+}
+
+function printReport(
+	corpusDir: PathBuilderLike,
+	configPath: string | undefined,
+	stats: SliceStats,
+	rows: AuditRow[]
+): void {
+	console.log(`\nCorpus audit — ${corpusDir}`)
+
+	if (configPath) {
+		console.log(`Config:        ${configPath}`)
+	}
+
+	console.log(
+		`Total slices:  ${stats.totalSlices}${stats.totalFiles !== stats.totalSlices ? ` (${stats.totalFiles} files on disk)` : ""}`
+	)
+	console.log("")
+
+	const trainStats = stats.bySplit["train"]
+
+	if (trainStats) {
+		const total = Object.values(trainStats).reduce((a, b) => a + b, 0)
+
+		console.log(`Train split: ${total} slices`)
+		console.log("")
+
+		const headers = ["source", "slices", "slice %", "weight", "eff. sample %"]
+		const widths = [22, 8, 10, 8, 14]
+		const fmtRow = (cells: string[]) => cells.map((c, i) => c.padEnd(widths[i]!)).join("  ")
+
+		console.log(fmtRow(headers))
+		console.log(fmtRow(widths.map((w) => "─".repeat(w))))
+
+		for (const row of rows) {
+			console.log(
+				fmtRow([
+					row.source,
+					String(row.slices),
+					formatPct(row.slicePct),
+					typeof row.weight === "number" ? row.weight.toFixed(2) : "—",
+					formatPct(row.effectiveSamplePct),
+				])
+			)
+		}
+
+		console.log("")
+
+		const dominator = rows.find((r) => r.overweightFactor !== undefined)
+
+		if (dominator) {
+			const factor = dominator.overweightFactor
+			const factorStr = factor === Infinity ? "∞" : factor?.toFixed(1)
+
+			console.error(
+				`⚠ Concentration: ${dominator.source} would sample ${formatPct(dominator.effectiveSamplePct)} ` +
+					`of training rows (${factorStr}× the next-highest). ` +
+					`Past lesson: v0.3.0's NAD at ~52% caused the 21-label coarse regression. ` +
+					`Consider lowering this source's weight or boosting others.`
+			)
+		} else {
+			console.log("✓ No single-source concentration (top source < 40% effective sample AND < 1.5× next).")
+		}
+
+		const missingWeights = rows.filter((r) => r.weight === "—" && r.slices > 0)
+
+		if (missingWeights.length && configPath) {
+			console.error(
+				`⚠ Sources present in corpus but absent from config.source_weights ` +
+					`(loader will skip them): ${missingWeights.map((r) => r.source).join(", ")}`
+			)
+		}
+
+		const orphanWeights = rows.filter((r) => typeof r.weight === "number" && r.slices === 0)
+
+		if (orphanWeights.length) {
+			console.error(
+				`⚠ Sources weighted in config but no slices found in corpus ` +
+					`(no-op weights): ${orphanWeights.map((r) => r.source).join(", ")}`
+			)
+		}
+	}
+}
+
+export async function audit(opts: AuditOpts): Promise<void> {
+	const config = opts.configPath ? await parseConfig(opts.configPath) : null
+	// Compose the known-prefix list from both the hardcoded set and any extra names in the config
+	// (forward-compat for future adapters added before this file is updated).
+	const prefixes = [...new Set([...KNOWN_SOURCE_PREFIXES, ...Object.keys(config?.sourceWeights ?? {})])]
+
+	const stats =
+		(await manifestScan(opts.corpusDir, prefixes)) ?? (await scanSlices(opts.corpusDir, opts.sampleSliceCount ?? 100))
+
+	const trainStats = stats.bySplit["train"] ?? {}
+	const rows = buildAuditRows(trainStats, config?.sourceWeights ?? {})
+	printReport(opts.corpusDir, opts.configPath, stats, rows)
+}

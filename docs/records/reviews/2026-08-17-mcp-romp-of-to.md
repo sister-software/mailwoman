@@ -37,7 +37,7 @@ what made it worth probing.
 
 ### What the sources say
 
-**WOF shards** (`source: "wof"`), unscoped: two exact-name rows, plus a long tail of names merely
+**WOF extracts** (`source: "wof"`), unscoped: two exact-name rows, plus a long tail of names merely
 _containing_ the token — `City of Port of Spain`, `Isle of Grain`, `Municipality of the County of Kings`,
 17 US postcodes matching on `alt_names`, and `The place of impact of the spear` (IR), which is a genuine
 WOF row.
@@ -54,7 +54,7 @@ matching — **not a build gap.**
 |               | WOF source                               | Candidate              |
 | ------------- | ---------------------------------------- | ---------------------- |
 | Route         | FTS5 token-AND over `name` + `alt_names` | exact `name_key` probe |
-| Rows for `Of` | 66 row-hits across 6 shards              | 2                      |
+| Rows for `Of` | 66 row-hits across 6 extracts            | 2                      |
 
 ### The finding: a tie the ranker cannot break
 
@@ -93,7 +93,7 @@ pulled from WOF. It is an acquisition gap, not a modelling error, and it closes 
 ### What shipped, and what is still unverified
 
 A **seat preference** now breaks the tie: on an exact `neg_rank` tie, a `locality` carrying a _real_
-population outranks other placetypes. Both gates are required and were measured, not reasoned:
+population outranks other placetypes. Both checks are required and were measured, not reasoned:
 
 - A plain "finer placetype wins" moved the top slot on **11,377** keys, of which only **722** were the
   seat/district duplicate. The rest were contests between distinct places — 2,885 `locality → neighbourhood`
@@ -120,7 +120,7 @@ cross-_country_ name collisions, since `name_key` groups globally. The two probl
 
 ### The FTS route: the stopword problem, larger
 
-`to` returns **976 row-hits** across the shards. Same mechanism as `Of`, more of it. The rows that come back
+`to` returns **976 row-hits** across the extracts. Same mechanism as `Of`, more of it. The rows that come back
 first are genuine — `Tô` (BF), `Tó` (PT), `To` (NO ×3) — so bm25 ranks exact-ish matches sensibly; the 976
 is the tail.
 
@@ -198,7 +198,7 @@ The genuine exonym is shared across _more_ places than the offending noun. Shari
 
 **What does look separable** — and this is a hypothesis, not a finding — is the mismatch between key count
 and prominence. 221 keys on a 63-person neighbourhood is anomalous in a way 428 keys on the United States
-is not. That is a lever with a board, not a change to make from one example.
+is not. That is a change with a board, not a change to make from one example.
 
 ### Why this survived
 

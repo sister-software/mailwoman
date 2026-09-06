@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { haversineKm } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
-
-import { haversineKm } from "#index"
 
 // Earth mean radius the formula uses (RADII.km). Reference distances below are derived from it, not
 // looked up — so they pin the exact constant + formula, not an approximation.

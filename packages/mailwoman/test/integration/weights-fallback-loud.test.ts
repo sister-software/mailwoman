@@ -21,18 +21,17 @@
  *   covered below.
  */
 
-import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { workspacePath } from "@mailwoman/core/paths"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
+import { $public } from "mailwoman/env"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 /**
@@ -72,7 +71,7 @@ afterAll(() => {
  * Child env with weights forced absent: empty $HOME + quiet node.
  */
 function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
-	return childEnv({ HOME: homeStub.path, NODE_NO_WARNINGS: "1", ...extra })
+	return childEnv({ HOME: homeStub.path.toString(), NODE_NO_WARNINGS: "1", ...extra })
 }
 
 /**
@@ -83,7 +82,7 @@ async function runCLI(
 	env: NodeJS.ProcessEnv
 ): Promise<{ stdout: string; stderr: string; code: number }> {
 	try {
-		const { stdout, stderr } = await exec("node", [cliBin, ...args], { env, maxBuffer: 8 * 1024 * 1024 })
+		const { stdout, stderr } = await runFile("node", [cliBin, ...args], { env, maxBuffer: 8 * 1024 * 1024 })
 
 		return { stdout, stderr, code: 0 }
 	} catch (error) {
@@ -194,7 +193,7 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 	}, 30_000)
 })
 
-// End-to-end --resolve degraded path (exit 0 with a real resolver) — gated on a WOF SQLite distribution,
+// End-to-end --resolve degraded path (exit 0 with a real resolver) — conditioned on a WOF SQLite distribution,
 // mirroring resolve-flag.test.ts. Runs only where a WOF DB is on disk; proves the warning + degraded
 // output + exit 0 combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))

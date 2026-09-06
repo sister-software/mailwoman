@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The three-law selectivity's unit surface (pure functions) + a DB-gated integration pass for the
+ *   The three-law selectivity's unit surface (pure functions) + a DB-conditional integration pass for the
  *   locality-surface build. Each law traces to a falsified training run (v3.16→v3.18) — these tests
  *   are the regression fence around that tuition.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { tmpdir } from "@mailwoman/platform/os"
 import {
 	buildStreetTypeLexicon,
 	clearsProminenceFloor,
@@ -24,9 +24,9 @@ import {
 import { loadDegenerateSurfaces } from "mailwoman/gazetteer-pipeline/fst"
 import { describe, expect, it } from "vitest"
 
-describe("three-law selectivity — pure units", () => {
-	const personNames = loadPersonNameSurfaces()
+const personNames = await loadPersonNameSurfaces()
 
+describe("three-law selectivity — pure units", () => {
 	it("law 3: person-name surfaces exist and carry the flip-row names", () => {
 		// The v3.17→v3.18 flip rows: given names that are prominent-place homographs.
 		for (const name of ["joseph", "pierre", "louis", "thomas"]) {
@@ -159,8 +159,8 @@ interface StreetTypeLexicon {
 }
 
 describe("street-type lexicon build", () => {
-	it("canonical lowercase words in entries, short abbreviations uppercase-gated", async () => {
-		const tmp = `${tmpdir()}/street-type-lexicon-test.json`
+	it("canonical lowercase words in entries, short abbreviations uppercase-conditional", async () => {
+		const tmp = tempRootPath(`street-type-lexicon-test.json`)
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.entries).toBeGreaterThan(400)
@@ -175,7 +175,7 @@ describe("street-type lexicon build", () => {
 	})
 
 	it("v2 / census family F1: US-state-homograph codes withheld, directionals kept", async () => {
-		const tmp = `${tmpdir()}/street-type-lexicon-v2-test.json`
+		const tmp = tempRootPath(`street-type-lexicon-v2-test.json`)
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)

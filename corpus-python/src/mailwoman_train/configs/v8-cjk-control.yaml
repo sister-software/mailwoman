@@ -1,0 +1,68 @@
+# === v8-cjk-control — v8-cjk-full with the CN source at 0.0: the 49-label head over the JP slice alone. ==============
+#
+# The control the v8-cjk-full header pre-registered for the case where the JP read moves. It did: at 24k the shared
+# head read coordinate-acceptability 0.9653 against the JP record's 0.9928, and 598 of the 664 failed rows are ONE
+# held-out hiragana municipality, かすみがうら市, predicted without its trailing 市 (the JP-only 24k model missed 2 of
+# its 823 rows). Everything else in the run is byte-identical to v8-cjk-full: same head width (49), same re-sealed
+# CJK char vocabulary, same seed, schedule and precision. This arm answers ONE question: does the 49-label head over
+# the JP slice alone also drop the generic on that municipality? If yes, the 0.9653 is head-width or run-to-run
+# variance on a single held-out name and the CN rows are not the cause; if this arm reads like the JP record, the
+# mixture is. Nothing here is a CN reading — the CN source is off.
+#
+# Launch:
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-control.yaml --resume auto
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-2026-09-05
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform. Same as v8-jp-full.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+    CN: 1.0
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart.
+  source_weights:
+    overture-jp: 1.0
+    # The control arm: the CN source at zero. The loader drops a zero-weight source from train AND val, so
+    # val reads the 20,000 JP rows and the CN val part contributes nothing.
+    coarse-placer-cn-units: 0.0
+  coarse_filter: false
+  # JP val 20,000 + CN val 11.
+  val_rows: 20011
+  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # v8-jp-full's geometry, unchanged, so the two deltas above are the only deltas.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-control-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 24000
+  eval_every_steps: 2000
+  save_every_steps: 4000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

@@ -3,288 +3,59 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Materialize the en-nz overlay's dev artifacts. See
- *   @mailwoman/neural-weights-en-us/scripts/link-dev-weights.ts for the base rationale.
+ *   Materialize the en-nz overlay's dev artifacts. The steps live in
+ *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest.
  *
- *   #1179 OVERLAY FORM (fr-fr's rewritten shape, adopted here from day one): en-nz declares
- *   `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so `resolveWeights` falls through
- *   to the en-us package for `model.onnx` / `tokenizer.model`. This script therefore links no
- *   model or tokenizer at all — it REMOVES any leftover local pair so the base fallback engages
- *   (a stale local file would SHADOW the base fallback and silently serve outdated bytes; see the
- *   fr-fr script's header for the incident that taught this).
+ *   #1179 OVERLAY FORM: en-nz declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
+ *   `resolveWeights` falls through to the en-us package for `model.onnx` / `tokenizer.model`. This overlay links no
+ *   model or tokenizer — it REMOVES any leftover local pair so the base fallback engages (a stale local file would
+ *   SHADOW the base fallback and silently serve outdated bytes; the fr-fr manifest's header records the incident).
  *
- *   What en-nz DOES own locally (locale-specific soft-feed siblings; `resolveFromPackageDir`
- *   resolves these from the overlay dir with no base fallback):
+ *   What en-nz DOES own locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
  *
- *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files,
- *       symlinked from `data/gazetteer/`.
- *   - `pair-index-nz.bin` (NZ arc, #1277) — no committed source (derived from the LINZ-derived
- *       OpenAddresses NZ countrywide CSV, the same register `synth-nz-v2` was built from), built in
- *       place via the compiled `gazetteer pair-index` CLI. `--delta 10` is the NZ-sweep-calibrated
- *       value (task-8 report, 2026-07-24 § "NZ arc": saturates at δ=10, identical to 12/15, 0/54
- *       golden-FP throughout) baked into the artifact's header.
+ *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files.
+ *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation
+ *       the card names under `requires.<channel>.lexicon`, the same pair the `files` array ships.
+ *   - `pair-index-nz.bin` (NZ arc, #1277) — no committed source (derived from the LINZ-derived OpenAddresses NZ
+ *       countrywide CSV, the same register `synth-nz-v2` was built from), built through the shared
+ *       `buildPairIndexOverlay` (whose freshness guard compares the format, every calibrated magnitude, and the
+ *       source md5; sidecar-cached — the CSV is 2.12M rows). `--delta 10` is the NZ-sweep-calibrated value (saturates
+ *       at δ=10, identical to 12/15, 0/54 golden-FP throughout) baked into the artifact's header. This locale
+ *       deliberately ships WITHOUT a `transitionBeta` (unmeasured there); the parent-bias δ=5 is measured — NZ's own
+ *       shipped board moved 230/246 → 246/246 whole-edge, identical at δ 4/6/8/20 — see
+ *       `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  *
- *   UNLIKE en-gb there is NO postcode binary to build: no WOF NZ postcode shard exists
- *   (release.config.json's softFeed.postcodeDBByCountry has no `nz` entry), so the anchor channel
- *   resolves OFF for en-nz until that shard is built — the tracked follow-up in this package's
- *   model-card.json (`nz_artifacts.no_postcode_bin`).
- *
- *   FRESHNESS GUARD on the skip-if-exists path (the en-gb pattern, verbatim rationale): a bare
- *   `existsSync` skip would let an existing `pair-index-nz.bin` go stale against either (a) a
- *   bumped `--delta` literal below or (b) a changed source CSV on disk. So: peek the existing
- *   binary's header (magic + header block ONLY, via a local reimplementation of
- *   `peekPairIndexHeader` — NOT imported from `@mailwoman/neural`, so this data-only package
- *   doesn't gain a dependency on the ONNX-runtime-carrying workspace for one header read) and
- *   compare `header.delta` against this script's `PAIR_INDEX_DELTA`, and EVERY md5 in
- *   `header.sourceMD5s` against a freshly computed md5 of the corresponding source (sidecar-cached
- *   — the CSV is 2.12M rows, worth not re-hashing on every `yarn test`). Any mismatch forces a loud
- *   rebuild instead of a silent skip. The NZ CSV is ~12× smaller than GB's PPD source (2.1M vs
- *   25.6M rows), so even a cold rebuild is well under a minute — the guard exists for correctness,
- *   not build-time savings.
+ *   UNLIKE en-gb there is NO postcode binary to build: no WOF NZ postcode extract exists (release.config.json's
+ *   softFeed.postcodeDBByCountry has no `nz` entry), so the anchor channel resolves OFF for en-nz until that extract
+ *   is built — the tracked follow-up in this package's model-card.json (`nz_artifacts.no_postcode_bin`).
  */
 
-import { readLocalTextFile, statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { resolve } from "@mailwoman/platform/path"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import {
-	linkForce,
-	pairIndexStaleReason,
-	peekPairIndexHeaderFields,
-	removeIfPresent,
+	committedSoftFeedLinks,
+	materializeDevOverlay,
+	PAIR_INDEX_DELTA,
+	PAIR_INDEX_PARENT_DELTA,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * Hex characters in an md5 digest.
+ * The LINZ-derived OpenAddresses NZ countrywide CSV — the build's one source, md5-recorded in the header.
  */
-const MD5_HEX_LENGTH = 32
+const NZ_SOURCE_CSV = String(dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
 
-/**
- * Where the artifacts LAND — the data-root overlay, never this tracked package.
- *
- * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
- * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`).
- */
-const DEST_DIR = String(weightsOverlayPath("en-nz"))
+const softFeed = await committedSoftFeedLinks()
 
-await makeDirectories(DEST_DIR)
-
-/**
- * Read or compute MD5 hash for a file, using a sidecar .md5 cache to avoid re-hashing large files. The sidecar is
- * written in standard md5sum format: `<hash> <filename>` (hash, two spaces, filename). On subsequent runs, if the
- * sidecar exists and its mtime >= the source file's mtime, the hash is read from the sidecar; otherwise it's recomputed
- * and the sidecar is updated.
- */
-async function md5FileWithSidecar(path: string): Promise<string> {
-	const sidecarPath = `${path}.md5`
-	const sourceStats = await statPath(path)
-
-	if (await pathExists(sidecarPath)) {
-		try {
-			const sidecarStats = await statPath(sidecarPath)
-
-			if (sidecarStats.mtime >= sourceStats.mtime) {
-				const sidecarContent = (await readLocalTextFile(sidecarPath)).trim()
-				const [hash] = sidecarContent.split(/\s+/)
-
-				if (hash && hash.length === MD5_HEX_LENGTH) {
-					// Valid md5 hash (32 hex chars)
-					console.log(`md5(${path}): read from sidecar`)
-
-					return hash
-				}
-			}
-		} catch {
-			// If sidecar read fails, fall through to recompute
-		}
-	}
-
-	const hash = await md5File(path)
-	const filename = path.split(/[/\\]/).pop() || path
-	await writeLocalTextFile(`${hash}  ${filename}\n`, sidecarPath)
-
-	console.log(`md5(${path}): computed and cached in sidecar`)
-
-	return hash
-}
-
-await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
-
-/**
- * --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----.
- */
-const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
-/**
- * Country-surface lexicon generated into the repo by the codex build.
- */
-const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
-
-if (await pathExists(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
-
-	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
-} else {
-	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
-}
-
-if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
-
-	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
-} else {
-	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
-}
-
-/**
- * `pair-index-nz.bin` (NZ arc, #1277) has no committed source (it's derived from the LINZ-derived OpenAddresses NZ
- * countrywide CSV) — build it in place via the compiled `gazetteer pair-index` CLI, the same command
- * `scripts/copy-weights.ts` runs at publish time (softFeed.pairIndexByCountry.nz). Skips with a warning (not a hard
- * failure) so a worktree without the source CSV can still link the lexicons. Freshness-guarded per the module doc
- * above.
- */
-const NZ_SOURCE_CSV = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
-/**
- * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
- */
-const CLI = workspacePath("mailwoman", "out", "cli.js")
-/**
- * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
- */
-const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-nz.bin")
-/**
- * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
- * forces a loud rebuild rather than silently shipping a stale index.
- */
-const PAIR_INDEX_DELTA = 10
-/**
- * The NZ artifact's WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5.
- * NZ's own shipped board moved 230/246 → 246/246 whole-edge with the parent bias on, identical at δ 4/6/8/20 — see
- * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Note this locale still ships WITHOUT a `transitionBeta`
- * (unmeasured there); the two levers are calibrated independently and NZ earning one says nothing about the other.
- */
-const PAIR_INDEX_PARENT_DELTA = 5
-
-let pairIndexIsFresh = false
-
-if (await pathExists(PAIR_INDEX_BIN_DEST)) {
-	try {
-		const header = await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
-		const existingSourceMD5s = header.sourceMD5s
-
-		// Format + every calibrated magnitude, through the shared check — see `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`.
-		// This script previously compared `delta` alone, which is how it stayed blind to a `transitionBeta` it does
-		// not set and would have stayed blind to a schema bump.
-		const staleReason = pairIndexStaleReason(header, {
-			delta: PAIR_INDEX_DELTA,
-			parentDelta: PAIR_INDEX_PARENT_DELTA,
-		})
-
-		if (staleReason) {
-			console.log(`STALE pair-index-nz.bin: ${staleReason} — rebuilding.`)
-		} else if (!(await pathExists(String(NZ_SOURCE_CSV)))) {
-			// Delta matches but the source CSV isn't on disk to re-hash — can't do better than trust the
-			// delta match (the "missing source, can't build" branch below would fire anyway if this were
-			// stale and needed a rebuild).
-			pairIndexIsFresh = true
-
-			console.log(
-				`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta (source CSV absent, md5 freshness unverifiable)`
-			)
-		} else {
-			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
-			// guard blind to the rest, and a stale artifact then keeps reporting itself fresh while the data it
-			// was built from has moved. The NZ build passes exactly one source (`--source <csv>`; no
-			// `--borough-db`, no `--pairs-jsonl`), so `gazetteer pair-index` records exactly one md5 and this
-			// single comparison IS the whole set — a header recording any other count cannot have come from
-			// this build, which is itself staleness.
-			const currentSourceMD5 = await md5FileWithSidecar(String(NZ_SOURCE_CSV))
-			const [existingSourceMD5] = existingSourceMD5s
-
-			if (existingSourceMD5s.length !== 1) {
-				console.log(
-					`STALE pair-index-nz.bin: header records ${existingSourceMD5s.length} source md5s ` +
-						`[${existingSourceMD5s.join(", ") || "(none recorded)"}], but this build reads exactly one source ` +
-						`(${NZ_SOURCE_CSV}) — rebuilding.`
-				)
-			} else if (existingSourceMD5 === currentSourceMD5) {
-				pairIndexIsFresh = true
-
-				console.log(
-					`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (header magnitudes + source md5 match)`
-				)
-			} else {
-				console.log(
-					`STALE pair-index-nz.bin: header source md5 ${existingSourceMD5} != current ` +
-						`${NZ_SOURCE_CSV} md5 ${currentSourceMD5} — rebuilding.`
-				)
-			}
-		}
-	} catch (error) {
-		console.log(`pair-index-nz.bin header unreadable (${(error as Error).message}) — rebuilding.`)
-	}
-}
-
-if (pairIndexIsFresh) {
-	// Nothing to do — the loud skip/rebuild message was already printed above.
-} else if (!(await pathExists(CLI))) {
-	console.error(
-		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build pair-index-nz.bin.`
-	)
-} else if (!(await pathExists(String(NZ_SOURCE_CSV)))) {
-	console.error(
-		`WARNING: missing ${NZ_SOURCE_CSV} — pair-index-nz.bin not built; the placetype-pair prior default will resolve OFF for NZ.`
-	)
-} else {
-	const result = spawnSync(
-		process.execPath,
-		[
-			CLI,
-			"gazetteer",
-			"pair-index",
-			"--out",
-			DEST_DIR,
-			"--country",
-			"nz",
-			"--source",
-			String(NZ_SOURCE_CSV),
-			"--delta",
-			String(PAIR_INDEX_DELTA),
-			"--parent-delta",
-			String(PAIR_INDEX_PARENT_DELTA),
-		],
-		{ stdio: "inherit" }
-	)
-
-	if (result.status !== 0 || !(await pathExists(PAIR_INDEX_BIN_DEST))) {
-		console.error(`ERROR: failed to build ${PAIR_INDEX_BIN_DEST} (exit ${result.status})`)
-
-		process.exit(1)
-	}
-
-	console.log(`built ${PAIR_INDEX_BIN_DEST}`)
-}
-
-/**
- * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
- * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
- * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
- * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
- * it. (en-nz ships no per-locale FST, but the morphology artifact is locale-general, so it ships here too.)
- */
-const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-/**
- * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
- */
-const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
-
-if (await pathExists(MORPHOLOGY_SRC)) {
-	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
-
-	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
-} else {
-	console.error(
-		`WARNING: missing ${MORPHOLOGY_SRC} — the street-context gate falls back to the per-process dictionary build.`
-	)
-}
+await materializeDevOverlay({
+	locale: "en-nz",
+	model: { kind: "inherit" },
+	softFeed: [softFeed.anchor, softFeed.country],
+	evidenceLexiconsFromCard: true,
+	pairIndex: {
+		country: "nz",
+		delta: PAIR_INDEX_DELTA,
+		parentDelta: PAIR_INDEX_PARENT_DELTA,
+		sources: [NZ_SOURCE_CSV],
+		extraArgs: ["--source", NZ_SOURCE_CSV],
+	},
+	streetMorphologyFST: true,
+})

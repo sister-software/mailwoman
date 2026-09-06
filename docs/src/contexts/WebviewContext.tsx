@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { SetStateAction } from "react"
 import { createContext, useCallback, useContext, useMemo } from "react"
 import type { ViewState } from "react-map-gl"

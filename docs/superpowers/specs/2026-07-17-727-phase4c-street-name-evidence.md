@@ -35,7 +35,7 @@ Rerank rule, applied only when rank-1's street is not the evidence pick:
 This stays inside the anti-Pelias rule from `resolver/rerank.ts`: one bit of evidence, no score
 blending, model order preserved among candidates with equal evidence. G1 is a lexicon fact
 (libpostal street-type dictionaries), not a tuned weight; G2's 2.5 is the one scalar — it must be
-re-fit (or replaced by the isotonic ambiguity gate the plan pre-registered) when the span head
+re-fit (or replaced by the isotonic ambiguity check the plan pre-registered) when the span head
 retrains, since raw score margins are not calibrated across models.
 
 Residual per-class notes from the board: street-housenumber dips 0.922 → 0.912 under G2 (the cap
@@ -81,7 +81,7 @@ Index backends, in build order:
 Fold parity is a CONTRACT: the index builder and the runtime prober must share the fold function
 (export it beside the interface). The 4 original G2 breaks were fold mismatches (`pillet-will`
 stored unhyphenated); the builder should normalize hyphens/apostrophes to spaces on BOTH sides —
-re-measure the 3 residual breaks after that change, it likely cuts them further.
+re-measure the 3 residual breaks after that change, it likely reduces them further.
 
 ## What phase 4c does NOT do
 
@@ -92,7 +92,7 @@ re-measure the 3 residual breaks after that change, it likely cuts them further.
   stop and re-read the rerank.ts header.
 - No production wiring until a span-head model ships. The v3.10.1 8k model (step-4, 2026-07-17) is
   the substrate: it exports spanScores + the semi-crf-transitions sidecar and is staged at
-  `scratchpad/v3101-cache`. The rerank rides that model behind a flag, with the golden gate +
+  `scratchpad/v3101-cache`. The rerank rides that model behind a flag, with the golden check +
   gauntlet battery (run WITH the rerank active) as the promotion bar.
 
 ## Measured-read pre-registration for the implementation PR
@@ -100,7 +100,7 @@ re-measure the 3 residual breaks after that change, it likely cuts them further.
 On the FR fragment board (same fixtures, the **v3.10.1 8k substrate**, k=5 — NOT the v301 proxy):
 street@1 ≥ 0.85 overall, date-name ≥ 0.55 (the primary-win class), breaks ≤ 5 of recoverable,
 zero regression on street-housenumber beyond −1.0pp vs seg@1. On parity fixtures: no
-coordinate-acceptability regression (P1/P2/P3 gate). Baseline to beat = seg@1 0.791 → the v2 policy
+coordinate-acceptability regression (P1/P2/P3 check). Baseline to beat = seg@1 0.791 → the v2 policy
 board result 0.851 (96 fixes / 3 breaks) is the target the wired implementation must reproduce.
 
 ## Logged training signal (free byproduct)

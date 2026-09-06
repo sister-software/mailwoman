@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { InMemoryPolicyRegistry } from "@mailwoman/core/policy/registry"
+import { Span } from "@mailwoman/core/tokenization"
+import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
-
-import { Span } from "#tokenization"
-import type { ClassificationProposal } from "#types"
 
 function makeProposal(
 	overrides: Partial<ClassificationProposal> & Pick<ClassificationProposal, "component" | "source">

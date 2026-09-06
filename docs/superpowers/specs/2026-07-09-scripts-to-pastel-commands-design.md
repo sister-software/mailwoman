@@ -19,46 +19,46 @@ Every table row = one thin `.tsx` in `mailwoman/commands/…` wrapping a `run()`
 
 ### `mailwoman corpus` (existing group, gains)
 
-| Command                   | Source script                                                                                                                              | Logic lands in                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| `corpus audit`            | `corpus/scripts/audit.ts`                                                                                                                  | `corpus/tools/audit.ts`                                                 |
-| `corpus ingest-csv`       | `corpus/scripts/ingest-csv.ts`                                                                                                             | `corpus/tools/ingest-csv.ts`                                            |
-| `corpus fetch <source>`   | `corpus/scripts/fetch-nad.ts` + `fetch-sources/*` (ban, hrsa, imls-pls, nppes, openaddresses, state-sources, state-hi-schools, tiger-full) | `corpus/tools/fetch/<source>.ts` over one shared fetch util (§3)        |
-| `corpus shard kryptonite` | `corpus/scripts/build-kryptonite-shard.ts`                                                                                                 | `corpus/tools/shard-kryptonite.ts`                                      |
-| `corpus shard translit`   | `corpus/scripts/build-transliteration-shard.ts`                                                                                            | `corpus/tools/shard-translit.ts`                                        |
-| `corpus golden expand`    | `corpus/scripts/expand-golden.ts`                                                                                                          | `corpus/tools/golden-expand.ts`                                         |
-| `corpus golden promote`   | `corpus/scripts/promote-golden.ts`                                                                                                         | `corpus/tools/golden-promote.ts`                                        |
-| — (fold)                  | `corpus/scripts/run-corpus-build.ts`                                                                                                       | duplicate of existing `corpus run` (`runAdapter`) — verify, then delete |
+| Command                     | Source script                                                                                                                              | Logic lands in                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `corpus audit`              | `corpus/scripts/audit.ts`                                                                                                                  | `corpus/tools/audit.ts`                                                 |
+| `corpus ingest-csv`         | `corpus/scripts/ingest-csv.ts`                                                                                                             | `corpus/tools/ingest-csv.ts`                                            |
+| `corpus fetch <source>`     | `corpus/scripts/fetch-nad.ts` + `fetch-sources/*` (ban, hrsa, imls-pls, nppes, openaddresses, state-sources, state-hi-schools, tiger-full) | `corpus/tools/fetch/<source>.ts` over one shared fetch util (§3)        |
+| `corpus extract kryptonite` | `corpus/scripts/build-kryptonite-extract.ts`                                                                                               | `corpus/tools/extract-kryptonite.ts`                                    |
+| `corpus extract translit`   | `corpus/scripts/build-transliteration-extract.ts`                                                                                          | `corpus/tools/extract-translit.ts`                                      |
+| `corpus golden expand`      | `corpus/scripts/expand-golden.ts`                                                                                                          | `corpus/tools/golden-expand.ts`                                         |
+| `corpus golden promote`     | `corpus/scripts/promote-golden.ts`                                                                                                         | `corpus/tools/golden-promote.ts`                                        |
+| — (fold)                    | `corpus/scripts/run-corpus-build.ts`                                                                                                       | duplicate of existing `corpus run` (`runAdapter`) — verify, then delete |
 
-The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-tools/` (3 files backing align-shard/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
+The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-tools/` (3 files backing align-extract/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
 
 ### `mailwoman dev` (new group)
 
-| Command                           | Source script                                        | Logic lands in                                                                   |
-| --------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `dev generate country-reference`  | `scripts/generate-country-reference.ts`              | `codex/tools/generate-country-reference.ts`                                      |
-| `dev generate official-languages` | `scripts/generate-official-languages.ts`             | `codex/tools/generate-official-languages.ts`                                     |
-| `dev generate language-types`     | `scripts/generate-language-types.ts`                 | `core/tools/generate-language-types.ts` (generates core types)                   |
-| `dev generate trace-fixture`      | `scripts/generate-trace-fixture.ts`                  | `mailwoman/dev-tools/` (fixture for the docs visualizer; no better owner)        |
-| `dev lint corpus-shard`           | `scripts/lint-corpus-shard.ts` (+ `lint-rules.json`) | `corpus/tools/lint-shard.ts` (rules JSON moves with it)                          |
-| `dev lint shard-vocab`            | `scripts/lint-shard-vocab.ts`                        | `corpus/tools/lint-shard-vocab.ts`                                               |
-| `dev lint mdx-angles`             | `scripts/lint-mdx-angles.ts`                         | `mailwoman/dev-tools/` (docs tooling; docs workspace is private, can't be a dep) |
-| `dev jsonl-to-parquet`            | `scripts/jsonl-to-parquet.ts`                        | `corpus/tools/jsonl-to-parquet.ts` (it writes corpus shards)                     |
+| Command                           | Source script                                          | Logic lands in                                                                   |
+| --------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `dev generate country-reference`  | `scripts/generate-country-reference.ts`                | `codex/tools/generate-country-reference.ts`                                      |
+| `dev generate official-languages` | `scripts/generate-official-languages.ts`               | `codex/tools/generate-official-languages.ts`                                     |
+| `dev generate language-types`     | `scripts/generate-language-types.ts`                   | `core/tools/generate-language-types.ts` (generates core types)                   |
+| `dev generate trace-fixture`      | `scripts/generate-trace-fixture.ts`                    | `mailwoman/dev-tools/` (fixture for the docs visualizer; no better owner)        |
+| `dev lint corpus-extract`         | `scripts/lint-corpus-extract.ts` (+ `lint-rules.json`) | `corpus/tools/lint-extract.ts` (rules JSON moves with it)                        |
+| `dev lint extract-vocab`          | `scripts/lint-extract-vocab.ts`                        | `corpus/tools/lint-extract-vocab.ts`                                             |
+| `dev lint mdx-angles`             | `scripts/lint-mdx-angles.ts`                           | `mailwoman/dev-tools/` (docs tooling; docs workspace is private, can't be a dep) |
+| `dev jsonl-to-parquet`            | `scripts/jsonl-to-parquet.ts`                          | `corpus/tools/jsonl-to-parquet.ts` (it writes corpus extracts)                   |
 
 ### `mailwoman eval` (new group)
 
-Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Gate-threshold JSONs (`scripts/eval/gates/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data, not code).
+Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data, not code).
 
 | Command                      | Source script                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------- |
-| `eval gate`                  | `scripts/eval/promotion-gate.ts` (+ `promotion-gate-verdict.ts`)                            |
+| `eval promote`               | `scripts/eval/promotion-eval.ts` (+ `promotion-eval-verdict.ts`)                            |
 | `eval gauntlet`              | `scripts/eval/gauntlet/run.ts` (+ harness/schema/regression/metamorphic/holdout as modules) |
 | `eval ledger append`         | `scripts/eval/ledger-append.ts`                                                             |
 | `eval capability-manifest`   | `scripts/eval/gen-capability-manifest.ts`                                                   |
 | `eval oa-resolver`           | `scripts/eval/oa-resolver-eval.ts`                                                          |
 | `eval error-analysis`        | `scripts/eval/eval-error-analysis.ts` (night-shift skill repoints)                          |
 | `eval preset-compare`        | `scripts/eval/demo-preset-compare.ts` (eval-model skill repoints)                           |
-| `eval mask-regression`       | `scripts/eval/mask-regression-gate.ts`                                                      |
+| `eval mask-regression`       | `scripts/eval/mask-regression-check.ts`                                                     |
 | `eval es-postcode-centroids` | `scripts/eval/overture-es-postcode-centroids.ts` (RELEASING.md repoints)                    |
 
 **Probe triage (the ~100-file long tail):** the rule is mechanical — a script referenced by CI, a skill, RELEASING.md, or another surviving script gets a command; every other probe moves to `scripts/diagnostic/` (the gitignored graveyard; git history preserves tracked ones at their old paths). `scripts/eval/record-matcher/` (train-gbt + learned-scorer evals) moves to `registry/tools/` with the registry phase, per the drawer spec's original intent. Python eval scripts (`fit-*.py`, `calibration-drift-guard.py`) are exempt (Python).
@@ -120,15 +120,15 @@ All four `bin` entries leave `resolver-wof-sqlite/package.json`. `build-fts-cli.
 
 New core helpers follow the acronym-casing convention (`readJSONL`, not `readJsonl`) so they don't join the #875 debt. Phase 0 lands the core helpers; later phases consume them as each script migrates — **no big-bang rewrite of untouched scripts**; a script's dedupe happens when it migrates (probes headed for `diagnostic/` are not rewritten).
 
-| #   | Concern                                                       | Sites                     | Destination                                                                                      |
-| --- | ------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------ |
-| 1   | JSONL read/write/iterate (`split("\n")` + `JSON.parse` idiom) | ~88 files                 | `core/utils`: `readJSONL`/`writeJSONL`/`iterateJSONL`                                            |
-| 2   | `percentile`/`median`/`quantile` + `formatPercent`            | ~15 + ~40                 | `core/utils` stats module                                                                        |
-| 3   | `sha256OfFile` clones                                         | ~12                       | `core/utils`: `sha256File()`                                                                     |
-| 4   | `downloadToFile` + `isTransientStatus` + MANIFEST read/write  | ~9 files each, same files | `corpus/tools/fetch/shared.ts` (owning package — corpus-fetch-specific shape)                    |
-| 5   | local `mulberry32`/`shuffle` re-rolls                         | 4                         | delete; use `SeededRandom` (`core/utils`, exists)                                                |
-| 6   | hardcoded `/mnt/playpen`/`/data` literals                     | ~13                       | `dataRootPath()` (exists) — excludes `build-transliteration-shard`'s deliberate rewrite prefixes |
-| 7   | coarse-placer FNV-1a `hash`                                   | 4                         | `core/coarse-placer/tools/shared.ts`                                                             |
+| #   | Concern                                                       | Sites                     | Destination                                                                                        |
+| --- | ------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | JSONL read/write/iterate (`split("\n")` + `JSON.parse` idiom) | ~88 files                 | `core/utils`: `readJSONL`/`writeJSONL`/`iterateJSONL`                                              |
+| 2   | `percentile`/`median`/`quantile` + `formatPercent`            | ~15 + ~40                 | `core/utils` stats module                                                                          |
+| 3   | `sha256OfFile` clones                                         | ~12                       | `core/utils`: `sha256File()`                                                                       |
+| 4   | `downloadToFile` + `isTransientStatus` + MANIFEST read/write  | ~9 files each, same files | `corpus/tools/fetch/shared.ts` (owning package — corpus-fetch-specific shape)                      |
+| 5   | local `mulberry32`/`shuffle` re-rolls                         | 4                         | delete; use `SeededRandom` (`core/utils`, exists)                                                  |
+| 6   | hardcoded `/mnt/playpen`/`/data` literals                     | ~13                       | `dataRootPath()` (exists) — excludes `build-transliteration-extract`'s deliberate rewrite prefixes |
+| 7   | coarse-placer FNV-1a `hash`                                   | 4                         | `core/coarse-placer/tools/shared.ts`                                                               |
 
 **Deliberately left:** byte-size formatting (1 file), CSV parsing (`ingest-csv`'s is deliberate), exec wrappers (three styles, no shared shape), padEnd table grids (37 bespoke), progress ticks (bespoke phrasing).
 
@@ -146,20 +146,20 @@ Commands remain TSX (compiled); tool modules in owning workspaces remain plain `
 
 ## 5. Phasing (one PR each, sequenced)
 
-| Phase | Contents                                                                                           | Gate                                                                                                                                   |
+| Phase | Contents                                                                                           | Check                                                                                                                                  |
 | ----- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | 0     | core dedupe helpers (§3 #1–3) + cli-kit/test-kit move with shims + `useCommandTask`/`CheckList`    | unit tests for new helpers; `yarn compile`; existing commands still run                                                                |
 | 1     | corpus: tools modules + commands + fetch shared util (§3 #4) + corpus-tools absorption + deletions | each command `--help` + one real invocation per command (dry-run flags where network-bound); `corpus/scripts/` empty                   |
 | 2     | `mailwoman dev` namespace (codex/core/corpus/dev-tools)                                            | codegen output byte-identical vs old scripts on same inputs                                                                            |
 | 3     | WOF bin absorption + demo-assets slim-leg removal + bin deletions                                  | resolver-wof-sqlite tests; **demo production smoke green**; `mailwoman gazetteer build fts` parity vs old bin on a fixture DB          |
 | 4     | registry/tiger/placer groups + record-matcher scripts → registry/tools + tiger dep fix             | `--help` smokes; one figure render; placer eval parity on cached dataset                                                               |
-| 5     | eval: eval-harness module extraction + commands + probe triage → diagnostic/                       | **promotion-gate + gauntlet before/after parity: identical exit codes + artifacts on the same model**; RELEASING.md + skills repointed |
+| 5     | eval: eval-harness module extraction + commands + probe triage → diagnostic/                       | **promotion-eval + gauntlet before/after parity: identical exit codes + artifacts on the same model**; RELEASING.md + skills repointed |
 
-Phase 5 last because the gates guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
+Phase 5 last because the checks guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
 
 ## 6. Risks + contracts
 
-- **Gate parity is the hard contract:** `eval gate`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
+- **Check parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
 - **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
 - **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
 - **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.
@@ -169,10 +169,10 @@ Phase 5 last because the gates guard releases — nothing else may wobble while 
 
 - [ ] `corpus/scripts/` deleted; corpus logic lives in `corpus/tools/` behind `mailwoman corpus …`
 - [ ] `scripts/` top level = release tooling + configs ONLY (codegen/lint gone to `mailwoman dev`)
-- [ ] `scripts/eval/` reduced to Python calibration scripts + `gates` data consumed by eval-harness — or empty if those move cleanly; probes in `diagnostic/`
+- [ ] `scripts/eval/` reduced to Python calibration scripts + `checks` data consumed by eval-harness — or empty if those move cleanly; probes in `diagnostic/`
 - [ ] `registry/tools/`, `tiger/tools/`, `core/coarse-placer/tools/` all reachable via commands
 - [ ] resolver-wof-sqlite has zero `bin` entries; demo smoke green
 - [ ] `mailwoman/sdk/` gone (shims at old subpaths); `sdk` = data acquisition everywhere
 - [ ] Every command uses `useCommandTask`/cli-kit; zero copy-pasted runner dances
 - [ ] Dedupe table §3 executed for all migrated code; survey re-run shows no new duplicates in migrated trees
-- [ ] `yarn lint`, `yarn compile`, full test suite, promotion-gate + gauntlet parity, demo smoke — all green at each phase boundary
+- [ ] `yarn lint`, `yarn compile`, full test suite, promotion-eval + gauntlet parity, demo smoke — all green at each phase boundary

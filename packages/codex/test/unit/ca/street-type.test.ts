@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { isCanadianDirectional, isCanadianStreetWord } from "@mailwoman/codex/ca/street-type"
+import { isCanadianDirectional, isCanadianStreetWord } from "@mailwoman/codex/ca"
 import { describe, expect, it } from "vitest"
 
 describe("isCanadianStreetWord", () => {

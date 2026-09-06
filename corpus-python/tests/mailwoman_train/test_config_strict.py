@@ -3,7 +3,7 @@
 The 2026-07-22 en-GB probe run A burned a launch cycle on a YAML whose
 ``train.reinit_label_rows`` + ``train.classifier_learning_rate`` keys were silently
 dropped by a volume-side config that predated them — the run proceeded as a plain
-fine-tune with zero signal that its levers were inert. Config guards RAISE (same
+fine-tune with zero signal that its settings were inert. Config guards RAISE (same
 discipline as the YAML-Norway guard in ``DataConfig.__post_init__``).
 """
 
@@ -125,10 +125,10 @@ def test_lenient_config_skips_unknown_nested_receipt_keys(tmp_path):
 def test_lenient_mode_preserves_the_silent_skip(tmp_path):
     # strict=False is the override for tooling that intentionally consumes a
     # partial view of a config: unknown keys are skipped, known keys still merge.
-    path = _write(tmp_path, "train:\n  not_a_lever: 1\n  max_steps: 7\n")
+    path = _write(tmp_path, "train:\n  not_a_setting: 1\n  max_steps: 7\n")
     cfg = load_config(path, strict=False)
     assert cfg.train.max_steps == 7
-    assert not hasattr(cfg.train, "not_a_lever")
+    assert not hasattr(cfg.train, "not_a_setting")
 
 
 def test_lenient_merge_skips_unknown_keys():

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The venue-word hint table's integrity gate. The table is mined, so the committed artifact — not
+ *   The venue-word hint table's integrity check. The table is mined, so the committed artifact — not
  *   the generator — is what ships; these tests hold the committed rows to the bars the provenance
  *   block declares, and pin the exclusion families the composed measure exists to kill. A regenerate
  *   that widens a bar or leaks a toponym fails here, not in a consumer.
@@ -13,7 +13,7 @@ import { venueWordHint, venueWordHintCount, venueWordHintProvenance } from "@mai
 import type { VenueWordHintTable } from "@mailwoman/poi-taxonomy/venue-word-hints"
 import { describe, expect, it } from "vitest"
 
-const TABLE = readPackagedTable<VenueWordHintTable>("venue-word-hints.json")
+const TABLE = await readPackagedTable<VenueWordHintTable>("venue-word-hints.json")
 
 describe("venue-word-hints table integrity", () => {
 	it("every committed row honors the provenance block's own bars", () => {

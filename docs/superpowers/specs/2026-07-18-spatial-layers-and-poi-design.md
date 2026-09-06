@@ -110,14 +110,14 @@ vertical before expanding.)
 ## 3. Phase 1 — the POI arc (implementable now)
 
 Extends the Fable exotic-POI spec (scratchpad/fable-exotic-poi-design.md); its Phases 0–2
-(coordinate kind, venue gazetteer shard, venue-fragment retrain) proceed as written. This spec
+(coordinate kind, venue gazetteer extract, venue-fragment retrain) proceed as written. This spec
 adds the amenity/brand/intent half and re-homes venue data as layer #1.
 
 ### 3.1 Pipeline: `poi_query` kind
 
 - New `QueryKind` union member `poi_query` (`core/pipeline/types.ts`).
 - New scorer in `kind-classifier` (template: `scoreVenueLandmark`): lexicon hit on a
-  category/brand phrase, with the already-reserved `locale` param gating locale-specific
+  category/brand phrase, with the already-reserved `locale` param blocking locale-specific
   aliases. The classifier's "no place-name dictionaries" docstring invariant is relaxed
   deliberately: the lexicon lives in `variant-aliases` data and is injected, not hardcoded.
 - Anchor split: on a `poi_query` hit, the subject phrase is stripped and the remainder
@@ -175,7 +175,7 @@ ISP-adjacent categories are one slice of it. It therefore splits from `variant-a
 - Build: `mailwoman gazetteer build poi` (Overture places ingest; the divisions ingest is
   precedent). Scope: **all currently supported locales' countries (US, CA, MX, FR)** —
   operator decision. California rows cover the demo-preset acceptance probes (Pier 39 /
-  Golden Gate Park). Demo (Tier A pocket) inclusion is a separate budget review.
+  Golden Check Park). Demo (Tier A pocket) inclusion is a separate budget review.
 - Venue resolve half (placetypeMap `venue` entry, resolve.ts venue pass) proceeds per the
   Fable spec Phase 1; poi.db serves both the venue lookup and category/brand search.
 
@@ -187,7 +187,7 @@ they live in OSM and in Overture's _base_ theme, both ODbL. Ship `poi build --so
 The category lexicon still recognizes these subjects when the layer is absent — the answer is
 then "requires the locally-built OSM layer," not a mangled parse.
 
-### 3.6 Gates (pre-registered)
+### 3.6 Checks (pre-registered)
 
 - Golden 2pp guard with the `poi_query` scorer live; byte-identical parses for non-POI queries.
 - Curated POI query board (the class-1/9 probe table + amenity/brand/infra fixtures) with
@@ -196,7 +196,7 @@ then "requires the locally-built OSM layer," not a mangled parse.
 - Full-address venue (class 2) non-regression.
 - Runtime-flag register rows for the new stage + scorer (invariant 5); flag-off = byte-identical.
 - Demo presets stay green; Pier 39 resolving to the pier (not SF centroid) is the acceptance
-  probe once the venue shard lands.
+  probe once the venue extract lands.
 
 ## 4. Phase 2 — BDC plausibility (proving-ground vertical; separate spec)
 
@@ -275,4 +275,4 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
   key range (few range requests, no joins) — the same access pattern as the candidate
   gazetteer. `layer_coverage` cells sit at res 6 (epistemics, not lookups).
 
-Remaining open: when the demo pocket gets a slim POI shard (budget review at Phase-1 exit).
+Remaining open: when the demo pocket gets a slim POI extract (budget review at Phase-1 exit).

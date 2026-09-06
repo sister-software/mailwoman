@@ -37,10 +37,10 @@ as "distinct." A real entity-truth must collapse by **org-name + address**, not 
 1. **The over-merge "problem" is a measurement artifact.** The matcher's co-located merges are correct
    org-resolution; NPI-truth (and even subpart-truth) scores them as errors. This is why the **A/B
    showed the corroboration features didn't move precision** — there is essentially no genuine
-   over-merge to cut. Optimizing the model for precision here optimizes a phantom; cost-sensitive
+   over-merge to reduce. Optimizing the model for precision here optimizes a phantom; cost-sensitive
    training would only _hurt_ (un-merge correct same-org pairs).
 
-2. **The real dedup lever is the YARDSTICK, not the model.** A better entity-truth that collapses
+2. **The real dedup change is the YARDSTICK, not the model.** A better entity-truth that collapses
    same-org-same-address NPIs by org-name lifts the _measured_ F1 toward the real ceiling (the ceiling
    doc's ~1.6% irreducible) — because it stops charging correct merges as errors. The next build is an
    org-name-aware entity truth + re-scoring at that grain, not more scorer features.

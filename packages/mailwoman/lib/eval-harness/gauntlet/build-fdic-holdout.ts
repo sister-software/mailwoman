@@ -1,0 +1,154 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Build the US verified-coord held-out pool for the Gauntlet (C6). FDIC BankFind publishes every insured
+ *   bank branch (~78k) with a real street address AND a geocoded LAT/LON — a clean US truth source that is
+ *   NOT in mailwoman's training corpus (Overture/NAD/BAN), so it measures genuine US generalization, the
+ *   complement to the FR/BAN draw. Public domain (US Government work).
+ *
+ *   Writes a semicolon CSV pool (address;city;state;zip;lat;lon) to $MAILWOMAN_DATA_ROOT/corpus/staging/
+ *   fdic-us.csv, build-on-copy. The pool is the FAST draw — holdout.ts reservoir-samples it in milliseconds
+ *   instead of streaming the 5 GB BAN file. Re-run to refresh (FDIC re-indexes ~monthly).
+ *
+ *   Run: mailwoman eval gauntlet-build fdic-holdout
+ */
+
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { removePath, movePath } from "@mailwoman/core/fs/writers"
+
+/**
+ * Southern edge of the US including Puerto Rico and Hawaii.
+ */
+const MIN_US_LATITUDE = 17
+
+/**
+ * Northern edge of the US including Alaska.
+ */
+const MAX_US_LATITUDE = 72
+
+/**
+ * Western edge of the US including the Aleutians.
+ */
+const MIN_US_LONGITUDE = -180
+
+/**
+ * Eastern edge of the US including Maine and the Virgin Islands.
+ */
+const MAX_US_LONGITUDE = -64
+
+const API = "https://banks.data.fdic.gov/api/locations"
+const PAGE = 10_000
+const FIELDS = "ADDRESS,CITY,STALP,ZIP,LATITUDE,LONGITUDE"
+
+interface Loc {
+	ADDRESS?: string
+	CITY?: string
+	STALP?: string
+	ZIP?: string
+	LATITUDE?: number
+	LONGITUDE?: number
+}
+
+/**
+ * Sane CONUS+AK/HI/PR bbox — drops null-island and mis-geocoded rows so the pool is clean truth.
+ */
+function plausibleUs(lat: number, lon: number): boolean {
+	return (
+		Number.isFinite(lat) &&
+		Number.isFinite(lon) &&
+		lat >= MIN_US_LATITUDE &&
+		lat <= MAX_US_LATITUDE &&
+		lon >= MIN_US_LONGITUDE &&
+		lon <= MAX_US_LONGITUDE
+	)
+}
+
+/**
+ * Retry is ON because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
+ * throttled page in the middle aborted the whole build. The tmp-then-rename tail means a partial run is discarded
+ * rather than published, so the cost of a transient failure was the entire download, not a corrupt artifact.
+ *
+ * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link PAGE} rows, so the loop already
+ * paces itself at whatever the API takes to assemble 10,000 records.
+ */
+const fdicClient = new APIClient({ displayName: "fdic", retry: true })
+
+async function fetchPage(offset: number): Promise<Loc[]> {
+	const url = `${API}?fields=${FIELDS}&limit=${PAGE}&offset=${offset}&format=json`
+
+	const body = await fdicClient.fetch<{ data?: Array<{ data: Loc }> }>({ url }).then(pluckResponseData)
+
+	return (body.data ?? []).map((d) => d.data)
+}
+
+/**
+ * Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy).
+ */
+export async function buildFDICHoldout(): Promise<void> {
+	const OUT = String(dataRootPath("corpus", "staging", "fdic-us.csv"))
+	const tmp = `${OUT}.tmp-${process.pid}`
+
+	if (await pathExists(tmp)) {
+		await removePath(tmp)
+	}
+
+	const sink = openWriteStream(tmp, { encoding: "utf8" })
+	sink.write("address;city;state;zip;lat;lon\n")
+
+	let total = 0
+	let written = 0
+	let dropped = 0
+
+	for (let offset = 0; ; offset += PAGE) {
+		const rows = await fetchPage(offset)
+
+		if (!rows.length) break
+		total += rows.length
+
+		for (const r of rows) {
+			const address = (r.ADDRESS ?? "").trim()
+			const city = (r.CITY ?? "").trim()
+			const state = (r.STALP ?? "").trim()
+			const zip = (r.ZIP ?? "").trim()
+			const lat = Number(r.LATITUDE)
+			const lon = Number(r.LONGITUDE)
+
+			if (!address || !city || !state || !plausibleUs(lat, lon)) {
+				dropped++
+
+				continue
+			}
+
+			// Semicolons can't appear in a US street address/city; no escaping needed.
+			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
+
+			written++
+		}
+
+		console.error(
+			`[fdic] offset ${offset.toLocaleString()} → ${written.toLocaleString()} written, ${dropped.toLocaleString()} dropped`
+		)
+	}
+
+	await new Promise<void>((resolvePromise) => {
+		sink.end(resolvePromise)
+	})
+
+	if (await pathExists(OUT)) {
+		await movePath(OUT, `${OUT}.prev`)
+	}
+
+	await movePath(tmp, OUT)
+
+	if (await pathExists(`${OUT}.prev`)) {
+		await removePath(`${OUT}.prev`)
+	}
+
+	console.error(
+		`[fdic] DONE ${OUT} — ${written.toLocaleString()} of ${total.toLocaleString()} branches (${dropped.toLocaleString()} dropped)`
+	)
+}

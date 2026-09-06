@@ -47,14 +47,14 @@ vi.mock("onnxruntime-web/webgpu", () => {
 let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
 
 // The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
-vi.mock("../../tokenizer.ts", async (importOriginal) => ({
+vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
 // Capture-only stub: the real classifier needs the real tokenizer + label wiring. We only care
 // that it is CONSTRUCTED (the load reached the end) and WHAT postcode lookup it received.
-vi.mock("../../classifier.ts", async (importOriginal) => ({
+vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
 		constructor(cfg: { postcodeAnchorLookup?: Map<string, unknown> }) {
@@ -75,7 +75,7 @@ afterAll(() => vi.resetModules())
 
 // Import AFTER the mock declarations + reset. `postcode-binary-resolver.ts` is NOT mocked, so the
 // binaries we build here decode through the real reader.
-const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode-binary-resolver")
+const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
 const SEQ = 128

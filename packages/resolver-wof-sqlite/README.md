@@ -35,7 +35,7 @@ for (const c of candidates) {
 
 ## A database that cannot answer says so on construction
 
-Databases are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail quietly, and both now throw when you build the lookup:
+Databases are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail without logging, and both now throw when you build the lookup:
 
 - The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits, which is indistinguishable from "this country has no places".
 - The database carries `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
@@ -65,8 +65,8 @@ const lookup = new WOFSQLitePlaceLookup({
 	databasePath: ["/data/wof/whosonfirst-data-admin-us-latest.db", "/data/wof/whosonfirst-data-postalcode-us-latest.db"],
 })
 
-await lookup.findPlace({ text: "Springfield", placetype: "locality" }) // → admin shard
-await lookup.findPlace({ text: "62701", placetype: "postalcode" }) // → postcode shard
+await lookup.findPlace({ text: "Springfield", placetype: "locality" }) // → admin extract
+await lookup.findPlace({ text: "62701", placetype: "postalcode" }) // → postcode extract
 ```
 
 Override schema names or routing explicitly when needed:
@@ -262,7 +262,7 @@ Coverage includes: placetype filtering, country filtering, the empty-result case
 
 ## Concurrency model
 
-This package opens a single `node:sqlite` connection per `WOFSQLitePlaceLookup` instance. SQLite is single-writer / many-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is fine (queries queue) but won't parallelize across cores.
+This package opens a single `node:sqlite` connection per `WOFSQLitePlaceLookup` instance. SQLite is single-writer / multiple-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is safe (queries queue) but won't parallelize across cores.
 
 ## License
 

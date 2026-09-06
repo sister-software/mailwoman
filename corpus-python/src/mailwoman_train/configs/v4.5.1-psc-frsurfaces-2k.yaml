@@ -5,8 +5,8 @@
 # ONE config knob vs v4.5.0: synth-fr-bare-street dose 12.0 -> 6.0 (the FR shapes were the
 # erosion's attacker; CZ stays 12.0 — its forms were not implicated). B11 template otherwise
 # verbatim: init_from v4.4.0 step-060000, EWC lambda=1.0e4 + the base fisher, LR 1e-5.
-# GATE (pre-registered, the v4.5.0 lesson): the probe is graded ON THE BOARD, not val — export
-# step-2000, int8, `eval gauntlet --candidate`. PASS = zero new gated failures vs the base board
+# CHECK (pre-registered, the v4.5.0 lesson): the probe is graded ON THE BOARD, not val — export
+# step-2000, int8, `eval gauntlet --candidate`. PASS = zero new counted failures vs the base board
 # AND the bare-street probes hold (Calle de Alcalá / Madison Square West / COMER stay street-read)
 # AND 'Praha 100 00, Czechia' moves. FAIL -> read, never sweep.
 data:

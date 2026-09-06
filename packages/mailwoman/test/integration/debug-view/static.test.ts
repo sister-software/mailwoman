@@ -13,13 +13,14 @@
  *   weights or a database.
  */
 
-import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
-import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
+import { $public } from "mailwoman/env"
+import { createGeocodeCommandOptions } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
 // MARK: Environment guard
@@ -29,9 +30,9 @@ const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
-const hasWeights = (() => {
+const hasWeights = await (async () => {
 	try {
-		resolveWeights({ locale: "en-us" })
+		await resolveWeights({ locale: "en-us" })
 
 		return true
 	} catch {
@@ -65,7 +66,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
 
-		// The resolved tier line — street-level when the shard is present, admin centroid otherwise; either is a
+		// The resolved tier line — street-level when the database is present, admin centroid otherwise; either is a
 		// legitimate resolve for this environment, so the assertion accepts both.
 		expect(text).toMatch(/address_point|admin/)
 

@@ -1,7 +1,7 @@
 # Night Shift Postmortem — 2026-07-01/02 (30th shift)
 
 Drafted during the shift; finalized at hand-off. Window: **05:30 → 13:10 UTC** (operator returned early).
-Posture: autonomous, CPU/local, ~$0 Modal (GPU levers flagged, not run). PRs shipped + flagged for
+Posture: autonomous, CPU/local, ~$0 Modal (GPU changes flagged, not run). PRs shipped + flagged for
 operator merge (no self-merge).
 
 ## 🔔 Operator decision brief (read first)
@@ -19,7 +19,7 @@ operator merge (no self-merge).
 
 - **#825 GPU retrain** — the multilocale diagnosis is done + damning: **CZ 84% / PL 77% content-gap**, root-caused to Slavic-diacritic mis-tokenization. Worth a Modal budget? (CZ now in scope; AU/US already clean.)
 - **#877 candidate rebuild** — #880 says **low-ROI** (English resolves ~96%; residual ~4%, split ~evenly). My read: **defer**.
-- **#875 `Json`/public-`Us` acronym batch** — version-gated (breaking). Bundle into the next major, or leave?
+- **#875 `Json`/public-`Us` acronym batch** — version-conditional (breaking). Bundle into the next major, or leave?
 - **#861 demo↔server resolver parity** — recommended **B** (converge on shared resolver) as a focused session; no regression today, not urgent.
 
 ## What shipped / opened
@@ -29,21 +29,21 @@ operator merge (no self-merge).
   (Wof/Osm/Json/Id/Us) + the pre-existing strict-null gaps; left `casing-ab`/`portland-833b` async-drift
   fixed too. Untracked, so local-only.
 - **#875 filed** — the v5.0.0 sweep missed two acronyms: `Us` and generic `Json`/`Jsonl` (~28 identifiers,
-  some public). Documented in AGENTS.md as a version-gated batch.
+  some public). Documented in AGENTS.md as a version-conditional batch.
 - **PR #876** — `recognizeUsRegions` → `recognizeUSRegions` (internal-only slice of #875; no public
   re-export → zero release impact). Compile + affected tests green. Flagged for merge.
-- **Coverage quantified (lever C, closes the #823 loop).** Ran `frontier-gap.ts` against the live
+- **Coverage quantified (change C, closes the #823 loop).** Ran `frontier-gap.ts` against the live
   `candidate.db` (→ `candidate-global-coverage.db`, the post-#266/#267 build), geonames cities15000 top-2/country:
   **resolve-rate bare 88.9% → +hint 94.3%**, across 187 countries. **181 bare-supported · 3 placer-recoverable
-  (AR/GE/PR — 0→2/2 with hint, the #244/#822 lever) · 3 residual · 0 wrong-place.** The residual is a clean
-  exonym-indexing lever: Israel/Kuwait/Antigua fail because the English name (Tel Aviv, Kuwait City) matches no
+  (AR/GE/PR — 0→2/2 with hint, the #244/#822 change) · 3 residual · 0 wrong-place.** The residual is a clean
+  exonym-indexing change: Israel/Kuwait/Antigua fail because the English name (Tel Aviv, Kuwait City) matches no
   in-country record — index alt-name surface forms (Warsaw↔Warszawa is already proven). Down from the ~97
   residual countries the coverage arc started with. #823 was closed on a 5-city spot-check; this is the honest
   full measure.
-- **#305 — measured + FALSIFIED (not shipped).** Implemented the proximity gate on the coord-first exact
+- **#305 — measured + FALSIFIED (not shipped).** Implemented the proximity check on the coord-first exact
   tier (`coordFirstExactProximityKm`, default-off/byte-stable), A/B'd on the JP end-to-end eval:
-  baseline KEN_ALL 98.5% / GeoNames 93.9% → **gated 90.3% / 72.8%** (−8/−21pp). 50km ≡ 200km (identical),
-  so it's the `pcInfo`-membership gate suppressing correct FTS-exacts, not distance. Reverted; posted the
+  baseline KEN_ALL 98.5% / GeoNames 93.9% → **conditional 90.3% / 72.8%** (−8/−21pp). 50km ≡ 200km (identical),
+  so it's the `pcInfo`-membership check suppressing correct FTS-exacts, not distance. Reverted; posted the
   data + redesign direction to #305; lowered priority (the 98.5% baseline is already good, the existing
   mismatch-flag is the right conservative behavior).
 
@@ -57,24 +57,24 @@ operator merge (no self-merge).
   and aggregates the all-O runs into a corpus-gap shopping list, **separating trivial delimiter gaps from
   content gaps**. Honest read: **9.0% content-gap rate** (1.0% of chars; the raw 98% is delimiters). Top
   signal (verified): accented/foreign-influenced mis-segmentations (`Montréal, QC` → model drops the `C`;
-  clean `Austin, TX` tags fine) → an accent-robustness lever, plus fr `sainte`, plus non-Latin scripts.
+  clean `Austin, TX` tags fine) → an accent-robustness change, plus fr `sainte`, plus non-Latin scripts.
 
 - **Multi-locale corpus-gap read → #825 shopping list (verified).** Ran the #878 tool over the `oa-*-coord-150`
   external OpenAddresses sets. **CZ 84% / PL 77%** content-gap rate (the worst by far; PT 27, AT 15, FR 10, IT 2,
   AU 0, US 0). Root cause **verified by dumping cases** (probe before write-up this time): a **Slavic-diacritic
   tokenization/offset failure** — `Grudziądz` splits at `ą`, `Bohaterów` at `ó`, and the span shift eats trailing
-  digits (`39`→`9`). Told #825 the lever is diacritic robustness + CZ-in-scope, not per-locale volume (AU/US
+  digits (`39`→`9`). Told #825 the change is diacritic robustness + CZ-in-scope, not per-locale volume (AU/US
   already 0%). The 3 PRs (#874/#876/#878) all verified MERGEABLE/CLEAN + green.
 
 - **PR #879 — dropped the `as unknown as ResolverBackend` cast (closes #873).** Filed #873 (day session)
   assuming `createWOFResolver(lookup)` didn't typecheck; verified it does (`PlaceCandidate` is structurally
   a `ResolvedPlace`; method param is bivariant). Removed all **18** cast sites + dead imports. Pure
-  type-level, byte-identical runtime, 76 resolver tests green. A clean ungated API-papercut removal — and
+  type-level, byte-identical runtime, 76 resolver tests green. A clean unconditional API-papercut removal — and
   this time the assumption was verified (one cast removed + compiled) BEFORE the fix, not after.
 - **CZ/PL diacritic gap: no clean CPU fix (→ #825 GPU).** `parseWithLogits` shows the tokenizer isolates
   diacritics into own pieces the model tags O; a decoder gap-bridge would patch `Grudziądz` but not the
   broader Polish under-tagging (`Daliowa`→`owa`), and it's #305-class repair risk. Declined; it's the
-  retrain lever.
+  retrain change.
 
 - **PR #880 — exonym-vs-coverage kill-switch (#826).** A pure name_key existence probe (no model) that
   front-runs the candidate-rebuild-payload decision. Verified across two sample widths: **English names
@@ -87,7 +87,7 @@ operator merge (no self-merge).
 - **Verify-before-verdict earned its keep on #305.** The issue's hypothesis was plausible; the eval said
   −21pp. Shipping on the hypothesis would have been a real regression. Grade the assembled output.
 - **Scope discipline on the acronym gaps.** The `Json` sweep is ~28 identifiers across packages incl.
-  public API — recognized it as a version-gated batch, not an overnight slip-in, after a partial sweep
+  public API — recognized it as a version-conditional batch, not an overnight slip-in, after a partial sweep
   half-renamed callers vs their def (caught + reverted immediately).
 
 ## What could've gone better
@@ -110,9 +110,9 @@ operator merge (no self-merge).
 
 ## Decisions made autonomously
 
-- **Did not ship #305.** A default-off lever that regresses 21pp when enabled is misleading scaffolding,
+- **Did not ship #305.** A default-off change that regresses 21pp when enabled is misleading scaffolding,
   not a fix. Reverted rather than ship-behind-a-flag.
-- **Deferred the `Json`/public-`Us` acronym batch to the operator** (breaking, version-gated) rather than
+- **Deferred the `Json`/public-`Us` acronym batch to the operator** (breaking, version-conditional) rather than
   do a piecemeal overnight sweep.
 
 ## Open questions / for the operator

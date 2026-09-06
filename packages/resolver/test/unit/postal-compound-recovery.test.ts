@@ -6,7 +6,7 @@
  *   ("Kožljek 7, 1382 Kožljek") whose parse globs the trailing city into the postcode span. The
  *   fixture mirrors the real failure: the compound resolves as nothing, the confident postcode
  *   span blocks its own city tokens, and the tree comes back empty. With the flag on, the code
- *   subset anchors the gate, the residual city tokens become span material, and the failed
+ *   subset anchors the check, the residual city tokens become span material, and the failed
  *   postcode node gains a coordinate floor. Street blocking (the "Ave, France" guard) stays.
  */
 
@@ -16,7 +16,7 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { postcodeCodeSubset } from "@mailwoman/resolver/span-rescore"
 import { describe, expect, it } from "vitest"
 
-import { backendNameKey } from "#test/backend-name-key"
+import { backendNameKey } from "../helpers/backend-name-key.ts"
 
 const norm = backendNameKey
 
@@ -35,7 +35,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{ id: 900, name: "1382", placetype: "postalcode", country: "SI", lat: 45.82, lon: 14.42, score: 1 },
-	// A distant same-named decoy in another country — the gate + country constraint must hold.
+	// A distant same-named decoy in another country — the check + country constraint must hold.
 	{
 		id: 2,
 		name: "Kožljek",
@@ -113,7 +113,7 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
 
-	it("flag ON: recovers the trailing city from the globbed postcode span, gate-validated", async () => {
+	it("flag ON: recovers the trailing city from the globbed postcode span, check-validated", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI", postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
@@ -121,7 +121,7 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 		expect(locality!.metadata?.span_rescore).toBe(true)
-		expect(locality!.metadata?.rescore_gated).toBe(true) // the code-subset anchor validated it
+		expect(locality!.metadata?.rescore_postcode_verified).toBe(true) // the code-subset anchor validated it
 		// The postcode node stays UNdecorated when a locality was recovered — its medoid centroid is
 		// coarser than the village pin, and postcode-over-locality consumers must not trade down.
 		const pc = out.roots.find((n) => n.tag === "postcode")
@@ -184,14 +184,14 @@ describe("postal-compound recovery (#942)", () => {
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)
 	})
 
-	it("gate rejects a cross-border same-named decoy (unscoped)", async () => {
+	it("check rejects a cross-border same-named decoy (unscoped)", async () => {
 		// No defaultCountry: the HR decoy is name-identical. The code-subset anchor (SI 1382) plus the
-		// 50km gate must reject the 400+km decoy and accept the SI village.
+		// 50km check must reject the 400+km decoy and accept the SI village.
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
-		// Both candidates surface; the gate keeps only the SI one.
+		// Both candidates surface; the check keeps only the SI one.
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
@@ -201,7 +201,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 	// The CLI's en-US locale default scoped both the anchor and the village probe to US, so the SI
 	// floor never fired through geocode-core. The joint pass probes spans unscoped and verifies each
 	// candidate against the postcode resolved in the CANDIDATE's own country — cross-country
-	// promotion only postcode-verified, never ungated.
+	// promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
@@ -209,7 +209,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
-		expect(locality!.metadata?.rescore_gated).toBe(true)
+		expect(locality!.metadata?.rescore_postcode_verified).toBe(true)
 	})
 
 	it("rejects a cross-country namesake whose own country cannot verify the postcode", async () => {
@@ -224,7 +224,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID)).toHaveLength(0)
 	})
 
-	it("never cross-promotes without a postcode present (no ungated wandering)", async () => {
+	it("never cross-promotes without a postcode present (no unrestricted wandering)", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 
 		const tree: AddressTree = {

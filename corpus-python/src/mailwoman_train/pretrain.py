@@ -25,6 +25,7 @@ import json
 import math
 import time
 from pathlib import Path
+from typing import Any
 
 import torch
 from torch.optim import AdamW
@@ -45,7 +46,7 @@ from .train import (
 
 
 @torch.no_grad()
-def _mlm_eval(cfg: Config, model, tokenizer: Tokenizer, device, *, mask_token_id: int) -> dict:
+def _mlm_eval(cfg: Config, model: Any, tokenizer: Tokenizer, device: Any, *, mask_token_id: int) -> dict[str, Any]:
     """MLM cross-entropy + perplexity over a bounded slice of the val split."""
     was_training = model.training
     model.eval()
@@ -78,7 +79,8 @@ def _mlm_eval(cfg: Config, model, tokenizer: Tokenizer, device, *, mask_token_id
 
 def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     """Run MLM pre-training; write encoder checkpoints to ``cfg.train.output_dir``."""
-    assert cfg.train.objective == "mlm", f"pretrain() needs objective='mlm', got {cfg.train.objective!r}"
+    if cfg.train.objective != "mlm":
+        raise ValueError(f"pretrain() needs objective='mlm', got {cfg.train.objective!r}")
     force_math_sdpa()
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -115,11 +117,11 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     if resume_from is not None:
         rp = Path(resume_from)
         if (rp / "optimizer.pt").is_file():
-            optim.load_state_dict(torch.load(rp / "optimizer.pt", weights_only=False))
+            optim.load_state_dict(torch.load(rp / "optimizer.pt", weights_only=False))  # nosec B614 — resume loads state WE wrote under this output_dir
         if (rp / "training_state.json").is_file():
             resume_step = int(json.loads((rp / "training_state.json").read_text()).get("step", 0))
         if (rp / "scheduler.pt").is_file():
-            scheduler.load_state_dict(torch.load(rp / "scheduler.pt", weights_only=False))
+            scheduler.load_state_dict(torch.load(rp / "scheduler.pt", weights_only=False))  # nosec B614 — same trusted resume dir
         else:
             for _ in range(resume_step):
                 scheduler.step()
@@ -133,7 +135,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     log_every = max(1, cfg.train.log_every_steps)
     grad_clip = float(getattr(cfg.train, "grad_clip_norm", 1.0))
 
-    def extras() -> dict:
+    def extras() -> dict[str, Any]:
         from dataclasses import asdict
 
         return {
@@ -171,7 +173,9 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 out = model.forward_mlm(
                     input_ids=masked.to(device), attention_mask=tb["attention_mask"], mlm_labels=labels.to(device)
                 )
-                loss = out.loss
+                loss: Any = out.loss
+                if loss is None:
+                    raise RuntimeError("forward_mlm returned no loss")
                 loss.backward()
                 if grad_clip > 0:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)

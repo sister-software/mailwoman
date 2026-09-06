@@ -56,13 +56,13 @@ tracked per row.
 
 ## Used only when developing Mailwoman
 
-The following build the corpus, gazetteer shards, evaluations, and this site. They are **not**
+The following build the corpus, gazetteer extracts, evaluations, and this site. They are **not**
 redistributed in any published npm package.
 
 ### GeoNames
 
 [GeoNames](https://www.geonames.org/) postal and centroid data builds gazetteer postcode
-shards and training corpus, under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+extracts and training corpus, under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ### OpenAddresses
 

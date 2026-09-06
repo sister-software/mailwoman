@@ -1,7 +1,7 @@
 # PR3 Pilot A — self-conditioning decisive eval
 
 **Date:** 2026-06-04
-**Model:** `v0.9.0-pilot-selfcond-s42`, step-20000 (early gate), fp32 ONNX
+**Model:** `v0.9.0-pilot-selfcond-s42`, step-20000 (early check), fp32 ONNX
 **Baseline:** v0.7.2 (`/tmp/v072-eval/model.onnx`), fp32, same v0.6.0-a0 tokenizer, same 33-label schema
 **Verdict:** **Do not promote. Clean negative result.** Self-conditioning did not prevent the German end-of-string locality collapse.
 
@@ -9,9 +9,9 @@
 
 One hypothesis (design doc: `docs/articles/plan/2026-06-04-pr3-self-conditioned-retrain.md`): a from-scratch model with an auxiliary locale head over the pooled sequence + zero-init FiLM modulation of its own per-token reps would learn German word order **without** triggering the v0.8.0 Saint-Albans span collapse. Single variable on the v0.7.2-proven recipe (1.5e-4 constant, ls 0.1, CRF off); the only addition is the conditioning. Corpus `v0.4.1-de`: v0.4.0 (US/FR) base + a 200K-row synth-german overlay (~18% of the mix).
 
-## The pre-registered gate, and the result
+## The pre-registered check, and the result
 
-| Gate (from the design doc)               | Target           | Result             | Pass?                          |
+| Check (from the design doc)              | Target           | Result             | Pass?                          |
 | ---------------------------------------- | ---------------- | ------------------ | ------------------------------ |
 | DE locality — resolver match             | ≥ 70% and rising | **25.6%**          | ❌                             |
 | DE locality — parse F1 (held-out golden) | ≥ 70%            | **34.8%**          | ❌                             |
@@ -99,8 +99,8 @@ Two blind spots let training look healthy to the dashboard while German was brea
 
 ## Decisions made
 
-- **Did not promote** the pilot to `releases.json` / HF. Gate failed by ~45pp on the headline metric; the model is not on disk anywhere a consumer would pick it up.
-- **Did not launch the 100k follow-up.** That was conditional on the gate passing. At 25.6% (vs a 70% bar), and with the 10k-vs-20k slope flat (German locality pinned — see above), extending to 100k would not cross the bar. Not justified by this data.
+- **Did not promote** the pilot to `releases.json` / HF. Check failed by ~45pp on the headline metric; the model is not on disk anywhere a consumer would pick it up.
+- **Did not launch the 100k follow-up.** That was conditional on the check passing. At 25.6% (vs a 70% bar), and with the 10k-vs-20k slope flat (German locality pinned — see above), extending to 100k would not cross the bar. Not justified by this data.
 - **Did not launch another from-scratch German pilot autonomously.** This is the 2nd reproduction of the same end-of-string locality collapse via a _new_ mechanism (v0.8.0 continue-train was the 1st), on correct data. The evidence now points away from recipe/conditioning tweaks. The next direction is the operator's call.
 
 ## The slope: flat, not rising — the recipe is not salvageable by more steps

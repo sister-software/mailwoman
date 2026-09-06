@@ -1,7 +1,7 @@
 """SentencePiece tokenizer training harness (v0.5.0 Thread A).
 
 A reproducible trainer that produces a versioned tokenizer + model card from a corpus
-shard tree. Used to train ``tokenizer-v0.5.0-a0`` on ``corpus-v0.3.0`` and (once Thread B
+slice tree. Used to train ``tokenizer-v0.5.0-a0`` on ``corpus-v0.3.0`` and (once Thread B
 lands) ``tokenizer-v0.5.0-a1`` on ``corpus-v0.4.0`` via the same code path.
 
 The runtime wrapper lives in ``mailwoman_train.tokenizer`` — that's the SP encoder + label
@@ -30,7 +30,7 @@ import json
 import logging
 import random
 import re
-import subprocess
+import subprocess  # nosec B404 — spawns external toolchain binaries by design (git for provenance stamps)
 import tempfile
 import time
 import unicodedata
@@ -38,9 +38,10 @@ from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import pyarrow.parquet as pq
-import sentencepiece as spm  # type: ignore[import-not-found]
+import sentencepiece as spm
 
 logger = logging.getLogger(__name__)
 
@@ -204,41 +205,41 @@ class TrainerConfig:
     user_defined_symbols: tuple[str, ...] = ()
     eval_fixture: Path | None = None
     seed: int = 42
-    extra_sp_kwargs: dict = field(default_factory=dict)
+    extra_sp_kwargs: dict[str, Any] = field(default_factory=dict)
 
 
-def iter_train_shards(corpus_dir: Path) -> list[Path]:
-    """Resolve the train-split shard paths for ``corpus_dir``.
+def iter_train_slices(corpus_dir: Path) -> list[Path]:
+    """Resolve the train-split slice paths for ``corpus_dir``.
 
-    Source of truth is ``MANIFEST.json``'s ``shards[]`` (each entry carries an absolute
+    Source of truth is ``MANIFEST.json``'s ``slices[]`` (each entry carries an absolute
     ``path``), which supports adapter-addition corpora composed across versions — e.g.
-    ``corpus-v0.4.0`` is logically ``corpus-v0.3.0`` base shards + new kryptonite +
-    transliteration shards, with the v0.3.0 shards left on disk under their original
+    ``corpus-v0.4.0`` is logically ``corpus-v0.3.0`` base slices + new kryptonite +
+    transliteration slices, with the v0.3.0 slices left on disk under their original
     versioned dir rather than re-emitted. Globbing ``<corpus>/train/`` would silently
-    miss those cross-version base shards.
+    miss those cross-version base slices.
 
     Falls back to a glob over ``<corpus>/train/`` for backward-compat with corpora that
     don't carry a manifest (e.g. ad-hoc test fixtures). Raises ``FileNotFoundError`` if
-    neither source yields shards.
+    neither source yields slices.
     """
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        shards = [Path(s["path"]) for s in data.get("shards", []) if s.get("split") == "train"]
-        if shards:
-            return sorted(shards)
+        slices = [Path(s["path"]) for s in data.get("slices", []) if s.get("split") == "train"]
+        if slices:
+            return sorted(slices)
     train_dir = corpus_dir / "train"
-    shards = sorted(train_dir.glob("*.parquet"))
-    if not shards:
-        raise FileNotFoundError(f"no parquet shards via MANIFEST.json or {train_dir}")
-    return shards
+    slices = sorted(train_dir.glob("*.parquet"))
+    if not slices:
+        raise FileNotFoundError(f"no parquet slices via MANIFEST.json or {train_dir}")
+    return slices
 
 
 def iter_raws_by_country(corpus_dir: Path, country: str) -> Iterable[str]:
-    """Yield ``raw`` strings from every train shard whose row matches ``country``."""
-    for shard in iter_train_shards(corpus_dir):
+    """Yield ``raw`` strings from every train slice whose row matches ``country``."""
+    for slice in iter_train_slices(corpus_dir):
         # Column-projected read keeps RSS low.
-        t = pq.read_table(shard, columns=["raw", "country"])
+        t = pq.read_table(slice, columns=["raw", "country"])
         raws = t["raw"]
         countries = t["country"]
         for i in range(t.num_rows):
@@ -282,32 +283,36 @@ def mine_postcode_literals(
     *,
     top_k: int,
     countries: Sequence[str] | None = None,
-    max_shards: int | None = None,
+    max_slices: int | None = None,
 ) -> list[str]:
     """Return the top-``top_k`` postcode literals in the train split by frequency.
 
-    Reads each shard's ``labels`` column and pulls out tokens whose BIO label endswith
+    Reads each slice's ``labels`` column and pulls out tokens whose BIO label endswith
     ``-postcode``. The unigram trainer will not always keep these whole on its own; adding
     them as UDS guarantees one piece per common postcode literal.
 
     ``countries``: when given, only count postcodes from rows whose ``country`` matches.
-    ``max_shards``: for unit tests; in production leave ``None`` to scan everything.
+    ``max_slices``: for unit tests; in production leave ``None`` to scan everything.
     """
     counter: Counter[str] = Counter()
-    shards = iter_train_shards(corpus_dir)
-    if max_shards is not None:
-        shards = shards[:max_shards]
-    for shard in shards:
+    slices = iter_train_slices(corpus_dir)
+    if max_slices is not None:
+        slices = slices[:max_slices]
+    for slice in slices:
         cols = ["tokens", "labels"]
         if countries is not None:
             cols.append("country")
-        t = pq.read_table(shard, columns=cols)
+        t = pq.read_table(slice, columns=cols)
         tokens_col = t["tokens"]
         labels_col = t["labels"]
         countries_col = t["country"] if countries is not None else None
         country_filter = set(countries) if countries is not None else None
         for i in range(t.num_rows):
-            if country_filter is not None and countries_col[i].as_py() not in country_filter:
+            if (
+                countries_col is not None
+                and country_filter is not None
+                and countries_col[i].as_py() not in country_filter
+            ):
                 continue
             toks = tokens_col[i].as_py()
             labs = labels_col[i].as_py()
@@ -367,7 +372,7 @@ def detect_script(text: str) -> str:
     return top if n / total >= 0.9 else "mixed"
 
 
-def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) -> dict:
+def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) -> dict[str, Any]:
     """Encode each line and tally byte-fallback piece rate, overall + per script.
 
     Returns a dict shaped::
@@ -436,7 +441,7 @@ def load_fixture_lines(path: Path) -> list[str]:
 def git_commit(workdir: Path | None = None) -> str | None:
     """Best-effort: return the current HEAD SHA, or None outside a git checkout."""
     try:
-        out = subprocess.check_output(
+        out = subprocess.check_output(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary
             ["git", "rev-parse", "HEAD"],
             cwd=workdir or Path(__file__).parent,
             stderr=subprocess.DEVNULL,
@@ -489,7 +494,7 @@ def _dedupe_keep_order(items: Iterable[str]) -> list[str]:
     return out
 
 
-def train_tokenizer(cfg: TrainerConfig) -> dict:
+def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     """End-to-end SentencePiece training + byte-fallback measurement.
 
     Steps:
@@ -592,7 +597,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict:
 
     # 4. Byte-fallback measurement.
     sp = spm.SentencePieceProcessor(model_file=str(model_path))
-    byte_fb: dict | None = None
+    byte_fb: dict[str, Any] | None = None
     if cfg.eval_fixture is not None:
         fixture_lines = load_fixture_lines(cfg.eval_fixture)
         byte_fb = measure_byte_fallback(sp, fixture_lines)
@@ -645,7 +650,7 @@ __all__ = [
     "TrainerConfig",
     "detect_script",
     "iter_raws_by_country",
-    "iter_train_shards",
+    "iter_train_slices",
     "load_fixture_lines",
     "measure_byte_fallback",
     "mine_postcode_literals",

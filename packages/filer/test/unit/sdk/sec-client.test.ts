@@ -38,8 +38,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`). Mock the module directly so the
 // no-UA fail-fast test below is isolated from whatever the ambient `.env` actually contains. Every
 // OTHER test in this file passes an explicit `userAgent` option and never reads `$private`.
-vi.mock("@mailwoman/core/env", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/core/env")>()
+vi.mock("@mailwoman/filer/env", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@mailwoman/filer/env")>()
 
 	return {
 		...actual,
@@ -48,7 +48,7 @@ vi.mock("@mailwoman/core/env", async (importOriginal) => {
 })
 
 // Shared-graph guard, mirroring `bdc/sdk/client.test.ts`: the root vitest config runs `isolate: false`, so
-// `./sec-client.ts` may ALREADY sit in the worker's cache — evaluated WITHOUT this file's `@mailwoman/core/env` mock by
+// `./sec-client.ts` may ALREADY sit in the worker's cache — evaluated WITHOUT this file's `@mailwoman/filer/env` mock by
 // an earlier file (a cached module never re-evaluates, and `vi.mock` factories are only consulted at evaluation). Reset
 // on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in this fork never
 // inherits our mocked env module.
@@ -604,7 +604,7 @@ describe("createSECClient: rate limiting", () => {
 		// ARRIVALS, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
 		// rate limiter sees, and asserting it hid exactly this bug: the sleeps were 111ms apart and passed,
 		// while 10 requests still landed inside one second. `runUntilSettled` is required because the pacing
-		// gate now sits DOWNSTREAM of the on-disk cache lookup, so each request spends real event-loop turns
+		// check now sits DOWNSTREAM of the on-disk cache lookup, so each request spends real event-loop turns
 		// in `readFile` before it registers its sleep.
 		await clock.runUntilSettled(
 			Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`https://data.sec.gov/fanout/${i}.json`)))

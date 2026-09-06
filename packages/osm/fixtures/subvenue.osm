@@ -7,7 +7,7 @@
     <tag k="ref" v="5"/>
   </node>
   <node id="2" lat="51.4701" lon="-0.4544">
-    <tag k="aeroway" v="gate"/>
+    <tag k="aeroway" v="check"/>
     <tag k="ref" v="A12"/>
   </node>
   <node id="3" lat="40.6413" lon="-73.7781">

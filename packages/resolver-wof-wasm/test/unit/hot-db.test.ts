@@ -23,11 +23,11 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
-import { $public } from "@mailwoman/core/env"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import { $public } from "@mailwoman/resolver-wof-wasm/env"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
 import { WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm/lookup"
 import { aroundAll, describe, expect, test } from "vitest"

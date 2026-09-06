@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The #1717 seam, end to end on the CANDIDATE backend: a fixture candidate.db (built through the
+ *   The #1717 path, end to end on the CANDIDATE backend: a fixture candidate.db (built through the
  *   real {@link buildCandidateTable}, ancestors sidecar included) behind the real resolver walk,
  *   with the admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult`
  *   reads them. This is the flip the sidecar exists for — the Weimar-class winner's `region`
@@ -11,7 +11,7 @@
  *   so).
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -84,12 +84,9 @@ const tree = (...roots: AddressNode[]): AddressTree => ({ raw: roots.map((r) => 
 
 function flatten(roots: readonly AddressNode[]): AddressNode[] {
 	const out: AddressNode[] = []
-	const stack = [...roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(roots)) {
 		out.push(n)
-		stack.push(...n.children)
 	}
 
 	return out

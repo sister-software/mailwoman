@@ -15,7 +15,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
 import { compileGeographicModel, serializeCompiledModel, ValidationIssueCode } from "@mailwoman/geographic-model"
 import {
 	type GeographicModelSourceFile,
@@ -25,7 +25,7 @@ import {
 	mergeGeographicModelFiles,
 	MODEL_MANIFEST_FILENAME,
 } from "@mailwoman/geographic-model/load"
-import { resolve } from "@mailwoman/platform/path"
+import { dirname, join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -129,13 +129,13 @@ async function writeModelDirectory(files: readonly GeographicModelSourceFile[]):
 	const root = fixtures.use(await temporaryDirectory("geographic-model-")).path
 
 	for (const entry of files) {
-		const path = resolve(root, entry.path)
+		const path = join(root, entry.path)
 
-		await makeDirectories(resolve(path, ".."))
+		await makeDirectories(dirname(path))
 		await writeLocalFile(entry.text, path)
 	}
 
-	return root
+	return resolvePath(root)
 }
 
 describe("the authoring layout carries no meaning", () => {
@@ -152,14 +152,14 @@ describe("the authoring layout carries no meaning", () => {
 
 	it("reads a directory the same way twice", async () => {
 		const root = writeModelDirectory(slice())
-		const once = serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(await root)))
+		const once = serializeCompiledModel(compileGeographicModel(await loadGeographicModelDirectory(await root)))
 
-		expect(serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(await root)))).toBe(once)
+		expect(serializeCompiledModel(compileGeographicModel(await loadGeographicModelDirectory(await root)))).toBe(once)
 		expect(once).toContain(`"modelVersion": "0.1.0"`)
 	})
 
 	it("merges a table split across files, and one file holding several tables", async () => {
-		const document = loadGeographicModelDirectory(await writeModelDirectory(slice()))
+		const document = await loadGeographicModelDirectory(await writeModelDirectory(slice()))
 
 		expect(document.concepts.map((concept) => concept.id)).toEqual(["obtain_medication", "pharmacy"])
 		expect(document.mappings).toHaveLength(1)

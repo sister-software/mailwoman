@@ -10,265 +10,38 @@
 		"directory": "packages/dev-mcp"
 	},
 	"bin": {
-		"mwdev-mcp": "./cli.ts"
+		"mwdev-mcp": "./lib/cli.ts"
 	},
 	"type": "module",
+	"imports": {
+		"#test/stub-registry": "./test/stub-registry.ts",
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
-		"./cli": {
-			"node": "./cli.ts",
-			"default": "./out/cli.js",
-			"types": "./out/cli.d.ts"
-		},
-		"./hooks/todo-issue-sync": {
-			"node": "./hooks/todo-issue-sync.ts",
-			"default": "./out/hooks/todo-issue-sync.js",
-			"types": "./out/hooks/todo-issue-sync.d.ts"
-		},
-		"./hooks/vale-check-core": {
-			"node": "./hooks/vale-check-core.ts",
-			"default": "./out/hooks/vale-check-core.js",
-			"types": "./out/hooks/vale-check-core.d.ts"
-		},
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
-		"./arms": {
-			"node": "./arms.ts",
-			"default": "./out/arms.js",
-			"types": "./out/arms.d.ts"
-		},
-		"./bench": {
-			"node": "./bench.ts",
-			"default": "./out/bench.js",
-			"types": "./out/bench.d.ts"
-		},
-		"./census": {
-			"node": "./census.ts",
-			"default": "./out/census.js",
-			"types": "./out/census.d.ts"
-		},
-		"./evidence": {
-			"node": "./evidence.ts",
-			"default": "./out/evidence.js",
-			"types": "./out/evidence.d.ts"
-		},
-		"./cli-allowlist": {
-			"node": "./cli-allowlist.ts",
-			"default": "./out/cli-allowlist.js",
-			"types": "./out/cli-allowlist.d.ts"
-		},
-		"./compare": {
-			"node": "./compare.ts",
-			"default": "./out/compare.js",
-			"types": "./out/compare.d.ts"
-		},
-		"./contract-census": {
-			"node": "./contract-census.ts",
-			"default": "./out/contract-census.js",
-			"types": "./out/contract-census.d.ts"
-		},
-		"./contract-report": {
-			"node": "./contract-report.ts",
-			"default": "./out/contract-report.js",
-			"types": "./out/contract-report.d.ts"
-		},
-		"./engine-registry": {
-			"node": "./engine-registry.ts",
-			"default": "./out/engine-registry.js",
-			"types": "./out/engine-registry.d.ts"
-		},
-		"./oracle-arm": {
-			"node": "./oracle-arm.ts",
-			"default": "./out/oracle-arm.js",
-			"types": "./out/oracle-arm.d.ts"
-		},
-		"./reliability": {
-			"node": "./reliability.ts",
-			"default": "./out/reliability.js",
-			"types": "./out/reliability.d.ts"
-		},
-		"./reliability-report": {
-			"node": "./reliability-report.ts",
-			"default": "./out/reliability-report.js",
-			"types": "./out/reliability-report.d.ts"
-		},
-		"./reliability-surfaces": {
-			"node": "./reliability-surfaces.ts",
-			"default": "./out/reliability-surfaces.js",
-			"types": "./out/reliability-surfaces.d.ts"
-		},
-		"./run-store": {
-			"node": "./run-store.ts",
-			"default": "./out/run-store.js",
-			"types": "./out/run-store.d.ts"
-		},
-		"./external-arm": {
-			"node": "./external-arm.ts",
-			"default": "./out/external-arm.js",
-			"types": "./out/external-arm.d.ts"
-		},
-		"./compiled-tree": {
-			"node": "./compiled-tree.ts",
-			"default": "./out/compiled-tree.js",
-			"types": "./out/compiled-tree.d.ts"
-		},
-		"./source-census": {
-			"node": "./source-census.ts",
-			"default": "./out/source-census.js",
-			"types": "./out/source-census.d.ts"
-		},
-		"./tree-fingerprint": {
-			"node": "./tree-fingerprint.ts",
-			"default": "./out/tree-fingerprint.js",
-			"types": "./out/tree-fingerprint.d.ts"
-		},
-		"./tools/coverage": {
-			"node": "./tools/coverage.ts",
-			"default": "./out/tools/coverage.js",
-			"types": "./out/tools/coverage.d.ts"
-		},
-		"./arc": {
-			"node": "./arc.ts",
-			"default": "./out/arc.js",
-			"types": "./out/arc.d.ts"
-		},
-		"./tool-kit": {
-			"node": "./tool-kit.ts",
-			"default": "./out/tool-kit.js",
-			"types": "./out/tool-kit.d.ts"
-		},
-		"./confound": {
-			"node": "./confound.ts",
-			"default": "./out/confound.js",
-			"types": "./out/confound.d.ts"
-		},
-		"./constraint-census": {
-			"node": "./constraint-census.ts",
-			"default": "./out/constraint-census.js",
-			"types": "./out/constraint-census.d.ts"
-		},
-		"./counterfactual": {
-			"node": "./counterfactual.ts",
-			"default": "./out/counterfactual.js",
-			"types": "./out/counterfactual.d.ts"
-		},
-		"./diagnose": {
-			"node": "./diagnose.ts",
-			"default": "./out/diagnose.js",
-			"types": "./out/diagnose.d.ts"
-		},
-		"./input-sets": {
-			"node": "./input-sets.ts",
-			"default": "./out/input-sets.js",
-			"types": "./out/input-sets.d.ts"
-		},
-		"./engine-rigs": {
-			"node": "./engine-rigs.ts",
-			"default": "./out/engine-rigs.js",
-			"types": "./out/engine-rigs.d.ts"
-		},
-		"./gate-report": {
-			"node": "./gate-report.ts",
-			"default": "./out/gate-report.js",
-			"types": "./out/gate-report.d.ts"
-		},
-		"./gauntlet-report": {
-			"node": "./gauntlet-report.ts",
-			"default": "./out/gauntlet-report.js",
-			"types": "./out/gauntlet-report.d.ts"
-		},
-		"./geo-grade": {
-			"node": "./geo-grade.ts",
-			"default": "./out/geo-grade.js",
-			"types": "./out/geo-grade.d.ts"
-		},
-		"./grade": {
-			"node": "./grade.ts",
-			"default": "./out/grade.js",
-			"types": "./out/grade.d.ts"
-		},
-		"./lookup-sources": {
-			"node": "./lookup-sources.ts",
-			"default": "./out/lookup-sources.js",
-			"types": "./out/lookup-sources.d.ts"
-		},
-		"./lookup": {
-			"node": "./lookup.ts",
-			"default": "./out/lookup.js",
-			"types": "./out/lookup.d.ts"
-		},
-		"./lookup-tool": {
-			"node": "./lookup-tool.ts",
-			"default": "./out/lookup-tool.js",
-			"types": "./out/lookup-tool.d.ts"
-		},
-		"./minimal-pairs": {
-			"node": "./minimal-pairs.ts",
-			"default": "./out/minimal-pairs.js",
-			"types": "./out/minimal-pairs.d.ts"
-		},
-		"./parse-compare": {
-			"node": "./parse-compare.ts",
-			"default": "./out/parse-compare.js",
-			"types": "./out/parse-compare.d.ts"
-		},
-		"./parse-compare-report": {
-			"node": "./parse-compare-report.ts",
-			"default": "./out/parse-compare-report.js",
-			"types": "./out/parse-compare-report.d.ts"
-		},
-		"./place-id-provenance": {
-			"node": "./place-id-provenance.ts",
-			"default": "./out/place-id-provenance.js",
-			"types": "./out/place-id-provenance.d.ts"
-		},
-		"./power": {
-			"node": "./power.ts",
-			"default": "./out/power.js",
-			"types": "./out/power.d.ts"
-		},
-		"./tally": {
-			"node": "./tally.ts",
-			"default": "./out/tally.js",
-			"types": "./out/tally.d.ts"
-		},
-		"./jobs": {
-			"node": "./jobs.ts",
-			"default": "./out/jobs.js",
-			"types": "./out/jobs.d.ts"
-		},
 		"./tools": {
-			"node": "./tools/index.ts",
+			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
 		},
-		"./vocabulary": {
-			"node": "./vocabulary.ts",
-			"default": "./out/vocabulary.js",
-			"types": "./out/vocabulary.d.ts"
+		"./hooks/*": {
+			"node": "./lib/hooks/*.ts",
+			"default": "./out/hooks/*.js",
+			"types": "./out/hooks/*.d.ts"
 		},
-		"./worker-host": {
-			"node": "./worker-host.ts",
-			"default": "./out/worker-host.js",
-			"types": "./out/worker-host.d.ts"
-		},
-		"./worktree-arm": {
-			"node": "./worktree-arm.ts",
-			"default": "./out/worktree-arm.js",
-			"types": "./out/worktree-arm.d.ts"
-		},
-		"./routed-mailwoman-arm": {
-			"node": "./routed-mailwoman-arm.ts",
-			"default": "./out/routed-mailwoman-arm.js",
-			"types": "./out/routed-mailwoman-arm.d.ts"
-		},
-		"./symbol-index": {
-			"node": "./symbol-index.ts",
-			"default": "./out/symbol-index.js",
-			"types": "./out/symbol-index.d.ts"
+		"./*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"dependencies": {
@@ -277,17 +50,17 @@
 		"@mailwoman/geocode-oracle": "workspace:*",
 		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",
 		"mailwoman": "workspace:*",
-		"path-ts": "^2.1.0",
-		"spliterator": "^6.3.1",
-		"zod": "^4.4.3"
+		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1",
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
-		"@vvago/vale": "^3.17.0"
+		"@vvago/vale": "^3.20.0"
 	}
 }

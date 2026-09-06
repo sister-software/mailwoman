@@ -1,0 +1,116 @@
+{
+	"name": "neural-weights-cjk",
+	"version": "0.0.1",
+	"locale": "cjk",
+	"phase": "First functional release (0.0.1 was the name reservation): the v8-cjk-kana 24k graph and vocabulary, staged at cjk/v0.0.1/ on the Hugging Face bucket (#2164, #2165).",
+	"encoder": "char",
+	"char_vocab": "char-vocab.json",
+	"max_units": 96,
+	"max_unit_width": 7,
+	"char_ctx": 3,
+	"format": {
+		"model": "ONNX fp32 (opset 17), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (2,337 entries, <pad> 0, <unk> 1, code-point order).",
+		"tokenizer": null
+	},
+	"architecture": {
+		"hidden_size": 384,
+		"num_hidden_layers": 4,
+		"num_attention_heads": 6,
+		"intermediate_size": 1536,
+		"max_position_embeddings": 96,
+		"char_embed_dim": 64,
+		"num_labels": 49,
+		"params": "7,551,857"
+	},
+	"label_set": "stage3-cjk",
+	"labels": [
+		"O",
+		"B-country",
+		"I-country",
+		"B-region",
+		"I-region",
+		"B-locality",
+		"I-locality",
+		"B-dependent_locality",
+		"I-dependent_locality",
+		"B-postcode",
+		"I-postcode",
+		"B-subregion",
+		"I-subregion",
+		"B-cedex",
+		"I-cedex",
+		"B-venue",
+		"I-venue",
+		"B-street",
+		"I-street",
+		"B-house_number",
+		"I-house_number",
+		"B-street_prefix",
+		"I-street_prefix",
+		"B-street_suffix",
+		"I-street_suffix",
+		"B-unit",
+		"I-unit",
+		"B-po_box",
+		"I-po_box",
+		"B-intersection_a",
+		"I-intersection_a",
+		"B-intersection_b",
+		"I-intersection_b",
+		"B-prefecture",
+		"I-prefecture",
+		"B-municipality",
+		"I-municipality",
+		"B-district",
+		"I-district",
+		"B-block",
+		"I-block",
+		"B-sub_block",
+		"I-sub_block",
+		"B-building_number",
+		"I-building_number",
+		"B-building_name",
+		"I-building_name",
+		"B-locality_unit",
+		"I-locality_unit"
+	],
+	"files": {
+		"model": "model.onnx",
+		"char_vocab": "char-vocab.json",
+		"model_card": "model-card.json"
+	},
+	"files_md5": {
+		"$comment": "The candidate artifacts' md5s — what a materialized package is verified against.",
+		"model.onnx": "f0bb12e0c021fab19998759cc32dab30",
+		"char-vocab.json": "6f2d7efdbcd6c36edd186bf871336b13"
+	},
+	"training": {
+		"run": "v8-cjk-kana seed 42, 24,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-kana.yaml)",
+		"corpus": "v8-cjk-kana-2026-09-06 overlay: the v8-jp-kana-2026-09-06 JP corpus (2,000,000 train rows, Overture-JP, five registers — native, arabic_chome, compact_folded, designator, kana_municipality) plus 126 CN organizational-unit rows; source mixture overture-jp 0.98 / coarse-placer-cn-units 0.02",
+		"modal_app": "ap-PWNbrv0yjoQiEfzY19fuDV"
+	},
+	"eval": {
+		"jp_board_20000": {
+			"$comment": "Held-out municipalities, coordinate-acceptability at 15 km via the municipality centroid table (corpus-python/scripts/score_jp_probe_board.py --label-set stage3-cjk), on the pre-registered v8-jp-full-2026-08-04 board. PyTorch read; the shared head (v8-cjk-full) read 0.9653 / 0.9757 on the same instrument.",
+			"coordinate_acceptability": 0.9924,
+			"municipality_macro": 0.9821,
+			"municipality_exact": 0.994,
+			"district_exact": 0.987,
+			"prefecture_exact": 1.0,
+			"block_exact": 1.0,
+			"house_number_exact": 0.9933,
+			"note": "かすみがうら市 (823 held-out rows) fails 0 (the shared head failed 598); 中新川郡上市町 fails 121 of 136 (the shared head 66) — the model closes the municipality at the inner 市. On the v8-jp-kana-2026-09-06 board the 1,127 kana_municipality rows read 1,125 gold-exact."
+		},
+		"cn_board_14": {
+			"$comment": "locality_unit span exact-match, PyTorch per-unit argmax; the shared head read 10 (PyTorch) / 12 (served, Viterbi).",
+			"locality_unit_exact": "11/14"
+		}
+	},
+	"model_lineage": "0.0.1: v8-cjk-full step-024000 (fp32 ONNX md5 e14ef4c426dabb22e9433ab04b584d48). Decision record: docs/superpowers/specs/2026-09-05-cjk-serving-path.md; receipts on #1176, #2034, #2164.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"notes": [
+		"One CJK package a consumer installs as a unit (#1177 Phase B): Japanese and Chinese ride one 49-label head; ja-jp and zh-cn data-only overlays follow.",
+		"Channel-free by contract (D5): no postcode-anchor, gazetteer, country or evidence channels; the graph declares only char_ids and attention_mask.",
+		"The locale hint routes a cjk character class to ja-JP; until the ja-jp overlay exists, load this package explicitly: NeuralAddressClassifier.loadFromWeights({ modelPath, charVocabPath, modelCardPath })."
+	]
+}

@@ -15,12 +15,12 @@ across **four new workspaces** and **14 commits**, with **121 passing tests** in
 new packages (+170 corpus tests still green through a migration). Nothing is merged;
 it's all a draft PR awaiting review/CI/split. The only thing left to _run it on real
 data_ is a CLI command that injects the heavy geocoder (operator-verifiable; the
-weights/shards aren't in the worktree).
+weights/extracts aren't in the worktree).
 
 ## What got built — the cascade
 
 ```
-CSV / SQLite -ingest-> normalize (name, org, address) -[GeocodeAddress seam]-> SourceRecord
+CSV / SQLite -ingest-> normalize (name, org, address) -[GeocodeAddress boundary]-> SourceRecord
    -> @mailwoman/match  BLOCK (geo | canonical | phone | email)
                         SCORE (Jaro-Winkler, distance buckets, Fellegi-Sunter;
                                m/u learned label-free by EM; rare values up-weighted by TF)
@@ -96,8 +96,8 @@ Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-toke
   - `geojson.ts`: `toGeoJSON(entities)` to a QGIS Point FeatureCollection (recordCount,
     cohesion, name/org/address, geocode tier as properties).
   - `ingest.ts`: `parseCsv`, `ColumnMapping`, `ingestRows` (pure column-map + normalize),
-    `GeocodeAddress` (the injected geocoder **seam**), `geocodeAddressVia` (the adapter
-    that wires mailwoman's **real** parse+geocode into the seam; `RawGeocode` is
+    `GeocodeAddress` (the injected geocoder **boundary**), `geocodeAddressVia` (the adapter
+    that wires mailwoman's **real** parse+geocode into the boundary; `RawGeocode` is
     structurally a `GeocodeResult` subset, so this package never imports the heavy runtime).
 
 ## Locked decisions (don't re-litigate)
@@ -137,9 +137,9 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
 - **After adding a workspace:** add it to root `package.json` workspaces, `tsconfig.json`
   references, `vitest.config.ts` aliases, then `yarn install` (updates the lockfile — keep
   it clean for CI's `--immutable`).
-- **The heavy geocoder (weights + situs/interp shards) is NOT in this worktree**, so the
+- **The heavy geocoder (weights + situs/interp extracts) is NOT in this worktree**, so the
   real end-to-end geocode run can't be unit-tested here — it's operator-verifiable via the
-  CLI. That's why geocoding is an injected seam.
+  CLI. That's why geocoding is an injected boundary.
 - Another agent was active on `eval/oa-offmap-pull` in the shared checkout during this
   shift — we stayed isolated in the worktree.
 - **Docs under `docs/articles/` are linted as MDX** — backtick any raw angle brackets or
@@ -148,7 +148,7 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
 ## Open work (prioritized)
 
 1. **CLI command** `mailwoman registry <csv>` — construct the real geocoder (neural parse +
-   resolver + shards) and inject it into `geocodeAddressVia`, then run
+   resolver + extracts) and inject it into `geocodeAddressVia`, then run
    ingest, resolve, GeoJSON on a dataset. Lives in `mailwoman/` (the CLI package, which
    already has `geocode-core.ts`). This is the operator-verifiable integration that makes
    it run on real clinic data — **grades the thesis against truth.**

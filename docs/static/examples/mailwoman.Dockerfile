@@ -67,7 +67,7 @@ COPY --from=install --chown=node:node /app/node_modules ./node_modules
 # the two files saved straight from the docs site.
 COPY --chown=node:node mailwoman-server.mjs ./mailwoman-server.mjs
 
-# Both resolver backends open SQLite read-only, so mount this `:ro`. Per-state rooftop shards are
+# Both resolver backends open SQLite read-only, so mount this `:ro`. Per-state rooftop databases are
 # WAL-mode: keep their -wal and -shm siblings in the same mount, or those addresses fall back to a
 # coarser resolution tier.
 RUN mkdir -p /data && chown node:node /data

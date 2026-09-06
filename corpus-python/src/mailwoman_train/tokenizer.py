@@ -33,8 +33,9 @@ import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
-import sentencepiece as spm  # type: ignore[import-not-found]
+import sentencepiece as spm
 
 from .labels import IGNORE_INDEX, LABEL_TO_ID, LOCALE_TO_ID, NUM_LOCALES, collapse_label
 
@@ -88,11 +89,11 @@ class Tokenizer:
     def encode_with_spans(self, raw: str) -> list[PieceSpan]:
         """Encode raw text and return one ``PieceSpan`` per sub-token with char offsets."""
         try:
-            proto = self.sp.encode(raw, out_type="immutable_proto")
+            proto = self.sp.encode(raw, out_type=cast(Any, "immutable_proto"))
         except ValueError:
             # sentencepiece ≥0.2.2 renamed the proto out_type (Modal's pinned image keeps the old
             # spelling; local dev venvs track newer). Identical pieces/offsets either way.
-            proto = self.sp.encode(raw, out_type="proto")
+            proto = self.sp.encode(raw, out_type=cast(Any, "proto"))
         # Build a byte→char index for the original raw string so we can map proto byte offsets.
         raw_bytes = raw.encode("utf-8")
         # ``byte_to_char[i]`` is the char index of the codepoint that owns byte ``i`` (start byte).
@@ -126,7 +127,7 @@ def whitespace_spans(raw: str, tokens: Sequence[str]) -> list[tuple[int, int]]:
     """Return the (char_begin, char_end) span of each whitespace token in ``raw``.
 
     Scans left-to-right; for each token, finds it at-or-after the previous end. The corpus
-    tokens come from ``packages/corpus/src/tokenize.ts`` (whitespace split + Unicode-aware),
+    tokens come from ``packages/corpus/lib/tokenize.ts`` (whitespace split + Unicode-aware),
     so the surface forms are guaranteed to be substrings of ``raw`` in order.
     """
     spans: list[tuple[int, int]] = []
@@ -370,7 +371,7 @@ def _paint_anchor_chars(
     GB OUTWARD FALLBACK (2026-08-05). A unit postcode that misses retries its outward district
     (``SW1A 2AA`` -> ``SW1A``) and paints the WHOLE unit span from it, mirroring
     ``neural/anchor-inference.ts``'s ``spanMode: "shaped"`` exactly. It earns its keep on real
-    shards: against the v2 lookup, ``synth-gb-v1`` misses 217 spans in 200,000 rows (retired unit
+    slices: against the v2 lookup, ``synth-gb-v1`` misses 217 spans in 200,000 rows (retired unit
     codes — Code-Point Open is a 2026-05 snapshot, the tuples are older), and 215 of those 217 have
     a live outward district. INERT for every lookup shipped before that date: they hold five-digit
     keys only, and a five-digit key's outward slice is two digits, which is not a key in any of
@@ -452,15 +453,15 @@ def encode_row(
     max_length: int,
     anchor_lookup: dict[str, tuple[dict[str, float], float, float]] | None = None,
     anchor_paint_mode: str = "gold",
-    gazetteer_lexicon=None,
+    gazetteer_lexicon: Any = None,
     gazetteer_choreography: bool = False,
-    country_lexicon=None,
-    street_type_lexicon=None,
-    locality_surface_lexicon=None,
+    country_lexicon: Any = None,
+    street_type_lexicon: Any = None,
+    locality_surface_lexicon: Any = None,
     span_starts: Sequence[int] | None = None,
     span_ends: Sequence[int] | None = None,
     span_tags: Sequence[str] | None = None,
-) -> dict[str, list]:
+) -> dict[str, list[Any]]:
     """Encode a single row into ``input_ids`` + ``attention_mask`` + ``label_ids``.
 
     Truncates to ``max_length`` SP pieces. Pads to ``max_length`` with the SP ``pad_id`` and
@@ -495,7 +496,12 @@ def encode_row(
         )
     spans = tokenizer.encode_with_spans(raw)
     if has_spans:
-        bio_labels = realign_spans_to_pieces(raw, span_starts, span_ends, span_tags, spans)
+        # The partial-triple raise above guarantees all three are present; local fallbacks
+        # narrow for mypy without a stripped-under -O assert.
+        starts = span_starts if span_starts is not None else ()
+        ends = span_ends if span_ends is not None else ()
+        tags = span_tags if span_tags is not None else ()
+        bio_labels = realign_spans_to_pieces(raw, starts, ends, tags, spans)
     else:
         bio_labels = realign_labels_to_pieces(raw, tokens, labels, spans)
     ids = [s.piece_id for s in spans][:max_length]
@@ -506,7 +512,7 @@ def encode_row(
         ids.extend([tokenizer.pad_id] * pad_needed)
         attention.extend([0] * pad_needed)
         label_ids.extend([IGNORE_INDEX] * pad_needed)
-    out: dict[str, list] = {"input_ids": ids, "attention_mask": attention, "labels": label_ids}
+    out: dict[str, list[Any]] = {"input_ids": ids, "attention_mask": attention, "labels": label_ids}
 
     if anchor_lookup is not None:
         if anchor_paint_mode == "shaped":
@@ -515,9 +521,10 @@ def encode_row(
             # look-like-ZIPs and learns to override it. Ignores tokens/labels/spans (shape from raw text).
             feats, confs = realign_anchor_to_pieces_shaped(raw, list(spans), anchor_lookup)
         elif has_spans:
-            feats, confs = realign_anchor_to_pieces_from_spans(
-                raw, span_starts, span_ends, span_tags, list(spans), anchor_lookup
-            )
+            starts = span_starts if span_starts is not None else ()
+            ends = span_ends if span_ends is not None else ()
+            tags = span_tags if span_tags is not None else ()
+            feats, confs = realign_anchor_to_pieces_from_spans(raw, starts, ends, tags, list(spans), anchor_lookup)
         else:
             feats, confs = realign_anchor_to_pieces(raw, tokens, labels, list(spans), anchor_lookup)
         feats = feats[:max_length]

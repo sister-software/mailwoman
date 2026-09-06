@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The venue-structure confound board (#1423), run as a gate.
+ *   The venue-structure confound board (#1423), run as a check.
  *
  *   `venueStructureBiasScale` pushes venue-INTERIOR designators ("concourse", "terminal", "gate",
  *   "wing", …) toward `unit` harder than the postal designators they share a vocabulary with. The
@@ -10,7 +10,7 @@
  *   designator: the GB `-gate` street names, "Gate House" venues, "Terminal" industrial estates,
  *   "Wing" as a personal or business name, and designators used as street names.
  *
- *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the lever was
+ *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was
  *   measured. Its bar is absolute — zero `unit` emissions — because every row is a surface where a
  *   unit is simply wrong, not one where a unit is merely unlikely.
  *
@@ -19,17 +19,17 @@
  *   decode stays byte-identical) and is switched on by `geocode-core.ts` via
  *   `WORD_CONSISTENCY_SHIP_DEFAULT`. A board run against the raw classifier therefore measures an
  *   UN-HEALED decode, and it will report failures that no consumer of the shipped pipeline can
- *   reach — which is exactly what happened while this lever was being measured: `1 Building Society
+ *   reach — which is exactly what happened while this change was being measured: `1 Building Society
  *   Place, Leeds` read `unit="Buil"`, a sub-token fragment, and was written up as a pre-existing
  *   product defect. It is not one. `Building` tokenizes to `B`/`uil`/`ding`, the model labelled
  *   those `B-unit`/`I-unit`/`B-street` — three components inside one word, a sequence no valid parse
  *   can have — and the heal collapses it to `unit="Building"` the moment it is on. The bug was in
- *   the harness, and the fix is to make the gate incapable of choosing the wrong path.
+ *   the harness, and the fix is to make the check incapable of choosing the wrong path.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { workspacePath } from "@mailwoman/core/paths"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
-import { workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
@@ -46,7 +46,7 @@ interface ConfoundRow {
 	xfail?: string
 }
 
-const BOARD = String(workspacePath("mailwoman", "eval-harness", "fixtures", "venue-structure-confounds.jsonl"))
+const BOARD = String(workspacePath("mailwoman", "lib", "eval-harness", "fixtures", "venue-structure-confounds.jsonl"))
 
 const rows: ConfoundRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<ConfoundRow>(BOARD))
 
@@ -56,7 +56,7 @@ try {
 	classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 } catch {
 	// Lean checkout with no materialized weights — the suite skips rather than fails, matching the
-	// other model-gated suites in this leg.
+	// other model-conditional suites in this leg.
 	classifier = undefined
 }
 

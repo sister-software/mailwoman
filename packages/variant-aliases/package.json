@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/variant-aliases",
-	"version": "9.2.0",
-	"description": "Regional variant alias table — local terms for amenities/brands gated by locale. 'servo' → fuel (en-AU), 'マクド' → McDonald's (ja-JP), 'PFK' → KFC (fr-CA).",
+	"version": "9.3.0",
+	"description": "Regional variant alias table — local terms for amenities/brands blocked by locale. 'servo' → fuel (en-AU), 'マクド' → McDonald's (ja-JP), 'PFK' → KFC (fr-CA).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -25,15 +25,23 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./lookup": {
-			"node": "./lookup.ts",
+			"node": "./lib/lookup.ts",
 			"default": "./out/lookup.js",
 			"types": "./out/lookup.d.ts"
 		}
@@ -42,7 +50,6 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/core": "workspace:*",
-		"@mailwoman/platform": "workspace:*"
+		"@mailwoman/core": "workspace:*"
 	}
 }

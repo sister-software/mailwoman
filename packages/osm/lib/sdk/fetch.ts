@@ -1,0 +1,62 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Geofabrik extract URLs + a streaming downloader. Geofabrik is the OSM ecosystem's de-facto
+ *   regional-extract host: a cascade of continent → country → sub-region `.osm.pbf` files
+ *   (`europe/france/ile-de-france-latest.osm.pbf`). We pull per-COUNTRY extracts (the ecosystem's
+ *   default extract unit — matching Photon's per-country dumps and our own per-locale weights), and a
+ *   smaller sub-region extract when we only need to smoke a build (Île-de-France for the Paris
+ *   acceptance). The bytes are ODbL OpenStreetMap data — see `osm/README.md`.
+ *
+ *   RAW `fetch` HERE IS DELIBERATE. `AGENTS.md` requires HTTP clients to extend or instantiate
+ *   `APIClient`, and that rule is about API REQUESTS — small bodies, repeated calls, rate-limited
+ *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
+ *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
+ *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
+ *   non-stream response type in memory. The primitive that fits a body this large is the one that
+ *   never holds it: a web stream piped to a write stream.
+ */
+
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
+import { movePath } from "@mailwoman/core/fs/writers"
+
+const GEOFABRIK_BASE = "https://download.geofabrik.de"
+
+/**
+ * The URL of a Geofabrik `-latest.osm.pbf` extract for a region path like `europe/france/ile-de-france` or
+ * `europe/germany`. Pass the path WITHOUT the `-latest.osm.pbf` suffix.
+ */
+export function geofabrikURL(regionPath: string): string {
+	const clean = regionPath.replaceAll(/^\/+|\/+$/g, "")
+
+	return `${GEOFABRIK_BASE}/${clean}-latest.osm.pbf`
+}
+
+/**
+ * Download a Geofabrik extract to `destPath`, streaming (these run to several GB for a whole country). Returns the byte
+ * count written. The caller owns where the file lands (typically `$MAILWOMAN_DATA_ROOT/osm/geofabrik/`).
+ */
+export async function downloadExtract(regionPath: string, destPath: string): Promise<number> {
+	const url = geofabrikURL(regionPath)
+	const res = await fetch(url)
+
+	if (!res.ok || !res.body) throw new Error(`Geofabrik download failed (${res.status}) for ${url}`)
+	let bytes = 0
+
+	const counter = new TransformStream<Uint8Array, Uint8Array>({
+		transform(chunk, controller) {
+			bytes += chunk.byteLength
+			controller.enqueue(chunk)
+		},
+	})
+
+	// Write to a `.tmp` sibling and rename, so an interrupted multi-gigabyte download never lands at
+	// the final path looking like a complete extract (the same discipline as tiger's downloadIfNeeded).
+	const tmpPath = destPath + ".tmp"
+
+	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(tmpPath))
+	await movePath(tmpPath, destPath)
+
+	return bytes
+}

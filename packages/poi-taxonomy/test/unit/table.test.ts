@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { lookupPOIBrand as nodeLookupPOIBrand } from "@mailwoman/poi-taxonomy/brands"
 import { lookupPOICategory as nodeLookupPOICategory } from "@mailwoman/poi-taxonomy/lookup"
 import { createPOIBrandLookup, createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
@@ -31,10 +32,10 @@ const TWO_CATEGORY_TABLE: POITaxonomyTable = {
 	overtureRelease: null,
 	categories: [hospital, telecomCabinet],
 	synonyms: [
-		// Locale-gated synonym case, same semantics as the node entry's `chemist` fixture.
+		// Locale-restricted synonym case, same semantics as the node entry's `chemist` fixture.
 		{ phrase: "hospice", categoryID: hospital.id, locales: ["en-GB"] },
 		{ phrase: "hôpital", categoryID: hospital.id, locales: ["fr"] },
-		// Infra-flag case: an ungated synonym pointing at the mailwoman-infra category.
+		// Infra-flag case: an unrestricted synonym pointing at the mailwoman-infra category.
 		{ phrase: "fiber hut", categoryID: telecomCabinet.id },
 	],
 }
@@ -99,11 +100,10 @@ describe("createPOITaxonomyLookup", () => {
 	it("agrees with the node entry on a shared phrase from the real taxonomy table", async () => {
 		// Load the same JSON the node entry loads, via the core reader (this test file itself runs under node, so
 		// this doesn't exercise bundler-safety — it just proves the two entries agree over the real table).
-		const { resolve } = await import("@mailwoman/platform/path")
 
 		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
 		const table = (await readLocalJSONFile(
-			resolve(import.meta.dirname, "../../data/taxonomy.json")
+			resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json")
 		)) as POITaxonomyTable
 
 		const injectedLookup = createPOITaxonomyLookup(table)
@@ -188,10 +188,10 @@ describe("createPOIBrandLookup", () => {
 	})
 
 	it("agrees with the node entry on a shared phrase from the real committed brand table", async () => {
-		const { resolve } = await import("@mailwoman/platform/path")
-
 		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
-		const table = (await readLocalJSONFile(resolve(import.meta.dirname, "../../data/brands.json"))) as POIBrandTable
+		const table = (await readLocalJSONFile(
+			resolvePackagePath("@mailwoman/poi-taxonomy", "data", "brands.json")
+		)) as POIBrandTable
 
 		const injectedLookup = createPOIBrandLookup(table)
 		const [firstBrand] = table.brands

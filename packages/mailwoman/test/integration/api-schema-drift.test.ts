@@ -61,7 +61,7 @@
  */
 
 import { GeocodeOutcomeSchema } from "@mailwoman/api"
-import type { GeocodeResult } from "mailwoman/geocode-result"
+import type { GeocodeResult } from "mailwoman/geocode"
 import { expect, test } from "vitest"
 import { z } from "zod"
 
@@ -114,6 +114,8 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	lat: true,
 	lon: true,
 	resolution_tier: true,
+	epistemic_status: true,
+	derivation: true,
 	entity: true,
 	uncertainty_m: true,
 	locality: true,

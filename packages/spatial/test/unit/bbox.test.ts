@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { bboxAround, is2DBBox, is3DBBox, isBBox } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
-
-import { bboxAround, is2DBBox, is3DBBox, isBBox } from "#index"
 
 // 2D GeoJSON bbox: [west, south, east, north]. 3D adds min/max altitude: [w, s, minA, e, n, maxA].
 const BBOX_2D = [-74.1, 40.6, -73.9, 40.9]

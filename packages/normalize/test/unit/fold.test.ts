@@ -1,0 +1,17 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { foldCaseWhitespace, stripCombiningMarks } from "@mailwoman/normalize/fold"
+import { describe, expect, it } from "vitest"
+
+describe("foldCaseWhitespace", () => {
+	it("lower-cases, collapses whitespace runs and trims", () => {
+		expect(foldCaseWhitespace("  Saint-Étienne \t  CEDEX\n")).toBe("saint-étienne cedex")
+	})
+})
+
+describe("stripCombiningMarks", () => {
+	it("removes marks and keeps case, whitespace and non-decomposable letters", () => {
+		expect(stripCombiningMarks("Saint-Étienne  Łódź")).toBe("Saint-Etienne  Łodz")
+	})
+})

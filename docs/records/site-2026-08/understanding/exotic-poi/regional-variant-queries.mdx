@@ -84,15 +84,15 @@ This is the right approach for a global-scale geocoder with query log data. It d
 
 1. **An alias table.** A mapping from regional terms to standard categories and brands. This is hand-curated data — about 200-500 entries for major global variants, maintained as a data file. It's the same kind of maintenance burden as a state abbreviation dictionary, just larger.
 
-2. **A locale signal.** The geocoder needs to know where the user is to disambiguate variants. "Chemist" means pharmacy in the UK and Australia but not in the US. The locale gate (Stage 2) provides this signal for Mailwoman — it detects the script and format of the query, which is a proxy for the user's region.
+2. **A locale signal.** The geocoder needs to know where the user is to disambiguate variants. "Chemist" means pharmacy in the UK and Australia but not in the US. The locale check (Stage 2) provides this signal for Mailwoman — it detects the script and format of the query, which is a proxy for the user's region.
 
 3. **Fuzzy matching.** Some variants are informal and appear nowhere in formal databases. "Mickey D's" for McDonalds, regional colloquialisms for common amenities. Exact alias matching won't catch these. A fuzzy-matching layer that handles common informal variants requires training data — either query logs or hand-curated examples.
 
 ## What Mailwoman does today
 
-Mailwoman's locale gate (Stage 2) can detect the query's language/script family, and the alias table half of this problem now has a real home: `@mailwoman/variant-aliases` is the curated locale-slang table ("servo," "PFK," "Macca's"), and it finally has a consumer — it resolves each slang term to a [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) category id, so "servo" reaches the same `gas_station` category and the same `poi.db` lookup an English "gas station" query would. Amenity-variant slang works today the way [amenity queries](./amenity-queries.mdx) do.
+Mailwoman's locale check (Stage 2) can detect the query's language/script family, and the alias table half of this problem now has a real home: `@mailwoman/variant-aliases` is the curated locale-slang table ("servo," "PFK," "Macca's"), and it finally has a consumer — it resolves each slang term to a [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) category id, so "servo" reaches the same `gas_station` category and the same `poi.db` lookup an English "gas station" query would. Amenity-variant slang works today the way [amenity queries](./amenity-queries.mdx) do.
 
-Brand-variant slang doesn't yet, for the same reason [franchise queries](./franchise-queries.mdx) don't: there's no brand table for "servo" to resolve into. "マクド" (makudo) is recognized as Japanese text by the locale gate, but nothing maps it to McDonald's until the brand lexicon exists. Fuzzy matching for informal variants that never made it into the curated table is also still unbuilt.
+Brand-variant slang doesn't yet, for the same reason [franchise queries](./franchise-queries.mdx) don't: there's no brand table for "servo" to resolve into. "マクド" (makudo) is recognized as Japanese text by the locale check, but nothing maps it to McDonald's until the brand lexicon exists. Fuzzy matching for informal variants that never made it into the curated table is also still unbuilt.
 
 ## See also
 

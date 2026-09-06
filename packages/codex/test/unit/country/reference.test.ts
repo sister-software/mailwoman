@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { countryFlag, countryReferenceAnnotator } from "@mailwoman/codex/country/reference"
+import { countryFlag, countryReferenceAnnotator } from "@mailwoman/codex/country"
 import { expect, test } from "vitest"
 
 test("countryFlag: alpha-2 → regional-indicator emoji, case-insensitive", () => {

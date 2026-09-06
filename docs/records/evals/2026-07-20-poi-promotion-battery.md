@@ -4,7 +4,7 @@
 [runtime-flag register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/runtime-flags.mdx)). **Status: report only.** No
 default was flipped by this work; the numbers below are for the operator's promotion decision.
 
-The register's gate: **"golden 2pp + demo presets + the POI board (spec §3.6)."** Three legs,
+The register's check: **"golden 2pp + demo presets + the POI board (spec §3.6)."** Three legs,
 plus a report-only latency check the task also asked for.
 
 ## Leg 1 — golden 2pp guard (misroute count)
@@ -13,7 +13,7 @@ plus a report-only latency check the task also asked for.
 path?
 
 **Method used: the DIRECT equivalent, not the full model-eval harness.** The golden-set runner
-(`mailwoman/eval-harness/`, `promotion-gate.ts` and friends) is shaped around scoring the neural
+(`mailwoman/eval-harness/`, `promotion-check.ts` and friends) is shaped around scoring the neural
 classifier's tag output against golden components — parameterizing it by a pipeline-level routing
 flag would mean threading `poiQueryKind` through the whole scorer for a question the harness
 doesn't otherwise ask. `poiQueryKind` only changes Stage 2.5 (kind classification), so the direct
@@ -102,7 +102,7 @@ One open failure (`brand-us-02`, Applebee's/Dallas) traced to the reader's k-rin
 being tuned for category density, not brand density — not a subject-match or kind-classification
 issue. See the v1.1 doc for the full trace.
 
-## Latency (report-only, not part of the promotion gate)
+## Latency (report-only, not part of the promotion check)
 
 **Question:** does the poi classifier's per-query lexicon scan add measurable overhead to a
 plain address parse?
@@ -137,9 +137,9 @@ done here since the report-only ask was for a first-order signal, not a tight bo
 
 Scripts: `scratchpad/poi-battery/leg4-latency.ts`, `leg4-latency-swapped.ts` (gitignored).
 
-## What the register's gate requires vs what was measured
+## What the register's check requires vs what was measured
 
-The register: _"Promotion gate before any default flip: golden 2pp + demo presets + the POI
+The register: _"Promotion check before any default flip: golden 2pp + demo presets + the POI
 board (spec §3.6)."_
 
 | Leg          | Requirement (as stated in the register)              | Measured                                                                                              |

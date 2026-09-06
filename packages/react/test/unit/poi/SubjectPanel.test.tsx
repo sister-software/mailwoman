@@ -5,7 +5,7 @@ import { SubjectPanel } from "@mailwoman/react/poi/SubjectPanel"
 import type { CategoryRecord, POIBrandSubject, POICategorySubject } from "@mailwoman/react/poi/types"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 function subject(overrides: Partial<POICategorySubject> = {}): POICategorySubject {
 	return {

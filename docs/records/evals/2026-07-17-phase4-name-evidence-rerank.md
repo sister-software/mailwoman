@@ -17,7 +17,7 @@ evidence rate: 9/267 (3.4%) — tier census: 1308 admin / 25 address_point / 2 s
 ```
 
 **The rerank collected NOTHING — because it is evidence-starved, not wrong.** The failing class is
-context-free fragments, and a fragment cannot reach the rooftop layers (no locality/postcode to shard
+context-free fragments, and a fragment cannot reach the rooftop layers (no locality/postcode to extract
 on), so every hypothesis ties at admin tier and the arbiter has nothing to prefer. Full-geocode tier
 is structurally blind exactly where the headroom lives.
 
@@ -45,7 +45,7 @@ exists in BAN; positive evidence only, no scores blended):
 
 Of 202 recoverable fixtures (wrong at rank 1, right in the top 5): **fixed 140, broke 14, neutral
 48** — a 10:1 fix/break ratio. The +18.5pp lands on **bare-street — the 66% recall class** that every
-corpus lever plateaued on (the ~0.77 ceiling) and that option C was designed to attack. The arbiter
+corpus change plateaued on (the ~0.77 ceiling) and that option C was designed to attack. The arbiter
 collects it without a single training step.
 
 ## Caveats, stated
@@ -60,7 +60,7 @@ collects it without a single training step.
   not the model; production carries the same index and the eval surfaces are real streets), but the
   coverage is by construction ideal. Foreign-locale generalization will be lower.
 - The 14 breaks are real street names outranking gold; a locality-scoped lookup (street × locality)
-  should cut them further. Unscoped membership was the v0 policy.
+  should reduce them further. Unscoped membership was the v0 policy.
 
 ## Addendum — falsifier v2: the break audit + two guards (same night, 06:20)
 
@@ -85,8 +85,8 @@ the interface + productionization plan is
 
 - **Phase 4c is justified and specified:** merge the archived span-decode surface (it now has a
   consumer), define `StreetLocalityEvidence`, build per-country name indexes, wire the rerank behind
-  a flag, isotonic ambiguity gate on top-1/margin per the plan. The bare-fragment class no longer
-  needs option C as the primary lever — the arbiter beat the projected channel gains without
+  a flag, isotonic ambiguity check on top-1/margin per the plan. The bare-fragment class no longer
+  needs option C as the primary change — the arbiter beat the projected channel gains without
   touching the model.
 - The plan's discipline held: parse scores stayed in one probability space; the rerank signal is
   measured atlas evidence only; rank-2-beats-rank-1 cases (140 of them) are loggable training data.

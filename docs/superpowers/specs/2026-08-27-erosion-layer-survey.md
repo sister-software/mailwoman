@@ -16,7 +16,7 @@ the basis discipline; the flood survey
 ([`2026-08-27-flood-layer-survey.md`](./2026-08-27-flood-layer-survey.md)) is this record's structural
 template and the source of its acquisition mechanics; the arability survey
 ([`2026-08-27-arability-layer-survey.md`](./2026-08-27-arability-layer-survey.md)) verified the USDA
-soil path this record reuses; and `packages/mailwoman/observations/absence-route.ts` plus its
+soil path this record reuses; and `packages/mailwoman/lib/observations/absence-route.ts` plus its
 `QueryIntentMarker` carrier deliver an additive, provenance-carrying advisory without touching ranking.
 
 **Every external claim below carries its URL and the date it was read.** Measurements taken from this
@@ -249,7 +249,7 @@ validate these interpretations and to confirm the identity of the soil on a give
   Severely eroded spot 2, `ERA` Eroded areas 1, `SES` Severely eroded shoreline 1. **1,210 distinct
   survey areas** define at least one, against 2,542 defining any special feature and 3,380 in
   `sacatalog`. Verbatim `GUL` definition (from `AZ655`): "A small, steep-sided channel caused by erosion
-  and cut in unconsolidated materials by concentrated but intermittent flow of water…"
+  and reduce in unconsolidated materials by concentrated but intermittent flow of water…"
 
 Defining a symbol is not the same as holding features, and a spot symbol is mapped only where it is
 large enough to note and small enough not to delineate. **The absence of a gully symbol is not the

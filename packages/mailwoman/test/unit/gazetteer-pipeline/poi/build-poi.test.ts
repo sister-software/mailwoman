@@ -14,11 +14,11 @@
  *   coordinates the loader must skip (and count) rather than insert.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { isFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
-import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
+import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
@@ -203,12 +203,12 @@ describe("buildPOIDatabase", () => {
 		})
 
 		expect(result.rows).toBe(30)
-		expect((await statPath(nestedOut)).isFile()).toBe(true)
+		await expect(isFile(nestedOut)).resolves.toBe(true)
 	})
 })
 
 /**
- * Extract-bbox coverage polyfill (decision 5) — the pure seam `--source osm` uses in place of the Overture path's
+ * Extract-bbox coverage polyfill (decision 5) — the pure helper `--source osm` uses in place of the Overture path's
  * "rows-present ⇒ 1" coverage. Springfield IL sits well inside this small bbox; the bbox spans several res-6 cells, so
  * an empty `rows` list (or rows clustered in only one spot) always leaves at least one cell with `observedRows: 0` to
  * exercise decision 5's "well-surveyed, none found" case.
@@ -252,7 +252,7 @@ describe("bboxCoverageCells", () => {
 })
 
 /**
- * The `--source osm` build-local branch (decisions 3/5): same `rows:` injection seam as the default Overture path, but
+ * The `--source osm` build-local branch (decisions 3/5): same `rows:` injection point as the default Overture path, but
  * `source`/`tier` swap the manifest to build-local/ODbL and `coverageCellsOverride` replaces the rows-derived coverage
  * with the bbox polyfill above — including a zero-observed-rows cell, which must round-trip through
  * `writeLayerCoverage` / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
@@ -321,7 +321,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 
 		expect(manifest.attribution).toMatch(/OpenStreetMap/)
 
-		// --- Gate-relevant: the zero-observed-rows cell must round-trip, never read back as undefined ---
+		// --- Check-relevant: the zero-observed-rows cell must round-trip, never read back as undefined ---
 		const zeroCell = coverageCellsOverride.find((c) => c.observedRows === 0)!
 		const readBack = await readLayerCoverage(kdb, zeroCell.h3Cell)
 
@@ -422,7 +422,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		const overrideCell = overrideCells.find((c) => c.observedRows === 1)!
 
 		// The default (Overture) branch's rows-derived coverage — already correct (~:592) — built independently
-		// via the real `buildPOIDatabase` seam over the exact same row.
+		// via the real `buildPOIDatabase` entry point over the exact same row.
 		const result = await buildPOIDatabase({
 			rows: [row],
 			out,

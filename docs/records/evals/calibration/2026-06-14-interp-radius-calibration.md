@@ -17,7 +17,7 @@ truth ~90% of the time, not 72%. Otherwise the number is decoration.
 
 Split-conformal prediction (`scripts/eval/conformal-calibrate.ts`, #374) over the **interpolation tier
 in isolation** — situs forced off (an empty-but-valid address-point db) so every resolved row falls
-through to interpolation, on the full national TX interp shard (254 counties):
+through to interpolation, on the full national TX interp extract (254 counties):
 
 ```
 holdout  : Travis County E-911 (1965 rows)
@@ -63,7 +63,7 @@ is a property of the calibration set, not the geometry), and the caller supplies
   is a data swap, not a code change.
 - **Abstention router (#244)** is the remaining confidence piece: when the calibrated radius exceeds a
   threshold, return the coarser admin tier instead of a falsely-precise street point. The 403 no-hit rows
-  already abstain to admin; #244 generalizes that to a confidence-gated downgrade.
+  already abstain to admin; #244 generalizes that to a confidence-conditional downgrade.
 
 ## Reproduce
 

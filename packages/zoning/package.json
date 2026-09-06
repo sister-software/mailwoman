@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/zoning",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "Irish Generalised Zoning Types (MyPlan.ie) — acquisition, build, and the zoning-ireland.db layer reader",
 	"keywords": [
 		"geospatial",
@@ -44,85 +44,92 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./scripts/*": {
-			"node": "./scripts/*.ts",
+			"node": "./lib/scripts/*.ts",
 			"default": "./out/scripts/*.js",
 			"types": "./out/scripts/*.d.ts"
 		},
 		"./schema": {
-			"node": "./schema.ts",
+			"node": "./lib/schema.ts",
 			"default": "./out/schema.js",
 			"types": "./out/schema.d.ts"
 		},
 		"./vocabulary": {
-			"node": "./vocabulary.ts",
+			"node": "./lib/vocabulary.ts",
 			"default": "./out/vocabulary.js",
 			"types": "./out/vocabulary.d.ts"
 		},
 		"./test-kit": {
-			"node": "./test-kit.ts",
+			"node": "./lib/test-kit.ts",
 			"default": "./out/test-kit.js",
 			"types": "./out/test-kit.d.ts"
 		},
 		"./rings": {
-			"node": "./rings.ts",
+			"node": "./lib/rings.ts",
 			"default": "./out/rings.js",
 			"types": "./out/rings.d.ts"
 		},
 		"./ring-roles": {
-			"node": "./ring-roles.ts",
+			"node": "./lib/ring-roles.ts",
 			"default": "./out/ring-roles.js",
 			"types": "./out/ring-roles.d.ts"
 		},
 		"./sdk": {
-			"node": "./sdk/index.ts",
+			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
 		"./sdk/build-zoning": {
-			"node": "./sdk/build-zoning.ts",
+			"node": "./lib/sdk/build-zoning.ts",
 			"default": "./out/sdk/build-zoning.js",
 			"types": "./out/sdk/build-zoning.d.ts"
 		},
 		"./sdk/cells": {
-			"node": "./sdk/cells.ts",
+			"node": "./lib/sdk/cells.ts",
 			"default": "./out/sdk/cells.js",
 			"types": "./out/sdk/cells.d.ts"
 		},
 		"./sdk/client": {
-			"node": "./sdk/client.ts",
+			"node": "./lib/sdk/client.ts",
 			"default": "./out/sdk/client.js",
 			"types": "./out/sdk/client.d.ts"
 		},
 		"./sdk/download": {
-			"node": "./sdk/download.ts",
+			"node": "./lib/sdk/download.ts",
 			"default": "./out/sdk/download.js",
 			"types": "./out/sdk/download.d.ts"
 		},
 		"./sdk/ingest": {
-			"node": "./sdk/ingest.ts",
+			"node": "./lib/sdk/ingest.ts",
 			"default": "./out/sdk/ingest.js",
 			"types": "./out/sdk/ingest.d.ts"
 		},
 		"./sdk/ingest-chunk": {
-			"node": "./sdk/ingest-chunk.ts",
+			"node": "./lib/sdk/ingest-chunk.ts",
 			"default": "./out/sdk/ingest-chunk.js",
 			"types": "./out/sdk/ingest-chunk.d.ts"
 		},
 		"./sdk/measure-resolutions": {
-			"node": "./sdk/measure-resolutions.ts",
+			"node": "./lib/sdk/measure-resolutions.ts",
 			"default": "./out/sdk/measure-resolutions.js",
 			"types": "./out/sdk/measure-resolutions.d.ts"
 		},
 		"./sdk/verify": {
-			"node": "./sdk/verify.ts",
+			"node": "./lib/sdk/verify.ts",
 			"default": "./out/sdk/verify.js",
 			"types": "./out/sdk/verify.d.ts"
 		}
@@ -135,12 +142,12 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.4",
-		"spliterator": "^6.3.1"
+		"kysely": "^0.29.5",
+		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1"
 	},
 	"engines": {
 		"node": ">=24.18.0"

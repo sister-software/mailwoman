@@ -14,12 +14,12 @@ python3 scripts/eval/build-calibration-set.py \
   --out data/eval/calibration/calibration-set.jsonl
 
 # 2. Run the SHIPPED model over the set → (raw span confidence, correct?) pairs.
-node scripts/eval/collect-span-confidences.ts \
+node packages/mailwoman/lib/dev-tools/collect-span-confidences.run.ts \
   --set data/eval/calibration/calibration-set.jsonl \
   --out data/eval/calibration/confidences.jsonl
 
 # 3. Fit isotonic (PAVA), emit the 20-bin lookup table + ECE report.
-python3 scripts/eval/fit-isotonic-calibration.py
+python3 corpus-python/scripts/fit-isotonic-calibration.py
 ```
 
 ## What's committed vs regenerated

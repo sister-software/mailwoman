@@ -3,14 +3,14 @@
 
 /**
  *   Unit tests for the `registry` command's pure pieces (#613). The full cascade is
- *   operator-verifiable (it needs the weights + shards), so here we only pin the column-mapping
+ *   operator-verifiable (it needs the weights + databases), so here we only pin the column-mapping
  *   resolution — the one bit of command-specific logic that doesn't touch the heavy runtime.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { DEFAULT_MAPPING, loadMapping, loadSources } from "mailwoman/commands/registry/run"
+import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -18,7 +18,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function tmp(): Promise<string> {
-	const d = fixtures.use(await temporaryDirectory("mw-registry-")).path
+	const d = fixtures.use(await temporaryDirectory("mw-registry-")).path.toString()
 
 	return d
 }

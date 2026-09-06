@@ -12,8 +12,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { repoRootPath } from "@mailwoman/core/paths"
 import {
 	CONFORMANCE_RELATIONS,
 	type ConformanceFixture,
@@ -22,6 +21,7 @@ import {
 	parseConformanceFixture,
 	RELATIONS_BY_COMPARATOR,
 } from "mailwoman/eval-harness/conformance/fixture"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**
@@ -32,7 +32,7 @@ const scratchDirectories = new AsyncDisposableStack()
 afterAll(() => scratchDirectories.disposeAsync())
 
 const EXAMPLE_SUITE = String(
-	repoRootPath("packages", "mailwoman", "test-fixtures", "conformance", "contract-example.jsonl")
+	repoRootPath("packages", "mailwoman", "lib", "test-fixtures", "conformance", "contract-example.jsonl")
 )
 
 function record(over: Record<string, unknown> = {}): Record<string, unknown> {
@@ -171,7 +171,7 @@ describe("parseConformanceFixture", () => {
 		expect(() => parseConformanceFixture(raw, "inline")).toThrow(/must be a positive finite number/)
 	})
 
-	it("defaults an unstated status to gating rather than to tracked", () => {
+	it("defaults an unstated status to enforcing rather than to tracked", () => {
 		const fixture = parseConformanceFixture(record(), "inline")
 
 		expect(fixture.status).toBeUndefined()
@@ -191,7 +191,7 @@ describe("parseConformanceFixture", () => {
 		expect(fixture.bugRef).toBe("#1919")
 	})
 
-	it("rejects a bugRef on a gating row — a row expected to hold cannot also name a defect", () => {
+	it("rejects a bugRef on a enforcing row — a row expected to hold cannot also name a defect", () => {
 		expect(() => parseConformanceFixture(record({ bugRef: "#1919" }), "inline")).toThrow(
 			/only meaningful on a tracked row, and this row's status is "pass"/
 		)

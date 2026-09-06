@@ -1,6 +1,7 @@
 import { buildRoutedMailwomanArm, type RoutedMailwomanArmDeps } from "@mailwoman/dev-mcp/routed-mailwoman-arm"
 import type { ResolvedWeights } from "@mailwoman/neural/weights"
 import type { GauntletDeps, GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
+import { resolvePathBuilder } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
 // `tier` carries a real value because `toGauntletResult` passes `resolution_tier` straight through and that field is
@@ -33,9 +34,10 @@ function resolved(
 	return {
 		modelPath: model,
 		tokenizerPath: "/candidate/node_modules/@mailwoman/neural-weights-en-us/tokenizer.model",
+		encoder: { kind: "sentencepiece" },
 		modelCardPath: `${packageDir}/model-card.json`,
 		source: `cache:@mailwoman/neural-weights-${locale.toLowerCase()}`,
-		packageDir,
+		packageDir: resolvePathBuilder(packageDir),
 		artifacts: [
 			{ name: "model.onnx", path: model, origin: "base" },
 			{ name: "model-card.json", path: `${packageDir}/model-card.json`, origin: "package" },
@@ -61,8 +63,8 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 
 	return {
 		buildDeps: vi.fn(async () => gauntlet),
-		resolveWeights: vi.fn(({ locale }) => resolved(locale)),
-		realpath: (path) => path,
+		resolveWeights: vi.fn(async ({ locale }) => resolved(locale)),
+		realpath: async (path) => String(path),
 		runOne: vi.fn(async () => EMPTY_RESULT),
 		...overrides,
 	}
@@ -103,7 +105,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 		expect(deps.buildDeps).toHaveBeenCalledWith({
 			weightsCacheRoot: "/candidate",
-			levers: { gazetteerPrior: false },
+			pins: { gazetteerPrior: false },
 		})
 
 		expect(deps.runOne).toHaveBeenCalledWith("10 Downing Street, London SW1A 2AA", expect.anything(), {
@@ -135,7 +137,7 @@ describe("buildRoutedMailwomanArm", () => {
 		expect(deps.buildDeps).toHaveBeenCalledWith({
 			weightsCacheRoot: "/candidate",
 			candidateDB: "/staging/candidate-variant.db",
-			levers: {
+			pins: {
 				postcodeCountryCoherence: false,
 				gazetteerPrior: false,
 				adminContainmentRerank: true,
@@ -164,7 +166,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 	it("refuses an overlay artifact that escapes the candidate cache", async () => {
 		const deps = fakeDeps({
-			resolveWeights: ({ locale }) => ({
+			resolveWeights: async ({ locale }) => ({
 				...resolved(locale),
 				artifacts: [{ name: "pair-index-gb.bin", path: "/installed/pair-index-gb.bin", origin: "package" }],
 			}),
@@ -177,7 +179,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 	it("refuses an overlay that resolves a model other than candidate en-US", async () => {
 		const deps = fakeDeps({
-			resolveWeights: ({ locale }) =>
+			resolveWeights: async ({ locale }) =>
 				locale === "en-GB"
 					? resolved(locale, "/candidate/node_modules/@mailwoman/neural-weights-en-gb/model.onnx")
 					: resolved(locale),

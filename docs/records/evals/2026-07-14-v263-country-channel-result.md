@@ -11,7 +11,7 @@ v261 documented-exception decision — because the region delta is a per-tag reg
 
 ## Grade (package-shaped throughout — `--weights-cache`, never `--model` alone, #718)
 
-| Gate                                                  | shipped (v261 / 6.1.0) | v263                         | verdict                                                             |
+| Check                                                 | shipped (v261 / 6.1.0) | v263                         | verdict                                                             |
 | ----------------------------------------------------- | ---------------------- | ---------------------------- | ------------------------------------------------------------------- |
 | **PRIMARY — golden country recall**                   | 190/224 = **84.8%**    | 200/224 = **89.3%**          | ✓ +4.5pp — clears the 88.6% v241 bar; fixes 19, breaks 9 (net +10)  |
 | **GUARD — real-postal country recall** (falsifier)    | 3/4                    | 3/4                          | ✓ identical                                                         |
@@ -40,9 +40,9 @@ z-test on 300 fresh real US/FDIC and 300 fresh real FR/BAN addresses — is flat
 don't emphasize; the resolver still pins those without the region. This is the same class as v261's
 documented country exception, in the opposite tag: a per-tag delta that the coordinate does not see.
 
-## The homograph trade — the country channel cuts both ways (surfaced 2026-07-14 by the ledger tooling)
+## The homograph trade — the country channel reduces both ways (surfaced 2026-07-14 by the ledger tooling)
 
-The `--weights-cache` promotion-gate path added for the ledger backfill graded v263 package-shaped on the
+The `--weights-cache` promotion-check path added for the ledger backfill graded v263 package-shaped on the
 `country-homograph-real` probe (n=54) and exposed a **second, country-side** trade the golden grade above
 did not measure. v263's country channel is a 2-dim `[country_surface, country_ambiguous]` feature; the
 `country_ambiguous` bit is a learnable false-positive guard for homograph surfaces (a country name that is
@@ -55,14 +55,14 @@ This is the mirror image of the WOF-admin win. On the leading-long-form WOF-admi
 _trades_ recall for precision. The net is coordinate-invisible — the held-out coordinate z-test passed on
 both locales, and the `country_ambiguous` guard's whole purpose is fewer false "Georgia → country" emissions
 on real mixed input, which the homograph-recall test cannot credit. It does not change the v263 ship
-(coordinate is the ship gate, #566), but it sharpens the country story: **v263 helps admin-hierarchy country
+(coordinate is the ship check, #566), but it sharpens the country story: **v263 helps admin-hierarchy country
 and trades a little homograph-country recall for homograph precision.** A future tune could soften the
 guard (a lower `country_ambiguous` weight) if the homograph-recall lens is judged to matter more than the
 precision it buys. Recorded in `evals/scores-by-version.json` (the 6.2.0 row's `us.country_homograph`).
 
 ## The decision — operator's, per the v261 precedent
 
-The night-shift 2pp pre-publish gate aborts a promotion on any tag regressing >2pp from the default
+The night-shift 2pp pre-publish check aborts a promotion on any tag regressing >2pp from the default
 **unless the operator pre-approved the trade**. The region regression was not pre-approved (the greenlit
 retrain targeted country recovery). So — exactly as v261 shipped only because the operator said "promote
 with the documented exception" — the promote-to-default call for v263 is the operator's, with this trade

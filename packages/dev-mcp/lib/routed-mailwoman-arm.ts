@@ -1,0 +1,225 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ * A production-routed mailwoman grading arm. Unlike the warm session, the Gauntlet selects the weights overlay from
+ * each case's country. This wrapper makes that routing and its artifact provenance inspectable before a board run.
+ */
+
+import { realPath } from "@mailwoman/core/fs/readers"
+import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
+import {
+	buildGauntletDeps,
+	runOne,
+	type GauntletDeps,
+	type GauntletDepsOptions,
+	type GauntletResult,
+} from "mailwoman/eval-harness/gauntlet/harness"
+import { overlayLocale } from "mailwoman/eval-harness/gauntlet/routing"
+import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
+
+import type { EngineConfig } from "#engine-registry"
+import type { ResolvedInput } from "#input-sets"
+
+const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
+	"weights_cache",
+	"candidate_db",
+	"default_country",
+	"postcode_country_coherence",
+	"gazetteer_prior",
+	"admin_containment_rerank",
+	"capital_tier",
+	"variant_alias_exemption",
+	"poi_venue_tier",
+])
+
+export interface RoutedArtifactProvenance {
+	locale: string
+	source: string
+	package_dir: string
+	model_path: string
+	tokenizer_path: string
+	artifacts: ResolvedWeights["artifacts"]
+}
+
+export interface RoutedMailwomanProvenance {
+	engine: "mailwoman:gauntlet-routed"
+	weights_cache: string | null
+	base_model_path: string
+	routes: Record<string, string>
+	artifacts_by_locale: RoutedArtifactProvenance[]
+}
+
+export interface RoutedMailwomanArm extends Disposable {
+	provenance: RoutedMailwomanProvenance
+	geocode(input: ResolvedInput): Promise<GauntletResult>
+}
+
+export interface RoutedMailwomanArmDeps {
+	buildDeps(options: GauntletDepsOptions): Promise<GauntletDeps>
+	resolveWeights(options: { locale: string; cacheRoot?: string }): Promise<ResolvedWeights>
+	realpath(path: PathBuilderLike): Promise<string>
+	runOne(
+		input: string,
+		deps: GauntletDeps,
+		options: { defaultCountry?: string; caseCountry?: string; fuzzyCountryScope?: string }
+	): Promise<GauntletResult>
+}
+
+const DEFAULT_DEPS: RoutedMailwomanArmDeps = {
+	buildDeps: buildGauntletDeps,
+	resolveWeights,
+	realpath: realPath,
+	runOne,
+}
+
+function assertSupportedConfig(config: EngineConfig): void {
+	const unsupported = Object.keys(config).filter((key) => !SUPPORTED_CONFIG_KEYS.has(key as keyof EngineConfig))
+
+	if (unsupported.length) {
+		throw new Error(
+			`The routed Gauntlet arm does not support EngineConfig field${unsupported.length === 1 ? "" : "s"} ` +
+				`${unsupported.toSorted().join(", ")}. Supported fields: ${[...SUPPORTED_CONFIG_KEYS].join(", ")}.`
+		)
+	}
+}
+
+async function assertInsideCache(
+	path: PathBuilderLike,
+	cacheRoot: string,
+	realpath: (path: PathBuilderLike) => Promise<string>
+): Promise<string> {
+	const root = await realpath(cacheRoot)
+	const target = await realpath(path)
+	const fromRoot = relative(root, target)
+
+	if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`) || resolvePath(root, fromRoot) !== target) {
+		throw new Error(`Candidate artifact resolved outside weights_cache: ${path} -> ${target}; cache is ${root}.`)
+	}
+
+	return target
+}
+
+async function preflightLocale(
+	locale: string,
+	cacheRoot: string,
+	deps: RoutedMailwomanArmDeps
+): Promise<RoutedArtifactProvenance> {
+	const resolved = await deps.resolveWeights({ locale, cacheRoot })
+
+	if (!resolved.packageDir) throw new Error(`Candidate locale ${locale} resolved without a package directory.`)
+
+	const paths = [
+		resolved.packageDir,
+		resolved.modelPath,
+		resolved.tokenizerPath,
+		...resolved.artifacts.flatMap((artifact) => (artifact.path ? [artifact.path] : [])),
+	]
+
+	for (const path of paths) {
+		await assertInsideCache(path, cacheRoot, deps.realpath)
+	}
+
+	return {
+		locale,
+		source: resolved.source,
+		package_dir: await deps.realpath(resolved.packageDir),
+		model_path: await deps.realpath(resolved.modelPath),
+		tokenizer_path: await deps.realpath(resolved.tokenizerPath),
+		artifacts: resolved.artifacts,
+	}
+}
+
+async function resolveLocale(locale: string, cacheRoot: string | undefined, deps: RoutedMailwomanArmDeps) {
+	if (cacheRoot) return await preflightLocale(locale, cacheRoot, deps)
+
+	const resolved = await deps.resolveWeights({ locale })
+
+	if (!resolved.packageDir) throw new Error(`Shipped locale ${locale} resolved without a package directory.`)
+
+	return {
+		locale,
+		source: resolved.source,
+		package_dir: await deps.realpath(resolved.packageDir),
+		model_path: await deps.realpath(resolved.modelPath),
+		tokenizer_path: await deps.realpath(resolved.tokenizerPath),
+		artifacts: resolved.artifacts,
+	}
+}
+
+/**
+ * Build one Gauntlet arm after proving that every route represented by the selected rows is candidate-contained.
+ */
+export async function buildRoutedMailwomanArm(
+	config: EngineConfig,
+	inputs: readonly ResolvedInput[],
+	deps: RoutedMailwomanArmDeps = DEFAULT_DEPS
+): Promise<RoutedMailwomanArm> {
+	using resources = new DisposableStack()
+	assertSupportedConfig(config)
+
+	const cacheRoot = config.weights_cache
+
+	const routes = Object.fromEntries(
+		inputs.flatMap((input) => {
+			const country = (input.routeCountry ?? input.country)?.toUpperCase()
+
+			return country ? [[country, overlayLocale(country)]] : []
+		})
+	)
+
+	const locales = ["en-US", ...Object.values(routes)].filter((locale, index, all) => all.indexOf(locale) === index)
+	const artifacts = await Promise.all(locales.map(async (locale) => resolveLocale(locale, cacheRoot, deps)))
+	const baseModelPath = artifacts[0]!.model_path
+	const mismatched = artifacts.filter((artifact) => artifact.model_path !== baseModelPath)
+
+	if (mismatched.length) {
+		throw new Error(
+			`Candidate overlays must share the en-US model ${baseModelPath}; mismatched: ` +
+				mismatched.map((artifact) => `${artifact.locale} -> ${artifact.model_path}`).join(", ")
+		)
+	}
+
+	const gauntletDeps = resources.use(
+		await deps.buildDeps({
+			...(cacheRoot ? { weightsCacheRoot: cacheRoot } : {}),
+			...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
+			pins: {
+				...(config.postcode_country_coherence === undefined
+					? {}
+					: { postcodeCountryCoherence: config.postcode_country_coherence }),
+				...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
+				...(config.admin_containment_rerank === undefined
+					? {}
+					: { adminContainmentRerank: config.admin_containment_rerank }),
+				...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
+				...(config.variant_alias_exemption === undefined
+					? {}
+					: { variantAliasExemption: config.variant_alias_exemption }),
+				...(config.poi_venue_tier === undefined ? {} : { poiVenueTier: config.poi_venue_tier }),
+			},
+		})
+	)
+
+	const weightsCache = cacheRoot ? await deps.realpath(cacheRoot) : null
+
+	return Object.assign(resources.move(), {
+		provenance: {
+			engine: "mailwoman:gauntlet-routed" as const,
+			weights_cache: weightsCache,
+			base_model_path: baseModelPath,
+			routes,
+			artifacts_by_locale: artifacts,
+		},
+		geocode: (input: ResolvedInput) =>
+			deps.runOne(input.input, gauntletDeps, {
+				...((input.defaultCountry ?? config.default_country)
+					? { defaultCountry: input.defaultCountry ?? config.default_country }
+					: {}),
+				...((input.routeCountry ?? input.country)
+					? { caseCountry: (input.routeCountry ?? input.country)!.toUpperCase() }
+					: {}),
+				...(input.fuzzyCountryScope ? { fuzzyCountryScope: input.fuzzyCountryScope } : {}),
+			}),
+	})
+}

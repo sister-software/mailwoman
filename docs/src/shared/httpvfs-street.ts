@@ -11,12 +11,12 @@
  *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline
  *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
  *
- *   These power the demo's street tier against byte-ranged per-state situs/interp shards: a lookup
- *   touches ~KB of a multi-GB shard (measured, see the spec), so the file size is irrelevant to
+ *   These power the demo's street tier against byte-ranged per-state situs/interp databases: a lookup
+ *   touches ~KB of a multi-GB extract (measured, see the spec), so the file size is irrelevant to
  *   query cost.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -24,8 +24,10 @@ import {
 	normalizeStreetForKeyLocale,
 	type StreetLocale,
 	stripArrondissement,
-} from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
+
+import { memoizeResettable, rowsFromExec, tableExists } from "./sqljs-rows.ts"
 
 /**
  * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.
@@ -39,16 +41,6 @@ export interface HTTPVFSDB {
  */
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
-/**
- * Sql.js exec result → row objects.
- */
-function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
-	if (!res || !res.length) return []
-	const { columns, values } = res[0]!
-
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
-}
-
 export interface StreetPointHit {
 	lat: number
 	lon: number
@@ -61,32 +53,19 @@ export interface StreetPointHit {
  */
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
-	#available: Promise<boolean> | undefined
+	/**
+	 * One memoized round trip to confirm the extract carries `address_point` (graceful on a tableless extract, #568).
+	 */
+	readonly #hasTable: () => Promise<boolean>
 	#locale: StreetLocale
 
 	/**
-	 * `streetLocale` must match the shard's build locale (the node class's contract) — default "us".
+	 * `streetLocale` must match the extract's build locale (the node class's contract) — default "us".
 	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
+		this.#hasTable = memoizeResettable(() => tableExists(worker, "address_point"))
 		this.#locale = opts.streetLocale ?? "us"
-	}
-
-	/**
-	 * One round trip to confirm the shard carries `address_point` (graceful on a tableless shard, #568).
-	 */
-	#hasTable(): Promise<boolean> {
-		if (!this.#available) {
-			this.#available = this.#worker.db
-				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='address_point'`)
-				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
-
-			this.#available.catch(() => {
-				this.#available = undefined
-			})
-		}
-
-		return this.#available
 	}
 
 	async find(query: {
@@ -119,7 +98,7 @@ export class HTTPVFSAddressPointLookup {
 		}
 
 		if (!rows.length && query.locality) {
-			// FR shards fold arrondissement communes to the base city on both sides (the node class +
+			// FR extracts fold arrondissement communes to the base city on both sides (the node class +
 			// BAN builder discipline) — mirror it here so the twins stay in lockstep.
 			const localityKey =
 				this.#locale === "fr"
@@ -155,24 +134,14 @@ export interface StreetInterpHit {
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
-	#available: Promise<boolean> | undefined
+	/**
+	 * One memoized round trip to confirm the extract carries `street_segment`.
+	 */
+	readonly #hasTable: () => Promise<boolean>
 
 	constructor(worker: HTTPVFSDB) {
 		this.#worker = worker
-	}
-
-	#hasTable(): Promise<boolean> {
-		if (!this.#available) {
-			this.#available = this.#worker.db
-				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='street_segment'`)
-				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
-
-			this.#available.catch(() => {
-				this.#available = undefined
-			})
-		}
-
-		return this.#available
+		this.#hasTable = memoizeResettable(() => tableExists(worker, "street_segment"))
 	}
 
 	async find(query: { street: string; number: string; postcode?: string }): Promise<StreetInterpHit | null> {

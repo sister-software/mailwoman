@@ -11,7 +11,7 @@
  *   the operator's card on every CI run.
  *
  *   The interesting assertions are the ones about Google's IN-BAND error channel — statuses that
- *   arrive under HTTP 200 and are therefore invisible to every gate `core/api` provides — and about
+ *   arrive under HTTP 200 and are therefore invisible to every check `core/api` provides — and about
  *   the API key, which must not reach a log, a cache key or a filename.
  */
 
@@ -21,7 +21,7 @@ import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` is a LIVE getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
@@ -29,8 +29,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv` regardless of what the
 // test puts on `process.env`. Mocking the module is the only way to make the missing-key test test
 // anything. (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
-vi.mock("@mailwoman/core/env", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/core/env")>()
+vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@mailwoman/geocode-oracle/env")>()
 
 	return { ...actual, $private: { ...actual.$private, GOOGLE_MAPS_API_KEY: undefined } }
 })
@@ -98,7 +98,7 @@ beforeEach(async () => {
 	cacheDir = dataRoot.resolve("http-cache")
 
 	await makeDirectoryExclusive(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
 
 afterEach(() => {

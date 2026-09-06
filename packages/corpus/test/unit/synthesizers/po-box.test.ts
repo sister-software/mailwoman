@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import {
 	composePoBoxPhrase,
 	countryToLocale,
@@ -10,10 +10,9 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
 } from "@mailwoman/corpus/synthesizers/po-box"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
-import { alignRow } from "#utils"
 
 // Deterministic RNG for reproducible tests.
 describe("synthesizePoBoxRow", () => {
@@ -223,6 +222,14 @@ describe("countryToLocale", () => {
 	it("maps ES variants", () => {
 		expect(countryToLocale("ES")).toBe("es-ES")
 		expect(countryToLocale("Spain")).toBe("es-ES")
+	})
+
+	it("stays template-scoped: a locale without a PO-box template falls back to en-US", () => {
+		// The shared synthesizers/utils map resolves DE to de-DE, but PO_BOX_LOCALE_TEMPLATES carries no
+		// de-DE entry — the wrapper folds it back to en-US so DE tuples keep the en-US box vocabulary.
+		expect(supportedLocales()).not.toContain("de-DE")
+		expect(countryToLocale("DE")).toBe("en-US")
+		expect(countryToLocale("Germany")).toBe("en-US")
 	})
 })
 

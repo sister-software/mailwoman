@@ -52,7 +52,7 @@ model:
   attention_probs_dropout_prob: 0.1
   use_crf: true
   label_smoothing: 0.0
-  # v0.4.0 levers — exercised so the smoke catches any bf16-x-class-weights or
+  # v0.4.0 changes — exercised so the smoke catches any bf16-x-class-weights or
   # per_token-CRF integration issues.
   crf_normalization: per_token
   crf_loss_weight: 1.0

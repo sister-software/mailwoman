@@ -2,7 +2,7 @@
 
 **Why now:** country is a CLOSED, ENUMERABLE class (~250 surfaces), but the neural GRAMMAR mislabels
 it in the WOF-admin / resolver hierarchy case — "United States of America, Wyoming, Лорейн" reads the
-leading 4-token country phrase as a STREET. The v261 promotion (`2026-07-14-v261-promote-country-gate-exception.md`)
+leading 4-token country phrase as a STREET. The v261 promotion (`2026-07-14-v261-promote-country-check-exception.md`)
 documented golden country recall at 82.0% vs 88.6% shipped, **entirely** on non-postal WOF-admin
 rows (220/224 golden country-gold rows), with real-postal recall + precision identical across the
 fragment lineage. A data counterweight was tried and confirmed to give diminishing returns (v290 tail
@@ -68,7 +68,7 @@ separate, clean gazetteer slots. The real justification is dilution + suppressio
 ### Feature representation: 2-dim `[country_surface, country_ambiguous]`
 
 Rather than DeepSeek's 1-dim `is_country_surface` (where the feature would be perfectly redundant with
-the confidence gate), the channel emits **2 dims**:
+the confidence check), the channel emits **2 dims**:
 
 - `country_surface` (bit 1) — the piece is inside a recognized country surface phrase.
 - `country_ambiguous` (bit 2) — the surface is a homograph (also a US region, e.g. "Georgia", "CA")
@@ -166,7 +166,7 @@ After training:
 model loading feeds NO sibling channels, so a `--model`-only grade would silently run country-OFF and
 mismeasure.
 
-## Expected gate
+## Expected check
 
 - **PRIMARY (the target):** golden country recall recovers toward the 88.6% shipped bar on the
   WOF-admin hierarchy rows (the 220/224 non-postal country-gold rows, incl. the leading long-form
@@ -178,7 +178,7 @@ mismeasure.
   forms from over-firing.
 - **NON-INFERIORITY:** US/FR assembled-coordinate + parity street/house_number/postcode flat vs the
   init_from baseline (the country cue is orthogonal to those tags). Run the standard promotion battery
-  - mask-regression gate; zero NaN.
+  - mask-regression check; zero NaN.
 
 ## Follow-ups (out of scope here)
 

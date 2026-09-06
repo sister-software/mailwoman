@@ -5,7 +5,7 @@
 /**
  *   Fixture test for `docs/styles/Mailwoman/*.yml` (the published-prose rules) and
  *   `docs/styles/MailwomanChat/*.yml` (the agent-reply rules the Stop hook runs through
- *   `.vale-chat.ini` — see `packages/dev-mcp/hooks/vale-response-check.ts`).
+ *   `.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale-response-check.ts`).
  *
  *   There is no vitest harness for a set of Vale YAML rule files, so this is the test. Each style
  *   has two fixtures. The dirty one is written to trip every rule file at least once, and also
@@ -24,9 +24,17 @@
  *     (Nominatim's response field) must NOT trip `Spelling.yml`, nor must the JSON fence carrying
  *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
  *     those two en-GB-looking identifiers can stay on the swap list.
- *   - `promotion-gate.ts`, `packages/corpus/src/shard-recipes/` and `mailwoman eval gate` are
+ *   - `promotion-eval.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval promote` are
  *     backticked, so `AmbiguousShorthand` must stay quiet on all three — that is how a
  *     contract-bearing name survives the vocabulary ban without being renamed.
+ *
+ *   The CODE leg exists because that last mechanism does not reach a source comment. Vale's
+ *   markdown parser skips inline code; its comment scanner has no markdown parser, so a
+ *   backticked identifier in a `//` comment is flagged exactly like bare prose (measured on
+ *   @vvago/vale 3.17.0). `Mailwoman/AmbiguousShorthandCode.yml` therefore protects contract-bearing
+ *   names by NAME, and `dirty.ts` asserts the negative that matters: a backticked `the check` MUST
+ *   still fire. If it stops, the Code rule has been replaced by the markdown one and every name in
+ *   the exceptions list is relying on a mechanism that is not there.
  *
  *   Run from anywhere:
  *
@@ -37,10 +45,10 @@
  *   loudly instead of silently drifting.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { createRequire } from "@mailwoman/platform/module"
-import { dirname, join, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { failScript } from "@mailwoman/core/scripting/utils"
+import { valeCommand } from "@mailwoman/core/vale"
 import { $ } from "zx"
 
 /**
@@ -94,7 +102,7 @@ interface StyleLeg {
 	cleanCountsEverySeverity: boolean
 }
 
-const DOCS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+const DOCS_DIR = repoRootPath("docs")
 
 const LEGS: StyleLeg[] = [
 	{
@@ -112,6 +120,17 @@ const LEGS: StyleLeg[] = [
 			"Mailwoman.Terms",
 			"Mailwoman.Weasel",
 		],
+		cleanCountsEverySeverity: false,
+	},
+	{
+		label: "code",
+		config: ".vale-code.ini",
+		dirtyFixture: "scripts/vale-fixtures/dirty.ts",
+		cleanFixture: "scripts/vale-fixtures/clean.ts",
+		minDirtyErrors: 7,
+		ruleChecks: ["Mailwoman.AmbiguousShorthandCode"],
+		// The Code rule is error-severity and it is the only rule this config runs, so the exit
+		// code carries the whole verdict.
 		cleanCountsEverySeverity: false,
 	},
 	{
@@ -142,36 +161,17 @@ const LEGS: StyleLeg[] = [
 	},
 ]
 
-/**
- * Locate the Vale binary through Node's own resolution algorithm.
- *
- * `@vvago/vale` is a devDependency of this workspace, but yarn's node-modules linker hoists it to whichever install
- * directory has no conflicting version — the repo root here, not `docs/`. Asking `require.resolve` for the package
- * manifest and joining from its directory finds it wherever the linker put it, and keeps this file clear of the
- * hand-assembled install path that `scripts/node-modules-reacharound.test.ts` refuses.
- */
-function resolveValeBinary(): string {
-	const manifest = createRequire(import.meta.url).resolve("@vvago/vale/package.json")
-
-	return join(dirname(manifest), "bin", "vale")
-}
-
-const VALE_BIN = resolveValeBinary()
+const VALE = await valeCommand(import.meta.url)
 const $vale = $({ cwd: DOCS_DIR, nothrow: true })
 
 /**
  * A single Vale run: its parsed alerts plus the exit code, which the dirty legs assert on.
  */
 async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
-	const result = await $vale`${VALE_BIN} --config ${config} --output=JSON ${fixture}`.quiet()
+	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${fixture}`.quiet()
 	const report = parseJSONStrict<ValeReport>(result.stdout)
 
 	return { alerts: Object.values(report).flat(), exitCode: result.exitCode ?? 0 }
-}
-
-function fail(message: string): never {
-	process.stderr.write(`${message}\n`)
-	process.exit(1)
 }
 
 async function checkLeg(leg: StyleLeg): Promise<void> {
@@ -182,18 +182,20 @@ async function checkLeg(leg: StyleLeg): Promise<void> {
 	const dirty = await runVale(leg.config, leg.dirtyFixture)
 
 	if (dirty.exitCode === 0) {
-		fail(`FAIL: ${leg.dirtyFixture} exited 0 (expected a non-zero exit from error-severity hits)`)
+		failScript(`FAIL: ${leg.dirtyFixture} exited 0 (expected a non-zero exit from error-severity hits)`)
 	}
 
 	const errorCount = dirty.alerts.filter((alert) => alert.Severity === "error").length
 
 	if (errorCount < leg.minDirtyErrors) {
-		fail(`FAIL: ${leg.dirtyFixture} produced ${errorCount} error-severity hits, expected >= ${leg.minDirtyErrors}`)
+		failScript(
+			`FAIL: ${leg.dirtyFixture} produced ${errorCount} error-severity hits, expected >= ${leg.minDirtyErrors}`
+		)
 	}
 
 	for (const check of leg.ruleChecks) {
 		if (!dirty.alerts.some((alert) => alert.Check === check)) {
-			fail(`FAIL: rule ${check} did not fire on ${leg.dirtyFixture} (regression)`)
+			failScript(`FAIL: rule ${check} did not fire on ${leg.dirtyFixture} (regression)`)
 		}
 	}
 
@@ -213,14 +215,14 @@ async function checkLeg(leg: StyleLeg): Promise<void> {
 				process.stderr.write(`  ${leg.cleanFixture}:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
 			}
 
-			fail(`FAIL: ${leg.cleanFixture} tripped ${clean.alerts.length} alert(s) (false positive)`)
+			failScript(`FAIL: ${leg.cleanFixture} tripped ${clean.alerts.length} alert(s) (false positive)`)
 		}
 	} else if (clean.exitCode !== 0) {
 		for (const alert of clean.alerts) {
 			process.stderr.write(`  ${leg.cleanFixture}:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
 		}
 
-		fail(`FAIL: ${leg.cleanFixture} tripped a rule (false positive)`)
+		failScript(`FAIL: ${leg.cleanFixture} tripped a rule (false positive)`)
 	}
 
 	process.stdout.write(`OK: ${leg.cleanFixture} — 0 alerts\n`)

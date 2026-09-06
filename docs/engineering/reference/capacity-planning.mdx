@@ -87,7 +87,7 @@ belongs to the coverage register, not this file.
 
 ## Cost-reduction roadmap
 
-Three levers, held behind the five-arm benchmark's per-query-class latency and fidelity data
+Three changes, held behind the five-arm benchmark's per-query-class latency and fidelity data
 — optimizing layout ahead of that measurement is the reasoned-to-instead-of-measured trap.
 
 1. **Packed address-point spine** ([#1547](https://github.com/sister-software/mailwoman/issues/1547)) —
@@ -108,6 +108,6 @@ Three levers, held behind the five-arm benchmark's per-query-class latency and f
    general form it replaces. Only stable + hot queries earn an artifact; precompute freezes a
    query distribution.
 
-Levers 1 and 3 are not opposed: specializing to the probe shape is simultaneously the
+Changes 1 and 3 are not opposed: specializing to the probe shape is simultaneously the
 compression and the precompute. All three derive from the same build passes, so consistency
 rides the existing rebuild-not-patch discipline.

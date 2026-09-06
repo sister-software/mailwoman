@@ -15,7 +15,7 @@
  *       influenced each parsed component.
  */
 
-import { confidenceTier } from "#shared/confidence-tiers"
+import { confidenceTierOrMid } from "#shared/confidence-tiers"
 import type { ResultNode } from "#shared/resources"
 
 import styles from "./styles.module.css"
@@ -338,16 +338,6 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 
 //#endregion
 
-//#region Confidence tier
-
-function tier(confidence?: number): "high" | "mid" | "low" {
-	if (confidence == null) return "mid"
-
-	return confidenceTier(confidence)
-}
-
-//#endregion
-
 //#region Dynamic per-component table
 
 const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: boolean }> = ({
@@ -400,7 +390,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 								<td className={styles.valueCell}>{String(n.value ?? "")}</td>
 								<td>
 									{n.confidence != null ? (
-										<span className={`${styles.confBadge} ${styles[`conf_${tier(n.confidence)}`]}`}>
+										<span className={`${styles.confBadge} ${styles[`conf_${confidenceTierOrMid(n.confidence)}`]}`}>
 											{n.confidence.toFixed(2)}
 										</span>
 									) : (

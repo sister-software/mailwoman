@@ -752,7 +752,7 @@ export interface SynonymEntry {
 	phrase: string
 	categoryID: POICategoryID
 	/**
-	 * BCP-47 locale gate, same semantics as `@mailwoman/variant-aliases`: omitted = ungated
+	 * BCP-47 locale check, same semantics as `@mailwoman/variant-aliases`: omitted = unconditional
 	 * (matches any locale at confidence 1.0); present = 1.0 on exact locale, 0.5 on language-only.
 	 */
 	locales?: string[]
@@ -1042,7 +1042,7 @@ describe("lookupPOICategory", () => {
 		expect(requiresBuildLocalLayer(shipped!.category)).toBe(false)
 	})
 
-	it("gates locale-restricted synonyms like variant-aliases does", () => {
+	it("checks locale-restricted synonyms like variant-aliases does", () => {
 		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1.0)
 		expect(lookupPOICategory("chemist", "en-IE")[0]?.confidence).toBe(0.5)
 		expect(lookupPOICategory("chemist", "fr-FR")).toEqual([])
@@ -1083,7 +1083,7 @@ Expected: FAIL — cannot resolve `./lookup.ts`.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Phrase → category lookup over `data/taxonomy.json`. Same loader + locale-gating shape as
+ *   Phrase → category lookup over `data/taxonomy.json`. Same loader + locale-blocking shape as
  *   `@mailwoman/variant-aliases` (its slang table resolves INTO these category ids). Matching is
  *   exact-phrase over a lowercased index; n-gram extraction from longer queries is the kind
  *   classifier's job, not this package's.
@@ -1162,12 +1162,12 @@ export interface CategoryMatch {
 	category: CategoryRecord
 	/** The lexicon phrase that matched (lowercased). */
 	matchedPhrase: string
-	/** 1.0 = ungated or exact-locale; 0.5 = language-only locale match. */
+	/** 1.0 = unconditional or exact-locale; 0.5 = language-only locale match. */
 	confidence: number
 }
 
 /**
- * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the
+ * Exact-phrase category lookup. `locale` checks locale-restricted synonyms with the
  * variant-aliases semantics: exact locale 1.0, language-only 0.5, otherwise no match.
  * Ungated phrases always match at 1.0. Deduplicated by category (best confidence wins),
  * sorted by confidence descending.
@@ -1249,7 +1249,7 @@ Expected: PASS (6 tests).
 cd /home/lab/Projects/mailwoman-exotic-poi
 yarn oxfmt poi-taxonomy/lookup.ts poi-taxonomy/index.ts poi-taxonomy/lookup.test.ts
 git add poi-taxonomy/lookup.ts poi-taxonomy/index.ts poi-taxonomy/lookup.test.ts
-git commit -m "feat(poi-taxonomy): phrase lookup API with locale gating + integrity checks"
+git commit -m "feat(poi-taxonomy): phrase lookup API with locale blocking + integrity checks"
 git log -1 --oneline
 ```
 

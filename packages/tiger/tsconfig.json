@@ -1,6 +1,7 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"allowSyntheticDefaultImports": true,
 		"emitDecoratorMetadata": true,
 		"emitDeclarationOnly": false,
@@ -8,7 +9,8 @@
 		"erasableSyntaxOnly": true,
 		"experimentalDecorators": true
 	},
-	"exclude": ["./out/**/*"],
+	"include": ["./lib/**/*"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts"],
 	"references": [
 		{ "path": "../sqlite" },
 		// ---

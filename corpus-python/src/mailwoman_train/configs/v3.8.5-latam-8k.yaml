@@ -1,6 +1,6 @@
 # === v3.8.1-punct-fix-full — #1101 comma-free FIX + digit-ownership: no-fragment tweak + punct-drop. 8k SHIP. ===
 # The 8k ESCALATION of the v372 2k probe, which BROKE the v371 plateau (bare-street-hn 0.733->0.775) with
-# a clean golden gate. This run answers whether the 2k->8k trajectory clears the strict bar (~>=0.78).
+# a clean golden check. This run answers whether the 2k->8k trajectory clears the strict bar (~>=0.78).
 #
 # PRE-REGISTERED READ (written before the numbers exist; graded on the NO digit board, board 3,
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
@@ -13,7 +13,7 @@
 # at 6x gives every miss mode the boundary signal. Composition: street-hn 85% of 33,203 rows (measured,
 # scratchpad/build-no-fragment-b4b3tweak.run.ts).
 #
-# CONFOUND, stated: the 6x-all boost triples the shard volume (11,609 -> 33,203 rows) at the same weight
+# CONFOUND, stated: the 6x-all boost triples the slice volume (11,609 -> 33,203 rows) at the same weight
 # 12.0, so this changes signal volume AND composition. The FR guard is the detector — if FR re-drifts like
 # knob 1, the volume over-diluted and the weight needs dropping; if FR holds, volume was fine. Reading FR
 # is therefore required this run, not just do-no-harm.
@@ -23,15 +23,15 @@
 #
 # MOVE  : bare-street-hn CROSSES the plateau — v371 (knob 3 8k) topped out at 0.733; this must beat that
 #         materially, ideally lower CI above v310's 0.736 (~>=0.78). Falsifier: if boosting ALL lengths at
-#         6x ALSO plateaus ~0.73, the corpus lever is EXHAUSTED (every knob tried) and digit-ownership is
+#         6x ALSO plateaus ~0.73, the corpus change is EXHAUSTED (every knob tried) and digit-ownership is
 #         fully explored — ship v371 as the clean additive net-positive or hold. This is the last knob.
 # GUARD : bare-pc (negative class) HOLDS at 1.000 — the model must not stop emitting postcode.
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does NOT re-drift below FR OVERALL ~0.725 (v310 0.733).
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden gate delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
 #
-# SHIP CANDIDATE. On PASS: export int8, run board 3 + FR fragment + the golden gate, then operator promotes.
+# SHIP CANDIDATE. On PASS: export int8, run board 3 + FR fragment + the golden check, then operator promotes.
 #
 # init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 8000 steps, warmup 500.
 #
@@ -68,7 +68,7 @@ data:
     CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture slices. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -97,13 +97,13 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000

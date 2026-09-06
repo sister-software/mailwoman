@@ -1,4 +1,4 @@
-"""Score a v8 JP char model on the municipality-held-out board (the pre-registered gate read).
+"""Score a v8 JP char model on the municipality-held-out board (the pre-registered eval read).
 
 PRE-REGISTERED DEFINITION — written before any board inference was run (the bars-are-bars rule):
 
@@ -14,20 +14,20 @@ PRE-REGISTERED DEFINITION — written before any board inference was run (the ba
   A row whose predicted pair is absent from the table is UNACCEPTABLE. 15 km covers the areal
   spread of large municipalities around their own centroid (the WOF-JP point-geometry situation:
   municipality centroids suffice — the architecture plan's stated resolution).
-- **GATE (Leg 1, pre-registered 2026-07-18): acceptable fraction >= 0.70.**
+- **EVAL (Leg 1, pre-registered 2026-07-18): acceptable fraction >= 0.70.**
 - Secondary diagnostics reported alongside (the FAIL ladder's first rung, computed either way):
   per-tag span exact-match rates (region/locality/street/house_number/postcode vs the board's
   gold spans) and the unresolved-pair count.
 
---- Phase-3 additions (2026-08-05). The gate above is UNCHANGED; both additions are diagnostic. ---
+--- Phase-3 additions (2026-08-05). The check above is UNCHANGED; both additions are diagnostic. ---
 
-**Per-register acceptability.** The full JP shard (#1458) writes a ``register`` column on every
-board row — which of the four surfaces ``build_jp_shard`` rendered it in (``native`` /
+**Per-register acceptability.** The full JP slice (#1458) writes a ``register`` column on every
+board row — which of the four surfaces ``build_jp_slice`` rendered it in (``native`` /
 ``arabic_chome`` / ``compact_folded`` / ``designator``). One blended number cannot tell "the model
 reads Japanese" from "the model reads the 68% of the board that is the source's own surface", and
 the two synthesized registers are exactly the ones the source never contains — so they are the ones
 a blended average hides. This script now splits the SAME per-row outcomes by that column and prints
-the breakdown under the blended number. **The gate is still the blended fraction >= 0.70**; a
+the breakdown under the blended number. **The check is still the blended fraction >= 0.70**; a
 per-register number has no bar attached to it and cannot pass or fail anything. Boards with no
 ``register`` column (the Leg-1 probe board) simply get no breakdown — the blended read is identical.
 
@@ -42,7 +42,7 @@ Usage:
   # Leg-1 probe board (unchanged behavior)
   uv run python scripts/score_jp_probe_board.py --checkpoint <dir-with-pytorch_model.bin>
 
-  # Phase-3 full-shard board
+  # Phase-3 full-slice board
   uv run python scripts/score_jp_probe_board.py --checkpoint <dir> --label-set stage3-jp \
       --board $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04/jp-board.jsonl \
       --vocab $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04/char-vocab-jp-full.json \
@@ -75,13 +75,15 @@ CTX = 3
 WIDTH = 7
 MAX_UNITS = 96
 ACCEPT_KM = 15.0
-GATE = 0.70
+CHECK = 0.70
 
 # Which two predicted spans get concatenated into the centroid-table key, per label set. STAGE3 is
 # the Leg-1 mapping (prefecture → region, municipality → locality); stage3-jp gives them own tags.
 RESOLVE_TAGS: dict[str, tuple[str, str]] = {
     "stage3": ("region", "locality"),
     "stage3-jp": ("prefecture", "municipality"),
+    # The CJK head is stage3-jp plus `locality_unit`; the JP board resolves on the same two tags.
+    "stage3-cjk": ("prefecture", "municipality"),
 }
 
 
@@ -150,6 +152,14 @@ def score_board(
     reg_rows: Counter[str] = Counter()
     reg_acceptable: Counter[str] = Counter()
     reg_unresolved: Counter[str] = Counter()
+    # Per held-out municipality (the gold locality-tag span): the board holds out whole municipalities, and one of
+    # them carries 823 of 20,000 rows, so a row-weighted number moves 2 pp on a single name. The macro over
+    # municipalities is reported beside the blended fraction; the check stays the blended one.
+    muni_rows: Counter[str] = Counter()
+    muni_acceptable: Counter[str] = Counter()
+    gold_exact = 0
+    reg_gold_exact: Counter[str] = Counter()
+    muni_gold_exact: Counter[str] = Counter()
 
     for r in rows:
         n += 1
@@ -167,6 +177,9 @@ def score_board(
         register = r.get("register")
         if register is not None:
             reg_rows[register] += 1
+        gold_muni = gold.get(locality_tag)
+        if gold_muni is not None:
+            muni_rows[gold_muni] += 1
 
         key = norm_key(pred.get(region_tag, "") + "|" + pred.get(locality_tag, ""))
         hit = centroids.get(key)
@@ -174,35 +187,75 @@ def score_board(
             unresolved += 1
             if register is not None:
                 reg_unresolved[register] += 1
+            # A surface the centroid table does not key (the kana register renders うんぜん市 for 雲仙市) can still
+            # be read: when the predicted pair equals the gold pair span for span, the row's own kanji fields name
+            # the centroid. Reported beside the pre-registered number, never folded into it.
+            if pred.get(region_tag) == gold.get(region_tag) and pred.get(locality_tag) == gold_muni:
+                # The JP board names its fields `pref` / `muni`; the KR board `region` / `city`.
+                gold_key = norm_key(
+                    str(r.get("pref") or r.get("region") or "") + "|" + str(r.get("muni") or r.get("city") or "")
+                )
+                gold_hit = centroids.get(gold_key)
+                if gold_hit is not None and haversine_km(gold_hit[0], gold_hit[1], r["lon"], r["lat"]) <= accept_km:
+                    gold_exact += 1
+                    if register is not None:
+                        reg_gold_exact[register] += 1
+                    if gold_muni is not None:
+                        muni_gold_exact[gold_muni] += 1
             continue
         if haversine_km(hit[0], hit[1], r["lon"], r["lat"]) <= accept_km:
             acceptable += 1
             if register is not None:
                 reg_acceptable[register] += 1
+            if gold_muni is not None:
+                muni_acceptable[gold_muni] += 1
 
     per_register = {
         name: {
             "rows": count,
             "acceptable": reg_acceptable[name],
             "unresolved": reg_unresolved[name],
+            "gold_exact": reg_gold_exact[name],
             "fraction": reg_acceptable[name] / count,
         }
         for name, count in reg_rows.items()
     }
+    per_municipality = {
+        name: {
+            "rows": count,
+            "acceptable": muni_acceptable[name],
+            "gold_exact": muni_gold_exact[name],
+            "fraction": muni_acceptable[name] / count,
+        }
+        for name, count in muni_rows.items()
+    }
+    municipality_macro = (
+        sum(stats["fraction"] for stats in per_municipality.values()) / len(per_municipality)
+        if per_municipality
+        else 0.0
+    )
     return {
         "rows": n,
         "acceptable": acceptable,
+        "gold_exact_unresolved": gold_exact,
         "unresolved": unresolved,
         "fraction": acceptable / n if n else 0.0,
         "tag_hit": tag_hit,
         "tag_total": tag_total,
         "per_register": per_register,
+        "per_municipality": per_municipality,
+        "municipality_macro": municipality_macro,
     }
 
 
-def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, gate: float = GATE) -> str:
-    """The printed read. The gate line is the blended fraction and nothing else."""
-    lines = [f"board rows: {result['rows']}; unresolved (pred pair not in table): {result['unresolved']}"]
+def format_report(
+    result: Mapping, *, accept_km: float = ACCEPT_KM, check: float = CHECK, all_municipalities: bool = False
+) -> str:
+    """The printed read. The check line is the blended fraction and nothing else."""
+    lines = [
+        f"board rows: {result['rows']}; unresolved (pred pair not in table): {result['unresolved']}"
+        f" (of which gold-exact, centroid within {accept_km:g} km by the row's own kanji: {result.get('gold_exact_unresolved', 0)})"
+    ]
     tag_total, tag_hit = result["tag_total"], result["tag_hit"]
     lines.append("per-tag span exact-match:")
     for t in sorted(tag_total):
@@ -211,28 +264,51 @@ def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, gate: float 
     per_register = result["per_register"]
     if per_register:
         lines.append("")
-        lines.append(f"per-register acceptability (<= {accept_km:g} km) — DIAGNOSTIC, not the gate:")
+        lines.append(f"per-register acceptability (<= {accept_km:g} km) — DIAGNOSTIC, not the check:")
         for name, stats in sorted(per_register.items(), key=lambda kv: -kv[1]["rows"]):
             lines.append(
                 f"  {name:<16} {stats['fraction']:.4f}  "
                 f"({stats['acceptable']}/{stats['rows']})  unresolved {stats['unresolved']}"
+                f" (gold-exact {stats.get('gold_exact', 0)})"
             )
     else:
         lines.append("")
         lines.append("per-register acceptability: board carries no `register` column — no breakdown.")
+
+    per_municipality = result.get("per_municipality") or {}
+    if per_municipality:
+        lines.append("")
+        lines.append(
+            f"municipality macro (mean of per-municipality acceptability over {len(per_municipality)} held-out "
+            f"municipalities) — a READING beside the blended check: {result['municipality_macro']:.4f}"
+        )
+        worst = sorted(per_municipality.items(), key=lambda kv: (kv[1]["fraction"], -kv[1]["rows"]))[:5]
+        lines.append("  lowest five (name, acceptable/rows):")
+        for name, stats in worst:
+            lines.append(f"    {name:<12} {stats['fraction']:.4f}  ({stats['acceptable']}/{stats['rows']})")
+        if all_municipalities:
+            lines.append("  every held-out municipality (name, acceptable/rows, gold-exact among unresolved):")
+            for name, stats in sorted(per_municipality.items(), key=lambda kv: (kv[1]["fraction"], -kv[1]["rows"])):
+                lines.append(
+                    f"    {name:<12} {stats['fraction']:.4f}  ({stats['acceptable']}/{stats['rows']})"
+                    f"  gold-exact {stats.get('gold_exact', 0)}"
+                )
 
     lines.append("")
     lines.append(
         f"COORD-ACCEPTABILITY (<= {accept_km:g} km): {result['fraction']:.4f}  "
         f"({result['acceptable']}/{result['rows']})"
     )
-    lines.append(f"GATE >= {gate:.2f}: {'PASS' if result['fraction'] >= gate else 'FAIL'}")
+    lines.append(f"CHECK >= {check:.2f}: {'PASS' if result['fraction'] >= check else 'FAIL'}")
     return "\n".join(lines)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
+    ap.add_argument(
+        "--all-municipalities", action="store_true", help="print every held-out municipality, not the lowest five"
+    )
     ap.add_argument("--board", default=str(PROBE_DIR / "jp-probe-board.jsonl"))
     ap.add_argument("--vocab", default=str(PROBE_DIR / "char-vocab-jp-v1.json"))
     ap.add_argument("--centroids", default=str(PROBE_DIR / "jp-muni-centroids.json"))
@@ -300,7 +376,7 @@ def main() -> None:
             id_to_label=label_set.id_to_label,
             resolve_tags=resolve_tags,
         )
-    print(format_report(result))
+    print(format_report(result, all_municipalities=args.all_municipalities))
 
 
 if __name__ == "__main__":

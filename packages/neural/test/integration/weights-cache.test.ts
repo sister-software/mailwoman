@@ -13,10 +13,10 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { cacheRootPath } from "@mailwoman/core/utils"
+import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "@mailwoman/neural/weights"
+import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-
-import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "#weights"
 
 const LOCALE = "pt-BR"
 const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"
@@ -61,7 +61,7 @@ describe("resolveWeights cache fallback", () => {
 			"crf-transitions.json",
 		])
 
-		const resolved = resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })
+		const resolved = await resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe(`cache:${PACKAGE_NAME}`)
 		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
@@ -74,11 +74,11 @@ describe("resolveWeights cache fallback", () => {
 	test("a binary-less cache install without a base declaration does not resolve", async () => {
 		await layoutCachedPackage(["model-card.json"])
 
-		expect(() => resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).toThrow(/missing model files/)
+		await expect(resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).rejects.toThrow(/missing model files/)
 	})
 
-	test("the not-found error names the probed cache path", () => {
-		expect(() => resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).toThrow(
+	test("the not-found error names the probed cache path", async () => {
+		await expect(resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).rejects.toThrow(
 			new RegExp(cacheRoot.resolve("node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 		)
 	})
@@ -93,7 +93,7 @@ describe("resolveWeights cache fallback", () => {
 		}
 
 		// The workspace package exists and resolves, but the explicit cacheRoot.path names the candidate.
-		const resolved = resolveWeights({ locale: "en-US", cacheRoot: cacheRoot.path })
+		const resolved = await resolveWeights({ locale: "en-US", cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-us")
 		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
@@ -121,7 +121,7 @@ describe("resolveWeights cache fallback", () => {
 
 		await writeLocalTextFile("overlay-pairs", join(overlayDir, "pair-index-gb.bin"))
 
-		const resolved = resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
+		const resolved = await resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-gb+base")
 		expect(resolved.modelPath).toBe(join(baseDir, "model.onnx"))
@@ -146,7 +146,7 @@ describe("resolveWeights cache fallback", () => {
 		let message = ""
 
 		try {
-			resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
+			await resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -157,19 +157,19 @@ describe("resolveWeights cache fallback", () => {
 	})
 
 	test("helpers: cache dir + package-name builder", () => {
-		expect(weightsCacheDir()).toMatch(/\.cache[/\\]mailwoman[/\\]weights$/)
+		expect(String(weightsCacheDir())).toBe(cacheRootPath("weights"))
 		expect(weightsPackageName("en-US")).toBe("@mailwoman/neural-weights-en-us")
 		expect(weightsPackageName()).toBe("@mailwoman/neural-weights-en-us")
 	})
 
 	// The tie between the exported layout helper and the layout this file pins independently. Every other call site in
 	// the tree now builds the directory with `weightsCachePackageDir`; if it and the hand-spelled path ever disagree,
-	// they disagree HERE and not in a gate run that silently graded the wrong bundle.
+	// they disagree HERE and not in an eval run that silently graded the wrong bundle.
 	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
-		expect(weightsCachePackageDir(cacheRoot.path, LOCALE)).toBe(cacheRoot.resolve("node_modules", PACKAGE_NAME))
+		expect(String(weightsCachePackageDir(cacheRoot.path, LOCALE))).toBe(cacheRoot.resolve("node_modules", PACKAGE_NAME))
 
 		// Locale casing is normalized the same way the package name is.
-		expect(weightsCachePackageDir(cacheRoot.path)).toBe(
+		expect(String(weightsCachePackageDir(cacheRoot.path))).toBe(
 			cacheRoot.resolve("node_modules", "@mailwoman/neural-weights-en-us")
 		)
 	})

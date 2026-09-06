@@ -20,7 +20,7 @@
  *   - `mcp` speaks JSON-RPC over stdio rather than HTTP, and loads its deps LAZILY, so its cold start fails
  *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
  *     all, and the first model-backed tool call must answer with the same `mailwoman data pull` fix as a tool
- *     error — not the internal `resolveShards: at least one shard is required`, which is what it said before
+ *     error — not the internal `resolveExtracts: at least one database is required`, which is what it said before
  *     Task 14. A second, network-free test asserts `@mailwoman/mcp` DECLARES `@mailwoman/neural-weights-en-us`;
  *     it did not until 2026-08-03, so a standalone `npm install @mailwoman/mcp` could never load the model
  *     (measured against the published 8.6.0 — the same defect Task 7 fixed in `@mailwoman/libpostal`). Nothing
@@ -30,30 +30,27 @@
  *   These assertions run in EVERY environment and download nothing (a bare `mkdtemp` data root, never
  *   populated). The full loop — actually `data pull candidate` (~1.65 GB) and confirm photon/nominatim ALSO
  *   bind + answer 200 against it, plus the Paris/Texas routing retest (#task-7's carry-forward finding: the FTS
- *   default backend misroutes a French address to its US homonym; the candidate backend does not) — is gated
+ *   default backend misroutes a French address to its US homonym; the candidate backend does not) — is conditional
  *   behind `$MAILWOMAN_COLD_START_FULL=1` (unset in CI). Run it manually once per change to this cold-start
  *   path; `$MAILWOMAN_COLD_START_DATA_ROOT` lets a repeat local run reuse an already-pulled data root instead of
  *   re-downloading.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
+import { workspacePath } from "@mailwoman/core/paths"
+import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath } from "@mailwoman/core/utils"
-import { execFile, spawn, type ChildProcess } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
+import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
+import { join } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
-
-const execFileAsync = promisify(execFile)
 
 //#region Paths + budgets
 
@@ -101,14 +98,16 @@ const HEALTHY_TIMEOUT_MS = 30_000
 const TEST_TIMEOUT_MS = 150_000
 
 /**
- * The `data pull candidate` step in the gated suite streams ~1.65 GB; this budget is network-bound, not CPU-bound.
+ * The `data pull candidate` step in the conditional suite streams ~1.65 GB; this budget is network-bound, not
+ * CPU-bound.
  */
 const PULL_TIMEOUT_MS = 600_000
 
 /**
- * The gated test's own vitest timeout: the pull, plus two server boots and a geocode call, each independently bounded.
+ * The conditional test's own vitest timeout: the pull, plus two server boots and a geocode call, each independently
+ * bounded.
  */
-const GATED_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
+const CONDITIONAL_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
 
 //#endregion
 
@@ -132,7 +131,7 @@ function spawnServer(
 	// JSON-RPC transport runs over it — so the MCP round-trip below opens it.
 	stdin: "ignore" | "pipe" = "ignore"
 ): SpawnedServer {
-	const child = spawn("node", [cliPath, ...args], { env, stdio: [stdin, "pipe", "pipe"] })
+	const child = spawnProcess("node", [cliPath, ...args], { env, stdio: [stdin, "pipe", "pipe"] })
 	const server: SpawnedServer = { child, stdout: "", stderr: "" }
 
 	child.stdout?.on("data", (chunk: Buffer) => {
@@ -285,7 +284,7 @@ async function mcpRoundTrip(
  * Fresh, empty data root — never populated, so the "missing data" + "libpostal needs none" tests download nothing.
  */
 async function freshDataRoot(): Promise<string> {
-	return fixtures.use(await temporaryDirectory("mw-cold-start-")).path
+	return fixtures.use(await temporaryDirectory("mw-cold-start-")).path.toString()
 }
 
 const cleanupServers: SpawnedServer[] = []
@@ -304,7 +303,7 @@ describe.skipIf(!hasPhotonCLI)("mailwoman-photon serve — cold start, no data",
 
 			await expect(
 				withCLISpawnLockAsync(() =>
-					execFileAsync("node", [PHOTON_CLI, "serve", "--port", String(PHOTON_TEST_PORT)], {
+					runFile("node", [PHOTON_CLI, "serve", "--port", String(PHOTON_TEST_PORT)], {
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({ MAILWOMAN_DATA_ROOT: dataRoot, NODE_NO_WARNINGS: "1" }),
 					})
@@ -326,7 +325,7 @@ describe.skipIf(!hasNominatimCLI)("mailwoman-nominatim serve — cold start, no 
 
 			await expect(
 				withCLISpawnLockAsync(() =>
-					execFileAsync("node", [NOMINATIM_CLI, "serve", "--port", String(NOMINATIM_TEST_PORT)], {
+					runFile("node", [NOMINATIM_CLI, "serve", "--port", String(NOMINATIM_TEST_PORT)], {
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({ MAILWOMAN_DATA_ROOT: dataRoot, NODE_NO_WARNINGS: "1" }),
 					})
@@ -441,22 +440,22 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 				expect(list.tools.map((t) => t.name)).toContain("mailwoman_parse")
 				expect(list.tools.map((t) => t.name)).toContain("mailwoman_layer_manifest")
 
-				// Calling one does, and the failure has to name the fix rather than the internal shard error.
+				// Calling one does, and the failure has to name the fix rather than the internal database error.
 				expect(call.isError).toBe(true)
 				expect(call.content[0]!.text).toContain("mailwoman data pull candidate")
-				expect(call.content[0]!.text).not.toContain("resolveShards")
+				expect(call.content[0]!.text).not.toContain("resolveExtracts")
 			})
 		},
 		TEST_TIMEOUT_MS
 	)
 })
 
-//#region Gated: real data pull + Paris/Texas retest
+//#region Conditional: real data pull + Paris/Texas retest
 
 const isFull = $public.MAILWOMAN_COLD_START_FULL === "1"
 
 describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI)(
-	"drop-in cold start WITH data (gated: MAILWOMAN_COLD_START_FULL=1)",
+	"drop-in cold start WITH data (conditional: MAILWOMAN_COLD_START_FULL=1)",
 	() => {
 		test(
 			"mailwoman data pull candidate + photon/nominatim serve bind and answer 200; Paris routes to France not Texas",
@@ -467,7 +466,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				const dataRoot = reuseRoot ?? (await freshDataRoot())
 
 				await withCLISpawnLockAsync(() =>
-					execFileAsync("node", [MAILWOMAN_CLI, "data", "pull", "candidate"], {
+					runFile("node", [MAILWOMAN_CLI, "data", "pull", "candidate"], {
 						timeout: PULL_TIMEOUT_MS,
 						env: childEnv({ MAILWOMAN_DATA_ROOT: dataRoot }),
 					})
@@ -505,7 +504,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				// The ledgered Paris/Texas finding: `mailwoman geocode` (unlike the drop-ins) resolves the candidate
 				// gazetteer ONLY via $MAILWOMAN_CANDIDATE_DB — the export step `buildNoGazetteerMessage` prints for it.
 				const { stdout } = await withCLISpawnLockAsync(() =>
-					execFileAsync("node", [MAILWOMAN_CLI, "geocode", "12 Rue de Rivoli, 75001 Paris"], {
+					runFile("node", [MAILWOMAN_CLI, "geocode", "12 Rue de Rivoli, 75001 Paris"], {
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({
 							MAILWOMAN_DATA_ROOT: dataRoot,
@@ -521,7 +520,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				expect(result.lat).toBeCloseTo(48.8566, 1)
 				expect(result.lon).toBeCloseTo(2.3428, 1)
 			},
-			GATED_TEST_TIMEOUT_MS
+			CONDITIONAL_TEST_TIMEOUT_MS
 		)
 	}
 )

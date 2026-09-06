@@ -1,4 +1,4 @@
-import { test } from "#e2e"
+import { test } from "../e2e/index.ts"
 
 test.describe("Demo — theme toggling", () => {
 	test("light → dark → light keeps the map alive (no style-race errors)", async ({ demo }) => {

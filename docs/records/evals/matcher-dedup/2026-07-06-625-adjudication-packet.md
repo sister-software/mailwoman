@@ -285,7 +285,7 @@ noted inline.
    [distinct] clusters are differently-branded operating entities sharing a corporate/billing address —
    and in most, the AUTHORIZED OFFICIAL also agrees (the roll-up operator signs everything). The
    auth-official discriminator is actively harmful on exactly this class: it corroborates the wrong merge.
-3. **The next lever writes itself:** when org names disagree strongly and the ONLY agreements are
+3. **The next change writes itself:** when org names disagree strongly and the ONLY agreements are
    address + official, that pattern is management-company evidence, not identity evidence — a
    corroboration rule (or a GBT feature: `official-agree × org-disagree × address-shared`) targeting
    precisely the 7 remaining clusters. Filed on #625.

@@ -6,7 +6,7 @@
  *
  *   A calibration curve is the one measurement that is worthless when it is subtly wrong: an ECE computed against the
  *   wrong denominator, or a table that drops its empty bins, still reads as a plausible number and still gets quoted
- *   into a threshold decision. So the binning, the weighting and the gate table are pinned here against samples
+ *   into a threshold decision. So the binning, the weighting and the eval table are pinned here against samples
  *   constructed to have a known answer.
  */
 
@@ -80,17 +80,17 @@ describe("reliabilityCurve", () => {
 describe("thresholdTable", () => {
 	const sample = [...at(0.95, 80, 76), ...at(0.85, 20, 10), ...at(0.4, 100, 20)]
 
-	it("counts what a gate admits and what it forgoes", () => {
+	it("counts what a check admits and what it forgoes", () => {
 		const [row] = thresholdTable(sample, [0.9])
 
 		expect(row?.admitted).toBe(80)
 		expect(row?.precision_above).toBeCloseTo(76 / 80, 10)
 		expect(row?.errors_admitted).toBe(4)
-		// 76 + 10 + 20 = 106 correct overall, 76 of them above the gate.
+		// 76 + 10 + 20 = 106 correct overall, 76 of them above the eval.
 		expect(row?.correct_below).toBe(30)
 	})
 
-	it("reports precision above an empty gate as null, not as zero", () => {
+	it("reports precision above an empty check as null, not as zero", () => {
 		const [row] = thresholdTable(sample, [0.999])
 
 		expect(row?.admitted).toBe(0)
@@ -99,12 +99,12 @@ describe("thresholdTable", () => {
 })
 
 describe("errorClasses", () => {
-	it("ranks the confusions a gate lets through", () => {
+	it("ranks the confusions a check lets through", () => {
 		const observations: Observation[] = [
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },
 			{ confidence: 0.95, correct: false, strata: { expected: "AT", predicted: "DE" } },
-			// Below the gate: a real error, but not one this gate admits.
+			// Below the eval: a real error, but not one this check admits.
 			{ confidence: 0.2, correct: false, strata: { expected: "SI", predicted: "HR" } },
 			{ confidence: 0.99, correct: true, strata: { expected: "FR", predicted: "FR" } },
 		]

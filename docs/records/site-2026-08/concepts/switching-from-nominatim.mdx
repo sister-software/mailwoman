@@ -56,7 +56,7 @@ Mailwoman ignores: `extratags`, `namedetails`, `dedupe`, `polygon_text`/`_svg`/`
 
 ## What's missing
 
-- **Coordinate precision varies by coverage.** Where the address-point and street shards reach,
+- **Coordinate precision varies by coverage.** Where the address-point and street extracts reach,
   `/search` returns the rooftop or an interpolated point — `1600 Pennsylvania Avenue NW` resolves to the
   building, with `addressdetails` down to `house_number` and `road`. Where they don't, you get the admin
   centroid: the right place, not the right doorstep. The `addressdetails` always reflect what was parsed.

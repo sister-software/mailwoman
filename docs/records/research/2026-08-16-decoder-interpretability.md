@@ -8,7 +8,7 @@ diagnosis vocabulary?
 
 Grounding read: `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` (calibrated,
 retrieval-augmented sequence labeler; channels are soft features, never overrides) and
-`packages/neural/soft-features.ts` (the channel choreography: anchor, gazetteer, country,
+`packages/neural/lib/soft-features.ts` (the channel choreography: anchor, gazetteer, country,
 street-type channels, each `features[][]` + `confidence[]`, fed alongside `input_ids`; the
 ProductionScorer already asserts _which_ channels were fed). The Weimar case in this memo's terms:
 every channel row was zero, the token-embedding pathway alone produced the (correct) labels, and
@@ -134,7 +134,7 @@ the labels came out right.
 "monosemantic" features: Anthropic's line — Bricken et al. 2023, _Towards Monosemanticity:
 Decomposing Language Models With Dictionary Learning_ [S]; Templeton et al. 2024, _Scaling
 Monosemanticity_ [M] — plus architecture successors: TopK SAEs (Gao et al. 2024, _Scaling and
-evaluating sparse autoencoders_, OpenAI [S]), Gated and JumpReLU SAEs (Rajamanoharan et al. 2024,
+evaluating sparse autoencoders_, OpenAI [S]), Conditional and JumpReLU SAEs (Rajamanoharan et al. 2024,
 DeepMind [M]), Gemma Scope's released SAE suites (Lieberum et al. 2024 [M]), crosscoders (Anthropic
 2024 [M]). The 2025 successor to raw SAEs for _circuit-level_ explanation is transcoders +
 attribution graphs: Anthropic 2025, _Circuit Tracing: Revealing Computational Graphs in Language
@@ -217,7 +217,7 @@ Training Differentiable Models by Constraining their Explanations_ (IJCAI) [S]: 
 gradients on features the model _shouldn't_ use (or reward gradients on ones it should). Directly
 implementable in corpus-python as a `∂logits/∂channel` regularizer — but note the sign: our
 problem is under-reliance on channels only when channels are _present and correct_; when they're
-silent, token-embedding reliance is desired behavior. A blanket penalty is the wrong lever.
+silent, token-embedding reliance is desired behavior. A blanket penalty is the wrong change.
 
 **Interchange-intervention training / causal alignment — the strongest fit.** Geiger et al. 2022,
 _Inducing Causal Structure for Interpretable Neural Networks_ (IIT, ICML) [S]; Geiger et al. 2024,
@@ -246,7 +246,7 @@ synthetic transformers with known circuits [S]; the MIB benchmark, 2025 [S, hedg
 is derivable only from a channel, so any faithful method must attribute to it.
 
 **Pitfalls.** IIT constrains capacity and could cost tier-1 accuracy — it lands under the D-rule
-(no default-on mechanism with a known tier-1 regression), so it's a gated experiment, not a free
+(no default-on mechanism with a known tier-1 regression), so it's a conditional experiment, not a free
 win. Reliance metrics averaged over a board hide per-locale collapse; compute them per tier.
 Leakage literature warns that intervention on a leaky bottleneck can _hurt_ (leakage poisoning,
 2025 [S]) — relevant if we ever add "correct the channel and re-run" tooling.
@@ -352,7 +352,7 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 | Linear country probe         | Hidden states read "DE" while the resolver chose US — the cross-boundary contradiction that _was_ the actual failure.                                |
 | SAE dictionary               | Would likely surface a German-place-morphology feature firing on "Thüringen" — same fact as the probe, at ~1000× the effort.                         |
 | Hard concept bottleneck      | Would have been forced to abstain (zero concept input) — and been wrong, since the parse was right; shows why the bypass is a feature at parse time. |
-| RRR gradient penalty         | Would push reliance toward channels — the wrong lever here; the model's grammar-only decision was correct.                                           |
+| RRR gradient penalty         | Would push reliance toward channels — the wrong change here; the model's grammar-only decision was correct.                                          |
 | IIT/DAS country register     | A trained country subspace would have output "DE" as a first-class readable value for the resolver to check against.                                 |
 | Calibration (parse level)    | No flag — correctly confident; calibration is not an error-shape detector.                                                                           |
 | Mondrian conformal diagnosis | Classifies the case into "evidence-silent + resolver country flip" with per-class coverage, or emits a novelty p-value before that class exists.     |
@@ -375,7 +375,7 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 4. **Patching forensics tool** (a week, lab GPU): exhaustive activation-patch sweep as an on-demand
    `mwdev`-style tool for any board row — the "WHERE did this decision form" answer. Exhaustive is
    affordable _only because_ the model is 4–6 layers; no AtP approximation needed.
-5. **Optional, gated experiments**: IIT country register (one ~1-hour retrain + D-rule gate); a
+5. **Optional, conditional experiments**: IIT country register (one ~1-hour retrain + D-rule check); a
    single exploratory SAE run for feature inventory (evening of GPU) — deprioritized per the 2025
    negative-results literature, probes first.
 6. **Diagnosis confidence**: Mondrian split-conformal over the triage ledger with a conformal-

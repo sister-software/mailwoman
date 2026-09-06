@@ -4,7 +4,7 @@
 **Standardization addendum (PR #1033):** the argv/env cleanup the migration left behind is DONE —
 57 local-helper/inline-scan files → `parseArgs` (codemod v2), the 4 gitignored diagnostic files with
 broken cli-args imports fixed (`rg` respects .gitignore — always recount with `--no-ignore`),
-promotion-gate converted STRICT with exit-2 parity, photon/libpostal/nominatim dispatch →
+promotion-eval converted STRICT with exit-2 parity, photon/libpostal/nominatim dispatch →
 positionals, smoke-resolve's hardcoded playpen path → `dataRootPath`. Deliberately NOT converted:
 the lookup CLIs' documented negative-coordinate hand-parse and the resolver build CLIs' structured
 tested parsers — neither is the scan anti-pattern.
@@ -34,21 +34,21 @@ scripts/ — 294 files total (272 source files)
 
 **Duplication highlight reel:**
 
-| Anti-pattern                                      | Count                                 | Fix                                                                  |
-| ------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------- |
-| `process.argv` indexed/scanned directly           | 69 scripts                            | `parseArgs` from `node:util` (already used by 71)                    |
-| `scripts/lib/cli-args` helper                     | 45 imports                            | retire; `parseArgs` is the standard                                  |
-| `readFileSync`/`writeFileSync`/`mkdirSync` ad-hoc | 140/108/26                            | fine for one-offs; flag when it's reimplementing `fs/promises` badly |
-| `$public`/`$private` env access                   | 12 scripts                            | correct pattern; 200+ scripts ignore it entirely                     |
-| `.mjs` references in docstrings/comments          | 11 scripts                            | stale — AGENTS.md bans `.mjs`                                        |
-| lone surviving `.mjs`                             | 1 (`diagnostic/gate-nl-postcode.mjs`) | convert or delete                                                    |
+| Anti-pattern                                      | Count                                  | Fix                                                                  |
+| ------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------- |
+| `process.argv` indexed/scanned directly           | 69 scripts                             | `parseArgs` from `node:util` (already used by 71)                    |
+| `scripts/lib/cli-args` helper                     | 45 imports                             | retire; `parseArgs` is the standard                                  |
+| `readFileSync`/`writeFileSync`/`mkdirSync` ad-hoc | 140/108/26                             | fine for one-offs; flag when it's reimplementing `fs/promises` badly |
+| `$public`/`$private` env access                   | 12 scripts                             | correct pattern; 200+ scripts ignore it entirely                     |
+| `.mjs` references in docstrings/comments          | 11 scripts                             | stale — AGENTS.md bans `.mjs`                                        |
+| lone surviving `.mjs`                             | 1 (`diagnostic/check-nl-postcode.mjs`) | convert or delete                                                    |
 
 ---
 
 ## The endgame: scripts/ holds ONLY three things
 
 1. **Release-it hooks + CI tooling** — the publish/verify/smoke scripts that the release pipeline invokes
-2. **The eval harness** — `eval/` (promotion gate, gauntlet, gates, probes) and `diagnostic/` (one-offs)
+2. **The eval harness** — `eval/` (promotion check, gauntlet, checks, probes) and `diagnostic/` (one-offs)
 3. **Minimal codegen/lint** — the generate-_/lint-_ scripts that don't yet have a `mailwoman dev` home
 
 Everything else either moves into a package (as a module), becomes an Ink command (`mailwoman <group> <verb>`), or gets deleted because it's stale/duplicated/superseded.
@@ -61,11 +61,11 @@ Everything else either moves into a package (as a module), becomes an Ink comman
 
 These are addressed in `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. The spec is approved; implementation is pending (3 PRs). The items below are listed for completeness — their fate is already decided.
 
-| Script(s)                                                                                                                                                                                                                                                                                                                                                                                   | Fate                                                      | Details                                                                                      |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Gazetter builders (build-unified-wof, add-region-abbrevs, add-ancestors, backfill-ancestors-from-hierarchy, augment-admin-_, build-admin-geonames-fold, build-coverage-expansion, backfill-postcode-centroids, fill-zcta-centroids, build-postcode-locality_, build-postalcode-nl-pc6, audit-po-box-cedex-shard, build-supplemental-gazetteer, build-pilot-anchor-lookup, reverse-eu-panel) | **Migrate → `mailwoman/gazetteer-pipeline/`** then delete | Subsumed by `mailwoman gazetteer build [admin\|candidate\|postcode\|polygons]`. See spec §5. |
-| `wof-build-manifest.json`                                                                                                                                                                                                                                                                                                                                                                   | Becomes auto-appended build log                           | Written by the command, not a recipe store.                                                  |
-| `scripts/data/county-population-ranked.json`                                                                                                                                                                                                                                                                                                                                                | Moves into the pipeline module as a constant or data file |                                                                                              |
+| Script(s)                                                                                                                                                                                                                                                                                                                                                                                     | Fate                                                      | Details                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Gazetter builders (build-unified-wof, add-region-abbrevs, add-ancestors, backfill-ancestors-from-hierarchy, augment-admin-_, build-admin-geonames-fold, build-coverage-expansion, backfill-postcode-centroids, fill-zcta-centroids, build-postcode-locality_, build-postalcode-nl-pc6, audit-po-box-cedex-extract, build-supplemental-gazetteer, build-pilot-anchor-lookup, reverse-eu-panel) | **Migrate → `mailwoman/gazetteer-pipeline/`** then delete | Subsumed by `mailwoman gazetteer build [admin\|candidate\|postcode\|polygons]`. See spec §5. |
+| `wof-build-manifest.json`                                                                                                                                                                                                                                                                                                                                                                     | Becomes auto-appended build log                           | Written by the command, not a recipe store.                                                  |
+| `scripts/data/county-population-ranked.json`                                                                                                                                                                                                                                                                                                                                                  | Moves into the pipeline module as a constant or data file |                                                                                              |
 
 ### ▸ Phase 1 — The `lib/` dissolution (low-hanging fruit, highest duplication payoff)
 
@@ -155,10 +155,10 @@ These are tooling scripts — not builders, not eval, not release. They belong i
 | `generate-trace-fixture.ts`      | **Stay**, candidate for `mailwoman dev generate-trace-fixture`      | Trace fixture generator. Uses `parseArgs` correctly already. |
 | `generate.ts`                    | **Stay**                                                            | Unknown purpose — evaluate during Phase 6. May be dead.      |
 | `jsonl-to-parquet.ts`            | **Stay**, candidate for `mailwoman dev jsonl-to-parquet`            | Simple conversion utility.                                   |
-| `lint-corpus-shard.ts`           | **Stay**, candidate for `mailwoman corpus lint`                     | Corpus shard linter — should live with corpus commands.      |
+| `lint-corpus-extract.ts`         | **Stay**, candidate for `mailwoman corpus lint`                     | Corpus extract linter — should live with corpus commands.    |
 | `lint-mdx-angles.ts`             | **Stay**, candidate for `mailwoman dev lint-mdx`                    | MDX angle-bracket linter.                                    |
-| `lint-shard-vocab.ts`            | **Stay**, candidate for `mailwoman corpus lint-vocab`               | Shard vocabulary linter.                                     |
-| `lint-rules.json`                | **Stay**                                                            | The rules config for lint-corpus-shard. Moves with it.       |
+| `lint-extract-vocab.ts`          | **Stay**, candidate for `mailwoman corpus lint-vocab`               | Extract vocabulary linter.                                   |
+| `lint-rules.json`                | **Stay**                                                            | The rules config for lint-corpus-extract. Moves with it.     |
 
 ### ▸ Phase 7 — Release tooling (legitimate permanent residents)
 
@@ -174,37 +174,37 @@ These are invoked by `.release-it.json` hooks, CI, or the operator at release ti
 | `check-release-parity.ts`              | **Stay**                            | Verifies all workspace versions match the release tag.                                                     |
 | `rewrite-workspace-imports.ts`         | **Stay**                            | Post-release import rewriting.                                                                             |
 | `release-workspace-repository.test.ts` | **Stay**                            | Test for the release flow.                                                                                 |
-| `verify-shard-acks.ts`                 | **Stay**                            | Verifies shard acknowledgements.                                                                           |
+| `verify-extract-acks.ts`               | **Stay**                            | Verifies extract acknowledgements.                                                                         |
 | `verify-export-quant-versions.ts`      | **Stay**                            | Verifies quantized model version exports.                                                                  |
 | `smoke-clean-install.ts`               | **Stay**                            | CI smoke test — clean install from npm.                                                                    |
 | `smoke-resolve.ts`                     | **Stay**                            | CI smoke test — resolution check.                                                                          |
 
 ### ▸ Phase 8 — Config & docs files (staying)
 
-| File                            | Fate                                        | Rationale                                                                                   |
-| ------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `AGENTS.md`                     | **Stay**                                    | Agent instructions for the scripts directory. Update to reflect the new slimmed-down world. |
-| `CLAUDE.md`                     | **Stay** (symlink to AGENTS.md)             | Already just `@AGENTS.md`.                                                                  |
-| `tsconfig.json`                 | **Stay**                                    | TypeScript config for `yarn typecheck:scripts`.                                             |
-| `v062-model-card-template.json` | **Stay** or move to `neural-weights-en-us/` | Model card template. Belongs with the model metadata, not scripts.                          |
-| `lint-rules.json`               | **Stay** (moves with lint-corpus-shard.ts)  | See Phase 6.                                                                                |
+| File                            | Fate                                         | Rationale                                                                                   |
+| ------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `AGENTS.md`                     | **Stay**                                     | Agent instructions for the scripts directory. Update to reflect the new slimmed-down world. |
+| `CLAUDE.md`                     | **Stay** (symlink to AGENTS.md)              | Already just `@AGENTS.md`.                                                                  |
+| `tsconfig.json`                 | **Stay**                                     | TypeScript config for `yarn typecheck:scripts`.                                             |
+| `v062-model-card-template.json` | **Stay** or move to `neural-weights-en-us/`  | Model card template. Belongs with the model metadata, not scripts.                          |
+| `lint-rules.json`               | **Stay** (moves with lint-corpus-extract.ts) | See Phase 6.                                                                                |
 
 ### ▸ Phase 9 — Eval harness (legitimate permanent resident)
 
-The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 diagnostic scripts in `scripts/diagnostic/` (46 gitignored, 9 tracked). These are the eval/diagnostic harness — the promotion gate, the gauntlet, per-tag probes, calibration scripts, golden-set builders, and one-off investigation scripts.
+The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 diagnostic scripts in `scripts/diagnostic/` (46 gitignored, 9 tracked). These are the eval/diagnostic harness — the promotion check, the gauntlet, per-tag probes, calibration scripts, golden-set builders, and one-off investigation scripts.
 
-**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has many tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _gates_ (promotion-gate, gauntlet, gates/) and `diagnostic/` for everything else — but that's cleanup, not migration.
+**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has many tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _checks_ (promotion-eval, gauntlet, checks/) and `diagnostic/` for everything else — but that's cleanup, not migration.
 
 **One cleanup task:** 2 files in `eval/` are gitignored (residual probes). Ensure the gitignore is correct and nothing tracked should be gitignored or vice versa.
 
 ### ▸ Phase 10 — The lone `.mjs` and stale references
 
-| File                                                                                   | Fate                           | Rationale                                                    |
-| -------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------ |
-| `scripts/diagnostic/gate-nl-postcode.mjs`                                              | **Convert to `.ts` or delete** | The ONLY surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
-| 11 `.mjs` references in docstrings/comments                                            | **Update comments**            | Stale references to scripts that no longer exist as `.mjs`.  |
-| `scripts/lib/zip-csv.ts:15` references `ingest-openaddresses.mjs`                      | **Fix during Phase 1**         | Stale reference.                                             |
-| `scripts/eval/audit-po-box-cedex-shard.ts:8` references `build-po-box-cedex-shard.mjs` | **Fix during Phase 0**         | Handled by gazetteer spec.                                   |
+| File                                                                                       | Fate                           | Rationale                                                    |
+| ------------------------------------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------ |
+| `scripts/diagnostic/check-nl-postcode.mjs`                                                 | **Convert to `.ts` or delete** | The ONLY surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
+| 11 `.mjs` references in docstrings/comments                                                | **Update comments**            | Stale references to scripts that no longer exist as `.mjs`.  |
+| `scripts/lib/zip-csv.ts:15` references `ingest-openaddresses.mjs`                          | **Fix during Phase 1**         | Stale reference.                                             |
+| `scripts/eval/audit-po-box-cedex-extract.ts:8` references `build-po-box-cedex-extract.mjs` | **Fix during Phase 0**         | Handled by gazetteer spec.                                   |
 
 ---
 
@@ -229,7 +229,7 @@ corpus-python/
   modal/             ← train_remote.py + AGENTS.md (Phase 5)
 
 scripts/             ← what remains:
-  eval/              ← promotion gate, gauntlet, gates, eval probes (Phase 9)
+  eval/              ← promotion check, gauntlet, checks, eval probes (Phase 9)
   diagnostic/        ← one-off investigations (Phase 9)
   *.ts               ← release tooling (Phase 7)
   *.ts               ← codegen/lint (Phase 6)
@@ -273,7 +273,7 @@ const verbose = values.verbose!
 
 200+ scripts use ad-hoc `process.env.X` or bare `process.env` access. 12 scripts already correctly use `$public` / `$private` from `@mailwoman/core/env`.
 
-Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), but any script that ships or gates a release MUST use the typed env accessors. At minimum, ensure the release-tooling and promotion-gate scripts use them.
+Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), but any script that ships or checks a release MUST use the typed env accessors. At minimum, ensure the release-tooling and promotion-eval scripts use them.
 
 ---
 

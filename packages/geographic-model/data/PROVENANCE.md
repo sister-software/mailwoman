@@ -68,7 +68,7 @@ with, and the POI branch searches the union rather than choosing between them.
 Produced by `scripts/build-artifact.ts` from `model/`. **Do not hand-edit.** Regenerate with:
 
 ```bash
-node packages/geographic-model/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
+node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 
 The `oxfmt` pass is required because committed JSON must be `oxfmt`-clean (short arrays inline), which raw

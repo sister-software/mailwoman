@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { countryOfPostcode, countryOfPostcodeArea, GB_POSTCODE_AREA_COUNTRY } from "@mailwoman/codex/gb/postcode-area"
+import { countryOfPostcode, countryOfPostcodeArea, GB_POSTCODE_AREA_COUNTRY } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("GB_POSTCODE_AREA_COUNTRY", () => {

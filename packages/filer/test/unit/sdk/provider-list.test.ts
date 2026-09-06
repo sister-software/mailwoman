@@ -8,11 +8,12 @@
  *   sharing a `provider_id` into one, no matter how tempting a `Map` keyed by `provider_id` looks.
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { parseProviderList, type ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const FIXTURES_DIR = join(import.meta.dirname, "../../../test-fixtures")
+const FIXTURES_DIR = resolvePackagePath("@mailwoman/filer", "test-fixtures")
 const SAMPLE_CSV = join(FIXTURES_DIR, "provider-list-sample.csv")
 const MALFORMED_CSV = join(FIXTURES_DIR, "provider-list-malformed.csv")
 const MISSING_COLUMN_CSV = join(FIXTURES_DIR, "provider-list-missing-column.csv")

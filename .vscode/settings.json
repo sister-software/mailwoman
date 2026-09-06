@@ -81,7 +81,7 @@
 	},
 	"js/ts.format.semicolons": "remove",
 	"js/ts.preferences.quoteStyle": "double",
-	"js/ts.preferences.importModuleSpecifier": "project-relative",
+	"js/ts.preferences.importModuleSpecifier": "non-relative",
 	"js/ts.preferences.importModuleSpecifierEnding": "js",
 	"js/ts.preferences.includePackageJsonAutoImports": "on",
 	"js/ts.implicitProjectConfig.module": "ESNext",

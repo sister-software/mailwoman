@@ -1,4 +1,4 @@
-# Coarse-placer off-map breadth — OpenAddresses pull: breadth helps, threshold is the lever (2026-06-14)
+# Coarse-placer off-map breadth — OpenAddresses pull: breadth helps, threshold is the change (2026-06-14)
 
 _The #244 follow-up to night-15's Latin-off-map finding (trained off-map countries went 23%→100% handled
 but didn't generalize to unseen ones — attributed to Overture's ALPHA theme carrying only ~7 off-map
@@ -34,7 +34,7 @@ At the default decision threshold (abstain 0.5):
   per-country n-gram fingerprints, so more families lift the boundary only so far. **Breadth is necessary
   but insufficient.**
 
-## The abstention threshold is the real lever (DeepSeek-confirmed)
+## The abstention threshold is the real change (DeepSeek-confirmed)
 
 Sweeping the threshold on the OA retrain trades in-map accuracy for off-map handling — a clean Pareto curve:
 
@@ -54,7 +54,7 @@ threshold gets _close_ but not all the way.
 - **Breadth was worth pulling.** The OA retrain is a strict Pareto improvement (trained families →100%,
   unseen +13pp at every threshold, in-map held). The 27-country / 10-family leave-one-out probe is a far
   honester generalization signal than night-15's 7 countries.
-- **But breadth alone doesn't clear the bar** — confirming DeepSeek's pushback. The final lever is **method,
+- **But breadth alone doesn't clear the bar** — confirming DeepSeek's pushback. The final change is **method,
   not more data**: an open-set / novelty detector (Mahalanobis on the in-map manifold, or an explicit
   "not-any-of-the-11" head) to push heldout toward 100% without the in-map cost the raw threshold imposes.
 - **Shippable now (operator's call):** the OA-broadened model + a tuned threshold (~0.85) is a real,

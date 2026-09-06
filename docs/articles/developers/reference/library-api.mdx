@@ -15,7 +15,7 @@ This page describes the five entry points a consumer calls from TypeScript: `cre
 output that file produced.
 
 It does not describe the stage packages (`@mailwoman/normalize`, `@mailwoman/query-shape`,
-`@mailwoman/locale-gate`, `@mailwoman/kind-classifier`, `@mailwoman/phrase-grouper`). Those are wired
+`@mailwoman/locale-hint`, `@mailwoman/kind-classifier`, `@mailwoman/phrase-grouper`). Those are wired
 by `createRuntimePipeline` with production defaults, and a consumer who calls them directly is
 building a pipeline rather than using one. For the command line, see [CLI](./cli.mdx). For HTTP, see
 [HTTP APIs](./http-apis.mdx).
@@ -31,16 +31,16 @@ is a subset, it says so and says what it left out.
 serves TypeScript source directly, so no build step stands between an installed package and a running
 script.
 
-| Import                         | What it carries                                                           |
-| ------------------------------ | ------------------------------------------------------------------------- |
-| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports     |
-| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `ShardProvider`, the result types    |
-| `mailwoman/geocode-stream`     | `geocodeStream`                                                           |
-| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers |
-| `mailwoman/cli-kit`            | Ink helpers for building an interactive command                           |
-| `mailwoman/test-kit`           | The parser test helpers                                                   |
-| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                |
-| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules        |
+| Import                         | What it carries                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports           |
+| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `RegionDatabaseProvider`, the result types |
+| `mailwoman/geocode-stream`     | `geocodeStream`                                                                 |
+| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers       |
+| `mailwoman/cli-kit`            | Ink helpers for building an interactive command                                 |
+| `mailwoman/test-kit`           | The parser test helpers                                                         |
+| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                      |
+| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules              |
 
 `geocodeAddress` and its result types are reachable only through `mailwoman/geocode-core`. They are
 not re-exported from the bare specifier.
@@ -73,7 +73,7 @@ Two stages take an injected implementation. The rest carry production defaults.
 | `normalizeCase`       | `boolean`                          | on                           | Title-cases detected all-caps ASCII input before the model                    |
 | `hardPlaceCountry`    | `boolean`                          | on                           | Promotes a confident country guess to a filter, inside a coverage safelist    |
 | `hardCountrySafelist` | `ReadonlySet<string>`              | the gazetteer's own manifest | Which countries the hard filter applies to. Falls back to a built-in list     |
-| `detectLocale`        | function                           | `@mailwoman/locale-gate`     | Stage 2                                                                       |
+| `detectLocale`        | function                           | `@mailwoman/locale-hint`     | Stage 2                                                                       |
 | `classifyKind`        | function                           | `@mailwoman/kind-classifier` | Stage 2.5. An explicit override wins over the POI-aware default               |
 | `groupPhrases`        | function                           | `@mailwoman/phrase-grouper`  | Stage 2.7                                                                     |
 
@@ -88,7 +88,7 @@ factory default.
 
 | Field               | Type                            | Default                  | Effect                                                    |
 | ------------------- | ------------------------------- | ------------------------ | --------------------------------------------------------- |
-| `locale`            | `string`                        | derived by `locale-gate` | BCP-47 tag, for example `en-US`                           |
+| `locale`            | `string`                        | derived by `locale-hint` | BCP-47 tag, for example `en-US`                           |
 | `inputMode`         | `"fragmented"` or `"formatted"` | derived from the kind    | Which register the evidence channels run in               |
 | `resolveOpts`       | `ResolveOpts`                   | none                     | Passed through to the resolver                            |
 | `normalizeCase`     | `boolean`                       | the factory value        | Overrides the factory default for this call               |
@@ -200,7 +200,7 @@ dependency, so it reports where the gazetteer index is and leaves deserializatio
 ### Parse options
 
 These are the fields of `ParseOpts` a consumer sets. `ParseOpts` has 20 fields; the ten omitted here
-are the FST bias magnitudes and decision thresholds (`fstBiasScale`, `fstStreetContextGate` and their
+are the FST bias magnitudes and decision thresholds (`fstBiasScale`, `fstStreetContextRequirement` and their
 siblings, four of which the source marks internal), the `queryShapeBiasScale` magnitude, the
 morphology-prior override, the pre-v4.4.0 `bridgePunctuationGaps` switch, and `trailingLocality`,
 which is deprecated and scheduled for deletion at the next major.
@@ -240,10 +240,10 @@ the failure is silent — which is why this section exists rather than a note on
 
 Wire it from the path the classifier already resolved. `fstPath` is optional, because a locale
 overlay that ships no gazetteer index leaves it undefined, so guard it rather than reading it
-straight into `readFileSync`.
+straight into `readFile`.
 
 ```ts
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -251,7 +251,7 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 // `fstPath` is optional — a locale overlay that ships no gazetteer index leaves it undefined.
-const fst = classifier.fstPath ? deserializeFST(readFileSync(classifier.fstPath)) : undefined
+const fst = classifier.fstPath ? deserializeFST(await readFile(classifier.fstPath)) : undefined
 
 for (const input of ["Hollywood", "big spring"]) {
 	console.log(input)
@@ -293,7 +293,7 @@ row.
 
 ### Dependencies
 
-`GeocodeDeps` has 18 fields. The 16 below are the ones a consumer sets; `osmShards` and
+`GeocodeDeps` has 18 fields. The 16 below are the ones a consumer sets; `osmExtracts` and
 `hardCountrySafelist` are omitted as evaluation and build-time wiring.
 
 | Field                    | Type                           | Default              | Effect                                                         |
@@ -301,8 +301,8 @@ row.
 | `classifier`             | `GeocodeClassifier`            | required             | The parser                                                     |
 | `inputMode`              | `"fragmented"` / `"formatted"` | from the query kind  | Which register the evidence channels run in                    |
 | `resolver`               | `Resolver`                     | required             | The gazetteer walk                                             |
-| `shards`                 | `ShardResolver`                | none                 | Per-state rooftop and interpolation lookups                    |
-| `nationalShards`         | `(country) => StateShards`     | none                 | Per-country lookups, for example the French rooftop database   |
+| `extracts`               | `RegionDatabaseResolver`       | none                 | Per-state rooftop and interpolation lookups                    |
+| `nationalExtracts`       | `(country) => RegionDatabases` | none                 | Per-country lookups, for example the French rooftop database   |
 | `defaultCountry`         | `string`                       | none                 | Scopes the resolver to one country                             |
 | `bias`                   | proximity points               | none                 | Soft re-rank toward a viewport or a user location              |
 | `interpCalibration`      | `number` or a table            | the database's value | Multiplier on the interpolation tier's uncertainty radius      |
@@ -349,15 +349,15 @@ the tier, not on the presence of `house_number`: the parsed span is populated wh
 `hierarchy` is the resolved view and carries only nodes the resolver decorated. The flat span fields
 are the parsed view. The two disagree whenever the parse found something the gazetteer did not.
 
-### `ShardProvider`
+### `RegionDatabaseProvider`
 
-`ShardProvider` opens per-state rooftop and interpolation databases on demand, caches the handles, and
+`RegionDatabaseProvider` opens per-state rooftop and interpolation databases on demand, caches the handles, and
 swaps them atomically when the data release changes.
 
 ```ts
-class ShardProvider {
-	constructor(factory: ShardLookupFactory, dataRoot: string)
-	readonly for: ShardResolver
+class RegionDatabaseProvider {
+	constructor(factory: RegionDatabaseFactory, dataRoot: string)
+	readonly for: RegionDatabaseResolver
 	versions(): DataReleaseManifest | null
 	reload(): DataReleaseManifest | null
 	close(): void
@@ -365,7 +365,7 @@ class ShardProvider {
 ```
 
 The constructor is positional. `factory` is the `@mailwoman/resolver-wof-sqlite` module namespace in
-practice. `for` is a property rather than a method so it can be passed unbound as `deps.shards`.
+practice. `for` is a property rather than a method so it can be passed unbound as `deps.extracts`.
 
 ### Example
 
@@ -398,6 +398,7 @@ Output:
 	"lat": 40.694457,
 	"lon": -73.93045,
 	"resolution_tier": "admin",
+	"epistemic_status": "observed",
 	"uncertainty_m": null,
 	"locality": "New York",
 	"region": "NY",
@@ -488,12 +489,12 @@ The table ships inside each weights package as `calibration.json`, and a per-cou
 `tables` entries to the bare-array form.
 
 ```ts
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 
 import { createCalibrator } from "@mailwoman/core/decoder"
 
 // Replace <WEIGHTS_DIR> with your node_modules/@mailwoman/neural-weights-en-us directory.
-const table = JSON.parse(readFileSync("<WEIGHTS_DIR>/calibration.json", "utf8"))
+const table = JSON.parse(await readFile("<WEIGHTS_DIR>/calibration.json", "utf8"))
 const calibrate = createCalibrator(table)
 
 for (const raw of [0, 0.25, 0.5, 0.75, 0.9, 0.99, 1]) {

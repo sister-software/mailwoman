@@ -95,7 +95,7 @@ interface ClassifierPolicy {
 }
 ```
 
-Default mode is `rule_only`. The neural classifier earns each component one at a time, gated on golden-set metrics. If the neural model regresses, flipping back to `rule_only` is a one-line config change with no retraining.
+Default mode is `rule_only`. The neural classifier earns each component one at a time, blocked on golden-set metrics. If the neural model regresses, flipping back to `rule_only` is a one-line config change with no retraining.
 
 This is the **Ship of Theseus** migration: replace the planks one at a time, keep sailing the whole time.
 

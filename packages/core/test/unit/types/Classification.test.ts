@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { Classifications, ClassificationsMatchMap, isVisibleClassification } from "@mailwoman/core/types"
 import { expect, test } from "vitest"
-
-import { Classifications, ClassificationsMatchMap, isVisibleClassification } from "#types"
 
 // A classification that is valid but NOT in the visible set — derived through the public API so the
 // test doesn't couple to the (unexported) VisibleClassification set's contents.

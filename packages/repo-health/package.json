@@ -1,0 +1,74 @@
+{
+	"name": "@mailwoman/repo-health",
+	"version": "9.2.0",
+	"private": true,
+	"description": "Repository health checks as a registry — each inspects the checkout and returns diagnostics or pass/fail, and nothing here mutates, generates, publishes, benchmarks, or probes.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/repo-health"
+	},
+	"files": [
+		"lib",
+		"out",
+		"baseline.json",
+		"README.md"
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./lib/index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./registry": {
+			"node": "./lib/registry.ts",
+			"default": "./out/registry.js",
+			"types": "./out/registry.d.ts"
+		},
+		"./baseline": {
+			"node": "./lib/baseline.ts",
+			"default": "./out/baseline.js",
+			"types": "./out/baseline.d.ts"
+		},
+		"./context": {
+			"node": "./lib/context.ts",
+			"default": "./out/context.js",
+			"types": "./out/context.d.ts"
+		},
+		"./tracked-sources": {
+			"node": "./lib/tracked-sources.ts",
+			"default": "./out/tracked-sources.js",
+			"types": "./out/tracked-sources.d.ts"
+		},
+		"./ts-ast": {
+			"node": "./lib/ts-ast.ts",
+			"default": "./out/ts-ast.js",
+			"types": "./out/ts-ast.d.ts"
+		},
+		"./checks/*": {
+			"node": "./lib/checks/*.ts",
+			"default": "./out/checks/*.js",
+			"types": "./out/checks/*.d.ts"
+		}
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/release-kit": "workspace:*",
+		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1",
+		"typescript": "^6.0.3"
+	},
+	"devDependencies": {
+		"@vvago/vale": "^3.20.0"
+	}
+}

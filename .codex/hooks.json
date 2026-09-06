@@ -5,7 +5,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node packages/dev-mcp/hooks/vale-response-check-codex.ts",
+						"command": "node packages/dev-mcp/lib/hooks/vale-response-check-codex.ts",
 						"timeout": 30,
 						"statusMessage": "Vale prose check"
 					}

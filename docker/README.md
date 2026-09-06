@@ -27,7 +27,7 @@ opt into geocoding by mounting data.
 
 ## Full geocoding — mount the gazetteer read-only
 
-Point `/data` at a mailwoman data root (a `wof/candidate.db` plus optional per-state shards):
+Point `/data` at a mailwoman data root (a `wof/candidate.db` plus optional per-state extracts):
 
 ```bash
 docker run --rm -p 3000:3000 \
@@ -67,7 +67,7 @@ gotchas worth naming:
 - If `wof/candidate.db` is a **symlink**, set `MAILWOMAN_CANDIDATE_DB` to the real file path inside the
   container (e.g. `/data/wof/candidate-global-1026.db`). A symlink pointing at an absolute host path
   dangles inside the container.
-- Per-state rooftop shards (`address-points/…`, `interpolation/…`) are WAL-mode. They open fine
+- Per-state rooftop extracts (`address-points/…`, `interpolation/…`) are WAL-mode. They open fine
   read-only when their `-wal`/`-shm` siblings are present in the same mount; a missing sidecar drops
   that address to admin/street-level coordinates rather than failing the request.
 

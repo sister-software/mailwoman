@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-26 · **Status:** read-only survey (fork agent), ranked by leverage-to-effort ·
 **Directive:** "every opportunity we find to serialize runtime decisions into static indexes… Who's
-on First's hierarchy is under-leveraged for this sort of thing."
+on First's hierarchy is under-changeaged for this sort of thing."
 
 **Context:** the FST degenerate-surface fix is moving from decode-time guards to build-time artifact
 curation (parallel session, in flight). This survey asks where else the same move pays. The healthy
@@ -33,7 +33,7 @@ cascade, AddrKG-LLM's prompt rulebook).
   independently at `mailwoman/eval-harness/parity-corpus.ts:101-102` and
   `scripts/eval/harness-neural.ts:738`.
 - **The kicker:** a repo-wide grep shows **no browser surface builds it at all** — `neural-web/`,
-  `react/`, `docs/src` have zero references. The browser demo runs WITHOUT the street-context gate
+  `react/`, `docs/src` have zero references. The browser demo runs WITHOUT the street-context check
   (#1315) that node runtimes apply by default. That violates standing invariant 2 ("the demo is the
   geocoder — must not silently trail"); serializing isn't just latency hygiene, it closes a real
   behavioral fork between runtimes.
@@ -74,10 +74,10 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   the runtime recomputes hierarchical consistency piecemeal: `adminCoherence` joint re-picks,
   `region-country-coherence`, `hierarchyCompletion` ancestry walks
   (`resolver-wof-sqlite/ancestry.ts:58` `ancestorLineage`, `PLACETYPE_DEPTH:25`).
-- **Artifact:** per-country pair shards for the REST of the hierarchy — `(locality, region)`,
+- **Artifact:** per-country pair extracts for the REST of the hierarchy — `(locality, region)`,
   `(neighbourhood, locality)`, `(locality, country)` — built from WOF ancestry (+ registers where
   they exist), same PIX1 format, loader, and per-country calibration discipline. WOF's `ancestors`
-  table is precisely the source; this is the "hierarchy is under-leveraged" claim made concrete.
+  table is precisely the source; this is the "hierarchy is under-changeaged" claim made concrete.
 - **Dual-use (the strategic part):** the Option-A locality evidence channel (Track 2,
   ROAD_TO §8) needs exactly this artifact as a **training-time input feature** — "this span is a
   known locality under a plausible parent present in the same input." One build feeds both the
@@ -120,7 +120,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   recorded update-both trap). The degenerate-surface exclusion policy currently has no in-artifact
   record. Both belong in the FST header: the order table (self-describing format, kills the
   duplication) and the curation policy line (which dictionaries, which date — provenance). Zero
-  standalone cost if it rides the parent session's rebuild; version-gate the format bump.
+  standalone cost if it rides the parent session's rebuild; version-check the format bump.
 
 ### 7. Conventions / per-locale emission masks → artifact (L — defer until it grows)
 
@@ -151,4 +151,4 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 1 + 5 + 6 are small and independent; 6 rides the in-flight FST rebuild. 2 lands with the next
 gazetteer rebuild cycle. 3 and 4 are the strategic pair — both feed Track 2's Option-A evidence
 bundle, so their builders should be designed once, together (same WOF ancestry pass emits pair
-shards AND ambiguity classes).
+extracts AND ambiguity classes).

@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/registry",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "The geocode-first record-matching application: resolve messy contact/organization records into canonical, geocoded entities (block → score → cluster) and export them as GeoJSON for spatial analysis. The clinic-funding use case mailwoman was built for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -24,74 +24,110 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#index": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
-		"#tools/nppes/*": {
-			"node": "./tools/nppes/*.ts",
-			"default": "./out/tools/nppes/*.js",
-			"types": "./out/tools/nppes/*.d.ts"
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./resolve": {
-			"node": "./resolve.ts",
+			"node": "./lib/resolve.ts",
 			"default": "./out/resolve.js",
 			"types": "./out/resolve.d.ts"
 		},
 		"./geojson": {
-			"node": "./geojson.ts",
+			"node": "./lib/geojson.ts",
 			"default": "./out/geojson.js",
 			"types": "./out/geojson.d.ts"
 		},
 		"./ingest": {
-			"node": "./ingest.ts",
+			"node": "./lib/ingest.ts",
 			"default": "./out/ingest.js",
 			"types": "./out/ingest.d.ts"
 		},
 		"./tools": {
-			"node": "./tools/index.ts",
+			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
 		},
 		"./address-key": {
-			"node": "./address-key.ts",
+			"node": "./lib/address-key.ts",
 			"default": "./out/address-key.js",
 			"types": "./out/address-key.d.ts"
 		},
 		"./types": {
-			"node": "./types.ts",
+			"node": "./lib/types.ts",
 			"default": "./out/types.js",
 			"types": "./out/types.d.ts"
 		},
 		"./geocode-handler": {
-			"node": "./geocode-handler.ts",
+			"node": "./lib/geocode-handler.ts",
 			"default": "./out/geocode-handler.js",
 			"types": "./out/geocode-handler.d.ts"
 		},
 		"./learned-scorer": {
-			"node": "./learned-scorer.ts",
+			"node": "./lib/learned-scorer.ts",
 			"default": "./out/learned-scorer.js",
 			"types": "./out/learned-scorer.d.ts"
 		},
 		"./map-html": {
-			"node": "./map-html.ts",
+			"node": "./lib/map-html.ts",
 			"default": "./out/map-html.js",
 			"types": "./out/map-html.d.ts"
 		},
 		"./reconcile": {
-			"node": "./reconcile.ts",
+			"node": "./lib/reconcile.ts",
 			"default": "./out/reconcile.js",
 			"types": "./out/reconcile.d.ts"
+		},
+		"./tools/nppes/org-name": {
+			"node": "./lib/tools/nppes/org-name.ts",
+			"default": "./out/tools/nppes/org-name.js",
+			"types": "./out/tools/nppes/org-name.d.ts"
+		},
+		"./tools/nppes/overmerge-packet": {
+			"node": "./lib/tools/nppes/overmerge-packet.ts",
+			"default": "./out/tools/nppes/overmerge-packet.js",
+			"types": "./out/tools/nppes/overmerge-packet.d.ts"
+		},
+		"./tools/nppes/report": {
+			"node": "./lib/tools/nppes/report.ts",
+			"default": "./out/tools/nppes/report.js",
+			"types": "./out/tools/nppes/report.d.ts"
+		},
+		"./tools/nppes/sample": {
+			"node": "./lib/tools/nppes/sample.ts",
+			"default": "./out/tools/nppes/sample.js",
+			"types": "./out/tools/nppes/sample.d.ts"
+		},
+		"./tools/nppes/scoring": {
+			"node": "./lib/tools/nppes/scoring.ts",
+			"default": "./out/tools/nppes/scoring.js",
+			"types": "./out/tools/nppes/scoring.d.ts"
+		},
+		"./tools/nppes/settings": {
+			"node": "./lib/tools/nppes/settings.ts",
+			"default": "./out/tools/nppes/settings.js",
+			"types": "./out/tools/nppes/settings.d.ts"
+		},
+		"./tools/nppes/truth-grains": {
+			"node": "./lib/tools/nppes/truth-grains.ts",
+			"default": "./out/tools/nppes/truth-grains.js",
+			"types": "./out/tools/nppes/truth-grains.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -101,17 +137,17 @@
 		"@mailwoman/address-id": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"h3-js": "^4.5.0",
-		"spliterator": "^6.3.1"
+		"spliterator": "^6.4.1"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2",
-		"playwright": "^1.62.1"
+		"@types/node": "^26.4.1",
+		"path-ts": "^2.3.0",
+		"playwright": "^1.63.0"
 	}
 }

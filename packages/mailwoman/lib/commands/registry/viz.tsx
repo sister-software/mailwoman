@@ -1,0 +1,109 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman registry viz <figure>` — emit one of the record-matcher figures (HTML/SVG). The map
+ *   figures (`cross-dataset-map`, `source-provenance-map`) must be SERVED OVER LOCALHOST to render
+ *   their basemap (the house tile server CORS-restricts to localhost + the docs domains). PNG
+ *   rendering stays programmatic via `renderPlotlyHTMLToPNG` / `renderServedMapToPNG` in
+ *   `@mailwoman/registry/tools` (lazy playwright).
+ */
+
+import { Text } from "ink"
+
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
+
+const figures = ["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"] as const
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "viz",
+	description: "Render record-matcher figures.",
+	positionals: [{ name: "figure", required: true, choices: figures, description: "Figure id" }],
+	options: {
+		in: { type: "string", description: "Cross-dataset links GeoJSON" },
+		"cross-agency-only": { type: "boolean", default: false, description: "Keep only cross-agency entities" },
+		lambda: { type: "number", description: "Illustrative prior lambda" },
+		state: { type: "string", description: "State Postcode" },
+		db: { type: "string", description: "Address-point database" },
+		"nad-mod": { type: "number", description: "NAD sampling modulus" },
+		"oa-mod": { type: "number", description: "OpenAddresses sampling modulus" },
+		cap: { type: "number", description: "Per-source marker cap" },
+		"out-html": { type: "string", description: "Output HTML path" },
+		"out-svg": { type: "string", description: "Output SVG path" },
+	},
+} as const satisfies CommandSpec
+
+interface Options {
+	in?: string
+	crossAgencyOnly: boolean
+	lambda?: number
+	state?: string
+	db?: string
+	nadMod?: number
+	oaMod?: number
+	cap?: number
+	outHTML?: string
+	outSVG?: string
+}
+
+type Figure = (typeof figures)[number]
+
+async function runFigure(figure: Figure, options: Options): Promise<string> {
+	const { crossDatasetMap, geocodeFirstSurface, sourceProvenanceMap, yardstickFigure } =
+		await import("@mailwoman/registry/tools")
+
+	switch (figure) {
+		case "cross-dataset-map":
+			return (
+				await crossDatasetMap(
+					{ in: options.in, outHTML: options.outHTML, crossAgencyOnly: options.crossAgencyOnly },
+					reportToStderr
+				)
+			).outHTML
+		case "geocode-first-surface":
+			return (await geocodeFirstSurface({ lambda: options.lambda, outHTML: options.outHTML }, reportToStderr)).outHTML
+		case "source-provenance-map":
+			return (
+				await sourceProvenanceMap(
+					{
+						state: options.state,
+						db: options.db,
+						outHTML: options.outHTML,
+						nadMod: options.nadMod,
+						oaMod: options.oaMod,
+						cap: options.cap,
+					},
+					reportToStderr
+				)
+			).outHTML
+		case "yardstick-figure":
+			return (await yardstickFigure({ outSVG: options.outSVG }, reportToStderr)).outSVG
+	}
+}
+
+const RegistryViz: ParsedCommandComponent<Options, [Figure]> = ({ options, args }) => {
+	const state = useCommandTask(async () => await runFigure(args[0], options))
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	if (state.status === "done") {
+		return (
+			<Text color="green">
+				{args[0]} → {state.result}
+			</Text>
+		)
+	}
+
+	return null
+}
+
+export default RegistryViz

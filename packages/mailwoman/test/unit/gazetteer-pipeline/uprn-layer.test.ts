@@ -4,7 +4,7 @@
 /**
  *   The Open UPRN builder's contract: the line parser's input-tail behavior (truncated fields,
  *   `Number("")`-shaped traps), the versions.txt parse, and a full fixture build through
- *   `buildUPRNLayer` — DDL, gates, coverage, manifest, seal — verified by reading the sealed
+ *   `buildUPRNLayer` — DDL, checks, coverage, manifest, seal — verified by reading the sealed
  *   artifact back through the production reader.
  */
 
@@ -12,9 +12,7 @@ import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { CoverageBasis, readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { join } from "@mailwoman/platform/path"
-import { UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
-import { UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
+import { UPRNLookup, UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent } from "h3-js"
@@ -25,6 +23,7 @@ import {
 	parseOpenUPRNVersions,
 	type ExtractOpenUPRNResult,
 } from "mailwoman/gazetteer-pipeline/uprn-layer"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -115,7 +114,7 @@ function fixtureCSV(headerLine: string = OPEN_UPRN_HEADER): string {
 async function writeFixtureSource(
 	headerLine?: string
 ): Promise<{ sourceDir: string; extracted: ExtractOpenUPRNResult }> {
-	const sourceDir = fixtures.use(await temporaryDirectory("uprn-build-")).path
+	const sourceDir = fixtures.use(await temporaryDirectory("uprn-build-")).path.toString()
 	const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 	const csv = fixtureCSV(headerLine)
 
@@ -193,7 +192,7 @@ describe("buildUPRNLayer (fixture)", () => {
 
 	it("reports a malformed row and an under-floor count as mismatches, not silence", async () => {
 		await using sourceDirDirectory = await temporaryDirectory("uprn-build-")
-		const sourceDir = sourceDirDirectory.path
+		const sourceDir = sourceDirDirectory.path.toString()
 		const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 
 		await writeLocalTextFile(`${BOM}${OPEN_UPRN_HEADER}\r\n1,0.0,0.0,51.5,\r\n26,0.0,0.0,51.5,-2.6\r\n`, csvPath)

@@ -1,6 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
-import { execSync } from "@mailwoman/platform/child_process"
+import { runShellSync } from "@mailwoman/core/process"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
@@ -27,7 +27,8 @@ const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
-		return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+		// oxlint-disable-next-line mailwoman/prefer-home -- the Docusaurus config loader is synchronous, and `@mailwoman/core/git` answers a promise
+		return runShellSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
 	} catch {
 		return "unknown"
 	}
@@ -327,7 +328,7 @@ const config: Config = {
 						{ label: "Demo", to: "/demo" },
 						{ label: "Field notes", to: "/research" },
 						// /training is a published page with no other route into it since the navbar
-						// was cut back to the doors. This is the smallest fix for that, not a
+						// was trimmed back to the doors. This is the smallest fix for that, not a
 						// considered placement — revisit when the Resources door lands.
 						{ label: "Training", to: "/training" },
 					],
@@ -338,6 +339,23 @@ const config: Config = {
 						{ label: "Pricing", to: "/docs/pricing" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
+					],
+				},
+				{
+					title: "Legal",
+					items: [
+						{
+							label: "Inquiries",
+							href: "mailto:hello@sister.software?subject=Hello%20Sister...",
+						},
+						{
+							label: "Privacy Policy",
+							to: "/privacy",
+						},
+						{
+							label: "Terms of Service",
+							to: "/terms-of-service",
+						},
 					],
 				},
 			],

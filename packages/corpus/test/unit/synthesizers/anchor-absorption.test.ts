@@ -1,15 +1,17 @@
 /**
  * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The required checks: (1) every slice
- * aligns cleanly (no quarantine) so the shard is trainable, and (2) the LEADING 5-digit gets the CONTEXT-correct label
+ * aligns cleanly (no quarantine) so the slice is trainable, and (2) the LEADING 5-digit gets the CONTEXT-correct label
  * — house_number when a trailing postcode is present (CASE-H), postcode when not (CASE-P). That contrast is exactly
- * what the model must learn instead of flipping the default (the Probe A0 erosion this shard fixes).
+ * what the model must learn instead of flipping the default (the Probe A0 erosion this slice fixes).
  */
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
+import {
+	synthesizeAnchorAbsorptionRow,
+	type AnchorAbsorptionTemplate,
+} from "@mailwoman/corpus/synthesizers/anchor-absorption"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "#synthesizers/anchor-absorption"
-import { alignRow } from "#utils"
 
 // A deterministic RNG so the assertions are stable.
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
@@ -72,7 +74,7 @@ describe("synthesize anchor-absorption", () => {
 
 	it("h-no-trailing-locality: leading number + LOCALITY + state, no trailing → house_number (the A3 fix)", () => {
 		// The contrast to p-us-rural: same no-trailing state-bearing shape, but a LOCALITY is present, so the
-		// leading number is the house number — the discriminator the A2 shard lacked (98 house#->postcode).
+		// leading number is the house number — the discriminator the A2 slice lacked (98 house#->postcode).
 		const { synth, aligned } = rowFor("h-no-trailing-locality", 3)
 		expect(synth.components.locality).toBeTruthy() // a locality IS present (vs p-us-rural's none)
 		expect(synth.components.postcode).toBeUndefined() // no trailing postcode

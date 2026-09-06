@@ -29,7 +29,7 @@ Mailwoman v3.0.0 shipped with a trainable CRF: a learned transition matrix, back
 ## Where this lives in the code
 
 - **Structural mask + Viterbi (JavaScript, shipped):** `neural/viterbi.ts`
-- **Training-time loss gate:** `corpus-python/src/mailwoman_train/model.py` — CRF forward/backward only runs when `crf_loss_weight > 0`, which every config from v0.6.3 on leaves at `0.0`
+- **Training-time loss check:** `corpus-python/src/mailwoman_train/model.py` — CRF forward/backward only runs when `crf_loss_weight > 0`, which every config from v0.6.3 on leaves at `0.0`
 - **Model card flags:** `neural-weights-en-us/model-card.json` — `crf_at_training: false`, `crf_at_inference: true`
 
 For the decode step in the context of a full parse, see [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx#decoding-a-valid-sequence-and-building-the-tree).

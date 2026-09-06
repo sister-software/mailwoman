@@ -14,15 +14,14 @@
  *   without meaning to gets a message rather than a `undefined` it will misread.
  */
 
-import type { GeocodeSession } from "mailwoman/geocode-session"
-
-import type { EffectiveConfig, Engine, EngineRegistryLike } from "../engine-registry.ts"
-import type { TreeFingerprint } from "../tree-fingerprint.ts"
+import type { EffectiveConfig, Engine, EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
+import type { TreeFingerprint } from "@mailwoman/dev-mcp/tree-fingerprint"
+import type { GeocodeSession } from "mailwoman/geocode"
 
 /**
  * A fingerprint that never changes, so a test asserting on staleness controls it rather than the clock.
  */
-export const STUB_FINGERPRINT: TreeFingerprint = {
+const STUB_FINGERPRINT: TreeFingerprint = {
 	digest: "tree0",
 	gitHead: "head0",
 	dirtyFiles: [],
@@ -40,8 +39,8 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 		maxResident: 2,
 		size: 1,
 		bootFingerprint: STUB_FINGERPRINT,
-		sourceMoved: false,
-		fingerprint: () => STUB_FINGERPRINT,
+		sourceMoved: async () => false,
+		fingerprint: async () => STUB_FINGERPRINT,
 		acquire: () => {
 			throw new Error("stubEngineRegistry: this case was not given an engine to acquire")
 		},

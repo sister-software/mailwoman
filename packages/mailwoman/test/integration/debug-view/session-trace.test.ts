@@ -10,21 +10,20 @@
  *   same reasons, so the two suites run and skip together.
  */
 
-import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
-import { createGeocodeSession } from "mailwoman/geocode-session"
+import { $public } from "mailwoman/env"
+import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
-const hasWeights = (() => {
+const hasWeights = await (async () => {
 	try {
-		resolveWeights({ locale: "en-us" })
+		await resolveWeights({ locale: "en-us" })
 
 		return true
 	} catch {
@@ -47,8 +46,13 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				const withTrace = await traced.geocode(ADDRESS)
 				const without = await plain.geocode(ADDRESS)
 
-				// The answer is the answer, traced or not.
-				expect(withTrace.result).toEqual(without.result)
+				// The answer is the answer, traced or not. The one field a trace adds is the derivation projected from the
+				// records the sink received; it is absent, not empty, on the untraced path.
+				const { derivation, ...tracedResult } = withTrace.result
+
+				expect(derivation).toBeDefined()
+				expect(without.result.derivation).toBeUndefined()
+				expect(tracedResult).toEqual(without.result)
 				expect(withTrace.tree).toEqual(without.tree)
 
 				// An untraced session records no trace — absent, not an empty one.

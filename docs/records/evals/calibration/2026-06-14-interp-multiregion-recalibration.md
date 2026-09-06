@@ -1,7 +1,7 @@
 # The interpolation radius factor is regional — 1.70 is a Texas artifact
 
 _2026-06-14. The conformal interpolation-radius factor (Q̂ = 1.70, #569) was calibrated on one region
-(Texas / Travis County E-911). This re-gates it on four more states spanning the density spectrum,
+(Texas / Travis County E-911). This re-checks it on four more states spanning the density spectrum,
 using each state's situs address points (OA/NAD) as independent ground truth for the TIGER
 interpolation tier — a non-circular holdout available for all 50 states. The factor is **not**
 region-invariant: it runs 1.53× (dense NY) to 2.85× (rural MT), a ~2× spread that tracks rurality. The
@@ -20,7 +20,7 @@ the _ratio_ of true error to segment length (what Q̂ captures) may differ too.
 
 ## Method — non-circular, by construction
 
-For each state: synthesize a `{input, lat, lon}` holdout from the state's **situs** shard (OA/NAD
+For each state: synthesize a `{input, lat, lon}` holdout from the state's **situs** extract (OA/NAD
 address points — the ground-truth coordinates), then run `conformal-calibrate.ts` **interp-only** (the
 situs tier no-op'd via the #568 tableless guard) so every resolved row is a TIGER **interpolation**,
 scored against the true situs coordinate. TIGER (Census street ranges) and OA/NAD (address points) are
@@ -97,7 +97,7 @@ that it under-covers rural geocodes.
 ## Reproduce
 
 ```bash
-node scripts/eval/build-situs-holdout.mjs --shard <state-situs.db> --region <ABBR> --n 2000
+node scripts/eval/build-situs-holdout.mjs --extract <state-situs.db> --region <ABBR> --n 2000
 node scripts/eval/conformal-calibrate.ts \
   --holdout /tmp/<abbr>-situs-holdout.jsonl \
   --address-points /tmp/empty-situs.db \   # tableless → situs no-op → interp-only (#568)

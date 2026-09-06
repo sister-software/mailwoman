@@ -15,7 +15,7 @@
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
 import { POI_BOARD_FIXTURES, type POIBoardFixture } from "mailwoman/eval-harness/poi-board"
 import { JSONSpliterator } from "spliterator"
@@ -63,7 +63,7 @@ describe("every committed-query attestation resolves to the row it names", () =>
 		it(`${entry.phrase} → ${attestation.reference}`, () => {
 			const { file, record } = splitReference(attestation.reference)
 
-			expect(file).toBe("packages/mailwoman/eval-harness/fixtures/poi-board.jsonl")
+			expect(file).toBe("packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl")
 
 			const row = board.get(record)
 

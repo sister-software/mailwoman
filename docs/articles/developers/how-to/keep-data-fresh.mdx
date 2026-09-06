@@ -138,16 +138,16 @@ root naming the current version per family:
 { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
 ```
 
-`ShardProvider` reads that manifest when it is constructed:
+`RegionDatabaseProvider` reads that manifest when it is constructed:
 
 ```js
 import { AddressPointSqliteLookup, StreetInterpolator } from "@mailwoman/resolver-wof-sqlite"
-import { ShardProvider } from "mailwoman/geocode-core"
+import { RegionDatabaseProvider } from "mailwoman/geocode-core"
 
-const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, "/tmp/mw-releases-demo")
+const extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, "/tmp/mw-releases-demo")
 
-console.log("versions:", JSON.stringify(shards.versions()))
-console.log("dc address points open:", Boolean(shards.for("dc").addressPoints))
+console.log("versions:", JSON.stringify(extracts.versions()))
+console.log("dc address points open:", Boolean(extracts.for("dc").addressPoints))
 ```
 
 With no manifest, it runs in legacy mode against the unversioned filenames:
@@ -185,14 +185,14 @@ So a typo in `releases.json` degrades to the old data rather than to an error. A
 after deploy rather than assuming the pin took.
 
 The reason to run the manifest at all is `reload()`. Write the new database files alongside the old, then
-write `releases.json` — one atomic file write — then call `shards.reload()`. Any database whose resolved
+write `releases.json` — one atomic file write — then call `extracts.reload()`. Any database whose resolved
 path changed is reopened; any whose path is unchanged keeps its open handle. Retired handles close
 on the _next_ reload, which gives in-flight reads a generation of grace.
 
 ```js
 // A long-running server, on a signal or a poll.
 process.on("SIGHUP", () => {
-	console.log("switched to", JSON.stringify(shards.reload()))
+	console.log("switched to", JSON.stringify(extracts.reload()))
 })
 ```
 

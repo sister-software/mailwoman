@@ -4,23 +4,22 @@
 /**
  *   CLI integration tests for `parse --neural --resolve` (Phase 4.3).
  *
- *   Schema-level tests run unconditionally. End-to-end tests gate on a real WOF SQLite distribution
+ *   Schema-level tests run unconditionally. End-to-end tests check on a real WOF SQLite distribution
  *   being on disk (skip-if-missing via `describe.skipIf`), matching the pattern in
  *   `resolver-wof-sqlite/integration.test.ts`.
  */
 
-import { $public } from "@mailwoman/core/env"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { workspacePath } from "@mailwoman/core/paths"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
+import { $public } from "mailwoman/env"
 import { describe, expect, test } from "vitest"
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
@@ -47,23 +46,23 @@ describe("npx mailwoman parse --resolve error paths", () => {
 	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {
 		// As of the pipeline-default flip, --resolve works without --neural — the runtime pipeline
 		// handles classification + resolution end-to-end. The remaining error path is "no gazetteer
-		// available", which means BOTH backends unreachable: no WOF shard AND no candidate.db.
+		// available", which means BOTH backends unreachable: no WOF database AND no candidate.db.
 		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off — leaving it unset lets the
 		// convention path answer, and on any machine that has run `data pull candidate` the command
 		// then succeeds and this test's premise is gone.
 		await expect(
-			exec("node", [cliBin, "parse", "--resolve", "123 Main St"], {
+			runFile("node", [cliBin, "parse", "--resolve", "123 Main St"], {
 				env: childEnv({ MAILWOMAN_WOF_DB: "", MAILWOMAN_CANDIDATE_DB: "none" }),
 			})
 		).rejects.toMatchObject({
-			stdout: expect.stringMatching(/needs a WOF SQLite path/),
+			stdout: expect.stringMatching(/No WOF database configured/),
 		})
 	})
 })
 
 describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () => {
 	test("emits resolver-decorated XML for a known US locality", async () => {
-		const result = await exec(
+		const result = await runFile(
 			"node",
 			[cliBin, "parse", "--neural", "--resolve", "--format", "xml", "Springfield, Illinois"],
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
@@ -82,7 +81,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	test("respects --resolve-db explicit path override (matches env default)", async () => {
 		// Use the same input as the first test — the neural classifier needs enough context to tag
 		// component spans; bare single-token names like "Houston" alone often parse to nothing.
-		const result = await exec(
+		const result = await runFile(
 			"node",
 			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", wofPath, "--format", "xml", "Springfield, Illinois"],
 			{ env: childEnv({ NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
@@ -93,7 +92,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	}, 60_000)
 
 	test("works without --resolve (regression check — flag default is off)", async () => {
-		const result = await exec("node", [cliBin, "parse", "--neural", "--format", "xml", "Springfield, Illinois"], {
+		const result = await runFile("node", [cliBin, "parse", "--neural", "--format", "xml", "Springfield, Illinois"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
@@ -108,7 +107,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		// "Springfield, Illinois" — the region qualifier helps the model produce a resolvable tag.
 		// WOF returns multiple Springfields (OR, PA, MA, etc.). With --candidates 5 we expect at
 		// least one <alternative> element on the resolved node.
-		const result = await exec(
+		const result = await runFile(
 			"node",
 			[cliBin, "parse", "--resolve", "--candidates", "5", "--format", "xml", "Springfield, Illinois"],
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
@@ -122,7 +121,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	}, 60_000)
 
 	test("--candidates surfaces runner-up resolutions in JSON (tree shape)", async () => {
-		const result = await exec(
+		const result = await runFile(
 			"node",
 			[cliBin, "parse", "--resolve", "--candidates", "3", "--format", "json", "Springfield, Illinois"],
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
@@ -151,7 +150,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	}, 60_000)
 
 	test("without --candidates, JSON stays libpostal-flat (no tree shape leak)", async () => {
-		const result = await exec("node", [cliBin, "parse", "--resolve", "--format", "json", "Springfield"], {
+		const result = await runFile("node", [cliBin, "parse", "--resolve", "--format", "json", "Springfield"], {
 			env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})

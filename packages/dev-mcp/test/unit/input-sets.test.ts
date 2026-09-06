@@ -1,16 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { InputSetRef } from "@mailwoman/dev-mcp/input-sets"
 import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
 import { describe, expect, it } from "vitest"
 
 /**
  * The board and parity corpora are COMMITTED, so they grade everywhere. The panel and golden sets live under
- * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-gated the way `weights.test.ts` gates on
- * the dev model.
+ * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-conditional the way `weights.test.ts`
+ * checks on the dev model.
  *
  * A skipped suite is not a passing one: these assertions hold only on a machine carrying the artifacts, and CI's green
  * tick says nothing about them.
@@ -222,5 +222,34 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 		Reflect.set(unknownSource, "source", "de")
 
 		await expect(resolveInputSet(unknownSource)).rejects.toThrow(/unknown holdout source/)
+	})
+})
+
+describe("resolveInputSet — ladder", () => {
+	it("expands every truth-bearing board row into prefix rungs that carry the row's truth and locale hint", async () => {
+		const board = await resolveInputSet({ kind: "board", country: "GB" })
+		const ladder = await resolveInputSet({ kind: "ladder", country: "GB" })
+		const truthRows = board.inputs.filter((row) => typeof row.truthLat === "number")
+
+		expect(ladder.setID).toBe("ladder:GB")
+		expect(ladder.n).toBe(ladder.inputs.length)
+		expect(ladder.n).toBeGreaterThan(truthRows.length)
+
+		const first = truthRows[0]!
+		const rungs = ladder.inputs.filter((row) => row.id.startsWith(`${first.id}@`))
+
+		// The full string is a rung, so the row's ordinary grade is reproducible inside the ladder.
+		expect(rungs.at(-1)?.input).toBe(first.input)
+		expect(rungs.at(-1)?.id).toBe(`${first.id}@${first.input.length}`)
+
+		for (const rung of rungs) {
+			expect(rung.truthLat).toBe(first.truthLat)
+			expect(rung.toleranceM).toBe(first.toleranceM)
+			expect(rung.routeCountry).toBe("GB")
+			expect(rung.fuzzyCountryScope).toBe("GB")
+			expect(rung.defaultCountry).toBe("GB")
+		}
+
+		expect(ladder.hasTruth.coordinates).toBe(ladder.n)
 	})
 })

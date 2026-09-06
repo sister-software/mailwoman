@@ -264,7 +264,7 @@ No. `node.metadata.resolver_score`, correct vs wrong, within each backend on Ins
 | cand + none | n=38, 4.91–6.95, mean **6.07**    | n=2, 5.75–7.29, mean **6.52**    |
 
 In both backends the wrong answers' range sits **inside** the correct answers' range and their mean
-is **higher**. There is no threshold that gates errors without discarding correct answers, so a
+is **higher**. There is no threshold that checks errors without discarding correct answers, so a
 score-based abstention or confidence surface cannot be built on this field as it stands.
 
 The two scales are also not comparable to each other — FTS is bm25-derived (≈19–41), candidate is
@@ -286,7 +286,7 @@ Distinct places, `admin-global-priority.db` `spr` vs `candidate-global-1026.db` 
 | country        |       237 |           237 |              0 |
 | **postalcode** |     **0** | **3,661,017** | **+3,661,017** |
 
-Candidate carries 3.66M postcodes the FTS shard has none of — which is why the candidate arm of the
+Candidate carries 3.66M postcodes the FTS extract has none of — which is why the candidate arm of the
 Paris reproduction also resolves `75001` to `wof:421307175` while FTS leaves it bare — and drops
 ~873k admin places, mostly thin-tail localities and neighbourhoods. I did **not** determine whether
 those dropped rows are deprecated/superseded WOF records (a cleanup) or real coverage loss. Nothing
@@ -312,9 +312,9 @@ systematically — the one loss is a reproducible singleton with a clear owner, 
 p50 cost (1.5 → 2.4 km international) is real but small next to the p90 gain (180 → 47 km).
 
 **Two caveats on the way the flip is framed.** First, ship the backend flip _without_ also flipping
-the country filter, or the change is untestable against these numbers — they are separate levers
+the country filter, or the change is untestable against these numbers — they are separate changes
 with separate risk, and it is the filter, not the backend, that carries the +10 on bare
-international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one lever;
+international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one change;
 splitting `resolverDefaultCountry`'s `candidateActive` branch from the backend selection is a
 prerequisite for shipping either independently.
 

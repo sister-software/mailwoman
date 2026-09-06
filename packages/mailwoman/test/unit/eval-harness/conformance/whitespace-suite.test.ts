@@ -21,7 +21,6 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { join } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	auditWhitespaceSuite,
@@ -35,6 +34,7 @@ import {
 } from "mailwoman/eval-harness/conformance/whitespace"
 import { CASES_DIR, loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
+import { join } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 let fixtures: ConformanceFixture[]
@@ -174,10 +174,10 @@ describe("the committed whitespace suite", () => {
 		expect(new Set(fixtures.map((fixture) => fixture.context?.caseCountry)).size).toBeGreaterThan(1)
 	})
 
-	it("gives every tracked row a reference and a note, and every gating row no reference", () => {
+	it("gives every tracked row a reference and a note, and every enforcing row no reference", () => {
 		for (const fixture of fixtures) {
 			if ((fixture.status ?? "pass") === "pass") {
-				expect(fixture.bugRef, `${fixture.id}: a gating row must not name a defect`).toBeUndefined()
+				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeUndefined()
 
 				continue
 			}

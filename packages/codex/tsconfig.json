@@ -1,13 +1,14 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true,
 		"resolveJsonModule": true
 	},
-	"include": ["./**/*", "./us/street-suffix.json"],
+	"include": ["./lib/**/*", "./lib/us/street-suffix.json"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{

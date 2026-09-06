@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Host-level pins against a stub child — the seam `WorkerHostOptions.workerPath` exists for. The stub advertises
+ *   Host-level pins against a stub child — the injection point `WorkerHostOptions.workerPath` exists for. The stub advertises
  *   whatever tool metas its sidecar file holds, so the test can change a SCHEMA between forks without changing a name:
  *   exactly the restart the name-only `tools_changed` compare failed to announce, leaving clients on a stale schema
  *   with no signal to refresh.
@@ -21,8 +21,8 @@ const TOOLS_PATH = STUB_DIR.resolve("tools.json")
  * A minimal worker speaking the IPC protocol: ready on handshake with the sidecar's tool metas, echo on call.
  */
 await writeLocalTextFile(
-	`const { readFileSync } = process.getBuiltinModule("node:fs")
-const tools = JSON.parse(readFileSync(process.argv[2], "utf8"))
+	`const { promises: fs } = process.getBuiltinModule("node:fs")
+const tools = JSON.parse(await fs.readFile(process.argv[2], "utf8"))
 process.on("message", (message) => {
 	if (message.type === "handshake") {
 		process.send({ type: "ready", pid: process.pid, bootFingerprint: "stub", tools })

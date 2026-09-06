@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The source-conflict gate, and the baseline it is measured against.
+ *   The source-conflict check, and the baseline it is measured against.
  *
- *   The property under test is the DISTINCTION the gate exists to draw: fourteen countries are two-source
- *   today because someone traded duplication for coverage, and a fifteenth appearing is an accident. A gate
+ *   The property under test is the DISTINCTION the check exists to draw: fourteen countries are two-source
+ *   today because someone traded duplication for coverage, and a fifteenth appearing is an accident. A check
  *   that refused all multi-source countries would refuse the trade; one that accepted all of them would
  *   never catch the accident. Both failures print a clean result.
  */
@@ -35,7 +35,7 @@ const LIVE = {
 describe("the shipped recipe", () => {
 	it("has no UNRECORDED multi-source country", () => {
 		// The regression this guards: a country cloned as a WOF repo, or moved between lists, without being
-		// removed from the one that served it. `verifyAdmin` tests floors, so the duplication moves every gate
+		// removed from the one that served it. `verifyAdmin` tests floors, so the duplication moves every check
 		// number in the passing direction and the build ships.
 		const conflicts = sourceConflicts(countrySourceMap(LIVE))
 
@@ -124,8 +124,8 @@ describe("the id-band literals in country-plan.ts", () => {
 		// `censusForCountry` spells the boundaries as SQL literals because a query cannot import a constant.
 		// This is what stops that duplication from drifting: a fold that moves its base moves this test.
 		const { OVERTURE_ID_BASE } = await import("mailwoman/gazetteer-pipeline/admin/fold-overture")
-		const { GEONAMES_ID_BASE } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
-		const source = await readLocalTextFile(new URL("../../../gazetteer-pipeline/country-plan.ts", import.meta.url))
+		const { GEONAMES_ID_BASE } = await import("@mailwoman/resolver-wof-sqlite/geonames")
+		const source = await readLocalTextFile(new URL("../../../lib/gazetteer-pipeline/country-plan.ts", import.meta.url))
 
 		expect(source).toContain(
 			`const OVERTURE_BAND_START = ${OVERTURE_ID_BASE.toLocaleString("en-US").replaceAll(",", "_")}`

@@ -13,7 +13,7 @@
  *   descendant that speaks for itself (`veterinary_pharmacy`).
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	ARTIFACT_SCHEMA_VERSION,
 	type CompiledGeographicModel,

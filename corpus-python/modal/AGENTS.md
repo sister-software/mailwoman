@@ -19,13 +19,13 @@ Everything must go through **R2 → a container-side `rclone` in a `sync_*` func
 
 ## Launching a retrain (the v1.6.0-boundary-stress example)
 
-1. **Build the corpus locally** — for an overlay (base + your new shard), assemble the overlay manifest.
-2. **Re-root the manifest paths to `/data`.** The data loader (`data_loader.py`) reads each shard's
-   manifest `path` AS-IS; base shards must point at `/data/corpus/versioned/<base>/…` (where the base
+1. **Build the corpus locally** — for an overlay (base + your new slice), assemble the overlay manifest.
+2. **Re-root the manifest paths to `/data`.** The data loader (`data_loader.py`) reads each slice's
+   manifest `path` AS-IS; base slices must point at `/data/corpus/versioned/<base>/…` (where the base
    `sync` lands them), NOT the local `/mnt/playpen` build path. The overlay assembler does this
-   (`_reroot`). **Verify: `python -c "...; sum('/mnt' in s['path'] for s in shards)"` must be 0.**
-   _This bit us on v1.6.0: the manifest's 690 base shards pointed at `/mnt/playpen`, so on the volume
-   the loader would re-root them under the OVERLAY dir (which holds only the new shard) and find nothing._
+   (`_reroot`). **Verify: `python -c "...; sum('/mnt' in s['path'] for s in slices)"` must be 0.**
+   _This bit us on v1.6.0: the manifest's 690 base slices pointed at `/mnt/playpen`, so on the volume
+   the loader would re-root them under the OVERLAY dir (which holds only the new slice) and find nothing._
 3. **Push the deltas to R2.** `set -a; source .env; set +a` then
    `rclone copy corpus-python/src/ :s3:mailwoman-assets/corpus-python/src/ --exclude "**/__pycache__/**"`
    (delivers the new config) and `rclone copy <overlay-dir>/ :s3:mailwoman-assets/corpus/<ver>/<corpus>/`.
@@ -34,8 +34,8 @@ Everything must go through **R2 → a container-side `rclone` in a `sync_*` func
    unquoted vars, so `$FLAGS` arrives as one bogus flag.
 4. **Add a `sync_v0XX`** to `train_remote.py`, mirroring `sync_v050`: rclone `corpus-python/src/` (the
    config) + the overlay corpus; `shutil.rmtree` the stale `…/mailwoman_train/__pycache__`; `vol.commit()`;
-   then print a verify block (`os.path.isfile` on the config, the MANIFEST, your shard, AND a re-rooted
-   base shard). The base + tokenizer usually persist on the volume from prior runs — don't re-sync the
+   then print a verify block (`os.path.isfile` on the config, the MANIFEST, your slice, AND a re-rooted
+   base slice). The base + tokenizer usually persist on the volume from prior runs — don't re-sync the
    ~30 GB base unless it's actually missing.
 5. **Run the sync:** `modal run scripts/modal/train_remote.py::sync_v0XX`. Confirm every verify line is `True`.
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
@@ -46,11 +46,11 @@ mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps i
 8. **Sanity-check the loss in the first ~300 steps — BEFORE walking away.** `modal app logs <app-id>`;
    `train_loss` must be a normal CE scale (O(1–10)) and **decreasing**. An exploded loss (thousands /
    millions, not falling) means a loss term is `-inf`-ing gold labels. _This bit v1.6.0: the conventions
-   loss-mask (rider) forbids FR `street_prefix`, which the boundary shard's fr-prefix shape TEACHES → loss
+   loss-mask (rider) forbids FR `street_prefix`, which the boundary slice's fr-prefix shape TEACHES → loss
    ~7M. Killed at step 2000, disabled the mask, relaunched (loss 5.0→1.6)._ Don't bundle a per-locale
-   label/transition mask with a shard that teaches a label that locale's convention forbids — reconcile
+   label/transition mask with a slice that teaches a label that locale's convention forbids — reconcile
    the convention table with the actual training labels first.
-9. **Watch the gate:** the recipe's pre-registered gate is canonical — targets move up, non-regression
+9. **Watch the check:** the recipe's pre-registered check is canonical — targets move up, non-regression
    floors hold. A below-bar number is a MISS to confront (re-baseline with a stated reason, or iterate),
    never a quiet pass. Restating a bar from memory drifts it.
 
@@ -65,14 +65,14 @@ The Volume persists across runs (outputs under `/data/output*`). A failed train 
 synced corpus, so re-launch after fixing the config/recipe — no re-sync needed unless the corpus changed.
 `modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts.
 
-## After the run: the promote/no-promote gate (v1.6.0-boundary-stress example)
+## After the run: the promote/no-promote check (v1.6.0-boundary-stress example)
 
 The training function writes ONLY checkpoints + `train_log.csv` to the output dir — **no `model.onnx`,
 `model-card.json`, or `crf-transitions.json`.** You produce the evaluatable artifact yourself. Two
 simplifiers for this model: (1) the STAGE3 label set is stable, so the existing
 `neural-weights-en-us/model-card.json` (labels-identical) is reused as-is — no packaging step for the
 eval. (2) `crf_loss_weight` is `0.0`, so `export_crf_transitions()` returns `None` and the bundle ships
-no `crf-transitions.json`; production therefore decodes **argmax**, and a gate run without it is faithful.
+no `crf-transitions.json`; production therefore decodes **argmax**, and a check run without it is faithful.
 
 ```bash
 # 1. Export the final checkpoint to fp32 ONNX (writes {output-dir}/model.onnx on the volume)
@@ -90,23 +90,23 @@ modal volume get mailwoman-training /models/quantized/model-v160-step-40000-int8
 
 TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
 
-# 4a. The 4-shape TARGET gate (the headline — street_suffix/comma-less/fr-prefix/hn-after)
-node scripts/eval/boundary-stress-gate.ts \
+# 4a. The 4-shape TARGET check (the headline — street_suffix/comma-less/fr-prefix/hn-after)
+node packages/mailwoman/lib/dev-tools/boundary-stress-eval.run.ts \
   --model ./out/v160/model.onnx --tokenizer "$TOK" \
   --model-card neural-weights-en-us/model-card.json --n 300
 
-# 4b. The per-locale FLOORS gate (guardrail non-regression). score-affix.ts hardcodes the repo card +
+# 4b. The per-locale FLOORS check (guardrail non-regression). score-affix.ts hardcodes the repo card +
 #     tokenizer — both already correct for v1.6.0 (labels identical, same v0.6.0-a0 tokenizer).
-node packages/mailwoman/out/cli.js eval gate \
+node packages/mailwoman/out/cli.js eval check \
   --model ./out/v160/model.onnx --int8 ./out/v160/model.onnx \
-  --gate mailwoman/eval-harness/gates/v1.6.0-boundary-stress.json \
+  --spec mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json \
   --tokenizer "$TOK" --card neural-weights-en-us/model-card.json \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
-  --out-dir /tmp/gate-v160
-cat /tmp/gate-v160/verdict.json
+  --out-dir /tmp/check-v160
+cat /tmp/check-v160/verdict.json
 ```
 
 Both must pass to ship: 4a moves the four boundary targets up; 4b holds the guardrail floors. The floors
-spec (`mailwoman/eval-harness/gates/v1.6.0-boundary-stress.json`) carries a stated `us.street` caveat — the recipe's
+spec (`mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json`) carries a stated `us.street` caveat — the recipe's
 80.4 is the pre-#492 shipped value; recent models sit at ~76-78, so it's floored at the committed 74.0
 pending a re-anchor to v1.5.1's measured number.

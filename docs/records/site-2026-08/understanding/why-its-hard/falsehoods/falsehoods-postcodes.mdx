@@ -68,7 +68,7 @@ Douglas Perreault's condo in Florida changed ZIP codes twice in a few years: `33
 
 ## What the neural approach changes
 
-**The locale gate (Stage 2)** detects the address's country or script family before classification. A UK-formatted address routes to a UK postcode pattern expectation. A Canadian address routes to a Canadian pattern. The classifier does not need to try every global postcode regex on every input — the locale gate narrows the format space.
+**The locale check (Stage 2)** detects the address's country or script family before classification. A UK-formatted address routes to a UK postcode pattern expectation. A Canadian address routes to a Canadian pattern. The classifier does not need to try every global postcode regex on every input — the locale check narrows the format space.
 
 **The classifier (Stage 3)** learns postcode patterns from corpus co-occurrence. A 5-digit number after a US state abbreviation and before the end of the address is a ZIP code. A 5-digit number before a French locality name is also a postcode — just in a different position. The model learns the positional distribution, not the regex. This means it can handle new postcode formats that appear in training data without new regexes.
 
@@ -78,7 +78,7 @@ Douglas Perreault's condo in Florida changed ZIP codes twice in a few years: `33
 
 ## What Mailwoman still can't do
 
-- **Postcode format detection without a locale gate.** The model can learn that `SW1A 1AA` is a postcode format if the training corpus includes UK addresses, but without the locale gate detecting "this is a UK address," the model is learning a distribution over all global postcode formats simultaneously. The locale gate reduces this to a per-country problem.
+- **Postcode format detection without a locale check.** The model can learn that `SW1A 1AA` is a postcode format if the training corpus includes UK addresses, but without the locale check detecting "this is a UK address," the model is learning a distribution over all global postcode formats simultaneously. The locale check reduces this to a per-country problem.
 - **Postcode changes in production.** The resolver's WOF SQLite distribution is a snapshot. When postcodes change (USPS monthly updates, UK Royal Mail monthly updates), the snapshot drifts. The resolver can be updated independently of the parser, but the update cadence must match the postal service's change cadence — weekly or monthly — for production use.
 - **Delivery point codes.** The full 11-digit USPS delivery point barcode is not present in any open gazetteer. The 5-digit ZIP is the finest resolution the resolver can achieve from open data. For delivery-point-level resolution, a commercial address verification service is required.
 

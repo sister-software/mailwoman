@@ -59,7 +59,7 @@ them, that trap put the US p99 at 889 km.)
 ## Takeaway
 
 The fusion is a clean win in both directions: it supplies postcode-level coordinates for the locales
-whose postcodes the resolver's shards do not carry (DE/ES/IT/NL/FR), and it tightens the tail even where
+whose postcodes the resolver's extracts do not carry (DE/ES/IT/NL/FR), and it tightens the tail even where
 they do (US), because a real postcode out-resolves a mis-parsed admin centroid. It is the postcode tier
 the eval's own note promised, between the admin-centroid tier and the future street-level (TIGER) tier —
 and the position-aware confidence means it runs on the anchor's own judgment, not an eval-side crutch.
@@ -71,5 +71,5 @@ node scripts/eval/oa-resolver-eval.ts \
   --eval data/eval/external/openaddresses-de-sample.jsonl --limit 1500 --default-country DE \
   --model <onnx> --tokenizer <tok> --model-card <card> \
   --wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db \
-  --postcode-shards <us.db>,<intl.db> --postcode-anchor
+  --postcode-extracts <us.db>,<intl.db> --postcode-anchor
 ```

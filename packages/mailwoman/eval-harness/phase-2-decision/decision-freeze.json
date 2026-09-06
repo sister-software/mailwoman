@@ -1,8 +1,0 @@
-{
-	"definition": "packages/mailwoman/eval-harness/phase-2-decision/decision-definition.json",
-	"decisionID": "phase-2-decision-1967",
-	"version": "1.0.0",
-	"sha256": "cf7c9ac417bd2b9683b6f4e23a73a8cd655d8ff2c71ad62f6d40fbdb0d18663b",
-	"frozenAt": "2026-08-27",
-	"note": "Content hash of the pre-registration over canonical JSON (keys sorted at every depth, array order preserved, no insignificant whitespace). `loadPhase2Definition` refuses a definition whose hash does not match this record, so no lane, check, denominator, bar or threshold can move between the run that produced the receipt and the run a reader reproduces. Recompute by hashing `canonicalJSON(definition)` with `phase2DefinitionHash` from mailwoman/eval-harness/phase-2-decision/decision."
-}

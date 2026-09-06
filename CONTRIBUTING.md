@@ -1,7 +1,7 @@
 # Contributing to Mailwoman
 
 Thanks for wanting to help. Mailwoman is a postal-address parser — a calibrated,
-retrieval-augmented neural sequence labeler plus a Who's on First gazetteer
+retrieval-augmented neural sequence labeler plus a Who's On First gazetteer
 resolver — and there's plenty to do at every layer: the model, the resolver, the
 CLI, the docs, the data pipelines.
 
@@ -114,7 +114,7 @@ before anything else; it'll otherwise hide behind every later step.
 The trained model binaries (`model.onnx`, `tokenizer.model`) are **not committed
 to git** — they're large, and they version on a different cadence than the code.
 Most contributions (parser logic, the resolver, the CLI, docs, data pipelines)
-don't need them. The handful of tests that do are conditional and will skip cleanly
+don't need them. The handful of tests that do are conditional and will skip without error
 without them.
 
 If you do need the weights — to run the neural classifier locally or work on the
@@ -175,7 +175,7 @@ node packages/mailwoman/out/cli.js --help
   type drift that CI would otherwise bounce. It only checks staged files, so for
   a change that spans packages, run the full `yarn ci:test` before pushing.
 - **CI must be green** — the Test and Docs workflows run on every push. A red
-  Docs build usually means an MDX syntax slip; a red Test build is a real failure.
+  Docs build means an MDX syntax slip; a red Test build is a real failure.
 - Keep PRs focused. One concept per PR is much easier to review (and to revert).
 
 ## Where to read next

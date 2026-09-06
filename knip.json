@@ -1,50 +1,71 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
-	"entry": ["scripts/**/*.ts", "corpus-python/scripts/**/*.ts", "docker/server.ts", "*.config.ts", "oxlint.plugin.ts"],
+	"entry": ["corpus-python/scripts/**/*.ts", "docker/server.ts", "*.config.ts", "oxlint.plugin.ts"],
 	"ignore": [
-		"scripts/**/*.ts",
 		"corpus-python/scripts/**/*.ts",
 		"docker/server.ts",
 		"docs/**/*.mdx",
 		"docs/.agents/**",
 		"docs/build/**",
-		"packages/mailwoman/commands/**/*.tsx",
+		"packages/mailwoman/lib/commands/**/*.tsx",
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
-		"packages/*/out/**",
-		"codemods/**"
+		"packages/*/out/**"
 	],
-	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uvx"],
-	"ignoreDependencies": ["@duckdb/node-api", "ts-morph"],
+	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uv", "uvx"],
+	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web"],
 	"workspaces": {
 		"packages/*": {
-			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"]
+			"entry": [
+				"lib/index.ts",
+				"lib/cli.ts",
+				"lib/cli.tsx",
+				"lib/scripts/**/*.ts",
+				"lib/tools/**/*.ts",
+				"lib/dev-tools/**/*.ts"
+			]
 		},
 		"packages/mailwoman": {
 			"entry": [
-				"index.ts",
-				"cli.tsx",
-				"commands/**/*.tsx",
-				"dev-tools/**/*.ts",
-				"geocode-worker.ts",
-				"test-fixtures/**/*"
-			]
+				"lib/index.ts",
+				"lib/cli.tsx",
+				"lib/commands/**/*.tsx",
+				"lib/dev-tools/**/*.ts",
+				"lib/geocode/worker.ts",
+				"lib/test-fixtures/**/*"
+			],
+			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
+		},
+		"packages/api-kit": {
+			"entry": ["lib/index.ts", "test/fixtures/**/*.ts"]
 		},
 		"packages/dev-mcp": {
-			"entry": ["index.ts", "cli.ts", "worker.ts", "hooks/*.ts"]
+			"entry": ["lib/index.ts", "lib/cli.ts", "lib/worker.ts", "lib/hooks/*.ts"],
+			"ignoreDependencies": ["@vvago/vale"]
 		},
 		"packages/{fastify,libpostal,mcp,nominatim,photon}": {
-			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"],
+			"entry": [
+				"lib/index.ts",
+				"lib/cli.ts",
+				"lib/cli.tsx",
+				"lib/scripts/**/*.ts",
+				"lib/tools/**/*.ts",
+				"lib/dev-tools/**/*.ts"
+			],
 			"ignoreDependencies": ["@mailwoman/neural", "@mailwoman/neural-weights-en-us"]
 		},
 		"packages/neural-weights-*": {
 			"entry": ["index.ts", "scripts/**/*.ts"],
-			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
+			"ignoreDependencies": ["@mailwoman/neural-weights-en-us", "@mailwoman/neural-weights-cjk"]
 		},
 		"packages/registry": {
-			"entry": ["index.ts", "cli.ts", "models/**/*.ts", "tools/**/*.ts"]
+			"entry": ["lib/index.ts", "lib/cli.ts", "lib/models/**/*.ts", "lib/tools/**/*.ts"]
 		},
 		"packages/tile-worker": {
-			"entry": ["index.ts", "_worker.ts"]
+			"entry": ["lib/index.ts", "lib/_worker.ts"]
+		},
+		"packages/license-worker": {
+			"entry": ["lib/index.ts", "test/**/*.ts", "vitest.config.ts"],
+			"ignoreDependencies": ["@cloudflare/vitest-pool-workers", "cloudflare", "wrangler"]
 		},
 		"docs": {
 			"entry": [
@@ -55,6 +76,19 @@
 				"src/**/*.{js,ts,tsx}",
 				"static/**/*.{js,mjs,ts}"
 			]
+		},
+		"packages/release-kit": {
+			"entry": ["lib/index.ts", "lib/registry.ts"]
+		},
+		"packages/repo-health": {
+			"entry": ["lib/index.ts", "lib/registry.ts"],
+			"ignoreDependencies": ["@vvago/vale"]
+		},
+		"packages/ops-cli": {
+			"entry": ["lib/index.ts", "lib/cli.ts"]
+		},
+		"packages/release-mcp": {
+			"entry": ["lib/index.ts", "lib/cli.ts"]
 		}
 	}
 }

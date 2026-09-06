@@ -385,11 +385,11 @@ Reviewed with DeepSeek, grounded in existing codebase behavior and downstream co
 
 The `geojson.body` column is the only way to extract `wof:population` (used by `build-importance.ts` population fallback and `fts.ts::buildPlaceSearchFts` population aux table). After extraction into `place_population`, the table is dropped. The frozen artifact never contains raw GeoJSON text.
 
-### 3. Sharding
+### 3. Extracting
 
-**Both — per-country shards as canonical, monolith as convenience.**
+**Both — per-country extracts as canonical, monolith as convenience.**
 
-The resolver already supports multi-shard ATTACH (`sharding.ts`, `multi-shard.test.ts`). Per-country shards give clean separation, independent update cadences, and smaller downloads. The monolith is a rollup (ATTACH + INSERT SELECT + VACUUM) for consumers that don't want to manage multiple files. Build per-country in parallel, merge on demand.
+The resolver already supports multi-extract ATTACH (`extract routing.ts`, `multi-extract.test.ts`). Per-country extracts give clean separation, independent update cadences, and smaller downloads. The monolith is a rollup (ATTACH + INSERT SELECT + VACUUM) for consumers that don't want to manage multiple files. Build per-country in parallel, merge on demand.
 
 ### 4. Alt geometries
 
@@ -428,7 +428,7 @@ This is the fix for the database lock bug that blocked the current `wof/prepare`
 
 ## 9. Definition of done
 
-- Existing WOF resolver tests still pass, especially FTS, sharding, population, proximity, and slim-build tests.
+- Existing WOF resolver tests still pass, especially FTS, extract routing, population, proximity, and slim-build tests.
 - Artifact exposes the expected WOF-compatible tables for the chosen feature set.
 - `PRAGMA journal_mode` on the frozen file returns `delete`.
 - `PRAGMA integrity_check` returns `ok`.

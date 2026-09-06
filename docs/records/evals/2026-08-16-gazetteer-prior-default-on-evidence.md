@@ -17,7 +17,7 @@ fixed in separate PRs.
    read as `street` with the flag on and off alike.
 2. **The gauntlet fed every overlay the BASE classifier's FST** (#1703). A GB row ran en-GB weights
    against the en-US gazetteer — a pairing production never runs. `st margarets hope` is in
-   `fst-en-gb.bin` and absent from `fst-en-us.bin`, so the row the lever fixes was invisible.
+   `fst-en-gb.bin` and absent from `fst-en-us.bin`, so the row the change fixes was invisible.
 
 ## Evidence
 
@@ -25,10 +25,10 @@ fixed in separate PRs.
 
 | layer       | prior OFF               | prior ON                |
 | ----------- | ----------------------- | ----------------------- |
-| regression  | 352/354 gated           | **353/354** gated       |
+| regression  | 352/354 conditional     | **353/354** conditional |
 | metamorphic | PASS (3 tracked xfails) | PASS (3 tracked xfails) |
 
-Row-level diff over all failing rows (gated + tracked), 209 OFF and 208 ON:
+Row-level diff over all failing rows (conditional + tracked), 209 OFF and 208 ON:
 
 - **fixed: 1** — `gb-op2-st-margarets-hope`, `street` → `locality`
 - **broken: 0**
@@ -36,7 +36,7 @@ Row-level diff over all failing rows (gated + tracked), 209 OFF and 208 ON:
 
 ### Parity corpus, 321 fixtures
 
-Wired for this decision — until then the lever was reachable only from the gauntlet, which is #1497's
+Wired for this decision — until then the change was reachable only from the gauntlet, which is #1497's
 title verbatim ("FST decoder bias is invisible to every live eval").
 
 | metric                                  | en-US OFF → ON    | fr-FR OFF → ON    |
@@ -71,16 +71,16 @@ what is reported is parity's own metric.
 
 ## The objection this had to answer
 
-The register's `fst` row records that the pipeline ships the street-context gate with the emission
-prior **zeroed**, because ungated it measured **US-golden −48**. That number is about the
+The register's `fst` row records that the pipeline ships the street-context check with the emission
+prior **zeroed**, because unconditional it measured **US-golden −48**. That number is about the
 **street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`), not the gazetteer FST, and it is unaffected
-here: `geocode-core.ts` already calls `streetContextGateFor` — the same helper `runPipeline` calls, on
+here: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
 purpose, so the two paths cannot drift (#1669) — so both ship `fstStreetContextPositiveScale = 0`
 identically. Turning the gazetteer prior on does not re-open the morphology question.
 
 ## Bounds
 
-The lever is now visible to the gauntlet and to the parity corpus. It remains invisible to
+The change is now visible to the gauntlet and to the parity corpus. It remains invisible to
 `eval error-analysis`, the coordinate panels and the golden per-tag evals, so "no known regression" is
 bounded by those two batteries. Closing that is the remainder of #1497.
 

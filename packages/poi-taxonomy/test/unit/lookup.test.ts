@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { prettyJSON } from "@mailwoman/core/objects"
-import { resolve } from "@mailwoman/platform/path"
+import { prettyJSON } from "@mailwoman/core/json"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	getAllCategories,
 	getPOICategory,
@@ -56,7 +56,7 @@ describe("lookupPOICategory", () => {
 		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1)
 		expect(lookupPOICategory("chemist", "en-IE")[0]?.confidence).toBe(0.5)
 		expect(lookupPOICategory("chemist", "fr-FR")).toEqual([])
-		// Ungated synonyms match any locale at full confidence.
+		// unrestricted synonyms match any locale at full confidence.
 		expect(lookupPOICategory("datacenter", "fr-FR")[0]?.confidence).toBe(1)
 	})
 
@@ -144,7 +144,7 @@ describe("resolveOvertureCategories", () => {
 })
 
 describe("lookup without a locale", () => {
-	it("hides locale-gated synonyms and keeps ungated ones", () => {
+	it("hides locale-restricted synonyms and keeps unrestricted ones", () => {
 		expect(lookupPOICategory("chemist")).toEqual([])
 		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1)
 	})
@@ -197,8 +197,31 @@ describe("full Overture snapshot + curated overlay", () => {
 
 		// `credit union` is special: Overture keeps a standalone `credit_union` category (its own id-phrase), and the
 		// curated `bank` record absorbs the SEPARATE `bank_credit_union` leaf. The added synonym maps the phrase onto
-		// bank too, so it now yields both — the specific standalone category first, then the curated bank rollup.
-		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["credit_union", "bank"])
+		// bank too, so it yields both — the curated redirect first (#1933 precedence), then the standalone category.
+		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["bank", "credit_union"])
+	})
+
+	// Eight of the 55 curated synonyms spell a phrase that is also some category's id or label. Four of those redirect
+	// somewhere else, and before the tie-break none of the four could reach a caller: the identity phrase was inserted
+	// first, the sort was stable, and `matchPOISubject` reads `hits[0]`. The other four collide with their own label and
+	// are unaffected either way.
+	it("lets a curated synonym outrank a category whose id spells the same phrase (#1933)", () => {
+		expect(lookupPOICategory("drugstore", "en-US").map((m) => [m.category.id, m.phraseSource])).toEqual([
+			["pharmacy", "synonym"],
+			["drugstore", "identity"],
+		])
+
+		// The `drugstore → pharmacy` row is scoped to en-US; elsewhere the phrase means the category it names.
+		expect(lookupPOICategory("drugstore", "en-GB")[0]?.category.id).toBe("drugstore")
+		expect(lookupPOICategory("drugstore")[0]?.category.id).toBe("drugstore")
+
+		// The three ungated redirects flip everywhere.
+		expect(lookupPOICategory("motel")[0]?.category.id).toBe("hotel")
+		expect(lookupPOICategory("emergency room")[0]?.category.id).toBe("hospital")
+		expect(lookupPOICategory("credit union")[0]?.category.id).toBe("bank")
+
+		// A synonym colliding with its own category's label is one category, reported once.
+		expect(lookupPOICategory("fire hydrant").map((m) => m.category.id)).toEqual(["fire_hydrant"])
 	})
 
 	it("regenerates deterministically and matches the committed table by content", async () => {
@@ -209,7 +232,7 @@ describe("full Overture snapshot + curated overlay", () => {
 		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
 		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
 		// file is compared by PARSED content, not raw bytes: same data, formatting aside.
-		const committed = await readLocalJSONFile(resolve(import.meta.dirname, "../../data/taxonomy.json"))
+		const committed = await readLocalJSONFile(resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json"))
 
 		expect(committed).toEqual(await generateTaxonomyTable())
 	})
@@ -217,28 +240,28 @@ describe("full Overture snapshot + curated overlay", () => {
 
 describe("taxonomy integrity — malformed table", () => {
 	afterEach(() => {
-		vi.doUnmock("@mailwoman/platform/fs")
+		vi.doUnmock("@mailwoman/core/fs/readers")
 		vi.resetModules()
 	})
 
 	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
 		vi.resetModules()
 
-		vi.doMock("@mailwoman/platform/fs", async () => {
-			const actual = await vi.importActual<typeof import("@mailwoman/platform/fs")>("@mailwoman/platform/fs")
+		vi.doMock("@mailwoman/core/fs/readers", async () => {
+			const actual = await vi.importActual<typeof import("@mailwoman/core/fs/readers")>("@mailwoman/core/fs/readers")
 
-			const malformed = JSON.stringify({
+			const malformed = {
 				version: "0.0.0",
 				overtureRelease: null,
 				categories: [
 					{ id: "hospital", label: "Hospital", hierarchy: ["hospital"], basicLabel: null, source: "overture" },
 				],
 				synonyms: [{ phrase: "x", categoryID: "nope" }],
-			})
+			}
 
 			return {
 				...actual,
-				readFileSync: () => malformed,
+				readLocalJSONFile: async () => malformed,
 			}
 		})
 

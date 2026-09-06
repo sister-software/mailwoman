@@ -1,4 +1,4 @@
-import { confidenceTier } from "#shared/confidence-tiers"
+import { confidenceTierOrMid } from "#shared/confidence-tiers"
 import type { ResultNode } from "#shared/resources"
 
 import styles from "./styles.module.css"
@@ -17,15 +17,6 @@ export interface SpanHighlightProps {
 interface Segment {
 	text: string
 	node: ResultNode | null
-}
-
-/**
- * ConfidenceCell's tiers, verbatim — keep these thresholds and the swatch colours in sync.
- */
-function tier(confidence?: number): "high" | "mid" | "low" {
-	if (confidence == null) return "mid"
-
-	return confidenceTier(confidence)
 }
 
 /**
@@ -98,7 +89,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 					seg.node ? (
 						<span
 							key={i}
-							className={`${styles.seg} ${styles[tier(seg.node.confidence)]}`}
+							className={`${styles.seg} ${styles[confidenceTierOrMid(seg.node.confidence)]}`}
 							title={`${seg.node.tag}${seg.node.confidence != null ? ` · ${seg.node.confidence.toFixed(2)}` : ""}`}
 						>
 							<span className={styles.segText}>{seg.text}</span>

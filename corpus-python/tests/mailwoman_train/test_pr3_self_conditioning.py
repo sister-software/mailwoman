@@ -7,7 +7,7 @@ metric, save/load round-trip, back-compat with the conditioning OFF, and that th
 loads with the expected scope.
 
 NO loss.backward, NO optimizer step, NO GPU. Geometry + numerical-sanity only — the falsify-before-
-you-spend gate for the self-conditioned retrain.
+you-spend check for the self-conditioned retrain.
 """
 
 from __future__ import annotations
@@ -233,5 +233,5 @@ def test_pilot_config_loads_and_matches_scope():
     # The DE corpus is wired: the overlay dir + the German source weight (no longer a launch TODO).
     assert "v0.4.1-de" in cfg.data.corpus_dir
     assert (cfg.data.source_weights or {}).get("synth-german", 0) > 0
-    assert cfg.train.max_steps == 20000  # stop at the early gate
+    assert cfg.train.max_steps == 20000  # stop at the early check
     assert cfg.train.lr_schedule == "constant"

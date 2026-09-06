@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ * @file Match-key folds: the loss-y transforms a comparison applies to both sides.
+ */
+
+/**
+ * Lower-case, whitespace runs collapsed to one space, ends trimmed. The fold every string comparison applies before it
+ * compares; it keeps punctuation and diacritics, so `Saint-Étienne` and `Saint-Etienne` stay distinct.
+ */
+export function foldCaseWhitespace(input: string): string {
+	return input.toLowerCase().replaceAll(/\s+/gu, " ").trim()
+}
+
+/**
+ * Combining marks removed after NFD decomposition: `é` → `e`, `ł` unchanged (it is not a base plus a mark). Case and
+ * whitespace are untouched.
+ */
+export function stripCombiningMarks(input: string): string {
+	return input.normalize("NFD").replaceAll(/\p{M}/gu, "")
+}
+
+/**
+ * {@link foldCaseWhitespace} over the NFKC composition, with locale-aware lower-casing: fullwidth and compatibility
+ * forms fold together before comparison.
+ */
+export function foldNFKCWhitespace(input: string): string {
+	return input.normalize("NFKC").toLocaleLowerCase().replaceAll(/\s+/gu, " ").trim()
+}

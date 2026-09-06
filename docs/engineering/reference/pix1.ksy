@@ -12,7 +12,7 @@
 # Semantics Kaitai cannot express, stated here as prose:
 #
 # 1. header_json is UTF-8 JSON (`PairIndexHeader`). Required fields:
-#      country        — lowercase ISO 3166-1 alpha-2 the index was built for; readers hard-gate on it.
+#      country        — lowercase ISO 3166-1 alpha-2 the index was built for; readers hard-check on it.
 #      delta          — calibrated soft-prior bias magnitude (log-score units), consumer-interpreted.
 #      schemaVersion  — MUST be exactly 3. Readers refuse both older (rebuild the artifact) and newer.
 #      foldVersion    — which text fold child/parent were built under (1 = normalizeFSTToken: NFKC,
@@ -37,7 +37,7 @@
 #    recorded in a model card identifies the build.
 #
 # 3. Duplicate (child, parent) pairs are forbidden. Serializers must refuse them rather than
-#    last-write-win — a duplicate is a shard-build bug, not a merge decision.
+#    last-write-win — a duplicate is an extract-build bug, not a merge decision.
 #
 # 4. child and parent are stored ALREADY FOLDED (see foldVersion). A probe with unfolded text will
 #    miss; the fold is not part of this format, it is a contract with the consumer.

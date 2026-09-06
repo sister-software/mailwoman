@@ -1,17 +1,17 @@
-"""Per-register acceptability on the JP board — and proof the pre-registered gate is untouched.
+"""Per-register acceptability on the JP board — and proof the pre-registered eval is untouched.
 
-The full JP shard (#1458) writes a ``register`` column on every board row (``native`` /
+The full JP slice (#1458) writes a ``register`` column on every board row (``native`` /
 ``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in ZERO
-source rows and exist only because ``build_jp_shard`` synthesizes them, and they are a small
+source rows and exist only because ``build_jp_slice`` synthesizes them, and they are a small
 minority of the board — so a blended average is exactly the statistic that would hide them failing.
 ``score_jp_probe_board.score_board`` splits the same per-row outcomes by that column.
 
 What these tests pin, in order of how badly a regression would hurt:
 
-1. The GATE. ``fraction`` is ``acceptable / rows`` over the whole board, an unresolved pair counts
+1. The CHECK. ``fraction`` is ``acceptable / rows`` over the whole board, an unresolved pair counts
    as unacceptable, and the bar is 0.70 — the 2026-07-18 pre-registration, unchanged. The
    per-register split is diagnostic and must not be able to move it: the board in
-   ``test_gate_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000
+   ``test_check_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000
    and still reads PASS, because the blend clears 0.70.
 2. The split is a partition of those same outcomes — per-register rows/acceptable/unresolved sum
    back to the blended totals. A bucketing bug that double-counted or dropped rows would otherwise
@@ -123,11 +123,11 @@ def test_per_register_fractions_are_computed_over_that_register_only():
     assert result["fraction"] == pytest.approx(5 / 6)
 
     per = result["per_register"]
-    assert per["native"] == {"rows": 3, "acceptable": 3, "unresolved": 0, "fraction": 1.0}
-    assert per["arabic_chome"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "fraction": 1.0}
-    assert per["designator"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "fraction": 1.0}
+    assert per["native"] == {"rows": 3, "acceptable": 3, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
+    assert per["arabic_chome"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
+    assert per["designator"] == {"rows": 1, "acceptable": 1, "unresolved": 0, "gold_exact": 0, "fraction": 1.0}
     # The one that failed reads 0.0000 on its own, where the blended 0.83 would have hidden it.
-    assert per["compact_folded"] == {"rows": 1, "acceptable": 0, "unresolved": 1, "fraction": 0.0}
+    assert per["compact_folded"] == {"rows": 1, "acceptable": 0, "unresolved": 1, "gold_exact": 0, "fraction": 0.0}
 
 
 def test_per_register_totals_partition_the_blended_totals():
@@ -140,7 +140,7 @@ def test_per_register_totals_partition_the_blended_totals():
     assert sum(s["unresolved"] for s in per) == result["unresolved"]
 
 
-def test_gate_is_the_blended_number_even_when_a_register_is_wiped_out():
+def test_check_is_the_blended_number_even_when_a_register_is_wiped_out():
     """The pre-registered bar reads the blend. A dead minority register cannot flip it, by design."""
     # 5 of 6 acceptable = 0.8333 >= 0.70, with designator at 0.0000.
     correct = {r["raw"] for r in ALL_ROWS} - {"TOKYOCHIYODA3BAN16GO"}
@@ -149,16 +149,16 @@ def test_gate_is_the_blended_number_even_when_a_register_is_wiped_out():
     assert result["per_register"]["designator"]["fraction"] == 0.0
     assert result["fraction"] == pytest.approx(5 / 6)
     report = scorer.format_report(result)
-    assert "GATE >= 0.70: PASS" in report
+    assert "CHECK >= 0.70: PASS" in report
     # …and the diagnostic is labeled as one, so nobody quotes it as a bar.
-    assert "DIAGNOSTIC, not the gate" in report
+    assert "DIAGNOSTIC, not the check" in report
 
 
-def test_gate_still_fails_on_a_bad_blend():
+def test_check_still_fails_on_a_bad_blend():
     correct = {"TOKYOCHIYODA1-2-3"}
     result = _score(correct)
     assert result["fraction"] == pytest.approx(1 / 6)
-    assert "GATE >= 0.70: FAIL" in scorer.format_report(result)
+    assert "CHECK >= 0.70: FAIL" in scorer.format_report(result)
 
 
 def test_board_without_a_register_column_scores_identically_and_gets_no_breakdown():
@@ -209,3 +209,19 @@ def test_resolve_tags_select_which_spans_form_the_centroid_key():
 def test_resolve_tag_defaults_track_the_label_set():
     assert scorer.RESOLVE_TAGS["stage3"] == ("region", "locality")
     assert scorer.RESOLVE_TAGS["stage3-jp"] == ("prefecture", "municipality")
+
+
+def test_municipality_macro_weights_each_held_out_municipality_once():
+    # CHIYODA carries 4 of 6 rows, KITA 2. Wiping KITA out moves the blended number by a third and the macro by a half:
+    # the macro is what says "one of two municipalities failed", whatever the row split.
+    chiyoda = {r["raw"] for r in ALL_ROWS if "CHIYODA" in r["raw"]}
+    result = _score(chiyoda)
+
+    assert result["fraction"] == pytest.approx(4 / 6)
+    assert result["per_municipality"]["CHIYODA"] == {"rows": 4, "acceptable": 4, "gold_exact": 0, "fraction": 1.0}
+    assert result["per_municipality"]["KITA"] == {"rows": 2, "acceptable": 0, "gold_exact": 0, "fraction": 0.0}
+    assert result["municipality_macro"] == pytest.approx(0.5)
+
+    report = scorer.format_report(result)
+    assert "municipality macro" in report
+    assert "KITA" in report.split("lowest five")[1]

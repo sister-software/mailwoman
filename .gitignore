@@ -55,7 +55,6 @@ pids
 *.seed
 *.pid.lock
 
-
 # Build files
 out
 dist
@@ -65,7 +64,7 @@ storybook-static
 
 # `mailwoman clients generate` output (mailwoman/tools/generate-clients.ts) — the emitted specs +
 # the assembled/verified Python package and Rust crate. One-directional build product, never
-# committed; the gated CI job (publish.yml) regenerates it fresh on every dispatch.
+# committed; the conditional CI job (publish.yml) regenerates it fresh on every dispatch.
 /clients-build/
 
 # Yarn (without zero-installs)
@@ -78,16 +77,18 @@ storybook-static
 !.yarn/sdks
 !.yarn/versions
 
-# Coverage (vitest/istanbul report dirs). The bare rule matches any dir named `coverage` at any depth,
-# which also swallows SOURCE dirs that legitimately carry the name — the `mailwoman coverage` CLI command
-# and the cartographer `coverage` (fog-of-war) style module. Re-include those (source, not report output).
-coverage
-!/packages/mailwoman/commands/coverage/
-!/packages/mailwoman/commands/coverage/**
-!/packages/cartographer/coverage/
-!/packages/cartographer/coverage/**
-!/docs/articles/evals/coverage/
-!/docs/articles/evals/coverage/**
+# Coverage (vitest/istanbul report dirs).
+#
+# ANCHORED, NOT BARE. This was `coverage`, which matches a directory of that name at ANY depth — so it
+# swallowed every SOURCE directory that legitimately carries the word, and the repository grew a negation
+# per casualty: the `mailwoman coverage` command, cartographer's fog-of-war module, two docs trees. Each
+# was found the same way, by `git add` refusing a path whose siblings were already tracked, and the list
+# was always one rename behind — the prefix fold added two more (`mailwoman/lib/coverage/`,
+# `mailwoman/test/unit/coverage/`) and would have wanted a fifth and sixth negation.
+#
+# Vitest writes its report to `<root>/coverage` (the default `reportsDirectory`), and nothing writes a
+# per-package one, so anchoring the rule to the root covers the real output and stops claiming source.
+/coverage/
 playwright-report
 playwright-traces
 test-results
@@ -95,12 +96,14 @@ test-results
 .vitest-attachments
 __screenshots__
 
-
-# Python artifacts (packages/corpus-python)
+# Python artifacts (corpus-python)
 **/.venv/
 **/__pycache__/
 **/*.egg-info/
 **/*.pyc
+**/.mypy_cache/
+**/.ruff_cache/
+**/.pytest_cache/
 
 # Neural-weights model binaries — kept out of git per Phase 2 §"Eval reports committed
 # to git (numbers, not models)". model-card.json carries the eval numbers; .onnx and
@@ -140,7 +143,7 @@ data/eval/calibration/confidences.jsonl
 corpus-python/.pytest_cache/
 output/
 # Per-run training-output download dirs (e.g. output-v150-fr-order-s42/ — pulled from the Modal
-# volume to local during a re-gate; each holds a ~113MB model.onnx). The exact `output/` above
+# volume to local during a re-check; each holds a ~113MB model.onnx). The exact `output/` above
 # only matches the bare dir; the suffixed per-run dirs need their own glob.
 output-*/
 !.claude/output-styles/
@@ -170,15 +173,6 @@ session-notes-*.md
 
 # Diagnostic scripts — one-off investigation scripts that aren't part of the shipped
 # toolchain. Keepers cited by docs/memories stay tracked; this only hides untracked
-# new diag scripts (#379). The scripts live under scripts/diagnostic/ (and one-off
-# residual probes under scripts/eval/); the old scripts/diag-*.ts glob never matched.
-scripts/diag-*.ts
-scripts/diag-*.sh
-# Contents rather than the directory: git cannot re-include a file whose PARENT DIRECTORY is excluded, so
-# `scripts/diagnostic/` made the keeper negations below unreachable and blocked the pre-commit hook's re-add.
-scripts/diagnostic/*
-!scripts/diagnostic/calibration-reliability.ts
-scripts/eval/*-residual.ts
 
 # Coarse-placer (#244) training data + model artifacts — regenerable, not committed
 data/coarse-placer/
@@ -208,5 +202,11 @@ nightshift
 ## Subagent-driven-development scratch (ledgers, briefs, review packages) — per-plan, never committed
 .superpowers/
 
-## Codemod CLI update-check cache — machine-local, never a repository fact.
-.claude/codemod/
+
+# dev-mcp writes its worktree-arm runner here for the life of one mwdev_compare; never commit it
+.mwdev-arm-runner.ts
+
+# Wrangler's local secrets for `wrangler dev`; the committed shape is .dev.vars.example
+.dev.vars
+# Wrangler's local state (the local D1, cached builds) beside a worker
+.wrangler/

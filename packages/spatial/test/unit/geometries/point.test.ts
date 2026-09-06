@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { GeoPoint } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
-
-import { GeoPoint } from "#index"
 
 // GeoPoint stores GeoJSON [longitude, latitude(, altitude)] order. `from` recognizes several input
 // shapes and treats a 0/0 coordinate (Null Island) as a "missing coordinate" sentinel → null.

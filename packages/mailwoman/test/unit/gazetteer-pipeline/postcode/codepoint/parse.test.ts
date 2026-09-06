@@ -8,7 +8,6 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { parseCodePointMetadata } from "mailwoman/gazetteer-pipeline/postcode/codepoint/extract"
 import {
 	createCodePointParseStats,
@@ -17,6 +16,7 @@ import {
 	readCodePointCSV,
 	splitCSVLine,
 } from "mailwoman/gazetteer-pipeline/postcode/codepoint/parse"
+import { resolvePath } from "path-ts"
 import { expect, test } from "vitest"
 
 test("splitCSVLine strips the wrapping quotes Code-Point puts on every text field", () => {
@@ -32,7 +32,7 @@ test("splitCSVLine strips the wrapping quotes Code-Point puts on every text fiel
 })
 
 test("splitCSVLine treats a comma inside quotes as data", () => {
-	// The case that defeats the shared splitter. No row in the 2026-05 cut needs this; the format allows it.
+	// The case that defeats the shared splitter. No row in the 2026-05 extract needs this; the format allows it.
 	expect(splitCSVLine('"AB1 1AA",10,1,2,"X, Y","b"')).toEqual(["AB1 1AA", "10", "1", "2", "X, Y", "b"])
 })
 
@@ -48,7 +48,8 @@ test("splitCSVLine keeps empty trailing and interior fields", () => {
 
 test("readCodePointCSV keeps a quoted multiline field in one logical record and accounts for every skip", async () => {
 	await using scratch = await temporaryDirectory("mailwoman-codepoint-parse-")
-	const csvPath = join(scratch.path, "rows.csv")
+
+	const csvPath = resolvePath(scratch.path, "rows.csv")
 	// Exceeds the adaptive bulk threshold so the quoted field and its newline cross filesystem read boundaries.
 	const multilineHealthAuthority = `"health,${"x".repeat(140_000)}\r\nauthority"`
 

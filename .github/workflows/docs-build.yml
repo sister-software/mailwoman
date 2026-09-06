@@ -1,7 +1,7 @@
 # Build + deploy the Docusaurus docs site.
 #
 # On pull_request: the build job runs on EVERY PR (so it can be a required status check), but the
-# structure gate + build steps execute only when a demo-affecting path changed — otherwise the job
+# structure check + build steps execute only when a demo-affecting path changed — otherwise the job
 # reports green in seconds. Catches broken links, MDX parse errors, and — before any install —
 # frontmatter/duplicate-title/orphan regressions via docs/scripts/check-docs-structure.ts.
 # On push to main: same steps (path-filtered at the trigger), then deploy to GitHub Pages.
@@ -24,7 +24,7 @@ on:
   # reports a check on EVERY PR — a prerequisite for making it a required status check in the
   # branch ruleset. A workflow-level `paths:` filter would leave PRs that touch none of these paths
   # with no check reported at all, which a required-check rule reads as "waiting forever" and the
-  # PR can never merge. Instead the heavy steps are gated per-job below on a change-detection step;
+  # PR can never merge. Instead the heavy steps are conditional per-job below on a change-detection step;
   # an unaffected PR reports green in seconds. The `push` trigger keeps its `paths:` filter — deploy
   # should only fire when the built output can actually change.
   workflow_dispatch: {}
@@ -43,6 +43,8 @@ on:
       - "packages/core/**"
       - "packages/spatial/**"
       - "packages/codex/**"
+      # the demo shell is @mailwoman/react (GeocoderDemo, DemoMap, styles.css)
+      - "packages/react/**"
       - "*.md"
 
 permissions:
@@ -85,7 +87,7 @@ jobs:
       - name: Detect demo-affecting changes
         id: changes
         if: github.event_name == 'pull_request'
-        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           # dorny/paths-filter resolves the PR's base/head SHAs from the event payload via the
           # GitHub API, so it works correctly under actions/checkout's default shallow
@@ -104,6 +106,8 @@ jobs:
               - "packages/core/**"
               - "packages/spatial/**"
               - "packages/codex/**"
+              # the demo shell is @mailwoman/react (GeocoderDemo, DemoMap, styles.css)
+              - "packages/react/**"
               - "*.md"
 
       - name: Setup Node
@@ -115,7 +119,7 @@ jobs:
           # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
           # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
-      # Fast structural gate (docs-architecture cleanup, Phase 4): frontmatter contract +
+      # Fast structural check (docs-architecture cleanup, Phase 4): frontmatter contract +
       # required fields, exact duplicate titles, orphan pages. Static parse over node built-ins
       # only — no install, no build — so a structural regression fails in seconds instead of
       # after the full Docusaurus build.
@@ -125,7 +129,7 @@ jobs:
       # EVERY published page, rather than the legacy seven-role vocabulary that only required one
       # on a manifest of entry pages. It was held off until the old tree left docs/articles/,
       # because that corpus predated the contract and failed the check wholesale. Voice and
-      # section rules that the gate cannot see live in docs/engineering/writing-system.md.
+      # section rules that the check cannot see live in docs/engineering/writing-system.md.
       # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
       # type:module without breaking the Docusaurus SSR bundle; see docs/scripts/package.json.)
       - name: Docs structure checks
@@ -170,6 +174,10 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: docs/build
+          # The action's tar excludes every dot-entry unless told otherwise, and the site's one dot-directory is
+          # `.well-known/`, where the license key register lives. Without this the register builds, uploads nothing,
+          # and `mailwoman license verify --online` reads the live site's 404 as unreachable.
+          include-hidden-files: true
 
   deploy:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
@@ -184,4 +192,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -13,39 +13,11 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { aroundEach, describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
-/**
- * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
- */
-function stubWorker(db: DatabaseClient<CandidateDatabase>) {
-	return {
-		db: {
-			async exec(sql: string) {
-				const rows = db.prepare(sql).all() as Record<string, unknown>[]
+import { registerOpenDatabases, stubWorker, trackDatabase } from "./stub-worker.ts"
 
-				if (!rows.length) return []
-				const columns = Object.keys(rows[0]!)
-
-				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
-			},
-		},
-		bytesRead: async () => 0,
-	}
-}
-
-/**
- * Every connection this test's fixtures open. A DisposableStack disposes once and stays disposed, so each test gets a
- * fresh one rather than reusing the emptied stack.
- */
-let openDatabases: DisposableStack
-
-aroundEach(async (runTest) => {
-	using databases = new DisposableStack()
-
-	openDatabases = databases
-	await runTest()
-})
+registerOpenDatabases()
 
 function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 	const d = DatabaseClient.temp<CandidateDatabase>()
@@ -76,9 +48,7 @@ function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 		`)
 	}
 
-	openDatabases.use(d)
-
-	return d
+	return trackDatabase(d)
 }
 
 describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {
@@ -117,7 +87,7 @@ describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", 
 	// loaded, the capitalized global never existed, and the demo street tier silently fell back to
 	// the admin cascade for three days. These pins make the next sweep fail loudly instead.
 	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
-		const { createRequire } = await import("@mailwoman/platform/module")
+		const { createRequire } = await import("@mailwoman/core/module/resolvers")
 		const require = createRequire(import.meta.url)
 		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
 

@@ -25,7 +25,7 @@ ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE2_TAGS  # 10 tags
 ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS  # 16 tags
 ```
 
-The label IDs are stable: STAGE3 appends to STAGE2 without reordering. Old parquet shards work unchanged — they just don't emit the new tags. Models trained on STAGE2 IDs would still decode correctly against a STAGE3 classifier head; the new logit slots just never get picked.
+The label IDs are stable: STAGE3 appends to STAGE2 without reordering. Old parquet extracts work unchanged — they just don't emit the new tags. Models trained on STAGE2 IDs would still decode correctly against a STAGE3 classifier head; the new logit slots just never get picked.
 
 ## Where the data comes from
 
@@ -67,10 +67,10 @@ The good news: PO boxes are highly templated. USPS Pub 28 §28C2.040 and DMM 508
 WOF SQLite (1.29M places, 7 countries)
   ↓  scripts/extract-tuples.py
 50K (locality, region, postcode, country) tuples
-  ↓  scripts/build-po-box-shard.mjs
+  ↓  scripts/build-po-box-extract.mjs
 50K LabeledRow JSONL with B-po_box/I-po_box spans
   ↓  scripts/jsonl-to-parquet.py
-3 MB Parquet shard → Modal volume
+3 MB Parquet extract → Modal volume
   ↓
 v0.6.0 training (source_weight: 1.5)
 ```

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { isNZPostcode, normalizeNZPostcode, NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz/postcode"
+import { isNZPostcode, normalizeNZPostcode, NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
 import { expect, test } from "vitest"
 
 test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {

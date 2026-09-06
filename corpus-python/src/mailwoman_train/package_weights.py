@@ -22,6 +22,7 @@ import json
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import torch
 
@@ -58,13 +59,13 @@ def build_model_card(
     corpus_version: str,
     tokenizer_version: str,
     training_steps: int,
-    eval_report: dict,
+    eval_report: dict[str, Any],
     notes: str,
     training_hardware: str,
     training_duration_seconds: float,
     base_path: Path,
     package_version: str = "0.1.0",
-) -> dict:
+) -> dict[str, Any]:
     """Construct the ModelCard payload. Fields per Phase 2 §10."""
     return {
         "name": f"neural-weights-{locale}",
@@ -111,7 +112,7 @@ def build_model_card(
     }
 
 
-def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0.0) -> dict | None:
+def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0.0) -> dict[str, Any] | None:
     """Extract learned CRF transition parameters from a trained model.
 
     Returns None if the model has no CRF module (CE-only training) or if
@@ -134,7 +135,7 @@ def export_crf_transitions(model: torch.nn.Module, *, crf_loss_weight: float = 0
     }
 
 
-def export_semi_crf_transitions(model: torch.nn.Module) -> dict | None:
+def export_semi_crf_transitions(model: torch.nn.Module) -> dict[str, Any] | None:
     """#727 stage-2: the segment-transition table, as a JSON sidecar for the Phase-3 JS decoder.
 
     Transitions are DECODE-TIME data, not graph — same contract as ``export_crf_transitions`` above.
@@ -161,10 +162,10 @@ def write_package(
     *,
     int8_model_path: Path,
     tokenizer_model_path: Path,
-    model_card: dict,
-    package_json: dict,
+    model_card: dict[str, Any],
+    package_json: dict[str, Any],
     readme_md: str,
-    crf_transitions: dict | None = None,
+    crf_transitions: dict[str, Any] | None = None,
 ) -> Path:
     """Write a single weights package directory. Idempotent: overwrites contents."""
     package_dir.mkdir(parents=True, exist_ok=True)
@@ -180,7 +181,7 @@ def write_package(
     return package_dir
 
 
-def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict:
+def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict[str, Any]:
     return {
         "name": f"@mailwoman/neural-weights-{locale}",
         "version": package_version,
@@ -211,7 +212,7 @@ _F1_TARGETS: dict[str, float] = {
 }
 
 
-def _target_status_line(eval_report: dict) -> str:
+def _target_status_line(eval_report: dict[str, Any]) -> str:
     """Honest one-liner about how this build measures up to the per-tag F1 floors."""
     per = eval_report.get("per_component", {}) or {}
     active_tags = set(ACTIVE_TAGS)
@@ -269,7 +270,7 @@ def render_readme(
     *,
     locale: str,
     corpus_version: str,
-    eval_report: dict,
+    eval_report: dict[str, Any],
     training_steps: int,
     training_hardware: str,
     smoke: bool,

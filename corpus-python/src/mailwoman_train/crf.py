@@ -115,6 +115,10 @@ class LinearChainCRF(nn.Module):
     isn't a learnable parameter — invalid transitions are pinned at ``-inf`` for all time.
     """
 
+    # register_buffer names typed (torch's setattr typing yields Tensor | Module otherwise).
+    transition_mask: torch.Tensor
+    start_mask: torch.Tensor
+
     def __init__(self, num_tags: int, id_to_label: dict[int, str]) -> None:
         super().__init__()
         if num_tags != len(id_to_label):
@@ -432,14 +436,14 @@ def _row_top_k(
         for t in range(length - 1, 0, -1):
             bt = backptr_tag[t - 1]
             br = backptr_rank[t - 1]
-            prev_tag = int(bt[cur_tag, cur_rank].item())
-            prev_rank = int(br[cur_tag, cur_rank].item())
-            if prev_tag < 0:
+            bt_tag = int(bt[cur_tag, cur_rank].item())
+            bt_rank = int(br[cur_tag, cur_rank].item())
+            if bt_tag < 0:
                 # Hit an unfilled slot — path is shorter than ``length``; skip.
                 seq = []
                 break
-            seq.append(prev_tag)
-            cur_tag, cur_rank = prev_tag, prev_rank
+            seq.append(bt_tag)
+            cur_tag, cur_rank = bt_tag, bt_rank
         if not seq:
             continue
         seq.reverse()

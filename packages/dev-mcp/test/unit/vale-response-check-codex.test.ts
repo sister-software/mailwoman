@@ -1,15 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
-const HOOK_PATH = fileURLToPath(new URL("../../hooks/vale-response-check-codex.ts", import.meta.url))
+const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "vale-response-check-codex.ts")
 
 function runHook(lastAssistantMessage: string): string {
-	const result = spawnSync(process.execPath, [HOOK_PATH], {
+	const result = spawnProcessSync(process.execPath, [HOOK_PATH], {
 		input: JSON.stringify({ last_assistant_message: lastAssistantMessage }),
 		encoding: "utf8",
 	})

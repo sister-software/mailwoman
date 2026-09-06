@@ -115,7 +115,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
    from silently-wrong to honestly-empty before any new data ships. (The transport shipped as the
    #1585 fuzzy-tier country restriction; today it abstains by candidate absence, without a named
    reason.)
-2. **The NZ locality shard lands honest**: ~7.6k rows (LINZ for the permissive tier; the OSM copy
+2. **The NZ locality extract lands honest**: ~7.6k rows (LINZ for the permissive tier; the OSM copy
    stays build-local under the ODbL posture), with `surveyed_complete` asserted from the
    authority's own coverage statement — the first layer whose register is honest from birth.
 3. **Falsifier 1 becomes re-runnable with teeth**: negative evidence scoped to
@@ -124,7 +124,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
 4. **Falsifier 3 becomes gradable**: fit the CPT prior only in `surveyed_complete` POI cells; the
    residual then measures the theory, not the coverage. (The poi.db register rebuild — board #26 —
    is the prerequisite and is a REBUILD of the sealed artifact per the standing rule.)
-5. **Benchmark receipts sharpen**: every discrepancy row can terminate in "coverage lever" with a
+5. **Benchmark receipts sharpen**: every discrepancy row can terminate in "coverage change" with a
    cell-level citation instead of an inference.
 
 ## Explicitly out of scope for phase 1
@@ -146,7 +146,7 @@ BEFORE the full register is built; receipts in `scratchpad/falsifiers/f4-scope-c
    different stored states, not one shared absence.
 3. Keep exact foreign matches available under a locale hint — scope coverage is consulted by the
    fuzzy/derived tiers only; the exact tier never reads it (the #1585 board's Paris row is the
-   standing gated witness).
+   standing conditional witness).
 4. Prevent hard negative evidence from a partial namespace — only `surveyed_complete` powers a
    negative; `surveyed_partial` must be refused at the contract level.
 5. Reconcile sampled `surveyed_complete` claims against a second source — the disagreement rate is

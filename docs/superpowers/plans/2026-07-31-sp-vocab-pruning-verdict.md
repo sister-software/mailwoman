@@ -6,7 +6,7 @@ step 1, before any bar ran.
 
 ## The measurement
 
-Full v0.15.0-venue feed — **all 699 train shards, 684,103,970 rows, no sampling** — encoded with
+Full v0.15.0-venue feed — **all 699 train extracts, 684,103,970 rows, no sampling** — encoded with
 the shipped v0.9.0-multisplice tokenizer, counted at the unit the model reads (`encode()` ids;
 instrument: `corpus-python/scripts/measure_vocab_utilization.py`, ~12 min on 13 workers after the
 bincount fix). Eval surface separately: 69,452 distinct texts → 13,348 fired ids.
@@ -29,7 +29,7 @@ fired-1–99 "weak" pieces) would add 5.5 MB — and that band is practiced, so 
 
 ## Verdict
 
-The lever as surveyed — "embedding is ~72.5% of params at ≤24% utilization" implying a
+The change as surveyed — "embedding is ~72.5% of params at ≤24% utilization" implying a
 half-size-class prune — **does not exist**. 3.7 MB at the cost of a permanent id-remap coupling
 between tokenizer.model and model.onnx (a new invariant surface every future fine-tune, splice,
 and the browser loader must respect) is a bad trade. Not built, not shipped.

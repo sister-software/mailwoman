@@ -4,7 +4,7 @@
 /**
  *   The constraint census, tested against a FAKE engine and a FAKE candidate table.
  *
- *   What is under test is the accounting — reachability kept apart from coverage, a gate called inert only when it
+ *   What is under test is the accounting — reachability kept apart from coverage, an eval called inert only when it
  *   never accompanied a pick — not whether the resolver is right about any particular place. A test that loaded the
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
@@ -18,7 +18,7 @@ interface FakeLookup {
 	tag: string
 	value: string
 	placetype: string
-	gates: string[]
+	checks: string[]
 	picked: boolean
 	candidates?: number
 }
@@ -64,7 +64,7 @@ function fakeRegistry(byInput: Record<string, FakeLookup[]>): EngineRegistryLike
 								value: l.value,
 								placetype: l.placetype,
 								query: { limit: 5 },
-								gates: l.gates,
+								checks: l.checks,
 								candidates: Array.from({ length: l.candidates ?? 0 }, () => ({})),
 								candidatesTruncated: 0,
 								picked: l.picked ? { id: 1, name: l.value, source: "ranked" } : null,
@@ -83,8 +83,8 @@ describe("constraint census", () => {
 		const { runConstraintCensus } = await import("@mailwoman/dev-mcp/constraint-census")
 
 		const registry = fakeRegistry({
-			a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", gates: [], picked: false }],
-			b: [{ tag: "locality", value: "Nowhereville", placetype: "locality", gates: [], picked: false }],
+			a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", checks: [], picked: false }],
+			b: [{ tag: "locality", value: "Nowhereville", placetype: "locality", checks: [], picked: false }],
 		})
 
 		const r = await runConstraintCensus(registry, { inputs: LITERAL(["a", "b"]) }, dependencies)
@@ -97,37 +97,39 @@ describe("constraint census", () => {
 		expect(r.summary).toContain("never summed")
 	})
 
-	it("calls a gate INERT only when it fired enough AND never accompanied a pick", async () => {
+	it("calls a check INERT only when it fired enough AND never accompanied a pick", async () => {
 		const { runConstraintCensus } = await import("@mailwoman/dev-mcp/constraint-census")
 		const dead = Array.from({ length: 25 }, (_, i) => `dead${i}`)
 		const byInput: Record<string, FakeLookup[]> = {}
 
 		for (const k of dead) {
-			byInput[k] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["some_retry"], picked: false }]
+			byInput[k] = [{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["some_retry"], picked: false }]
 		}
 
-		// A second gate fires just as often but DOES pick sometimes — it must not be called inert.
-		byInput["alive"] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["live_gate"], picked: true }]
+		// A second check fires just as often but DOES pick sometimes — it must not be called inert.
+		byInput["alive"] = [
+			{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["live_check"], picked: true },
+		]
 
 		const r = await runConstraintCensus(fakeRegistry(byInput), { inputs: LITERAL([...dead, "alive"]) }, dependencies)
 
-		expect(r.inert_gates.join()).toContain("some_retry")
-		expect(r.inert_gates.join()).not.toContain("live_gate")
+		expect(r.inert_checks.join()).toContain("some_retry")
+		expect(r.inert_checks.join()).not.toContain("live_check")
 	})
 
-	it("does not call a rarely-fired gate inert, because that claim needs firings", async () => {
+	it("does not call a rarely-fired check inert, because that claim needs firings", async () => {
 		const { runConstraintCensus } = await import("@mailwoman/dev-mcp/constraint-census")
 
 		const r = await runConstraintCensus(
 			fakeRegistry({
-				a: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["rare_gate"], picked: false }],
+				a: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["rare_check"], picked: false }],
 			}),
 			{ inputs: LITERAL(["a"]) },
 			dependencies
 		)
 
-		expect(r.inert_gates).toEqual([])
-		expect(r.summary).toContain("No gate reached the inert threshold")
+		expect(r.inert_checks).toEqual([])
+		expect(r.summary).toContain("No check reached the inert threshold")
 	})
 
 	it("separates a null pick WITH candidates (rejected downstream) from an empty probe", async () => {
@@ -135,8 +137,8 @@ describe("constraint census", () => {
 
 		const r = await runConstraintCensus(
 			fakeRegistry({
-				a: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: [], picked: false, candidates: 4 }],
-				b: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: [], picked: false }],
+				a: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: [], picked: false, candidates: 4 }],
+				b: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: [], picked: false }],
 			}),
 			{ inputs: LITERAL(["a", "b"]) },
 			dependencies
@@ -151,7 +153,7 @@ describe("constraint census", () => {
 
 		const r = await runConstraintCensus(
 			fakeRegistry({
-				a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", gates: [], picked: true }],
+				a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", checks: [], picked: true }],
 			}),
 			{ inputs: LITERAL(["a"]) },
 			dependencies

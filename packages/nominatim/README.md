@@ -74,7 +74,10 @@ Nominatim-compatible field — the newest build date across the databases this p
 				"manifest": "present",
 				"version": "candidate@2026-08-25",
 				"built": "2026-08-25T17:21:58.254Z",
-				"sources": ["admin-global-priority@2026-08-25", "admin=… postcode-shards=23 locality-shards=2 importance=yes"],
+				"sources": [
+					"admin-global-priority@2026-08-25",
+					"admin=… postcode-extracts=23 locality-extracts=2 importance=yes",
+				],
 			},
 		],
 	},

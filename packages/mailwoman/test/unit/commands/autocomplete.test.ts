@@ -9,14 +9,10 @@
  *   symmetry contract from issue #190.
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalBuffer, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
-import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
-import { FSTMatcher, normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
-import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst-types"
+import { autocomplete, FSTMatcher, normalizeTokens, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst"
 import { resolveFSTPath, runAutocomplete } from "mailwoman/autocomplete-core"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
@@ -115,7 +111,7 @@ beforeAll(async () => {
 	// Write the serialized fixture to a temp file so runAutocomplete (which reads from disk) can be
 	// tested end-to-end.
 	const buf = serializeFST(fixtureMatcher)
-	fixtureBinPath = join(tmpdir(), `mailwoman-fst-fixture-${Date.now()}.bin`)
+	fixtureBinPath = tempRootPath(`mailwoman-fst-fixture-${Date.now()}.bin`)
 	await writeLocalFile(buf, fixtureBinPath)
 })
 
@@ -219,7 +215,7 @@ describe("runAutocomplete — disk round-trip", () => {
 	})
 
 	it("throws a human-readable error for a malformed FST buffer", async () => {
-		const badPath = join(tmpdir(), `mailwoman-fst-bad-${Date.now()}.bin`)
+		const badPath = tempRootPath(`mailwoman-fst-bad-${Date.now()}.bin`)
 		await writeLocalBuffer(Buffer.from("not-an-fst-binary"), badPath)
 		await expect(runAutocomplete("New", { fstPath: badPath })).rejects.toThrow(/Malformed FST binary/)
 	})
@@ -251,7 +247,7 @@ describe("resolveFSTPath", () => {
 		try {
 			// Lowercase on both halves — the name `gazetteer-pipeline/fst.ts` actually writes. This assertion
 			// previously restated the resolver's own spelling, so it agreed with the code and with no artifact.
-			expect(resolveFSTPath()).toBe(dataRootPath("wof", "fst-per-locale", "fst-en-us.bin"))
+			expect(String(resolveFSTPath())).toBe(String(dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")))
 		} finally {
 			vi.unstubAllEnvs()
 		}

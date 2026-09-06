@@ -5,7 +5,7 @@
  *   Tests for {@link stampNameRoles} — pass 3c of the candidate build, whose two detectors decide
  *   which alias rows carry a `name_role`.
  *
- *   Each case is one of the gates the detectors are made of, because the failure mode is a gate
+ *   Each case is one of the checks the detectors are made of, because the failure mode is a check
  *   quietly widening: `gloss` is an ANOMALY signal that must never reach a place with measured
  *   prominence or an admin placetype (a country legitimately carries a name in every language), and
  *   `abbr` is a PROVENANCE signal that must never reach a variant recorded in a language the country
@@ -17,14 +17,13 @@ import {
 	type CandidateDatabase,
 	createCandidateStagingTables,
 } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "@mailwoman/resolver-wof-sqlite/candidate/name-roles"
+import type { PlaceAttrs } from "@mailwoman/resolver-wof-sqlite/candidate/place-attrs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { allRows } from "@mailwoman/resolver-wof-sqlite/sqlite-utils"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
-
-import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "#candidate/name-roles"
-import type { PlaceAttrs } from "#candidate/place-attrs"
-import { allRows } from "#sqlite-utils"
 
 const CCODES = new Map([
 	["FR", 0],
@@ -38,7 +37,7 @@ const PTCODES = new Map([
 ])
 
 /**
- * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production cut is a property of the real key
+ * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production threshold is a property of the real key
  * distribution, so a test that reused it would need 50 aliases per place to say anything.
  */
 const THRESHOLD = 3
@@ -172,7 +171,7 @@ describe("stampNameRoles: the gloss anomaly detector", () => {
 		expect(rows.filter((r) => r.name_role === "gloss").every((r) => r.is_primary === 0)).toBe(true)
 	})
 
-	test("refuses a place below the key-count cut", async () => {
+	test("refuses a place below the key-count threshold", async () => {
 		const { roleGloss, keyTailPlaces } = await stamp(
 			[{ sid: 1, name: "Poisson", country: "FR", placetype: "locality", aliases: ["Fish"] }],
 			[]
@@ -310,7 +309,7 @@ describe("stampNameRoles: the key-tail census", () => {
 			[]
 		)
 
-		// Toledo is below the cut, so it is not in the denominator; New York is, and carries no role.
+		// Toledo is below the threshold, so it is not in the denominator; New York is, and carries no role.
 		expect(keyTailPlaces).toBe(2)
 		expect(keyTailWithRole).toBe(1)
 	})

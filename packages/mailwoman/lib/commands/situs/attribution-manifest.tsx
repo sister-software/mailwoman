@@ -1,0 +1,155 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   `mailwoman situs attribution-manifest` — regenerate a COMPLETE situs attribution manifest from
+ *   the address-point databases on disk. The national build driver (`mailwoman situs build`) only
+ *   records the states it built in a given run, so after incremental / resumed builds its
+ *   `ATTRIBUTION.json` undercounts. This reads every `address-points-us-*.db` in the directory and
+ *   aggregates the per-row `source` (`overture:<dataset>`) provenance into a full ledger — the
+ *   document we owe consumers for the OpenAddresses attribution obligation (NAD is US public
+ *   domain; the named OA sources want credit).
+ *
+ *   This regenerates a small JSON manifest from read-only databases (it builds no large DB), so — as in
+ *   the original script — `ATTRIBUTION.json` is written directly in place. Per-database progress
+ *   streams to stderr; the summary lands on stdout.
+ */
+
+import { readDirectory } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allRows } from "@mailwoman/core/utils"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { Box, Text } from "ink"
+import { join } from "path-ts"
+
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "attribution-manifest",
+	description: "Regenerate the address-point attribution manifest",
+	options: {
+		"out-dir": {
+			type: "string",
+			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/address-points",
+		},
+		release: { type: "string", default: "2026-05-20.0", description: "Overture release tag stamped into the manifest" },
+	},
+} as const satisfies CommandSpec
+
+interface Options {
+	outDir?: string
+	release: string
+}
+
+interface StateLedger {
+	ok: boolean
+	error?: string
+	points?: number
+	datasets?: Record<string, number>
+}
+
+const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) => {
+	const state = useCommandTask(async () => {
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
+		const outDir = options.outDir ?? dataRootPath("address-points")
+
+		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
+		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state database and the CLI never
+		// selects.
+		const databaseFiles = (await readDirectory(outDir))
+			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))
+			.toSorted()
+
+		const manifest: {
+			release: string
+			regeneratedFromDatabases: number
+			totalPoints: number
+			datasetTotals: Record<string, number>
+			states: Record<string, StateLedger>
+		} = {
+			release: options.release,
+			regeneratedFromDatabases: databaseFiles.length,
+			totalPoints: 0,
+			datasetTotals: {},
+			states: {},
+		}
+
+		for (const file of databaseFiles) {
+			const slug = file.replace(/^address-points-us-/, "").replace(/\.db$/, "")
+			let db: DatabaseClient<AddressPointDatabase>
+
+			try {
+				db = new DatabaseClient<AddressPointDatabase>(join(outDir, file), { readOnly: true })
+			} catch {
+				manifest.states[slug] = { ok: false, error: "unreadable" }
+
+				continue
+			}
+
+			try {
+				const rows = allRows<{ source: string; n: number }>(
+					db.prepare("SELECT source, count(*) AS n FROM address_point GROUP BY source")
+				)
+
+				const datasets: Record<string, number> = {}
+				let points = 0
+
+				for (const { source, n } of rows) {
+					const ds = String(source).replace(/^overture:/, "")
+					datasets[ds] = Number(n)
+					manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + Number(n)
+					points += Number(n)
+				}
+
+				manifest.states[slug] = { ok: true, points, datasets }
+				manifest.totalPoints += points
+
+				console.error(`${slug.padEnd(8)} ${points.toLocaleString().padStart(12)} points · ${rows.length} sources`)
+			} finally {
+				await db.destroy()
+			}
+		}
+
+		// Sort datasetTotals descending for readability.
+		manifest.datasetTotals = Object.fromEntries(Object.entries(manifest.datasetTotals).toSorted((a, b) => b[1] - a[1]))
+
+		const attributionPath = join(outDir, "ATTRIBUTION.json")
+		await writeLocalJSONFile(manifest, attributionPath)
+
+		const lines = [
+			`attribution: ${attributionPath}`,
+			`${databaseFiles.length} databases · ${manifest.totalPoints.toLocaleString()} total points`,
+			`top sources:`,
+		]
+
+		for (const [ds, n] of Object.entries(manifest.datasetTotals).slice(0, 6)) {
+			lines.push(`  ${ds.padEnd(40)} ${n.toLocaleString()}`)
+		}
+
+		return lines
+	})
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
+
+	if (state.status === "done") {
+		return (
+			<Box flexDirection="column">
+				{state.result.map((line, i) => (
+					<Text key={i} color={i === 0 ? "green" : undefined}>
+						{i === 0 ? "✓ " : "  "}
+						{line}
+					</Text>
+				))}
+			</Box>
+		)
+	}
+
+	return null // progress streams to stderr until the summary lands
+}
+
+export default SitusAttributionManifest

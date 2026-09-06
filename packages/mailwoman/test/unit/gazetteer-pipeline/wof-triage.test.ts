@@ -178,7 +178,11 @@ describe("triageWOFCurrency", () => {
 
 		buildFixtureAdmin(adminDB)
 
-		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch.path })
+		const { rows, summary } = await triageWOFCurrency({
+			adminDB,
+			countries: ["GB"],
+			geonamesDir: scratch.path.toString(),
+		})
 
 		expect(rows.every((r) => r.attestation.state === "unmeasured")).toBe(true)
 		// And the summary refuses to publish an attested count it could not measure.
@@ -193,13 +197,18 @@ describe("triageWOFCurrency", () => {
 		await writeLocalTextFile(
 			[
 				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
-				// An S-class row for Gillingham must not attest — feature class is the gate.
+				// An S-class row for Gillingham must not attest — feature class is the check.
 				geonamesLine(2, "Gillingham", 51.376, 0.577, "S", 90_000),
 			].join("\n") + "\n",
 			scratch.resolve("GB.txt")
 		)
 
-		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch.path })
+		const { rows, summary } = await triageWOFCurrency({
+			adminDB,
+			countries: ["GB"],
+			geonamesDir: scratch.path.toString(),
+		})
+
 		const byName = new Map(rows.map((r) => [r.name, r]))
 
 		expect(byName.get("Rochester")?.attestation).toMatchObject({ state: "attested", population: 28_671 })
