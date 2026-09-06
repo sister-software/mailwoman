@@ -29,8 +29,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv` regardless of what the
 // test puts on `process.env`. Mocking the module is the only way to make the missing-key test test
 // anything. (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
-vi.mock("@mailwoman/core/env", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/core/env")>()
+vi.mock("#env", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("#env")>()
 
 	return { ...actual, $private: { ...actual.$private, GOOGLE_MAPS_API_KEY: undefined } }
 })

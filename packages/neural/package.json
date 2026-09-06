@@ -75,6 +75,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./env": {
+			"node": "./lib/env.ts",
+			"default": "./out/env.js",
+			"types": "./out/env.d.ts"
+		},
 		"./anchor-inference": {
 			"node": "./lib/anchor-inference.ts",
 			"default": "./out/anchor-inference.js",
@@ -242,7 +247,8 @@
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"path-ts": "^2.3.0",
-		"spliterator": "^6.4.1"
+		"spliterator": "^6.4.1",
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"esbuild": "0.28.2",

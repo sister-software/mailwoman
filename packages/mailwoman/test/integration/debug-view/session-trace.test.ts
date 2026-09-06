@@ -12,11 +12,12 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

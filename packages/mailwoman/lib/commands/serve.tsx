@@ -204,7 +204,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 		void (async () => {
 			const { createMailwomanAPI } = await import("@mailwoman/api")
 			const { serveNode } = await import("@mailwoman/api-kit")
-			const { $public } = await import("@mailwoman/core/env")
+			const { $public } = await import("#env")
 			const { createServeEngine } = await import("#api-engine")
 
 			const { engine, preflight } = await createServeEngine()

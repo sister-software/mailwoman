@@ -4,16 +4,20 @@
  * @author Teffen Ellis, et al.
  */
 
-import { $private as corePrivate, $public as corePublic, liveEnv } from "@mailwoman/core/env"
+import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
+import { $public as resolverPublic } from "@mailwoman/resolver-wof-sqlite/env"
 
-import { PrivateEvaluationEnvSchema, PublicEvaluationEnvSchema } from "./schema.ts"
+import { PrivateMailwomanEnvSchema, PublicMailwomanEnvSchema } from "./schema.ts"
 
-/**
- * Live core and evaluation settings, sharing core's getters and cached values.
- */
-export const $public = liveEnv(PublicEvaluationEnvSchema, corePublic)
+export { PrivateMailwomanEnvSchema, PublicMailwomanEnvSchema } from "./schema.ts"
 
 /**
- * Live core and evaluation secrets, sharing core's getters and cached values. Never log their values.
+ * Live settings for the CLI and runtime pipeline over the resolver's and core's, sharing their getters and cached
+ * values.
  */
-export const $private = liveEnv(PrivateEvaluationEnvSchema, corePrivate)
+export const $public = liveEnv(PublicMailwomanEnvSchema, resolverPublic)
+
+/**
+ * Live secrets for the CLI's publishing and evaluation commands over core's. Never log their values.
+ */
+export const $private = liveEnv(PrivateMailwomanEnvSchema, corePrivate)

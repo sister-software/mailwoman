@@ -23,7 +23,6 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { $private } from "@mailwoman/core/env"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { trackedFiles } from "@mailwoman/core/git"
@@ -31,6 +30,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { md5Hex } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
+import { $private } from "#env/index"
 import { literalFilesEntries } from "#pack/verify-tarball"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "#weights/weights-recipe"
 

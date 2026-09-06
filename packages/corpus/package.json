@@ -72,6 +72,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./env": {
+			"node": "./lib/env.ts",
+			"default": "./out/env.js",
+			"types": "./out/env.d.ts"
+		},
 		"./types": {
 			"node": "./lib/types.ts",
 			"default": "./out/types.js",
@@ -223,7 +228,8 @@
 		"parquet-wasm": "0.7.2",
 		"path-ts": "^2.3.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^6.4.1"
+		"spliterator": "^6.4.1",
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",

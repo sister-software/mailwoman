@@ -40,6 +40,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./env": {
+			"node": "./lib/env.ts",
+			"default": "./out/env.js",
+			"types": "./out/env.d.ts"
+		},
 		"./browser-cascade": {
 			"node": "./lib/browser-cascade.ts",
 			"default": "./out/browser-cascade.js",
@@ -65,6 +70,7 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"@sqlite.org/sqlite-wasm": "^3.53.0-build1"
+		"@sqlite.org/sqlite-wasm": "^3.53.0-build1",
+		"zod": "^4.5.4"
 	}
 }

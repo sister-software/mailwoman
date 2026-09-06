@@ -105,6 +105,7 @@ const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
  */
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
+	"packages/neural/lib/env.ts",
 	"packages/neural/lib/onnx-runner.ts",
 	"packages/neural/lib/scorer.ts",
 	"packages/neural/lib/weights.ts",
@@ -125,8 +126,11 @@ const NODE_ONLY_NEURAL_MODULES = [
 	"./scorer.ts",
 	"onnxruntime-node",
 	// `$public` reaches node:util/node:fs/node:path. The `node:*` pattern below cannot catch it: the rule matches
-	// specifiers, and this module launders the builtins behind its own name.
+	// specifiers, and this module launders the builtins behind its own name. `./env.ts` extends it and is the same
+	// module one hop further away.
 	"@mailwoman/core/env",
+	"./env.ts",
+	"#env",
 ]
 
 /**

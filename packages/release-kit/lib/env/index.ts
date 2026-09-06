@@ -4,16 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
-import { $private as corePrivate, $public as corePublic, liveEnv } from "@mailwoman/core/env"
+import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
+import { $public as resolverPublic } from "@mailwoman/resolver-wof-sqlite/env"
 
 import { PrivateReleaseEnvSchema, PublicReleaseEnvSchema } from "./schema.ts"
 
 /**
- * Live core and release settings, sharing core's getters and cached values.
+ * Live release settings over the resolver's and core's (the development weights overlay lives with the resolver),
+ * sharing their getters and cached values.
  */
-export const $public = liveEnv(PublicReleaseEnvSchema, corePublic)
+export const $public = liveEnv(PublicReleaseEnvSchema, resolverPublic)
 
 /**
- * Live core and release credentials, sharing core's getters and cached values. Never log their values.
+ * Live release credentials over core's. Never log their values.
  */
 export const $private = liveEnv(PrivateReleaseEnvSchema, corePrivate)

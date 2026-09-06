@@ -67,7 +67,7 @@ export async function loadClassifierFromWeights(
 			unfedChannelWarner,
 		},
 	] = await Promise.all([
-		import(/* webpackIgnore: true */ "@mailwoman/core/env"),
+		import(/* webpackIgnore: true */ "#env"),
 		import(/* webpackIgnore: true */ "#weights"),
 		import(/* webpackIgnore: true */ "#weights-channels"),
 	])
@@ -246,7 +246,7 @@ export async function loadClassifierFromWeights(
 				// `transitionBeta` do — the prior reads `PairIndexResolver.parentDelta` off the header, so a
 				// calibrated locale (us/gb/nz/fr at 5) is default-on and an unmeasured one (de/in/es/it, no header
 				// field) stays off, with no code here knowing which is which. The env is an OVERRIDE for eval
-				// sweeps only and wins when set; see `MAILWOMAN_PAIR_PARENT_DELTA` in `core/env/schema.ts`.
+				// sweeps only and wins when set; see `MAILWOMAN_PAIR_PARENT_DELTA` in `neural/lib/env.ts`.
 				placetypePair = {
 					index: new PairIndexResolver(pairIndexBytes),
 					...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined

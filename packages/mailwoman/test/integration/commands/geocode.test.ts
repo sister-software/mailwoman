@@ -20,7 +20,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -29,6 +28,8 @@ import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
+
+import { $public } from "#env"
 
 // MARK: Paths
 

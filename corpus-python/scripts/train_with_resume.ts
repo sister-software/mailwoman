@@ -16,10 +16,19 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
+import { liveEnv } from "@mailwoman/core/env"
 import { open } from "@mailwoman/core/fs/readers"
 import { passThroughCLIArguments } from "@mailwoman/core/scripting/utils"
+import { z } from "zod"
 import { $, sleep } from "zx"
+
+const $public = liveEnv(
+	z.object({
+		MAX_ATTEMPTS: z.string().optional(),
+		LOG: z.string().optional(),
+		CONFIG: z.string().optional(),
+	})
+)
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
 const LOG = $public.LOG ?? tempRootPath("stage1-train.log")

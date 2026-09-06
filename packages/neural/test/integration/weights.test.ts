@@ -47,7 +47,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { readDirectory, readLocalBuffer, readLocalJSONFile, pathExists, isFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -58,6 +57,8 @@ import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mail
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { dirname, join } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
+
+import { $public } from "#env"
 
 const fixtures = new AsyncDisposableStack()
 

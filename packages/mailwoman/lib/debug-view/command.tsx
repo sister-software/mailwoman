@@ -25,7 +25,6 @@
  *   of it (`import/no-cycle`), and a second copy of a guard is a second place for it to drift.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { type MapFrame, MapRenderer, TileSource } from "@mailwoman/map-tui"
 import { render, Text, useApp } from "ink"
 import React, { useEffect } from "react"
@@ -34,6 +33,7 @@ import { CommandError, useCommandTask, writeRawStdout } from "#cli-kit"
 import { renderInkToString } from "#debug-view/static-render"
 import { resolveTilesPath } from "#debug-view/tiles"
 import { assertDebugFormatSanity, assertDebugSizeFloor, initialZoomForTier } from "#debug-view/view-policy"
+import { $public } from "#env"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 import { createGeocodeSession } from "#geocode/session"
 

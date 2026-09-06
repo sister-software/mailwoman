@@ -63,11 +63,19 @@ export const PublicReleaseEnvSchema = z.object({
 })
 
 /**
- * Credentials used by package publication. Never log their values.
+ * Credentials used by package publication and weights staging. Never log their values.
  */
 export const PrivateReleaseEnvSchema = z.object({
 	RELEASE_IT_WORKSPACES_OTP: z.string().optional().meta({
 		title: "npm one-time password",
 		description: "npm two-factor authentication code used by the release publish flow.",
 	}),
+	HF_BUCKET_RESOLVE_URL: z
+		.url()
+		.optional()
+		.meta({
+			title: "Hugging Face bucket resolve URL",
+			description: "Resolve URL used to fetch staged weights from the Hugging Face bucket.",
+			examples: ["https://huggingface.co/buckets/sister-software/mailwoman/resolve/"],
+		}),
 })

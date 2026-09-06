@@ -48,7 +48,6 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $private } from "@mailwoman/core/env"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
@@ -56,6 +55,7 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
+import { $private } from "#env"
 import { streamParquetRows } from "#utils/parquet"
 
 // ── Types ─────────────────────────────────────────────────────────────────

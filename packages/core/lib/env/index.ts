@@ -72,16 +72,18 @@ export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Recor
 }
 
 /**
- * Publicly accessible environment — non-secret operational config (DB paths, batch tuning, `NODE_ENV`). Safe to log. A
- * live, typed view over `process.env` layered on an optional `.env`; only keys in {@link PublicEnvSchema} appear.
+ * Publicly accessible environment — the non-secret operational config core reads (data roots, the license key). Safe to
+ * log. A live, typed view over `process.env` layered on an optional `.env`; only keys in {@link PublicEnvSchema} appear.
+ * A package's own view extends this one: `liveEnv(PackageSchema, $public)`.
  *
- * @see {@link $private} for secrets (tokens, upload credentials).
+ * @see {@link $private} for secrets.
  */
 export const $public = liveEnv(PublicEnvSchema)
 
 /**
- * Privately accessible environment — secrets and credentials (HF token, API keys, rclone S3 creds). Do NOT log. A live,
- * typed view over `process.env` layered on an optional `.env`; only keys in {@link PrivateEnvSchema} appear.
+ * Privately accessible environment — secrets and credentials. Do NOT log. Core reads none itself, so this view is
+ * empty; it is the base a package's private view extends (`liveEnv(PackageSecrets, $private)`), which keeps every
+ * credential declared beside the code that sends it.
  *
  * @see {@link $public} for non-secret operational config.
  */

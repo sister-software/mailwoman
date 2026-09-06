@@ -14,7 +14,7 @@
  */
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
-import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
+import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { isSelfServicePayload, type LicenseKeyVerification, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
@@ -43,6 +43,7 @@ import {
 	type POIObservation,
 	type WeightsObservation,
 } from "#doctor/checks"
+import { $public } from "#env"
 import {
 	layerDatabaseAlternates,
 	layerDatabasePath,

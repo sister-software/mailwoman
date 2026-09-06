@@ -50,10 +50,10 @@
 import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
 import { GeoPoint, type GeoPointInput, isGooglePlaceID } from "@mailwoman/spatial"
 
+import { $private } from "#env"
 import type { OracleGeocodeResult } from "#result"
 import { parseGoogleGeocodeResult } from "#sdk/google-parser"
 import {

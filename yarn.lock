@@ -4787,6 +4787,7 @@ __metadata:
     path-ts: "npm:^2.3.0"
     spliterator: "npm:^6.4.1"
     type-fest: "npm:^5.9.0"
+    zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
 
@@ -4894,6 +4895,7 @@ __metadata:
     read-excel-file: "npm:^9.3.10"
     spliterator: "npm:^6.4.1"
     write-excel-file: "npm:^4.1.1"
+    zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
 
@@ -5017,6 +5019,7 @@ __metadata:
     spliterator: "npm:^6.4.1"
     type-fest: "npm:^5.9.0"
     write-excel-file: "npm:^4.1.1"
+    zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
 
@@ -5056,6 +5059,7 @@ __metadata:
     "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:^26.4.1"
     path-ts: "npm:^2.3.0"
+    zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
 
@@ -5300,6 +5304,7 @@ __metadata:
     path-ts: "npm:^2.3.0"
     playwright: "npm:^1.62.1"
     spliterator: "npm:^6.4.1"
+    zod: "npm:^4.5.4"
   peerDependencies:
     onnxruntime-node: ^1.26.0
     onnxruntime-web: "*"
@@ -5561,6 +5566,7 @@ __metadata:
     path-ts: "npm:^2.3.0"
     spliterator: "npm:^6.4.1"
     type-fest: "npm:^5.9.0"
+    zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
 
@@ -5574,6 +5580,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@sqlite.org/sqlite-wasm": "npm:^3.53.0-build1"
+    zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
 

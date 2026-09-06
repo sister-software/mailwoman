@@ -35,10 +35,10 @@ import { createMailwomanAPI } from "@mailwoman/api"
 import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResultEntry } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { $public } from "mailwoman/env"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
 import {
 	createResolverBackend,

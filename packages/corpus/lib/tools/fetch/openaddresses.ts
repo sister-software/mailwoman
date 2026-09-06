@@ -53,7 +53,6 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
-import { $private } from "@mailwoman/core/env"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { openReadStream, openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
@@ -63,6 +62,7 @@ import { runFile, spawnProcess } from "@mailwoman/core/process"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
+import { $private } from "#env"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { streamDownload, writeManifest } from "#tools/fetch/download"
 

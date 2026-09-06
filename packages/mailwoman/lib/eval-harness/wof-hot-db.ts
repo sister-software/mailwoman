@@ -14,7 +14,7 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
+import { $public } from "@mailwoman/resolver-wof-wasm/env"
 import { join } from "path-ts"
 
 /**

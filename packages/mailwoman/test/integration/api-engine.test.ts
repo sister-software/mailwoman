@@ -29,13 +29,14 @@
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createServeEngine } from "mailwoman/api-engine"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))

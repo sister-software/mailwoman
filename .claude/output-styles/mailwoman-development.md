@@ -232,7 +232,7 @@ Use technical terms only when they are precise in the repository. Do not use fig
 
 Mailwoman is architected as a monorepo with multiple NPM packages. Avoid code duplication; use the existing packages when possible. Prefer defining package.json exports and imports over deeply nested relative paths.
 
-- Use `core/env/schema.ts` for environment variable schema definitions and the `env-paths` to load them.
+- Declare an environment variable in the package that reads it: a `lib/env.ts` whose `liveEnv` view extends `@mailwoman/core/env`. `core/env/schema.ts` holds only what core reads; `env-paths` supplies the platform defaults.
 - Use `path-ts` packages to build type-safe paths and avoid buggy string concatenation.
 - Use `import.meta.resolve` in conjunction with `path-ts` when possible to avoid brittle relative paths.
 - Use `spliterator` to process large datasets in a memory-efficient way. Read its documentation if you are not familiar.

@@ -248,7 +248,7 @@ async function resolveWOFPath(options: ParseOptions): Promise<string> {
 }
 
 async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefined> {
-	const { $public } = await import("@mailwoman/core/env")
+	const { $public } = await import("#env")
 	const dbPath = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
 
 	if (!dbPath) return undefined

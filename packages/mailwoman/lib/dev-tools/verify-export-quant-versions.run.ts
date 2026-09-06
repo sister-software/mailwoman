@@ -15,9 +15,10 @@
  *   Plain-node tool-script (no env banner, no zx). Run: node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts
  */
 
-import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { runFileSync } from "@mailwoman/core/process"
+
+import { $public } from "#env"
 
 const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/modal/train_remote.py"

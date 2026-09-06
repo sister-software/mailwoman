@@ -43,8 +43,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // below is isolated from whatever the ambient environment actually contains (live-data finding — this
 // broke the first time real credentials landed in `.env`). Every OTHER test in this file passes explicit
 // `username`/`apiKey` options and never reads `$private`, so this mock doesn't affect them.
-vi.mock("@mailwoman/core/env", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/core/env")>()
+vi.mock("#env", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("#env")>()
 
 	return {
 		...actual,
@@ -53,7 +53,7 @@ vi.mock("@mailwoman/core/env", async (importOriginal) => {
 })
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./client.ts` may already sit
-// in the worker's cache — evaluated WITHOUT this file's `@mailwoman/core/env` mock by an earlier file
+// in the worker's cache — evaluated WITHOUT this file's `#env` mock by an earlier file
 // (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset
 // on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in
 // this fork never inherits our mocked env module from the cache.

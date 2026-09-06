@@ -29,7 +29,7 @@ try {
 // React's CJS entry picks its development or production build from `NODE_ENV` at import time, and the development
 // build is 23.5% of the render work in `geocode --debug`'s interactive session: 12.35 ms → 4.25 ms of synchronous
 // main-thread work per keystroke at 120×36. Nothing in the CLI reads React's dev warnings, so production is the right
-// default — `??=` and not `=`, because vitest sets `NODE_ENV=test` and `core/env` models all three values.
+// default — `??=` and not `=`, because vitest sets `NODE_ENV=test`.
 // oxlint-disable-next-line sister-software/no-process-globals -- See above
 process.env.NODE_ENV ??= "production"
 

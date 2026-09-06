@@ -79,7 +79,7 @@ export async function run(args: readonly string[]): Promise<number> {
 async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 	const lat = coordinate(parsed.positionals[0]!, "latitude")
 	const lon = coordinate(parsed.positionals[1]!, "longitude")
-	const { $public } = await import("@mailwoman/core/env")
+	const { $public } = await import("#env")
 
 	const adminDBPath = stringValue(parsed.values, "admin-db") ?? $public.MAILWOMAN_WOF_ADMIN_DB
 

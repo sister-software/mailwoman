@@ -11,7 +11,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
@@ -20,6 +19,8 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 

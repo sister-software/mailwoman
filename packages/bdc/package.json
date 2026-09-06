@@ -62,6 +62,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./env": {
+			"node": "./lib/env.ts",
+			"default": "./out/env.js",
+			"types": "./out/env.d.ts"
+		},
 		"./schema": {
 			"node": "./lib/schema.ts",
 			"default": "./out/schema.js",
@@ -140,7 +145,8 @@
 		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",
 		"spliterator": "^6.4.1",
-		"type-fest": "^5.9.0"
+		"type-fest": "^5.9.0",
+		"zod": "^4.5.4"
 	},
 	"engines": {
 		"node": ">=24.18.0"

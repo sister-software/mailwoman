@@ -21,7 +21,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -30,6 +29,7 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 import { relative, resolvePath, resolvePathBuilder } from "path-ts"
 
+import { $public } from "#env/index"
 import { type BuildableArtifact, type LinkableArtifact, readWeightsRecipe } from "#weights/weights-recipe"
 
 export interface LinkWeightsOverlayOptions {

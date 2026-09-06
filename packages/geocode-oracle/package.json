@@ -46,6 +46,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./env": {
+			"node": "./lib/env.ts",
+			"default": "./out/env.js",
+			"types": "./out/env.d.ts"
+		},
 		"./sdk/census-client": {
 			"node": "./lib/sdk/census-client.ts",
 			"default": "./out/sdk/census-client.js",
@@ -92,7 +97,8 @@
 		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"@mailwoman/tiger": "workspace:*"
+		"@mailwoman/tiger": "workspace:*",
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",

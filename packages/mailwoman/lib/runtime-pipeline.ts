@@ -14,7 +14,6 @@
  *   See `docs/engineering/reference/STAGES.md` for the full contract.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	runPipeline,
@@ -45,6 +44,7 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 import { loadDefaultPlaceCountry } from "#default/placer"
 import { loadDefaultReverseGeocoder } from "#default/reverse-geocoder"
 import { loadDefaultStreetEvidence } from "#default/street-evidence"
+import { $public } from "#env"
 import { rerankByStreetEvidence } from "#kbest-street-rerank"
 import { createPOIExecutor, type POIAncestryEntry } from "#poi/executor"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi/intent"

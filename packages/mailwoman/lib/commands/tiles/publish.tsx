@@ -61,7 +61,7 @@ interface Options {
 const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
 
 async function publishTiles(options: Options): Promise<string> {
-	const { $private } = await import("@mailwoman/core/env")
+	const { $private } = await import("#env")
 	const { $ } = await import("zx")
 
 	if (!(await pathExists(options.file))) throw new CommandError(`--file not found: ${options.file}`)

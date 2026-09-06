@@ -24,7 +24,6 @@
  *   to a note.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { clamp } from "@mailwoman/core/numeric"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
@@ -35,6 +34,7 @@ import { outputLines } from "#debug-view/output-lines"
 import { QueryInput, type InputState } from "#debug-view/QueryInput"
 import { resolveTilesPath } from "#debug-view/tiles"
 import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "#debug-view/view-policy"
+import { $public } from "#env"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 import type { GeocodeResult } from "#geocode/result"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "#geocode/session"

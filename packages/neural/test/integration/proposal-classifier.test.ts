@@ -12,7 +12,6 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
@@ -22,6 +21,8 @@ import {
 	type NeuralProposalClassifierConfig,
 } from "@mailwoman/neural/proposal-classifier"
 import { describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 /**
  * Minimal duck-typed Section — see proposal-classifier.ts for why we don't construct real Spans.

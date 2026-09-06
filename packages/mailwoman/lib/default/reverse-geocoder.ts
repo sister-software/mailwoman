@@ -25,10 +25,10 @@
  *   the same env var `mailwoman reverse` reads.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFReverseGeocoder as WOFReverseGeocoderType } from "@mailwoman/resolver-wof-sqlite"
 
+import { $public } from "#env"
 import { existingWOFDatabasePaths } from "#resolver-backend"
 
 let cached: Promise<WOFReverseGeocoderType | null> | null = null

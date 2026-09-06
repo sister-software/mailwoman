@@ -18,6 +18,20 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Changed — each package declares the environment variables it reads
+
+`@mailwoman/core/env`'s `$public` now carries only what core reads (the four data roots, `MAILWOMAN_COARSE_PLACER_DIR`,
+the license key and URLs) and its `$private` is empty. Every other variable moved to the package that reads it, each a
+`liveEnv` view extending core's so a key is declared once beside its reader: the WOF database paths and the development
+weights overlay in `@mailwoman/resolver-wof-sqlite/env`; the CLI's runtime and evaluation settings and its rclone
+credentials in `mailwoman/env` (which extends the resolver's view); the ONNX thread cap and the PIX1 delta in
+`@mailwoman/neural/env`; the corpus, BDC, filer, geocode-oracle and release-kit credentials in each package's `./env`.
+`liveEnv` validates one field at a time and caches each until its raw value changes, so an invalid unrelated variable
+no longer blocks a valid read. Removed, having no reader: `NODE_ENV`, `CI`, `MAILWOMAN_LOG_ROOT`, `MAILWOMAN_DEMO_URL`,
+`HF_TOKEN`, `HF_BUCKET_URI`, `HF_ORG_NAME`, `HF_BUCKET_NAME`, `CF_AUTH_TOKEN`, `GEOCODE_EARTH_API_KEY`, `UK_EPC_TOKEN`,
+`USAC_API_KEY_ID`, `USAC_API_SECRET_KEY`, and the twenty training-script and playpen variables. A consumer that read a
+moved key from `@mailwoman/core/env` imports the owning package's `./env` instead.
+
 ### Added — the shop as data, and `mwops shop`
 
 The Stripe objects the license worker depends on are defined once, in `packages/license-worker/lib/shop/catalog.ts`:

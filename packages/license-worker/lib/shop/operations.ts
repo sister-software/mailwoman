@@ -11,7 +11,6 @@
  *   key; `live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses anything but `sk_live_`.
  */
 
-import { $private } from "@mailwoman/core/env"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -21,6 +20,7 @@ import Stripe from "stripe"
 import { z } from "zod"
 
 import { AGREEMENT_VERSION, SHOP_PLANS } from "#shop/catalog"
+import { $private } from "#shop/env"
 import { type ProvisionReport, provisionShop } from "#shop/provision"
 import { readEnvironmentVar, withEnvironmentVars } from "#shop/wrangler-vars"
 import { STRIPE_API_VERSION } from "#stripe/client"

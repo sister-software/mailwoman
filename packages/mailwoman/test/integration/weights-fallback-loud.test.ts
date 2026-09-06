@@ -23,7 +23,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -32,6 +31,8 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 

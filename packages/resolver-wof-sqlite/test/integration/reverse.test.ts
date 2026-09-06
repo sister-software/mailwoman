@@ -16,12 +16,13 @@
  *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
  */
 
-import { $public } from "@mailwoman/core/env"
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { geometryContains, pointInPolygon, pointInRing, type LineStringPath } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 const square = (minX: number, minY: number, maxX: number, maxY: number): LineStringPath => [
 	[minX, minY],

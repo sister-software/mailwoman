@@ -22,13 +22,13 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $private } from "@mailwoman/core/env"
 import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { $private } from "#env"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 

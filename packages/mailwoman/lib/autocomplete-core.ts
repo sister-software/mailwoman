@@ -7,10 +7,11 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { PathBuilderLike } from "path-ts"
+
+import { $public } from "#env"
 
 /**
  * Resolve the FST artifact from an explicit flag, environment, or the application data directory.

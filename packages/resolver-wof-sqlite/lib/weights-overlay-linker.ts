@@ -8,7 +8,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import {
 	pathExists,
 	readLocalJSONFile,
@@ -32,6 +31,7 @@ import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core
 import { weightsOverlayPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
+import { $public } from "#env"
 import { fstFreshnessWarning } from "#fst/freshness"
 
 /**

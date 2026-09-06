@@ -22,11 +22,12 @@
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type AddressSystemConventions } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
+
+import { $public } from "#env"
 
 const MODEL =
 	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ??

@@ -52,7 +52,7 @@ import {
 /**
  * Default `POST /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the
  * standalone-engine default, not derived from env — `mailwoman serve` always passes the env-derived value explicitly
- * (`$public.MAILWOMAN_BATCH_MAX`, default 1000; see `core/env/schema.ts`).
+ * (`$public.MAILWOMAN_BATCH_MAX`, default 1000; see `mailwoman/lib/env/schema.ts`).
  */
 export const DEFAULT_BATCH_MAX = 500
 

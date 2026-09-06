@@ -20,7 +20,6 @@
  */
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { wofExtractPaths } from "@mailwoman/core/utils"
@@ -35,6 +34,8 @@ import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, resolvePath, type PathBuilderLike } from "path-ts"
+
+import { $public } from "#env"
 
 /**
  * The candidate gazetteer's conventional home — where `mailwoman data pull candidate` writes it, and where every caller

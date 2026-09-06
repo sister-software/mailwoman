@@ -14,7 +14,6 @@
  */
 
 import { configRootPath } from "@mailwoman/core/data-root"
-import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, writePrivateTextFile } from "@mailwoman/core/fs/writers"
 import {
@@ -49,6 +48,7 @@ import {
 	runNativeCommand,
 	stringValue,
 } from "#cli-native/spec"
+import { $public } from "#env"
 
 /**
  * The `license` command contract: one positional action and the options each action reads.
