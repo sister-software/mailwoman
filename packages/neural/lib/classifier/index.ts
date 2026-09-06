@@ -35,6 +35,7 @@ import type {
 	ParseWithLogitsResult,
 	SpanProposerConfig,
 } from "#classifier/options"
+import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { buildFSTEmissionPriors } from "#fst-prior"
 import { repairJPMunicipalityLabels } from "#jp-municipality-repair"
 import { STAGE2_BIO_LABELS } from "#labels"
@@ -69,6 +70,8 @@ export type {
 	ParseWithLogitsResult,
 	SpanProposerConfig,
 } from "#classifier/options"
+
+export { ScriptRoutedClassifier, scriptFamilyForText, type ScriptRoutedClassifierOpts } from "#classifier/script-router"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
@@ -208,6 +211,20 @@ export class NeuralAddressClassifier {
 		const { loadClassifierFromWeights } = await import(/* webpackIgnore: true */ "#classifier/loader")
 
 		return loadClassifierFromWeights(...args)
+	}
+
+	/**
+	 * {@link loadFromWeights} behind a {@link ScriptRoutedClassifier}: the caller's locale is the primary, and an input
+	 * whose script names another weights family runs on that family's classifier, loaded on first use. The served entry
+	 * points (`mailwoman geocode`, the drop-in servers, the batch worker) load through this one, so a bare kanji or
+	 * Hangul line reaches the character-path model without a `--locale`. Node-only, as {@link loadFromWeights} is.
+	 */
+	static async loadRoutedFromWeights(
+		...args: Parameters<typeof import("#classifier/loader").loadScriptRoutedClassifier>
+	): Promise<ScriptRoutedClassifier> {
+		const { loadScriptRoutedClassifier } = await import(/* webpackIgnore: true */ "#classifier/loader")
+
+		return loadScriptRoutedClassifier(...args)
 	}
 	/**
 	 * Tokenize → infer → Viterbi (or argmax) → decoder tree.

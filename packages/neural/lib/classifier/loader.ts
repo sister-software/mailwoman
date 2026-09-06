@@ -14,6 +14,7 @@ import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { AnchorLookup } from "#anchor-inference"
 import { parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier/index"
+import { ScriptRoutedClassifier } from "#classifier/script-router"
 import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
 import type { GazetteerLexicon } from "#gazetteer-inference"
@@ -35,6 +36,32 @@ import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
  * static dependency graph, so this file can be bundled for the browser by `@mailwoman/neural-web`. Calling this method
  * in a browser will throw at runtime — use `loadNeuralClassifierFromURLs` from `@mailwoman/neural-web` instead.
  */
+/**
+ * {@link loadClassifierFromWeights} for the caller's locale, wrapped so an input whose script names another weights
+ * family (`cjk` for Han, kana and Hangul) runs on that family's classifier, loaded once on first use from the same
+ * resolution options (cache root, overlay root). A family whose package is absent is reported once on stderr and its
+ * inputs stay on the primary.
+ */
+export async function loadScriptRoutedClassifier(
+	opts: Parameters<typeof loadClassifierFromWeights>[0] = {}
+): Promise<ScriptRoutedClassifier> {
+	const primary = await loadClassifierFromWeights(opts)
+
+	return new ScriptRoutedClassifier({
+		primary,
+		loadFamily: (family) =>
+			loadClassifierFromWeights({ ...opts, locale: family, modelPath: undefined, tokenizerPath: undefined }),
+		onFamilyUnavailable: (family, error) => {
+			console.warn(
+				`[neural] the ${family} weights family is not installed ` +
+					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message, not a data file.
+					`(${error instanceof Error ? error.message.split("\n")[0] : String(error)}); ` +
+					`inputs in that script run on the ${opts.locale ?? "en-US"} model. Install @mailwoman/neural-weights-${family}.`
+			)
+		},
+	})
+}
+
 export async function loadClassifierFromWeights(
 	opts: ResolveWeightsOpts & {
 		postcodeAnchorLookup?: AnchorLookup

@@ -169,7 +169,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 		import("@mailwoman/neural"),
 	])
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
+	const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale })
 
 	let resolver: ReturnType<(typeof import("@mailwoman/resolver"))["createWOFResolver"]> | undefined
 

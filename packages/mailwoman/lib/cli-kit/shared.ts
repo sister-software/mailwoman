@@ -17,7 +17,7 @@ import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import type { ScriptRoutedClassifier } from "@mailwoman/neural"
 import { Box, Text } from "ink"
 import { createElement as h, Fragment, useEffect, useState } from "react"
 import type * as React from "react"
@@ -419,11 +419,12 @@ export async function loadClassifierTolerant(
 		tokenizerPath?: string
 		onDegrade: (message: string) => void
 	}
-): Promise<NeuralAddressClassifier | undefined> {
+): Promise<ScriptRoutedClassifier | undefined> {
 	try {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 
-		return await NeuralAddressClassifier.loadFromWeights({
+		// Routed by script: a kanji or Hangul line runs on the character-path family, the primary stays the locale.
+		return await NeuralAddressClassifier.loadRoutedFromWeights({
 			locale,
 			modelPath: options.modelPath,
 			tokenizerPath: options.tokenizerPath,

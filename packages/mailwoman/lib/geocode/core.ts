@@ -29,7 +29,6 @@ import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
 	deriveInputMode,
 	type InputMode,
-	type ClassifierOpts,
 	hardCountryFor,
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -40,13 +39,13 @@ import {
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
-import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type { AddressPointLookup, PostcodePrefixIndexLike, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
 import { applyEntityTiers } from "#fork-entity"
+import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
 import { type RegionDatabaseResolver, type RegionDatabases, regionSlugFromTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
@@ -79,35 +78,7 @@ export {
 	POSTCODE_FORMAT_COUNTRY,
 } from "@mailwoman/core/resolver"
 
-/**
- * The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it).
- */
-export interface GeocodeClassifier {
-	/**
-	 * Which encoder feeds the model. Absent reads as `sentencepiece`. The character path keeps the postal mark 〒 the
-	 * normalizer otherwise strips: the CJK model was trained with it and misreads the prefecture boundary without it.
-	 */
-	encoder?: "sentencepiece" | "char"
-	parse(
-		text: string,
-		opts?: {
-			postcodeRepair?: boolean
-			normalizeCase?: boolean
-			queryShape?: QueryShape
-			inputMode?: InputMode
-			enforceWordConsistency?: ClassifierOpts["enforceWordConsistency"]
-			/**
-			 * The gazetteer FST prior. The classifier reads this from `opts` ONLY — there is no config fallback, unlike
-			 * `placetypePair` — so a path that cannot express the field does not merely weaken the prior, it never constructs
-			 * it (#1497). Absent = byte-identical to the pre-#1497 decode.
-			 */
-			fst?: ClassifierOpts["fst"]
-			fstStreetMorphology?: ClassifierOpts["fstStreetMorphology"]
-			fstStreetMorphologyOpts?: ClassifierOpts["fstStreetMorphologyOpts"]
-			fstStreetContextPositiveScale?: number
-		}
-	): Promise<AddressTree>
-}
+export type { GeocodeClassifier } from "#geocode/classifier"
 
 // The attached spatial layers ride in as ONE bundle: `layerDesignationMarkers` reads all of them together and this
 // module reads none of them, so a fourth layer is an edit in `observations/observation-marker.ts` and none here.
@@ -408,20 +379,6 @@ export interface GeocodeParseInputs {
 	opts: NonNullable<Parameters<GeocodeClassifier["parse"]>[1]>
 }
 
-/**
- * The normalizer call every geocode entry shares, so the three call sites cannot disagree about the postal mark.
- */
-function normalizeGeocodeInput(
-	input: string,
-	classifier: Pick<GeocodeClassifier, "encoder"> | undefined
-): ReturnType<typeof normalize> {
-	return normalize(input, {
-		expandAbbreviations: true,
-		locale: "und",
-		postalMark: classifier?.encoder === "char" ? "keep" : "strip",
-	})
-}
-
 export function geocodeParseInputs(
 	input: string,
 	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"> &
@@ -496,11 +453,12 @@ export async function parseForGeocode(
 	input: string,
 	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
 ): Promise<AddressTree> {
-	const { parseInput, opts, queryShape } = geocodeParseInputs(input, deps)
+	const classifier = await classifierForInput(deps.classifier, input)
+	const { parseInput, opts, queryShape } = geocodeParseInputs(input, { ...deps, classifier })
 
 	// #22: a bare unambiguous postcode the model read as a street ("N7 0BT" → `{ street: … }`) is retagged
 	// before the resolve — see recognizeBarePostcode for why nothing downstream can recover it.
-	const tree = recognizeBarePostcode(recognizeUSRegions(await deps.classifier.parse(parseInput, opts)))
+	const tree = recognizeBarePostcode(recognizeUSRegions(await classifier.parse(parseInput, opts)))
 
 	// #1735: the multi-node generalization of #22 — a letter-digit postcode span the model SPLIT into
 	// street + house_number ("KT2 6AB") is repaired from the shape stage's own span. Runs HERE, before
@@ -525,7 +483,10 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// #1649 first refusal — BEFORE the resolve and before the register-flip retry rider, so a refused
 	// thing-query can neither resolve nor be retried into nonsense. See intent-refusal.ts.
 	if (deps.classifyKind && !deps.inputMode) {
-		const parseInput = deps.normalizeInput === false ? input : normalizeGeocodeInput(input, deps.classifier).normalized
+		const parseInput =
+			deps.normalizeInput === false
+				? input
+				: normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
 
 		const refusal = await thingQueryRefusalMarkers(deps.classifyKind, parseInput)
 
@@ -628,7 +589,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
 	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
 	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
-	const parseInput = deps.normalizeInput === false ? input : normalizeGeocodeInput(input, deps.classifier).normalized
+	const parseInput =
+		deps.normalizeInput === false
+			? input
+			: normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
 
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const queryShape = computeQueryShape(parseInput)

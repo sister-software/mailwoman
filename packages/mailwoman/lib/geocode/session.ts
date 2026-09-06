@@ -40,7 +40,7 @@ import {
 } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
@@ -488,14 +488,16 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// Load the neural classifier (required for street-level; weights must be present).
 	progress("Loading neural model…")
 
-	let classifier: NeuralAddressClassifier
+	let routed: ScriptRoutedClassifier
 
 	try {
 		// #1732 reach half: the session's dataRoot is authoritative for EVERYTHING it loads, weights and
 		// their FSTs included. Before this line threaded it, a data_root override moved the gazetteer but
 		// weights silently resolved from the process env — so a dev-mcp engine with data_root set measured
 		// a mixed configuration, and no A/B comparison for a staged FST existed on the warm path at all.
-		classifier = await NeuralAddressClassifier.loadFromWeights({
+		// Routed by script: a bare kanji or Hangul line runs on the character-path family, loaded on first use from the
+		// same options; the primary stays the locale the caller asked for.
+		routed = await NeuralAddressClassifier.loadRoutedFromWeights({
 			locale: options.locale,
 			overlayRoot: resolvePath(options.dataRoot, "weights"),
 			// Ahead of the overlay in the ladder rather than beside it: a caller naming a candidate bundle is naming
@@ -507,6 +509,10 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
 		)
 	}
+
+	// The primary's own artifacts (its FST siblings, its resolved weights) are read from the primary; parses go
+	// through `routed`, which answers the family classifier for a script the primary cannot read.
+	const classifier = routed.primary
 
 	// #1497: the prior the geocode path has never had. Loaded from the classifier's own weights-package sibling, the
 	// same artifact `runPipeline` auto-loads — one source, not a second resolution ladder. A failure degrades to
@@ -757,7 +763,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		GeocodeDeps,
 		"classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"
 	> = {
-		classifier,
+		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
 	}
@@ -774,7 +780,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		try {
 			return {
-				parse: await classifier.traceParse(inputs.parseInput, inputs.opts),
+				parse: await routed.traceParse(inputs.parseInput, inputs.opts),
 				queryShape: inputs.queryShape,
 				...(inputs.kind ? { kind: inputs.kind } : {}),
 				inputMode: inputs.inputMode,
@@ -808,9 +814,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// code's own format is harder evidence than the locale hint. An explicit --default-country
 		// still wins (checked first, same as #912), and the bare 5-digit family implies no countries
 		// (countriesFromPostcodeFormat returns []) so the 75008 locale-prior contract is untouched.
+		// A script-routed input ran on the family classifier, not the locale's: the locale then says nothing about the
+		// address's country, and its inferred scope (`--locale en-US` → US) would starve every lookup for a kanji or
+		// Hangul line. An explicit --default-country is the operator's and stays.
+		const routedAway = (await routed.forInput(input)) !== routed.primary
+
+		const localeCountry =
+			routedAway && !options.defaultCountry ? undefined : resolverDefaultCountry(options, !!candidateDB)
+
 		const barePostcodeFormatConflict = (): boolean => {
 			if (!isBarePostcodeTree(parsedTree)) return false
-			const inferred = resolverDefaultCountry(options, !!candidateDB)
+			const inferred = localeCountry
 
 			if (!inferred) return false
 			const postcodeValue = firstNodeWhere(parsedTree.roots, (node) => node.tag === "postcode")?.value
@@ -826,10 +840,10 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// country and chose not to scope by it", so this is the one place that knows the value was
 		// dropped rather than never derived. Handed on as a soft prior (never a filter) when the operator
 		// opts in with --locale-country-prior; the resolver additionally ignores it under any hard scope.
-		const withheldCountry = inferredScopeOK ? undefined : resolverDefaultCountry(options, !!candidateDB)
+		const withheldCountry = inferredScopeOK ? undefined : localeCountry
 
 		const result = await geocodeAddress(input, {
-			classifier,
+			classifier: routed,
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
 			resolver,
@@ -838,7 +852,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
-			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDB)) || undefined,
+			defaultCountry: (inferredScopeOK && localeCountry) || undefined,
 			// The street-miss fallback's #912 posture switch: explicit --default-country stays supreme
 			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
 			defaultCountryIsInferred: !options.defaultCountry,
@@ -847,9 +861,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(capitalLevel ? { capitalLevel } : {}),
 			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
 			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
-			...(resolverDefaultCountry(options, !!candidateDB)
-				? { fuzzyCountryScope: resolverDefaultCountry(options, !!candidateDB) || undefined }
-				: {}),
+			...(localeCountry ? { fuzzyCountryScope: localeCountry } : {}),
 			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
 			// threading (an unset dep already reads as ON downstream).
 			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
