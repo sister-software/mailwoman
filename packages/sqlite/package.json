@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/sqlite",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "The one way a Mailwoman SQLite connection is opened: a typed Kysely client over node:sqlite, plus the sealed-artifact lifecycle.",
 	"keywords": [
 		"kysely",

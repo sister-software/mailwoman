@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/flood",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "Environment Agency Flood Map for Planning (England) — acquisition, build, and the flood.db layer reader",
 	"keywords": [
 		"environment-agency",
