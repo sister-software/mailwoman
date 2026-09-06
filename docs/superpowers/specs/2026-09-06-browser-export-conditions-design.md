@@ -1,7 +1,7 @@
 # Browser export conditions: retire the bundler stubs in the owning packages
 
 **Status:** design approved 2026-09-06 (export conditions in the owning packages, never a new leaf package; the
-operator's call).
+operator's call). Implemented 2026-09-07 (PR #2192).
 **Builds on:** the platform-split rule that put `workerd`/`browser` conditions beside `node` in `@mailwoman/core`
 for the license worker (`packages/core/test/integration/worker-bundle.test.ts` is the proof shape), and the
 `browser` condition `@mailwoman/neural` already carries on `./onnx-runner`.
