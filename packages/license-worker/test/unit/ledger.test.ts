@@ -6,10 +6,10 @@
 
 import { openLedger } from "@mailwoman/license-worker/ledger/client"
 import {
-	createLicense,
+	createLicenseIfAbsent,
 	currentToken,
 	findLicenseBySubscription,
-	insertToken,
+	insertTokenIfAbsent,
 	recordEventOnce,
 	setLicenseState,
 	takePendingRefreshSecret,
@@ -50,10 +50,10 @@ test("a license is found by subscription; the current token is the one with the 
 	const ledger = openLedger(env.LICENSE_LEDGER)
 	const row = license("a")
 
-	await createLicense(ledger, row)
+	expect(await createLicenseIfAbsent(ledger, row)).toBe("inserted")
 	expect((await findLicenseBySubscription(ledger, row.subscription_id))?.license_state).toBe(LicenseState.Active)
 
-	await insertToken(ledger, {
+	await insertTokenIfAbsent(ledger, {
 		invoice_id: "in_a1",
 		lid: row.lid,
 		issued: "2026-10-01",
@@ -62,7 +62,7 @@ test("a license is found by subscription; the current token is the one with the 
 		token: "mwl1.a.a",
 	})
 
-	await insertToken(ledger, {
+	await insertTokenIfAbsent(ledger, {
 		invoice_id: "in_a2",
 		lid: row.lid,
 		issued: "2026-11-01",
@@ -74,23 +74,35 @@ test("a license is found by subscription; the current token is the one with the 
 	expect((await currentToken(ledger, row.lid))?.invoice_id).toBe("in_a2")
 })
 
-test("a second token for one invoice is refused by the primary key", async () => {
+test("a second token for one invoice is answered as present and the first stands; a second row for one subscription likewise", async () => {
 	const ledger = openLedger(env.LICENSE_LEDGER)
 	const row = license("b")
 
-	await createLicense(ledger, row)
+	await createLicenseIfAbsent(ledger, row)
+
+	expect(
+		await createLicenseIfAbsent(ledger, { ...row, lid: `lic_test0000000000000000b2`, checkout_session_id: "cs_b2" })
+	).toBe("present")
+
+	expect((await findLicenseBySubscription(ledger, row.subscription_id))?.lid).toBe(row.lid)
 
 	const token = { invoice_id: "in_b1", lid: row.lid, issued: "2026-10-01", expires: "2026-11-15", payload_json: "{}" }
 
-	await insertToken(ledger, { ...token, token: "mwl1.a.a" })
-	await expect(insertToken(ledger, { ...token, token: "mwl1.c.c" })).rejects.toThrow(/UNIQUE|constraint/iu)
+	expect(await insertTokenIfAbsent(ledger, { ...token, token: "mwl1.a.a" })).toBe("inserted")
+	expect(await insertTokenIfAbsent(ledger, { ...token, token: "mwl1.c.c" })).toBe("present")
+	expect((await currentToken(ledger, row.lid))?.token).toBe("mwl1.a.a")
+
+	// Only a unique conflict is forgiven: a row that breaks another constraint still throws.
+	await expect(
+		insertTokenIfAbsent(ledger, { ...token, invoice_id: "in_b_orphan", lid: "lic_nobody", token: "mwl1.d.d" })
+	).rejects.toThrow(/FOREIGN KEY|constraint/iu)
 })
 
 test("state transitions write the license, subscription and payment states", async () => {
 	const ledger = openLedger(env.LICENSE_LEDGER)
 	const row = license("c")
 
-	await createLicense(ledger, row)
+	await createLicenseIfAbsent(ledger, row)
 
 	await setLicenseState(ledger, row.lid, LicenseState.Revoked, {
 		subscriptionState: "canceled",
@@ -108,7 +120,7 @@ test("the pending refresh secret is answered to exactly one taker, and the store
 	const ledger = openLedger(env.LICENSE_LEDGER)
 	const row = license("d")
 
-	await createLicense(ledger, row)
+	await createLicenseIfAbsent(ledger, row)
 
 	expect(await takePendingRefreshSecret(ledger, row.lid)).toBe("secret")
 	expect(await takePendingRefreshSecret(ledger, row.lid)).toBeUndefined()

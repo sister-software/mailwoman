@@ -266,6 +266,35 @@ describe("fulfilment", () => {
 		expect(await findToken(bare.deps.ledger, "in_7n")).toBeUndefined()
 	})
 
+	it("two mints racing for one invoice leave one token and both answer; two checkouts racing for one subscription leave one row", async () => {
+		const { env: worker, deps } = await fixture("9")
+
+		const outcomes = await Promise.all([fulfilInvoice(worker, deps, "in_9"), fulfilInvoice(worker, deps, "in_9")])
+
+		expect(outcomes.map((outcome) => outcome.outcome).toSorted()).toEqual(["already_minted", "minted"])
+
+		const license = await findLicenseBySubscription(deps.ledger, "sub_9")
+
+		expect(await countTokens(deps.ledger, license!.lid)).toBe(1)
+		expect(sent.length).toBeGreaterThanOrEqual(1)
+
+		const racing = await fixture("9r")
+		const completed = checkoutCompletedEvent({ id: "evt_9r", sessionID: "cs_9r", subscriptionID: "sub_9r" })
+
+		await Promise.all([
+			handleStripeEvent(racing.env, racing.deps, completed),
+			handleStripeEvent(racing.env, racing.deps, completed),
+		])
+
+		const rows = await racing.deps.ledger
+			.selectFrom("licenses")
+			.select("lid")
+			.where("subscription_id", "=", "sub_9r")
+			.execute()
+
+		expect(rows).toHaveLength(1)
+	})
+
 	it("a subscription that ends keeps the license active until the current token's date passes, then lapses it", async () => {
 		const { env: worker, deps } = await fixture("8", { subscriptionStatus: "canceled" })
 

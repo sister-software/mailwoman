@@ -5,8 +5,11 @@
  *
  *   Fulfilment: one paid invoice becomes one signed token. Everything checked here is re-read from Stripe by id — the
  *   invoice, its subscription, and when the license row does not exist yet, the Checkout Session — so a webhook body is
- *   never the source of an entitlement. The ledger's primary keys are the idempotency: a second mint for one invoice
- *   answers `already_minted`, and two events for one payment in either order produce one token.
+ *   never the source of an entitlement. The ledger's unique keys are the idempotency: a second mint for one invoice
+ *   answers `already_minted`, two events for one payment in either order produce one token, and two callers racing
+ *   for one invoice or one subscription both get a defined answer with one row between them. What the keys do not
+ *   promise is one email: the loser of a mint race may find the winner's token with its email still pending and send
+ *   it too, and the provider's idempotency key is what closes that window where the provider honours one.
  */
 
 import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
@@ -18,11 +21,11 @@ import type { LicenseWorkerEnv } from "#env"
 import { newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
 import type { Ledger } from "#ledger/client"
 import {
-	createLicense,
+	createLicenseIfAbsent,
 	findLicense,
 	findLicenseBySubscription,
 	findToken,
-	insertToken,
+	insertTokenIfAbsent,
 	setEmailState,
 	setPlanCode,
 } from "#ledger/licenses"
@@ -46,9 +49,9 @@ export type FulfilOutcome =
 	| { outcome: "refused"; reason: string }
 
 /**
- * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after.
- * Mints no token; `invoice.paid` does. The refresh secret is stored by digest and held in plaintext only until the
- * first claim reads it.
+ * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after,
+ * and read back all the same when a concurrent caller's row landed first. Mints no token; `invoice.paid` does. The
+ * refresh secret is stored by digest and held in plaintext only until the first claim reads it.
  */
 export async function ensureLicenseFromCheckoutSession(
 	env: LicenseWorkerEnv,
@@ -88,7 +91,7 @@ export async function ensureLicenseFromCheckoutSession(
 	const plan = priceID ? planForPrice(env, priceID) : undefined
 	const refreshSecret = newRefreshSecret()
 
-	await createLicense(deps.ledger, {
+	await createLicenseIfAbsent(deps.ledger, {
 		lid: newLicenseID(),
 		subscription_id: subscriptionID,
 		customer_id: customerID,
@@ -120,18 +123,7 @@ export async function fulfilInvoice(
 
 	const existingToken = await findToken(deps.ledger, invoiceID)
 
-	if (existingToken) {
-		// A crash between the insert and the send leaves the email pending; the retry that finds the token sends it.
-		if (existingToken.email_state !== "sent") {
-			const holder = await findLicense(deps.ledger, existingToken.lid)
-
-			if (holder) {
-				await sendTokenEmail(deps, holder, existingToken)
-			}
-		}
-
-		return { outcome: "already_minted", lid: existingToken.lid, invoiceID }
-	}
+	if (existingToken) return alreadyMinted(deps, existingToken)
 
 	const invoice = await deps.stripe.invoices.retrieve(invoiceID)
 
@@ -208,7 +200,7 @@ export async function fulfilInvoice(
 
 	const token = await encodeLicenseKey(payload, env.LICENSE_SIGNING_KEY_PEM)
 
-	await insertToken(deps.ledger, {
+	const inserted = await insertTokenIfAbsent(deps.ledger, {
 		invoice_id: invoiceID,
 		lid: license.lid,
 		issued,
@@ -217,9 +209,34 @@ export async function fulfilInvoice(
 		token,
 	})
 
+	if (inserted === "present") {
+		// Another mint for this invoice landed between the read above and this insert; its row is the token.
+		const winner = await findToken(deps.ledger, invoiceID)
+
+		if (!winner) throw new Error(`token for ${invoiceID} vanished after a concurrent insert`)
+
+		return alreadyMinted(deps, winner)
+	}
+
 	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires })
 
 	return { outcome: "minted", lid: license.lid, invoiceID }
+}
+
+/**
+ * The answer for an invoice whose token exists. A crash between the insert and the send leaves the email pending, and
+ * the retry that finds the token sends it.
+ */
+async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): Promise<FulfilOutcome> {
+	if (token.email_state !== "sent") {
+		const holder = await findLicense(deps.ledger, token.lid)
+
+		if (holder) {
+			await sendTokenEmail(deps, holder, token)
+		}
+	}
+
+	return { outcome: "already_minted", lid: token.lid, invoiceID: token.invoice_id }
 }
 
 /**
