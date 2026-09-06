@@ -41,6 +41,10 @@ metadata, the success URL, consent collection), the Customer Portal's features a
 what is missing, idempotently, and writes the Price ids into `wrangler.toml` and, live, the Payment Links into
 `docs/src/license/shop.ts`. The webhook signing secret is answered once and written nowhere. `mwops` is now a view over
 three registries. New env: `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, so a live write is a deliberate act with its own key.
+`mwops shop rehearse` and `mwops shop rehearse-renewal` run the renewal path against a deployed worker in test mode: a
+customer on a Stripe test clock, a Checkout Session carrying the same collection as the Payment Link
+(`checkoutCollection`, one function for both), the clock advanced past the period end, and both tokens' dates reported
+with whether the renewed expiry is the new period end plus the grace.
 
 ### Added — self-service license: the site and the CLI
 

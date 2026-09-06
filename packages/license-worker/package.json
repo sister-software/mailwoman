@@ -102,6 +102,11 @@
 			"default": "./out/shop/provision.js",
 			"types": "./out/shop/provision.d.ts"
 		},
+		"./shop/rehearse": {
+			"node": "./lib/shop/rehearse.ts",
+			"default": "./out/shop/rehearse.js",
+			"types": "./out/shop/rehearse.d.ts"
+		},
 		"./shop/wrangler-vars": {
 			"node": "./lib/shop/wrangler-vars.ts",
 			"default": "./out/shop/wrangler-vars.js",

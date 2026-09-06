@@ -92,6 +92,19 @@ The same steps with `--env sandbox` stand up the sandbox on a key pair generated
 `/health` reads `signing: ok`, and a Payment Link in Stripe test mode runs the whole path: checkout, webhook, claim,
 email, refresh. Verify a sandbox token with `verifyLicenseKey` against the sandbox public key; no release trusts it.
 
+The renewal path needs a customer on a Stripe test clock, which a Payment Link cannot create, so the rehearsal builds
+the Checkout Session itself with the same collection the Link carries (`checkoutCollection` in `lib/shop/catalog.ts`):
+
+```bash
+yarn mwops shop rehearse                                  # prints the session id and the URL; pay it with card 4242 4242 4242 4242
+yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev
+```
+
+The second command waits for the deployed worker to issue the first token, advances the clock 32 days, waits for Stripe
+to pay the renewal and deliver its `invoice.paid`, and reports both tokens' dates with `agrees: true` when the renewed
+expiry is the new period end plus the grace. Nothing is replayed or signed by hand; a wait that gives up names Stripe's
+delivery to the worker as the first thing to check.
+
 ## The kill switch
 
 `ISSUANCE_ENABLED = "false"` and a redeploy. The webhook keeps answering 200 and recording events, `invoice.paid`

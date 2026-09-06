@@ -15,7 +15,8 @@ import type Stripe from "stripe"
 import {
 	AGREEMENT_METADATA_KEY,
 	AGREEMENT_VERSION,
-	LICENSEE_FIELD_KEY,
+	checkoutCollection,
+	SHOP_MARK,
 	SHOP_METADATA_KEY,
 	SHOP_PLANS,
 	SHOP_PRODUCT,
@@ -66,8 +67,6 @@ export interface ProvisionReport {
 	portal: ProvisionedObject
 	webhook?: ProvisionedObject & { url: string; secret?: string }
 }
-
-const SHOP_MARK = "commercial-license"
 
 function planRecord<T>(build: (plan: ShopPlan) => T): Record<ShopPlan["code"], T> {
 	return Object.fromEntries(SHOP_PLANS.map((plan) => [plan.code, build(plan)])) as Record<ShopPlan["code"], T>
@@ -149,12 +148,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 			const created = await stripe.paymentLinks.create({
 				line_items: [{ price: priceID, quantity: 1 }],
 				after_completion: { type: "redirect", redirect: { url: urls.successURL } },
-				custom_fields: [
-					{ key: LICENSEE_FIELD_KEY, label: { type: "custom", custom: "Licensee legal name" }, type: "text" },
-				],
-				billing_address_collection: "required",
-				consent_collection: { terms_of_service: "required" },
-				metadata: { [SHOP_METADATA_KEY]: SHOP_MARK, plan_code: plan.code, [AGREEMENT_METADATA_KEY]: AGREEMENT_VERSION },
+				...checkoutCollection(plan.code),
 			})
 
 			paymentLinks[plan.code] = { id: created.id, url: created.url, action: "created", consent: true }

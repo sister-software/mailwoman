@@ -91,7 +91,7 @@ MAILWOMAN_LICENSE_URL=https://mailwoman-license-sandbox.<account>.workers.dev no
 Expected: `status: unknown_key` (the shipped register does not carry `v9-ac522cf3`) and `license lic_…: active`. That pair of lines is the spec's demonstration that trust is release-bound. Then, in a script, `verifyLicenseKey(token, { trustedKeys: { "v9-ac522cf3": <sandbox public PEM> } })` reads `valid` with `expires` = the period end plus 14 days.
 
 - [ ] **Step 3:** `mailwoman license refresh --lid lic_… --secret …` against the sandbox reads `Not written: this release does not trust key id v9-ac522cf3`, exit 1: the refusal is the CLI holding the same line.
-- [ ] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates; a full refund in the dashboard flips `/v1/license-status` to `revoked`; the reconciliation cron's log names the ids only.
+- [ ] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates: `yarn mwops shop rehearse` prints a Checkout Session for a test-clock customer, pay it with the test card, then `yarn mwops shop rehearse-renewal --session cs_test_… --worker-origin https://mailwoman-license-sandbox.<account>.workers.dev` advances the clock and reports both tokens' dates with `agrees: true`. A full refund in the dashboard flips `/v1/license-status` to `revoked`; the reconciliation cron's log names the ids only.
 - [ ] **Step 5:** the kill-switch drill: `ISSUANCE_ENABLED = "false"`, redeploy, pay again; the webhook answers 200 with `refused: issuance is disabled`, the claim reads `pending`, refresh still answers; flip back, and the next reconciliation mints the missed invoice.
 
 #### Receipt: the local run, 2026-09-06
