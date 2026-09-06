@@ -11,8 +11,8 @@
 import type { Generated, Insertable, Selectable } from "kysely"
 
 /**
- * The four states a license moves through. `review` is a partial refund awaiting an operator; it reads `active` to the
- * public status route because the customer paid.
+ * The four states a license moves through, as the `license_state` column's check constraint spells them. What moves a
+ * license between them is `policy.ts`.
  */
 export const LicenseState = {
 	Active: "active",
@@ -22,16 +22,6 @@ export const LicenseState = {
 } as const
 
 export type LicenseState = (typeof LicenseState)[keyof typeof LicenseState]
-
-export type PublicLicenseStatus = "active" | "lapsed" | "revoked"
-
-/**
- * The word the public routes answer for a state. `review` reads `active`: the customer paid, and the question is the
- * operator's.
- */
-export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
-	return state === LicenseState.Review ? LicenseState.Active : state
-}
 
 export type EmailState = "pending" | "sent" | "failed"
 

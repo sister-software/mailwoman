@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   One handler per accepted event type. Every handler re-reads state from Stripe by id or acts only on the ledger; none
- *   reads an entitlement from the event body. Each is safe to run twice: the mint answers `already_minted`, the row
- *   creation finds the row, and the state writes are idempotent.
+ *   reads an entitlement from the event body, and none decides a state: each hands what it observed to `policy.ts` and
+ *   writes the answer. Each is safe to run twice: the mint answers `already_minted`, the row creation finds the row,
+ *   and the state writes are idempotent.
  */
 
 import type Stripe from "stripe"
@@ -14,7 +15,7 @@ import { todayUTC } from "#dates"
 import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies, fulfilInvoice } from "#fulfil"
 import { currentToken, findLicenseBySubscription, findTokenLid, setLicenseState } from "#ledger/licenses"
-import { LicenseState } from "#ledger/schema"
+import { licenseStateAfterDispute, licenseStateAfterRefund, licenseStateAfterSubscription } from "#policy"
 import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
 
 /**
@@ -32,30 +33,6 @@ async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promis
 	})
 
 	return idOf(payments.data[0]?.invoice)
-}
-
-/**
- * What a subscription's current state says the license state should be. A revoked license stays revoked whatever the
- * subscription does; a `review` license stays under review. A subscription that has ended lapses the license only once
- * the current token's date has passed: the token carries the paid period plus its grace, and online status must not
- * refuse a license whose offline token is still good. Until then the license stays active and reconciliation lapses it
- * on the day.
- */
-export function licenseStateFromSubscription(
-	current: LicenseState,
-	subscription: Pick<Stripe.Subscription, "status">,
-	options: { deleted?: boolean; graceUntil?: string; today: string }
-): LicenseState {
-	if (current === LicenseState.Revoked || current === LicenseState.Review) return current
-
-	const ended = options.deleted === true || subscription.status === "canceled" || subscription.status === "unpaid"
-
-	if (!ended) return LicenseState.Active
-
-	// Calendar dates compare as strings.
-	return options.graceUntil !== undefined && options.today <= options.graceUntil
-		? LicenseState.Active
-		: LicenseState.Lapsed
 }
 
 export async function handleStripeEvent(
@@ -100,7 +77,7 @@ export async function handleStripeEvent(
 
 			const token = await currentToken(deps.ledger, license.lid)
 
-			const next = licenseStateFromSubscription(license.license_state, subscription, {
+			const next = licenseStateAfterSubscription(license.license_state, subscription, {
 				deleted: event.type === "customer.subscription.deleted",
 				graceUntil: token?.expires,
 				today: todayUTC(deps.now),
@@ -123,13 +100,13 @@ export async function handleStripeEvent(
 
 			if (!lid) return { handled: "no license for charge" }
 
-			const partial = event.type === "charge.refunded" && charge.amount_refunded < charge.amount
+			const next = event.type === "charge.refunded" ? licenseStateAfterRefund(charge) : licenseStateAfterDispute()
 
-			await setLicenseState(deps.ledger, lid, partial ? LicenseState.Review : LicenseState.Revoked, {
+			await setLicenseState(deps.ledger, lid, next, {
 				paymentState: event.type === "charge.refunded" ? "refunded" : "disputed",
 			})
 
-			return { handled: partial ? "partial refund: review" : "revoked" }
+			return { handled: next === "review" ? "partial refund: review" : "revoked" }
 		}
 
 		default:

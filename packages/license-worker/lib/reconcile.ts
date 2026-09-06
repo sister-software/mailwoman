@@ -32,7 +32,7 @@ import {
 	tokensAwaitingEmail,
 } from "#ledger/licenses"
 import { type LicenseRow, LicenseState, type LicenseTokenRow } from "#ledger/schema"
-import { licenseStateFromSubscription } from "#stripe/handlers"
+import { licenseStateAfterSubscription } from "#policy"
 
 export type ReconcileStage = "mint" | "email" | "state"
 
@@ -253,7 +253,7 @@ async function stateStripeSays(
 		}
 
 		return {
-			state: licenseStateFromSubscription(license.license_state, subscription, { graceUntil: token?.expires, today }),
+			state: licenseStateAfterSubscription(license.license_state, subscription, { graceUntil: token?.expires, today }),
 		}
 	}
 
@@ -269,6 +269,6 @@ async function stateStripeSays(
 	if (dispute?.status !== "won") return undefined
 
 	return {
-		state: licenseStateFromSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
+		state: licenseStateAfterSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
 	}
 }

@@ -98,6 +98,11 @@
 			"default": "./out/ledger/schema.js",
 			"types": "./out/ledger/schema.d.ts"
 		},
+		"./policy": {
+			"node": "./lib/policy.ts",
+			"default": "./out/policy.js",
+			"types": "./out/policy.d.ts"
+		},
 		"./plans": {
 			"node": "./lib/plans.ts",
 			"default": "./out/plans.js",
