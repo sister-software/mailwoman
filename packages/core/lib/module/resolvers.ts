@@ -77,9 +77,4 @@ export function tryResolvePackageDirectory<Name extends string = string>(package
 	}
 }
 
-/**
- * A CommonJS `require` bound to a module's location, for the resolution shapes only `require.resolve` answers — a
- * package's `main` for a bundler alias, a file under a package that declares no `exports` — and for the one loader (the
- * Docusaurus config) that runs where `import.meta` does not exist.
- */
 export { createRequire } from "node:module"

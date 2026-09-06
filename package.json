@@ -135,7 +135,7 @@
 		"typecheck:docs": "tsc -p docs/tsconfig.json --noEmit",
 		"typecheck:tests": "yarn mwops health typecheck-tests",
 		"lint:prose:vocab": "yarn workspace @mailwoman/docs lint:prose:vocab",
-		"lint:prose:code": "node_modules/@vvago/vale/bin/vale --config docs/.vale-code.ini $(git ls-files '*.ts' '*.tsx' 'corpus-python/*.py')"
+		"lint:prose:code": "vale --config docs/.vale-code.ini $(git ls-files '*.ts' '*.tsx' 'corpus-python/*.py')"
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "^1.5.5-r.4",
@@ -148,6 +148,7 @@
 		"@types/react": "^19.2.18",
 		"@types/regenerate": "^1.4.3",
 		"@vitest/coverage-v8": "4.1.11",
+		"@vvago/vale": "^3.20.0",
 		"dependency-cruiser": "^18.2.0",
 		"husky": "^9.1.7",
 		"jscpd": "^5.1.2",

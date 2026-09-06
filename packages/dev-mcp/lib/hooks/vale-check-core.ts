@@ -21,9 +21,9 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { createRequire } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import { valeCommand } from "@mailwoman/core/vale"
 
 const MAX_MATCHES_PER_RULE = 8
 
@@ -40,14 +40,13 @@ export interface ProseVerdict {
 	text: string
 }
 
-export function lintReply(reply: string): ValeAlert[] {
-	const require = createRequire(import.meta.url)
-	const valeBin = require.resolve("@vvago/vale/bin/vale")
+export async function lintReply(reply: string): Promise<ValeAlert[]> {
+	const vale = await valeCommand(import.meta.url)
 	const configPath = repoRootPath("docs", ".vale-chat.ini")
 
 	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal —
 	// an unparseable stdout is the failure, and that reads as "no findings" per the silence contract.
-	const result = spawnProcessSync(valeBin, ["--config", configPath, "--output=JSON", "--ext=.md"], {
+	const result = spawnProcessSync(vale.file, [...vale.argv, "--config", configPath, "--output=JSON", "--ext=.md"], {
 		input: reply,
 		encoding: "utf8",
 		timeout: 20_000,

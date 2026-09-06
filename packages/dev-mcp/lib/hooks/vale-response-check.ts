@@ -75,7 +75,8 @@ async function main(): Promise<void> {
 
 	if (!reply) return
 
-	const verdict = renderVerdict(lintReply(reply))
+	const lintedReply = await lintReply(reply)
+	const verdict = renderVerdict(lintedReply)
 
 	if (!verdict) return
 
@@ -88,8 +89,4 @@ async function main(): Promise<void> {
 	process.stdout.write(JSON.stringify({ systemMessage: verdict.text }))
 }
 
-try {
-	await main()
-} catch {
-	// Silence is the contract. See the header.
-}
+await main().catch(() => void 0)

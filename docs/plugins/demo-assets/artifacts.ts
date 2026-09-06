@@ -8,37 +8,21 @@
  *
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
  *
- *   WHY `createRequire` AND NOT `import.meta.resolve` (2026-08-05 triage). Two reasons, and the
- *   second is the one that would bite.
- *
- *   What the callers want back is a package DIRECTORY, which `import.meta.resolve` does not return.
- *   It answers "which ONE file does this specifier import" — precisely the answer these aliases
- *   exist to OVERRIDE. They point webpack at source `.ts` rather than the `out/` JS the exports
- *   map's `default` condition selects, and at `core/resolver/types` rather than the
- *   `@mailwoman/resolver` barrel that re-exports it, so resolving them WITH the resolver is
- *   circular. The package-aware helpers therefore resolve source entries directly and keep package
- *   roots out of webpack-policy callers.
- *
- *   And this file does not run under plain Node; it runs under Docusaurus's config loader, where
- *   `import.meta.resolve` is not something to assume. `docs` declares no `"type": "module"`, and
- *   the sibling `plugin.ts` calls a BARE `require.resolve` (no `createRequire`) inside its
- *   `NormalModuleReplacementPlugin` hook — which only works if the loader hands these modules a CJS
- *   `require`, and CJS has no `import.meta` at all. `createRequire(import.meta.url)` survives that
- *   because transpilers rewrite `import.meta.url`; `import.meta.resolve` has no such rewrite.
- *   (Contrast `docs/scripts/generate-cli-reference.ts`, which the `prebuild` runs as `node <file>`
- *   — real ESM, and it uses `import.meta.resolve`.)
- *
- *   So the one sub-site here that IS a plain resolution — the `@mailwoman/codex` loop below, which
- *   deliberately asks the resolver instead of hand-deriving paths — stays on `require.resolve` too.
- *   Only a docs BUILD can verify a change to that, never a unit test.
+ *   Everything here resolves through `@mailwoman/core/module/resolve-from`, keyed on this file's `import.meta.url`,
+ *   and nothing here touches `import.meta.resolve`: this file runs under Docusaurus's config loader, whose CommonJS
+ *   transform rewrites `import.meta.url` and cannot parse `import.meta.resolve`, in this file or in anything it
+ *   imports. Only a docs BUILD can verify a change to that, never a unit test.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
+import {
+	resolvePackageJSON,
+	resolvePackagePathFrom,
+	tryResolvePackageSpecifier,
+} from "@mailwoman/core/module/resolve-from"
 import { basename, dirname, resolvePath } from "path-ts"
-
-import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolution.ts"
 
 //#region Model artifact staging
 
@@ -83,10 +67,7 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	let distDir: string
 
 	try {
-		const entry = resolvePackageSpecifier("sql.js-httpvfs/dist/index.js")
-
-		if (!entry) throw new Error("sql.js-httpvfs is not resolvable")
-		distDir = dirname(entry)
+		distDir = dirname(resolvePackageJSON(import.meta.url, "sql.js-httpvfs"))
 	} catch {
 		console.warn("[demo-assets] sql.js-httpvfs not resolvable — HTTP-VFS assets not staged")
 
@@ -157,7 +138,7 @@ export function relativeImportSpecifiers(source: string): string[] {
  * @param destDir - E.g. static/mailwoman/maplibre
  */
 export async function stageMapLibreWorker(destDir: string): Promise<string[]> {
-	const workerPath = resolvePackageSpecifier("maplibre-gl/dist/maplibre-gl-worker.mjs")
+	const workerPath = tryResolvePackageSpecifier(import.meta.url, "maplibre-gl", "dist/maplibre-gl-worker.mjs")
 
 	if (!workerPath) {
 		console.warn("[demo-assets] maplibre-gl worker not resolvable — MapLibre worker not staged")
@@ -225,13 +206,7 @@ export async function stagePairIndexes(destDir: string): Promise<boolean> {
 	let copied = 0
 
 	for (const { pkg, file } of sources) {
-		const src = resolvePackagePath(pkg, file)
-
-		if (!src) {
-			console.warn(`[demo-assets] pair-index: ${pkg} not resolvable — ${file} not staged`)
-
-			continue
-		}
+		const src = resolvePackagePathFrom(import.meta.url, pkg, file)
 
 		if (!(await pathExists(src))) {
 			console.warn(
