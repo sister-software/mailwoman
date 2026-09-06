@@ -84,7 +84,7 @@ event never arrived, was standing.
 answer promises; Ed25519 and the key-id digest run on `crypto.subtle`, so the same module serves Node, a Cloudflare
 Worker and a browser. Tokens are unchanged: a key signed by the previous implementation verifies, and the same key and
 payload sign to the same bytes. The payload gains two optional fields a self-service issuer sets, `lid` and
-`agreement`. `TRUSTED_LICENSE_SIGNING_KEYS` is replaced by the typed register in `@mailwoman/core/license/register`
+`agreement`. The register gains a second active key, `v9-e3d8105a`, the production license worker's; a release carrying it is what lets a purchased key verify. `TRUSTED_LICENSE_SIGNING_KEYS` is replaced by the typed register in `@mailwoman/core/license/register`
 (`LICENSE_SIGNING_KEYS`, `trustedLicenseSigningKeys()`, `publishedLicenseKeys()`), which also produces the well-known
 file; `mailwoman license register --write` regenerates it and the `license-register` health check refuses drift. The
 `./license/key` and `./license/register` subpaths are the Worker-safe imports, held by a bundle test under the

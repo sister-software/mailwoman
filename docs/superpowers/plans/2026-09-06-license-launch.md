@@ -10,17 +10,17 @@
 
 ## Who holds what
 
-| Prerequisite                                                    | Owner                                                                                                           | State on 2026-09-06                                                       |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Clickwrap terms page at `/license/terms/commercial-2026-10`     | operator (legal text)                                                                                           | not written                                                               |
-| Terms-of-service URL under the Stripe account's public details  | operator (dashboard, no API)                                                                                    | unset; test-mode Payment Links were still created with consent collection |
-| Stripe test-mode objects                                        | done: `mwops shop provision --mode test --apply` created six, a second run reads `exists`                       | done                                                                      |
-| Stripe live-mode objects                                        | `mwops shop provision --mode live --apply`, needs `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`                            | waiting on the key                                                        |
-| Cloudflare token with Workers Scripts, D1 and rate-limit scopes | done: `CF_AUTH_TOKEN` in `.env` lists Workers and D1; the sandbox deployed with it                              | done                                                                      |
-| Sandbox signing pair                                            | done: `~/.config/mailwoman-sandbox/license/signing-key.pem`, kid `v9-ac522cf3`, in `wrangler.toml` sandbox vars | done                                                                      |
-| Production signing pair, registered `active`, released          | operator generates offline; the register entry and release are code steps below                                 | not started                                                               |
-| Transactional email account (Resend) and its key                | operator                                                                                                        | not started                                                               |
-| Stripe merchant identity matches the licensor in the terms      | operator                                                                                                        | unknown                                                                   |
+| Prerequisite                                                    | Owner                                                                                                             | State on 2026-09-06                                                       |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Clickwrap terms page at `/license/terms/commercial-2026-10`     | operator (legal text)                                                                                             | not written                                                               |
+| Terms-of-service URL under the Stripe account's public details  | operator (dashboard, no API)                                                                                      | unset; test-mode Payment Links were still created with consent collection |
+| Stripe test-mode objects                                        | done: `mwops shop provision --mode test --apply` created six, a second run reads `exists`                         | done                                                                      |
+| Stripe live-mode objects                                        | `mwops shop provision --mode live --apply`, needs `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`                              | waiting on the key                                                        |
+| Cloudflare token with Workers Scripts, D1 and rate-limit scopes | done: `CF_AUTH_TOKEN` in `.env` lists Workers and D1; the sandbox deployed with it                                | done                                                                      |
+| Sandbox signing pair                                            | done: `~/.config/mailwoman-sandbox/license/signing-key.pem`, kid `v9-ac522cf3`, in `wrangler.toml` sandbox vars   | done                                                                      |
+| Production signing pair, registered `active`, released          | pair generated by the operator; `v9-e3d8105a` registered `active` and in the production vars; the release follows | registered, unreleased                                                    |
+| Transactional email account (Resend) and its key                | operator                                                                                                          | not started                                                               |
+| Stripe merchant identity matches the licensor in the terms      | operator                                                                                                          | unknown                                                                   |
 
 ## Global Constraints
 
@@ -158,8 +158,8 @@ owns that setting, so Task 7 confirms it does not refuse the CLI.
 
 **Files:** `packages/core/lib/license/register.ts`, `docs/static/.well-known/mailwoman/license-keys.json`
 
-- [ ] **Step 1 (operator):** generate the pair offline with `mailwoman license keygen` under a config root that is not the lab's, and keep the private half off every machine but the one that runs `wrangler secret put`.
-- [ ] **Step 2:** add the public half to `LICENSE_SIGNING_KEYS` as `active`; run `mailwoman license register --write`; the `license-register` health check holds the well-known file to the register. Open the PR; merge; publish the release (`RELEASING.md`).
+- [x] **Step 1 (operator):** generate the pair offline with `mailwoman license keygen` under a config root that is not the lab's, and keep the private half off every machine but the one that runs `wrangler secret put`.
+- [x] **Step 2:** add the public half to `LICENSE_SIGNING_KEYS` as `active`; run `mailwoman license register --write`; the `license-register` health check holds the well-known file to the register. Open the PR; merge; publish the release (`RELEASING.md`).
 - [ ] **Step 3:** confirm the published tarball and `https://mailwoman.ai/.well-known/mailwoman/license-keys.json` both carry the new kid.
 
 ### Task 5 (operator): terms, merchant identity, live Stripe
