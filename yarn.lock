@@ -5738,6 +5738,7 @@ __metadata:
     "@types/react": "npm:^19.2.18"
     "@types/regenerate": "npm:^1.4.3"
     "@vitest/coverage-v8": "npm:4.1.11"
+    "@vvago/vale": "npm:^3.20.0"
     dependency-cruiser: "npm:^18.2.0"
     husky: "npm:^9.1.7"
     jscpd: "npm:^5.1.2"

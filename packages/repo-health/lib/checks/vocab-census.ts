@@ -16,8 +16,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { isProcessError, runFile } from "@mailwoman/core/process"
+import { valeCommand } from "@mailwoman/core/vale"
 import { relative, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -217,7 +217,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	// needs one of them to trip so its positive control still means something. `@vvago/vale` is this
 	// package's devDependency for exactly this line; knip cannot see a specifier passed to a resolver,
 	// so `knip.json` names the dependency as used.
-	const vale = resolveModulePath("@vvago/vale/bin/vale")
+	const vale = valeCommand(import.meta.url)
 	const config = resolvePath(root, "docs/.vale-code-census.ini")
 
 	// Run from the REPO ROOT, because the paths are repo-relative. Run it from anywhere else and Vale
@@ -225,7 +225,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	// That is why the positive control below is not optional.
 	// Vale exits non-zero when it reports alerts, which is this command's expected outcome. Only a
 	// process error carries the output; a spawn failure has none and must not read as zero hits.
-	const result = await runFile(vale, ["--config", config, "--output", "line", ...files], {
+	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,
 	}).catch((error: unknown) => {
