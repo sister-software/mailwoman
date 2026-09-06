@@ -54,6 +54,15 @@ MCowBQYDK2VwAyEAwPWLp1gjTRCSKjPqrS5q1jw5WP7SlofcVap390Z2Te4=
 		majorVersions: [9],
 		status: LicenseKeyStatus.Active,
 	},
+	{
+		kid: "v9-e3d8105a",
+		publicKeyPEM: `-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAv0e7Yn028V/BS2AT0tW5a/reOLpWnGiaOxwoscegolQ=
+-----END PUBLIC KEY-----
+`,
+		majorVersions: [9],
+		status: LicenseKeyStatus.Active,
+	},
 ]
 
 /**

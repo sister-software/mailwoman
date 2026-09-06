@@ -8,6 +8,13 @@
 			"publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwPWLp1gjTRCSKjPqrS5q1jw5WP7SlofcVap390Z2Te4=\n-----END PUBLIC KEY-----\n",
 			"majorVersions": [9],
 			"status": "active"
+		},
+		{
+			"kid": "v9-e3d8105a",
+			"algorithm": "Ed25519",
+			"publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAv0e7Yn028V/BS2AT0tW5a/reOLpWnGiaOxwoscegolQ=\n-----END PUBLIC KEY-----\n",
+			"majorVersions": [9],
+			"status": "active"
 		}
 	]
 }
