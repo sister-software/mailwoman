@@ -14,10 +14,16 @@
  *   `src/`). A pattern target is satisfied when the directory before its `*` holds at least one tracked file. The one
  *   pattern allowed to map onto an empty tree is `imports["#*"]`: every workspace carries it by convention, the data-only
  *   weights overlays included, and those compile nothing.
+ *
+ *   A tracked source is not yet an emitted target. A workspace `tsconfig.json` whose `exclude` names the source (or
+ *   whose `include` misses it) makes `tsc -b` skip it, and the tarball then lacks the `out/` file the manifest promises
+ *   while every tracked-file reading passes — which is what the release preflight's tarball audit found on a test-kit
+ *   subpath. So a compiled target is also read against the workspace's own `include` / `exclude` globs.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePath } from "path-ts"
+import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
@@ -33,6 +39,73 @@ interface WorkspaceManifest {
 }
 
 const CONVENTIONAL_EMPTY_PATTERNS = new Set(["#*"])
+
+/**
+ * The half of a workspace `tsconfig.json` that decides whether a tracked source is emitted: the `include` and `exclude`
+ * globs as written. `extends` is not followed — every emitting workspace states both locally — and a config that states
+ * neither makes no claim, so it admits every source.
+ */
+export interface CompileScope {
+	include?: readonly string[]
+	exclude?: readonly string[]
+}
+
+/**
+ * A tsconfig glob as a matcher over workspace-relative paths. `**` spans directories, `*` stays inside one segment, and
+ * an entry with no wildcard names a path and everything under it (`out`, `node_modules`, `.docusaurus`).
+ */
+export function tsconfigGlob(glob: string): RegExp {
+	const normalized = glob.replace(/^\.\//u, "").replace(/\/$/u, "")
+
+	const body = normalized.replaceAll(/\*\*\/|\*\*|\*|[.+^${}()|[\]\\]/gu, (token) => {
+		switch (token) {
+			case "**/":
+				return "(?:.*/)?"
+			case "**":
+				return ".*"
+			case "*":
+				return "[^/]*"
+			default:
+				return `\\${token}`
+		}
+	})
+
+	return normalized.includes("*") ? new RegExp(`^${body}$`, "u") : new RegExp(`^${body}(?:/.*)?$`, "u")
+}
+
+/**
+ * Whether `tsc` emits `path` (workspace-relative) under `scope`: inside some `include` glob when the config states any,
+ * and outside every `exclude` glob.
+ */
+export function compilerAdmits(scope: CompileScope, path: string): boolean {
+	const included = !scope.include || scope.include.some((glob) => tsconfigGlob(glob).test(path))
+	const excluded = scope.exclude?.some((glob) => tsconfigGlob(glob).test(path)) ?? false
+
+	return included && !excluded
+}
+
+/**
+ * The workspace's compile scope, or an empty one (admits everything) when it carries no `tsconfig.json`. Read through
+ * TypeScript's own JSONC parser: the configs carry line comments.
+ */
+export async function readCompileScope(repoRoot: string, workspace: string): Promise<CompileScope> {
+	const configPath = resolvePath(repoRoot, workspace, "tsconfig.json")
+
+	if (!(await pathExists(configPath))) return {}
+
+	const { config } = ts.parseConfigFileTextToJson(configPath, await readLocalTextFile(configPath))
+	const scope: CompileScope = {}
+
+	if (Array.isArray(config?.include)) {
+		scope.include = config.include as string[]
+	}
+
+	if (Array.isArray(config?.exclude)) {
+		scope.exclude = config.exclude as string[]
+	}
+
+	return scope
+}
 
 function* targetStrings(value: ExportValue | undefined): Generator<string> {
 	if (typeof value === "string") {
@@ -78,7 +151,8 @@ export function patternDirectory(workspace: string, target: string): string {
 }
 
 /**
- * The diagnostic one target earns, or null when a tracked file satisfies it.
+ * The diagnostic one target earns, or null when a tracked file satisfies it — and, for a target under `out/`, when the
+ * workspace's compile scope emits that file.
  */
 function judgeTarget(
 	workspace: string,
@@ -86,31 +160,46 @@ function judgeTarget(
 	subpath: string,
 	target: string,
 	trackedFiles: readonly string[],
-	tracked: ReadonlySet<string>
+	tracked: ReadonlySet<string>,
+	scope: CompileScope
 ): Diagnostic | null {
 	const file = `${workspace}/package.json`
+	const compiled = target.startsWith("./out/")
+	const emitted = (path: string): boolean => !compiled || compilerAdmits(scope, path.slice(workspace.length + 1))
 
 	if (target.includes("*")) {
 		if (CONVENTIONAL_EMPTY_PATTERNS.has(subpath)) return null
 		const directory = patternDirectory(workspace, target)
+		const under = trackedFiles.filter((path) => path.startsWith(directory))
 
-		if (trackedFiles.some((path) => path.startsWith(directory))) return null
+		if (under.some(emitted)) return null
 
 		return {
 			severity: DiagnosticSeverity.Error,
 			file,
-			message: `${field}["${subpath}"] → ${target}: no tracked file under ${directory}`,
+			message: under.length
+				? `${field}["${subpath}"] → ${target}: ${workspace}/tsconfig.json compiles none of the ${under.length} tracked files under ${directory}, so nothing emits the target`
+				: `${field}["${subpath}"] → ${target}: no tracked file under ${directory}`,
 		}
 	}
 
 	const candidates = sourceCandidates(workspace, target)
+	const source = candidates.find((candidate) => tracked.has(candidate))
 
-	if (candidates.some((candidate) => tracked.has(candidate))) return null
+	if (!source) {
+		return {
+			severity: DiagnosticSeverity.Error,
+			file,
+			message: `${field}["${subpath}"] → ${target}: none of ${candidates.join(", ")} is tracked`,
+		}
+	}
+
+	if (emitted(source)) return null
 
 	return {
 		severity: DiagnosticSeverity.Error,
 		file,
-		message: `${field}["${subpath}"] → ${target}: none of ${candidates.join(", ")} is tracked`,
+		message: `${field}["${subpath}"] → ${target}: ${source} is tracked, but ${workspace}/tsconfig.json does not compile it (include/exclude), so nothing emits the target`,
 	}
 }
 
@@ -143,12 +232,13 @@ export const manifestTargetsCheck: RepoCheck = {
 
 		for (const workspace of rootManifest.workspaces) {
 			const manifest = await readLocalJSONFile<WorkspaceManifest>(resolvePath(root, `${workspace}/package.json`))
+			const scope = await readCompileScope(root, workspace)
 
 			for (const [field, map] of manifestMaps(manifest)) {
 				for (const [subpath, value] of Object.entries(map)) {
 					for (const target of targetStrings(value)) {
 						if (!target.startsWith("./")) continue
-						const diagnostic = judgeTarget(workspace, field, subpath, target, context.trackedFiles, tracked)
+						const diagnostic = judgeTarget(workspace, field, subpath, target, context.trackedFiles, tracked, scope)
 
 						if (diagnostic) {
 							diagnostics.push(diagnostic)

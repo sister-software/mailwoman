@@ -22,7 +22,6 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!lib/test-kit/**/*",
 		"!test/**"
 	],
 	"type": "module",
