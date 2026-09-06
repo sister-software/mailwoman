@@ -1,6 +1,6 @@
 # Korean under the CJK package — corpus, labels, board (proposal)
 
-Status: proposal, unscheduled. Written 2026-09-06 after the JP served path resolved (#2164 step 6, #2175), so that
+Status: proposal; the corpus, the overlay and the launch are BUILT AND STAGED (§8), the launch itself unscheduled. Written 2026-09-06 after the JP served path resolved (#2164 step 6, #2175), so that
 the Korean decision is taken on measured supply rather than the 2026-07 triage claim ("KR: no adopted open path",
 `docs/engineering/SCOPE.mdx`). Every number below was read on the lab data root on this date.
 
@@ -109,3 +109,25 @@ one card), with the KR attribution line in the card.
 The KR postcode extract (34,160 codes with entrance points is a per-country postcode database waiting to be built);
 the street tier for KR (the entrance points are rooftop-grade and would make an address-point database, licensed
 KOGL); the FST autocomplete tier (`fst-ko-kr.bin` is built, #1493).
+
+## 8. State
+
+Built on the lab data root and staged to R2 (2026-09-06), so the probe is one command:
+
+| Artifact                                                                        | Value                                                                                                                         |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `corpus/versioned/v8-kr-2026-09-06` (`build_kr_slice.py`, seed 42)              | 2,000,000 train / 20,000 val / 20,000 board rows; 27 held-out 시군구; 0 rows dropped of 6,173,505; BIO coverage 0.962; 132 MB |
+| registers landed (train)                                                        | official 0.35, no_dong 0.25, short_region 0.15, postcode_first 0.15, unspaced 0.10 — every row renders every register         |
+| `corpus/versioned/v8-cjk-kr-2026-09-06` (`build_cjk_overlay.py --extra-corpus`) | JP kana parts + CN parts + KR parts; vocabulary 3,165 (2,239 JP + 842 KR)                                                     |
+| `kr-sigungu-centroids.json`                                                     | 250 (region, 시군구) centroids from every source row                                                                          |
+| the untrained base (`v8-cjk-kana`) on the KR board                              | 0.0000 on every tag but `house_number` (0.0428); 0 of 20,000 @15 km                                                           |
+| configs                                                                         | `v8-cjk-kr-probe.yaml` (2,000 steps), `v8-cjk-kr.yaml` (24,000), pre-registered in their headers                              |
+
+```bash
+modal run corpus-python/modal/train_remote.py::sync_v8cjk_kr
+modal run -d corpus-python/modal/train_remote.py --config v8-cjk-kr-probe.yaml --resume auto
+```
+
+Two shapes the build measured that the plan did not name: the source's REGION strings predate the 2023 renames
+(`강원도`, `전라북도`), so both spellings carry a short form; and 시군구 with a two-level compound (`천안시 동남구`) render
+as two adjacent `subregion` spans, the shape the resolver's scoped pair (#2175) will read.

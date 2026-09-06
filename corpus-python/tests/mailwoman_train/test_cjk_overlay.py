@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -41,7 +42,7 @@ CN_ROW = {
 }
 
 
-def write_jsonl(path: Path, rows: list[dict]) -> Path:
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:
     path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
     return path
 
