@@ -42,6 +42,16 @@
 			"default": "./out/email/provider.js",
 			"types": "./out/email/provider.d.ts"
 		},
+		"./email/cloudflare": {
+			"node": "./lib/email/cloudflare.ts",
+			"default": "./out/email/cloudflare.js",
+			"types": "./out/email/cloudflare.d.ts"
+		},
+		"./email/render": {
+			"node": "./lib/email/render.ts",
+			"default": "./out/email/render.js",
+			"types": "./out/email/render.d.ts"
+		},
 		"./fulfil": {
 			"node": "./lib/fulfil.ts",
 			"default": "./out/fulfil.js",

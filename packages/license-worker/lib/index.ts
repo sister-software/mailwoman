@@ -11,6 +11,7 @@
 import type { ExportedHandler } from "@cloudflare/workers-types"
 
 import { type AppDependencies, createLicenseWorkerApp } from "#app"
+import { cloudflareEmailProvider } from "#email/cloudflare"
 import { resendProvider } from "#email/resend"
 import { type LicenseWorkerBindings, type LicenseWorkerEnv, readEnv } from "#env"
 import { openLedger } from "#ledger/client"
@@ -56,7 +57,7 @@ function isolateState(env: LicenseWorkerEnv): IsolateState {
 		deps: {
 			signingStatus: () => signing,
 			ledger: openLedger(env.LICENSE_LEDGER),
-			email: resendProvider(env),
+			email: env.EMAIL_SENDER ? cloudflareEmailProvider(env, env.EMAIL_SENDER) : resendProvider(env),
 		},
 	}
 

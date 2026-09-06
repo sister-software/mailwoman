@@ -14,7 +14,14 @@ export interface LicenseWorkerBindings {
 	STRIPE_SECRET_KEY: string
 	STRIPE_WEBHOOK_SECRET: string
 	LICENSE_SIGNING_KEY_PEM: string
-	EMAIL_API_KEY: string
+	/**
+	 * The transactional email provider's key, read only when `EMAIL_SENDER` is absent.
+	 */
+	EMAIL_API_KEY?: string
+	/**
+	 * Cloudflare's `send_email` binding; present, the worker sends through it and needs no email key.
+	 */
+	EMAIL_SENDER?: SendEmail
 	LICENSE_SIGNING_KID: string
 	STRIPE_PRICE_MONTHLY: string
 	STRIPE_PRICE_YEARLY: string
