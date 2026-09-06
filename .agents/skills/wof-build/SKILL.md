@@ -55,9 +55,10 @@ Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goe
 the swap into `fst-per-locale/` is operator-approved: an FST changes decoder behaviour, so it moves
 after the battery, not as a side effect of a build.
 
-**`fst-global-priority.bin` and the CJK three (`fst-{ja-jp,zh-cn,ko-kr}.bin`) have no builder.** They
-predate `FST_LOCALES` (#1318) and nothing in the tree can regenerate them; the freshness check in
-step 5 reports them as stale with `NO BUILDER` rather than pretending a command exists.
+**Every per-locale FST has a builder; `fst-global-priority.bin` is retired.** The CJK three
+(`fst-{ja-jp,zh-cn,ko-kr}.bin`) are `FST_LOCALES` entries like the Latin six and build with the same
+command (#1493); `fst-global-priority.bin` is retired (RELEASING.md), so the freshness check in step 5
+names only artifacts a command can regenerate.
 
 ### 4. Build slim WOF DB for browser (~20s)
 
