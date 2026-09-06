@@ -83,7 +83,7 @@ export interface TracePrior {
 /**
  * The post-decode repair passes, in application order.
  */
-export type TraceRepairPass = "wordConsistency" | "postcodeRepair" | "unitRepair" | "spanBridge"
+export type TraceRepairPass = "wordConsistency" | "postcodeRepair" | "unitRepair" | "jpMunicipality" | "spanBridge"
 
 /**
  * A repair pass that changed something: per-piece BIO label sequences before and after, index-aligned with `pieces`.

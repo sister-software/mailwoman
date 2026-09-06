@@ -36,6 +36,7 @@ import type {
 	SpanProposerConfig,
 } from "#classifier/options"
 import { buildFSTEmissionPriors } from "#fst-prior"
+import { repairJPMunicipalityLabels } from "#jp-municipality-repair"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype/census"
@@ -728,6 +729,17 @@ export class NeuralAddressClassifier {
 		// fragments split at unlabeled punctuation ("P.O. Box" decoding as P + O + Box). Opt-in,
 		// declared in the ship config like the conventions mask. When the span proposer ran, its
 		// ANNOTATION/QUOTED boundaries become merge-crossing constraints (M2's second half).
+		// The char path only: the six JP towns whose name carries 市 (`@mailwoman/codex`'s `JP_INNER_SHI_TOWNS`), where the
+		// model closes the municipality one character early. Exact register names, so no other row can move.
+		if (this.cfg.charEncoder) {
+			const before = traceRepairs ? labelsPerPiece(tokens) : []
+			tokens = repairJPMunicipalityLabels(text, tokens).tokens
+
+			if (traceRepairs) {
+				recordRepair("jpMunicipality", before, labelsPerPiece(tokens))
+			}
+		}
+
 		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
 			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
 			// The bridge MERGES tokens (later fragments are dropped), so both snapshots go through the

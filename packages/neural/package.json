@@ -191,6 +191,11 @@
 			"default": "./out/street-morphology-prior.js",
 			"types": "./out/street-morphology-prior.d.ts"
 		},
+		"./jp-municipality-repair": {
+			"node": "./lib/jp-municipality-repair.ts",
+			"default": "./out/jp-municipality-repair.js",
+			"types": "./out/jp-municipality-repair.d.ts"
+		},
 		"./unit-repair": {
 			"node": "./lib/unit-repair.ts",
 			"default": "./out/unit-repair.js",
