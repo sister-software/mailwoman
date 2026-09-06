@@ -720,7 +720,7 @@ function rustReadme(): string {
 		'        .search(None, None, None, None, Some(3), None, None, Some("berlin"))',
 		"        .await?;",
 		"",
-		"    if let PhotonResponse::PhotonFeatureCollection(fc) = response.into_inner() {",
+		"    if let PhotonResponse::StampedPhotonFeatureCollection(fc) = response.into_inner() {",
 		"        for feature in &fc.features {",
 		'            println!("{:?}", feature.properties);',
 		"        }",
@@ -763,7 +763,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     let features = match response.into_inner() {
-        PhotonResponse::PhotonFeatureCollection(fc) => fc.features,
+        PhotonResponse::StampedPhotonFeatureCollection(fc) => fc.features,
         PhotonResponse::Array(_) => unreachable!("GeoJSON is the default; JSON-LD needs format=jsonld"),
     };
 

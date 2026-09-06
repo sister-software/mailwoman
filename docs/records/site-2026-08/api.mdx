@@ -338,7 +338,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .search(None, None, None, None, Some(3), None, None, Some("berlin"))
         .await?;
 
-    if let PhotonResponse::PhotonFeatureCollection(fc) = response.into_inner() {
+    if let PhotonResponse::StampedPhotonFeatureCollection(fc) = response.into_inner() {
         for feature in &fc.features {
             println!("{:?}", feature.properties);
         }

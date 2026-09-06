@@ -90,7 +90,7 @@ const parseQueryParams = z.object({
 const parseResponses = {
 	200: {
 		description: "The tokenized input span + ranked solutions.",
-		content: { "application/json": { schema: stampedResponseSchema(ParseOutcomeSchema) } },
+		content: { "application/json": { schema: stampedResponseSchema(ParseOutcomeSchema, "StampedParseOutcome") } },
 	},
 	400: errorContent("`address` is required."),
 	501: errorContent("The backing engine method is not wired for this deployment."),
@@ -99,7 +99,7 @@ const parseResponses = {
 const geocodeResponses = {
 	200: {
 		description: "One geocode result (parse → resolve cascade), passed through from the engine verbatim.",
-		content: { "application/json": { schema: stampedResponseSchema(GeocodeOutcomeSchema) } },
+		content: { "application/json": { schema: stampedResponseSchema(GeocodeOutcomeSchema, "StampedGeocodeOutcome") } },
 	},
 	400: errorContent("`address` is required."),
 	503: errorContent("The geocoding engine is not wired for this deployment (dependencies missing)."),
@@ -108,7 +108,7 @@ const geocodeResponses = {
 const batchResponses = {
 	200: {
 		description: "One result per input address, in input order (per-row error isolation).",
-		content: { "application/json": { schema: stampedResponseSchema(BatchResponseSchema) } },
+		content: { "application/json": { schema: stampedResponseSchema(BatchResponseSchema, "StampedBatchResponse") } },
 	},
 	400: errorContent("Body must be `{ addresses: string[] }`."),
 	413: errorContent("`addresses.length` exceeds the configured batch cap."),
@@ -118,7 +118,7 @@ const batchResponses = {
 const resolveResponses = {
 	200: {
 		description: "The same tree, decorated in place with gazetteer coordinates + attribution.",
-		content: { "application/json": { schema: stampedResponseSchema(ResolveResponseSchema) } },
+		content: { "application/json": { schema: stampedResponseSchema(ResolveResponseSchema, "StampedResolveResponse") } },
 	},
 	400: errorContent("Body must be `{ tree: AddressTree, opts? }`."),
 	503: errorContent("The resolver is not wired for this deployment (dependencies missing)."),
@@ -137,7 +137,7 @@ const reloadResponses = {
 const formatResponses = {
 	200: {
 		description: "The rendered address string + the deterministic canonical match key.",
-		content: { "application/json": { schema: stampedResponseSchema(FormatResponseSchema) } },
+		content: { "application/json": { schema: stampedResponseSchema(FormatResponseSchema, "StampedFormatResponse") } },
 	},
 	400: errorContent("Invalid request body."),
 }

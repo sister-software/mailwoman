@@ -170,14 +170,29 @@ export const SchemaOrgPlaceSchema = z
 	.openapi("SchemaOrgPlace")
 
 /**
+ * A jsonv2/json result as a route returns it — the result plus the optional `engine` stamp. Named because it is a union
+ * arm: an unnamed arm is inlined, and a generated client then names the variant after its position.
+ */
+export const StampedNominatimResultSchema = stampedResponseSchema(NominatimResultSchema, "StampedNominatimResult")
+
+/**
+ * The `format=geojson` FeatureCollection as a route returns it — the collection plus the optional `engine` stamp, named
+ * for the same reason.
+ */
+export const StampedNominatimFeatureCollectionSchema = stampedResponseSchema(
+	NominatimFeatureCollectionSchema,
+	"StampedNominatimFeatureCollection"
+)
+
+/**
  * The real `/search` 200 response union (#1052 doc accuracy): a jsonv2/json result array by default, a `format=geojson`
  * FeatureCollection, or a `format=jsonld` array of schema.org `Place` objects — see `routes.ts`'s search handler.
  * Doc-only; the wire behavior is unchanged.
  */
 export const NominatimSearchResponseSchema = z
 	.union([
-		z.array(stampedResponseSchema(NominatimResultSchema)),
-		stampedResponseSchema(NominatimFeatureCollectionSchema),
+		z.array(StampedNominatimResultSchema),
+		StampedNominatimFeatureCollectionSchema,
 		z.array(SchemaOrgPlaceSchema),
 	])
 	.openapi("NominatimSearchResponse")
@@ -188,12 +203,7 @@ export const NominatimSearchResponseSchema = z
  * Doc-only; the wire behavior is unchanged.
  */
 export const NominatimReverseResponseSchema = z
-	.union([
-		stampedResponseSchema(NominatimResultSchema),
-		z.null(),
-		stampedResponseSchema(NominatimFeatureCollectionSchema),
-		SchemaOrgPlaceSchema,
-	])
+	.union([StampedNominatimResultSchema, z.null(), StampedNominatimFeatureCollectionSchema, SchemaOrgPlaceSchema])
 	.openapi("NominatimReverseResponse")
 
 /**
@@ -203,10 +213,7 @@ export const NominatimReverseResponseSchema = z
  * `/search`'s three-wide union.
  */
 export const NominatimLookupResponseSchema = z
-	.union([
-		z.array(stampedResponseSchema(NominatimResultSchema)),
-		stampedResponseSchema(NominatimFeatureCollectionSchema),
-	])
+	.union([z.array(StampedNominatimResultSchema), StampedNominatimFeatureCollectionSchema])
 	.openapi("NominatimLookupResponse")
 
 /**
