@@ -14,7 +14,6 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/release-kit"
 import Stripe from "stripe"
 import { z } from "zod"
@@ -116,18 +115,18 @@ async function recordInRepository(
 	const links = SHOP_PLANS.map((plan) => report.paymentLinks[plan.code].url)
 
 	if (mode === "live" && links.every((url): url is string => url !== undefined)) {
-		const shopPath = repoRootPath("docs", "src", "license", "shop.ts")
+		const shopPath = resolvePackagePath("@mailwoman/license-worker", "lib", "sdk", "constants.ts")
 		const source = await readLocalTextFile(shopPath)
 		const [monthlyURL, yearlyURL] = links as [string, string]
 
 		const next = source
 			.replace(
-				/^export const PAYMENT_LINK_MONTHLY: string \| undefined = .*$/mu,
-				`export const PAYMENT_LINK_MONTHLY: string | undefined = ${JSON.stringify(monthlyURL)}`
+				/^export const PAYMENT_LINK_MONTHLY = .*$/mu,
+				`export const PAYMENT_LINK_MONTHLY = ${JSON.stringify(monthlyURL)}`
 			)
 			.replace(
-				/^export const PAYMENT_LINK_YEARLY: string \| undefined = .*$/mu,
-				`export const PAYMENT_LINK_YEARLY: string | undefined = ${JSON.stringify(yearlyURL)}`
+				/^export const PAYMENT_LINK_YEARLY = .*$/mu,
+				`export const PAYMENT_LINK_YEARLY = ${JSON.stringify(yearlyURL)}`
 			)
 
 		if (next !== source) {
@@ -142,7 +141,7 @@ async function recordInRepository(
 const provisionOperation = defineOperation({
 	id: "shop.provision",
 	description:
-		"Reconcile the Stripe account against the shop catalog: the Product, the two Prices, the two Payment Links, the portal configuration and, given --worker-origin, the webhook destination. Reports what exists and what is missing; --apply creates the missing objects and writes the Price ids into wrangler.toml (and, live, the Payment Links into docs/src/license/shop.ts).",
+		"Reconcile the Stripe account against the shop catalog: the Product, the two Prices, the two Payment Links, the portal configuration and, given --worker-origin, the webhook destination. Reports what exists and what is missing; --apply creates the missing objects and writes the Price ids into wrangler.toml (and, live, the Payment Links into lib/sdk/constants.ts).",
 	effect: OperationEffect.ExternalWrite,
 	inputSchema: ProvisionInputSchema,
 	outputSchema: ReportSchema.extend({

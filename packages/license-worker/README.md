@@ -57,7 +57,7 @@ the installed release does not trust is a token no installation accepts, which i
 
    `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY` and writes the sandbox
    environment; `--mode live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, refuses any other prefix, and also writes the
-   Payment Links into `docs/src/license/shop.ts`. A Payment Link is created only with consent collection; if Stripe
+   Payment Links into `lib/sdk/constants.ts`, which the site reads. A Payment Link is created only with consent collection; if Stripe
    refuses it, the report reads `blocked` and the remedy is the terms-of-service URL under the account's public details
    in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing.
 
