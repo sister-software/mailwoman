@@ -1,9 +1,10 @@
-# Shift postmortem — 2026-09-06 (CJK arc; living document, finalized at hand-off)
+# Shift postmortem — 2026-09-06 (CJK arc)
 
 The shift that made `@mailwoman/neural-weights-cjk` real: the served path, the resolver behind it, and the
 kana-register run that replaced the base. Direct-to-main after local checks (root `yarn health`, the affected
 suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), one Modal run (`v8-cjk-kana`,
-24,000 steps, pre-registered in its config header before launch). Window: 02:00–13:00 UTC.
+24,000 steps, pre-registered in its config header before launch). Work window: 02:00–08:50 UTC of a shift the
+operator set to end at 13:00 UTC; the last four hours held nothing that did not need a decision listed below.
 
 ## What shipped
 
