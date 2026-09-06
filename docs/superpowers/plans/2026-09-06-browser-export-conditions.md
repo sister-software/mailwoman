@@ -10,6 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-06-browser-export-conditions-design.md`
 
+## Deviation taken at execution
+
+Task 1 as written would have been the fourth esbuild walk in the repository, beside
+`packages/core/test/integration/worker-bundle.test.ts`, `packages/neural/test/unit/browser-graph.test.ts` and the
+timing harness. The operator chose one home: the `bundle-graph` check in `@mailwoman/repo-health`, which absorbs the
+first two files as rows and runs from `yarn health`. Tasks 2 through 6 are unchanged.
+
 ## Global Constraints
 
 - The fix lives in the owning package: a `browser` export or import condition, never a new package, never a bundler shim in a published package.
