@@ -3,7 +3,7 @@
 # Two environments and nothing at the top level that could deploy by accident. Every secret arrives through
 # `wrangler secret put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY); a var still
 # reading REPLACE makes `readEnv` refuse every request with 503, so an unfilled production deploy never mints.
-# No `nodejs_compat`: every dependency runs on the Workers runtime as shipped, and core's worker-bundle test holds the
+# No `nodejs_compat`: every dependency runs on the Workers runtime as shipped, and the `bundle-graph` health check holds the
 # license subpaths free of Node builtins.
 
 name = "mailwoman-license"
