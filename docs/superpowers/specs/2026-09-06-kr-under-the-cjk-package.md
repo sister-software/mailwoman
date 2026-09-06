@@ -1,6 +1,6 @@
 # Korean under the CJK package — corpus, labels, board (proposal)
 
-Status: proposal; the corpus, the overlay and the launch are BUILT AND STAGED (§8), the launch itself unscheduled. Written 2026-09-06 after the JP served path resolved (#2164 step 6, #2175), so that
+Status: the operator took the four decisions on 2026-09-06 (join the family package, the KOGL line in the card, the `subregion` route, spend the probe); the probe `v8-cjk-kr-probe` is running as Modal app `ap-XEyyoAOPaSJbGwRe5v0n0g`. Written 2026-09-06 after the JP served path resolved (#2164 step 6, #2175), so that
 the Korean decision is taken on measured supply rather than the 2026-07 triage claim ("KR: no adopted open path",
 `docs/engineering/SCOPE.mdx`). Every number below was read on the lab data root on this date.
 

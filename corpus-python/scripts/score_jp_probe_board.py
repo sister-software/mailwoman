@@ -191,7 +191,10 @@ def score_board(
             # be read: when the predicted pair equals the gold pair span for span, the row's own kanji fields name
             # the centroid. Reported beside the pre-registered number, never folded into it.
             if pred.get(region_tag) == gold.get(region_tag) and pred.get(locality_tag) == gold_muni:
-                gold_key = norm_key(str(r.get("pref", "")) + "|" + str(r.get("muni", "")))
+                # The JP board names its fields `pref` / `muni`; the KR board `region` / `city`.
+                gold_key = norm_key(
+                    str(r.get("pref") or r.get("region") or "") + "|" + str(r.get("muni") or r.get("city") or "")
+                )
                 gold_hit = centroids.get(gold_key)
                 if gold_hit is not None and haversine_km(gold_hit[0], gold_hit[1], r["lon"], r["lat"]) <= accept_km:
                     gold_exact += 1
