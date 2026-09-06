@@ -227,7 +227,7 @@ const CORPUS_SIZE = 674
  * purpose. Every built `regression.db` carrying the old stamp is now stale and a runner will refuse to grade against it
  * until it is rebuilt — also by design, and the reason this is prose-only rather than bundled with a row change.
  */
-const CORPUS_HASH = "ef0bc68fe425048962aba3a3d9e78110d4efbdca15a7eb98333c059c8ea6b2cd"
+const CORPUS_HASH = "1e08c99e9a8865f9e865cd70a5bd887b8e14fa760f1a06712a9db093a5e6c182"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -248,7 +248,7 @@ const CORPUS_HASH = "ef0bc68fe425048962aba3a3d9e78110d4efbdca15a7eb98333c059c8ea
  * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → `@649:3df68a3c428a`), and for the Brest split plus
  * the Whitby cap-bound row (`@649:3df68a3c428a` → this).
  */
-const BOARD_ID = "gauntlet-regression@674:49936be1d86a"
+const BOARD_ID = "gauntlet-regression@674:810b76e05026"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
