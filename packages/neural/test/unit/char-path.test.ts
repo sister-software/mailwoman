@@ -10,6 +10,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { scriptFamilyBase } from "@mailwoman/neural/char-encoder"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { packCharFeed } from "@mailwoman/neural/onnx-runner"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -198,5 +199,38 @@ describe("NeuralAddressClassifier on the char path", () => {
 					labels: LABELS,
 				})
 		).toThrow(/inferChars/)
+	})
+})
+
+describe("script-family fallback", () => {
+	it("resolves ja-JP to the cjk base from the overlay rung when no ja-jp package holds binaries", async () => {
+		const root = resolvePath(fixtures.use(await temporaryDirectory("overlay-root-")).path)
+		const cjk = join(root, "cjk")
+
+		await writeLocalTextFile("not-a-real-graph", join(cjk, "model.onnx"))
+		await writeLocalTextFile(JSON.stringify(VOCAB), join(cjk, "char-vocab.json"))
+
+		await writeLocalTextFile(
+			JSON.stringify({
+				encoder: "char",
+				char_vocab: "char-vocab.json",
+				max_units: 96,
+				max_unit_width: 7,
+				char_ctx: 3,
+				labels: LABELS,
+			}),
+			join(cjk, "model-card.json")
+		)
+
+		const resolved = await resolveWeights({ locale: "ja-JP", overlayRoot: root })
+
+		expect(resolved.encoder.kind).toBe("char")
+		expect(resolved.modelPath).toBe(join(cjk, "model.onnx"))
+		expect(resolved.source).toContain("script-family base for ja-jp")
+	})
+
+	it("has no family base for a Latin locale", () => {
+		expect(scriptFamilyBase("en-US")).toBeUndefined()
+		expect(scriptFamilyBase("zh-CN")).toBe("cjk")
 	})
 })

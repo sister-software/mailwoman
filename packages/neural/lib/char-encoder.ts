@@ -203,3 +203,14 @@ export function encoderDescriptorFromCard(
 		ctxChars: ctxChars as number,
 	}
 }
+
+/**
+ * The base package a locale falls back to when it has no package of its own: the CJK char-path base for Japanese,
+ * Chinese and Korean (#2164). Latin locales have no family base — `en-us` IS the Latin base, and the overlays name it
+ * through `mailwoman.baseWeights` instead.
+ */
+export function scriptFamilyBase(locale: string): string | undefined {
+	const language = locale.toLowerCase().split("-")[0]
+
+	return language === "ja" || language === "zh" || language === "ko" ? "cjk" : undefined
+}

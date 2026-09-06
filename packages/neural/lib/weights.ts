@@ -28,6 +28,7 @@ import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/
 import { cacheRootPathBuilder, weightsOverlayPath } from "@mailwoman/core/utils"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
+import { scriptFamilyBase } from "#char-encoder"
 import { PlacetypeCensusResolver } from "#placetype/census"
 import {
 	type EncoderDescriptor,
@@ -116,8 +117,7 @@ export interface ResolveWeightsOpts {
 	 */
 	tokenizerPath?: string
 	/**
-	 * Explicit `char-vocab.json` for a char-path model (#2164), the alternative to `tokenizerPath`; pass it with
-	 * `modelPath` and a card that says `encoder: "char"`.
+	 * Explicit `char-vocab.json` for a char-path model (#2164), in place of `tokenizerPath`, with a card saying so.
 	 */
 	charVocabPath?: string
 	/**
@@ -200,15 +200,10 @@ export interface WeightsArtifactReport {
 export interface ResolvedWeights {
 	modelPath: string
 	/**
-	 * The SentencePiece model. On a char-path package (`encoder.kind === "char"`) this is the conventional path inside
-	 * the package and does not exist; `charVocabPath` is the artifact the encoder reads. Branch on `encoder` before
-	 * loading it.
+	 * The SentencePiece model. On a char-path package this path does not exist and `charVocabPath` is the artifact the
+	 * encoder reads, so branch on `encoder` (the card's block, SentencePiece when absent) before loading either.
 	 */
 	tokenizerPath: string
-	/**
-	 * How the package encodes text — the card's `encoder` block (#2164); SentencePiece when absent. `charVocabPath` is
-	 * the sealed character vocabulary, present only on a char-path package.
-	 */
 	encoder: EncoderDescriptor
 	charVocabPath?: string
 	/**
@@ -504,6 +499,15 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 		return await resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
+	// `ja-JP` and `zh-CN` ride the cjk base until their overlays exist (#2164); an explicit cache root never reaches here.
+	const familyBase = scriptFamilyBase(locale)
+
+	if (familyBase && familyBase !== locale) {
+		const resolved = await resolveWeights({ ...opts, locale: familyBase })
+
+		return { ...resolved, source: `${resolved.source} (script-family base for ${locale})` }
+	}
+
 	throw new Error(
 		`Could not resolve ${packageName}.\n` +
 			(emptyPackageDir
@@ -557,8 +561,7 @@ async function resolveFromPackageDir(
 	const modelCardCandidate = resolvePath(packageDir, "model-card.json")
 	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : undefined
 
-	// The card names the second binary the package owes — `tokenizer.model`, or a char graph's vocabulary (#2164) —
-	// and is read before the missing-files check so a char package is not refused for a tokenizer it never had.
+	// The card names the second binary the package owes (tokenizer, or a char graph's vocabulary, #2164).
 	const encoder = await readEncoderFromModelCard(
 		(await pathExists(modelCardCandidate)) ? modelCardCandidate : baseModelCardCandidate
 	)
@@ -566,11 +569,9 @@ async function resolveFromPackageDir(
 	const charVocabPath =
 		encoder.kind === "char" ? await resolveCharVocab(packageDir, baseDir ?? undefined, encoder.charVocab) : undefined
 
-	const secondBinary = charVocabPath ?? tokenizerPath
+	tried.push(modelPath, charVocabPath ?? tokenizerPath)
 
-	tried.push(modelPath, secondBinary)
-
-	if (!(await pathExists(modelPath)) || !(await pathExists(secondBinary))) {
+	if (!(await pathExists(modelPath)) || !(await pathExists(charVocabPath ?? tokenizerPath))) {
 		throw new Error(
 			`Weights package resolved at ${packageDir} but is missing model files.\n` +
 				`Tried:\n  ${tried.join("\n  ")}\n` +
