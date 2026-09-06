@@ -192,7 +192,7 @@ export async function setEmailState(
 /**
  * Tokens whose email has not been confirmed sent: `pending` covers a crash between the insert and the send, or between
  * the provider accepting the message and the ledger recording it; `failed` is a provider refusal. Both are re-sent
- * under the invoice id, which the provider deduplicates.
+ * under the invoice id; whether the provider deduplicates on it is the provider's (`email/provider.ts`).
  */
 export async function tokensAwaitingEmail(ledger: Ledger): Promise<LicenseTokenRow[]> {
 	return ledger.selectFrom("license_tokens").selectAll().where("email_state", "in", ["pending", "failed"]).execute()
@@ -221,8 +221,8 @@ export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: st
 }
 
 /**
- * Every license, for the reconciliation pass. The table holds one row per customer, so the pass reads it whole rather
- * than asking Stripe what changed, which its subscription list cannot answer.
+ * Every license, for the reconciliation pass. The table holds one row per subscription, so the pass reads it whole
+ * rather than asking Stripe what changed, which its subscription list cannot answer.
  */
 export async function allLicenses(ledger: Ledger): Promise<LicenseRow[]> {
 	return ledger.selectFrom("licenses").selectAll().orderBy("created_at", "asc").execute()

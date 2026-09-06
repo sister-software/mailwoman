@@ -6,8 +6,9 @@
  *   `GET /v1/checkout-sessions/:sessionID/license`: the success page's claim. The page arrives with the session id
  *   before Stripe's webhooks do, so a session the ledger has not seen is re-read from Stripe by id and its license row
  *   created here, the same way the webhook would; a session Stripe does not know is the only 404. The refresh secret is
- *   answered by exactly one claim, because the plaintext is cleared in the same statement that reads it. Rate limited
- *   per client address; CORS is the site's exact origin, set by the app.
+ *   answered by exactly one claim: the plaintext is read, then cleared by an update conditioned on the value read, so
+ *   of two claims racing only the one whose clear lands a row answers it. Rate limited per client address; CORS is the
+ *   site's exact origin, set by the app.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

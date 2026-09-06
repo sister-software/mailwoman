@@ -227,7 +227,7 @@ describe("the routes", () => {
 		).toEqual({ status: "revoked" })
 	})
 
-	it("kill switch: with issuance disabled the webhook still answers 200 and records the event, the claim stays pending, and refresh keeps answering", async () => {
+	it("kill switch: with issuance disabled the webhook still answers 200 and records the event, an unminted claim stays pending, and a minted token is still served to its claim and its refresh", async () => {
 		const a = await app("k")
 
 		await a.webhook(invoicePaidEvent({ id: "evt_k", invoiceID: "in_k" }))
@@ -242,6 +242,7 @@ describe("the routes", () => {
 		const refresh = await disabled.post("/v1/licenses/refresh", { lid: claim.lid, secret: claim.refresh_secret })
 
 		expect(refresh.status).toBe(200)
+		expect(await (await disabled.claim()).json()).toMatchObject({ status: "issued", token: claim.token })
 
 		const fresh = await app("k0", { issuance: false })
 

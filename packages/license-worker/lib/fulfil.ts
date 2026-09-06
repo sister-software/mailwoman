@@ -112,7 +112,9 @@ export async function ensureLicenseFromCheckoutSession(
 }
 
 /**
- * Mint for one invoice.
+ * One paid invoice to one token: refused with a reason when the invoice, its Price or its subscription is not one this
+ * worker mints for, `already_minted` when the ledger holds the token, `minted` once the token is inserted and the email
+ * attempted.
  */
 export async function fulfilInvoice(
 	env: LicenseWorkerEnv,
