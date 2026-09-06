@@ -34,12 +34,12 @@ export const TERMS_PATH = `/license/terms/${AGREEMENT_VERSION}`
 /**
  * Operator-owned: the monthly Payment Link. `undefined` until it exists.
  */
-export const PAYMENT_LINK_MONTHLY: string | undefined = undefined
+export const PAYMENT_LINK_MONTHLY: string | undefined = "https://buy.stripe.com/00weVffho9G7bgfeMl9oc00"
 
 /**
  * Operator-owned: the yearly Payment Link. `undefined` until it exists.
  */
-export const PAYMENT_LINK_YEARLY: string | undefined = undefined
+export const PAYMENT_LINK_YEARLY: string | undefined = "https://buy.stripe.com/5kQbJ3c5c05xdonaw59oc01"
 
 /**
  * Operator-owned: the no-code Customer Portal login link. `undefined` until it exists.
