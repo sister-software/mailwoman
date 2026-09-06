@@ -107,18 +107,25 @@ delivery to the worker as the first thing to check.
 ## The kill switch
 
 `ISSUANCE_ENABLED = "false"` and a redeploy. The webhook keeps answering 200 and recording events, `invoice.paid`
-answers `refused: issuance is disabled` and mints nothing, claims answer `pending`, and refresh and status keep serving
-what was already minted. Turning it back on lets the six-hourly reconciliation mint every paid invoice it refused.
+answers `refused: issuance is disabled` and mints nothing, a claim for a license with no token answers `pending`, and
+refresh, status and a claim for a token already minted keep serving it. Turning it back on lets the six-hourly
+reconciliation mint what it refused: every paid invoice of a subscription the ledger knows, and the first invoice of a
+subscription it does not know if that invoice was created within the last week (the section below says why).
 
 ## Reconciliation
 
-A Cron Trigger every six hours runs `lib/reconcile.ts` over the last week of paid invoices. It mints a paid invoice with
-no token through the same path the webhook takes, sends a token whose email is not confirmed sent (`pending` after a
-crash, or `failed`) under the same invoice id, which the provider deduplicates, and corrects a license whose state
-disagrees with its subscription, including a dispute Stripe has since ruled won and a subscription that ended once
-its token's date has passed. The
-report in the worker log names ids only. A license whose Stripe records cannot be read is reported and never stops the
-sweep for the rest.
+A Cron Trigger every six hours runs `lib/reconcile.ts`. It mints a paid invoice with no token through the same path
+the webhook takes, sends a token whose email is not confirmed sent (`pending` after a crash, or `failed`) under the
+same invoice id, and corrects a license whose state disagrees with its subscription, including a dispute Stripe has
+since ruled won and a subscription that ended once its token's date has passed. The report in the worker log names ids
+only; one item's failure is recorded against it and never stops the sweep for the rest.
+
+What it recovers: every license in the ledger is read whole each pass, and its subscription's latest paid invoice is
+minted if no token holds it, however old. A subscription the ledger has never seen (its `checkout.session.completed`
+lost and its success page never visited) is found only through Stripe's invoice list, which filters by creation time,
+so it is recovered while its first invoice was created within the last week; past that, resend the invoice's
+`invoice.paid` from the Stripe dashboard. A resend through Cloudflare's binding can deliver twice when the ledger fails
+to record an accepted send; Resend deduplicates on the invoice id.
 
 ## Refunds and disputes
 

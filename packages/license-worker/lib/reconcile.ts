@@ -9,6 +9,13 @@
  *   state disagrees with its subscription is corrected, including a dispute Stripe has since ruled in the customer's
  *   favour. One item's failure is recorded against that item and the sweep goes on; a listing that cannot be completed
  *   is recorded as such, so an empty sweep is never mistaken for a clean one. The report names ids only.
+ *
+ *   What the pass recovers, and what it does not. A subscription the ledger knows is read whole on every pass, and its
+ *   latest paid invoice is minted if no token holds it, however long ago it was created or paid: a lost renewal
+ *   webhook, or a renewal refused while issuance was off, is minted on the next pass with issuance on. A subscription
+ *   the ledger has never seen (its checkout webhook lost and its success page never visited) is found only through
+ *   the invoice list, which Stripe filters by creation time, so it is recovered while its first invoice was created
+ *   within `sinceSeconds`; past that the remedy is to resend the `invoice.paid` event from the Stripe dashboard.
  */
 
 import type Stripe from "stripe"
@@ -55,8 +62,8 @@ export interface ReconcileReport {
 
 export interface ReconcileOptions {
 	/**
-	 * How far back to list paid invoices, by the invoice's creation time. Wider than the cron interval, so a pass that
-	 * fails leaves nothing unminted.
+	 * How far back to list paid invoices, by the invoice's creation time: the bound on recovering a subscription the
+	 * ledger has never seen. Wider than the cron interval, so one failed pass costs nothing.
 	 */
 	sinceSeconds: number
 }
@@ -134,8 +141,24 @@ export async function reconcileLedger(
 	}
 
 	for (const license of licenses) {
+		let subscription: Stripe.Subscription
+
 		try {
-			const next = await stateStripeSays(deps.stripe, deps, license)
+			subscription = await deps.stripe.subscriptions.retrieve(license.subscription_id, { expand: ["latest_invoice"] })
+		} catch (error) {
+			report.failed.push({ stage: "state", lid: license.lid, reason: failureReason(error) })
+
+			continue
+		}
+
+		const latest = subscription.latest_invoice
+
+		if (latest && typeof latest !== "string" && latest.status === "paid") {
+			await mintIfUnminted(env, deps, latest.id, report)
+		}
+
+		try {
+			const next = await stateStripeSays(deps.stripe, deps, license, subscription)
 
 			if (next === undefined || next.state === license.license_state) continue
 
@@ -218,10 +241,9 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
 async function stateStripeSays(
 	stripe: Stripe,
 	deps: FulfilDependencies,
-	license: LicenseRow
+	license: LicenseRow,
+	subscription: Stripe.Subscription
 ): Promise<Correction | undefined> {
-	const subscription = await stripe.subscriptions.retrieve(license.subscription_id)
-
 	const token = await currentToken(deps.ledger, license.lid)
 	const today = todayUTC(deps.now)
 

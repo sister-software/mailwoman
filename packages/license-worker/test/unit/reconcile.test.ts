@@ -30,10 +30,11 @@ import {
 	invoicePaymentList,
 	subscriptionObject,
 } from "../support/stripe-fixtures.ts"
-import { stripeFetch } from "../support/stripe-mock.ts"
+import { type RecordedStripeCall, recordingStripeFetch } from "../support/stripe-mock.ts"
 
 const OCT_1 = Date.UTC(2026, 9, 1) / 1000
 const NOV_1 = Date.UTC(2026, 10, 1) / 1000
+const DEC_1 = Date.UTC(2026, 11, 1) / 1000
 const WEEK = 7 * 24 * 3600
 
 beforeAll(async () => {
@@ -68,6 +69,10 @@ async function fixture(
 		 * Invoice ids the list answers ahead of this fixture's, with no object behind them: a retrieval of one fails.
 		 */
 		unreadableInvoices?: string[]
+		/**
+		 * A paid renewal invoice the subscription reads as its latest, outside the listed window.
+		 */
+		latestInvoiceID?: string
 	} = {}
 ) {
 	const { env: worker } = await envWithSigningKey(readEnv({ ...env, ISSUANCE_ENABLED: "true" }))
@@ -91,49 +96,70 @@ async function fixture(
 		invoiceObject({ id, subscriptionID: `sub_${id}`, priceID: "price_x", paidAt: OCT_1, periodEnd: NOV_1 })
 	)
 
-	const stripe = stripeClient(
-		worker,
-		stripeFetch({
-			"GET /v1/invoices?": invoiceList(options.listInvoices === false ? [] : [...unreadable, invoice]),
-			[`GET /v1/invoices/in_${suffix}`]: invoice,
-			[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
-				id: `sub_${suffix}`,
+	const latestInvoice = options.latestInvoiceID
+		? invoiceObject({
+				id: options.latestInvoiceID,
+				subscriptionID: `sub_${suffix}`,
 				priceID: priceOf(worker, "commercial-monthly-v1"),
-				currentPeriodEnd: NOV_1,
-				status: options.subscriptionStatus,
-			}),
-			"GET /v1/checkout/sessions?": checkoutSessionList([
-				checkoutSessionObject({
-					id: `cs_${suffix}`,
-					subscriptionID: `sub_${suffix}`,
-					licensee: "Missed Ltd",
-					email: "m@example.com",
-				}),
-			]),
-			[`GET /v1/charges/ch_${suffix}`]: charge,
-			"GET /v1/charges?": { object: "list", url: "/v1/charges", has_more: false, data: [charge] },
-			"GET /v1/invoice_payments?": invoicePaymentList({ invoiceID: `in_${suffix}`, paymentIntentID: `pi_${suffix}` }),
-			"GET /v1/disputes?": disputeList(
-				options.disputeStatus
-					? [{ id: `dp_${suffix}`, paymentIntentID: `pi_${suffix}`, status: options.disputeStatus }]
-					: []
-			),
-		})
-	)
+				paidAt: NOV_1,
+				periodEnd: DEC_1,
+			})
+		: undefined
 
+	const recording = recordingStripeFetch({
+		"GET /v1/invoices?": invoiceList(options.listInvoices === false ? [] : [...unreadable, invoice]),
+		[`GET /v1/invoices/in_${suffix}`]: invoice,
+		...(latestInvoice ? { [`GET /v1/invoices/${options.latestInvoiceID}`]: latestInvoice } : {}),
+		[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
+			id: `sub_${suffix}`,
+			priceID: priceOf(worker, "commercial-monthly-v1"),
+			currentPeriodEnd: NOV_1,
+			status: options.subscriptionStatus,
+			latestInvoice,
+		}),
+		"GET /v1/checkout/sessions?": checkoutSessionList([
+			checkoutSessionObject({
+				id: `cs_${suffix}`,
+				subscriptionID: `sub_${suffix}`,
+				licensee: "Missed Ltd",
+				email: "m@example.com",
+			}),
+		]),
+		[`GET /v1/charges/ch_${suffix}`]: charge,
+		"GET /v1/charges?": { object: "list", url: "/v1/charges", has_more: false, data: [charge] },
+		"GET /v1/invoice_payments?": invoicePaymentList({ invoiceID: `in_${suffix}`, paymentIntentID: `pi_${suffix}` }),
+		"GET /v1/disputes?": disputeList(
+			options.disputeStatus
+				? [{ id: `dp_${suffix}`, paymentIntentID: `pi_${suffix}`, status: options.disputeStatus }]
+				: []
+		),
+	})
+
+	const stripe = stripeClient(worker, recording.fetch)
 	const ledger = openLedger(env.LICENSE_LEDGER)
 
-	return { worker, stripe, ledger }
+	return { worker, stripe, ledger, calls: recording.calls }
+}
+
+function invoiceListings(calls: RecordedStripeCall[]) {
+	return calls.filter((call) => call.method === "GET" && call.path === "/v1/invoices")
 }
 
 describe("reconciliation", () => {
 	it("mints a paid invoice the webhook never delivered, and re-sends a token whose email failed or stayed pending, once each", async () => {
-		const { worker, stripe, ledger } = await fixture("9")
+		const { worker, stripe, ledger, calls } = await fixture("9")
 		const email = recordingEmail()
-		const deps = { stripe, ledger, email: email.provider }
+		const now = Date.UTC(2026, 9, 3)
+		const deps = { stripe, ledger, email: email.provider, now: () => now }
 		const report = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
 		expect(report).toMatchObject({ minted: ["in_9"], resent: [], refused: [], corrected: [] })
+
+		// The listing is Stripe's paid invoices by creation time, from a week before the clock.
+		expect(invoiceListings(calls).map((call) => [call.form.get("status"), call.form.get("created[gte]")])).toEqual([
+			["paid", String(Math.floor(now / 1000) - WEEK)],
+		])
+
 		expect((await findToken(ledger, "in_9"))?.email_state).toBe("sent")
 		expect(email.sent).toEqual(["in_9"])
 
@@ -331,13 +357,33 @@ describe("reconciliation", () => {
 		expect((await findToken(ledger, "in_17"))?.email_state).toBe("failed")
 	})
 
+	it("mints a known subscription's latest paid invoice that the listed window no longer holds", async () => {
+		const first = await fixture("19")
+		const email = recordingEmail()
+
+		await fulfilInvoice(first.worker, { stripe: first.stripe, ledger: first.ledger, email: email.provider }, "in_19")
+
+		const later = await fixture("19", { listInvoices: false, latestInvoiceID: "in_19b" })
+		const deps = { stripe: later.stripe, ledger: later.ledger, email: email.provider }
+		const report = await reconcileLedger(later.worker, deps, { sinceSeconds: WEEK })
+
+		expect(report.minted).toEqual(["in_19b"])
+		expect((await findToken(later.ledger, "in_19b"))?.expires).toBe("2026-12-15")
+		expect(invoiceListings(later.calls)).toHaveLength(1)
+
+		const again = await reconcileLedger(later.worker, deps, { sinceSeconds: WEEK })
+
+		expect(again.minted).toEqual([])
+		expect(email.sent.filter((key) => key === "in_19b")).toHaveLength(1)
+	})
+
 	it("a listing that fails part way is reported as incomplete rather than as an empty sweep", async () => {
 		const { worker, ledger } = await fixture("18", { listInvoices: false })
 		const email = recordingEmail()
 
 		const report = await reconcileLedger(
 			worker,
-			{ stripe: stripeClient(worker, stripeFetch({})), ledger, email: email.provider },
+			{ stripe: stripeClient(worker, recordingStripeFetch({}).fetch), ledger, email: email.provider },
 			{ sinceSeconds: WEEK }
 		)
 
