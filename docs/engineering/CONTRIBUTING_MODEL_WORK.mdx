@@ -258,6 +258,39 @@ re-tokenized, measured only after the fact. Net-positive that time; the check re
    (~1h A100). Config lives in `corpus-python/src/mailwoman_train/configs/` — copy the latest,
    change one variable, write the acceptance-bar comment.
 
+## The character path (Japanese and Chinese)
+
+The CJK model is a separate lane from everything above: no SentencePiece, no soft-feed channels, its own label set
+and its own board. What carries over is the discipline — pre-register in the config header, grade the assembled
+coordinate, read the Latin board before a resolver mechanism ships.
+
+- **Model.** A from-scratch character encoder (`corpus-python/src/mailwoman_train/configs/v8-cjk-*.yaml`), label set
+  `stage3-cjk` (`labels.py`: the Latin `stage3` tags, the seven JP tiers, `locality_unit`), served as one fp32 ONNX
+  graph behind `char_ids` + `attention_mask` (`export_onnx.py`, checked by `verify_char_parity` over 256 board rows).
+  One package for the family, `@mailwoman/neural-weights-cjk`; `release.config.json` `charWeights.<family>` names the
+  graph and the sealed vocabulary, and the package's `scripts/link-dev-weights.ts` links them into the data-root
+  overlay for a dev checkout.
+- **Corpus.** `build_jp_slice.py` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the compact
+  folded number, the designator form, the municipality's kana reading) and holds out whole municipalities;
+  `build_cjk_overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
+  register is a renderer entry with a weight and a build report that says how many rows it landed on.
+- **The board read.** `scripts/score_jp_probe_board.py --label-set stage3-cjk` over the 20,000-row JP board: the check
+  is coordinate-acceptability at 15 km through the municipality centroid table; beside it, the municipality macro, the
+  per-register table, and `--all-municipalities` for every held-out name. A row-weighted number moves 2 pp on one
+  held-out municipality, so the pre-registration names the municipalities it is aimed at. `gold-exact` counts rows the
+  kanji-keyed table cannot key (a kana-register surface) whose prediction equals the gold span — reported, never inside
+  the check. Score the arm you are replacing on the same scorer in the same run; a scorer patch between two reads is a
+  comparison of scorers.
+- **The served read.** `packages/mailwoman/lib/dev-tools/jp-served-resolve.run.ts` geocodes board rows through the
+  installed package and the candidate gazetteer and grades the resolver's coordinate on the board's own point. The
+  parse board and the served board answer different questions; a resolver change is read here.
+- **The D-rule here.** Only the character model emits the JP tags, so a resolver mechanism keyed on them cannot reach a
+  Latin row by construction — and it is still read: `mwdev_compare` over the full regression board, origin/main
+  against the working tree, before it ships.
+
+Records: `docs/records/evals/2026-09-06-v8-cjk-shared-head.md` (the shared head, the served path, the kana register)
+and the decision record `docs/superpowers/specs/2026-09-05-cjk-serving-path.md`.
+
 ## Reading the scorecard
 
 Two lenses that disagree on purpose: **arena head-to-head** is whole-parse-strict (the strict
