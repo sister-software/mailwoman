@@ -86,7 +86,7 @@ describe("adminLadderFor", () => {
 	})
 
 	it("leaves every other country on the locality-first default", () => {
-		for (const country of ["FR", "IT", "ES", "US", "GB", "NL", "AU", "CA", "JP", ""]) {
+		for (const country of ["FR", "IT", "ES", "US", "GB", "NL", "AU", "CA", ""]) {
 			expect(adminLadderFor({ ...DE_PLZ, country })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		}
 
@@ -97,7 +97,7 @@ describe("adminLadderFor", () => {
 	// The membership table is a MEASURED claim, so a silent addition is the thing to catch — a new entry has to arrive
 	// with its panel, the way DE did.
 	it("holds exactly the countries a full-panel measurement has admitted", () => {
-		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE"])
+		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE", "JP"])
 	})
 })
 

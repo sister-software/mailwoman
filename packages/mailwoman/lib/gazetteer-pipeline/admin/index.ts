@@ -282,5 +282,6 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 export * from "#gazetteer-pipeline/admin/enrich"
 export * from "#gazetteer-pipeline/admin/fold-geonames"
 export * from "#gazetteer-pipeline/admin/fold-overture"
+export * from "#gazetteer-pipeline/admin/fold-staleness"
 export * from "#gazetteer-pipeline/admin/freeze"
 export * from "#gazetteer-pipeline/admin/ingest-wof"

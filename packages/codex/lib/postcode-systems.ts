@@ -166,13 +166,14 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * Membership is earned by a full-panel measurement, the same bar {@link UNIT_GRADE_POSTCODE} sets for CA. Coordinate
  * p50 on the OpenAddresses panels, locality-first (the default) against the postcode point:
  *
- * | country | rows  | locality-first | postcode point | verdict                                                            |
- * | ------- | ----: | -------------: | -------------: | ------------------------------------------------------------------ |
- * | **DE**  | 2,997 | 5.84 km        | **1.24 km**    | postcode, on EVERY percentile incl. p99 (21.50 → 10.57)            |
- * | FR      | 3,000 | **0.97 km**    | 2.64 km        | locality, closer on 77.5% of rows                                  |
- * | IT      | 2,833 | **1.34 km**    | 3.05 km        | locality, closer on 66.4%                                          |
- * | ES      | 2,929 | **0.68 km**    | 0.97 km        | locality, but near a coin flip — 46.1% of rows prefer the postcode |
- * | US      | 577   | **2.28 km**    | 4.15 km        | locality (see below)                                               |
+ * | country | rows  | locality-first | postcode point | verdict                                                                |
+ * | ------- | ----: | -------------: | -------------: | ---------------------------------------------------------------------- |
+ * | **DE**  | 2,997 | 5.84 km        | **1.24 km**    | postcode, on EVERY percentile incl. p99 (21.50 → 10.57)                |
+ * | FR      | 3,000 | **0.97 km**    | 2.64 km        | locality, closer on 77.5% of rows                                      |
+ * | IT      | 2,833 | **1.34 km**    | 3.05 km        | locality, closer on 66.4%                                              |
+ * | ES      | 2,929 | **0.68 km**    | 0.97 km        | locality, but near a coin flip — 46.1% of rows prefer the postcode     |
+ * | US      | 577   | **2.28 km**    | 4.15 km        | locality (see below)                                                   |
+ * | **JP**  | 586   | 4.93 km        | **0.48 km**    | postcode, closer on 97.3% of rows (p90 13.55 → 1.21, p99 19.63 → 3.54) |
  *
  * **The US row is measured on the population production actually sends to the ladder.** Its rooftop cascade is US-only
  * by construction (`selectAddressPointsDB` composes `address-points-us-<slug>.db`), and it serves 94.2% of US queries,
@@ -181,8 +182,12 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * Measured over all 10,000 rows instead, the US looks like a postcode-first country (2.41 km vs 3.63); that is a
  * selection effect, and it is why this table reports 577 rows for the US and full panels for the others, which have no
  * such cascade.
+ *
+ * **The JP row is the JP board through the served path** (`jp-served-resolve.run.ts`, 2,000 rows, seed 42): the 586
+ * rows carrying a postcode the candidate table keys, graded on the row's own entrance point — the locality-first answer
+ * is the municipality centroid, the postcode answer the code's 町域 centroid from the WOF extract.
  */
-export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE"])
+export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP"])
 
 /**
  * True when this country's area-grade postal code outranks its locality. Absent or unknown country → false, so the

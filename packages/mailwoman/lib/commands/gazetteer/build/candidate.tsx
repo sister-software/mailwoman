@@ -9,6 +9,7 @@
  *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
  */
 
+import { tryStat } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
@@ -20,6 +21,7 @@ import {
 	splitUpperList,
 	useCommandTask,
 } from "#cli-kit"
+import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazetteer-pipeline/admin/fold-staleness"
 import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"
 
 /**
@@ -37,6 +39,11 @@ export const spec = {
 			description: `Comma-separated ISO codes. Default: ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`,
 		},
 		"fold-out": { type: "string", description: "Folded admin DB path. Default <admin>-geonames.db" },
+		"allow-stale-fold": {
+			type: "boolean",
+			default: false,
+			description: "Build from a fold output older than its admin database on purpose",
+		},
 		importance: { type: "string", description: `Importance source. Default <data-root>/wof/${DEFAULT_IMPORTANCE_DB}` },
 		"skip-importance": { type: "boolean", default: false, description: "Build with an empty importance column" },
 	},
@@ -48,6 +55,7 @@ interface Options {
 	fold: boolean
 	countries?: string
 	foldOut?: string
+	allowStaleFold: boolean
 	importance?: string
 	skipImportance: boolean
 }
@@ -72,6 +80,21 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		const countries = options.countries ? splitUpperList(options.countries) : DEFAULT_FOLD_COUNTRIES
 
 		let adminDB = adminIn
+
+		// A fold output that predates its admin database carries the admin database's OLD coordinates (the Frankfurt
+		// read of 2026-09-06): refused unless asked for, since the remedy is `--fold` on this same command.
+		if (!options.fold && !options.allowStaleFold) {
+			const source = foldSourceAdminPath(adminIn)
+			const [foldStat, adminStat] = await Promise.all([tryStat(adminIn), source ? tryStat(source) : null])
+
+			if (source && foldStat) {
+				const staleness = foldStaleness(adminIn, source, foldStat.mtime, adminStat?.mtime ?? null)
+
+				if (staleness) {
+					throw new Error(foldStalenessMessage(staleness))
+				}
+			}
+		}
 
 		if (options.fold) {
 			const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
