@@ -46,7 +46,21 @@ the installed release does not trust is a token no installation accepts, which i
 
 1. Create the D1 database and the three rate-limit namespaces in the Cloudflare account. Write the database id into
    `wrangler.toml` under the environment.
-2. Set the four secrets for the environment:
+2. Provision the Stripe objects from the catalog in `lib/shop/catalog.ts`, which is the one definition of the Product,
+   the two Prices, the Payment Links' shape, the portal's features and the webhook's events:
+
+   ```bash
+   yarn mwops shop status --mode live                      # read what the account holds; writes nothing
+   yarn mwops shop provision --mode live --apply           # create what is missing; write the Price ids into wrangler.toml
+   ```
+
+   `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY` and writes the sandbox
+   environment; `--mode live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, refuses any other prefix, and also writes the
+   Payment Links into `docs/src/license/shop.ts`. A Payment Link is created only with consent collection; if Stripe
+   refuses it, the report reads `blocked` and the remedy is the terms-of-service URL under the account's public details
+   in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing.
+
+3. Set the four secrets for the environment:
 
    ```bash
    yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_SECRET_KEY --env production
@@ -55,21 +69,22 @@ the installed release does not trust is a token no installation accepts, which i
    yarn workspace @mailwoman/license-worker wrangler secret put EMAIL_API_KEY --env production
    ```
 
-3. Fill `LICENSE_SIGNING_KID`, `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY` in `wrangler.toml`. Leave
-   `ISSUANCE_ENABLED = "false"`.
-4. Run the `license-worker` workflow with `migrate` checked. It tests, bundles, refuses a `node:` import, applies the
+4. Fill `LICENSE_SIGNING_KID` in `wrangler.toml`. Leave `ISSUANCE_ENABLED = "false"`.
+5. Run the `license-worker` workflow with `migrate` checked. It tests, bundles, refuses a `node:` import, applies the
    migrations, and deploys.
-5. Confirm `GET /health` reads `{"issuance":false,"liveMode":true,"signing":"ok","ledger":"ok"}`; it answers 503
+6. Confirm `GET /health` reads `{"issuance":false,"liveMode":true,"signing":"ok","ledger":"ok"}`; it answers 503
    when the ledger does not respond.
-6. Point the Stripe webhook destination at `POST /v1/webhooks/stripe` with the seven event types in
-   `lib/stripe/webhook.ts`, and copy its signing secret into step 2 if it changed. A verified event of another type
-   answers 200 and is logged; only a failed signature answers 400, which Stripe retries for three days.
-7. Create the two Payment Links with a `text` custom field keyed `licensee_legal_name`, terms-of-service consent
-   required, and metadata `agreement_version` equal to `AGREEMENT_VERSION`. Stripe copies the metadata onto each
-   Checkout Session; the worker records it on the license once and signs it into every token for that license's
-   life, so changing `AGREEMENT_VERSION` later moves no existing subscriber. A session without the metadata is not
-   fulfilled. The success URL is `https://mailwoman.ai/license/issued?session_id={CHECKOUT_SESSION_ID}`, the page that
-   polls the claim route; the links themselves go into `docs/src/license/shop.ts`.
+7. Create the webhook destination against the deployed origin, and store the secret it answers once:
+
+   ```bash
+   yarn mwops shop provision --mode live --apply --worker-origin https://license.mailwoman.ai
+   yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET --env production
+   ```
+
+   The destination subscribes to the seven event types in `lib/stripe/webhook.ts` and pins the API version the SDK is
+   built against. A verified event of another type answers 200 and is logged; only a failed signature answers 400,
+   which Stripe retries for three days.
+
 8. Set `ISSUANCE_ENABLED = "true"` and run the workflow again without `migrate`.
 
 The same steps with `--env sandbox` stand up the sandbox on a key pair generated for it alone

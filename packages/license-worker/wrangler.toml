@@ -32,9 +32,9 @@ SITE_ORIGIN = "https://mailwoman.ai"
 AGREEMENT_VERSION = "commercial-2026-10"
 EMAIL_FROM = "licenses@mailwoman.ai"
 STRIPE_LIVE_MODE = "false"
-LICENSE_SIGNING_KID = "v9-sandbox0"
-STRIPE_PRICE_MONTHLY = "price_sandbox_monthly"
-STRIPE_PRICE_YEARLY = "price_sandbox_yearly"
+LICENSE_SIGNING_KID = "v9-ac522cf3"
+STRIPE_PRICE_MONTHLY = "price_1UCTF7ANyI6tE9Bz9jYATsOF"
+STRIPE_PRICE_YEARLY = "price_1UCTF8ANyI6tE9BzmJnVxNiS"
 
 [[env.sandbox.d1_databases]]
 binding = "LICENSE_LEDGER"

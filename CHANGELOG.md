@@ -18,6 +18,16 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — the shop as data, and `mwops shop`
+
+The Stripe objects the license worker depends on are defined once, in `packages/license-worker/lib/shop/catalog.ts`:
+the Product, the two Prices (by lookup key), the Payment Links' shape (the licensee field, the agreement-version
+metadata, the success URL, consent collection), the Customer Portal's features and the webhook's events.
+`mwops shop status --mode test|live` reads a Stripe account against it; `mwops shop provision --mode … --apply` creates
+what is missing, idempotently, and writes the Price ids into `wrangler.toml` and, live, the Payment Links into
+`docs/src/license/shop.ts`. The webhook signing secret is answered once and written nowhere. `mwops` is now a view over
+three registries. New env: `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, so a live write is a deliberate act with its own key.
+
 ### Added — self-service license: the site and the CLI
 
 `/license` gains a Buy section (the two Payment Links and the billing portal, rendered once the operator fills them in
