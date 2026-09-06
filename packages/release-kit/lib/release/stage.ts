@@ -43,6 +43,10 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/ops-cli": "private operator CLI (mwops) — never publishes",
 	"packages/release-mcp": "private maintainer MCP server over the release registry — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
+	"packages/neural-weights-ja-jp":
+		"held out until its fst-ja-jp.bin is staged and the name is blessed — the manifest promises a file no build produces yet",
+	"packages/neural-weights-zh-cn":
+		"held out until its artifacts are staged and the name is blessed — the manifest promises files no build produces yet",
 }
 
 /**
