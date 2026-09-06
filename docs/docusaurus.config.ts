@@ -341,6 +341,23 @@ const config: Config = {
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
 					],
 				},
+				{
+					title: "Legal",
+					items: [
+						{
+							label: "Inquiries",
+							href: "mailto:hello@sister.software?subject=Hello%20Sister...",
+						},
+						{
+							label: "Privacy Policy",
+							to: "/privacy",
+						},
+						{
+							label: "Terms of Service",
+							to: "/terms-of-service",
+						},
+					],
+				},
 			],
 			copyright: `Copyright © ${new Date().getFullYear()} Sister Software.`,
 		},
