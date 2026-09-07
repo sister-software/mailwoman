@@ -14,6 +14,8 @@
  *   repair so an early close inside them is also repaired.
  */
 
+import { completeFromRegister } from "#register-completion"
+
 /**
  * One town from Japan Post's KEN_ALL municipality list whose own name contains 市.
  */
@@ -56,13 +58,5 @@ export const JP_INNER_SHI_TOWN_NAMES: readonly string[] = JP_INNER_SHI_TOWNS.fla
  * already IS a register name answers null: nothing to absorb.
  */
 export function jpMunicipalityCompletion(surface: string, following: string): string | null {
-	for (const name of JP_INNER_SHI_TOWN_NAMES) {
-		if (name.length > surface.length && name.startsWith(surface)) {
-			const remainder = name.slice(surface.length)
-
-			if (following.startsWith(remainder)) return remainder
-		}
-	}
-
-	return null
+	return completeFromRegister(JP_INNER_SHI_TOWN_NAMES, surface, following)
 }

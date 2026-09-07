@@ -139,6 +139,11 @@
 			"node": "./lib/us/unit-designator.ts",
 			"default": "./out/us/unit-designator.js",
 			"types": "./out/us/unit-designator.d.ts"
+		},
+		"./kr": {
+			"node": "./lib/kr/index.ts",
+			"default": "./out/kr/index.js",
+			"types": "./out/kr/index.d.ts"
 		}
 	},
 	"publishConfig": {

@@ -37,13 +37,13 @@ import type {
 } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { buildFSTEmissionPriors } from "#fst-prior"
-import { repairJPMunicipalityLabels } from "#jp-municipality-repair"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype/census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"
 import { repairPostcodeLabels } from "#postcode/repair"
 import { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
+import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "#register-boundary-repair"
 import type { SemiCRFTransitions } from "#semi-markov-decode"
 import { buildSoftFeatures, type SoftFeatureChannel, type SoftFeatures } from "#soft-features"
 import { bridgePunctuationGaps } from "#span/bridge"
@@ -752,14 +752,20 @@ export class NeuralAddressClassifier {
 		// fragments split at unlabeled punctuation ("P.O. Box" decoding as P + O + Box). Opt-in,
 		// declared in the ship config like the conventions mask. When the span proposer ran, its
 		// ANNOTATION/QUOTED boundaries become merge-crossing constraints (M2's second half).
-		// The char path only: the six JP towns whose name carries 市 (`@mailwoman/codex`'s `JP_INNER_SHI_TOWNS`), where the
-		// model closes the municipality one character early. Exact register names, so no other row can move.
+		// The char path only: the name registers close an administrative span the model closed early — the six JP towns
+		// whose name carries 市 (`JP_INNER_SHI_TOWNS`) and every Korean 시군구 (`KR_SIGUNGU`), both in `@mailwoman/codex`.
+		// Exact register names, so no other row can move.
 		if (this.cfg.charEncoder) {
-			const before = traceRepairs ? labelsPerPiece(tokens) : []
-			tokens = repairJPMunicipalityLabels(text, tokens).tokens
+			for (const [pass, repair] of [
+				["jpMunicipality", repairJPMunicipalityLabels],
+				["krSubregion", repairKRSubregionLabels],
+			] as const) {
+				const before = traceRepairs ? labelsPerPiece(tokens) : []
+				tokens = repair(text, tokens).tokens
 
-			if (traceRepairs) {
-				recordRepair("jpMunicipality", before, labelsPerPiece(tokens))
+				if (traceRepairs) {
+					recordRepair(pass, before, labelsPerPiece(tokens))
+				}
 			}
 		}
 

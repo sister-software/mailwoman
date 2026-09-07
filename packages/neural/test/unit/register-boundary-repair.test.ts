@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The JP municipality boundary repair over char-aligned tokens: the model's early close at the inner 市 of `中新川郡上市町`
- *   is closed by the register, a real city followed by a 町-initial district is untouched, and a surface that is
- *   already a register name absorbs nothing.
+ *   The register boundary repair over char-aligned tokens. JP: the model's early close at the inner 市 of `中新川郡上市町`
+ *   is closed by the six-town register, a real city followed by a 町-initial district is untouched, and a surface that
+ *   is already a register name absorbs nothing. KR: the two emissions the CJK model produced on Haeundae rows it never
+ *   saw — a split `해:B 운:B` and a truncated `해운대` — both close on `해운대구`, and a compound city extends to its ward.
  */
 
 import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
-import { repairJPMunicipalityLabels } from "@mailwoman/neural/jp-municipality-repair"
+import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "@mailwoman/neural/register-boundary-repair"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -118,5 +119,94 @@ describe("repairJPMunicipalityLabels", () => {
 		repairJPMunicipalityLabels(text, tokens)
 
 		expect(tokens).toEqual(snapshot)
+	})
+})
+
+describe("repairKRSubregionLabels", () => {
+	it("joins a split B-B emission and absorbs the ward suffix: 해 + 운 + 대구 → 해운대구", () => {
+		// The CJK model's labels on `부산광역시 해운대구 반송로 910-1`: 해:B-subregion 운:B-subregion 대:B-street 구:O.
+		const tokens: DecoderToken[] = []
+		let text = ""
+
+		for (const [ch, label] of [
+			...[..."부산광역시"].map((c, k) => [c, k === 0 ? "B-region" : "I-region"] as const),
+			[" ", "O"],
+			["해", "B-subregion"],
+			["운", "B-subregion"],
+			["대", "B-street"],
+			["구", "O"],
+			[" ", "O"],
+			["반", "B-street"],
+			["송", "I-street"],
+			["로", "I-street"],
+			[" ", "O"],
+			...[..."910-1"].map((c, k) => [c, k === 0 ? "B-house_number" : "I-house_number"] as const),
+		] as const) {
+			tokens.push({
+				piece: ch,
+				start: text.length,
+				end: text.length + ch.length,
+				label: label as BIOLabel,
+				confidence: 1,
+			})
+
+			text += ch
+		}
+
+		expect(spansOf(text, repairKRSubregionLabels(text, tokens).tokens)).toEqual([
+			["부산광역시", "region"],
+			["해운대구", "subregion"],
+			["반송로", "street"],
+			["910-1", "house_number"],
+		])
+	})
+
+	it("absorbs the one missing character of a truncated name: 해운대 + 구", () => {
+		const { text, tokens } = charTokens([
+			["부산광역시", "region"],
+			[" ", null],
+			["해운대", "subregion"],
+			["구", null],
+			[" ", null],
+			["아랫반송로", "street"],
+			[" ", null],
+			["46", "house_number"],
+		])
+
+		expect(spansOf(text, repairKRSubregionLabels(text, tokens).tokens)).toEqual([
+			["부산광역시", "region"],
+			["해운대구", "subregion"],
+			["아랫반송로", "street"],
+			["46", "house_number"],
+		])
+	})
+
+	it("extends a city to the compound the register keys when the ward follows: 성남시 + 분당구", () => {
+		const { text, tokens } = charTokens([
+			["경기도", "region"],
+			[" ", null],
+			["성남시", "subregion"],
+			["분당구", "dependent_locality"],
+			[" ", null],
+			["판교역로", "street"],
+		])
+
+		expect(spansOf(text, repairKRSubregionLabels(text, tokens).tokens)).toEqual([
+			["경기도", "region"],
+			["성남시분당구", "subregion"],
+			["판교역로", "street"],
+		])
+	})
+
+	it("leaves a register name alone when what follows is not a longer name", () => {
+		const { text, tokens } = charTokens([
+			["서울특별시", "region"],
+			[" ", null],
+			["종로구", "subregion"],
+			[" ", null],
+			["자하문로", "street"],
+		])
+
+		expect(repairKRSubregionLabels(text, tokens).changed).toBe(0)
 	})
 })
