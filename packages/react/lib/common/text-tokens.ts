@@ -2,12 +2,12 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Word tokenization + span ownership shared by the word-level demo visualizers.
+ * @file Word tokenization + span ownership shared by the word-level visualizers.
  *
- *   `SubwordExplorer` and `BIOHighlight` both split the raw input on whitespace and assign each word
- *   to its most specific covering span (the shortest-span owner, the same rule `SpanHighlight`
- *   applies per character). The two copies had to agree for the BIO labels to line up between the
- *   panels, so the split and the owner walk live here.
+ *   A word-level panel splits the raw input on whitespace and assigns each word to its most specific
+ *   covering span (the shortest-span owner, the same rule a character-level highlight applies per
+ *   character). Two panels must agree for the BIO labels to line up between them, so the split and
+ *   the owner walk live here.
  */
 
 export interface WordToken {
@@ -36,11 +36,12 @@ export function tokenizeWords(input: string): WordToken[] {
 	const words: WordToken[] = []
 	let i = 0
 
+	// `charAt` answers "" past the end, which no whitespace test matches, so both walks stop at the input's length.
 	while (i < input.length) {
 		let ws = ""
 
-		while (i < input.length && /\s/.test(input[i])) {
-			ws += input[i]
+		while (/\s/.test(input.charAt(i))) {
+			ws += input.charAt(i)
 
 			i++
 		}
@@ -48,7 +49,7 @@ export function tokenizeWords(input: string): WordToken[] {
 		if (i >= input.length) break
 		const start = i
 
-		while (i < input.length && !/\s/.test(input[i])) {
+		while (i < input.length && !/\s/.test(input.charAt(i))) {
 			i++
 		}
 
@@ -71,25 +72,17 @@ export interface CharSpan {
  * covered when any part of it falls within the span.
  */
 export function shortestSpanOwners(words: readonly CharSpan[], spans: readonly CharSpan[]): number[] {
-	const owner: number[] = new Array(words.length).fill(-1)
-
-	for (let w = 0; w < words.length; w++) {
-		const wStart = words[w].start
-		const wEnd = words[w].end
+	return words.map((word) => {
 		let best = -1
 		let bestLen = Infinity
 
-		for (let s = 0; s < spans.length; s++) {
-			const sp = spans[s]
-
-			if (wStart < sp.end && wEnd > sp.start && sp.end - sp.start < bestLen) {
+		for (const [s, sp] of spans.entries()) {
+			if (word.start < sp.end && word.end > sp.start && sp.end - sp.start < bestLen) {
 				bestLen = sp.end - sp.start
 				best = s
 			}
 		}
 
-		owner[w] = best
-	}
-
-	return owner
+		return best
+	})
 }

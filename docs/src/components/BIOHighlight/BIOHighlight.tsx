@@ -10,8 +10,7 @@
  */
 
 import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
-
-import { shortestSpanOwners, tokenizeWords } from "#shared/text-tokens"
+import { shortestSpanOwners, tokenizeWords } from "@mailwoman/react/common/text-tokens"
 
 import styles from "./styles.module.css"
 

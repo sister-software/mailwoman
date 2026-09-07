@@ -1,6 +1,5 @@
 import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
-
-import { confidenceTierOrMid } from "#shared/confidence-tiers"
+import { confidenceTierOrMid } from "@mailwoman/react/common/confidence-tiers"
 
 import styles from "./styles.module.css"
 

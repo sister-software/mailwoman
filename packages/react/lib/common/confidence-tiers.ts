@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Confidence banding shared by the demo components.
+ * @file Confidence banding shared by every component that colours a span by confidence.
  *
- *   The same three-way split was written out in seven components. It is a presentation choice, not a
- *   model one — the parser emits a continuous confidence and these bounds only decide which colour a
- *   span is drawn in — so it lives here rather than anywhere the pipeline can see it.
+ *   It is a presentation choice, not a model one: the parser emits a continuous confidence and these
+ *   bounds only decide which colour a span is drawn in, so they live here rather than anywhere the
+ *   pipeline can see them.
  */
 
 /**

@@ -14,10 +14,9 @@
  */
 
 import type { KindView, ParsedComponent, StageTiming } from "@mailwoman/core/pipeline/client-result"
+import { confidenceTierOrMid } from "@mailwoman/react/common/confidence-tiers"
+import { shortestSpanOwners, tokenizeWords, type WordToken } from "@mailwoman/react/common/text-tokens"
 import type React from "react"
-
-import { confidenceTierOrMid } from "#shared/confidence-tiers"
-import { shortestSpanOwners, tokenizeWords, type WordToken } from "#shared/text-tokens"
 
 import styles from "./styles.module.css"
 

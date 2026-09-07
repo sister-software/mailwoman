@@ -17,8 +17,7 @@
  */
 
 import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
-
-import { confidenceTierOrMid } from "#shared/confidence-tiers"
+import { confidenceTierOrMid } from "@mailwoman/react/common/confidence-tiers"
 
 import styles from "./styles.module.css"
 
@@ -175,8 +174,8 @@ interface TreeNodeLike {
 }
 
 /**
- * Flatten the address tree preserving source provenance. Mirrors `flattenTree` from demo-helpers but preserves `source`
- * / `sourceID` and extracts displaced classifier info from `metadata` when available.
+ * Flatten the address tree preserving source provenance. Mirrors `flattenTreeNodes` from `@mailwoman/core/decoder` but
+ * preserves `source` / `sourceID` and extracts displaced classifier info from `metadata` when available.
  */
 function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	const out: SourceNode[] = []
