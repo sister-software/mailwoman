@@ -5,7 +5,7 @@
  * @file Enforce tests as external consumers of workspace package contracts.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { dirname, relative, resolvePath, sep } from "path-ts"
 import ts from "typescript"
 
@@ -18,8 +18,13 @@ interface RootManifest {
 }
 
 const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
-const packageSuites = new Set(["full", "integration", "unit"])
-const docsSuites = new Set([...packageSuites, "browser", "build", "e2e"])
+const vitestSuites = new Set(["full", "integration", "unit"])
+/**
+ * A workspace that carries a `playwright.config.ts` runs Playwright suites too, and those live beside the vitest ones:
+ * `browser` for page specs, `build` for a build-health project, `e2e` for the fixtures they share. Vitest's root
+ * configs exclude those directories, so the two runners never collect each other's files.
+ */
+const playwrightSuites = new Set([...vitestSuites, "browser", "build", "e2e"])
 
 /**
  * The `test-contract` check: one error per test file outside `test/{unit,integration,full}/` and per relative import a
@@ -37,8 +42,8 @@ export const testContractCheck: RepoCheck = {
 
 		for (const workspace of manifest.workspaces) {
 			const workspaceRoot = resolvePath(root, workspace)
-			const isDocs = workspace === "docs"
-			const allowedSuites = isDocs ? docsSuites : packageSuites
+			const runsPlaywright = await pathExists(resolvePath(workspaceRoot, "playwright.config.ts"))
+			const allowedSuites = runsPlaywright ? playwrightSuites : vitestSuites
 
 			for (const filePath of sources) {
 				if (!filePath.startsWith(`${workspaceRoot}/`) || !testPattern.test(filePath)) continue
@@ -49,7 +54,7 @@ export const testContractCheck: RepoCheck = {
 				if (workspaceRelative[0] !== "test" || !allowedSuites.has(workspaceRelative[1] ?? "")) {
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
-						message: `tests belong under test/${isDocs ? "{unit,integration,full,browser,build,e2e}" : "{unit,integration,full}"}/`,
+						message: `tests belong under test/${runsPlaywright ? "{unit,integration,full,browser,build,e2e}" : "{unit,integration,full}"}/`,
 						file,
 					})
 				}

@@ -39,7 +39,6 @@
 		"deploy:dry-run": "wrangler deploy --dry-run"
 	},
 	"dependencies": {
-		"@mailwoman/core": "workspace:*",
 		"@mailwoman/react": "workspace:*",
 		"@mailwoman/site-kit": "workspace:*",
 		"maplibre-gl": "^6.7.0",

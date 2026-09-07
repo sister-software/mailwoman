@@ -5937,7 +5937,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/earth@workspace:packages/earth"
   dependencies:
-    "@mailwoman/core": "workspace:*"
     "@mailwoman/react": "workspace:*"
     "@mailwoman/site-kit": "workspace:*"
     "@playwright/test": "npm:^1.63.0"

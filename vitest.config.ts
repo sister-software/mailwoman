@@ -148,6 +148,9 @@ export default defineConfig({
 			// — the `docusaurus build` health check — was missing here, so it surfaced the moment CI
 			// could reach the test phase again.)
 			"**/docs/test/browser/**",
+			// A package that runs Playwright (a playwright.config.ts beside its manifest) keeps the same layout.
+			"**/packages/*/test/browser/**",
+			"**/packages/*/test/e2e/**",
 			"**/docs/test/build/**",
 			"**/docs/test/e2e/**",
 			// Agent worktrees under .claude/worktrees/ are isolated git checkouts; each contains a
