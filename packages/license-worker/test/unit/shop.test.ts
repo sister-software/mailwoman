@@ -83,6 +83,7 @@ function provisionedAccount(options: { agreementVersion?: string } = {}): Record
 						terms_of_service_url: `${SITE}/license/terms/${AGREEMENT_VERSION}`,
 					},
 					default_return_url: `${SITE}/license`,
+					login_page: { enabled: true, url: "https://billing.stripe.com/p/login/test_portal" },
 				},
 			],
 		},
@@ -118,7 +119,14 @@ function creatingAccount(): Record<string, StripeRoute> {
 			metadata: { plan_code: form.get("metadata[plan_code]") },
 			consent_collection: { terms_of_service: form.get("consent_collection[terms_of_service]") ?? null },
 		}),
-		"POST /v1/billing_portal/configurations": () => ({ id: "bpc_1", object: "billing_portal.configuration" }),
+		"POST /v1/billing_portal/configurations": (form) => ({
+			id: "bpc_1",
+			object: "billing_portal.configuration",
+			login_page: {
+				enabled: form.get("login_page[enabled]") === "true",
+				url: form.get("login_page[enabled]") === "true" ? "https://billing.stripe.com/p/login/test_new" : null,
+			},
+		}),
 		"POST /v1/webhook_endpoints": (form) => ({
 			id: "we_1",
 			object: "webhook_endpoint",
@@ -163,7 +171,11 @@ describe("the shop provisioner", () => {
 			expect(report.paymentLinks[plan.code]).toMatchObject({ action: "created", consent: true })
 		}
 
-		expect(report.portal).toEqual({ id: "bpc_1", action: "created" })
+		expect(report.portal).toEqual({
+			id: "bpc_1",
+			action: "created",
+			url: "https://billing.stripe.com/p/login/test_new",
+		})
 
 		expect(report.webhook).toEqual({
 			id: "we_1",
@@ -238,7 +250,13 @@ describe("the shop provisioner", () => {
 		})
 
 		expect(report.product).toEqual({ id: "prod_1", action: "exists" })
-		expect(report.portal).toEqual({ id: "bpc_1", action: "exists" })
+
+		expect(report.portal).toEqual({
+			id: "bpc_1",
+			action: "exists",
+			url: "https://billing.stripe.com/p/login/test_portal",
+		})
+
 		expect(report.webhook).toEqual({ id: "we_1", url: `${WORKER}/v1/webhooks/stripe`, action: "exists" })
 
 		// The one link that lacked promotion codes is the one write of the run.
@@ -392,6 +410,61 @@ describe("the shop provisioner", () => {
 		expect(enabledEvents).toEqual([...WEBHOOK_EVENTS])
 	})
 
+	it("a portal whose login page is off is drift under a read-only run, and is switched on under apply with its address answered", async () => {
+		const account: Record<string, StripeRoute> = {
+			...provisionedAccount(),
+			"GET /v1/billing_portal/configurations?": {
+				object: "list",
+				data: [
+					{
+						id: "bpc_1",
+						object: "billing_portal.configuration",
+						business_profile: {
+							headline: "Mailwoman commercial license",
+							terms_of_service_url: `${SITE}/license/terms/${AGREEMENT_VERSION}`,
+						},
+						default_return_url: `${SITE}/license`,
+						login_page: { enabled: false, url: null },
+					},
+				],
+			},
+			"POST /v1/billing_portal/configurations/bpc_1": (form) => ({
+				id: "bpc_1",
+				object: "billing_portal.configuration",
+				login_page: {
+					enabled: form.get("login_page[enabled]") === "true",
+					url: "https://billing.stripe.com/p/login/live_enabled",
+				},
+			}),
+		}
+
+		const readOnly = recordingStripeFetch(account)
+		const plan = await provisionShop(stripeClient(worker, readOnly.fetch), { siteOrigin: SITE, apply: false })
+
+		expect(plan.portal).toEqual({
+			id: "bpc_1",
+			action: "exists",
+			drift: ["login_page.enabled is false; the catalog says true"],
+		})
+
+		expect(readOnly.calls.every((call) => call.method === "GET")).toBe(true)
+
+		const applying = recordingStripeFetch(account)
+		const report = await provisionShop(stripeClient(worker, applying.fetch), { siteOrigin: SITE, apply: true })
+
+		expect(report.portal).toEqual({
+			id: "bpc_1",
+			action: "updated",
+			url: "https://billing.stripe.com/p/login/live_enabled",
+		})
+
+		const update = applying.calls.find(
+			(call) => call.method === "POST" && call.path === "/v1/billing_portal/configurations/bpc_1"
+		)
+
+		expect(update?.form.get("login_page[enabled]")).toBe("true")
+	})
+
 	it("finds the Product on a later page of the list", async () => {
 		const stripe = recordingStripeFetch({
 			...provisionedAccount(),
@@ -425,6 +498,19 @@ describe("the ids record", () => {
 
 		expect(next.live.prices).toEqual({ "commercial-monthly-v1": "price_l1_new", "commercial-yearly-v1": "price_l2" })
 		expect(next.live.paymentLinks).toEqual(current.live.paymentLinks)
+		expect(next.live.portalURL).toBeUndefined()
 		expect(next.test).toEqual(current.test)
+
+		const withPortal = withShopIDs(next, "live", {
+			prices: {},
+			paymentLinks: {},
+			portalURL: "https://billing.stripe.com/p/login/x",
+		})
+
+		expect(withPortal.live.portalURL).toBe("https://billing.stripe.com/p/login/x")
+
+		expect(withShopIDs(withPortal, "live", { prices: {}, paymentLinks: {} }).live.portalURL).toBe(
+			"https://billing.stripe.com/p/login/x"
+		)
 	})
 })

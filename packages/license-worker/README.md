@@ -55,7 +55,8 @@ the installed release does not trust is a token no installation accepts, which i
 
    `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY`; `--mode live` reads
    `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses any other prefix. Both write `lib/shop/ids.json`, the one file that
-   names the Price ids the worker allowlists and the Payment Links the site renders. A Payment Link is created only with consent collection; if Stripe
+   names the Price ids the worker allowlists, the Payment Links the site renders, and the portal's login address the
+   site and the email hand a customer. A Payment Link is created only with consent collection; if Stripe
    refuses it, the report reads `blocked` and the remedy is the terms-of-service URL under the account's public details
    in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing. An object that
    differs from the catalog is reported under `drift`; `--apply` updates what an update can change (a link's promotion
