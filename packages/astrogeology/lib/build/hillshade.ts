@@ -133,19 +133,11 @@ export async function buildHillshadePMTiles(options: HillshadeBuildOptions): Pro
 
 	await runFile("gdal_translate", declare)
 
-	// 3. MBTiles with PNG tiles at the deepest zoom, then overviews down to zoom 0, then PMTiles.
-	const tile = [
-		"-of",
-		"MBTILES",
-		"-co",
-		"TILE_FORMAT=PNG",
-		"-co",
-		"ZOOM_LEVEL_STRATEGY=LOWER",
-		"-co",
-		`MAXZOOM=${options.maxZoom}`,
-		forTiling,
-		mbtiles,
-	]
+	// 3. MBTiles with PNG tiles at exactly the requested zoom, then overviews down to zoom 0, then PMTiles. The zoom is
+	//    pinned with ZOOM_LEVEL rather than left to a strategy and a cap: under ZOOM_LEVEL_STRATEGY=LOWER with
+	//    MAXZOOM=6 the 118 m Moon mosaic still landed at zoom 7 (21,845 tiles, 907 MB) while the 463 m Mars mosaic
+	//    landed at 6.
+	const tile = ["-of", "MBTILES", "-co", "TILE_FORMAT=PNG", "-co", `ZOOM_LEVEL=${options.maxZoom}`, forTiling, mbtiles]
 
 	await runFile("gdal_translate", tile)
 
