@@ -98,7 +98,7 @@
 		"ci:test:lexicon-full": "vitest --run --config vitest.full.config.ts",
 		"ci:test:pair-index-parity": "vitest --run pair/index-card-parity",
 		"ci:test:slow": "vitest --run --config vitest.slow.config.ts",
-		"ci:tile-worker": "run-s compile",
+		"ci:workers": "run-s compile",
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
 		"docs:build": "yarn workspace @mailwoman/docs build",
