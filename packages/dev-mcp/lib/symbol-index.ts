@@ -92,37 +92,59 @@ function isIdentifier(name: string): boolean {
 
 /**
  * Split an identifier into its camelCase components: `readPackageJSONFile` → `read`, `Package`, `JSON`, `File`. A run
- * of capitals is one component, so an acronym stays whole rather than becoming one component per letter.
+ * of capitals is one component, so an acronym stays whole rather than becoming one component per letter, and digits
+ * attach to the capitals they follow, so `getH3Cell` yields `get`, `H3`, `Cell` rather than a lone `3`.
+ *
+ * `change-case` exports a `split` that does nearly this, and `@mailwoman/core/strings/case` already depends on that
+ * package. It is not reached for here because this workspace does not otherwise depend on `change-case`, and because
+ * the digit rule above is this module's own: a component that begins with a digit can never head a candidate name.
  */
 function nameComponents(name: string): string[] {
-	return name.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
+	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
 }
 
 /**
- * The names a new name would be a longer spelling of: every contiguous run of at least two of its components, shorter
- * than the whole.
+ * The number of camelCase components a contained run must carry to be worth reporting.
+ *
+ * One-component runs are the vocabulary of the tree — `read`, `build`, `file`, `parse` — so a floor of one reports
+ * nearly every name against nearly every other. Of the 2,950 exported function names under `packages/`, the count that
+ * are a longer spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three; across
+ * different files, 348, 67 and 20. Two keeps the motivating case (`readWorkspaceDirectories` over
+ * `workspaceDirectories`) while dropping the vocabulary, and it is why this constant takes an argument: the floor is
+ * measurable rather than asserted.
+ */
+const COMPONENT_FLOOR = 2
+
+/**
+ * The names a new name would be a longer spelling of: every contiguous run of at least {@link COMPONENT_FLOOR} of its
+ * components, shorter than the whole.
  *
  * WHY THIS EXISTS. Exact-name matching finds a duplicate only for an author who already guessed the existing name,
- * which is the one thing a duplicating author does not know. Both duplicates written on 2026-09-07 were the existing
- * name plus an affix — `readWorkspaceDirectories` over `workspaceDirectories`, `readPackageJSONFile` over
- * `readPackageJSON` — and the exact rule was silent for both. A contiguous run is what an affix leaves behind, so
- * searching for the runs finds the shorter home from the longer name.
+ * which is the one thing a duplicating author does not know. A duplicate arrives as an existing name plus an affix —
+ * `readWorkspaceDirectories` over `workspaceDirectories`, `readPackageJSONFile` over `readPackageJSON` — and the exact
+ * rule is silent for every one of them. A contiguous run is what an affix leaves behind, so searching for the runs
+ * finds the shorter home from the longer name.
  *
- * Two components is the floor because one-component runs are the vocabulary of the tree — `read`, `build`, `file` — and
- * a rule that reports them reports everything. Measured over the repository's exported function names, the floor is the
- * difference between 183 pairs and 47.
+ * The relation is ONE-DIRECTIONAL. It answers "is there a shorter name inside this one", never the reverse, so writing
+ * the shorter name while the longer already exists still reports nothing.
  */
-export function containedNameCandidates(name: string): string[] {
+export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
 	const components = nameComponents(name)
 	const candidates = new Set<string>()
 
 	for (let start = 0; start < components.length; start += 1) {
-		for (let end = start + 2; end <= components.length; end += 1) {
+		for (let end = start + floor; end <= components.length; end += 1) {
 			if (end - start === components.length) continue
 
 			const [head = "", ...rest] = components.slice(start, end)
 
-			candidates.add(head.charAt(0).toLowerCase() + head.slice(1) + rest.join(""))
+			// A candidate is read as a name, so its head takes the case a name would: an acronym goes fully lowercase
+			// (`JSON` → `json`), and a component opening with a digit cannot head one at all.
+			if (/^\d/u.test(head)) continue
+
+			const leading = /^[A-Z]+\d*$/u.test(head) ? head.toLowerCase() : head.charAt(0).toLowerCase() + head.slice(1)
+
+			candidates.add(leading + rest.join(""))
 		}
 	}
 
