@@ -1020,7 +1020,7 @@ git commit -m "feat(astrogeology): the search artifact over feature names, and t
 ```bash
 sed -n 1,80p packages/mailwoman/lib/commands/tiles/publish.tsx
 sed -n 40,120p packages/libpostal/lib/cli.ts
-grep -n "^export" packages/mailwoman/lib/cli-kit/index.ts | cut -c1-120
+grep -n "^export" packages/mailwoman/lib/cli-kit/index.ts | head -c 4000
 ```
 
 `packages/libpostal/lib/cli.ts` is a package with its own `bin` over `mailwoman/cli-kit`; `tiles/publish.tsx` is the command shape (`spec` with `options`, a `ParsedCommandComponent` rendering `CommandTaskResult` over `useCommandTask`). The astrogeology `cli.ts` selects one of four command modules by the first positional through `parseArguments` from `@mailwoman/core/scripting/arguments` and renders it with Ink the way `libpostal`'s does; if cli-kit exports a runner that takes a command table (`grep -n "runCommand\|selectCommand" packages/mailwoman/lib/cli-kit/*.ts`), use it rather than writing the dispatch.
