@@ -268,6 +268,7 @@ export async function sendTokenEmail(
 				lid: license.lid,
 				issued: token.issued,
 				expires: token.expires,
+				agreement: license.agreement_version,
 				...(license.refresh_secret_pending ? { refreshSecret: license.refresh_secret_pending } : {}),
 			},
 			token.invoice_id

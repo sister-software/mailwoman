@@ -14,6 +14,11 @@
 	"imports": {
 		"#test/*": "./test/*.ts",
 		"#shop/ids.json": "./lib/shop/ids.json",
+		"#email/template": {
+			"workerd": "./lib/email/template.tsx",
+			"default": "./out/email/template.js",
+			"types": "./out/email/template.d.ts"
+		},
 		"#*": {
 			"workerd": "./lib/*.ts",
 			"node": "./lib/*.ts",
@@ -57,6 +62,11 @@
 			"node": "./lib/email/cloudflare.ts",
 			"default": "./out/email/cloudflare.js",
 			"types": "./out/email/cloudflare.d.ts"
+		},
+		"./email/content": {
+			"node": "./lib/email/content.ts",
+			"default": "./out/email/content.js",
+			"types": "./out/email/content.d.ts"
 		},
 		"./email/render": {
 			"node": "./lib/email/render.ts",
@@ -161,15 +171,20 @@
 		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/release-kit": "workspace:*",
+		"@react-email/components": "^1.0.12",
 		"hono": "^4.13.7",
 		"kysely": "^0.29.5",
 		"kysely-d1": "^0.4.0",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
 		"stripe": "^22.6.1",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.22.0",
 		"@cloudflare/workers-types": "^5.20260906.1",
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.7",
 		"@vitest/runner": "^4.1.11",
 		"@vitest/snapshot": "^4.1.11",
 		"vitest": "4.1.11",

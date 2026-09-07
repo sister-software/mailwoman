@@ -8,7 +8,7 @@
  */
 
 import type { EmailProvider } from "#email/provider"
-import { licenseEmailSubject, renderLicenseEmail } from "#email/render"
+import { licenseEmailSubject, renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
 import type { LicenseWorkerEnv } from "#env"
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails"
@@ -28,6 +28,7 @@ export function resendProvider(env: LicenseWorkerEnv): EmailProvider {
 					to: [message.to],
 					subject: licenseEmailSubject(message),
 					text: renderLicenseEmail(message, env.SITE_ORIGIN),
+					html: renderLicenseEmailHTML(message, env.SITE_ORIGIN, env.EMAIL_FROM),
 				}),
 			})
 
