@@ -35,6 +35,6 @@ export const PAYMENT_LINK_MONTHLY = SHOP_IDS.live.paymentLinks["commercial-month
 export const PAYMENT_LINK_YEARLY = SHOP_IDS.live.paymentLinks["commercial-yearly-v1"]
 
 /**
- * No-code Customer Portal login link.
+ * The Customer Portal's login page, where a customer changes the card, the plan, or cancels.
  */
-export const BILLING_PORTAL_URL: string | null = null
+export const BILLING_PORTAL_URL = SHOP_IDS.live.portalURL

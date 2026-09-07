@@ -102,13 +102,8 @@ const Issued: React.FC<{ claim: IssuedClaim }> = ({ claim }) => {
 			</p>
 
 			<p>
-				The same key is in your email.
-				{BILLING_PORTAL_URL ? (
-					<>
-						{" "}
-						Change the card, the plan, or cancel at <a href={BILLING_PORTAL_URL}>the billing portal</a>.
-					</>
-				) : null}
+				The same key is in your email. Change the card, the plan, or cancel at{" "}
+				<a href={BILLING_PORTAL_URL}>the billing portal</a>.
 			</p>
 		</>
 	)

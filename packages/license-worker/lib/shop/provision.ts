@@ -91,7 +91,10 @@ export const ProvisionReportSchema = z.object({
 		z.enum(SHOP_PLAN_CODES),
 		ProvisionedObjectSchema.extend({ url: z.string().optional(), consent: z.boolean(), promotionCodes: z.boolean() })
 	),
-	portal: ProvisionedObjectSchema,
+	/**
+	 * The portal's login page, once enabled: the address a customer signs in at to change the card, the plan, or cancel.
+	 */
+	portal: ProvisionedObjectSchema.extend({ url: z.string().optional() }),
 	webhook: ProvisionedObjectSchema.extend({ url: z.string(), secret: z.string().optional() }).optional(),
 })
 
@@ -314,14 +317,24 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		}
 	}
 
-	// The Customer Portal configuration: cancel at period end, update the card, switch between the two Prices. Found
-	// by its headline, held to the URLs the catalog derives.
+	// The Customer Portal configuration: cancel at period end, update the card, switch between the two Prices, and the
+	// login page whose address the site and the email hand a customer. Found by its headline, held to the URLs the
+	// catalog derives and to the login page being on.
 	const existingPortal = await findListed(
 		stripe.billingPortal.configurations.list({ limit: 100 }),
 		(configuration) => configuration.business_profile.headline === SHOP_PRODUCT.name
 	)
 
-	let portal: ProvisionedObject = existingPortal ? { id: existingPortal.id, action: "exists" } : { action: "missing" }
+	const portalReport = (configuration: Stripe.BillingPortal.Configuration, action: ProvisionAction) => ({
+		id: configuration.id,
+		action,
+		...(configuration.login_page.url ? { url: configuration.login_page.url } : {}),
+	})
+
+	let portal: ProvisionReport["portal"] = existingPortal
+		? portalReport(existingPortal, "exists")
+		: { action: "missing" }
+
 	const priceIDs = SHOP_PLANS.map((plan) => prices[plan.code].id).filter((id): id is string => id !== undefined)
 
 	if (existingPortal) {
@@ -332,15 +345,17 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 				urls.termsURL
 			),
 			...differs("default_return_url", existingPortal.default_return_url, urls.licenseURL),
+			...differs("login_page.enabled", existingPortal.login_page.enabled, true),
 		]
 
 		if (drift.length && input.apply) {
-			await stripe.billingPortal.configurations.update(existingPortal.id, {
+			const updated = await stripe.billingPortal.configurations.update(existingPortal.id, {
 				business_profile: { terms_of_service_url: urls.termsURL },
 				default_return_url: urls.licenseURL,
+				login_page: { enabled: true },
 			})
 
-			portal = { id: existingPortal.id, action: "updated" }
+			portal = portalReport(updated, "updated")
 		} else {
 			portal = withDrift(portal, drift)
 		}
@@ -352,6 +367,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 				privacy_policy_url: urls.licenseURL,
 			},
 			default_return_url: urls.licenseURL,
+			login_page: { enabled: true },
 			features: {
 				customer_update: { enabled: true, allowed_updates: ["email", "address", "name"] },
 				invoice_history: { enabled: true },
@@ -365,7 +381,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 			},
 		})
 
-		portal = { id: created.id, action: "created" }
+		portal = portalReport(created, "created")
 	}
 
 	// The webhook destination, once the worker has an origin: found by URL, held to the event list; its API version
