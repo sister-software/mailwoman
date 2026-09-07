@@ -2,7 +2,9 @@
 
 **Status:** design approved 2026-09-06. Decisions the operator took: the word "demo" is retired, the app lives
 under `packages/`, the browser runtime moves into the packages that own it (no `@mailwoman/browser`), and
-Cloudflare Workers Builds builds and deploys the app.
+Cloudflare Workers Builds builds and deploys the app. Shell landed in #2196, the runtime's package homes in #2203;
+the launch PR moves the runtime, the panels and the browser suite into the app and retires the docs page. The two
+dashboard steps are the Workers Builds project and the bucket's CORS rule for the workers.dev preview origin.
 **Builds on:** `2026-09-06-browser-export-conditions-design.md` (the packages must bundle under Vite without
 aliases before this app can consume them).
 **Precedes:** `2026-09-06-planetary-app-design.md`, which copies this app's build and deployment shape.
@@ -218,6 +220,24 @@ in that path.
 - `packages/earth` is registered in the root `workspaces`, both root `tsconfig.json` reference entries,
   and `SANCTIONED_RELEASE_ABSENCES`; the `publishCount` pin in `release-stage.test.ts` is unchanged.
 - The Workers Builds project exists, deploys from `main`, and the README carries its settings table.
+
+Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
+
+- Parity: `packages/earth/test/browser/100-demo-cold-load.spec.ts` and `200-demo-resolve.spec.ts` run against the
+  preview on port 7770 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
+  postcode anchors, the viewport and device biases, the debug trace and the theme. About one cold load in five stalls
+  on the classifier step for over 100 s with no console error and no failed request; the fixture waits 180 s.
+- `?q=` links: `docs/src/components/EarthRedirect/EarthRedirect.tsx` forwards with `location.search` intact.
+- Removal: `ls docs/src/shared` prints the two maplibre worker files; `docs/src/pages/demo/index.tsx`, `debug.tsx` and
+  `trace.tsx` are the redirects; `docs/static/range-cache-sw.js` is gone; the plugin is `docs/plugins/runtime-assets/`;
+  `grep -rn "docs/src/shared" packages` prints nothing. `knip` measures no unused docs dependency after the move:
+  `maplibre-gl`, `react-map-gl`, `@mailwoman/cartographer` serve `DashboardMap`, `onnxruntime-web` and
+  `@mailwoman/neural` serve the explainers that classify, and `sql.js-httpvfs` left with the runtime-homes PR.
+- Names: the `@mailwoman/react/map` rename map is applied by the launch PR's rename commit.
+- The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
+- Registers: unchanged since the shell PR (#2196).
+- Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and
+  `http://localhost:7770` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
 
 ## Out of scope
 
