@@ -227,7 +227,7 @@ export interface StreetResolution {
 }
 
 /**
- * Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes).
+ * Structural shapes so this is testable with stubs (and decoupled from the lookup classes above).
  */
 interface SitusLike {
 	find(q: {

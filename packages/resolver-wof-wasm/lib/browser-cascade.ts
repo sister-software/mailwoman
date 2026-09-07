@@ -3,15 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tree resolution over a browser-side place lookup.
+ *   Tree resolution over a browser-side place lookup: the browser half of the same resolve cascade the
+ *   node path runs, with nothing in it that belongs to one host.
  *
- *   This lived in the docs site (`docs/src/shared/`), which made it unreachable from the packages that
- *   need it: `hot-db.test.ts` here had to reach across a workspace boundary into a private Docusaurus
- *   app, dragging its React graph into a project that has no business type-checking it. Nothing in this
- *   file is docs-specific — it is the browser half of the same resolve cascade the node path runs.
- *
- *   The lookup is structural (`MailwomanLookupLike`) rather than a concrete class, so the demo's HTTPVFS
- *   lookup, the WASM lookup here, and any future one all satisfy it.
+ *   The lookup is structural (`MailwomanLookupLike`) rather than a concrete class, so the HTTPVFS lookup,
+ *   the WASM lookup here, and any future one all satisfy it.
  */
 
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"

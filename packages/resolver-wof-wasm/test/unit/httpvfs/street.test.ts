@@ -7,8 +7,8 @@
  *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub worker that
  *   mimics sql.js-httpvfs's `db.exec` contract ([] on no rows, else [{columns, values}]), plus
  *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no /mnt/playpen
- *   dependency, CI-safe. Integration against real extracts is the `verify-httpvfs-street` probe in
- *   the geocoder-demo spec.
+ *   dependency, CI-safe. Integration against real extracts is the docs site's street-tier browser
+ *   spec.
  */
 
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"

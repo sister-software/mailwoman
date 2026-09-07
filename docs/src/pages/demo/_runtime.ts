@@ -16,9 +16,9 @@
  *   (bbox / street tier / lazily-fetched crisp polygon) that feeds the declarative overlays.
  *
  *   Node-safety is not a concern here — this is docs-only code (webpack/browser), never imported by the
- *   published `@mailwoman/react` package. It reuses the SAME shared helpers the live demo uses
- *   (`@mailwoman/docs/shared/demo-helpers`, `@mailwoman/docs/shared/resources`, `./_map-helpers`) so the two paths can't
- *   drift on the parse/resolve/geometry math.
+ *   published `@mailwoman/react` package. It composes the browser runtime (`mailwoman/browser-runtime/*`) and
+ *   `./_map-helpers`, the same modules the MDX embed composes, so the two paths can't drift on the
+ *   parse/resolve/geometry math.
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"

@@ -5,7 +5,7 @@
  *
  *   Node↔browser candidate-reader PARITY over the REAL artifact (the #861 server↔demo contract, run
  *   for the 2026-08-11 staging repoint): the same probes through the Node `WOFCandidateTableLookup`
- *   (`@mailwoman/resolver-wof-sqlite`) and the browser twin (`httpvfs-resolver.ts` over a
+ *   (`@mailwoman/resolver-wof-sqlite`) and the browser twin (`httpvfs/resolver.ts` over a
  *   node:sqlite-backed stub worker), asserting the SAME top answer — id, coordinate, exact-tier flag,
  *   and the #28 importance carry.
  *

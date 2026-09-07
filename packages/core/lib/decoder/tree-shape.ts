@@ -93,10 +93,9 @@ export interface FlatTreeNode {
 /**
  * Flatten a tree to its nodes in SOURCE order — sorted by `start`, the same order `decodeAsTuples` means by it.
  *
- * The two copies this replaces (the demo's `demo-helpers.ts` and the `demo-cascade-smoke` mirror of it) relied on
- * TRAVERSAL order instead: depth-first onto a stack, then reversed. That coincides with source order only while every
- * parent's span precedes its children's, and the decoder does not promise it — measured, the two orders disagree on **7
- * of 10** ordinary addresses, always with a child ahead of its parent:
+ * A traversal-order walk (depth-first onto a stack, then reversed) is the obvious implementation and is wrong here: it
+ * coincides with source order only while every parent's span precedes its children's, and the decoder does not promise
+ * it — measured, the two orders disagree on **7 of 10** ordinary addresses, always with a child ahead of its parent:
  *
  *     Queen Street, Bristol              street_suffix@6 before street@0
  *     Via Roma, 5, 50123 Firenze, …      house_number@10 before street@0
@@ -104,9 +103,6 @@ export interface FlatTreeNode {
  *
  * Sorting is what the tuple projection already does, so this makes a rendered span list and `decodeAsTuples` agree by
  * construction rather than by luck.
- *
- * The smoke test could not import the demo's copy (that would be a `mailwoman` → `docs` project reference, and `docs`
- * already depends on `mailwoman`), which is why a third home was the only way to collapse them.
  */
 export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 	if (!tree) return []

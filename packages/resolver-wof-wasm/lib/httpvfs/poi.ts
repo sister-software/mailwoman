@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   A SECOND sql.js-httpvfs worker, byte-ranged over the published `poi.db` (`poiLayerURL()`) —
- *   category-only k-ring search for the docs POI tester (`POIExplorer` / try-it.mdx). Independent of
- *   `httpvfs-resolver.ts`'s admin-gazetteer worker: a POI search opens its OWN worker over a
+ *   category-only k-ring search for a live POI explorer. Independent of
+ *   `resolver.ts`'s admin-gazetteer worker: a POI search opens its OWN worker over a
  *   different DB, over the same staged sql.js-httpvfs UMD/worker/wasm assets.
  *
  *   The k-ring walk + h3 packing REPLICATE `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
@@ -32,7 +32,7 @@ import { rowsFromExec } from "#httpvfs/rows"
 const POI_H3_RESOLUTION = 9
 
 /**
- * The worker handle `loadHTTPVFSDatabase` resolves to — named here since `httpvfs-resolver.ts` doesn't export its
+ * The worker handle `loadHTTPVFSDatabase` resolves to — named here since `resolver.ts` doesn't export its
  * `HTTPVFSWorker` interface.
  */
 export type POIHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>

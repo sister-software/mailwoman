@@ -7,7 +7,7 @@
  *   (classify → subject → OverpassQL) lives entirely in the package and is self-contained. This file
  *   supplies only the ONE docs-specific concern: the live poi.db search, which needs the site's staged
  *   sql.js-httpvfs assets and the byte-ranged published layer. It's injected as a `runLiveSearch`
- *   function that dynamically imports `@mailwoman/docs/shared/poi-httpvfs` on first use, so the httpvfs/worker
+ *   function that dynamically imports `@mailwoman/resolver-wof-wasm/httpvfs/poi` on first use, so the httpvfs/worker
  *   implementation never enters the package's browser graph and the intent-only common case pays nothing.
  *
  *   The injected probe is CATEGORY-ONLY, and `brandLiveSearch` is left off (default), so a chain-brand

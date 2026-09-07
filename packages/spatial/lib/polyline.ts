@@ -6,10 +6,10 @@
  *   Position along a polyline, by arc length.
  *
  *   This is what house-number interpolation stands on: given a street segment's geometry and how far
- *   along its house-number range an address sits, it answers where that is on the ground. It lived in
- *   two byte-identical copies — `resolver-wof-sqlite/interpolation.ts` and the browser twin in
- *   `docs/src/shared/httpvfs-street.ts` — under a header telling both to be kept in lockstep by hand.
- *   The geometry never differed between them; only the I/O around it did.
+ *   along its house-number range an address sits, it answers where that is on the ground. The node
+ *   reader (`resolver-wof-sqlite/interpolation.ts`) and the browser twin
+ *   (`resolver-wof-wasm/httpvfs/street.ts`) both call it: the geometry never differs between them,
+ *   only the I/O around it does.
  */
 
 import { haversineKm } from "#distance"

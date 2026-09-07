@@ -5,8 +5,8 @@
  *
  *   Bounded cross-country PRIMARY-NAME preference over a population-ordered candidate row set — the
  *   `is_primary` ranking signal, PURE and platform-free so the Node candidate lookup
- *   (`candidate-lookup.ts`) and the browser twin (`docs/src/shared/httpvfs-resolver.ts`) rank with the
- *   SAME function rather than two copies that drift (the #861 server↔demo parity contract).
+ *   (`candidate-lookup.ts`) and the browser twin (`packages/resolver-wof-wasm/lib/httpvfs/resolver.ts`) rank with
+ *   the SAME function rather than two copies that drift (the #861 server↔browser parity contract).
  *
  *   Only type imports and arithmetic live here: anything with a `node:` import stays out.
  */
