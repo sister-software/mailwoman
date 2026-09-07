@@ -9,8 +9,9 @@
  *   wholesale (measured: the single-line `locales` array expands to eleven lines).
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { bumpReleaseConfigVersion } from "@mailwoman/release-kit/release/config-version"
 import { resolvePath } from "path-ts"
@@ -47,7 +48,7 @@ describe("release.config.json under the prepare bump", () => {
 
 	it("carries the current release number, not a lagged one", async () => {
 		const rootManifestPath = resolvePath(String(repoRootPath()), "package.json")
-		const root = await readLocalJSONFile<{ version: string }>(rootManifestPath)
+		const root = await readPackageJSON(rootManifestPath)
 
 		// The v9.2.0 incident: the root moved and this file did not. The prepare bump now writes both,
 		// and its pre-write sync check refuses drift — this assertion is the standing regression check.

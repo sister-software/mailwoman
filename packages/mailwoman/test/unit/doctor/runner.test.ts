@@ -11,7 +11,7 @@
  *   that resolves a real file, so nothing above it can catch a broken resolution.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import {
 	CheckStatus,
 	defaultDoctorDeps,
@@ -446,9 +446,7 @@ describe("runDoctor (injected boundaries)", () => {
 // otherwise show up only as a doctor report that silently stops enforcing the Node floor.
 describe("defaultDoctorDeps — engines floor via package self-reference", () => {
 	it("reads the real engines.node, not the >=0 fallback", async () => {
-		const manifest = await readLocalJSONFile<{ engines?: { node?: string } }>(
-			new URL("../../../package.json", import.meta.url)
-		)
+		const manifest = await readPackageJSON(import.meta.url, "mailwoman")
 
 		expect(manifest.engines?.node).toBeTruthy()
 		expect((await defaultDoctorDeps()).enginesFloor).toBe(manifest.engines!.node)

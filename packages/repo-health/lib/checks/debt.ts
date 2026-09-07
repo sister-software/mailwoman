@@ -11,6 +11,7 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { relative, resolvePath } from "path-ts"
@@ -406,10 +407,11 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 	const counters = emptyCounters()
 
 	const workspacePackages = await Promise.all(
-		(await readWorkspaceDirectories(root)).map(async (workspace) => ({
-			directory: resolvePath(root, workspace),
-			name: (await readLocalJSONFile<{ name: string }>(resolvePath(root, workspace, "package.json"))).name,
-		}))
+		(await readWorkspaceDirectories(root)).map(async (workspace) => {
+			const { name } = await readPackageJSON(resolvePath(root, workspace, "package.json"))
+
+			return { directory: resolvePath(root, workspace), name }
+		})
 	)
 
 	for (const path of paths) {

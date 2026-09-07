@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readDirectory, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bundleAliases, configureDemoWebpack } from "@mailwoman/docs/plugins/demo-assets/webpack-policy"
 import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/demo-assets/workspace-aliases"
@@ -74,9 +75,7 @@ describe("docs webpack policy", () => {
 				if (seen.has(key)) continue
 				seen.add(key)
 
-				const manifest = await readLocalJSONFile<{ sideEffects?: boolean | string[] }>(
-					resolvePackagePath(packageName, "package.json")
-				)
+				const manifest = await readPackageJSON(import.meta.url, packageName)
 
 				const declared = manifest.sideEffects
 

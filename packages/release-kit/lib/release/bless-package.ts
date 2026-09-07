@@ -21,7 +21,8 @@
  *   run from CI over OIDC with no second factor at all.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { type PackageJSONLike, readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { join, resolvePath } from "path-ts"
 import { $, type ProcessPromise } from "zx"
 
@@ -139,17 +140,15 @@ async function assertWorkflowExists(options: BlessPackageOptions): Promise<void>
 	throw new Error(`--file ${options.file}: no such workflow — ${workflowPath} does not exist`)
 }
 
-interface Pkg {
-	name: string
-	version: string
-	repository?: string | { url?: string }
+/**
+ * A candidate's manifest. `name` is required because every caller below publishes, tags or reports under it, and a
+ * manifest without one cannot be blessed at all.
+ */
+async function readPkg(dir: string): Promise<PackageJSONLike<{ name: string }>> {
+	return await readPackageJSON<{ name: string }>(join(dir, "package.json"))
 }
 
-async function readPkg(dir: string): Promise<Pkg> {
-	return await readLocalJSONFile<Pkg>(join(dir, "package.json"))
-}
-
-function parseRepo(repository: Pkg["repository"]): string | undefined {
+function parseRepo(repository: PackageJSONLike["repository"]): string | undefined {
 	if (!repository) return
 	const url = typeof repository === "string" ? repository : repository.url
 

@@ -8,22 +8,12 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo } from "@mailwoman/api-kit"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo, readServedDocumentInfo } from "@mailwoman/api-kit"
 import type { EngineStamp } from "@mailwoman/core/license"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { cors } from "hono/cors"
 
 import type { NominatimEngine } from "#engine"
 import { registerNominatimRoutes } from "#routes"
-
-/**
- * This package's own manifest, read at load rather than imported as a module: a JSON import makes `tsc` copy the file
- * into `out/`, where it becomes the package scope for the compiled tree and breaks every `#` import in it.
- */
-const packageJson = await readLocalJSONFile<{ name: string; version: string; description: string }>(
-	resolvePackagePath("@mailwoman/nominatim", "package.json")
-)
 
 /**
  * Options for {@link createNominatimApp}.
@@ -50,9 +40,7 @@ export interface NominatimAppOptions {
  * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
  */
 export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
-	title: packageJson.name,
-	version: packageJson.version,
-	description: packageJson.description,
+	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/nominatim")),
 	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
 	contact: { name: "Sister Software", url: "https://mailwoman.ai" },
 	externalDocs: {

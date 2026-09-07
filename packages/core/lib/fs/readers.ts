@@ -310,6 +310,7 @@ export function readLocalTextFile<S extends Array<PathBuilderLike | URL>>(...pat
  * @deprecated Use `readLocalJSONFile` instead
  */
 export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}/package.json`): Promise<never>
+
 /**
  * Read a local JSON file.
  *
@@ -317,12 +318,14 @@ export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}
  *
  * @category Node
  * @category Files
- * @see {@linkcode readPackageJSONFile} for a `package.json`-specific overload that narrows the return type to the package shape.
+ * @see `readPackageJSON` in `#module/resolve-from` for a `package.json`, which answers the manifest shape and takes a
+ *   package name as readily as a path.
  */
 export function readLocalJSONFile<
 	T = Record<string, unknown>,
 	S extends Array<PathBuilderLike | URL> = Array<PathBuilderLike | URL>,
 >(...pathSegments: S): Promise<T>
+
 export function readLocalJSONFile<
 	T = Record<string, unknown>,
 	S extends Array<PathBuilderLike | URL> = Array<PathBuilderLike | URL>,

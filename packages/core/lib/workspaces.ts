@@ -12,11 +12,8 @@
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import { readDirectoryEntries, readLocalJSONFile, tryStat } from "#fs/readers"
-
-interface RootManifest {
-	workspaces?: string[]
-}
+import { readDirectoryEntries, tryStat } from "#fs/readers"
+import { readPackageJSON } from "#module/resolve-from"
 
 const TRAILING_STAR = /^(?<parent>[^*]+)\/\*$/u
 
@@ -42,8 +39,9 @@ export async function readWorkspaceDirectories(
 	repoRoot: PathBuilderLike,
 	options: ReadWorkspaceDirectoriesOptions = {}
 ): Promise<string[]> {
-	const manifest = await readLocalJSONFile<RootManifest>(resolvePath(repoRoot, "package.json"))
-	const entries = manifest.workspaces ?? []
+	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
+	// The field is either the pattern array or yarn's object form, which nests the same patterns under `packages`.
+	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
 
 	if (!entries.length) throw new Error(`${resolvePath(repoRoot, "package.json")} declares no workspaces`)
 

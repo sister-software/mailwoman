@@ -33,10 +33,11 @@
  *   for the same reason, since "source that can change a geocode" is the one question both are asking.
  */
 
-import { readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join } from "path-ts"
@@ -67,14 +68,6 @@ interface WorkspaceLink {
 }
 
 /**
- * The one field a link needs. `name` is optional to the type checker because a manifest on disk may omit it; a
- * workspace manifest that does raises rather than dropping the workspace from the link set.
- */
-interface WorkspaceManifest {
-	name?: string
-}
-
-/**
  * Read the root `workspaces` globs and resolve each to a `name -> directory` pair.
  *
  * Reads the WORKTREE's own manifests, not the main checkout's, because a ref that predates a workspace must not have
@@ -85,7 +78,7 @@ async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
 
 	// A literal entry the older ref does not carry is "not a workspace at this ref", so it is skipped rather than raised.
 	for (const directory of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
-		const { name } = await readLocalJSONFile<WorkspaceManifest>(root, directory, "package.json")
+		const { name } = await readPackageJSON(join(root, directory, "package.json"))
 
 		if (!name) throw new Error(`${join(root, directory, "package.json")} declares no name`)
 

@@ -14,8 +14,9 @@
  *   type-checks, tests, and publishes — and only the consumer who typed `mw` finds out.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
@@ -76,9 +77,7 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page
 
 describe("the published bin names", () => {
 	test("`mailwoman` and `mw` both point at the compiled CLI", async () => {
-		const manifest = await readLocalJSONFile<{ bin: Record<string, string> }>(
-			workspacePath("mailwoman", "package.json")
-		)
+		const manifest = await readPackageJSON(workspacePath("mailwoman", "package.json"))
 
 		expect(manifest.bin).toEqual({ mailwoman: "./out/cli.js", mw: "./out/cli.js" })
 	})

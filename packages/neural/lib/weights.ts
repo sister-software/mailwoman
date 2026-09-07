@@ -23,7 +23,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { cacheRootPathBuilder, weightsOverlayPath } from "@mailwoman/core/utils"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
@@ -968,9 +969,8 @@ async function resolveBaseWeightsDir(
 
 		if (!declarationDir) return null
 
-		const pkg = await readLocalJSONFile<{ mailwoman?: { baseWeights?: string } }>(declarationDir, "package.json")
-
-		const base = pkg?.mailwoman?.baseWeights
+		const { mailwoman } = await readPackageJSON(resolvePath(declarationDir, "package.json"))
+		const base = mailwoman?.baseWeights
 
 		if (typeof base !== "string" || !base) return null
 

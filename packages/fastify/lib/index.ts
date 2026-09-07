@@ -23,8 +23,7 @@
 
 import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
 import fp from "fastify-plugin"
 import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode"
@@ -33,9 +32,7 @@ import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode"
  * This package's own manifest, read at load rather than imported as a module: a JSON import makes `tsc` copy the file
  * into `out/`, where it becomes the package scope for the compiled tree and breaks every `#` import in it.
  */
-const packageJson = await readLocalJSONFile<{ name: string; version: string; description: string }>(
-	resolvePackagePath("@mailwoman/fastify", "package.json")
-)
+const packageJson = await readPackageJSON(import.meta.url, "@mailwoman/fastify")
 
 /**
  * Structural shape of the runtime pipeline (`createRuntimePipeline`'s return value): a function from raw input +
