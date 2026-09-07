@@ -1,0 +1,16 @@
+{
+	"mars-nomenclature": {
+		"url": "https://asc-planetarynames-data.s3.us-west-2.amazonaws.com/MARS_nomenclature_center_pts.zip",
+		"bytes": 5413387,
+		"sha256": "8aa50ad145c6dd19d29ff4812591db15a7caa8a659ab800b874da7e03ec17e3b",
+		"fetchedAt": "2026-09-07T20:34:47Z",
+		"snapshot": "2026-09-07"
+	},
+	"moon-nomenclature": {
+		"url": "https://asc-planetarynames-data.s3.us-west-2.amazonaws.com/MOON_nomenclature_center_pts.zip",
+		"bytes": 23842450,
+		"sha256": "684027e8a8e112b540d53afc3cbef32d20c95493738a16b44baee262e5ab2585",
+		"fetchedAt": "2026-09-07T20:34:46Z",
+		"snapshot": "2026-09-07"
+	}
+}

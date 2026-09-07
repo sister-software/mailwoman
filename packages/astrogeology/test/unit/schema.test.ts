@@ -4,8 +4,74 @@
  * @author Teffen Ellis, et al.
  */
 
+import { PlanetaryBuildManifestSchema, SourcesLockSchema } from "@mailwoman/astrogeology/schema/manifest"
 import { PlanetaryNomenclatureFeatureSchema } from "@mailwoman/astrogeology/schema/nomenclature"
 import { describe, expect, test } from "vitest"
+
+const SHA = "a".repeat(64)
+
+describe("SourcesLockSchema", () => {
+	test("accepts a snapshot-pinned archive and a product-pinned DEM", () => {
+		const lock = SourcesLockSchema.parse({
+			"moon-nomenclature": {
+				url: "https://example.test/MOON_nomenclature_center_pts.zip",
+				bytes: 23_842_450,
+				sha256: SHA,
+				fetchedAt: "2026-09-07T20:00:00Z",
+				snapshot: "2026-09-07",
+			},
+			"moon-dem": {
+				url: "https://example.test/LDEM_118m.tif",
+				bytes: 8_494_203_833,
+				sha256: SHA,
+				fetchedAt: "2026-09-07T20:00:00Z",
+			},
+		})
+
+		expect(lock["moon-nomenclature"]?.snapshot).toBe("2026-09-07")
+		expect(lock["moon-dem"]?.snapshot).toBeUndefined()
+	})
+
+	test.each([
+		["a short hash", { sha256: "abc" }],
+		["zero bytes", { bytes: 0 }],
+		["a snapshot that is not a date", { snapshot: "yesterday" }],
+	])("refuses %s", (_label, patch) => {
+		const entry = { url: "https://example.test/a.zip", bytes: 1, sha256: SHA, fetchedAt: "2026-09-07T20:00:00Z" }
+
+		expect(SourcesLockSchema.safeParse({ a: { ...entry, ...patch } }).success).toBe(false)
+	})
+})
+
+describe("PlanetaryBuildManifestSchema", () => {
+	test("accepts a manifest and refuses an unknown schema version", () => {
+		const manifest = {
+			schemaVersion: 1,
+			body: "moon",
+			builtAt: "2026-09-07T20:00:00Z",
+			sources: [
+				{
+					id: "moon-nomenclature",
+					url: "https://example.test/MOON_nomenclature_center_pts.zip",
+					sha256: SHA,
+					bytes: 23_842_450,
+					snapshot: "2026-09-07",
+					coordinates: {
+						longitudeDirection: "east",
+						longitudeRange: "0..360",
+						latitudeType: "planetocentric",
+						referenceBody: "Moon_2000_IAU_IAG (sphere, 1737400 m)",
+					},
+				},
+			],
+			outputs: [{ tileset: "moon", path: "moon.pmtiles", sha256: SHA, bytes: 1024 }],
+			transformations: ["tippecanoe -o moon.pmtiles …"],
+		}
+
+		expect(PlanetaryBuildManifestSchema.parse(manifest).outputs).toHaveLength(1)
+		expect(PlanetaryBuildManifestSchema.safeParse({ ...manifest, schemaVersion: 2 }).success).toBe(false)
+	})
+})
 
 const TYCHO = {
 	id: "6163",
