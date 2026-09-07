@@ -18,9 +18,9 @@ export interface ShopIDs {
 	prices: Record<ShopPlan["code"], string>
 	paymentLinks: Record<ShopPlan["code"], string>
 	/**
-	 * The Customer Portal's login page, once the provisioner has enabled it.
+	 * The Customer Portal's login page.
 	 */
-	portalURL?: string
+	portalURL: string
 }
 
 export type ShopIDsByMode = Record<ShopMode, ShopIDs>
@@ -50,7 +50,7 @@ export function withShopIDs(
 		[mode]: {
 			prices: { ...section.prices, ...answered.prices },
 			paymentLinks: { ...section.paymentLinks, ...answered.paymentLinks },
-			...((answered.portalURL ?? section.portalURL) ? { portalURL: answered.portalURL ?? section.portalURL } : {}),
+			portalURL: answered.portalURL ?? section.portalURL,
 		},
 	}
 }

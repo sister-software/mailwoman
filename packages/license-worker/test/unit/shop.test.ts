@@ -486,10 +486,12 @@ describe("the ids record", () => {
 		test: {
 			prices: { "commercial-monthly-v1": "price_t1", "commercial-yearly-v1": "price_t2" },
 			paymentLinks: { "commercial-monthly-v1": "https://t/1", "commercial-yearly-v1": "https://t/2" },
+			portalURL: "https://t/portal",
 		},
 		live: {
 			prices: { "commercial-monthly-v1": "price_l1", "commercial-yearly-v1": "price_l2" },
 			paymentLinks: { "commercial-monthly-v1": "https://l/1", "commercial-yearly-v1": "https://l/2" },
+			portalURL: "https://l/portal",
 		},
 	}
 
@@ -498,7 +500,7 @@ describe("the ids record", () => {
 
 		expect(next.live.prices).toEqual({ "commercial-monthly-v1": "price_l1_new", "commercial-yearly-v1": "price_l2" })
 		expect(next.live.paymentLinks).toEqual(current.live.paymentLinks)
-		expect(next.live.portalURL).toBeUndefined()
+		expect(next.live.portalURL).toBe("https://l/portal")
 		expect(next.test).toEqual(current.test)
 
 		const withPortal = withShopIDs(next, "live", {
