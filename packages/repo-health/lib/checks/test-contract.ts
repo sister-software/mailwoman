@@ -5,17 +5,14 @@
  * @file Enforce tests as external consumers of workspace package contracts.
  */
 
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, relative, resolvePath, sep } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 import { moduleSpecifiers } from "#ts-ast"
-
-interface RootManifest {
-	workspaces: string[]
-}
 
 const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const vitestSuites = new Set(["full", "integration", "unit"])
@@ -36,11 +33,10 @@ export const testContractCheck: RepoCheck = {
 		"Every workspace test sits under test/{unit,integration,full}/ and imports the package by its contract; a relative import names a test helper only.",
 	async run(context) {
 		const root = context.repoRoot
-		const manifest = await readLocalJSONFile<RootManifest>(resolvePath(root, "package.json"))
 		const diagnostics: Diagnostic[] = []
 		const sources = await trackedSourcePaths(context, { existingOnly: true })
 
-		for (const workspace of manifest.workspaces) {
+		for (const workspace of await readWorkspaceDirectories(root)) {
 			const workspaceRoot = resolvePath(root, workspace)
 			const runsPlaywright = await pathExists(resolvePath(workspaceRoot, "playwright.config.ts"))
 			const allowedSuites = runsPlaywright ? playwrightSuites : vitestSuites

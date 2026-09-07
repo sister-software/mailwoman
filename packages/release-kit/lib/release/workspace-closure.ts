@@ -9,6 +9,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join, resolvePath } from "path-ts"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
@@ -23,13 +24,12 @@ interface WorkspaceManifest {
 const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependencies"] as const
 
 /**
- * Every workspace in the root `workspaces` array, keyed by package name, with its repo-relative directory.
+ * Every workspace the root `workspaces` field names, expanded, keyed by package name, with its repo-relative directory.
  */
 export async function workspaceDirectories(repoRoot: string): Promise<Map<string, string>> {
-	const root = await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(repoRoot, "package.json"))
 	const byName = new Map<string, string>()
 
-	for (const dir of root.workspaces) {
+	for (const dir of await readWorkspaceDirectories(repoRoot)) {
 		const manifest = await readLocalJSONFile<WorkspaceManifest>(resolvePath(repoRoot, dir, "package.json"))
 
 		byName.set(manifest.name, dir)

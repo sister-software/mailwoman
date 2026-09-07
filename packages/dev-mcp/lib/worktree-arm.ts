@@ -38,6 +38,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join } from "path-ts"
 
 import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
@@ -72,19 +73,11 @@ interface WorkspaceLink {
  * that workspace linked into it — an import that should fail at the older ref has to actually fail.
  */
 async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
-	const manifest = await readLocalJSONFile<{ workspaces?: string[] }>(join(root, "package.json"))
 	const links: WorkspaceLink[] = []
 
-	for (const entry of manifest.workspaces ?? []) {
-		// The array holds literal paths in this repo, not globs. A glob would need expansion; treat a missing
-		// manifest as "not a workspace at this ref" rather than an error, which is the same thing.
-		let name: string
-
-		try {
-			name = (await readLocalJSONFile<{ name?: string }>(join(root, entry, "package.json"))).name ?? ""
-		} catch {
-			continue
-		}
+	// A literal entry the older ref does not carry is "not a workspace at this ref", so it is skipped rather than raised.
+	for (const entry of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
+		const name = (await readLocalJSONFile<{ name?: string }>(join(root, entry, "package.json"))).name ?? ""
 
 		if (name) {
 			links.push({ packageName: name, directory: entry })

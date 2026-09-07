@@ -20,6 +20,7 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"
 
@@ -99,7 +100,7 @@ export interface ReleaseListIdentity {
  * discrepancy is reported by NAME, so the failure is actionable without counting.
  */
 export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promise<ReleaseListIdentity> {
-	const root = (await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(repoRoot, "package.json"))).workspaces
+	const root = await readWorkspaceDirectories(repoRoot)
 
 	const release = new Set(await releaseWorkspaces(repoRoot))
 	const rootSet = new Set(root)
