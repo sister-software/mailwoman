@@ -115,9 +115,11 @@ export class GeocoderFixture {
 	async submit(): Promise<void> {
 		await this.page.locator("button[type='submit']").click()
 
-		// Block until the result panel renders so callers can immediately readResult().
-		await this.page.waitForFunction(() => document.body.textContent?.includes("Parsed components"), {
+		// Block until the result panel renders so callers can immediately readResult(). The options are the third
+		// argument, as in `expectReady`.
+		await this.page.waitForFunction(() => document.body.textContent?.includes("Parsed components"), undefined, {
 			timeout: 60_000,
+			polling: 500,
 		})
 
 		// Map needs a beat to finish fitBounds + (re-)wire terrain.

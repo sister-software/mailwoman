@@ -90,7 +90,17 @@ test.describe("Demo — resolution cascade", () => {
 	// countries had no postcode tier on the demo at all. Each case feeds locality + postcode + country
 	// and grades the resolved coordinate against the city bbox: the cascade country-restricts and the new
 	// postcode (or its locality) is reachable. Pairs with the v4.14.0 AU model (postcode-first format).
-	const newPostcodeCases: { name: string; query: string; lat: number; lon: number; tolDeg: number }[] = [
+	const newPostcodeCases: {
+		name: string
+		query: string
+		lat: number
+		lon: number
+		tolDeg: number
+		/**
+		 * A measured defect the case documents until it is fixed; the test is expected to fail while it stands.
+		 */
+		knownFailure?: string
+	}[] = [
 		{
 			name: "Portuguese postcode 1000-001 → Lisbon",
 			query: "Lisboa 1000-001, Portugal",
@@ -99,7 +109,15 @@ test.describe("Demo — resolution cascade", () => {
 			tolDeg: 0.15,
 		},
 		{ name: "Polish postcode 00-002 → Warsaw", query: "Warszawa 00-002, Poland", lat: 52.25, lon: 21.05, tolDeg: 0.15 },
-		{ name: "Czech postcode 100 00 → Prague", query: "Praha 100 00, Czechia", lat: 50.05, lon: 14.45, tolDeg: 0.15 },
+		{
+			name: "Czech postcode 100 00 → Prague",
+			query: "Praha 100 00, Czechia",
+			lat: 50.05,
+			lon: 14.45,
+			tolDeg: 0.15,
+			knownFailure:
+				"The v9.1.0 classifier tags `Praha` as a street and splits `100 00` into two house numbers, so the cascade has no locality or postcode to resolve and drops no marker. A model defect, not a runtime one.",
+		},
 		{
 			name: "Australian postcode 2000 → Sydney",
 			query: "Sydney NSW 2000, Australia",
@@ -111,6 +129,10 @@ test.describe("Demo — resolution cascade", () => {
 
 	for (const c of newPostcodeCases) {
 		test(`-20j postcode coverage — ${c.name}`, async ({ demo }) => {
+			if (c.knownFailure) {
+				test.fail(true, c.knownFailure)
+			}
+
 			await demo.goto(c.query)
 			await demo.submit()
 			const { markerCount } = await demo.readResult()
