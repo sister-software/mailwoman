@@ -26,6 +26,10 @@
  *       (never over house_number/street/etc.).
  *   - Numeric shapes (\d{5}, ZIP+4, BR, JP, PT, PL) are ambiguous (a bare 5-digit could be a house number)
  *       → SNAP-only: they expand/clip an EXISTING postcode span, never create one from scratch.
+ *   - A DESIGNATED shape carries the writing system's own postal marker: `〒506-0025` is a postcode by Japan Post's
+ *       convention, and no house number is ever written behind 〒. It may overwrite any label, structural ones
+ *       included — the one override the discipline below allows, because the mark, not the digit shape, decides. The
+ *       span excludes the mark: the resolver keys `506-0025`, and the character model was trained to leave 〒 outside.
  *   - Smear cleanup is LOCAL: only postcode tokens immediately flanking a snapped span are cleared. We
  *       never globally clear unmatched postcode tokens — that would regress shapes we don't
  *       pattern-match (AU 4-digit, IN 6-digit, …).
@@ -58,9 +62,10 @@ export type { RepairResult } from "#span/repair"
  */
 export interface PostcodeMatch extends SpanMatch {
 	/**
-	 * "alnum" shapes may ADD; "numeric" shapes may only SNAP an existing span.
+	 * "alnum" shapes may ADD over container labels; "numeric" shapes may only SNAP an existing span; a "designated" shape
+	 * (the digits behind a postal marker) may overwrite any label.
 	 */
-	kind: "alnum" | "numeric"
+	kind: "alnum" | "numeric" | "designated"
 }
 
 /**
@@ -68,7 +73,11 @@ export interface PostcodeMatch extends SpanMatch {
  * (postcodes are conventionally uppercase, and the eval data has them uppercase) — this keeps them from matching
  * ordinary lowercase prose.
  */
-export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"; re: RegExp }> = [
+export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric" | "designated"; re: RegExp }> = [
+	// --- Designated by a postal marker (may overwrite any label) ---
+	// JP: the digits behind 〒, optionally spaced (〒506-0025, 〒 100-0001). The character path keeps the mark in the
+	// text (`NormalizeOpts.postalMark`), and on a venue-led line the model has read the digits as a house number.
+	{ label: "JP-marked", kind: "designated", re: /(?<=〒\s?)\d{3}-\d{4}\b/gu },
 	// --- Alphanumeric (eligible to ADD) ---
 	// GB: outward + space + inward, e.g. SW1A 1AA, EH8 9YL, W1J 9PN, IP13 6SU, B12 8QX
 	{ label: "GB", kind: "alnum", re: /\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b/g },
@@ -147,10 +156,11 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		const hasPostcode = overlap.some((i) => isTagLabel(tokens[i]!.label, "postcode"))
 
 		if (!hasPostcode) {
-			// ADD path — only for high-confidence alphanumeric shapes, only over safe labels.
-			if (m.kind !== "alnum") continue
+			// ADD path — a designated shape over any label; an alphanumeric shape only over safe labels; a numeric shape
+			// never.
+			if (m.kind === "numeric") continue
 
-			if (!isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
+			if (m.kind === "alnum" && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 		}
 
 		// SNAP/ADD: relabel the matched run as a single postcode span.

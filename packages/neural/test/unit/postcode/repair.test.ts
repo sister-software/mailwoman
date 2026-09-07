@@ -260,3 +260,59 @@ describe("repairPostcodeLabels", () => {
 		expect(out.map((t) => t.label)).toEqual(tokens.map((t) => t.label))
 	})
 })
+
+/**
+ * One token per code point, labelled from `[[surface, tag], …]` in text order — the character path's token shape.
+ */
+function charTokens(spans: readonly (readonly [string, string | null])[]): { text: string; tokens: DecoderToken[] } {
+	const tokens: DecoderToken[] = []
+	let text = ""
+
+	for (const [surface, tag] of spans) {
+		for (const [k, ch] of [...surface].entries()) {
+			const label = (tag === null ? "O" : k === 0 ? `B-${tag}` : `I-${tag}`) as BIOLabel
+
+			tokens.push(tok(ch, text.length, text.length + ch.length, label))
+			text += ch
+		}
+	}
+
+	return { text, tokens }
+}
+
+describe("a postcode designated by the JP postal mark", () => {
+	it("overwrites a house_number the model put on the digits behind 〒, leaving the mark outside", () => {
+		const { text, tokens } = charTokens([
+			["りんりん, ", null],
+			["〒", null],
+			["506-0025", "house_number"],
+			[" ", null],
+			["岐阜県", "prefecture"],
+			["高山市", "municipality"],
+			["天満町", "district"],
+			["3丁目", "block"],
+			[" 57", null],
+		])
+
+		const result = repairPostcodeLabels(text, tokens)
+
+		expect(postcodeValue(text, result.tokens)).toBe("506-0025")
+		expect(result.tokens.find((t) => t.piece === "〒")?.label).toBe("O")
+		expect(result.tokens.some((t) => t.label.endsWith("house_number"))).toBe(false)
+		expect(result.tokens.filter((t) => t.label === "B-prefecture" || t.label === "B-district")).toHaveLength(2)
+	})
+
+	it("leaves the same digits alone without the mark: a numeric shape never overwrites a house number", () => {
+		const { text, tokens } = charTokens([
+			["506-0025", "house_number"],
+			[" ", null],
+			["岐阜県", "prefecture"],
+			["高山市", "municipality"],
+		])
+
+		const result = repairPostcodeLabels(text, tokens)
+
+		expect(result.changed).toBe(0)
+		expect(postcodeValue(text, result.tokens)).toBeNull()
+	})
+})

@@ -308,7 +308,8 @@ const UNCOUNTED = [
  * carries a negative lookahead for the letter runs that continue it into an unrelated English word ("advantage") and
  * into six place names. It is case-sensitive on purpose: `availableVersions` and `localeVerdict` contain the letters
  * across a camelCase boundary that appear in eval rows and records; those survive verbatim by construction, not by
- * allowlist.
+ * allowlist. The last alternation stops before a coreutils flag (` -c`, ` -d`): a shell command in a fenced block is
+ * the utility, not the word.
  *
  * KEEP THE COUNTER'S NAME FREE OF THE WORD. This ratchet is written in the language it polices, so the vocabulary sweep
  * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
@@ -317,7 +318,7 @@ const UNCOUNTED = [
  * make that impossible to repeat.
  */
 const BANNED_VOCABULARY =
-	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ll]ever|LEVER)(?!age|AGE|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L})|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
+	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ll]ever|LEVER)(?!age|AGE|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
 
 /**
  * Where the banned word is allowed to survive, and why each one earns it.
