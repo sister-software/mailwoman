@@ -57,6 +57,18 @@
  *   - `state-hi-schools` — Hawaii DOE school directory (original XLSX; HIDOE + PCS sheets). Tier A
  *       (state PD-equivalent).
  *   - `tiger-full` — US Census TIGER 2024 ADDRFEAT, all US counties. Tier A (US PD).
+ *   - `juso-kr` — the Korean road-name address register (주소DB, plus the English road-name DB) from
+ *       business.juso.go.kr, the LABEL source for Korean. Tier B ("이용허락범위 제한 없음", attribution).
+ *   - `localdata-kr` — Korea's local-government permit registry, one CSV per category, each row carrying
+ *       the lot-number AND road-name address of one premises plus a coordinate. The NOISY source for
+ *       Korean. Tier B (same label as `juso-kr`).
+ *   - `gcis-tw` — Taiwan's company and business registers from the economic ministry's open-data
+ *       platform, 148 files by region and industry. The NOISY source for Taiwanese. Tier B (Open
+ *       Government Data License v1.0 — the prescribed attribution is a condition of the grant).
+ *   - `acra-sg` — Singapore's ACRA corporate-entity register, 27 CSVs with the address FIELDED. The
+ *       NOISY source for Singapore. Tier B (Singapore Open Data Licence 1.0).
+ *   - `houjin-jp` — the National Tax Agency's corporate-number register, the nationwide Unicode CSV.
+ *       The NOISY source for Japanese. Tier A-equivalent (free use, no attribution condition stated).
  *
  *   License tiers per `docs/licensing-strategy.md` (or the playpen knowledge base mirror at
  *   `docs/docs/projects/mailwoman/licensing-strategy.md`). `openaddresses` is a **Tier-mixed**
@@ -97,11 +109,16 @@
  *   5. Add the source's adapter (or extend an existing one) under `corpus/src/adapters/`.
  */
 
+import { fetchACRASG } from "#tools/fetch/acra-sg"
 import { fetchBan } from "#tools/fetch/ban"
+import { fetchGCISTW } from "#tools/fetch/gcis-tw"
 import { fetchGeonamesDumps } from "#tools/fetch/geonames-dump"
 import { fetchGeonamesPostal } from "#tools/fetch/geonames-postal"
+import { fetchHoujinJP } from "#tools/fetch/houjin-jp"
 import { fetchHRSA } from "#tools/fetch/hrsa"
 import { fetchIMLSPLS } from "#tools/fetch/imls-pls"
+import { fetchJusoKR } from "#tools/fetch/juso-kr"
+import { fetchLocaldataKR } from "#tools/fetch/localdata-kr"
 import { fetchNAD } from "#tools/fetch/nad"
 import { fetchNPPES } from "#tools/fetch/nppes"
 import { fetchOpenAddresses } from "#tools/fetch/openaddresses"
@@ -111,11 +128,16 @@ import { fetchStateSources } from "#tools/fetch/state-sources"
 import { fetchTigerFull } from "#tools/fetch/tiger-full"
 import { fetchWikidataSubVenue } from "#tools/fetch/wikidata-subvenue"
 
+export * from "#tools/fetch/acra-sg"
 export * from "#tools/fetch/ban"
+export * from "#tools/fetch/gcis-tw"
 export * from "#tools/fetch/geonames-dump"
 export * from "#tools/fetch/geonames-postal"
+export * from "#tools/fetch/houjin-jp"
 export * from "#tools/fetch/hrsa"
 export * from "#tools/fetch/imls-pls"
+export * from "#tools/fetch/juso-kr"
+export * from "#tools/fetch/localdata-kr"
 export * from "#tools/fetch/nad"
 export * from "#tools/fetch/nppes"
 export * from "#tools/fetch/openaddresses"
@@ -129,7 +151,12 @@ export * from "#tools/fetch/wikidata-subvenue"
  * The fetch-source registry: id → module entry point. Each entry point takes its own options interface.
  */
 export const FETCH_SOURCES = {
+	"acra-sg": fetchACRASG,
 	ban: fetchBan,
+	"gcis-tw": fetchGCISTW,
+	"houjin-jp": fetchHoujinJP,
+	"juso-kr": fetchJusoKR,
+	"localdata-kr": fetchLocaldataKR,
 	nad: fetchNAD,
 	"geonames-dump": fetchGeonamesDumps,
 	"geonames-postal": fetchGeonamesPostal,
