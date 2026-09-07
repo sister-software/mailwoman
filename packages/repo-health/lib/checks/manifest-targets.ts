@@ -22,14 +22,11 @@
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
-
-interface RootManifest {
-	workspaces: string[]
-}
 
 type ExportValue = string | null | ExportValue[] | { [condition: string]: ExportValue }
 
@@ -227,10 +224,9 @@ export const manifestTargetsCheck: RepoCheck = {
 	async run(context) {
 		const root = context.repoRoot
 		const tracked = new Set(context.trackedFiles)
-		const rootManifest = await readLocalJSONFile<RootManifest>(resolvePath(root, "package.json"))
 		const diagnostics: Diagnostic[] = []
 
-		for (const workspace of rootManifest.workspaces) {
+		for (const workspace of await readWorkspaceDirectories(root)) {
 			const manifest = await readLocalJSONFile<WorkspaceManifest>(resolvePath(root, `${workspace}/package.json`))
 			const scope = await readCompileScope(root, workspace)
 

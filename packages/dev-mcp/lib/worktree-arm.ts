@@ -38,6 +38,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join } from "path-ts"
 
 import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
@@ -66,28 +67,20 @@ interface WorkspaceLink {
 }
 
 /**
- * Read the root `workspaces` globs and resolve each to a `name -> directory` pair.
+ * Read the root `workspaces` array and resolve each entry to a `name -> directory` pair.
  *
  * Reads the WORKTREE's own manifests, not the main checkout's, because a ref that predates a workspace must not have
- * that workspace linked into it — an import that should fail at the older ref has to actually fail.
+ * that workspace linked into it — an import that should fail at the older ref has to actually fail. A pattern entry
+ * expands against the manifests present at that ref, so a workspace the ref lacks is simply not matched.
  */
 async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
-	const manifest = await readLocalJSONFile<{ workspaces?: string[] }>(join(root, "package.json"))
 	const links: WorkspaceLink[] = []
 
-	for (const entry of manifest.workspaces ?? []) {
-		// The array holds literal paths in this repo, not globs. A glob would need expansion; treat a missing
-		// manifest as "not a workspace at this ref" rather than an error, which is the same thing.
-		let name: string
-
-		try {
-			name = (await readLocalJSONFile<{ name?: string }>(join(root, entry, "package.json"))).name ?? ""
-		} catch {
-			continue
-		}
+	for (const directory of await readWorkspaceDirectories(root)) {
+		const { name } = await readLocalJSONFile<{ name?: string }>(join(root, directory, "package.json"))
 
 		if (name) {
-			links.push({ packageName: name, directory: entry })
+			links.push({ packageName: name, directory })
 		}
 	}
 

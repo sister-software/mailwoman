@@ -16,6 +16,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 import type { Alias } from "vite"
 import { defineConfig } from "vite"
@@ -52,10 +53,9 @@ async function readManifest<T>(path: string): Promise<T> {
 }
 
 async function workspaceAliases(): Promise<Alias[]> {
-	const root = await readManifest<{ workspaces: string[] }>(resolvePath(here, "package.json"))
 	const aliases: Array<Alias & { specificity: number; wildcard: boolean }> = []
 
-	for (const workspace of root.workspaces) {
+	for (const workspace of await readWorkspaceDirectories(here)) {
 		const manifest = await readManifest<{
 			name?: string
 			exports?: Record<string, string | Record<string, string>>

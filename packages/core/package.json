@@ -526,6 +526,11 @@
 			"node": "./lib/release-config.ts",
 			"default": "./out/release-config.js"
 		},
+		"./workspaces": {
+			"types": "./out/workspaces.d.ts",
+			"node": "./lib/workspaces.ts",
+			"default": "./out/workspaces.js"
+		},
 		"./data-root": {
 			"types": "./out/data-root.d.ts",
 			"node": "./lib/data-root.ts",
