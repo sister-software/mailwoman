@@ -149,6 +149,11 @@
 			"default": "./out/map/ResultPanel.js",
 			"types": "./out/map/ResultPanel.d.ts"
 		},
+		"./map/fake-runtime": {
+			"node": "./lib/map/fake-runtime.ts",
+			"default": "./out/map/fake-runtime.js",
+			"types": "./out/map/fake-runtime.d.ts"
+		},
 		"./map/usePlaceAutocomplete": {
 			"node": "./lib/map/usePlaceAutocomplete.ts",
 			"default": "./out/map/usePlaceAutocomplete.js",

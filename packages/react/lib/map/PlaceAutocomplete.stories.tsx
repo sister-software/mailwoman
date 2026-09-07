@@ -10,7 +10,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useState } from "react"
 
-import { FAKE_SUGGESTIONS } from "#test/mocks"
+import { FAKE_SUGGESTIONS } from "#map/fake-runtime"
 
 import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 

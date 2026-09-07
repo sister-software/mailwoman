@@ -6,6 +6,9 @@
 
 const AllowedOrigins: ReadonlySet<string> = new Set([
 	"https://mailwoman.ai",
+	"https://earth.mailwoman.ai",
+	"https://moon.mailwoman.ai",
+	"https://mars.mailwoman.ai",
 	"https://mailwoman.sister.software",
 	"https://sister.software",
 	"https://dev.mailwoman.ai",

@@ -14,8 +14,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useMemo, useState } from "react"
 
+import { makeDemoRuntime } from "#map/fake-runtime"
 import type { DemoPanels } from "#map/types"
-import { makeDemoRuntime } from "#test/mocks"
 
 import { GeocoderDemo } from "./GeocoderDemo.tsx"
 

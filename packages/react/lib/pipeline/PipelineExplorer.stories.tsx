@@ -9,7 +9,7 @@
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import { makePipelineRuntime } from "#test/mocks"
+import { makePipelineRuntime } from "#map/fake-runtime"
 
 import { PipelineExplorer } from "./PipelineExplorer.tsx"
 

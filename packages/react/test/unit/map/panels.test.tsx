@@ -10,6 +10,7 @@
 
 import { BackendControl } from "@mailwoman/react/map/BackendControl"
 import { CompareToggle } from "@mailwoman/react/map/CompareToggle"
+import { FAKE_SUGGESTIONS, makeFakeParseResult } from "@mailwoman/react/map/fake-runtime"
 import { PlaceAutocomplete } from "@mailwoman/react/map/PlaceAutocomplete"
 import { ResultPanel } from "@mailwoman/react/map/ResultPanel"
 import type { DemoVersionOption, Suggestion } from "@mailwoman/react/map/types"
@@ -20,7 +21,6 @@ import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
 import { actDelay } from "../../act.ts"
-import { FAKE_SUGGESTIONS, makeFakeParseResult } from "../../mocks.tsx"
 import { renderComponent } from "../../render.tsx"
 
 const VERSIONS: DemoVersionOption[] = [

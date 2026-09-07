@@ -1,0 +1,53 @@
+{
+	"name": "@mailwoman/site-kit",
+	"version": "1.0.0",
+	"private": true,
+	"description": "The static-site build conventions the Earth and planetary apps share: the build.json Vite plugin, the installable-PWA manifest options, the Playwright preview configuration.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		"./build-info": {
+			"node": "./lib/build-info.ts",
+			"default": "./out/build-info.js",
+			"types": "./out/build-info.d.ts"
+		},
+		"./vite/build-info": {
+			"node": "./lib/vite/build-info.ts",
+			"default": "./out/vite/build-info.js",
+			"types": "./out/vite/build-info.d.ts"
+		},
+		"./vite/pwa": {
+			"node": "./lib/vite/pwa.ts",
+			"default": "./out/vite/pwa.js",
+			"types": "./out/vite/pwa.d.ts"
+		},
+		"./playwright": {
+			"node": "./lib/playwright.ts",
+			"default": "./out/playwright.js",
+			"types": "./out/playwright.d.ts"
+		}
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@playwright/test": "^1.63.0",
+		"vite": "^8.2.2",
+		"vite-plugin-pwa": "^1.3.0"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

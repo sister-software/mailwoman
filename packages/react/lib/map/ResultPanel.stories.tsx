@@ -11,7 +11,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useState } from "react"
 
-import { makeFakeParseResult } from "#test/mocks"
+import { makeFakeParseResult } from "#map/fake-runtime"
 
 import { ResultPanel } from "./ResultPanel.tsx"
 

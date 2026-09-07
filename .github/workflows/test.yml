@@ -751,6 +751,8 @@ jobs:
 
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
+      - name: Earth shell smoke
+        run: yarn workspace @mailwoman/earth test:browser
 
       # The license worker's tests run under the Workers runtime (Miniflare) through the workspace's own vitest
       # config; the root sweep excludes them for the same reason it excludes the react browser leg.

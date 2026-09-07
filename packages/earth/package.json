@@ -1,0 +1,63 @@
+{
+	"name": "@mailwoman/earth",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Earth — the mailwoman geocoder map at earth.mailwoman.ai: a React + Vite installable PWA on Cloudflare Workers Static Assets.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		"./routes": {
+			"node": "./lib/routes.ts",
+			"default": "./out/routes.js",
+			"types": "./out/routes.d.ts"
+		},
+		"./config": {
+			"node": "./lib/config.ts",
+			"default": "./out/config.js",
+			"types": "./out/config.d.ts"
+		}
+	},
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview --port 7780 --strictPort",
+		"test:browser": "playwright test",
+		"deploy:dry-run": "wrangler deploy --dry-run"
+	},
+	"dependencies": {
+		"@mailwoman/react": "workspace:*",
+		"@mailwoman/site-kit": "workspace:*",
+		"maplibre-gl": "^6.7.0",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"react-map-gl": "^8.1.3",
+		"workbox-precaching": "^7.4.1"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.63.0",
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.7",
+		"@vitejs/plugin-react": "^6.1.1",
+		"vite": "^8.2.2",
+		"vite-plugin-pwa": "^1.3.0",
+		"workbox-window": "^7.4.1",
+		"wrangler": "^4.129.0"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}
