@@ -13,7 +13,7 @@ import { createPortal } from "react-dom"
 
 import styles from "./map-debug.module.css"
 
-export function useMapPointerInfo(map: MapLibreMap | null) {
+function useMapPointerInfo(map: MapLibreMap | null) {
 	const [_pointerPosition, setPointerPosition] = useState<Point>()
 	const [pointerCoords, setPointerCoords] = useState<LngLat>()
 	const [featureTargets, setFeatureTargets] = useState<MapGeoJSONFeature[]>()
