@@ -78,6 +78,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1",
 		"zod": "^4.5.4"
 	},
 	"engines": {

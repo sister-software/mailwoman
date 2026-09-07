@@ -5716,6 +5716,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     mailwoman: "workspace:*"
     path-ts: "npm:^2.3.0"
+    spliterator: "npm:^6.4.1"
     zod: "npm:^4.5.4"
   bin:
     astrogeology: ./out/cli.js
