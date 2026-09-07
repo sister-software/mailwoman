@@ -27,99 +27,99 @@
 	"sideEffects": false,
 	"imports": {
 		"#postcode": {
+			"types": "./out/postcode/index.d.ts",
 			"node": "./lib/postcode/index.ts",
-			"default": "./out/postcode/index.js",
-			"types": "./out/postcode/index.d.ts"
+			"default": "./out/postcode/index.js"
 		},
 		"#span": {
+			"types": "./out/span/index.d.ts",
 			"node": "./lib/span/index.ts",
-			"default": "./out/span/index.js",
-			"types": "./out/span/index.d.ts"
+			"default": "./out/span/index.js"
 		},
 		"#classifier": {
+			"types": "./out/classifier/index.d.ts",
 			"node": "./lib/classifier/index.ts",
-			"default": "./out/classifier/index.js",
-			"types": "./out/classifier/index.d.ts"
+			"default": "./out/classifier/index.js"
 		},
 		"#pair": {
+			"types": "./out/pair/index.d.ts",
 			"node": "./lib/pair/index.ts",
-			"default": "./out/pair/index.js",
-			"types": "./out/pair/index.d.ts"
+			"default": "./out/pair/index.js"
 		},
 		"#placetype": {
+			"types": "./out/placetype/index.d.ts",
 			"node": "./lib/placetype/index.ts",
-			"default": "./out/placetype/index.js",
-			"types": "./out/placetype/index.d.ts"
+			"default": "./out/placetype/index.js"
 		},
 		"#onnx-runner": {
+			"types": "./out/onnx-runner.d.ts",
 			"browser": "./out/onnx-runner-browser.js",
 			"node": "./lib/onnx-runner.ts",
-			"default": "./out/onnx-runner.js",
-			"types": "./out/onnx-runner.d.ts"
+			"default": "./out/onnx-runner.js"
 		},
 		"#classifier/loader": {
+			"types": "./out/classifier/loader.d.ts",
 			"browser": "./out/classifier/loader-browser.js",
 			"node": "./lib/classifier/loader.ts",
-			"default": "./out/classifier/loader.js",
-			"types": "./out/classifier/loader.d.ts"
+			"default": "./out/classifier/loader.js"
 		},
 		"#weights": {
+			"types": "./out/weights.d.ts",
 			"node": "./lib/weights.ts",
-			"default": "./out/weights.js",
-			"types": "./out/weights.d.ts"
+			"default": "./out/weights.js"
 		},
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./env": {
+			"types": "./out/env.d.ts",
 			"node": "./lib/env.ts",
-			"default": "./out/env.js",
-			"types": "./out/env.d.ts"
+			"default": "./out/env.js"
 		},
 		"./anchor-inference": {
+			"types": "./out/anchor-inference.d.ts",
 			"node": "./lib/anchor-inference.ts",
-			"default": "./out/anchor-inference.js",
-			"types": "./out/anchor-inference.d.ts"
+			"default": "./out/anchor-inference.js"
 		},
 		"./case-normalize": {
+			"types": "./out/case-normalize.d.ts",
 			"node": "./lib/case-normalize.ts",
-			"default": "./out/case-normalize.js",
-			"types": "./out/case-normalize.d.ts"
+			"default": "./out/case-normalize.js"
 		},
 		"./fst-prior": {
+			"types": "./out/fst-prior.d.ts",
 			"node": "./lib/fst-prior.ts",
-			"default": "./out/fst-prior.js",
-			"types": "./out/fst-prior.d.ts"
+			"default": "./out/fst-prior.js"
 		},
 		"./soft-features": {
+			"types": "./out/soft-features.d.ts",
 			"node": "./lib/soft-features.ts",
-			"default": "./out/soft-features.js",
-			"types": "./out/soft-features.d.ts"
+			"default": "./out/soft-features.js"
 		},
 		"./scorer": {
+			"types": "./out/scorer.d.ts",
 			"node": "./lib/scorer.ts",
-			"default": "./out/scorer.js",
-			"types": "./out/scorer.d.ts"
+			"default": "./out/scorer.js"
 		},
 		"./tokenizer": {
+			"types": "./out/tokenizer.d.ts",
 			"node": "./lib/tokenizer.ts",
-			"default": "./out/tokenizer.js",
-			"types": "./out/tokenizer.d.ts"
+			"default": "./out/tokenizer.js"
 		},
 		"./char-encoder": {
+			"types": "./out/char-encoder.d.ts",
 			"node": "./lib/char-encoder.ts",
-			"default": "./out/char-encoder.js",
-			"types": "./out/char-encoder.d.ts"
+			"default": "./out/char-encoder.js"
 		},
 		"./onnx-runner": {
 			"types": "./out/onnx-runner.d.ts",
@@ -128,124 +128,124 @@
 			"default": "./out/onnx-runner.js"
 		},
 		"./web-onnx-runner": {
+			"types": "./out/web-onnx-runner.d.ts",
 			"node": "./lib/web-onnx-runner.ts",
-			"default": "./out/web-onnx-runner.js",
-			"types": "./out/web-onnx-runner.d.ts"
+			"default": "./out/web-onnx-runner.js"
 		},
 		"./web-loader": {
+			"types": "./out/web-loader.d.ts",
 			"node": "./lib/web-loader.ts",
-			"default": "./out/web-loader.js",
-			"types": "./out/web-loader.d.ts"
+			"default": "./out/web-loader.js"
 		},
 		"./weights": {
+			"types": "./out/weights.d.ts",
 			"node": "./lib/weights.ts",
-			"default": "./out/weights.js",
-			"types": "./out/weights.d.ts"
+			"default": "./out/weights.js"
 		},
 		"./browser": {
+			"types": "./out/browser.d.ts",
 			"node": "./lib/browser.ts",
-			"default": "./out/browser.js",
-			"types": "./out/browser.d.ts"
+			"default": "./out/browser.js"
 		},
 		"./labels": {
+			"types": "./out/labels.d.ts",
 			"node": "./lib/labels.ts",
-			"default": "./out/labels.js",
-			"types": "./out/labels.d.ts"
+			"default": "./out/labels.js"
 		},
 		"./query-shape-prior": {
+			"types": "./out/query-shape-prior.d.ts",
 			"node": "./lib/query-shape-prior.ts",
-			"default": "./out/query-shape-prior.js",
-			"types": "./out/query-shape-prior.d.ts"
+			"default": "./out/query-shape-prior.js"
 		},
 		"./proposal-classifier": {
+			"types": "./out/proposal-classifier.d.ts",
 			"node": "./lib/proposal-classifier.ts",
-			"default": "./out/proposal-classifier.js",
-			"types": "./out/proposal-classifier.d.ts"
+			"default": "./out/proposal-classifier.js"
 		},
 		"./gazetteer-inference": {
+			"types": "./out/gazetteer-inference.d.ts",
 			"node": "./lib/gazetteer-inference.ts",
-			"default": "./out/gazetteer-inference.js",
-			"types": "./out/gazetteer-inference.d.ts"
+			"default": "./out/gazetteer-inference.js"
 		},
 		"./trace": {
+			"types": "./out/trace.d.ts",
 			"node": "./lib/trace.ts",
-			"default": "./out/trace.js",
-			"types": "./out/trace.d.ts"
+			"default": "./out/trace.js"
 		},
 		"./address-system": {
+			"types": "./out/address-system.d.ts",
 			"node": "./lib/address-system.ts",
-			"default": "./out/address-system.js",
-			"types": "./out/address-system.d.ts"
+			"default": "./out/address-system.js"
 		},
 		"./country-inference": {
+			"types": "./out/country-inference.d.ts",
 			"node": "./lib/country-inference.ts",
-			"default": "./out/country-inference.js",
-			"types": "./out/country-inference.d.ts"
+			"default": "./out/country-inference.js"
 		},
 		"./semi-markov-decode": {
+			"types": "./out/semi-markov-decode.d.ts",
 			"node": "./lib/semi-markov-decode.ts",
-			"default": "./out/semi-markov-decode.js",
-			"types": "./out/semi-markov-decode.d.ts"
+			"default": "./out/semi-markov-decode.js"
 		},
 		"./venue-structure": {
+			"types": "./out/venue-structure.d.ts",
 			"node": "./lib/venue-structure.ts",
-			"default": "./out/venue-structure.js",
-			"types": "./out/venue-structure.d.ts"
+			"default": "./out/venue-structure.js"
 		},
 		"./street-morphology-prior": {
+			"types": "./out/street-morphology-prior.d.ts",
 			"node": "./lib/street-morphology-prior.ts",
-			"default": "./out/street-morphology-prior.js",
-			"types": "./out/street-morphology-prior.d.ts"
+			"default": "./out/street-morphology-prior.js"
 		},
 		"./register-boundary-repair": {
+			"types": "./out/register-boundary-repair.d.ts",
 			"node": "./lib/register-boundary-repair.ts",
-			"default": "./out/register-boundary-repair.js",
-			"types": "./out/register-boundary-repair.d.ts"
+			"default": "./out/register-boundary-repair.js"
 		},
 		"./unit-repair": {
+			"types": "./out/unit-repair.d.ts",
 			"node": "./lib/unit-repair.ts",
-			"default": "./out/unit-repair.js",
-			"types": "./out/unit-repair.d.ts"
+			"default": "./out/unit-repair.js"
 		},
 		"./viterbi": {
+			"types": "./out/viterbi.d.ts",
 			"node": "./lib/viterbi.ts",
-			"default": "./out/viterbi.js",
-			"types": "./out/viterbi.d.ts"
+			"default": "./out/viterbi.js"
 		},
 		"./word-consistency": {
+			"types": "./out/word-consistency.d.ts",
 			"node": "./lib/word-consistency.ts",
-			"default": "./out/word-consistency.js",
-			"types": "./out/word-consistency.d.ts"
+			"default": "./out/word-consistency.js"
 		},
 		"./weights-channels": {
+			"types": "./out/weights-channels.d.ts",
 			"node": "./lib/weights-channels.ts",
-			"default": "./out/weights-channels.js",
-			"types": "./out/weights-channels.d.ts"
+			"default": "./out/weights-channels.js"
 		},
 		"./postcode": {
+			"types": "./out/postcode/index.d.ts",
 			"node": "./lib/postcode/index.ts",
-			"default": "./out/postcode/index.js",
-			"types": "./out/postcode/index.d.ts"
+			"default": "./out/postcode/index.js"
 		},
 		"./span": {
+			"types": "./out/span/index.d.ts",
 			"node": "./lib/span/index.ts",
-			"default": "./out/span/index.js",
-			"types": "./out/span/index.d.ts"
+			"default": "./out/span/index.js"
 		},
 		"./classifier": {
+			"types": "./out/classifier/index.d.ts",
 			"node": "./lib/classifier/index.ts",
-			"default": "./out/classifier/index.js",
-			"types": "./out/classifier/index.d.ts"
+			"default": "./out/classifier/index.js"
 		},
 		"./pair": {
+			"types": "./out/pair/index.d.ts",
 			"node": "./lib/pair/index.ts",
-			"default": "./out/pair/index.js",
-			"types": "./out/pair/index.d.ts"
+			"default": "./out/pair/index.js"
 		},
 		"./placetype": {
+			"types": "./out/placetype/index.d.ts",
 			"node": "./lib/placetype/index.ts",
-			"default": "./out/placetype/index.js",
-			"types": "./out/placetype/index.d.ts"
+			"default": "./out/placetype/index.js"
 		}
 	},
 	"publishConfig": {

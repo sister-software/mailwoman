@@ -65,332 +65,332 @@
 	"type": "module",
 	"imports": {
 		"#env": {
+			"types": "./out/env/index.d.ts",
 			"node": "./lib/env/index.ts",
-			"default": "./out/env/index.js",
-			"types": "./out/env/index.d.ts"
+			"default": "./out/env/index.js"
 		},
 		"#geocode": {
+			"types": "./out/geocode/index.d.ts",
 			"node": "./lib/geocode/index.ts",
-			"default": "./out/geocode/index.js",
-			"types": "./out/geocode/index.d.ts"
+			"default": "./out/geocode/index.js"
 		},
 		"#poi": {
+			"types": "./out/poi/index.d.ts",
 			"node": "./lib/poi/index.ts",
-			"default": "./out/poi/index.js",
-			"types": "./out/poi/index.d.ts"
+			"default": "./out/poi/index.js"
 		},
 		"#default": {
+			"types": "./out/default/index.d.ts",
 			"node": "./lib/default/index.ts",
-			"default": "./out/default/index.js",
-			"types": "./out/default/index.d.ts"
+			"default": "./out/default/index.js"
 		},
 		"#data": {
+			"types": "./out/data/index.d.ts",
 			"node": "./lib/data/index.ts",
-			"default": "./out/data/index.js",
-			"types": "./out/data/index.d.ts"
+			"default": "./out/data/index.js"
 		},
 		"#street": {
+			"types": "./out/street/index.d.ts",
 			"node": "./lib/street/index.ts",
-			"default": "./out/street/index.js",
-			"types": "./out/street/index.d.ts"
+			"default": "./out/street/index.js"
 		},
 		"#coverage": {
+			"types": "./out/coverage/index.d.ts",
 			"node": "./lib/coverage/index.ts",
-			"default": "./out/coverage/index.js",
-			"types": "./out/coverage/index.d.ts"
+			"default": "./out/coverage/index.js"
 		},
 		"#doctor": {
+			"types": "./out/doctor/index.d.ts",
 			"node": "./lib/doctor/index.ts",
-			"default": "./out/doctor/index.js",
-			"types": "./out/doctor/index.d.ts"
+			"default": "./out/doctor/index.js"
 		},
 		"#gazetteer/*": {
+			"types": "./out/gazetteer-pipeline/*.d.ts",
 			"node": "./lib/gazetteer-pipeline/*.ts",
-			"default": "./out/gazetteer-pipeline/*.js",
-			"types": "./out/gazetteer-pipeline/*.d.ts"
+			"default": "./out/gazetteer-pipeline/*.js"
 		},
 		"#cli-kit": {
+			"types": "./out/cli-kit/index.d.ts",
 			"node": "./lib/cli-kit/index.ts",
-			"default": "./out/cli-kit/index.js",
-			"types": "./out/cli-kit/index.d.ts"
+			"default": "./out/cli-kit/index.js"
 		},
 		"#gazetteer-pipeline": {
+			"types": "./out/gazetteer-pipeline/index.d.ts",
 			"node": "./lib/gazetteer-pipeline/index.ts",
-			"default": "./out/gazetteer-pipeline/index.js",
-			"types": "./out/gazetteer-pipeline/index.d.ts"
+			"default": "./out/gazetteer-pipeline/index.js"
 		},
 		"#index": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"#cli-kit/weights-guard": {
+			"types": "./out/cli-kit/weights-guard.d.ts",
 			"node": "./out/cli-kit/weights-guard.js",
-			"default": "./out/cli-kit/weights-guard.js",
-			"types": "./out/cli-kit/weights-guard.d.ts"
+			"default": "./out/cli-kit/weights-guard.js"
 		},
 		"#autocomplete-core": {
+			"types": "./out/autocomplete-core.d.ts",
 			"node": "./lib/autocomplete-core.ts",
-			"default": "./out/autocomplete-core.js",
-			"types": "./out/autocomplete-core.d.ts"
+			"default": "./out/autocomplete-core.js"
 		},
 		"#commands/registry/run": {
+			"types": "./out/commands/registry/run.d.ts",
 			"node": "./out/commands/registry/run.js",
-			"default": "./out/commands/registry/run.js",
-			"types": "./out/commands/registry/run.d.ts"
+			"default": "./out/commands/registry/run.js"
 		},
 		"#debug-view/command": {
+			"types": "./out/debug-view/command.d.ts",
 			"node": "./out/debug-view/command.js",
-			"default": "./out/debug-view/command.js",
-			"types": "./out/debug-view/command.d.ts"
+			"default": "./out/debug-view/command.js"
 		},
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./env": {
+			"types": "./out/env/index.d.ts",
 			"node": "./lib/env/index.ts",
-			"default": "./out/env/index.js",
-			"types": "./out/env/index.d.ts"
+			"default": "./out/env/index.js"
 		},
 		"./dev-tools/*": {
+			"types": "./out/dev-tools/*.d.ts",
 			"node": "./lib/dev-tools/*.ts",
-			"default": "./out/dev-tools/*.js",
-			"types": "./out/dev-tools/*.d.ts"
+			"default": "./out/dev-tools/*.js"
 		},
 		"./eval-harness/*": {
+			"types": "./out/eval-harness/*.d.ts",
 			"node": "./lib/eval-harness/*.ts",
-			"default": "./out/eval-harness/*.js",
-			"types": "./out/eval-harness/*.d.ts"
+			"default": "./out/eval-harness/*.js"
 		},
 		"./debug-view/*": {
+			"types": "./out/debug-view/*.d.ts",
 			"node": "./lib/debug-view/*.ts",
-			"default": "./out/debug-view/*.js",
-			"types": "./out/debug-view/*.d.ts"
+			"default": "./out/debug-view/*.js"
 		},
 		"./debug-view/DebugFrame": {
+			"types": "./out/debug-view/DebugFrame.d.ts",
 			"node": "./lib/debug-view/DebugFrame.tsx",
-			"default": "./out/debug-view/DebugFrame.js",
-			"types": "./out/debug-view/DebugFrame.d.ts"
+			"default": "./out/debug-view/DebugFrame.js"
 		},
 		"./debug-view/command": {
+			"types": "./out/debug-view/command.d.ts",
 			"node": "./lib/debug-view/command.tsx",
-			"default": "./out/debug-view/command.js",
-			"types": "./out/debug-view/command.d.ts"
+			"default": "./out/debug-view/command.js"
 		},
 		"./resolver-backend": {
+			"types": "./out/resolver-backend.d.ts",
 			"node": "./lib/resolver-backend.ts",
-			"default": "./out/resolver-backend.js",
-			"types": "./out/resolver-backend.d.ts"
+			"default": "./out/resolver-backend.js"
 		},
 		"./gazetteer-pipeline": {
+			"types": "./out/gazetteer-pipeline/index.d.ts",
 			"node": "./lib/gazetteer-pipeline/index.ts",
-			"default": "./out/gazetteer-pipeline/index.js",
-			"types": "./out/gazetteer-pipeline/index.d.ts"
+			"default": "./out/gazetteer-pipeline/index.js"
 		},
 		"./gazetteer-pipeline/admin": {
+			"types": "./out/gazetteer-pipeline/admin/index.d.ts",
 			"node": "./lib/gazetteer-pipeline/admin/index.ts",
-			"default": "./out/gazetteer-pipeline/admin/index.js",
-			"types": "./out/gazetteer-pipeline/admin/index.d.ts"
+			"default": "./out/gazetteer-pipeline/admin/index.js"
 		},
 		"./gazetteer-pipeline/*": {
+			"types": "./out/gazetteer-pipeline/*.d.ts",
 			"node": "./lib/gazetteer-pipeline/*.ts",
-			"default": "./out/gazetteer-pipeline/*.js",
-			"types": "./out/gazetteer-pipeline/*.d.ts"
+			"default": "./out/gazetteer-pipeline/*.js"
 		},
 		"./cli-kit": {
+			"types": "./out/cli-kit/index.d.ts",
 			"node": "./lib/cli-kit/index.ts",
-			"default": "./out/cli-kit/index.js",
-			"types": "./out/cli-kit/index.d.ts"
+			"default": "./out/cli-kit/index.js"
 		},
 		"./cli-kit/metadata": {
+			"types": "./out/cli-kit/metadata.d.ts",
 			"node": "./lib/cli-kit/metadata.ts",
-			"default": "./out/cli-kit/metadata.js",
-			"types": "./out/cli-kit/metadata.d.ts"
+			"default": "./out/cli-kit/metadata.js"
 		},
 		"./cli-kit/engine-stamp": {
+			"types": "./out/cli-kit/engine-stamp.d.ts",
 			"node": "./lib/cli-kit/engine-stamp.ts",
-			"default": "./out/cli-kit/engine-stamp.js",
-			"types": "./out/cli-kit/engine-stamp.d.ts"
+			"default": "./out/cli-kit/engine-stamp.js"
 		},
 		"./cli-kit/dropin": {
+			"types": "./out/cli-kit/dropin.d.ts",
 			"node": "./lib/cli-kit/dropin.ts",
-			"default": "./out/cli-kit/dropin.js",
-			"types": "./out/cli-kit/dropin.d.ts"
+			"default": "./out/cli-kit/dropin.js"
 		},
 		"./cli-kit/weights-guard": {
+			"types": "./out/cli-kit/weights-guard.d.ts",
 			"node": "./out/cli-kit/weights-guard.js",
-			"default": "./out/cli-kit/weights-guard.js",
-			"types": "./out/cli-kit/weights-guard.d.ts"
+			"default": "./out/cli-kit/weights-guard.js"
 		},
 		"./test-kit": {
+			"types": "./out/test-kit/index.d.ts",
 			"node": "./lib/test-kit/index.ts",
-			"default": "./out/test-kit/index.js",
-			"types": "./out/test-kit/index.d.ts"
+			"default": "./out/test-kit/index.js"
 		},
 		"./api-engine": {
+			"types": "./out/api-engine.d.ts",
 			"node": "./lib/api-engine.ts",
-			"default": "./out/api-engine.js",
-			"types": "./out/api-engine.d.ts"
+			"default": "./out/api-engine.js"
 		},
 		"./cli-native/spec": {
+			"types": "./out/cli-native/spec.d.ts",
 			"node": "./lib/cli-native/spec.ts",
-			"default": "./out/cli-native/spec.js",
-			"types": "./out/cli-native/spec.d.ts"
+			"default": "./out/cli-native/spec.js"
 		},
 		"./commands/parse": {
+			"types": "./out/commands/parse.d.ts",
 			"node": "./lib/commands/parse.tsx",
-			"default": "./out/commands/parse.js",
-			"types": "./out/commands/parse.d.ts"
+			"default": "./out/commands/parse.js"
 		},
 		"./commands/corpus/run": {
+			"types": "./out/commands/corpus/run.d.ts",
 			"node": "./lib/commands/corpus/run.tsx",
-			"default": "./out/commands/corpus/run.js",
-			"types": "./out/commands/corpus/run.d.ts"
+			"default": "./out/commands/corpus/run.js"
 		},
 		"./test-kit/cli-spawn-lock": {
+			"types": "./out/test-kit/cli-spawn-lock.d.ts",
 			"node": "./lib/test-kit/cli-spawn-lock.ts",
-			"default": "./out/test-kit/cli-spawn-lock.js",
-			"types": "./out/test-kit/cli-spawn-lock.d.ts"
+			"default": "./out/test-kit/cli-spawn-lock.js"
 		},
 		"./observations": {
+			"types": "./out/observations/index.d.ts",
 			"node": "./lib/observations/index.ts",
-			"default": "./out/observations/index.js",
-			"types": "./out/observations/index.d.ts"
+			"default": "./out/observations/index.js"
 		},
 		"./commands/registry/run": {
+			"types": "./out/commands/registry/run.d.ts",
 			"node": "./lib/commands/registry/run.tsx",
-			"default": "./out/commands/registry/run.js",
-			"types": "./out/commands/registry/run.d.ts"
+			"default": "./out/commands/registry/run.js"
 		},
 		"./runtime-pipeline": {
+			"types": "./out/runtime-pipeline.d.ts",
 			"node": "./lib/runtime-pipeline.ts",
-			"default": "./out/runtime-pipeline.js",
-			"types": "./out/runtime-pipeline.d.ts"
+			"default": "./out/runtime-pipeline.js"
 		},
 		"./admin-coherence": {
+			"types": "./out/admin-coherence.d.ts",
 			"node": "./lib/admin-coherence.ts",
-			"default": "./out/admin-coherence.js",
-			"types": "./out/admin-coherence.d.ts"
+			"default": "./out/admin-coherence.js"
 		},
 		"./freshness": {
+			"types": "./out/freshness.d.ts",
 			"node": "./lib/freshness.ts",
-			"default": "./out/freshness.js",
-			"types": "./out/freshness.d.ts"
+			"default": "./out/freshness.js"
 		},
 		"./fork-entity": {
+			"types": "./out/fork-entity.d.ts",
 			"node": "./lib/fork-entity.ts",
-			"default": "./out/fork-entity.js",
-			"types": "./out/fork-entity.d.ts"
+			"default": "./out/fork-entity.js"
 		},
 		"./hierarchy-lineage": {
+			"types": "./out/hierarchy-lineage.d.ts",
 			"node": "./lib/hierarchy-lineage.ts",
-			"default": "./out/hierarchy-lineage.js",
-			"types": "./out/hierarchy-lineage.d.ts"
+			"default": "./out/hierarchy-lineage.js"
 		},
 		"./inferred-scope": {
+			"types": "./out/inferred-scope.d.ts",
 			"node": "./lib/inferred-scope.ts",
-			"default": "./out/inferred-scope.js",
-			"types": "./out/inferred-scope.d.ts"
+			"default": "./out/inferred-scope.js"
 		},
 		"./interp-calibration": {
+			"types": "./out/interp-calibration.d.ts",
 			"node": "./lib/interp-calibration.ts",
-			"default": "./out/interp-calibration.js",
-			"types": "./out/interp-calibration.d.ts"
+			"default": "./out/interp-calibration.js"
 		},
 		"./kbest-street-rerank": {
+			"types": "./out/kbest-street-rerank.d.ts",
 			"node": "./lib/kbest-street-rerank.ts",
-			"default": "./out/kbest-street-rerank.js",
-			"types": "./out/kbest-street-rerank.d.ts"
+			"default": "./out/kbest-street-rerank.js"
 		},
 		"./postcode-repair": {
+			"types": "./out/postcode-repair.d.ts",
 			"node": "./lib/postcode-repair.ts",
-			"default": "./out/postcode-repair.js",
-			"types": "./out/postcode-repair.d.ts"
+			"default": "./out/postcode-repair.js"
 		},
 		"./query-intent": {
+			"types": "./out/query-intent.d.ts",
 			"node": "./lib/query-intent.ts",
-			"default": "./out/query-intent.js",
-			"types": "./out/query-intent.d.ts"
+			"default": "./out/query-intent.js"
 		},
 		"./region-recognition": {
+			"types": "./out/region-recognition.d.ts",
 			"node": "./lib/region-recognition.ts",
-			"default": "./out/region-recognition.js",
-			"types": "./out/region-recognition.d.ts"
+			"default": "./out/region-recognition.js"
 		},
 		"./stranded-affix-repair": {
+			"types": "./out/stranded-affix-repair.d.ts",
 			"node": "./lib/stranded-affix-repair.ts",
-			"default": "./out/stranded-affix-repair.js",
-			"types": "./out/stranded-affix-repair.d.ts"
+			"default": "./out/stranded-affix-repair.js"
 		},
 		"./cli-native/command-router": {
+			"types": "./out/cli-native/command-router.d.ts",
 			"node": "./lib/cli-native/command-router.ts",
-			"default": "./out/cli-native/command-router.js",
-			"types": "./out/cli-native/command-router.d.ts"
+			"default": "./out/cli-native/command-router.js"
 		},
 		"./autocomplete-core": {
+			"types": "./out/autocomplete-core.d.ts",
 			"node": "./lib/autocomplete-core.ts",
-			"default": "./out/autocomplete-core.js",
-			"types": "./out/autocomplete-core.d.ts"
+			"default": "./out/autocomplete-core.js"
 		},
 		"./commands/gazetteer/inspect/sync-plan": {
+			"types": "./out/commands/gazetteer/inspect/sync-plan.d.ts",
 			"node": "./lib/commands/gazetteer/inspect/sync-plan.ts",
-			"default": "./out/commands/gazetteer/inspect/sync-plan.js",
-			"types": "./out/commands/gazetteer/inspect/sync-plan.d.ts"
+			"default": "./out/commands/gazetteer/inspect/sync-plan.js"
 		},
 		"./doctor": {
+			"types": "./out/doctor/index.d.ts",
 			"node": "./lib/doctor/index.ts",
-			"default": "./out/doctor/index.js",
-			"types": "./out/doctor/index.d.ts"
+			"default": "./out/doctor/index.js"
 		},
 		"./tools/generate-clients": {
+			"types": "./out/tools/generate-clients.d.ts",
 			"node": "./lib/tools/generate-clients.ts",
-			"default": "./out/tools/generate-clients.js",
-			"types": "./out/tools/generate-clients.d.ts"
+			"default": "./out/tools/generate-clients.js"
 		},
 		"./geocode": {
+			"types": "./out/geocode/index.d.ts",
 			"node": "./lib/geocode/index.ts",
-			"default": "./out/geocode/index.js",
-			"types": "./out/geocode/index.d.ts"
+			"default": "./out/geocode/index.js"
 		},
 		"./poi": {
+			"types": "./out/poi/index.d.ts",
 			"node": "./lib/poi/index.ts",
-			"default": "./out/poi/index.js",
-			"types": "./out/poi/index.d.ts"
+			"default": "./out/poi/index.js"
 		},
 		"./default": {
+			"types": "./out/default/index.d.ts",
 			"node": "./lib/default/index.ts",
-			"default": "./out/default/index.js",
-			"types": "./out/default/index.d.ts"
+			"default": "./out/default/index.js"
 		},
 		"./data": {
+			"types": "./out/data/index.d.ts",
 			"node": "./lib/data/index.ts",
-			"default": "./out/data/index.js",
-			"types": "./out/data/index.d.ts"
+			"default": "./out/data/index.js"
 		},
 		"./street": {
+			"types": "./out/street/index.d.ts",
 			"node": "./lib/street/index.ts",
-			"default": "./out/street/index.js",
-			"types": "./out/street/index.d.ts"
+			"default": "./out/street/index.js"
 		},
 		"./coverage": {
+			"types": "./out/coverage/index.d.ts",
 			"node": "./lib/coverage/index.ts",
-			"default": "./out/coverage/index.js",
-			"types": "./out/coverage/index.d.ts"
+			"default": "./out/coverage/index.js"
 		},
 		"./plus-code-override": {
+			"types": "./out/plus-code-override.d.ts",
 			"node": "./lib/plus-code-override.ts",
-			"default": "./out/plus-code-override.js",
-			"types": "./out/plus-code-override.d.ts"
+			"default": "./out/plus-code-override.js"
 		}
 	},
 	"publishConfig": {

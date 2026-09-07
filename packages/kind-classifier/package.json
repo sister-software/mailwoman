@@ -27,37 +27,37 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./classify": {
+			"types": "./out/classify.d.ts",
 			"node": "./lib/classify.ts",
-			"default": "./out/classify.js",
-			"types": "./out/classify.d.ts"
+			"default": "./out/classify.js"
 		},
 		"./intent-rules": {
+			"types": "./out/intent-rules.d.ts",
 			"node": "./lib/intent-rules.ts",
-			"default": "./out/intent-rules.js",
-			"types": "./out/intent-rules.d.ts"
+			"default": "./out/intent-rules.js"
 		},
 		"./rules": {
+			"types": "./out/rules.d.ts",
 			"node": "./lib/rules.ts",
-			"default": "./out/rules.js",
-			"types": "./out/rules.d.ts"
+			"default": "./out/rules.js"
 		},
 		"./poi": {
+			"types": "./out/poi.d.ts",
 			"node": "./lib/poi.ts",
-			"default": "./out/poi.js",
-			"types": "./out/poi.d.ts"
+			"default": "./out/poi.js"
 		}
 	},
 	"publishConfig": {

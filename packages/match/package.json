@@ -27,57 +27,57 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./blocking": {
+			"types": "./out/blocking.d.ts",
 			"node": "./lib/blocking.ts",
-			"default": "./out/blocking.js",
-			"types": "./out/blocking.d.ts"
+			"default": "./out/blocking.js"
 		},
 		"./clustering": {
+			"types": "./out/clustering.d.ts",
 			"node": "./lib/clustering.ts",
-			"default": "./out/clustering.js",
-			"types": "./out/clustering.d.ts"
+			"default": "./out/clustering.js"
 		},
 		"./comparators": {
+			"types": "./out/comparators.d.ts",
 			"node": "./lib/comparators.ts",
-			"default": "./out/comparators.js",
-			"types": "./out/comparators.d.ts"
+			"default": "./out/comparators.js"
 		},
 		"./distance": {
+			"types": "./out/distance.d.ts",
 			"node": "./lib/distance.ts",
-			"default": "./out/distance.js",
-			"types": "./out/distance.d.ts"
+			"default": "./out/distance.js"
 		},
 		"./fellegi-sunter": {
+			"types": "./out/fellegi-sunter.d.ts",
 			"node": "./lib/fellegi-sunter.ts",
-			"default": "./out/fellegi-sunter.js",
-			"types": "./out/fellegi-sunter.d.ts"
+			"default": "./out/fellegi-sunter.js"
 		},
 		"./em": {
+			"types": "./out/em.d.ts",
 			"node": "./lib/em.ts",
-			"default": "./out/em.js",
-			"types": "./out/em.d.ts"
+			"default": "./out/em.js"
 		},
 		"./tf": {
+			"types": "./out/tf.d.ts",
 			"node": "./lib/tf.ts",
-			"default": "./out/tf.js",
-			"types": "./out/tf.d.ts"
+			"default": "./out/tf.js"
 		},
 		"./gbt": {
+			"types": "./out/gbt.d.ts",
 			"node": "./lib/gbt.ts",
-			"default": "./out/gbt.js",
-			"types": "./out/gbt.d.ts"
+			"default": "./out/gbt.js"
 		}
 	},
 	"publishConfig": {

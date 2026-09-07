@@ -28,37 +28,37 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./env": {
+			"types": "./out/env.d.ts",
 			"node": "./lib/env.ts",
-			"default": "./out/env.js",
-			"types": "./out/env.d.ts"
+			"default": "./out/env.js"
 		},
 		"./browser-cascade": {
+			"types": "./out/browser-cascade.d.ts",
 			"node": "./lib/browser-cascade.ts",
-			"default": "./out/browser-cascade.js",
-			"types": "./out/browser-cascade.d.ts"
+			"default": "./out/browser-cascade.js"
 		},
 		"./loader": {
+			"types": "./out/loader.d.ts",
 			"node": "./lib/loader.ts",
-			"default": "./out/loader.js",
-			"types": "./out/loader.d.ts"
+			"default": "./out/loader.js"
 		},
 		"./lookup": {
+			"types": "./out/lookup.d.ts",
 			"node": "./lib/lookup.ts",
-			"default": "./out/lookup.js",
-			"types": "./out/lookup.d.ts"
+			"default": "./out/lookup.js"
 		}
 	},
 	"publishConfig": {

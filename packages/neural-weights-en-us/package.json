@@ -36,9 +36,9 @@
 	],
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {

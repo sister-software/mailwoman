@@ -27,195 +27,195 @@
 	"type": "module",
 	"imports": {
 		"#adapters/utils": {
+			"types": "./out/adapters/utils/index.d.ts",
 			"node": "./lib/adapters/utils/index.ts",
-			"default": "./out/adapters/utils/index.js",
-			"types": "./out/adapters/utils/index.d.ts"
+			"default": "./out/adapters/utils/index.js"
 		},
 		"#runner": {
+			"types": "./out/runner.d.ts",
 			"node": "./lib/runner.ts",
-			"default": "./out/runner.js",
-			"types": "./out/runner.d.ts"
+			"default": "./out/runner.js"
 		},
 		"#synthesizers/utils": {
+			"types": "./out/synthesizers/utils.d.ts",
 			"node": "./lib/synthesizers/utils.ts",
-			"default": "./out/synthesizers/utils.js",
-			"types": "./out/synthesizers/utils.d.ts"
+			"default": "./out/synthesizers/utils.js"
 		},
 		"#test-kit": "./lib/test-kit/index.ts",
 		"#test-kit/corpus-recipe": "./lib/test-kit/corpus-recipe.ts",
 		"#types": {
+			"types": "./out/types.d.ts",
 			"node": "./lib/types.ts",
-			"default": "./out/types.js",
-			"types": "./out/types.d.ts"
+			"default": "./out/types.js"
 		},
 		"#utils": {
+			"types": "./out/utils/index.d.ts",
 			"node": "./lib/utils/index.ts",
-			"default": "./out/utils/index.js",
-			"types": "./out/utils/index.d.ts"
+			"default": "./out/utils/index.js"
 		},
 		"#tools": {
+			"types": "./out/tools/index.d.ts",
 			"node": "./lib/tools/index.ts",
-			"default": "./out/tools/index.js",
-			"types": "./out/tools/index.d.ts"
+			"default": "./out/tools/index.js"
 		},
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./env": {
+			"types": "./out/env.d.ts",
 			"node": "./lib/env.ts",
-			"default": "./out/env.js",
-			"types": "./out/env.d.ts"
+			"default": "./out/env.js"
 		},
 		"./types": {
+			"types": "./out/types.d.ts",
 			"node": "./lib/types.ts",
-			"default": "./out/types.js",
-			"types": "./out/types.d.ts"
+			"default": "./out/types.js"
 		},
 		"./data/*": "./data/*",
 		"./utils": {
+			"types": "./out/utils/index.d.ts",
 			"node": "./lib/utils/index.ts",
-			"default": "./out/utils/index.js",
-			"types": "./out/utils/index.d.ts"
+			"default": "./out/utils/index.js"
 		},
 		"./runner": {
+			"types": "./out/runner.d.ts",
 			"node": "./lib/runner.ts",
-			"default": "./out/runner.js",
-			"types": "./out/runner.d.ts"
+			"default": "./out/runner.js"
 		},
 		"./build": {
+			"types": "./out/build.d.ts",
 			"node": "./lib/build.ts",
-			"default": "./out/build.js",
-			"types": "./out/build.d.ts"
+			"default": "./out/build.js"
 		},
 		"./synthesizers/*": {
+			"types": "./out/synthesizers/*.d.ts",
 			"node": "./lib/synthesizers/*.ts",
-			"default": "./out/synthesizers/*.js",
-			"types": "./out/synthesizers/*.d.ts"
+			"default": "./out/synthesizers/*.js"
 		},
 		"./recipes/*": {
+			"types": "./out/recipes/*.d.ts",
 			"node": "./lib/recipes/*.ts",
-			"default": "./out/recipes/*.js",
-			"types": "./out/recipes/*.d.ts"
+			"default": "./out/recipes/*.js"
 		},
 		"./adapters/utils": {
+			"types": "./out/adapters/utils/index.d.ts",
 			"node": "./lib/adapters/utils/index.ts",
-			"default": "./out/adapters/utils/index.js",
-			"types": "./out/adapters/utils/index.d.ts"
+			"default": "./out/adapters/utils/index.js"
 		},
 		"./adapters": {
+			"types": "./out/adapters/index.d.ts",
 			"node": "./lib/adapters/index.ts",
-			"default": "./out/adapters/index.js",
-			"types": "./out/adapters/index.d.ts"
+			"default": "./out/adapters/index.js"
 		},
 		"./adapters/*": {
+			"types": "./out/adapters/*.d.ts",
 			"node": "./lib/adapters/*.ts",
-			"default": "./out/adapters/*.js",
-			"types": "./out/adapters/*.d.ts"
+			"default": "./out/adapters/*.js"
 		},
 		"./tools": {
+			"types": "./out/tools/index.d.ts",
 			"node": "./lib/tools/index.ts",
-			"default": "./out/tools/index.js",
-			"types": "./out/tools/index.d.ts"
+			"default": "./out/tools/index.js"
 		},
 		"./codex/*": {
+			"types": "./out/codex/*.d.ts",
 			"node": "./lib/codex/*.ts",
-			"default": "./out/codex/*.js",
-			"types": "./out/codex/*.d.ts"
+			"default": "./out/codex/*.js"
 		},
 		"./utils/parquet": {
+			"types": "./out/utils/parquet.d.ts",
 			"node": "./lib/utils/parquet.ts",
-			"default": "./out/utils/parquet.js",
-			"types": "./out/utils/parquet.d.ts"
+			"default": "./out/utils/parquet.js"
 		},
 		"./tools/postcode-triples": {
+			"types": "./out/tools/postcode-triples.d.ts",
 			"node": "./lib/tools/postcode-triples.ts",
-			"default": "./out/tools/postcode-triples.js",
-			"types": "./out/tools/postcode-triples.d.ts"
+			"default": "./out/tools/postcode-triples.js"
 		},
 		"./tools/audit": {
+			"types": "./out/tools/audit.d.ts",
 			"node": "./lib/tools/audit.ts",
-			"default": "./out/tools/audit.js",
-			"types": "./out/tools/audit.d.ts"
+			"default": "./out/tools/audit.js"
 		},
 		"./tools/gb-title-case": {
+			"types": "./out/tools/gb-title-case.d.ts",
 			"node": "./lib/tools/gb-title-case.ts",
-			"default": "./out/tools/gb-title-case.js",
-			"types": "./out/tools/gb-title-case.d.ts"
+			"default": "./out/tools/gb-title-case.js"
 		},
 		"./tools/golden-relabel-street": {
+			"types": "./out/tools/golden-relabel-street.d.ts",
 			"node": "./lib/tools/golden-relabel-street.ts",
-			"default": "./out/tools/golden-relabel-street.js",
-			"types": "./out/tools/golden-relabel-street.d.ts"
+			"default": "./out/tools/golden-relabel-street.js"
 		},
 		"./tools/overture-subvenue": {
+			"types": "./out/tools/overture-subvenue.d.ts",
 			"node": "./lib/tools/overture-subvenue.ts",
-			"default": "./out/tools/overture-subvenue.js",
-			"types": "./out/tools/overture-subvenue.d.ts"
+			"default": "./out/tools/overture-subvenue.js"
 		},
 		"./tools/sub-venue-lexicon": {
+			"types": "./out/tools/sub-venue-lexicon.d.ts",
 			"node": "./lib/tools/sub-venue-lexicon.ts",
-			"default": "./out/tools/sub-venue-lexicon.js",
-			"types": "./out/tools/sub-venue-lexicon.d.ts"
+			"default": "./out/tools/sub-venue-lexicon.js"
 		},
 		"./tools/sub-venue-promotions": {
+			"types": "./out/tools/sub-venue-promotions.d.ts",
 			"node": "./lib/tools/sub-venue-promotions.ts",
-			"default": "./out/tools/sub-venue-promotions.js",
-			"types": "./out/tools/sub-venue-promotions.d.ts"
+			"default": "./out/tools/sub-venue-promotions.js"
 		},
 		"./tools/fetch/download": {
+			"types": "./out/tools/fetch/download.d.ts",
 			"node": "./lib/tools/fetch/download.ts",
-			"default": "./out/tools/fetch/download.js",
-			"types": "./out/tools/fetch/download.d.ts"
+			"default": "./out/tools/fetch/download.js"
 		},
 		"./tools/fetch/ppd": {
+			"types": "./out/tools/fetch/ppd.d.ts",
 			"node": "./lib/tools/fetch/ppd.ts",
-			"default": "./out/tools/fetch/ppd.js",
-			"types": "./out/tools/fetch/ppd.d.ts"
+			"default": "./out/tools/fetch/ppd.js"
 		},
 		"./utils/tokenize": {
+			"types": "./out/utils/tokenize.d.ts",
 			"node": "./lib/utils/tokenize.ts",
-			"default": "./out/utils/tokenize.js",
-			"types": "./out/utils/tokenize.d.ts"
+			"default": "./out/utils/tokenize.js"
 		},
 		"./utils/golden": {
+			"types": "./out/utils/golden.d.ts",
 			"node": "./lib/utils/golden.ts",
-			"default": "./out/utils/golden.js",
-			"types": "./out/utils/golden.d.ts"
+			"default": "./out/utils/golden.js"
 		},
 		"./utils/license": {
+			"types": "./out/utils/license.d.ts",
 			"node": "./lib/utils/license.ts",
-			"default": "./out/utils/license.js",
-			"types": "./out/utils/license.d.ts"
+			"default": "./out/utils/license.js"
 		},
 		"./utils/split": {
+			"types": "./out/utils/split.d.ts",
 			"node": "./lib/utils/split.ts",
-			"default": "./out/utils/split.js",
-			"types": "./out/utils/split.d.ts"
+			"default": "./out/utils/split.js"
 		},
 		"./utils/wof-json": {
+			"types": "./out/utils/wof-json.d.ts",
 			"node": "./lib/utils/wof-json.ts",
-			"default": "./out/utils/wof-json.js",
-			"types": "./out/utils/wof-json.d.ts"
+			"default": "./out/utils/wof-json.js"
 		},
 		"./test-kit": {
+			"types": "./out/test-kit/index.d.ts",
 			"node": "./lib/test-kit/index.ts",
-			"default": "./out/test-kit/index.js",
-			"types": "./out/test-kit/index.d.ts"
+			"default": "./out/test-kit/index.js"
 		},
 		"./test-kit/corpus-recipe": {
+			"types": "./out/test-kit/corpus-recipe.d.ts",
 			"node": "./lib/test-kit/corpus-recipe.ts",
-			"default": "./out/test-kit/corpus-recipe.js",
-			"types": "./out/test-kit/corpus-recipe.d.ts"
+			"default": "./out/test-kit/corpus-recipe.js"
 		}
 	},
 	"publishConfig": {

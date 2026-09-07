@@ -28,22 +28,22 @@
 	"type": "module",
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./forward-address": {
+			"types": "./out/forward-address.d.ts",
 			"node": "./lib/forward-address.ts",
-			"default": "./out/forward-address.js",
-			"types": "./out/forward-address.d.ts"
+			"default": "./out/forward-address.js"
 		},
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		}
 	},
 	"publishConfig": {

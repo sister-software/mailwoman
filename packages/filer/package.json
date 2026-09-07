@@ -45,147 +45,147 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./sdk": {
+			"types": "./out/sdk/index.d.ts",
 			"node": "./lib/sdk/index.ts",
-			"default": "./out/sdk/index.js",
-			"types": "./out/sdk/index.d.ts"
+			"default": "./out/sdk/index.js"
 		},
 		"./tools": {
+			"types": "./out/tools/index.d.ts",
 			"node": "./lib/tools/index.ts",
-			"default": "./out/tools/index.js",
-			"types": "./out/tools/index.d.ts"
+			"default": "./out/tools/index.js"
 		},
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./env": {
+			"types": "./out/env.d.ts",
 			"node": "./lib/env.ts",
-			"default": "./out/env.js",
-			"types": "./out/env.d.ts"
+			"default": "./out/env.js"
 		},
 		"./schema": {
+			"types": "./out/schema.d.ts",
 			"node": "./lib/schema.ts",
-			"default": "./out/schema.js",
-			"types": "./out/schema.d.ts"
+			"default": "./out/schema.js"
 		},
 		"./sdk/build-filer": {
+			"types": "./out/sdk/build-filer.d.ts",
 			"node": "./lib/sdk/build-filer.ts",
-			"default": "./out/sdk/build-filer.js",
-			"types": "./out/sdk/build-filer.d.ts"
+			"default": "./out/sdk/build-filer.js"
 		},
 		"./sdk/form499-notes": {
+			"types": "./out/sdk/form499-notes.d.ts",
 			"node": "./lib/sdk/form499-notes.ts",
-			"default": "./out/sdk/form499-notes.js",
-			"types": "./out/sdk/form499-notes.d.ts"
+			"default": "./out/sdk/form499-notes.js"
 		},
 		"./sdk/form499": {
+			"types": "./out/sdk/form499.d.ts",
 			"node": "./lib/sdk/form499.ts",
-			"default": "./out/sdk/form499.js",
-			"types": "./out/sdk/form499.d.ts"
+			"default": "./out/sdk/form499.js"
 		},
 		"./frn": {
+			"types": "./out/frn.d.ts",
 			"node": "./lib/frn.ts",
-			"default": "./out/frn.js",
-			"types": "./out/frn.d.ts"
+			"default": "./out/frn.js"
 		},
 		"./sdk/provider-list": {
+			"types": "./out/sdk/provider-list.d.ts",
 			"node": "./lib/sdk/provider-list.ts",
-			"default": "./out/sdk/provider-list.js",
-			"types": "./out/sdk/provider-list.d.ts"
+			"default": "./out/sdk/provider-list.js"
 		},
 		"./sdk/cik-corroboration": {
+			"types": "./out/sdk/cik-corroboration.d.ts",
 			"node": "./lib/sdk/cik-corroboration.ts",
-			"default": "./out/sdk/cik-corroboration.js",
-			"types": "./out/sdk/cik-corroboration.d.ts"
+			"default": "./out/sdk/cik-corroboration.js"
 		},
 		"./sdk/edgar-filings": {
+			"types": "./out/sdk/edgar-filings.d.ts",
 			"node": "./lib/sdk/edgar-filings.ts",
-			"default": "./out/sdk/edgar-filings.js",
-			"types": "./out/sdk/edgar-filings.d.ts"
+			"default": "./out/sdk/edgar-filings.js"
 		},
 		"./sdk/cluster-filers": {
+			"types": "./out/sdk/cluster-filers.d.ts",
 			"node": "./lib/sdk/cluster-filers.ts",
-			"default": "./out/sdk/cluster-filers.js",
-			"types": "./out/sdk/cluster-filers.d.ts"
+			"default": "./out/sdk/cluster-filers.js"
 		},
 		"./sdk/cores-client": {
+			"types": "./out/sdk/cores-client.d.ts",
 			"node": "./lib/sdk/cores-client.ts",
-			"default": "./out/sdk/cores-client.js",
-			"types": "./out/sdk/cores-client.d.ts"
+			"default": "./out/sdk/cores-client.js"
 		},
 		"./sdk/exhibit21": {
+			"types": "./out/sdk/exhibit21.d.ts",
 			"node": "./lib/sdk/exhibit21.ts",
-			"default": "./out/sdk/exhibit21.js",
-			"types": "./out/sdk/exhibit21.d.ts"
+			"default": "./out/sdk/exhibit21.js"
 		},
 		"./sdk/edgar-ingest": {
+			"types": "./out/sdk/edgar-ingest.d.ts",
 			"node": "./lib/sdk/edgar-ingest.ts",
-			"default": "./out/sdk/edgar-ingest.js",
-			"types": "./out/sdk/edgar-ingest.d.ts"
+			"default": "./out/sdk/edgar-ingest.js"
 		},
 		"./sdk/family-id": {
+			"types": "./out/sdk/family-id.d.ts",
 			"node": "./lib/sdk/family-id.ts",
-			"default": "./out/sdk/family-id.js",
-			"types": "./out/sdk/family-id.d.ts"
+			"default": "./out/sdk/family-id.js"
 		},
 		"./family-rollup": {
+			"types": "./out/family-rollup.d.ts",
 			"node": "./lib/family-rollup.ts",
-			"default": "./out/family-rollup.js",
-			"types": "./out/family-rollup.d.ts"
+			"default": "./out/family-rollup.js"
 		},
 		"./filer-lookup": {
+			"types": "./out/filer-lookup.d.ts",
 			"node": "./lib/filer-lookup.ts",
-			"default": "./out/filer-lookup.js",
-			"types": "./out/filer-lookup.d.ts"
+			"default": "./out/filer-lookup.js"
 		},
 		"./sdk/form499-workbook": {
+			"types": "./out/sdk/form499-workbook.d.ts",
 			"node": "./lib/sdk/form499-workbook.ts",
-			"default": "./out/sdk/form499-workbook.js",
-			"types": "./out/sdk/form499-workbook.d.ts"
+			"default": "./out/sdk/form499-workbook.js"
 		},
 		"./sdk/sec-client": {
+			"types": "./out/sdk/sec-client.d.ts",
 			"node": "./lib/sdk/sec-client.ts",
-			"default": "./out/sdk/sec-client.js",
-			"types": "./out/sdk/sec-client.d.ts"
+			"default": "./out/sdk/sec-client.js"
 		},
 		"./tools/linkage-corpus": {
+			"types": "./out/tools/linkage-corpus.d.ts",
 			"node": "./lib/tools/linkage-corpus.ts",
-			"default": "./out/tools/linkage-corpus.js",
-			"types": "./out/tools/linkage-corpus.d.ts"
+			"default": "./out/tools/linkage-corpus.js"
 		},
 		"./tools/linkage-eval": {
+			"types": "./out/tools/linkage-eval.d.ts",
 			"node": "./lib/tools/linkage-eval.ts",
-			"default": "./out/tools/linkage-eval.js",
-			"types": "./out/tools/linkage-eval.d.ts"
+			"default": "./out/tools/linkage-eval.js"
 		},
 		"./tools/linkage-metrics": {
+			"types": "./out/tools/linkage-metrics.d.ts",
 			"node": "./lib/tools/linkage-metrics.ts",
-			"default": "./out/tools/linkage-metrics.js",
-			"types": "./out/tools/linkage-metrics.d.ts"
+			"default": "./out/tools/linkage-metrics.js"
 		},
 		"./sdk/build/edgar-match": {
+			"types": "./out/sdk/build/edgar-match.d.ts",
 			"node": "./lib/sdk/build/edgar-match.ts",
-			"default": "./out/sdk/build/edgar-match.js",
-			"types": "./out/sdk/build/edgar-match.d.ts"
+			"default": "./out/sdk/build/edgar-match.js"
 		},
 		"./sdk/build/form499-rows": {
+			"types": "./out/sdk/build/form499-rows.d.ts",
 			"node": "./lib/sdk/build/form499-rows.ts",
-			"default": "./out/sdk/build/form499-rows.js",
-			"types": "./out/sdk/build/form499-rows.d.ts"
+			"default": "./out/sdk/build/form499-rows.js"
 		},
 		"./sdk/build/node-ids": {
+			"types": "./out/sdk/build/node-ids.d.ts",
 			"node": "./lib/sdk/build/node-ids.ts",
-			"default": "./out/sdk/build/node-ids.js",
-			"types": "./out/sdk/build/node-ids.d.ts"
+			"default": "./out/sdk/build/node-ids.js"
 		}
 	},
 	"publishConfig": {
