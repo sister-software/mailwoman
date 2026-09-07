@@ -45,7 +45,7 @@ interface Options {
 
 const TILES_BUCKET = "nexus-assets"
 const TILES_PREFIX = "tiles"
-const PUBLIC_BUCKET = "mailwoman-assets"
+const PUBLIC_BUCKET = "nexus-public"
 const TILES_ORIGIN = "https://tiles.mailwoman.ai"
 const PUBLIC_ORIGIN = "https://public.mailwoman.ai"
 const VERSION_HASH_LENGTH = 8
