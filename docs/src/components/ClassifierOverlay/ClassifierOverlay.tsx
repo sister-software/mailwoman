@@ -16,8 +16,8 @@
  *       influenced each parsed component.
  */
 
-import { confidenceTierOrMid } from "#shared/confidence-tiers"
-import type { ResultNode } from "#shared/resources"
+import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
+import { confidenceTierOrMid } from "@mailwoman/react/common/confidence-tiers"
 
 import styles from "./styles.module.css"
 
@@ -174,8 +174,8 @@ interface TreeNodeLike {
 }
 
 /**
- * Flatten the address tree preserving source provenance. Mirrors `flattenTree` from demo-helpers but preserves `source`
- * / `sourceID` and extracts displaced classifier info from `metadata` when available.
+ * Flatten the address tree preserving source provenance. Mirrors `flattenTreeNodes` from `@mailwoman/core/decoder` but
+ * preserves `source` / `sourceID` and extracts displaced classifier info from `metadata` when available.
  */
 function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	const out: SourceNode[] = []
@@ -264,7 +264,7 @@ export interface ClassifierOverlayProps {
 	/**
 	 * Flattened nodes for display ordering and cross-reference.
 	 */
-	nodes: ResultNode[]
+	nodes: ParsedComponent[]
 	/**
 	 * Whether the FST gazetteer matcher was active for this parse.
 	 */
@@ -341,7 +341,7 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 
 //#region Dynamic per-component table
 
-const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: boolean }> = ({
+const DynamicOverlay: React.FC<{ tree: unknown; nodes: ParsedComponent[]; fstActive: boolean }> = ({
 	tree,
 	nodes,
 	fstActive,
@@ -349,7 +349,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 	const sourceNodes = flattenTreeWithSource(tree)
 
 	// Cross-reference source nodes with display nodes by tag + start/end
-	const enriched: Array<ResultNode & { sourceNode?: SourceNode }> = nodes.map((n, i) => {
+	const enriched: Array<ParsedComponent & { sourceNode?: SourceNode }> = nodes.map((n, i) => {
 		// Match by start/end when both have offsets, otherwise by tag + value + index proximity
 		const match =
 			sourceNodes.find((sn) => sn.tag === n.tag && sn.start === n.start && sn.end === n.end) ??

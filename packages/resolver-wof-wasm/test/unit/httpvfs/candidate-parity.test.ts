@@ -5,7 +5,7 @@
  *
  *   Node↔browser candidate-reader PARITY over the REAL artifact (the #861 server↔demo contract, run
  *   for the 2026-08-11 staging repoint): the same probes through the Node `WOFCandidateTableLookup`
- *   (`@mailwoman/resolver-wof-sqlite`) and the browser twin (`httpvfs-resolver.ts` over a
+ *   (`@mailwoman/resolver-wof-sqlite`) and the browser twin (`httpvfs/resolver.ts` over a
  *   node:sqlite-backed stub worker), asserting the SAME top answer — id, coordinate, exact-tier flag,
  *   and the #28 importance carry.
  *
@@ -15,9 +15,9 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { WOFCandidateTableLookup as NodeCandidateLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 

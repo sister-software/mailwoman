@@ -8,9 +8,11 @@
  *   mount, and what a host mounts to show the UI without the model.
  */
 
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
+
 import type { ResolvedMapPlace } from "#map/place-render"
 import type { DemoRuntime, Suggestion } from "#map/types"
-import type { ParseResult, PipelineRuntime } from "#pipeline/types"
+import type { PipelineRuntime } from "#pipeline/types"
 
 import type { DemoMapStyle } from "./DemoMap.tsx"
 

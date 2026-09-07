@@ -11,8 +11,9 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
+import { createRequire, resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
@@ -88,7 +89,6 @@ describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", 
 	// loaded, the capitalized global never existed, and the demo street tier silently fell back to
 	// the admin cascade for three days. These pins make the next sweep fail loudly instead.
 	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
-		const { createRequire } = await import("@mailwoman/core/module/resolvers")
 		const require = createRequire(import.meta.url)
 		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
 
@@ -96,7 +96,9 @@ describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", 
 	})
 
 	test("the loader references the library's own casing and never the house-cased variant", async () => {
-		const source = await readLocalTextFile(new URL("../../../../src/shared/httpvfs-resolver.ts", import.meta.url))
+		const source = await readLocalTextFile(
+			resolvePackagePath("@mailwoman/resolver-wof-wasm", "lib", "httpvfs", "resolver.ts")
+		)
 
 		expect(source).toContain("createDbWorker")
 		expect(source).not.toContain("createDBWorker")

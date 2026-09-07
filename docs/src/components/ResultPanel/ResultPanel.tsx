@@ -1,3 +1,4 @@
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { buildParsePayload, CandidatePicker, ConfidenceCell, KindBadge, useClipboard } from "@mailwoman/react"
 import CodeBlock from "@theme/CodeBlock"
 import { Fragment, useCallback, useState } from "react"
@@ -6,12 +7,11 @@ import { FailureDiagnostic } from "#components/FailureDiagnostic/FailureDiagnost
 import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
 import { TimingPanel } from "#components/TimingPanel/TimingPanel"
 import { TreeView } from "#components/TreeView/TreeView"
-import type { DemoResult } from "#shared/resources"
 
 import styles from "./styles.module.css"
 
 export interface ResultPanelProps {
-	result: DemoResult
+	result: ParseResult
 	selectedCandidateIndex: number
 	onSelectCandidate: (index: number) => void
 }

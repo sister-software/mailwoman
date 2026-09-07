@@ -15,11 +15,12 @@
  *   are the ones behind the `@mailwoman/react/map` subpath).
  */
 
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
 import type { LayerSpecification, SourceSpecification } from "react-map-gl/maplibre"
 
 import type { LngLat, ResolvedMapPlace } from "#map/place-render"
-import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "#pipeline/types"
+import type { PipelineRuntime } from "#pipeline/types"
 
 import type { DemoMapStyle } from "./DemoMap.tsx"
 

@@ -13,11 +13,10 @@
  *   offsets). Each pipeline stage's contribution is annotated per word where applicable.
  */
 
+import type { KindView, ParsedComponent, StageTiming } from "@mailwoman/core/pipeline/client-result"
+import { confidenceTierOrMid } from "@mailwoman/react/common/confidence-tiers"
+import { shortestSpanOwners, tokenizeWords, type WordToken } from "@mailwoman/react/common/text-tokens"
 import type React from "react"
-
-import { confidenceTierOrMid } from "#shared/confidence-tiers"
-import type { KindResult, ResultNode, StageTiming } from "#shared/resources"
-import { shortestSpanOwners, tokenizeWords, type WordToken } from "#shared/text-tokens"
 
 import styles from "./styles.module.css"
 
@@ -31,7 +30,7 @@ export interface SubwordExplorerProps {
 	/**
 	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
 	 */
-	nodes: ResultNode[]
+	nodes: ParsedComponent[]
 	/**
 	 * The parse tree (for phrase-group extraction via intermediate grouping nodes).
 	 */
@@ -39,7 +38,7 @@ export interface SubwordExplorerProps {
 	/**
 	 * Stage 2.5 kind classifier result.
 	 */
-	kindResult?: KindResult
+	kindResult?: KindView
 	/**
 	 * Per-stage timing breakdown.
 	 */
@@ -85,11 +84,11 @@ interface AnnotatedWord {
 /**
  * Assign each word to its most specific covering span (shortest-span owner) and derive BIO labels + phrase groups.
  */
-function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[] {
+function annotateWords(words: WordToken[], nodes: ParsedComponent[]): AnnotatedWord[] {
 	// Filter to well-formed spans.
 	const spans: SpanInfo[] = nodes
 		.filter(
-			(n): n is ResultNode & { start: number; end: number } =>
+			(n): n is ParsedComponent & { start: number; end: number } =>
 				typeof n.start === "number" && typeof n.end === "number" && n.start >= 0 && n.end > n.start
 		)
 		.map((n) => ({ tag: n.tag, confidence: n.confidence, start: n.start, end: n.end, value: n.value }))
@@ -251,7 +250,7 @@ export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, 
 
 	// Keep only well-formed spans.
 	const validNodes = nodes.filter(
-		(n): n is ResultNode & { start: number; end: number } =>
+		(n): n is ParsedComponent & { start: number; end: number } =>
 			typeof n.start === "number" &&
 			typeof n.end === "number" &&
 			n.start >= 0 &&

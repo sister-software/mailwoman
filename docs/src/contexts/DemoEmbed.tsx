@@ -17,22 +17,23 @@
  *   public context shape is unchanged.
  */
 
+import type { Calibrator } from "@mailwoman/core/decoder/calibration"
 import type { DemoAssetsLoadContext, DemoManifest } from "@mailwoman/react"
 import { useDemoRuntime } from "@mailwoman/react"
+import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import type { SelectPairIndex } from "mailwoman/browser-runtime/classify"
+import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
+import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
+import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/manifest"
+import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
+import type { FSTMatcherLike, FSTProvenanceLike, MailwomanClassifierLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo } from "react"
 
 import { useSiteConfig } from "#hooks/site"
-import type { Calibrator, ReleaseInfo, ReleasesManifest, SelectPairIndex } from "#shared/demo-helpers"
-import { fetchReleasesManifest } from "#shared/demo-helpers"
-import type { DocsDemoAssets } from "#shared/demo-loader"
-import { loadDemoAssets } from "#shared/demo-loader"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
-import type { FSTMatcherLike, FSTProvenanceLike, MailwomanClassifierLike, MailwomanLookupLike } from "#shared/resources"
 
 //#region Types
-
-export type { ReleaseInfo, ReleasesManifest } from "#shared/demo-helpers"
 
 export interface DemoEmbedState {
 	/**
@@ -158,14 +159,12 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		}
 	}, [])
 
-	// Load the classifier + calibration + FST + WOF bundle for one release, via the shared `loadDemoAssets` (the ONE
-	// docs-side loader, also used by the `/demo` page). Reports staged progress via `ctx`; `useDemoRuntime` owns the
-	// terminal ready/error state and reveals the returned bundle atomically. The extra try/catch keeps this path's
-	// diagnostic console log on a load failure (the embed's original behavior).
+	// The embed keeps the gazetteer: the explainers resolve through `wofLookup`. `useDemoRuntime` owns the terminal
+	// ready/error state; the try/catch keeps this path's diagnostic console log on a load failure.
 	const loadAssets = useCallback(
-		async (release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<DocsDemoAssets> => {
+		async (release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<ReleaseAssets> => {
 			try {
-				return await loadDemoAssets(release, ctx, sqljsBaseURL)
+				return await loadReleaseAssets(release, ctx, { gazetteer: { sqljsBaseURL } })
 			} catch (error) {
 				console.error("Error loading resources", error)
 
@@ -175,7 +174,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		[sqljsBaseURL]
 	)
 
-	const rt = useDemoRuntime<DocsDemoAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useDemoRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
 
 	// Mount: register the range-chunk service worker (docs-only; persists validated DB range chunks
 	// across visits; see static/range-cache-sw.js).

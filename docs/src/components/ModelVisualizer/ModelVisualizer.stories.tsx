@@ -5,8 +5,7 @@
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
-
-import type { ParseTraceLike } from "#shared/resources"
+import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 
 import fixture from "./fixtures/white-house.trace.json"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"

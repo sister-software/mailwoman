@@ -61,24 +61,31 @@ function declaredNames(text: string, file: string, into: Set<string>): void {
 		if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
 			into.add(node.name.text)
 		}
+
 		if (ts.isImportSpecifier(node) || ts.isExportSpecifier(node)) {
 			into.add(node.name.text)
 		}
+
 		if (ts.isImportClause(node) && node.name) {
 			into.add(node.name.text)
 		}
+
 		if (ts.isPropertySignature(node) && node.name && ts.isIdentifier(node.name)) {
 			into.add(node.name.text)
 		}
+
 		if (ts.isMethodSignature(node) && node.name && ts.isIdentifier(node.name)) {
 			into.add(node.name.text)
 		}
+
 		if (ts.isMethodDeclaration(node) && ts.isIdentifier(node.name)) {
 			into.add(node.name.text)
 		}
+
 		if (ts.isPropertyDeclaration(node) && ts.isIdentifier(node.name)) {
 			into.add(node.name.text)
 		}
+
 		if (ts.isParameter(node) && ts.isIdentifier(node.name)) {
 			into.add(node.name.text)
 		}

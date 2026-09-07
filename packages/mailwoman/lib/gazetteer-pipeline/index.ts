@@ -497,7 +497,7 @@ export interface PublishOptions {
 	 */
 	stageDir: PathBuilderLike
 	/**
-	 * `docs/src/shared/resources/index.ts` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump.
+	 * `packages/mailwoman/lib/browser-runtime/resources.ts` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the pin bump.
 	 */
 	resourcesFile?: string
 	bucket?: string

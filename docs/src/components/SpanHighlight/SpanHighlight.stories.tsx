@@ -4,15 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
 import type { Meta, StoryObj } from "@storybook/react-vite"
-
-import type { ResultNode } from "#shared/resources"
 
 import { SpanHighlight } from "./SpanHighlight.tsx"
 
 const WHITE_HOUSE = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
-const whiteHouseNodes: ResultNode[] = [
+const whiteHouseNodes: ParsedComponent[] = [
 	{ tag: "house_number", value: "1600", confidence: 0.98, start: 0, end: 4 },
 	{ tag: "street", value: "Pennsylvania Ave NW", confidence: 0.91, start: 5, end: 24 },
 	{ tag: "locality", value: "Washington", confidence: 0.86, start: 26, end: 36 },

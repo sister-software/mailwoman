@@ -40,6 +40,7 @@ export interface WOFWasmPlaceLookupOpts {
 /**
  * One `sqlite_master` probe behind the lazy aux-table checks below.
  */
+// repo-health-ignore private-name-shadows-export -- the same probe over a synchronous sqlite-wasm handle; the httpvfs export answers a worker round trip and the sqlite one a node:sqlite client, and no adapter unifies the three handles
 function tableExists(db: Database, name: string): boolean {
 	return db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1`, [name]).length > 0
 }

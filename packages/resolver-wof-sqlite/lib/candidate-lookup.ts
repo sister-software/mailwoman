@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Node-side {@link PlaceLookup} over the byte-range CANDIDATE table (`build-candidate.ts`) — the
- *   SAME gazetteer the browser demo resolves against ({@link WOFCandidateTableLookup} in
- *   `docs/src/shared/httpvfs-resolver.ts`), but reading a LOCAL `candidate.db` via `node:sqlite`
- *   instead of sql.js-httpvfs. This is what makes the server/CLI resolver match the demo: one
- *   lookup surface, one artifact, one ranking.
+ *   SAME gazetteer the browser runtime resolves against ({@link WOFCandidateTableLookup} in
+ *   `packages/resolver-wof-wasm/lib/httpvfs/resolver.ts`), but reading a LOCAL `candidate.db` via
+ *   `node:sqlite` instead of sql.js-httpvfs. This is what makes the server/CLI resolver match the
+ *   browser: one lookup surface, one artifact, one ranking.
  *
  *   The query is a single contiguous probe on the `WITHOUT ROWID` B-tree keyed `(name_key,
  *   country_id, region_id, placetype_id, neg_rank, spr_id)`. `name_key` is the SHARED

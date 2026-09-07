@@ -8,10 +8,9 @@
  *   with confidence-delta annotations, and a unified diff of tag changes.
  */
 
+import type { ParseResult, ParsedComponent } from "@mailwoman/core/pipeline/client-result"
 import { ConfidenceCell } from "@mailwoman/react"
 import { useMemo } from "react"
-
-import type { DemoResult, ResultNode } from "#shared/resources"
 
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
@@ -29,11 +28,11 @@ export interface VersionCompareProps {
 	/**
 	 * The primary (left) parse result.
 	 */
-	primary: DemoResult
+	primary: ParseResult
 	/**
 	 * The compare (right) parse result.
 	 */
-	compare: DemoResult
+	compare: ParseResult
 	/**
 	 * Version label for the primary side.
 	 */
@@ -52,11 +51,11 @@ interface CompareRow {
 	/**
 	 * Primary side node, if present.
 	 */
-	primaryNode: ResultNode | null
+	primaryNode: ParsedComponent | null
 	/**
 	 * Compare side node, if present.
 	 */
-	compareNode: ResultNode | null
+	compareNode: ParsedComponent | null
 	/**
 	 * Confidence delta (compare − primary). Positive = improved, negative = regressed.
 	 */
@@ -76,15 +75,15 @@ interface CompareRow {
  * (primary-first, then interleaving). For each primary node we look for a compare node covering the same character
  * span; when the tag differs, both sides are shown as a "tag-changed" row.
  */
-function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRow[] {
+function computeCompareRows(primary: ParseResult, compare: ParseResult): CompareRow[] {
 	const rows: CompareRow[] = []
 	const pNodes = primary.nodes
 	const cNodes = compare.nodes
 
 	// Index compare nodes by (start, end) key for span-based matching.
 	// Nodes without a span are collected separately for positional fallback.
-	const cBySpan = new Map<string, ResultNode>()
-	const cUnspanned: ResultNode[] = []
+	const cBySpan = new Map<string, ParsedComponent>()
+	const cUnspanned: ParsedComponent[] = []
 
 	for (const n of cNodes) {
 		if (typeof n.start === "number" && typeof n.end === "number") {
@@ -101,7 +100,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 
 	for (const pn of pNodes) {
 		const spanKey = typeof pn.start === "number" && typeof pn.end === "number" ? `${pn.start}:${pn.end}` : null
-		let cn: ResultNode | null
+		let cn: ParsedComponent | null
 
 		if (spanKey) {
 			cn = cBySpan.get(spanKey) ?? null

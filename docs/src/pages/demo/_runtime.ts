@@ -16,20 +16,15 @@
  *   (bbox / street tier / lazily-fetched crisp polygon) that feeds the declarative overlays.
  *
  *   Node-safety is not a concern here — this is docs-only code (webpack/browser), never imported by the
- *   published `@mailwoman/react` package. It reuses the SAME shared helpers the live demo uses
- *   (`@mailwoman/docs/shared/demo-helpers`, `@mailwoman/docs/shared/resources`, `./_map-helpers`) so the two paths can't
- *   drift on the parse/resolve/geometry math.
+ *   published `@mailwoman/react` package. It composes the browser runtime (`mailwoman/browser-runtime/*`) and
+ *   `./_map-helpers`, the same modules the MDX embed composes, so the two paths can't drift on the
+ *   parse/resolve/geometry math.
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
-import type {
-	DemoAssetsLoadContext,
-	DemoManifest,
-	ParseResult,
-	ParsedComponent,
-	ResolvedPlaceView,
-} from "@mailwoman/react"
+import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { DemoAssetsLoadContext, DemoManifest } from "@mailwoman/react"
 import { useDemoRuntime } from "@mailwoman/react"
 import type {
 	DemoMapStyle,
@@ -41,23 +36,24 @@ import type {
 } from "@mailwoman/react/map"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import {
+	type HTTPVFSAddressPointLookup,
+	type HTTPVFSInterpolator,
+	resolveStreet,
+	type StreetResolution,
+} from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import type { Coordinates2D } from "@mailwoman/spatial"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-
-import type { ReleaseInfo, StreetResolution } from "#shared/demo-helpers"
 import {
 	DEFAULT_LOCALE,
-	fetchReleasesManifest,
 	parseStageLabelsFor,
 	projectCascadeHits,
 	resolveDualRoles,
-	resolveStreet,
 	runClassifyStage,
-} from "#shared/demo-helpers"
-import type { DocsDemoAssets } from "#shared/demo-loader"
-import { loadDemoAssets } from "#shared/demo-loader"
-import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "#shared/httpvfs-street"
-import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
+} from "mailwoman/browser-runtime/classify"
+import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
+import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
+import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
+import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import {
 	assetURL,
 	HOSTED_STREET_SLUGS,
@@ -65,8 +61,11 @@ import {
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
 	streetExtractURL,
-} from "#shared/resources"
-import type { ParseTraceLike, ResolvedHit } from "#shared/resources"
+} from "mailwoman/browser-runtime/resources"
+import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
 
 import {
 	fetchBasemapSource,
@@ -99,7 +98,7 @@ interface StreetLookups {
  * Per-candidate map-render extras stashed during a parse (bbox / street tier), read back by `resolveMapPlace`.
  */
 interface CandidateExtras {
-	bbox?: ResolvedHit["bbox"]
+	bbox?: ResolvedPlaceView["bbox"]
 	tier?: "address_point" | "interpolated"
 	uncertaintyM?: number
 }
@@ -178,15 +177,13 @@ export function useDemoMapRuntime({
 	// ── Injected loaders ──────────────────────────────────────────────────────
 	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => fetchReleasesManifest(), [])
 
-	// Delegates to the shared `loadDemoAssets` (the ONE docs-side loader, also used by the MDX-embed context) so the
-	// two demo entry points can't drift on the classifier/calibration/FST/WOF load sequence.
 	const loadAssets = useCallback(
-		(release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<DocsDemoAssets> =>
-			loadDemoAssets(release, ctx, sqljsBaseURL),
+		(release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<ReleaseAssets> =>
+			loadReleaseAssets(release, ctx, { gazetteer: { sqljsBaseURL } }),
 		[sqljsBaseURL]
 	)
 
-	const rt = useDemoRuntime<DocsDemoAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useDemoRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
 
 	// ── Range-cache service worker (docs-only; persists validated DB range chunks across visits) ───────────
 	useEffect(() => {
@@ -222,7 +219,7 @@ export function useDemoMapRuntime({
 	}, [])
 
 	// ── Mutable refs the stable parse/enrich callbacks read (avoids stale closures without churning identity) ──
-	const assetsRef = useRef<DocsDemoAssets | null>(rt.assets)
+	const assetsRef = useRef<ReleaseAssets | null>(rt.assets)
 	const releaseRef = useRef<ReleaseInfo | null>(rt.selectedRelease)
 	const versionRef = useRef<string | null>(rt.selectedVersion)
 
@@ -284,9 +281,10 @@ export function useDemoMapRuntime({
 
 			if (!p) {
 				p = (async () => {
-					const { loadHTTPVFSDatabase } = await import("#shared/httpvfs-resolver")
+					const { loadHTTPVFSDatabase } = await import("@mailwoman/resolver-wof-wasm/httpvfs/resolver")
 
-					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("#shared/httpvfs-street")
+					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } =
+						await import("@mailwoman/resolver-wof-wasm/httpvfs/street")
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsW = await loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL)
@@ -467,7 +465,7 @@ export function useDemoMapRuntime({
 
 			// Street-level coordinate wins the pin (more precise than any admin centroid). id=0 → not a WOF place. The
 			// `tier` + `uncertaintyM` ride on the candidate itself (a structural superset of `ResolvedPlaceView`, exactly
-			// like the live demo's `ResolvedHit`) so the docs `<ResultPanel>` renders the "precision ≈ interpolated · ±N m"
+			// like the live demo's `ResolvedPlaceView`) so the docs `<ResultPanel>` renders the "precision ≈ interpolated · ±N m"
 			// row instead of a "WOF id 0" — the map render still reads them back through `extrasRef` below.
 			if (streetResolution) {
 				const streetCandidate: ResolvedPlaceView & { tier: StreetResolution["tier"]; uncertaintyM: number } = {

@@ -9,9 +9,10 @@
  *   contract and shapes the UI state.
  */
 
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import { useCallback, useState } from "react"
 
-import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "#pipeline/types"
+import type { PipelineRuntime } from "#pipeline/types"
 
 export interface UseParsePipelineOptions {
 	runtime: PipelineRuntime

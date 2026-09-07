@@ -1,5 +1,5 @@
-import { confidenceTierOrMid } from "#shared/confidence-tiers"
-import type { ResultNode } from "#shared/resources"
+import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
+import { confidenceTierOrMid } from "@mailwoman/react/common/confidence-tiers"
 
 import styles from "./styles.module.css"
 
@@ -11,12 +11,12 @@ export interface SpanHighlightProps {
 	/**
 	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
 	 */
-	nodes: ResultNode[]
+	nodes: ParsedComponent[]
 }
 
 interface Segment {
 	text: string
-	node: ResultNode | null
+	node: ParsedComponent | null
 }
 
 /**
@@ -31,7 +31,7 @@ export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) =>
 
 	// Keep only well-formed spans that actually index into the input.
 	const spans = nodes.filter(
-		(n): n is ResultNode & { start: number; end: number } =>
+		(n): n is ParsedComponent & { start: number; end: number } =>
 			typeof n.start === "number" &&
 			typeof n.end === "number" &&
 			n.start >= 0 &&

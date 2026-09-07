@@ -25,10 +25,9 @@
  *   emitted by `corpus-python/scripts/fit-isotonic-calibration.py`.
  */
 
+import { DEFAULT_LOCALE } from "mailwoman/browser-runtime/classify"
+import { assetURL } from "mailwoman/browser-runtime/resources"
 import React, { useEffect, useState } from "react"
-
-import { DEFAULT_LOCALE } from "#shared/demo-helpers"
-import { assetURL } from "#shared/resources"
 
 interface ReliabilityBin {
 	n: number

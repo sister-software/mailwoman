@@ -86,8 +86,8 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 		return [
 			`R2: ${r.key}`,
 			r.bumped
-				? `demo: ADMIN_GAZETTEER_VERSION → ${version} (commit docs/src/shared/resources/index.ts)`
-				: "demo: not bumped",
+				? `browser runtime: ADMIN_GAZETTEER_VERSION → ${version} (commit packages/mailwoman/lib/browser-runtime/resources.ts)`
+				: "browser runtime: not bumped",
 		]
 	})
 

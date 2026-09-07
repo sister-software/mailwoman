@@ -46,8 +46,8 @@ import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/reso
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 
-import type { DualRole, MailwomanLookupLike } from "./resources"
-import { memoizeResettable, rowsFromExec, tableExists } from "./sqljs-rows.ts"
+import type { DualRole, MailwomanLookupLike } from "#browser-cascade"
+import { memoizeResettable, rowsFromExec, tableExists } from "#httpvfs/rows"
 
 /**
  * The candidate columns this reader probes — a typed projection of the shared {@link CandidateTable}.
@@ -740,9 +740,11 @@ export function makeHTTPVFSPolygonLookup(worker: HTTPVFSWorker) {
 		async get(id: number): Promise<unknown | null> {
 			const rows = rowsFromExec(await worker.db.exec(`SELECT geom FROM polygons WHERE id = ${Number(id)}`))
 
-			if (!rows.length) return null
+			const row = rows[0]
 
-			return tryParsingJSON(String(rows[0].geom))
+			if (!row) return null
+
+			return tryParsingJSON(String(row.geom))
 		},
 	}
 }

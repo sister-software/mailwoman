@@ -79,6 +79,16 @@
 			"node": "./lib/common/KindBadge.tsx",
 			"default": "./out/common/KindBadge.js"
 		},
+		"./common/confidence-tiers": {
+			"types": "./out/common/confidence-tiers.d.ts",
+			"node": "./lib/common/confidence-tiers.ts",
+			"default": "./out/common/confidence-tiers.js"
+		},
+		"./common/text-tokens": {
+			"types": "./out/common/text-tokens.d.ts",
+			"node": "./lib/common/text-tokens.ts",
+			"default": "./out/common/text-tokens.js"
+		},
 		"./common/LoadingIndicator": {
 			"types": "./out/common/LoadingIndicator.d.ts",
 			"node": "./lib/common/LoadingIndicator.tsx",
@@ -225,6 +235,7 @@
 		"test:node": "vitest run --config vitest.node.config.ts"
 	},
 	"dependencies": {
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*"

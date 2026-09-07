@@ -15,8 +15,8 @@ import {
 	pieceDisplay,
 	stripBIO,
 } from "@mailwoman/docs/components/ModelVisualizer/helpers"
-import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import type { NeuralParseTrace } from "@mailwoman/neural"
+import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import { describe, expect, it } from "vitest"
 
 // Compile-time tie (type-only, erased at build): the docs mirror must accept every real trace. A

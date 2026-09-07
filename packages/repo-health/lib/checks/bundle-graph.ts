@@ -126,7 +126,12 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 	browserRow("@mailwoman/core/decoder/types"),
 	browserRow("@mailwoman/core/errors"),
 	browserRow("@mailwoman/core/pipeline"),
+	browserRow("@mailwoman/core/pipeline/client-result"),
+	browserRow("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
+	browserRow("@mailwoman/resolver-wof-wasm/httpvfs/street"),
+	browserRow("@mailwoman/resolver-wof-wasm/httpvfs/poi"),
 	browserRow("@mailwoman/neural/viterbi"),
+	browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
 	browserRow("@mailwoman/neural/web-loader", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
 	browserRow("@mailwoman/neural/classifier", {
 		followDynamicImports: true,

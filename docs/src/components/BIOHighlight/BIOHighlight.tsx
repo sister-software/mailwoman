@@ -9,8 +9,8 @@
  *   per word.
  */
 
-import type { ResultNode } from "#shared/resources"
-import { shortestSpanOwners, tokenizeWords } from "#shared/text-tokens"
+import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
+import { shortestSpanOwners, tokenizeWords } from "@mailwoman/react/common/text-tokens"
 
 import styles from "./styles.module.css"
 
@@ -22,7 +22,7 @@ export interface BIOHighlightProps {
 	/**
 	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
 	 */
-	nodes: ResultNode[]
+	nodes: ParsedComponent[]
 }
 
 interface BIOWord {
@@ -53,7 +53,7 @@ interface BIOWord {
  */
 function assignBIOLabels(
 	words: ReturnType<typeof tokenizeWords>,
-	spans: Array<ResultNode & { start: number; end: number }>
+	spans: Array<ParsedComponent & { start: number; end: number }>
 ): BIOWord[] {
 	// Per-word: index of the shortest covering span (a word is covered when any part of it falls within the span).
 	const owner = shortestSpanOwners(words, spans)
@@ -96,7 +96,7 @@ export const BIOHighlight: React.FC<BIOHighlightProps> = ({ input, nodes }) => {
 
 	// Keep only well-formed spans that actually index into the input.
 	const spans = nodes.filter(
-		(n): n is ResultNode & { start: number; end: number } =>
+		(n): n is ParsedComponent & { start: number; end: number } =>
 			typeof n.start === "number" &&
 			typeof n.end === "number" &&
 			n.start >= 0 &&

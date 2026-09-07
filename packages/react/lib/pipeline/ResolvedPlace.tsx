@@ -7,9 +7,8 @@
  *   optional dual-role note. Presentational.
  */
 
+import type { DualRoleView, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import { Fragment, type ReactNode } from "react"
-
-import type { DualRoleView, ResolvedPlaceView } from "#pipeline/types"
 
 export interface ResolvedPlaceProps {
 	place: ResolvedPlaceView

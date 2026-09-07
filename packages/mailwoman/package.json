@@ -192,6 +192,36 @@
 			"node": "./lib/resolver-backend.ts",
 			"default": "./out/resolver-backend.js"
 		},
+		"./browser-runtime": {
+			"types": "./out/browser-runtime/index.d.ts",
+			"node": "./lib/browser-runtime/index.ts",
+			"default": "./out/browser-runtime/index.js"
+		},
+		"./browser-runtime/types": {
+			"types": "./out/browser-runtime/types.d.ts",
+			"node": "./lib/browser-runtime/types.ts",
+			"default": "./out/browser-runtime/types.js"
+		},
+		"./browser-runtime/resources": {
+			"types": "./out/browser-runtime/resources.d.ts",
+			"node": "./lib/browser-runtime/resources.ts",
+			"default": "./out/browser-runtime/resources.js"
+		},
+		"./browser-runtime/manifest": {
+			"types": "./out/browser-runtime/manifest.d.ts",
+			"node": "./lib/browser-runtime/manifest.ts",
+			"default": "./out/browser-runtime/manifest.js"
+		},
+		"./browser-runtime/classify": {
+			"types": "./out/browser-runtime/classify.d.ts",
+			"node": "./lib/browser-runtime/classify.ts",
+			"default": "./out/browser-runtime/classify.js"
+		},
+		"./browser-runtime/load-assets": {
+			"types": "./out/browser-runtime/load-assets.d.ts",
+			"node": "./lib/browser-runtime/load-assets.ts",
+			"default": "./out/browser-runtime/load-assets.js"
+		},
 		"./gazetteer-pipeline": {
 			"types": "./out/gazetteer-pipeline/index.d.ts",
 			"node": "./lib/gazetteer-pipeline/index.ts",

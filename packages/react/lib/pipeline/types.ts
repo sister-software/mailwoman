@@ -9,81 +9,8 @@
  *   onnxruntime-web, sql.js-httpvfs, and node builtins entirely out of this package's browser graph.
  */
 
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
-
-import type { KindBadgeResult } from "../common/KindBadge.tsx"
-
-/**
- * One decoded component, as the table + span views render it. Offsets index into `ParseResult.input`.
- */
-export interface ParsedComponent {
-	tag: string
-	value?: unknown
-	confidence?: number
-	start?: number
-	end?: number
-}
-
-/**
- * A resolved gazetteer place, projected to what the "Resolved place" panel + copy payload need.
- */
-export interface ResolvedPlaceView {
-	id: number
-	name: string
-	placetype: string
-	lat: number
-	lon: number
-	score: number
-}
-
-/**
- * An additional admin role a resolved place also fulfils (the dual-role / city-state relation, #402).
- */
-export interface DualRoleView {
-	id: number
-	name: string
-	placetype: string
-	relationshipType: string
-	role: string
-}
-
-/**
- * Per-stage wall-clock (ms) for one parse. `resolve` is absent when the lookup is skipped.
- */
-export interface StageTiming {
-	shape: number
-	classify: number
-	resolve?: number
-}
-
-/**
- * FST gazetteer-prior provenance, as the "FST prior" disclosure renders it.
- */
-export interface FSTProvenance {
-	builtAt: string
-	stateCount: number
-	placeCount: number
-	importanceMatches: number
-}
-
-/**
- * The presentational projection of one parse+resolve. The host's `runParse` produces it.
- */
-export interface ParseResult {
-	input: string
-	/**
-	 * Opaque hierarchy — handed straight to a host-injected tree/visualizer panel.
-	 */
-	tree: unknown
-	nodes: ParsedComponent[]
-	kindResult?: KindBadgeResult
-	timing?: StageTiming
-	resolved: ResolvedPlaceView | null
-	candidates: ResolvedPlaceView[]
-	fstActive: boolean
-	fstProvenance?: FSTProvenance | null
-	dualRoles?: DualRoleView[]
-}
 
 /**
  * Bundle-load progress surfaced before the runtime is `ready`.

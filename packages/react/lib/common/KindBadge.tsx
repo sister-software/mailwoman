@@ -9,16 +9,11 @@
  *   pipeline's projection satisfy it without a hard type dependency.
  */
 
+import type { KindView } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
 
-export interface KindBadgeResult {
-	kind: string
-	confidence: number
-	alternatives: ReadonlyArray<{ kind: string; confidence: number }>
-}
-
 export interface KindBadgeProps {
-	kindResult: KindBadgeResult
+	kindResult: KindView
 }
 
 const formatPct = (n: number): string => `${Math.round(n * 100)}%`
