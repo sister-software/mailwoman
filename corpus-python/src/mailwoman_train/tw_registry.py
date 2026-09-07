@@ -32,15 +32,27 @@ SOURCE = "gcis-tw"
 COUNTRY = "TW"
 
 _DIGITS = "0-9０-９"
-_NUMBER = re.compile(
-    rf"^(?P<number>[{_DIGITS}]+(?:之[{_DIGITS}]+)*(?:附[{_DIGITS}]+)?號(?:之[{_DIGITS}]+)?)(?P<rest>.*)$"
+# A sub-number is written 之N or with a dash (161-1號, 161─1號 with a box-drawing dash from a clerk's keyboard).
+_SUB = rf"(?:之|[-－─‐−])[{_DIGITS}]+"
+_NUMBER = re.compile(rf"^(?P<number>[{_DIGITS}]+(?:{_SUB})*(?:附[{_DIGITS}]+)?號(?:{_SUB})?)(?P<rest>.*)$")
+# The floor, as the registers write it: 2樓, ２樓之１, 地下一層, B1, and any of those in parentheses.
+_FLOOR = re.compile(
+    rf"^[（(]?(?:(?:地下|B|Ｂ)?[{_DIGITS}一二三四五六七八九十]+(?:樓|層|F|Ｆ)(?:之[{_DIGITS}]+)?|地下室|頂樓)[）)]?$"
 )
-_FLOOR = re.compile(rf"^(?:地下)?[{_DIGITS}一二三四五六七八九十]+樓(?:之[{_DIGITS}]+)?$")
+_SECTION = re.compile(rf"([{_DIGITS}]+)段")
+_KANJI_SECTION = dict(enumerate("〇一二三四五六七八九十", start=0))
+
+
+def _section_kanji(match: re.Match[str]) -> str:
+    """``2段`` → ``二段``: Overture writes the section ordinal in kanji, the registers in digits."""
+    value = int(ascii_digits(match.group(1)))
+    return (_KANJI_SECTION.get(value, match.group(1))) + "段"
 
 
 def fold_key(text: str) -> str:
-    """The comparison key: NFC, spaces removed, ASCII digits, 台 read as 臺."""
-    return ascii_digits(normalize_text(unicodedata.normalize("NFC", text))).replace("台", "臺")
+    """The comparison key: NFC, spaces removed, ASCII digits, 台 read as 臺, a digit section ordinal read as kanji."""
+    folded = ascii_digits(normalize_text(unicodedata.normalize("NFC", text))).replace("台", "臺")
+    return _SECTION.sub(_section_kanji, folded)
 
 
 @dataclass

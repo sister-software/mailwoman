@@ -46,13 +46,35 @@ COL_POSTCODE = 15
 _DIGITS = "0-9０-９"
 _KANJI_NUMERAL = "〇一二三四五六七八九十百"
 _HYPHENS = "-－‐‑‒–—―−ー﹘﹣ｰ"
-# district (no digits), optional chōme, optional number (either register), the rest.
-_STREET_SHAPE = re.compile(
-    rf"^(?P<district>[^{_DIGITS}{_KANJI_NUMERAL}]*?)"
-    rf"(?P<chome>[{_DIGITS}{_KANJI_NUMERAL}]+丁目)?"
+# The numeric tail of 丁目番地等: an optional chōme, then a number in either register, then whatever follows.
+_TAIL_SHAPE = re.compile(
+    rf"^(?P<chome>[{_DIGITS}{_KANJI_NUMERAL}]+丁目)?"
     rf"(?P<number>(?:[{_DIGITS}]+(?:番地?|号)?)(?:[{_HYPHENS}][{_DIGITS}]+(?:番地?|号)?)*)?"
     rf"(?P<rest>.*)$"
 )
+_TAIL_START = re.compile(rf"[{_DIGITS}{_KANJI_NUMERAL}]")
+
+
+def split_typed_street(street: str, districts: set[str]) -> tuple[str, str, str, str] | None:
+    """Split ``丁目番地等`` into (district, chōme, number, rest) at the leftmost cut whose district the register lists.
+
+    A district name may itself carry a kanji numeral (``一条通北２丁目３－２５``), so the cut is not "the first
+    numeral": every numeral position is tried left to right, and the first whose prefix is a listed district and
+    whose tail parses as chōme-then-number wins. Answers None when no cut does.
+    """
+    for match in _TAIL_START.finditer(street):
+        cut = match.start()
+        district = street[:cut]
+        if not district or normalize_name(district) not in districts:
+            continue
+        tail = _TAIL_SHAPE.match(street[cut:])
+        if not tail:
+            continue
+        chome, number = tail.group("chome") or "", tail.group("number") or ""
+        if not chome and not number:
+            continue
+        return district, chome, number, tail.group("rest") or ""
+    return None
 
 
 @dataclass
@@ -133,15 +155,10 @@ def align_corporate_row(row: CorporateRow, index: JPKeyIndex, with_postcode: boo
     if not districts:
         return None
     street = "".join(row.street.split())
-    match = _STREET_SHAPE.match(street)
-    if not match:
+    split = split_typed_street(street, districts)
+    if split is None:
         return None
-    district = match.group("district")
-    if not district or normalize_name(district) not in districts:
-        return None
-    chome, number, rest = match.group("chome") or "", match.group("number") or "", match.group("rest") or ""
-    if not chome and not number:
-        return None
+    district, chome, number, rest = split
     spans: list[tuple[int, int, str]] = []
     raw = ""
     if with_postcode and len(row.postcode) == 7 and row.postcode.isdigit():

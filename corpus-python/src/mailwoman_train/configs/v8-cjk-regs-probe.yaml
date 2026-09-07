@@ -1,0 +1,62 @@
+# === v8-cjk-regs-probe — 2,000-step probe of the JP + CN + KR + TW + registries mixture (#2204). ====================#
+# The probe of `v8-cjk-regs.yaml`: the same corpus, head, geometry and seed, stopped at 2,000 steps. Its bars are read
+# at the step's own level, as the KR probe's were: KR `street` / `house_number` ≥ 0.95 and TW `street` / `house_number`
+# ≥ 0.90 say the surfaces are learnable from the mixture and earn the 8,000-step run; JP blended ≥ 0.9924 − 0.01 at
+# 2,000 steps says the added sources do not cost JP. Lower is the finding, and the recipe changes before the run.
+#
+# Launch:
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk_regs
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-regs-probe.yaml --resume auto
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-regs-2026-09-08
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+    CN: 1.0
+    KR: 1.0
+    TW: 1.0
+  source_weights:
+    overture-jp: 0.34
+    juso-kr: 0.20
+    overture-tw: 0.20
+    localdata-kr: 0.09
+    houjin-jp: 0.09
+    gcis-tw: 0.06
+    coarse-placer-cn-units: 0.02
+  coarse_filter: false
+  val_rows: 100000
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-regs-2026-09-08/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-regs-probe-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 2000
+  eval_every_steps: 1000
+  save_every_steps: 2000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

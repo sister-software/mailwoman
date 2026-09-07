@@ -4857,6 +4857,156 @@ def sync_v8cjk_kr():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v8cjk_regs():
+    """Stage the v8 CJK registries corpus (#2204): the Korean LABEL corpus rebuilt from the ministry's 주소DB, the
+    Taiwanese LABEL corpus from Overture-TW, the three noisy registry corpora (Korean permits, Taiwanese company
+    registers, Japanese corporate numbers), the JP + CN + KR + TW overlay with its re-sealed vocabulary, the configs
+    and the training code. The JP kana corpus is already on the volume from the v8-cjk-kr sync and is listed again
+    so a fresh volume still verifies."""
+    import os
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    corpora = (
+        "v8-jp-kana-2026-09-06",
+        "v8-kr-2026-09-08",
+        "v8-kr-registry-2026-09-08",
+        "v8-tw-2026-09-08",
+        "v8-tw-registry-2026-09-08",
+        "v8-jp-registry-2026-09-08",
+        "v8-cjk-regs-2026-09-08",
+    )
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus-python/scripts/ {VOL_MOUNT}/corpus-python/scripts/ {retry}",
+        *(f"rclone copy :s3:{BUCKET}/corpus/{name}/ {VOL_MOUNT}/corpus/versioned/{name}/ {retry}" for name in corpora),
+    ]
+    for command in commands:
+        print(f"$ {command}")
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+    vol.commit()
+    _verify_v8cjk_regs(package, f"{VOL_MOUNT}/corpus/versioned")
+    print("\nv8-cjk-regs sync complete. Volume committed.")
+
+
+V8CJK_REGS_CORPORA = (
+    "v8-kr-2026-09-08",
+    "v8-kr-registry-2026-09-08",
+    "v8-tw-2026-09-08",
+    "v8-tw-registry-2026-09-08",
+    "v8-jp-registry-2026-09-08",
+    "v8-cjk-regs-2026-09-08",
+)
+
+
+def _verify_v8cjk_regs(package: str, versioned: str) -> None:
+    """The presence checks every staging path of the registries corpus ends with (#2204)."""
+    import os
+
+    overlay = f"{versioned}/v8-cjk-regs-2026-09-08"
+    checks = {
+        "v8-cjk-regs configs": all(
+            os.path.isfile(f"{package}/configs/{name}.yaml") for name in ("v8-cjk-regs-probe", "v8-cjk-regs")
+        ),
+        "KR builder + registries in the package": all(
+            os.path.isfile(f"{package}/{name}.py")
+            for name in ("build_kr_slice", "kr_juso", "kr_registry", "build_tw_slice", "tw_registry", "jp_registry")
+        ),
+        "KR train parts": all(
+            os.path.isfile(f"{versioned}/v8-kr-2026-09-08/train/kr-part-{index:04d}.parquet") for index in range(8)
+        ),
+        "KR board + centroids": os.path.isfile(f"{versioned}/v8-kr-2026-09-08/kr-board.jsonl")
+        and os.path.isfile(f"{versioned}/v8-kr-2026-09-08/kr-sigungu-centroids.json"),
+        "KR registry train part": os.path.isfile(
+            f"{versioned}/v8-kr-registry-2026-09-08/train/kr-registry-0000.parquet"
+        ),
+        "TW train parts": all(
+            os.path.isfile(f"{versioned}/v8-tw-2026-09-08/train/tw-part-{index:04d}.parquet") for index in range(8)
+        ),
+        "TW board + centroids": os.path.isfile(f"{versioned}/v8-tw-2026-09-08/tw-board.jsonl")
+        and os.path.isfile(f"{versioned}/v8-tw-2026-09-08/tw-district-centroids.json"),
+        "TW registry train part": os.path.isfile(
+            f"{versioned}/v8-tw-registry-2026-09-08/train/tw-registry-0000.parquet"
+        ),
+        "JP registry train part": os.path.isfile(
+            f"{versioned}/v8-jp-registry-2026-09-08/train/jp-registry-0000.parquet"
+        ),
+        "JP kana base train parts": all(
+            os.path.isfile(f"{versioned}/v8-jp-kana-2026-09-06/train/part-{index:04d}.parquet") for index in range(8)
+        ),
+        "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),
+        "CN train part": os.path.isfile(f"{overlay}/train/cn-units-0000.parquet"),
+        "CJK char vocab": os.path.isfile(f"{overlay}/char-vocab-cjk.json"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"staging incomplete: {missing}")
+
+
+# The direct staging path (#2204): the local corpora and training code mounted into the container and copied
+# into the volume there, then committed — the same container-side write + commit that `rclone` performs, with no
+# bucket in between. Used when the R2 token in `.env` answers 401 (it did on 2026-09-07, locally and from a Modal
+# container alike). `MAILWOMAN_DATA_ROOT` names the local data root; the mount is read at `modal run` time.
+_LOCAL_DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "")
+_LOCAL_CORPUS_PYTHON = os.path.join(os.path.dirname(__file__), "..")
+_stage_image = training_image.add_local_dir(
+    os.path.join(_LOCAL_CORPUS_PYTHON, "src"), remote_path="/staged/corpus-python/src"
+).add_local_dir(os.path.join(_LOCAL_CORPUS_PYTHON, "scripts"), remote_path="/staged/corpus-python/scripts")
+if _LOCAL_DATA_ROOT:
+    for _name in V8CJK_REGS_CORPORA:
+        _local = os.path.join(_LOCAL_DATA_ROOT, "corpus", "versioned", _name)
+        if os.path.isdir(_local):
+            _stage_image = _stage_image.add_local_dir(_local, remote_path=f"/staged/corpus/versioned/{_name}")
+
+
+@app.function(
+    image=_stage_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=3600,
+)
+def stage_v8cjk_regs():
+    """Copy the mounted local corpora and training code into the volume and commit; verify like the sync would."""
+    import os
+    import shutil
+
+    vol.reload()
+    for relative in (
+        "corpus-python/src",
+        "corpus-python/scripts",
+        *(f"corpus/versioned/{name}" for name in V8CJK_REGS_CORPORA),
+    ):
+        source = f"/staged/{relative}"
+        if not os.path.isdir(source):
+            print(f"  (not mounted) {relative}")
+            continue
+        target = f"{VOL_MOUNT}/{relative}"
+        shutil.copytree(source, target, dirs_exist_ok=True)
+        print(f"  copied {relative}")
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+    vol.commit()
+    _verify_v8cjk_regs(package, f"{VOL_MOUNT}/corpus/versioned")
+    print("\nv8-cjk-regs staged from the local mount. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=1800,
 )
 def sync_v8cjk():

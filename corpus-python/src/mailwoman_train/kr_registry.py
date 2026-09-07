@@ -83,10 +83,12 @@ class Aligned:
     sigungu: str
 
 
-def iter_permit_rows(source_dir: Path, statuses: Iterable[str] = (OPEN_STATUS,)) -> Iterator[PermitRow]:
+def iter_permit_rows(
+    source_dir: Path, statuses: Iterable[str] = (OPEN_STATUS,), pattern: str = "*.csv"
+) -> Iterator[PermitRow]:
     """Stream the permit CSVs (CP949 as delivered), one `PermitRow` per business in one of `statuses`."""
     wanted = set(statuses)
-    for path in sorted(source_dir.glob("*.csv")):
+    for path in sorted(source_dir.glob(pattern)):
         with path.open("rb") as raw:
             text = io.TextIOWrapper(raw, encoding="cp949", errors="replace", newline="")
             reader = csv.DictReader(text)
@@ -158,40 +160,76 @@ def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
         at = text.find(token, cursor)
         positions.append(at)
         cursor = at + len(token)
-    if len(tokens) < 4 or tokens[0] not in index.regions:
+    if len(tokens) < 3 or tokens[0] not in index.regions:
         return None
     region = tokens[0]
     width = index.sigungu_span(region, tokens, 1)
-    if not width:
+    # A region with no 시군구 level (세종특별자치시) lists the empty string; its strings go region → road.
+    if not width and "" not in index.sigungu_by_region.get(region, set()):
         return None
     sigungu = " ".join(tokens[1 : 1 + width])
     road_at = 1 + width
-    roads = index.roads_by_unit.get((region, sigungu), set())
+    unit = (region, sigungu)
+    roads = index.roads_by_unit.get(unit, set())
+    # In an 읍/면 area the road form carries the 읍/면 between the 시군구 and the road (`기장군 기장읍 기장해안로 205`);
+    # the register lists those names beside the 동 of the same unit.
+    eupmyeon_at: int | None = None
+    if (
+        road_at + 2 < len(tokens)
+        and tokens[road_at] in index.dongs_by_unit.get(unit, set())
+        and tokens[road_at + 1] in roads
+    ):
+        eupmyeon_at = road_at
+        road_at += 1
     # A road name is one token; a numbered branch (`대학로8길`) is part of that token in the register.
     if road_at + 1 >= len(tokens) or tokens[road_at] not in roads:
         return None
-    number = tokens[road_at + 1]
+    number_at_token = road_at + 1
+    # `달구벌대로 지하 1476`: the underground marker stands as its own token before the number, outside every span.
+    if tokens[number_at_token] == "지하" and number_at_token + 1 < len(tokens):
+        number_at_token += 1
+    number = tokens[number_at_token]
     if not _BUILDING_NUMBER.match(number):
-        return None
-    if len(tokens) > road_at + 2:
         return None
     spans: list[tuple[int, int, str]] = []
     _put(spans, text, positions[0], positions[0] + len(region), "region")
     for offset in range(width):
         token = tokens[1 + offset]
         _put(spans, text, positions[1 + offset], positions[1 + offset] + len(token), "subregion")
+    if eupmyeon_at is not None:
+        _put(
+            spans, text, positions[eupmyeon_at], positions[eupmyeon_at] + len(tokens[eupmyeon_at]), "dependent_locality"
+        )
     _put(spans, text, positions[road_at], positions[road_at] + len(tokens[road_at]), "street")
-    number_at = positions[road_at + 1]
+    number_at = positions[number_at_token]
     _put(spans, text, number_at, number_at + len(number), "house_number")
-    detail = detail.strip()
-    if detail:
-        detail_at = text.find(detail, number_at + len(number))
-        _put(spans, text, detail_at, detail_at + len(detail), "unit")
+    # What follows the number, with or without a comma, is the building name and then the floor/unit — the same
+    # leading-venue, unit-tail reading the lot form uses.
+    rest_tokens = [*tokens[number_at_token + 1 :], *detail.split()]
+    if rest_tokens:
+        rest_start = number_at + len(number)
+        rest_positions: list[int] = []
+        cursor = rest_start
+        for token in rest_tokens:
+            at = text.find(token, cursor)
+            rest_positions.append(at)
+            cursor = at + len(token)
+        first_unit = next((i for i, token in enumerate(rest_tokens) if _UNIT_TOKEN.match(token)), len(rest_tokens))
+        if first_unit:
+            _put(
+                spans,
+                text,
+                rest_positions[0],
+                rest_positions[first_unit - 1] + len(rest_tokens[first_unit - 1]),
+                "venue",
+            )
+        if first_unit < len(rest_tokens):
+            _put(spans, text, rest_positions[first_unit], rest_positions[-1] + len(rest_tokens[-1]), "unit")
     if parenthetical:
         paren_at = text.find(parenthetical, len(head))
         dong, _, building = parenthetical.partition(",")
         dong, building = dong.strip(), building.strip()
-        if dong in index.dongs_by_unit.get((region, sigungu), set()):
+        if dong in index.dongs_by_unit.get(unit, set()):
             dong_at = text.find(dong, paren_at)
             _put(spans, text, dong_at, dong_at + len(dong), "dependent_locality")
             if building:
@@ -220,11 +258,12 @@ def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
         at = text.find(token, cursor)
         positions.append(at)
         cursor = at + len(token)
-    if len(tokens) < 4 or tokens[0] not in index.regions:
+    if len(tokens) < 3 or tokens[0] not in index.regions:
         return None
     region = tokens[0]
     width = index.sigungu_span(region, tokens, 1)
-    if not width:
+    # A region with no 시군구 level (세종특별자치시) lists the empty string; its strings go region → road.
+    if not width and "" not in index.sigungu_by_region.get(region, set()):
         return None
     sigungu = " ".join(tokens[1 : 1 + width])
     dong_at = 1 + width
@@ -251,15 +290,16 @@ def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
     _put(spans, text, positions[lot_at], positions[lot_at] + len(lot), "house_number")
     rest = tokens[lot_at + 1 :]
     if rest:
-        venue_tokens = [
-            (positions[lot_at + 1 + i], token) for i, token in enumerate(rest) if not _UNIT_TOKEN.match(token)
-        ]
-        unit_tokens = [(positions[lot_at + 1 + i], token) for i, token in enumerate(rest) if _UNIT_TOKEN.match(token)]
-        if venue_tokens:
-            start, end = venue_tokens[0][0], venue_tokens[-1][0] + len(venue_tokens[-1][1])
+        # The clerk writes the building name first and the floor/unit after it (`교보생명빌딩 2층`, `지강빌딩 1층 일부호`):
+        # the venue is the run of tokens before the first unit-shaped one, the unit everything from there to the end.
+        first_unit = next((i for i, token in enumerate(rest) if _UNIT_TOKEN.match(token)), len(rest))
+        if first_unit:
+            start = positions[lot_at + 1]
+            end = positions[lot_at + first_unit] + len(rest[first_unit - 1])
             _put(spans, text, start, end, "venue")
-        if unit_tokens:
-            start, end = unit_tokens[0][0], unit_tokens[-1][0] + len(unit_tokens[-1][1])
+        if first_unit < len(rest):
+            start = positions[lot_at + 1 + first_unit]
+            end = positions[lot_at + len(rest)] + len(rest[-1])
             _put(spans, text, start, end, "unit")
     spans.sort()
     return Aligned(

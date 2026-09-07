@@ -25,6 +25,11 @@ const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_PARTIAL_CONTENT = 206
 
 /**
+ * The answer to a range that starts at or past the end of the body: the resume point is already the whole file.
+ */
+const HTTP_RANGE_NOT_SATISFIABLE = 416
+
+/**
  * Lowest 5xx status. Server-side failures are retryable; 4xx are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
@@ -392,6 +397,16 @@ export async function resumableDownload(options: {
 			await sleep(retryDelayMs)
 
 			continue
+		}
+
+		if (res.status === HTTP_RANGE_NOT_SATISFIABLE && have > 0) {
+			// Nothing past `have`: the file on disk is already the whole body (a parallel filler or an earlier run
+			// landed it), and `Content-Range: bytes */<total>` says how long it is.
+			const whole = /\*\/(\d+)/.exec(res.headers.get("content-range") ?? "")?.[1]
+			total = whole ? Number(whole) : have
+			await res.body?.cancel()
+
+			break
 		}
 
 		if (res.status !== HTTP_PARTIAL_CONTENT) {

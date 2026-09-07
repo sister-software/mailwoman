@@ -1,0 +1,92 @@
+# === v8-cjk-regs — the CJK base retrained on the re-sourced Korean register, Taiwan, and three noisy registries. ===#
+# Against v8-cjk-kr (the CJK base, card 0.0.2: JP blended 0.9924 on the kana board, KR subregion 0.9665 raw) the corpus
+# changes and nothing else (#2204): head, geometry, seed and schedule are v8-cjk-kr's. The corpus is
+# `v8-cjk-regs-2026-09-08`: the JP kana parts and the CN parts as before, plus
+#   * `juso-kr`        the Korean LABEL corpus rebuilt from the ministry's 주소DB (a direct download with no application
+#                      step, replacing the 2017 OpenAddresses upload of the application-reviewed entrance file), seven
+#                      registers including the lot-number form and the building name;
+#   * `overture-tw`    the Taiwanese LABEL corpus (9.7M Overture rows, 15 of 22 縣市), five registers;
+#   * `localdata-kr`   Korean permit-registry strings a clerk typed, aligned against the 주소DB key (both address forms);
+#   * `gcis-tw`        Taiwanese company-register strings, aligned against the Overture-TW key;
+#   * `houjin-jp`      Japanese corporate-number register strings, aligned against the Overture-JP key.
+# The vocabulary is re-sealed over the union. The last run's loss was flat from step 3,800 of 24,000, so this one stops
+# at 8,000 with the same cosine schedule; the probe (`v8-cjk-regs-probe.yaml`, 2,000 steps) runs first.
+#
+# --- WHAT THE RUN MUST SHOW (pre-registered) ---------------------------------------------------------------------
+#   * JP board (`v8-jp-kana-2026-09-06/jp-board.jsonl`, scorer `--resolve-tags prefecture,municipality`): blended
+#     ≥ 0.9924 − 0.005 and municipality macro ≥ 0.9821 − 0.005 — the new sources must not cost JP.
+#   * KR board (`v8-kr-2026-09-08/kr-board.jsonl`, `--resolve-tags region,subregion --centroids kr-sigungu-centroids.json`):
+#     per-tag span exact-match `street` and `house_number` ≥ 0.99, `subregion` ≥ 0.97, `dependent_locality` ≥ 0.95,
+#     `region` ≥ 0.99, `postcode` ≥ 0.99, read per register — the lot-number register (`jibun`) is new and reads
+#     beside the others.
+#   * TW board (`v8-tw-2026-09-08/tw-board.jsonl`, `--resolve-tags region,subregion --centroids tw-district-centroids.json`):
+#     `street` and `house_number` ≥ 0.97, `subregion` ≥ 0.95, `region` ≥ 0.99 — a first read, so a bar at the level
+#     the KR probe cleared at 2k rather than a number nobody has measured.
+#   * The three registry boards (`kr-registry-board.jsonl`, `tw-registry-board.jsonl`, `jp-registry-board.jsonl`):
+#     per-tag exact-match on the ALIGNED rows, reported; no bar on the first read.
+#   * CN board: `locality_unit` ≥ 11 of 14.
+#   * Score BOTH arms (this run and v8-cjk-kr) on the same scorer in the same session.
+#
+# Launch (after the probe clears its bar):
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk_regs
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-regs.yaml --resume auto
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-regs-2026-09-08
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+    CN: 1.0
+    KR: 1.0
+    TW: 1.0
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart. The LABEL corpora carry the
+  # weight; each noisy registry sits at a share the probe can read a regression from.
+  source_weights:
+    overture-jp: 0.34
+    juso-kr: 0.20
+    overture-tw: 0.20
+    localdata-kr: 0.09
+    houjin-jp: 0.09
+    gcis-tw: 0.06
+    coarse-placer-cn-units: 0.02
+  coarse_filter: false
+  # Every val part the manifest lists (the count is written by the overlay builder into its report).
+  val_rows: 100000
+  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises.
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-regs-2026-09-08/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # v8-cjk-kr's geometry, unchanged, so the corpus is the only delta.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-regs-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 8000
+  eval_every_steps: 1000
+  save_every_steps: 2000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0
