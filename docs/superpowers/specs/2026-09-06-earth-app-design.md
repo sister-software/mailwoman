@@ -5,6 +5,8 @@ under `packages/`, the browser runtime moves into the packages that own it (no `
 Cloudflare Workers Builds builds and deploys the app. Shell landed in #2196, the runtime's package homes in #2203;
 the launch PR moves the runtime, the panels and the browser suite into the app and retires the docs page. The two
 dashboard steps are the Workers Builds project and the bucket's CORS rule for the workers.dev preview origin.
+Launch PR #2206 opened 2026-09-07; the Workers Builds project and the public bucket's CORS rule are the two dashboard
+steps the operator took.
 **Builds on:** `2026-09-06-browser-export-conditions-design.md` (the packages must bundle under Vite without
 aliases before this app can consume them).
 **Precedes:** `2026-09-06-planetary-app-design.md`, which copies this app's build and deployment shape.
