@@ -18,6 +18,12 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — the CJK overlays join the lockstep release
+
+`@mailwoman/neural-weights-ja-jp` and `@mailwoman/neural-weights-zh-cn` are in the release list. Each is a data-only
+overlay over `@mailwoman/neural-weights-cjk`: its locale FST plus a card, with the graph reached through
+`mailwoman.baseWeights`. Both names were blessed at 9.3.0; the next release bumps them with every sibling.
+
 ### Removed — `@mailwoman/neural-web`
 
 The workspace is deleted and the package will not publish again; 9.3.0 is its last version on npm. Since 9.0.0 it

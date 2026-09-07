@@ -40,6 +40,8 @@
 				"packages/neural-weights-es-es",
 				"packages/neural-weights-fr-fr",
 				"packages/neural-weights-it-it",
+				"packages/neural-weights-ja-jp",
+				"packages/neural-weights-zh-cn",
 				"packages/nominatim",
 				"packages/normalize",
 				"packages/nuts-lookup",
