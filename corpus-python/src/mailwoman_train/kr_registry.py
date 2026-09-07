@@ -24,7 +24,7 @@ from __future__ import annotations
 import csv
 import io
 import re
-import subprocess
+import subprocess  # nosec B404 — spawns gdaltransform by design (the EPSG:5174 → WGS84 step below)
 from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -122,7 +122,7 @@ def transform_coordinates(points: Sequence[tuple[float, float]]) -> list[tuple[f
     if not points:
         return []
     payload = "\n".join(f"{x} {y}" for x, y in points) + "\n"
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary; stdin is numbers
         ["gdaltransform", "-s_srs", "EPSG:5174", "-t_srs", "EPSG:4326", "-output_xy"],
         input=payload,
         capture_output=True,
