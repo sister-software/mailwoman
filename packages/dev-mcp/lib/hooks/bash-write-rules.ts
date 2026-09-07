@@ -149,8 +149,10 @@ const REFUSED_SPELLINGS: ReadonlyArray<{ head: string; pattern: RegExp; because:
 	},
 	{
 		head: "git",
-		pattern: /(?:^|\s)(?:apply|stash|checkout|restore)\b/u,
-		because: "this `git` subcommand rewrites the tree",
+		// The reading forms of these subcommands are ordinary work: `stash list`, `stash show`, and a `checkout` that
+		// names a branch rather than a pathspec. Only the spellings that overwrite the working tree are refused.
+		pattern: /(?:^|\s)(?:apply\b|restore\b|stash\s+(?!list\b|show\b)|checkout\s+[^\n]*--\s)/u,
+		because: "this `git` subcommand overwrites the working tree",
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
 	{ head: "npm", pattern: /(?:^|\s)pkg\s+set\b/u, because: "`npm pkg set` writes a manifest" },
@@ -214,7 +216,10 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 		// `1`. It is removed rather than replaced, so no placeholder becomes a command word. Targets are judged
 		// separately, against the unmasked text.
 		.replaceAll(REDIRECT, " ")
-		.replaceAll(/\$\(|<\(|\)|\{|\}/gu, " ; ")
+		// An opener starts a command of its own; a CLOSER does not end one. Replacing `)` with a separator too would
+		// leave `comm -12 <(sort a) b` with a segment headed by `b`, and a filename is not a command.
+		.replaceAll(/\$\(|<\(|\(|\{|\}/gu, " ; ")
+		.replaceAll(")", " ")
 
 	for (const rawSegment of expanded.split(/(?:&&|\|\||[;|&\n])/u)) {
 		const segment = rawSegment.trim()
