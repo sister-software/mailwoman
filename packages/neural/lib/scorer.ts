@@ -32,7 +32,7 @@ import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
 import { MailwomanTokenizer } from "#tokenizer"
-import { EVIDENCE_LEXICON_FAMILIES, resolveWeights, type ResolvedWeights } from "#weights"
+import { resolveWeights, type ResolvedWeights } from "#weights"
 import {
 	inferRequiredChannelsFromInputs,
 	loadAnchorLookup,
@@ -42,6 +42,7 @@ import {
 	readRequiredChannels,
 	type RequiredChannels,
 } from "#weights-channels"
+import { EVIDENCE_LEXICON_FAMILIES } from "#weights-lexicon"
 
 /**
  * Delta threshold for the capability-manifest check (#718/#719): a conventions row may forbid a tag only if the mask

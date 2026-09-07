@@ -1,4 +1,4 @@
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { releaseWorkspaces } from "@mailwoman/release-kit/release/stage"
 import { resolvePath } from "path-ts"
@@ -28,16 +28,19 @@ const workspaces = await releaseWorkspaces(repoRoot)
 
 describe("#757 release provenance: every published workspace declares its repository", () => {
 	it.each(workspaces)("%s/package.json has the canonical repository block", async (ws) => {
-		const pkg = await readLocalJSONFile<{
-			repository?: { type?: string; url?: string; directory?: string }
-		}>(resolvePath(repoRoot, ws, "package.json"))
+		const pkg = await readPackageJSON(resolvePath(repoRoot, ws, "package.json"))
 
 		const repo = pkg.repository
-		// A missing/empty repository.url is exactly what npm provenance rejects with E422.
-		expect(repo, `${ws}/package.json is missing "repository"`).toBeTypeOf("object")
-		expect(repo!.type, `${ws}: repository.type must be "git"`).toBe("git")
-		expect(repo!.url, `${ws}: repository.url must be the canonical source repo (with .git)`).toBe(CANONICAL_URL)
+
+		// npm also accepts a shorthand string here, which carries no `directory` and so cannot satisfy the block
+		// below; a missing or empty repository.url is what npm provenance rejects with E422.
+		if (typeof repo !== "object") {
+			throw new TypeError(`${ws}/package.json must declare "repository" as an object, not ${typeof repo}`)
+		}
+
+		expect(repo.type, `${ws}: repository.type must be "git"`).toBe("git")
+		expect(repo.url, `${ws}: repository.url must be the canonical source repo (with .git)`).toBe(CANONICAL_URL)
 		// `directory` lets npm resolve the per-workspace source path under the monorepo.
-		expect(repo!.directory, `${ws}: repository.directory must be the workspace path`).toBe(ws)
+		expect(repo.directory, `${ws}: repository.directory must be the workspace path`).toBe(ws)
 	})
 })

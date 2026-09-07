@@ -766,7 +766,7 @@ jobs:
   #
   # PATH-CONDITIONAL on pull_request: the smoke test validates the PACKAGING pipeline, so changes to
   # docs, root *.md, data/, .github/, or any workspace NOT packed by smoke-clean-install.ts
-  # (osm, tile-worker, resolver-wof-wasm, neural-web) can't affect it. On a docs-only or
+  # (osm, tile-worker, resolver-wof-wasm) can't affect it. On a docs-only or
   # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
   # (release flow), and any PR that TOUCHES a smoke-relevant path, every step runs.
   # NOT PORTABLE — job-skipped when the fleet is down, for the same reason as unit-slow but a

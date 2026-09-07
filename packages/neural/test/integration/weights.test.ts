@@ -47,9 +47,10 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readDirectory, readLocalBuffer, readLocalJSONFile, pathExists, isFile } from "@mailwoman/core/fs/readers"
+import { isFile, pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
@@ -305,17 +306,21 @@ describe("resolveWeights — package auto-resolve", () => {
 	// input direction (the measured 24-postcode regression); declare shaped without the bin and the
 	// channel is simply off. Each half is checkable, and neither alone is the contract.
 	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped", async () => {
-		const manifest = await readLocalJSONFile<{ files: string[] }>(workspacePath("neural-weights-en-gb", "package.json"))
+		const manifest = await readPackageJSON(workspacePath("neural-weights-en-gb", "package.json"))
 
 		const card = await readLocalJSONFile<{ requires?: { anchor?: { span_mode?: string } } }>(
 			workspacePath("neural-weights-en-gb", "model-card.json")
 		)
 
 		const shaped = card.requires?.anchor?.span_mode === "shaped"
-		expect(manifest.files.filter((entry) => entry.startsWith("postcode-"))).toEqual(shaped ? ["postcode-gb.bin"] : [])
+		const { files } = manifest
+
+		// A manifest with no `files` would satisfy the unshaped arm below by carrying nothing at all.
+		expect(files, "neural-weights-en-gb/package.json declares no files array").toBeDefined()
+		expect(files!.filter((entry) => entry.startsWith("postcode-"))).toEqual(shaped ? ["postcode-gb.bin"] : [])
 		// The pair-prior capability is untouched by the anchor mitigation — pinned so a future
 		// "clean up the GB overlay" pass cannot take both out in one sweep.
-		expect(manifest.files).toContain("pair-index-gb.bin")
+		expect(files).toContain("pair-index-gb.bin")
 	})
 
 	// Base-overlay dedup, en-nz form: model/tokenizer/lexicon-less resolution details are all shared

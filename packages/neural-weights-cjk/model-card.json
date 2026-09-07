@@ -9,7 +9,7 @@
 	"max_unit_width": 7,
 	"char_ctx": 3,
 	"format": {
-		"model": "ONNX fp32 (opset 17), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (3,165 entries, <pad> 0, <unk> 1, code-point order).",
+		"model": "ONNX fp32 (opset 18), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (3,165 entries, <pad> 0, <unk> 1, code-point order).",
 		"tokenizer": null
 	},
 	"architecture": {
@@ -82,7 +82,7 @@
 	"files_md5": {
 		"$comment": "The candidate artifacts' md5s — what a materialized package is verified against.",
 		"model.onnx": "7a24dba39ee8b0a26aef62162b9fad3e",
-		"char-vocab.json": "e7ada09fe92d0c0fc480f748528d580c"
+		"char-vocab.json": "d5f5a6f00ec72b0e001156b47427559d"
 	},
 	"training": {
 		"run": "v8-cjk-kr seed 42, 24,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-kr.yaml)",

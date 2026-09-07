@@ -141,3 +141,10 @@ addresses was invisible to the other four.
 Plus, at step 3, a clean-install smoke of both shapes: a Node project with only `onnxruntime-node`
 installed, and a bundled project with only `onnxruntime-web`. The point of optional peers is that
 each works without the other, and that is not true until it is tested.
+
+## Where the shim ended
+
+Break 2 above kept `@mailwoman/neural-web` as a deprecated re-export shim, to be removed a major later. It was
+removed on 2026-09-07 instead, before any major: the workspace re-exported another package's names, which
+`mailwoman/no-cross-package-reexport` refuses everywhere else, and nothing in the repository imported it. 9.3.0 is
+its last publish; a consumer on it imports from `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`.

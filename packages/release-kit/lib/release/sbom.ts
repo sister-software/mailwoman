@@ -37,10 +37,10 @@
  *     CycloneDX:  cyclonedx-cli validate --input-file docs/static/sbom/mailwoman-<version>.cdx.json
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
 import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -109,7 +109,7 @@ export async function generateSBOM(options: GenerateSBOMOptions): Promise<Genera
 
 	const version =
 		options.version ??
-		(await readLocalJSONFile<{ version: string }>(join(repoRoot, "packages", "mailwoman", "package.json"))).version
+		(await readPackageJSON<{ version: string }>(join(repoRoot, "packages", "mailwoman", "package.json"))).version
 
 	const outDir = options.out ? resolvePath(repoRoot, options.out) : join(repoRoot, "docs", "static", "sbom")
 
@@ -134,7 +134,7 @@ export async function generateSBOM(options: GenerateSBOMOptions): Promise<Genera
 
 	// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`) — never part of the consumer closure.
 	const manifestPath = join(pkgDir, "package.json")
-	const manifest = await readLocalJSONFile<Record<string, unknown>>(manifestPath)
+	const manifest = await readPackageJSON(manifestPath)
 	delete manifest.devDependencies
 
 	await writeLocalJSONFile(manifest, manifestPath)

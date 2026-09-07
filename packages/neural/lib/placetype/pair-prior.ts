@@ -100,7 +100,7 @@
  *   and no-postcode forms already flip — the postcode simply lands in its own segment there). The segment path fixes this
  *   by stripping a TRAILING postcode-shaped run from a segment's KEY before it becomes a parent-candidate probe key — per
  *   the index header country's postcode shape (`@mailwoman/codex/<system>`; see {@link segmentParentPostcodeShape} /
- *   {@link stripTrailingSegmentPostcode}). Only a trailing run, never a segment that IS just a postcode, and only for a
+ *   {@link trailingSegmentPostcodeTake}). Only a trailing run, never a segment that IS just a postcode, and only for a
  *   country with a known codex shape (else byte-stable). SEGMENT PATH ONLY — anchored mode already anchors LEFT of the
  *   whole postcode span (see "Anchored mode"), and window mode is untouched. Positions/pieceIndices still span the whole
  *   segment, so only the probe key changes.

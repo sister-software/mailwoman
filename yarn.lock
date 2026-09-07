@@ -5868,6 +5868,7 @@ __metadata:
     mailwoman: "workspace:*"
     path-ts: "npm:^2.3.0"
     spliterator: "npm:^6.4.1"
+    typescript: "npm:^6.0.3"
     zod: "npm:^4.5.4"
   bin:
     mwdev-mcp: ./lib/cli.ts
@@ -6154,14 +6155,6 @@ __metadata:
       optional: true
   bin:
     mailwoman-mcp: ./out/cli.js
-  languageName: unknown
-  linkType: soft
-
-"@mailwoman/neural-web@workspace:packages/neural-web":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-web@workspace:packages/neural-web"
-  dependencies:
-    "@mailwoman/neural": "workspace:*"
   languageName: unknown
   linkType: soft
 

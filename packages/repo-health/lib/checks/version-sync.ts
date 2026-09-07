@@ -12,6 +12,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { releaseWorkspaces } from "@mailwoman/release-kit/release/stage"
 import { resolvePath } from "path-ts"
 
@@ -24,7 +25,7 @@ export const versionSyncCheck: RepoCheck = {
 	id: "version-sync",
 	description: "Every release workspace's manifest version equals the root's.",
 	async run(context) {
-		const root = await readLocalJSONFile<{ version?: unknown }>(resolvePath(context.repoRoot, "package.json"))
+		const root = await readPackageJSON(resolvePath(context.repoRoot, "package.json"))
 
 		if (typeof root.version !== "string") {
 			throw new TypeError(`version-sync: ${context.repoRoot}/package.json declares no string "version".`)

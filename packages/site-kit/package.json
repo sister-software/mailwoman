@@ -13,32 +13,32 @@
 	"type": "module",
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./build-info": {
+			"types": "./out/build-info.d.ts",
 			"node": "./lib/build-info.ts",
-			"default": "./out/build-info.js",
-			"types": "./out/build-info.d.ts"
+			"default": "./out/build-info.js"
 		},
 		"./vite/build-info": {
+			"types": "./out/vite/build-info.d.ts",
 			"node": "./lib/vite/build-info.ts",
-			"default": "./out/vite/build-info.js",
-			"types": "./out/vite/build-info.d.ts"
+			"default": "./out/vite/build-info.js"
 		},
 		"./vite/pwa": {
+			"types": "./out/vite/pwa.d.ts",
 			"node": "./lib/vite/pwa.ts",
-			"default": "./out/vite/pwa.js",
-			"types": "./out/vite/pwa.d.ts"
+			"default": "./out/vite/pwa.js"
 		},
 		"./playwright": {
+			"types": "./out/playwright.d.ts",
 			"node": "./lib/playwright.ts",
-			"default": "./out/playwright.js",
-			"types": "./out/playwright.d.ts"
+			"default": "./out/playwright.js"
 		}
 	},
 	"dependencies": {

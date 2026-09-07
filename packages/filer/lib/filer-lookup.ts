@@ -424,6 +424,7 @@ function resolveQueriedIdentifier(query: FilerLookupQuery): QueriedIdentifier {
  * `family-rollup.ts` shares this exact definition of "today" rather than growing its own — every reader in this SDK
  * should default `asOf` identically.
  */
+// repo-health-ignore export-name-affix -- the name IS the point: one definition of "today" for this SDK's `asOf`.
 export function todayISODate(): string {
 	return isoDate()
 }

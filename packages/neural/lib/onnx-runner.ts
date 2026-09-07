@@ -27,7 +27,7 @@ import {
 	type OutputTensor,
 } from "#ort-feeds"
 
-// Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so neural-web's runner can
+// Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so the web runner can
 // import them without touching this node-only module.
 export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 // Back-compat: the result type moved to ort-feeds.ts (pure, shared with the browser runner).

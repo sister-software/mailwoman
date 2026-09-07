@@ -11,12 +11,15 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { findDanglingLinks } from "#checks/doc-link-targets"
+import { findAffixPairs } from "#checks/export-name-affix"
 import { findPrivateNameShadows } from "#checks/private-name-shadows"
 import { trackedSourcePaths } from "#tracked-sources"
 
@@ -27,6 +30,18 @@ export interface DebtCounters {
 	 * replaced by imports or given their reason.
 	 */
 	privateNameShadows: number
+	/**
+	 * Exported functions in `packages/*\/lib` whose name spells out another package's exported name at greater length,
+	 * minus the marked pairs — the population `export-name-affix` lists site by site. The shape a duplicate arrives in,
+	 * since an author who knew the shorter name would have imported it.
+	 */
+	exportNameAffix: number
+	/**
+	 * `{@link}` tags in `packages/*\/lib` naming a symbol nothing in the tree declares — the population
+	 * `doc-link-targets` lists site by site. A tag reads as a promise the thing exists, and one of these was implemented
+	 * as a new function rather than recognized as a broken reference.
+	 */
+	danglingDocLinks: number
 	asNever: number
 	doubleCast: number
 	deepRelativeImports: number
@@ -84,6 +99,8 @@ const SELF = "packages/repo-health/lib/checks/debt.ts"
 function emptyCounters(): DebtCounters {
 	return {
 		privateNameShadows: 0,
+		exportNameAffix: 0,
+		danglingDocLinks: 0,
 		asNever: 0,
 		doubleCast: 0,
 		deepRelativeImports: 0,
@@ -406,10 +423,11 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 	const counters = emptyCounters()
 
 	const workspacePackages = await Promise.all(
-		(await readWorkspaceDirectories(root)).map(async (workspace) => ({
-			directory: resolvePath(root, workspace),
-			name: (await readLocalJSONFile<{ name: string }>(resolvePath(root, workspace, "package.json"))).name,
-		}))
+		(await readWorkspaceDirectories(root)).map(async (workspace) => {
+			const { name } = await readPackageJSON(resolvePath(root, workspace, "package.json"))
+
+			return { directory: resolvePath(root, workspace), name }
+		})
 	)
 
 	for (const path of paths) {
@@ -460,6 +478,8 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 	}
 
 	counters.privateNameShadows = (await findPrivateNameShadows(context)).length
+	counters.exportNameAffix = (await findAffixPairs(context)).length
+	counters.danglingDocLinks = (await findDanglingLinks(context)).length
 
 	return counters
 }

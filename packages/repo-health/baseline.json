@@ -1,5 +1,7 @@
 {
 	"privateNameShadows": 31,
+	"exportNameAffix": 43,
+	"danglingDocLinks": 0,
 	"asNever": 0,
 	"doubleCast": 5,
 	"deepRelativeImports": 0,
@@ -7,7 +9,7 @@
 	"productionFilesOver1000Lines": 0,
 	"selfPackageImports": 0,
 	"synchronousFilesystemCalls": 0,
-	"bannedVocabulary": 0,
 	"rawNULBytes": 0,
+	"bannedVocabulary": 0,
 	"handRolledTreeWalks": 0
 }

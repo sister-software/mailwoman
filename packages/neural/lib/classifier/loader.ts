@@ -33,8 +33,8 @@ import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
  * actionable error.
  *
  * **Node-only.** The dynamic imports keep `ONNXRunner` (onnxruntime-node) + `resolveWeights` (uses Node fs) out of the
- * static dependency graph, so this file can be bundled for the browser by `@mailwoman/neural-web`. Calling this method
- * in a browser will throw at runtime — use `loadNeuralClassifierFromURLs` from `@mailwoman/neural-web` instead.
+ * static dependency graph, so this file can be bundled for the browser through `@mailwoman/neural/web-loader`. Calling
+ * this method in a browser will throw at runtime — use `loadNeuralClassifierFromURLs` from that subpath instead.
  */
 /**
  * {@link loadClassifierFromWeights} for the caller's locale, wrapped so an input whose script names another weights
@@ -165,7 +165,7 @@ export async function loadClassifierFromWeights(
 	//
 	// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
 	// the model-card declares a channel REQUIRED but the package didn't ship its data, we warn ONCE
-	// (mirroring neural-web's `warnOnUnfedTrainedChannels`) and run that channel OFF — never crash.
+	// (mirroring the web loader's `warnOnUnfedTrainedChannels`) and run that channel OFF — never crash.
 	const declared = await readRequiredChannels(resolved.modelCardPath)
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup

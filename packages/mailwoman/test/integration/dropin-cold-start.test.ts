@@ -37,10 +37,11 @@
  *   re-downloading.
  */
 
-import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"
 import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
@@ -405,13 +406,13 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 
 describe("mailwoman-mcp — cold start over stdio, no data", () => {
 	test("declares @mailwoman/neural-weights-en-us, so a standalone npm install can load the model", async () => {
-		const manifest = await readLocalJSONFile<{ dependencies: Record<string, string> }>(MCP_PACKAGE_JSON)
+		const manifest = await readPackageJSON(MCP_PACKAGE_JSON)
 
 		// The regression this pins: `@mailwoman/mcp@8.6.0` shipped without it (checked against the registry
 		// 2026-08-03), so `npm install @mailwoman/mcp` in a clean directory installed no weights package and
 		// every model-backed tool answered `Could not resolve @mailwoman/neural-weights-en-us`. A runtime
 		// assertion cannot see this — yarn hoists the sibling workspace regardless — so the manifest IS the test.
-		expect(manifest.dependencies["@mailwoman/neural-weights-en-us"]).toBe("workspace:*")
+		expect(manifest.dependencies?.["@mailwoman/neural-weights-en-us"]).toBe("workspace:*")
 	})
 
 	test.skipIf(!hasMCPCLI)(

@@ -19,7 +19,8 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { LexiconVersionMismatchError, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { LexiconVersionMismatchError } from "@mailwoman/neural/weights-lexicon"
 import { join, type PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 

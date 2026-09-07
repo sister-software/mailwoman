@@ -168,7 +168,7 @@ export class WebONNXRunner implements NeuralRunner {
 
 	/**
 	 * Names of the inputs the loaded ONNX graph declares. `null` until the session has been created (first `infer()`
-	 * call). Lets callers (e.g. the neural-web loader) detect anchor/gazetteer-trained models and warn loudly when the
+	 * call). Lets callers (e.g. the web loader) detect anchor/gazetteer-trained models and warn loudly when the
 	 * corresponding feature source wasn't provided — running such a model on the zero-filled fallback is the measured
 	 * train/inference mismatch ("the zero-fill trap"), not a quality-neutral degrade.
 	 */

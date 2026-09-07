@@ -41,178 +41,178 @@
 		"#test/mocks": "./test/mocks.tsx",
 		"#test/render": "./test/render.tsx",
 		"#index": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"#map": {
+			"types": "./out/map/index.d.ts",
 			"node": "./lib/map/index.ts",
-			"default": "./out/map/index.js",
-			"types": "./out/map/index.d.ts"
+			"default": "./out/map/index.js"
 		},
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./styles.css": "./styles.css",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./map": {
+			"types": "./out/map/index.d.ts",
 			"node": "./lib/map/index.ts",
-			"default": "./out/map/index.js",
-			"types": "./out/map/index.d.ts"
+			"default": "./out/map/index.js"
 		},
 		"./common/CopyButton": {
+			"types": "./out/common/CopyButton.d.ts",
 			"node": "./lib/common/CopyButton.tsx",
-			"default": "./out/common/CopyButton.js",
-			"types": "./out/common/CopyButton.d.ts"
+			"default": "./out/common/CopyButton.js"
 		},
 		"./common/KindBadge": {
+			"types": "./out/common/KindBadge.d.ts",
 			"node": "./lib/common/KindBadge.tsx",
-			"default": "./out/common/KindBadge.js",
-			"types": "./out/common/KindBadge.d.ts"
+			"default": "./out/common/KindBadge.js"
 		},
 		"./common/LoadingIndicator": {
+			"types": "./out/common/LoadingIndicator.d.ts",
 			"node": "./lib/common/LoadingIndicator.tsx",
-			"default": "./out/common/LoadingIndicator.js",
-			"types": "./out/common/LoadingIndicator.d.ts"
+			"default": "./out/common/LoadingIndicator.js"
 		},
 		"./common/PresetChips": {
+			"types": "./out/common/PresetChips.d.ts",
 			"node": "./lib/common/PresetChips.tsx",
-			"default": "./out/common/PresetChips.js",
-			"types": "./out/common/PresetChips.d.ts"
+			"default": "./out/common/PresetChips.js"
 		},
 		"./map/DemoMap": {
+			"types": "./out/map/DemoMap.d.ts",
 			"node": "./lib/map/DemoMap.tsx",
-			"default": "./out/map/DemoMap.js",
-			"types": "./out/map/DemoMap.d.ts"
+			"default": "./out/map/DemoMap.js"
 		},
 		"./map/GeocoderDemo": {
+			"types": "./out/map/GeocoderDemo.d.ts",
 			"node": "./lib/map/GeocoderDemo.tsx",
-			"default": "./out/map/GeocoderDemo.js",
-			"types": "./out/map/GeocoderDemo.d.ts"
+			"default": "./out/map/GeocoderDemo.js"
 		},
 		"./map/place-render": {
+			"types": "./out/map/place-render.d.ts",
 			"node": "./lib/map/place-render.ts",
-			"default": "./out/map/place-render.js",
-			"types": "./out/map/place-render.d.ts"
+			"default": "./out/map/place-render.js"
 		},
 		"./map/ResultCamera": {
+			"types": "./out/map/ResultCamera.d.ts",
 			"node": "./lib/map/ResultCamera.tsx",
-			"default": "./out/map/ResultCamera.js",
-			"types": "./out/map/ResultCamera.d.ts"
+			"default": "./out/map/ResultCamera.js"
 		},
 		"./map/geometry": {
+			"types": "./out/map/geometry.d.ts",
 			"node": "./lib/map/geometry.ts",
-			"default": "./out/map/geometry.js",
-			"types": "./out/map/geometry.d.ts"
+			"default": "./out/map/geometry.js"
 		},
 		"./map/OverlayLayers": {
+			"types": "./out/map/OverlayLayers.d.ts",
 			"node": "./lib/map/OverlayLayers.tsx",
-			"default": "./out/map/OverlayLayers.js",
-			"types": "./out/map/OverlayLayers.d.ts"
+			"default": "./out/map/OverlayLayers.js"
 		},
 		"./map/ResolvedPlaceLayers": {
+			"types": "./out/map/ResolvedPlaceLayers.d.ts",
 			"node": "./lib/map/ResolvedPlaceLayers.tsx",
-			"default": "./out/map/ResolvedPlaceLayers.js",
-			"types": "./out/map/ResolvedPlaceLayers.d.ts"
+			"default": "./out/map/ResolvedPlaceLayers.js"
 		},
 		"./map/types": {
+			"types": "./out/map/types.d.ts",
 			"node": "./lib/map/types.ts",
-			"default": "./out/map/types.js",
-			"types": "./out/map/types.d.ts"
+			"default": "./out/map/types.js"
 		},
 		"./map/BackendControl": {
+			"types": "./out/map/BackendControl.d.ts",
 			"node": "./lib/map/BackendControl.tsx",
-			"default": "./out/map/BackendControl.js",
-			"types": "./out/map/BackendControl.d.ts"
+			"default": "./out/map/BackendControl.js"
 		},
 		"./map/CompareToggle": {
+			"types": "./out/map/CompareToggle.d.ts",
 			"node": "./lib/map/CompareToggle.tsx",
-			"default": "./out/map/CompareToggle.js",
-			"types": "./out/map/CompareToggle.d.ts"
+			"default": "./out/map/CompareToggle.js"
 		},
 		"./map/PlaceAutocomplete": {
+			"types": "./out/map/PlaceAutocomplete.d.ts",
 			"node": "./lib/map/PlaceAutocomplete.tsx",
-			"default": "./out/map/PlaceAutocomplete.js",
-			"types": "./out/map/PlaceAutocomplete.d.ts"
+			"default": "./out/map/PlaceAutocomplete.js"
 		},
 		"./map/ResultPanel": {
+			"types": "./out/map/ResultPanel.d.ts",
 			"node": "./lib/map/ResultPanel.tsx",
-			"default": "./out/map/ResultPanel.js",
-			"types": "./out/map/ResultPanel.d.ts"
+			"default": "./out/map/ResultPanel.js"
 		},
 		"./map/fake-runtime": {
+			"types": "./out/map/fake-runtime.d.ts",
 			"node": "./lib/map/fake-runtime.ts",
-			"default": "./out/map/fake-runtime.js",
-			"types": "./out/map/fake-runtime.d.ts"
+			"default": "./out/map/fake-runtime.js"
 		},
 		"./map/usePlaceAutocomplete": {
+			"types": "./out/map/usePlaceAutocomplete.d.ts",
 			"node": "./lib/map/usePlaceAutocomplete.ts",
-			"default": "./out/map/usePlaceAutocomplete.js",
-			"types": "./out/map/usePlaceAutocomplete.d.ts"
+			"default": "./out/map/usePlaceAutocomplete.js"
 		},
 		"./map/VersionPicker": {
+			"types": "./out/map/VersionPicker.d.ts",
 			"node": "./lib/map/VersionPicker.tsx",
-			"default": "./out/map/VersionPicker.js",
-			"types": "./out/map/VersionPicker.d.ts"
+			"default": "./out/map/VersionPicker.js"
 		},
 		"./pipeline/ComponentTable": {
+			"types": "./out/pipeline/ComponentTable.d.ts",
 			"node": "./lib/pipeline/ComponentTable.tsx",
-			"default": "./out/pipeline/ComponentTable.js",
-			"types": "./out/pipeline/ComponentTable.d.ts"
+			"default": "./out/pipeline/ComponentTable.js"
 		},
 		"./pipeline/PipelineExplorer": {
+			"types": "./out/pipeline/PipelineExplorer.d.ts",
 			"node": "./lib/pipeline/PipelineExplorer.tsx",
-			"default": "./out/pipeline/PipelineExplorer.js",
-			"types": "./out/pipeline/PipelineExplorer.d.ts"
+			"default": "./out/pipeline/PipelineExplorer.js"
 		},
 		"./pipeline/ResolvedPlace": {
+			"types": "./out/pipeline/ResolvedPlace.d.ts",
 			"node": "./lib/pipeline/ResolvedPlace.tsx",
-			"default": "./out/pipeline/ResolvedPlace.js",
-			"types": "./out/pipeline/ResolvedPlace.d.ts"
+			"default": "./out/pipeline/ResolvedPlace.js"
 		},
 		"./poi/LiveResultsBlock": {
+			"types": "./out/poi/LiveResultsBlock.d.ts",
 			"node": "./lib/poi/LiveResultsBlock.tsx",
-			"default": "./out/poi/LiveResultsBlock.js",
-			"types": "./out/poi/LiveResultsBlock.d.ts"
+			"default": "./out/poi/LiveResultsBlock.js"
 		},
 		"./poi/types": {
+			"types": "./out/poi/types.d.ts",
 			"node": "./lib/poi/types.ts",
-			"default": "./out/poi/types.js",
-			"types": "./out/poi/types.d.ts"
+			"default": "./out/poi/types.js"
 		},
 		"./poi/OverpassBlock": {
+			"types": "./out/poi/OverpassBlock.d.ts",
 			"node": "./lib/poi/OverpassBlock.tsx",
-			"default": "./out/poi/OverpassBlock.js",
-			"types": "./out/poi/OverpassBlock.d.ts"
+			"default": "./out/poi/OverpassBlock.js"
 		},
 		"./poi/POIExplorer": {
+			"types": "./out/poi/POIExplorer.d.ts",
 			"node": "./lib/poi/POIExplorer.tsx",
-			"default": "./out/poi/POIExplorer.js",
-			"types": "./out/poi/POIExplorer.d.ts"
+			"default": "./out/poi/POIExplorer.js"
 		},
 		"./poi/SubjectPanel": {
+			"types": "./out/poi/SubjectPanel.d.ts",
 			"node": "./lib/poi/SubjectPanel.tsx",
-			"default": "./out/poi/SubjectPanel.js",
-			"types": "./out/poi/SubjectPanel.d.ts"
+			"default": "./out/poi/SubjectPanel.js"
 		},
 		"./poi/usePOISearch": {
+			"types": "./out/poi/usePOISearch.d.ts",
 			"node": "./lib/poi/usePOISearch.ts",
-			"default": "./out/poi/usePOISearch.js",
-			"types": "./out/poi/usePOISearch.d.ts"
+			"default": "./out/poi/usePOISearch.js"
 		},
 		"./runtime/useDemoRuntime": {
+			"types": "./out/runtime/useDemoRuntime.d.ts",
 			"node": "./lib/runtime/useDemoRuntime.ts",
-			"default": "./out/runtime/useDemoRuntime.js",
-			"types": "./out/runtime/useDemoRuntime.d.ts"
+			"default": "./out/runtime/useDemoRuntime.js"
 		}
 	},
 	"publishConfig": {

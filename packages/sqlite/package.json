@@ -28,67 +28,67 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./client": {
+			"types": "./out/client.d.ts",
 			"node": "./lib/client.ts",
-			"default": "./out/client.js",
-			"types": "./out/client.d.ts"
+			"default": "./out/client.js"
 		},
 		"./introspection": {
+			"types": "./out/introspection.d.ts",
 			"node": "./lib/introspection.ts",
-			"default": "./out/introspection.js",
-			"types": "./out/introspection.d.ts"
+			"default": "./out/introspection.js"
 		},
 		"./dialect": {
+			"types": "./out/dialect.d.ts",
 			"node": "./lib/dialect.ts",
-			"default": "./out/dialect.js",
-			"types": "./out/dialect.d.ts"
+			"default": "./out/dialect.js"
 		},
 		"./dialect-config": {
+			"types": "./out/dialect-config.d.ts",
 			"node": "./lib/dialect-config.ts",
-			"default": "./out/dialect-config.js",
-			"types": "./out/dialect-config.d.ts"
+			"default": "./out/dialect-config.js"
 		},
 		"./sealed": {
+			"types": "./out/sealed.d.ts",
 			"node": "./lib/sealed.ts",
-			"default": "./out/sealed.js",
-			"types": "./out/sealed.d.ts"
+			"default": "./out/sealed.js"
 		},
 		"./sealed-db": {
+			"types": "./out/sealed-db.d.ts",
 			"node": "./lib/sealed-db.ts",
-			"default": "./out/sealed-db.js",
-			"types": "./out/sealed-db.d.ts"
+			"default": "./out/sealed-db.js"
 		},
 		"./database-schema": {
+			"types": "./out/database-schema.d.ts",
 			"node": "./lib/database-schema.ts",
-			"default": "./out/database-schema.js",
-			"types": "./out/database-schema.d.ts"
+			"default": "./out/database-schema.js"
 		},
 		"./batched": {
+			"types": "./out/batched.d.ts",
 			"node": "./lib/batched.ts",
-			"default": "./out/batched.js",
-			"types": "./out/batched.d.ts"
+			"default": "./out/batched.js"
 		},
 		"./schema-columns": {
+			"types": "./out/schema-columns.d.ts",
 			"node": "./lib/schema-columns.ts",
-			"default": "./out/schema-columns.js",
-			"types": "./out/schema-columns.d.ts"
+			"default": "./out/schema-columns.js"
 		},
 		"./sealed-build": {
+			"types": "./out/sealed-build.d.ts",
 			"node": "./lib/sealed-build.ts",
-			"default": "./out/sealed-build.js",
-			"types": "./out/sealed-build.d.ts"
+			"default": "./out/sealed-build.js"
 		}
 	},
 	"publishConfig": {

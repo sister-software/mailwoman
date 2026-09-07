@@ -80,8 +80,8 @@ export {
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
- * runner (e.g. `@mailwoman/neural-web`'s `WebONNXRunner`) without inheritance — the classifier only ever calls
- * `infer(ids)`. The signature is {@link InferFunction}, the one contract both runners implement.
+ * runner (e.g. `@mailwoman/neural/web-onnx-runner`'s `WebONNXRunner`) without inheritance — the classifier only ever
+ * calls `infer(ids)`. The signature is {@link InferFunction}, the one contract both runners implement.
  */
 export interface NeuralRunner {
 	infer: InferFunction

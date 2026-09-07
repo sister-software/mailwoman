@@ -4,33 +4,17 @@
  * @author Teffen Ellis, et al.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFileSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
+
+import { type HookOutput, runHook as driveHook } from "../hook-harness.ts"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "symbol-precheck.ts")
 const REPO_ROOT = repoRootPath()
 
-interface HookOutput {
-	hookSpecificOutput?: {
-		hookEventName?: string
-		additionalContext?: string
-	}
-}
-
-/**
- * Drive the hook exactly as the harness does: one JSON payload on stdin, one JSON document on stdout.
- */
 function runHook(payload: unknown): HookOutput {
-	const stdout = runFileSync("node", [HOOK], {
-		cwd: REPO_ROOT,
-		input: JSON.stringify(payload),
-		encoding: "utf8",
-	})
-
-	return tryParsingJSON<HookOutput>(stdout) ?? {}
+	return driveHook(HOOK, payload)
 }
 
 describe("symbol-precheck hook", () => {

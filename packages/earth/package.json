@@ -13,22 +13,22 @@
 	"type": "module",
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./routes": {
+			"types": "./out/routes.d.ts",
 			"node": "./lib/routes.ts",
-			"default": "./out/routes.js",
-			"types": "./out/routes.d.ts"
+			"default": "./out/routes.js"
 		},
 		"./config": {
+			"types": "./out/config.d.ts",
 			"node": "./lib/config.ts",
-			"default": "./out/config.js",
-			"types": "./out/config.d.ts"
+			"default": "./out/config.js"
 		}
 	},
 	"scripts": {

@@ -55,7 +55,9 @@ def build_char_vocab(texts: Iterable[str], min_count: int = 1) -> dict[str, int]
 
 
 def save_char_vocab(vocab: dict[str, int], path: Path | str) -> None:
-    Path(path).write_text(json.dumps(vocab, ensure_ascii=False, indent=0) + "\n", encoding="utf-8")
+    # Tab-indented, one entry per line: the repository formatter's JSON form, so the sealed artifact, the tracked
+    # workspace copy and the bytes the model card pins by md5 are one file rather than three byte forms of it.
+    Path(path).write_text(json.dumps(vocab, ensure_ascii=False, indent="\t") + "\n", encoding="utf-8")
 
 
 def load_char_vocab(path: Path | str) -> dict[str, int]:

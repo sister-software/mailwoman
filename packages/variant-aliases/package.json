@@ -28,22 +28,22 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./lookup": {
+			"types": "./out/lookup.d.ts",
 			"node": "./lib/lookup.ts",
-			"default": "./out/lookup.js",
-			"types": "./out/lookup.d.ts"
+			"default": "./out/lookup.js"
 		}
 	},
 	"publishConfig": {

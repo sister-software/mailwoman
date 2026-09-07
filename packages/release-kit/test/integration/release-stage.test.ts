@@ -12,6 +12,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { literalFilesEntries, verifyTarball } from "@mailwoman/release-kit/pack/verify-tarball"
@@ -27,14 +28,14 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 60 published, every absence sanctioned by name", async () => {
+	it("holds on the current tree: 61 published, every absence sanctioned by name", async () => {
 		const identity = await checkReleaseListIdentity(String(repoRootPath()))
 
-		expect(identity.publishCount).toBe(60)
+		expect(identity.publishCount).toBe(61)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
-		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(15)
+		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(13)
 	})
 
 	it("names an unsanctioned absence instead of reporting a count mismatch", async () => {
@@ -183,7 +184,7 @@ describe("the Hugging Face materialization plan", () => {
 		const unaccounted: string[] = []
 
 		for (const workspace of await weightsWorkspaces()) {
-			const manifest = await readLocalJSONFile<{ files?: unknown }>(join(repoRoot, workspace, "package.json"))
+			const manifest = await readPackageJSON(join(repoRoot, workspace, "package.json"))
 
 			for (const entry of literalFilesEntries(manifest.files)) {
 				const path = `${workspace}/${entry}`
@@ -217,9 +218,9 @@ describe("the pair-index parity selector", () => {
 		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
 		const repoRoot = String(repoRootPath())
 
-		const manifest = await readLocalJSONFile<{ scripts: Record<string, string> }>(join(repoRoot, "package.json"))
+		const manifest = await readPackageJSON(join(repoRoot, "package.json"))
 
-		const script = manifest.scripts["ci:test:pair-index-parity"]
+		const script = manifest.scripts?.["ci:test:pair-index-parity"]
 
 		expect(script).toBeDefined()
 

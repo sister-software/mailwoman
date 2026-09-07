@@ -46,7 +46,7 @@ async function main(): Promise<void> {
 		writingFile: relative(cwd, intent.filePath),
 	})
 
-	const additionalContext = formatFindings(findings)
+	const additionalContext = formatFindings(findings, declared)
 
 	if (!additionalContext) return
 

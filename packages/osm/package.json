@@ -27,37 +27,37 @@
 	"type": "module",
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./scripts/*": {
+			"types": "./out/scripts/*.d.ts",
 			"node": "./lib/scripts/*.ts",
-			"default": "./out/scripts/*.js",
-			"types": "./out/scripts/*.d.ts"
+			"default": "./out/scripts/*.js"
 		},
 		"./sdk": {
+			"types": "./out/sdk/index.d.ts",
 			"node": "./lib/sdk/index.ts",
-			"default": "./out/sdk/index.js",
-			"types": "./out/sdk/index.d.ts"
+			"default": "./out/sdk/index.js"
 		},
 		"./sdk/*": {
+			"types": "./out/sdk/*.d.ts",
 			"node": "./lib/sdk/*.ts",
-			"default": "./out/sdk/*.js",
-			"types": "./out/sdk/*.d.ts"
+			"default": "./out/sdk/*.js"
 		},
 		"./overpass/*": {
+			"types": "./out/overpass/*.d.ts",
 			"node": "./lib/overpass/*.ts",
-			"default": "./out/overpass/*.js",
-			"types": "./out/overpass/*.d.ts"
+			"default": "./out/overpass/*.js"
 		},
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		}
 	},
 	"publishConfig": {

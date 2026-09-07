@@ -25,7 +25,7 @@ export interface LineStringLiteral extends GeoObjectLiteral {
 	/**
 	 * An array of positions for each point in the geometry.
 	 *
-	 * @see {@linkcode GeoJSONPosition} for more information.
+	 * @see {@linkcode Coordinates2D} for more information.
 	 */
 	coordinates: LineStringPath
 }
@@ -41,7 +41,7 @@ export interface MultiLineStringLiteral extends GeoObjectLiteral {
 	/**
 	 * An array for each line in the geometry.
 	 *
-	 * @see {@linkcode GeoJSONPosition} for more information.
+	 * @see {@linkcode Coordinates2D} for more information.
 	 */
 	coordinates: LineStringPath[]
 }

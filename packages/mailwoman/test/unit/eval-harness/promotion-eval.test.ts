@@ -11,9 +11,10 @@
  *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid eval battery.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { listEvalSpecs, resolveThresholdSpecPath, runPromotionEval } from "mailwoman/eval-harness/promotion-eval"
 import { join } from "path-ts"
@@ -150,17 +151,20 @@ describe("resolveThresholdSpecPath", () => {
 		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
 		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO eval specs and the
 		// installed `mailwoman eval promote --spec <name>` found an empty checks dir.
-		const pkg = await readLocalJSONFile<{ files: string[] }>(new URL("../../../package.json", import.meta.url))
+		const pkg = await readPackageJSON(import.meta.url, "mailwoman")
+		const { files } = pkg
+
+		expect(files, "mailwoman/package.json declares no files array").toBeDefined()
 
 		// Package-relative, so it names the path INSIDE the tarball: source lives under `lib/`, and these
 		// JSON files ride along with it rather than being emitted into `out/`.
 		for (const spec of await listEvalSpecs()) {
 			const rel = `lib/eval-harness/specs/${spec}`
-			expect(shipsInPackage(pkg.files, rel), `${rel} must be covered by package.json files`).toBe(true)
+			expect(shipsInPackage(files!, rel), `${rel} must be covered by package.json files`).toBe(true)
 		}
 
 		// baselines.json resolves through the same source-tree-fallback pattern (baseline-assert.ts).
-		expect(shipsInPackage(pkg.files, "lib/eval-harness/baselines.json")).toBe(true)
+		expect(shipsInPackage(files!, "lib/eval-harness/baselines.json")).toBe(true)
 	})
 })
 

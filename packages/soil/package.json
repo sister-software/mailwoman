@@ -46,107 +46,107 @@
 	"type": "module",
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./scripts/*": {
+			"types": "./out/scripts/*.d.ts",
 			"node": "./lib/scripts/*.ts",
-			"default": "./out/scripts/*.js",
-			"types": "./out/scripts/*.d.ts"
+			"default": "./out/scripts/*.js"
 		},
 		"./schema": {
+			"types": "./out/schema.d.ts",
 			"node": "./lib/schema.ts",
-			"default": "./out/schema.js",
-			"types": "./out/schema.d.ts"
+			"default": "./out/schema.js"
 		},
 		"./vocabulary": {
+			"types": "./out/vocabulary.d.ts",
 			"node": "./lib/vocabulary.ts",
-			"default": "./out/vocabulary.js",
-			"types": "./out/vocabulary.d.ts"
+			"default": "./out/vocabulary.js"
 		},
 		"./test-kit": {
+			"types": "./out/test-kit.d.ts",
 			"node": "./lib/test-kit.ts",
-			"default": "./out/test-kit.js",
-			"types": "./out/test-kit.d.ts"
+			"default": "./out/test-kit.js"
 		},
 		"./sdk": {
+			"types": "./out/sdk/index.d.ts",
 			"node": "./lib/sdk/index.ts",
-			"default": "./out/sdk/index.js",
-			"types": "./out/sdk/index.d.ts"
+			"default": "./out/sdk/index.js"
 		},
 		"./sdk/acquire": {
+			"types": "./out/sdk/acquire.d.ts",
 			"node": "./lib/sdk/acquire.ts",
-			"default": "./out/sdk/acquire.js",
-			"types": "./out/sdk/acquire.d.ts"
+			"default": "./out/sdk/acquire.js"
 		},
 		"./sdk/build-soil": {
+			"types": "./out/sdk/build-soil.d.ts",
 			"node": "./lib/sdk/build-soil.ts",
-			"default": "./out/sdk/build-soil.js",
-			"types": "./out/sdk/build-soil.d.ts"
+			"default": "./out/sdk/build-soil.js"
 		},
 		"./sdk/cell-tiers": {
+			"types": "./out/sdk/cell-tiers.d.ts",
 			"node": "./lib/sdk/cell-tiers.ts",
-			"default": "./out/sdk/cell-tiers.js",
-			"types": "./out/sdk/cell-tiers.d.ts"
+			"default": "./out/sdk/cell-tiers.js"
 		},
 		"./sdk/cells": {
+			"types": "./out/sdk/cells.d.ts",
 			"node": "./lib/sdk/cells.ts",
-			"default": "./out/sdk/cells.js",
-			"types": "./out/sdk/cells.d.ts"
+			"default": "./out/sdk/cells.js"
 		},
 		"./sdk/client": {
+			"types": "./out/sdk/client.d.ts",
 			"node": "./lib/sdk/client.ts",
-			"default": "./out/sdk/client.js",
-			"types": "./out/sdk/client.d.ts"
+			"default": "./out/sdk/client.js"
 		},
 		"./sdk/download": {
+			"types": "./out/sdk/download.d.ts",
 			"node": "./lib/sdk/download.ts",
-			"default": "./out/sdk/download.js",
-			"types": "./out/sdk/download.d.ts"
+			"default": "./out/sdk/download.js"
 		},
 		"./sdk/ingest": {
+			"types": "./out/sdk/ingest.d.ts",
 			"node": "./lib/sdk/ingest.ts",
-			"default": "./out/sdk/ingest.js",
-			"types": "./out/sdk/ingest.d.ts"
+			"default": "./out/sdk/ingest.js"
 		},
 		"./sdk/ingest-chunk": {
+			"types": "./out/sdk/ingest-chunk.d.ts",
 			"node": "./lib/sdk/ingest-chunk.ts",
-			"default": "./out/sdk/ingest-chunk.js",
-			"types": "./out/sdk/ingest-chunk.d.ts"
+			"default": "./out/sdk/ingest-chunk.js"
 		},
 		"./sdk/measure-resolutions": {
+			"types": "./out/sdk/measure-resolutions.d.ts",
 			"node": "./lib/sdk/measure-resolutions.ts",
-			"default": "./out/sdk/measure-resolutions.js",
-			"types": "./out/sdk/measure-resolutions.d.ts"
+			"default": "./out/sdk/measure-resolutions.js"
 		},
 		"./sdk/reduce": {
+			"types": "./out/sdk/reduce.d.ts",
 			"node": "./lib/sdk/reduce.ts",
-			"default": "./out/sdk/reduce.js",
-			"types": "./out/sdk/reduce.d.ts"
+			"default": "./out/sdk/reduce.js"
 		},
 		"./sdk/survey-area": {
+			"types": "./out/sdk/survey-area.d.ts",
 			"node": "./lib/sdk/survey-area.ts",
-			"default": "./out/sdk/survey-area.js",
-			"types": "./out/sdk/survey-area.d.ts"
+			"default": "./out/sdk/survey-area.js"
 		},
 		"./sdk/tabular": {
+			"types": "./out/sdk/tabular.d.ts",
 			"node": "./lib/sdk/tabular.ts",
-			"default": "./out/sdk/tabular.js",
-			"types": "./out/sdk/tabular.d.ts"
+			"default": "./out/sdk/tabular.js"
 		},
 		"./sdk/verify": {
+			"types": "./out/sdk/verify.d.ts",
 			"node": "./lib/sdk/verify.ts",
-			"default": "./out/sdk/verify.js",
-			"types": "./out/sdk/verify.d.ts"
+			"default": "./out/sdk/verify.js"
 		}
 	},
 	"publishConfig": {

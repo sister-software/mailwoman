@@ -35,6 +35,7 @@
 
 import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
@@ -105,7 +106,7 @@ export async function scaffoldWeightsOverlay(
 	 * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
 	 * exists to catch.
 	 */
-	const rootVersion = await readLocalJSONFile<{ version: string }>(repoPath("package.json")).then((res) => res.version)
+	const rootVersion = await readPackageJSON<{ version: string }>(repoPath("package.json")).then((res) => res.version)
 
 	await makeDirectories(resolvePath(pkgDir, "scripts"))
 

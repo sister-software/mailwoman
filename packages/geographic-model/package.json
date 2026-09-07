@@ -37,52 +37,52 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./artifact": {
+			"types": "./out/artifact.d.ts",
 			"node": "./lib/artifact.ts",
-			"default": "./out/artifact.js",
-			"types": "./out/artifact.d.ts"
+			"default": "./out/artifact.js"
 		},
 		"./compile": {
+			"types": "./out/compile.d.ts",
 			"node": "./lib/compile.ts",
-			"default": "./out/compile.js",
-			"types": "./out/compile.d.ts"
+			"default": "./out/compile.js"
 		},
 		"./load": {
+			"types": "./out/load.d.ts",
 			"node": "./lib/load.ts",
-			"default": "./out/load.js",
-			"types": "./out/load.d.ts"
+			"default": "./out/load.js"
 		},
 		"./lookup": {
+			"types": "./out/lookup.d.ts",
 			"node": "./lib/lookup.ts",
-			"default": "./out/lookup.js",
-			"types": "./out/lookup.d.ts"
+			"default": "./out/lookup.js"
 		},
 		"./scripts/build-artifact": {
+			"types": "./out/scripts/build-artifact.d.ts",
 			"node": "./lib/scripts/build-artifact.ts",
-			"default": "./out/scripts/build-artifact.js",
-			"types": "./out/scripts/build-artifact.d.ts"
+			"default": "./out/scripts/build-artifact.js"
 		},
 		"./schema": {
+			"types": "./out/schema.d.ts",
 			"node": "./lib/schema.ts",
-			"default": "./out/schema.js",
-			"types": "./out/schema.d.ts"
+			"default": "./out/schema.js"
 		},
 		"./validate": {
+			"types": "./out/validate.d.ts",
 			"node": "./lib/validate.ts",
-			"default": "./out/validate.js",
-			"types": "./out/validate.d.ts"
+			"default": "./out/validate.js"
 		}
 	},
 	"publishConfig": {

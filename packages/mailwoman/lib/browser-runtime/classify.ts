@@ -107,7 +107,7 @@ export function pairCountryForInput(input: string): string | undefined {
 //#region Parse orchestration
 
 /**
- * A source-order parsed node, as {@link flattenTree} yields it.
+ * A source-order parsed node, as {@link flattenTreeNodes} yields it.
  */
 export type FlatNode = FlatTreeNode
 
@@ -116,7 +116,7 @@ export type FlatNode = FlatTreeNode
  */
 export interface ClassifyStageResult {
 	/**
-	 * The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`).
+	 * The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTreeNodes`).
 	 */
 	tree: AddressTree
 	/**
@@ -143,7 +143,7 @@ export interface ClassifyStageResult {
  * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
  */
 /**
- * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape `neural-web`'s
+ * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape the web loader's
  * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs locale-check over the text SHAPE (postcode
  * format / script, never place names) and returns the matching loaded index wrapped as an opaque `placetypePair` opt —
  * or `undefined` when no loaded index matches (byte-stable no-prior). Typed opaquely here because the docs bundle

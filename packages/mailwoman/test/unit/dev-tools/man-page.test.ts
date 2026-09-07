@@ -10,8 +10,8 @@
  *   reaches `man mailwoman`.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { MAN_PAGE_PATH, renderManPage } from "mailwoman/dev-tools/man-page"
 import { describe, expect, it } from "vitest"
 
@@ -28,9 +28,7 @@ describe("the man page", () => {
 	)
 
 	it("is wired into package.json (npm links `man` on install) and shipped in `files`", async () => {
-		const pkg = await readLocalJSONFile<{ man?: string; files: string[] }>(
-			resolvePackagePath("mailwoman", "package.json")
-		)
+		const pkg = await readPackageJSON(import.meta.url, "mailwoman")
 
 		expect(pkg.man).toBe("./man/mailwoman.1")
 		expect(pkg.files).toContain("man/mailwoman.1")

@@ -91,6 +91,67 @@ function isIdentifier(name: string): boolean {
 }
 
 /**
+ * Split an identifier into its camelCase components: `readPackageJSONFile` → `read`, `Package`, `JSON`, `File`. A run
+ * of capitals is one component, so an acronym stays whole rather than becoming one component per letter, and digits
+ * attach to the capitals they follow, so `getH3Cell` yields `get`, `H3`, `Cell` rather than a lone `3`.
+ *
+ * `change-case` exports a `split` that does nearly this, and `@mailwoman/core/strings/case` already depends on that
+ * package. It is not reached for here because this workspace does not otherwise depend on `change-case`, and because
+ * the digit rule above is this module's own: a component that begins with a digit can never head a candidate name.
+ */
+function nameComponents(name: string): string[] {
+	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
+}
+
+/**
+ * The number of camelCase components a contained run must carry to be worth reporting.
+ *
+ * One-component runs are the vocabulary of the tree — `read`, `build`, `file`, `parse` — so a floor of one reports
+ * nearly every name against nearly every other. Of the 2,950 exported function names under `packages/`, the count that
+ * are a longer spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three; across
+ * different files, 348, 67 and 20. Two keeps the motivating case (`readWorkspaceDirectories` over
+ * `workspaceDirectories`) while dropping the vocabulary, and it is why this constant takes an argument: the floor is
+ * measurable rather than asserted.
+ */
+const COMPONENT_FLOOR = 2
+
+/**
+ * The names a new name would be a longer spelling of: every contiguous run of at least {@link COMPONENT_FLOOR} of its
+ * components, shorter than the whole.
+ *
+ * WHY THIS EXISTS. Exact-name matching finds a duplicate only for an author who already guessed the existing name,
+ * which is the one thing a duplicating author does not know. A duplicate arrives as an existing name plus an affix —
+ * `readWorkspaceDirectories` over `workspaceDirectories`, `readPackageJSONFile` over `readPackageJSON` — and the exact
+ * rule is silent for every one of them. A contiguous run is what an affix leaves behind, so searching for the runs
+ * finds the shorter home from the longer name.
+ *
+ * The relation is ONE-DIRECTIONAL. It answers "is there a shorter name inside this one", never the reverse, so writing
+ * the shorter name while the longer already exists still reports nothing.
+ */
+export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
+	const components = nameComponents(name)
+	const candidates = new Set<string>()
+
+	for (let start = 0; start < components.length; start += 1) {
+		for (let end = start + floor; end <= components.length; end += 1) {
+			if (end - start === components.length) continue
+
+			const [head = "", ...rest] = components.slice(start, end)
+
+			// A candidate is read as a name, so its head takes the case a name would: an acronym goes fully lowercase
+			// (`JSON` → `json`), and a component opening with a digit cannot head one at all.
+			if (/^\d/u.test(head)) continue
+
+			const leading = /^[A-Z]+\d*$/u.test(head) ? head.toLowerCase() : head.charAt(0).toLowerCase() + head.slice(1)
+
+			candidates.add(leading + rest.join(""))
+		}
+	}
+
+	return [...candidates]
+}
+
+/**
  * Every top-level declaration of each name, across the tree.
  *
  * Names absent from the tree are absent from the map rather than present with an empty array: a caller iterating the
@@ -105,10 +166,26 @@ export function findDeclarations(
 
 	if (!searchable.length) return found
 
-	const alternation = searchable.join("|")
-	const output = runRipgrep(declarationPatterns(`(?:${alternation})`), cwd, searchPaths, { binary })
+	// The names themselves, plus the shorter names each one would be a longer spelling of. A duplicate is written by an
+	// author who does not know the existing name, so searching only for what they typed cannot find it.
+	const wanted = new Set(searchable)
 
-	return collectSites(output, (name) => searchable.includes(name))
+	for (const name of searchable) {
+		for (const candidate of containedNameCandidates(name)) {
+			if (isIdentifier(candidate)) {
+				wanted.add(candidate)
+			}
+		}
+	}
+
+	const alternation = [...wanted].join("|")
+
+	// A contained run starts mid-name, so its first component arrives capitalized in the container.
+	const output = runRipgrep(declarationPatterns(`(?:${alternation})`), cwd, searchPaths, { binary, ignoreCase: true })
+
+	const lowered = new Set([...wanted].map((name) => name.toLowerCase()))
+
+	return collectSites(output, (name) => lowered.has(name.toLowerCase()))
 }
 
 /**
@@ -316,16 +393,28 @@ export function readWriteIntent(payload: unknown): WriteIntent | null {
  * adding a workspace dependency and silently changing a unit. The signature and the export status are what settle the
  * question, so both travel with every site.
  */
-export function formatFindings(findings: readonly SymbolFinding[]): string {
+export function formatFindings(findings: readonly SymbolFinding[], declaredNames: readonly string[] = []): string {
 	if (!findings.length) return ""
 
+	const declared = new Set(declaredNames)
+	const containedIn = new Map<string, string>()
+
+	for (const name of declaredNames) {
+		for (const candidate of containedNameCandidates(name)) {
+			containedIn.set(candidate.toLowerCase(), name)
+		}
+	}
+
 	const lines = [
-		"Existing declarations share a name with what you are about to write. The existing implementation may or may " +
-			"not be the one to reuse — check the signature, and check what depending on its workspace would cost:",
+		"Existing declarations answer to what you are about to write — by the same name, or by a shorter name yours " +
+			"spells out at greater length. The existing implementation may or may not be the one to reuse — check the " +
+			"signature, and check what depending on its workspace would cost:",
 	]
 
 	for (const { name, sites } of findings) {
-		lines.push(`\n${name}:`)
+		const longer = declared.has(name) ? undefined : containedIn.get(name.toLowerCase())
+
+		lines.push(`\n${name}${longer ? ` — the name inside your ${longer}` : ""}:`)
 
 		for (const site of sites) {
 			lines.push(`  ${site.file}:${site.line}  [${site.exported ? "exported" : "local"}]  ${site.text}`)

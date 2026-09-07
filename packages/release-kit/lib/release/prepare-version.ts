@@ -24,9 +24,10 @@
  *   - `checkOnly` — resolve + validate + report, but write nothing (the dry-run path).
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePath } from "path-ts"
 import semver from "semver"
 
@@ -63,7 +64,7 @@ export async function prepareReleaseVersion(
 	}
 
 	const rootManifestPath = resolvePath(repoRoot, "package.json")
-	const rootManifest = await readLocalJSONFile<{ version?: string }>(rootManifestPath)
+	const rootManifest = await readPackageJSON(rootManifestPath)
 
 	if (typeof rootManifest.version !== "string" || !semver.valid(rootManifest.version)) {
 		fail(`root package.json version is not a valid semver: ${String(rootManifest.version)}`)
@@ -98,7 +99,7 @@ export async function prepareReleaseVersion(
 	const parsed: Array<{ path: string; manifest: Record<string, unknown> }> = []
 
 	for (const path of manifestPaths) {
-		const manifest = await readLocalJSONFile<Record<string, unknown>>(path)
+		const manifest = await readPackageJSON(path)
 
 		if (typeof manifest.version !== "string") {
 			fail(`${path} has no version field`)

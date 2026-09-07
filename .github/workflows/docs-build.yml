@@ -14,7 +14,7 @@
 name: Docs
 
 on:
-  # The demo BUNDLES these workspaces (neural-web pulls in the resolver), so a change to the
+  # The demo BUNDLES these workspaces (the neural web loader pulls in the resolver), so a change to the
   # resolver must rebuild + redeploy the demo — otherwise a merged resolver fix sits on main while
   # the live demo serves the old bundle (which is exactly how the "New York → West New York" fix
   # almost shipped invisibly). workflow_dispatch is the manual override when a dependency
@@ -34,7 +34,6 @@ on:
     branches: [main]
     paths:
       - "docs/**"
-      - "packages/neural-web/**"
       # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
       - "packages/neural/**"
       - "packages/resolver-wof-wasm/**"
@@ -97,8 +96,7 @@ jobs:
           filters: |
             docs:
               - "docs/**"
-              - "packages/neural-web/**"
-              # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
+                      # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
               - "packages/neural/**"
               - "packages/resolver-wof-wasm/**"
               - "packages/resolver-wof-sqlite/**"

@@ -8,29 +8,23 @@
  *   had been fixed in the release smoke a day earlier because each carried its own copy.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join, resolvePath } from "path-ts"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
-
-interface WorkspaceManifest {
-	name: string
-	dependencies?: Record<string, string>
-	optionalDependencies?: Record<string, string>
-	peerDependencies?: Record<string, string>
-}
 
 const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependencies"] as const
 
 /**
  * Every workspace the root `workspaces` field names, expanded, keyed by package name, with its repo-relative directory.
  */
+// repo-health-ignore export-name-affix -- keys the shared reader's answer by package name; it adds the manifest read.
 export async function workspaceDirectories(repoRoot: string): Promise<Map<string, string>> {
 	const byName = new Map<string, string>()
 
 	for (const dir of await readWorkspaceDirectories(repoRoot)) {
-		const manifest = await readLocalJSONFile<WorkspaceManifest>(resolvePath(repoRoot, dir, "package.json"))
+		const manifest = await readPackageJSON<{ name: string }>(resolvePath(repoRoot, dir, "package.json"))
 
 		byName.set(manifest.name, dir)
 	}
@@ -60,11 +54,11 @@ export async function walkWorkspaceClosure(repoRoot: string, seeds: readonly str
 
 		closure.set(name, dir)
 
-		const manifest = await readLocalJSONFile<WorkspaceManifest>(resolvePath(repoRoot, dir, "package.json"))
+		const manifest = await readPackageJSON<{ name: string }>(resolvePath(repoRoot, dir, "package.json"))
 
 		for (const field of DEPENDENCY_FIELDS) {
 			for (const [dependency, spec] of Object.entries(manifest[field] ?? {})) {
-				if (spec.startsWith("workspace:") && !closure.has(dependency)) {
+				if (spec?.startsWith("workspace:") && !closure.has(dependency)) {
 					queue.push(dependency)
 				}
 			}

@@ -27,93 +27,93 @@
 	"sideEffects": false,
 	"imports": {
 		"#admin": {
+			"types": "./out/admin/index.d.ts",
 			"node": "./lib/admin/index.ts",
-			"default": "./out/admin/index.js",
-			"types": "./out/admin/index.d.ts"
+			"default": "./out/admin/index.js"
 		},
 		"#postcode": {
+			"types": "./out/postcode/index.d.ts",
 			"node": "./lib/postcode/index.ts",
-			"default": "./out/postcode/index.js",
-			"types": "./out/postcode/index.d.ts"
+			"default": "./out/postcode/index.js"
 		},
 		"#resolve": {
+			"types": "./out/resolve/index.d.ts",
 			"node": "./lib/resolve/index.ts",
-			"default": "./out/resolve/index.js",
-			"types": "./out/resolve/index.d.ts"
+			"default": "./out/resolve/index.js"
 		},
 		"#street": {
+			"types": "./out/street/index.d.ts",
 			"node": "./lib/street/index.ts",
-			"default": "./out/street/index.js",
-			"types": "./out/street/index.d.ts"
+			"default": "./out/street/index.js"
 		},
 		"#test/backend-name-key": "./test/helpers/backend-name-key.ts",
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./resolve": {
+			"types": "./out/resolve/index.d.ts",
 			"node": "./lib/resolve/index.ts",
-			"default": "./out/resolve/index.js",
-			"types": "./out/resolve/index.d.ts"
+			"default": "./out/resolve/index.js"
 		},
 		"./span-rescore": {
+			"types": "./out/span-rescore.d.ts",
 			"node": "./lib/span-rescore.ts",
-			"default": "./out/span-rescore.js",
-			"types": "./out/span-rescore.d.ts"
+			"default": "./out/span-rescore.js"
 		},
 		"./backend-capabilities": {
+			"types": "./out/backend-capabilities.d.ts",
 			"node": "./lib/backend-capabilities.ts",
-			"default": "./out/backend-capabilities.js",
-			"types": "./out/backend-capabilities.d.ts"
+			"default": "./out/backend-capabilities.js"
 		},
 		"./decorate-node": {
+			"types": "./out/decorate-node.d.ts",
 			"node": "./lib/decorate-node.ts",
-			"default": "./out/decorate-node.js",
-			"types": "./out/decorate-node.d.ts"
+			"default": "./out/decorate-node.js"
 		},
 		"./plausibility": {
+			"types": "./out/plausibility.d.ts",
 			"node": "./lib/plausibility.ts",
-			"default": "./out/plausibility.js",
-			"types": "./out/plausibility.d.ts"
+			"default": "./out/plausibility.js"
 		},
 		"./remote-resolver": {
+			"types": "./out/remote-resolver.d.ts",
 			"node": "./lib/remote-resolver.ts",
-			"default": "./out/remote-resolver.js",
-			"types": "./out/remote-resolver.d.ts"
+			"default": "./out/remote-resolver.js"
 		},
 		"./rerank": {
+			"types": "./out/rerank.d.ts",
 			"node": "./lib/rerank.ts",
-			"default": "./out/rerank.js",
-			"types": "./out/rerank.d.ts"
+			"default": "./out/rerank.js"
 		},
 		"./toponym-prior": {
+			"types": "./out/toponym-prior.d.ts",
 			"node": "./lib/toponym-prior.ts",
-			"default": "./out/toponym-prior.js",
-			"types": "./out/toponym-prior.d.ts"
+			"default": "./out/toponym-prior.js"
 		},
 		"./admin": {
+			"types": "./out/admin/index.d.ts",
 			"node": "./lib/admin/index.ts",
-			"default": "./out/admin/index.js",
-			"types": "./out/admin/index.d.ts"
+			"default": "./out/admin/index.js"
 		},
 		"./postcode": {
+			"types": "./out/postcode/index.d.ts",
 			"node": "./lib/postcode/index.ts",
-			"default": "./out/postcode/index.js",
-			"types": "./out/postcode/index.d.ts"
+			"default": "./out/postcode/index.js"
 		},
 		"./street": {
+			"types": "./out/street/index.d.ts",
 			"node": "./lib/street/index.ts",
-			"default": "./out/street/index.js",
-			"types": "./out/street/index.d.ts"
+			"default": "./out/street/index.js"
 		}
 	},
 	"publishConfig": {

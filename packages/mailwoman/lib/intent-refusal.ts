@@ -9,7 +9,7 @@
  *   nonsense from it ("Statue of Liberty" resolved Of, Trabzon through a fuzzy locality; "Restaurants
  *   in London" resolved London, Kentucky). The geocode ABSTAINS with the verdict's intent markers
  *   attached; POI-lane answering lives in the runtime pipeline's poiIntent stage. The refusal is a
- *   VERDICT, not a miss — {@link hasRefusalMarker} lets the register-flip retry stand down (a retry
+ *   VERDICT, not a miss — {@link thingQueryRefusalMarkers} lets the register-flip retry stand down (a retry
  *   with a pinned register would skip this check and resolve the refused nonsense; measured on the
  *   harness's "Pharmacy near me" → a Hungarian namesake).
  *

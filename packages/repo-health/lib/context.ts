@@ -13,16 +13,12 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import type { RepoContext } from "#check"
 
 /**
- * The tracked files of the checkout at `repoRoot`, as `git ls-files` lists them (repo-relative, NUL-separated on the
- * wire so a path carrying a newline survives).
- */
-export async function listTrackedFiles(repoRoot: string): Promise<string[]> {
-	return trackedFiles(repoRoot)
-}
-
-/**
  * A `RepoContext` for the checkout at `repoRoot` (default: the repository this module sits in).
+ *
+ * The file listing is `trackedFiles` from `@mailwoman/core/git` directly. A `listTrackedFiles` wrapper stood here and
+ * returned that call unchanged, which is a second public name for one function and exactly what `export-name-affix`
+ * reports.
  */
 export async function collectRepoContext(repoRoot = String(repoRootPath())): Promise<RepoContext> {
-	return { repoRoot, trackedFiles: await listTrackedFiles(repoRoot) }
+	return { repoRoot, trackedFiles: await trackedFiles(repoRoot) }
 }

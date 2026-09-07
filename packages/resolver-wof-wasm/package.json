@@ -28,62 +28,62 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./env": {
+			"types": "./out/env.d.ts",
 			"node": "./lib/env.ts",
-			"default": "./out/env.js",
-			"types": "./out/env.d.ts"
+			"default": "./out/env.js"
 		},
 		"./browser-cascade": {
+			"types": "./out/browser-cascade.d.ts",
 			"node": "./lib/browser-cascade.ts",
-			"default": "./out/browser-cascade.js",
-			"types": "./out/browser-cascade.d.ts"
+			"default": "./out/browser-cascade.js"
 		},
 		"./loader": {
+			"types": "./out/loader.d.ts",
 			"node": "./lib/loader.ts",
-			"default": "./out/loader.js",
-			"types": "./out/loader.d.ts"
+			"default": "./out/loader.js"
 		},
 		"./lookup": {
+			"types": "./out/lookup.d.ts",
 			"node": "./lib/lookup.ts",
-			"default": "./out/lookup.js",
-			"types": "./out/lookup.d.ts"
+			"default": "./out/lookup.js"
 		},
 		"./httpvfs/resolver": {
+			"types": "./out/httpvfs/resolver.d.ts",
 			"node": "./lib/httpvfs/resolver.ts",
-			"default": "./out/httpvfs/resolver.js",
-			"types": "./out/httpvfs/resolver.d.ts"
+			"default": "./out/httpvfs/resolver.js"
 		},
 		"./httpvfs/street": {
+			"types": "./out/httpvfs/street.d.ts",
 			"node": "./lib/httpvfs/street.ts",
-			"default": "./out/httpvfs/street.js",
-			"types": "./out/httpvfs/street.d.ts"
+			"default": "./out/httpvfs/street.js"
 		},
 		"./httpvfs/poi": {
+			"types": "./out/httpvfs/poi.d.ts",
 			"node": "./lib/httpvfs/poi.ts",
-			"default": "./out/httpvfs/poi.js",
-			"types": "./out/httpvfs/poi.d.ts"
+			"default": "./out/httpvfs/poi.js"
 		},
 		"./httpvfs/rows": {
+			"types": "./out/httpvfs/rows.d.ts",
 			"node": "./lib/httpvfs/rows.ts",
-			"default": "./out/httpvfs/rows.js",
-			"types": "./out/httpvfs/rows.d.ts"
+			"default": "./out/httpvfs/rows.js"
 		},
 		"./host-assets": {
+			"types": "./out/host-assets.d.ts",
 			"node": "./lib/host-assets.ts",
-			"default": "./out/host-assets.js",
-			"types": "./out/host-assets.d.ts"
+			"default": "./out/host-assets.js"
 		}
 	},
 	"publishConfig": {

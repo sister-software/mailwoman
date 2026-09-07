@@ -11,9 +11,10 @@
  *   let the v7.2.0 ship-break class through untested.
  */
 
-import { readLink, readLocalJSONFile, readLocalTextFile, tryStatLink } from "@mailwoman/core/fs/readers"
+import { readLink, readLocalTextFile, tryStatLink } from "@mailwoman/core/fs/readers"
 import { copyFileTo, removePath, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { dirname, resolvePath } from "path-ts"
 
@@ -28,7 +29,7 @@ import { assertNoSourceTargets, transformExportsForPublish, transformImportsForP
  * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
 export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promise<void> {
-	const pkg = await readLocalJSONFile<{ files?: unknown[] }>(resolvePath(workspaceDir, "package.json"))
+	const pkg = await readPackageJSON(resolvePath(workspaceDir, "package.json"))
 
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs

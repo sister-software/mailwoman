@@ -28,58 +28,58 @@
 	"type": "module",
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./table": {
+			"types": "./out/table.d.ts",
 			"node": "./lib/table.ts",
-			"default": "./out/table.js",
-			"types": "./out/table.d.ts"
+			"default": "./out/table.js"
 		},
 		"./overpass": {
+			"types": "./out/overpass.d.ts",
 			"node": "./lib/overpass.ts",
-			"default": "./out/overpass.js",
-			"types": "./out/overpass.d.ts"
+			"default": "./out/overpass.js"
 		},
 		"./venue-word-hints": {
+			"types": "./out/venue-word-hints.d.ts",
 			"node": "./lib/venue-word-hints.ts",
-			"default": "./out/venue-word-hints.js",
-			"types": "./out/venue-word-hints.d.ts"
+			"default": "./out/venue-word-hints.js"
 		},
 		"./data/*.json": "./data/*.json",
 		"./brands": {
+			"types": "./out/brands.d.ts",
 			"node": "./lib/brands.ts",
-			"default": "./out/brands.js",
-			"types": "./out/brands.d.ts"
+			"default": "./out/brands.js"
 		},
 		"./lookup": {
+			"types": "./out/lookup.d.ts",
 			"node": "./lib/lookup.ts",
-			"default": "./out/lookup.js",
-			"types": "./out/lookup.d.ts"
+			"default": "./out/lookup.js"
 		},
 		"./scripts/generate-taxonomy": {
+			"types": "./out/scripts/generate-taxonomy.d.ts",
 			"node": "./lib/scripts/generate-taxonomy.ts",
-			"default": "./out/scripts/generate-taxonomy.js",
-			"types": "./out/scripts/generate-taxonomy.d.ts"
+			"default": "./out/scripts/generate-taxonomy.js"
 		},
 		"./types": {
+			"types": "./out/types.d.ts",
 			"node": "./lib/types.ts",
-			"default": "./out/types.js",
-			"types": "./out/types.d.ts"
+			"default": "./out/types.js"
 		},
 		"./packaged-data": {
+			"types": "./out/packaged-data.d.ts",
 			"node": "./lib/packaged-data.ts",
-			"default": "./out/packaged-data.js",
-			"types": "./out/packaged-data.d.ts"
+			"default": "./out/packaged-data.js"
 		}
 	},
 	"publishConfig": {

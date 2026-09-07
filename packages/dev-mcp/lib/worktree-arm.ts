@@ -33,10 +33,11 @@
  *   for the same reason, since "source that can change a geocode" is the one question both are asking.
  */
 
-import { readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join } from "path-ts"
@@ -76,12 +77,12 @@ async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
 	const links: WorkspaceLink[] = []
 
 	// A literal entry the older ref does not carry is "not a workspace at this ref", so it is skipped rather than raised.
-	for (const entry of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
-		const name = (await readLocalJSONFile<{ name?: string }>(join(root, entry, "package.json"))).name ?? ""
+	for (const directory of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
+		const { name } = await readPackageJSON(join(root, directory, "package.json"))
 
-		if (name) {
-			links.push({ packageName: name, directory: entry })
-		}
+		if (!name) throw new Error(`${join(root, directory, "package.json")} declares no name`)
+
+		links.push({ packageName: name, directory })
 	}
 
 	return links
@@ -139,7 +140,7 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
  * arm could not reach backwards past its own introduction — which is most of the refs anyone wants to compare against.
  * Its imports resolve inside the worktree, so it is the ref's pipeline that answers.
  *
- * It reads {@link ArmRequest} on stdin and writes {@link ArmResponse} on stdout, so nothing is passed by argv and an
+ * It reads one JSON request on stdin and writes one `WorktreeAnswer` on stdout, so nothing is passed by argv and an
  * input containing a quote or a newline cannot become a shell problem.
  */
 const RUNNER_SOURCE = `

@@ -84,9 +84,8 @@ Both ONNX runtimes are optional peer dependencies of `@mailwoman/neural`: a brow
 `onnxruntime-web`, a Node service installs `onnxruntime-node`, and neither pays for the other's
 binaries. Neither is installed for you.
 
-`@mailwoman/neural-web` still publishes, and is now a **deprecated re-export shim** over those two
-subpaths. Existing imports keep working — every name is re-exported at its original identity — but new
-code should import from `@mailwoman/neural`.
+`@mailwoman/neural-web`, the package the browser runtime lived in before 9.0.0, is gone: 9.3.0 was its last
+publish, a re-export shim over those two subpaths. Import from `@mailwoman/neural`.
 
 [Parse in the browser](../tutorials/parse-in-the-browser.mdx) wires it up.
 

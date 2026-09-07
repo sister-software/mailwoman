@@ -22,10 +22,10 @@
  *   Run AFTER `yarn compile`. Usage: yarn mwops release smoke-clean-install
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { join, resolvePath as resolve } from "path-ts"
 
@@ -377,15 +377,13 @@ async function assertClosureComplete(repoRoot: string): Promise<void> {
 	const missing = new Map<string, string[]>()
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
-		const manifest = await readLocalJSONFile<Record<string, Record<string, string>>>(
-			resolve(repoRoot, dir, "package.json")
-		)
+		const manifest = await readPackageJSON(resolve(repoRoot, dir, "package.json"))
 
 		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
 			for (const [dep, spec] of Object.entries(manifest[depType] ?? {})) {
 				const firstParty = dep.startsWith("@mailwoman/") || dep === "mailwoman"
 
-				if (firstParty && spec.startsWith("workspace:") && !(dep in WORKSPACES)) {
+				if (firstParty && spec?.startsWith("workspace:") && !(dep in WORKSPACES)) {
 					missing.set(dep, [...(missing.get(dep) ?? []), `${name} (${depType})`])
 				}
 			}

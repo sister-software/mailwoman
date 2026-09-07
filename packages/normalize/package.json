@@ -27,62 +27,62 @@
 	"sideEffects": false,
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
+			"types": "./out/index.d.ts",
 			"node": "./lib/index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+			"default": "./out/index.js"
 		},
 		"./abbreviations": {
+			"types": "./out/abbreviations.d.ts",
 			"node": "./lib/abbreviations.ts",
-			"default": "./out/abbreviations.js",
-			"types": "./out/abbreviations.d.ts"
+			"default": "./out/abbreviations.js"
 		},
 		"./cjk": {
+			"types": "./out/cjk.d.ts",
 			"node": "./lib/cjk.ts",
-			"default": "./out/cjk.js",
-			"types": "./out/cjk.d.ts"
+			"default": "./out/cjk.js"
 		},
 		"./compute": {
+			"types": "./out/compute.d.ts",
 			"node": "./lib/compute.ts",
-			"default": "./out/compute.js",
-			"types": "./out/compute.d.ts"
+			"default": "./out/compute.js"
 		},
 		"./nfc": {
+			"types": "./out/nfc.d.ts",
 			"node": "./lib/nfc.ts",
-			"default": "./out/nfc.js",
-			"types": "./out/nfc.d.ts"
+			"default": "./out/nfc.js"
 		},
 		"./offset-map": {
+			"types": "./out/offset-map.d.ts",
 			"node": "./lib/offset-map.ts",
-			"default": "./out/offset-map.js",
-			"types": "./out/offset-map.d.ts"
+			"default": "./out/offset-map.js"
 		},
 		"./punctuation": {
+			"types": "./out/punctuation.d.ts",
 			"node": "./lib/punctuation.ts",
-			"default": "./out/punctuation.js",
-			"types": "./out/punctuation.d.ts"
+			"default": "./out/punctuation.js"
 		},
 		"./comma-spacing": {
+			"types": "./out/comma-spacing.d.ts",
 			"node": "./lib/comma-spacing.ts",
-			"default": "./out/comma-spacing.js",
-			"types": "./out/comma-spacing.d.ts"
+			"default": "./out/comma-spacing.js"
 		},
 		"./fold": {
+			"types": "./out/fold.d.ts",
 			"node": "./lib/fold.ts",
-			"default": "./out/fold.js",
-			"types": "./out/fold.d.ts"
+			"default": "./out/fold.js"
 		},
 		"./whitespace": {
+			"types": "./out/whitespace.d.ts",
 			"node": "./lib/whitespace.ts",
-			"default": "./out/whitespace.js",
-			"types": "./out/whitespace.d.ts"
+			"default": "./out/whitespace.js"
 		}
 	},
 	"publishConfig": {

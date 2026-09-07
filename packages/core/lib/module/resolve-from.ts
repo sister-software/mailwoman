@@ -47,22 +47,34 @@ export function resolvePackagePathFrom(base: string, packageName: string, ...seg
 	return resolvePath(dirname(resolvePackageJSON(base, packageName)), ...segments)
 }
 
-export type PackageJSONLike<D extends object = object> = PackageJson & D
+/**
+ * The `mailwoman` block this repository's own manifests may carry. A data-only weights overlay names the base package
+ * it shares `model.onnx` and `tokenizer.model` with, which is the field `@mailwoman/neural` follows to find them.
+ */
+export interface MailwomanManifestFields {
+	mailwoman?: {
+		baseWeights?: string
+	}
+}
+
+export type PackageJSONLike<D extends object = MailwomanManifestFields> = PackageJson & D
 
 /**
  * Read and parse a package's `package.json`, given its path from {@link resolvePackageJSON}.
  */
-export async function readPackageJSON<D extends object = object>(manifestPath: string): Promise<PackageJSONLike<D>>
+export async function readPackageJSON<D extends object = MailwomanManifestFields>(
+	manifestPath: string
+): Promise<PackageJSONLike<D>>
 
 /**
  * Read and parse a package's `package.json`, resolving the package from the caller's `import.meta.url`.
  */
-export async function readPackageJSON<D extends object = object>(
+export async function readPackageJSON<D extends object = MailwomanManifestFields>(
 	base: string,
 	packageName: string
 ): Promise<PackageJSONLike<D>>
 
-export async function readPackageJSON<D extends object = object>(
+export async function readPackageJSON<D extends object = MailwomanManifestFields>(
 	first: string,
 	packageName?: string
 ): Promise<PackageJSONLike<D>> {

@@ -10,6 +10,7 @@
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 
 type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
 
@@ -33,6 +34,32 @@ export interface OpenAPIDocInfo {
 	}>
 	tags?: Array<{ name: string; description?: string }>
 	security?: OpenAPISecurityRequirements
+}
+
+/**
+ * The three document fields a served package takes from its own manifest, read at load rather than imported as a
+ * module: a JSON import makes `tsc` copy the manifest into `out/`, where it becomes the package scope for the compiled
+ * tree and breaks every `#` import in it.
+ *
+ * Each of the four served packages (`api`, `libpostal`, `nominatim`, `photon`) publishes a document naming itself, so
+ * the read and the mapping live here rather than four times over. A manifest missing any of the three raises: the
+ * document has no meaningful form without them, and every manifest here carries all three.
+ *
+ * @param base The CALLER's `import.meta.url`. The package resolves through the graph of the workspace that declares it,
+ *   which is what `resolve-from` exists for; resolving from here would answer through `@mailwoman/api-kit`'s instead.
+ */
+export async function readServedDocumentInfo(
+	base: string,
+	packageName: string
+): Promise<Pick<OpenAPIDocInfo, "title" | "version" | "description">> {
+	const manifest = await readPackageJSON(base, packageName)
+	const { name, version, description } = manifest
+
+	if (!name || !version || !description) {
+		throw new Error(`${packageName}/package.json must declare name, version and description for its OpenAPI document`)
+	}
+
+	return { title: name, version, description }
 }
 
 /**

@@ -24,7 +24,7 @@
  *   farmland nationally against nine specific criteria; §657.5(c) and (d) hand "additional farmland of
  *   statewide importance" and "of local importance" to state and local agencies respectively. So
  *   `Farmland of statewide importance` in Iowa and in Georgia are not the same claim, and a consumer that
- *   pooled them into one rank would be pooling incompatible vocabularies. {@link FARMLAND_SCOPE} carries
+ *   pooled them into one rank would be pooling incompatible vocabularies. {@link FarmlandScope} carries
  *   that distinction into the artifact rather than leaving it in a document.
  */
 

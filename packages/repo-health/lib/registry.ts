@@ -11,6 +11,8 @@
 import type { RepoCheck } from "#check"
 import { bundleGraphCheck } from "#checks/bundle-graph"
 import { debtCheck } from "#checks/debt"
+import { docLinkTargetsCheck } from "#checks/doc-link-targets"
+import { exportNameAffixCheck } from "#checks/export-name-affix"
 import { exportsCheck } from "#checks/exports"
 import { licenseRegisterCheck } from "#checks/license-register"
 import { manifestTargetsCheck } from "#checks/manifest-targets"
@@ -35,6 +37,8 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	noRootScriptsCheck,
 	manifestTargetsCheck,
 	privateNameShadowsCheck,
+	exportNameAffixCheck,
+	docLinkTargetsCheck,
 	runtimeFlagsCheck,
 	debtCheck,
 	bundleGraphCheck,

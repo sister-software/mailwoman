@@ -17,6 +17,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { canonicalJSON } from "mailwoman/eval-harness/preregistration"
 import { resolvePath } from "path-ts"
 
@@ -65,11 +66,11 @@ const NPM_REGISTRY = "https://registry.npmjs.org"
 
 export async function computeReleasePlan(repoRoot: string): Promise<ReleasePlan> {
 	const head = await gitHead(repoRoot)
-	const root = await readLocalJSONFile<{ version: string }>(resolvePath(repoRoot, "package.json"))
+	const root = await readPackageJSON<{ version: string }>(resolvePath(repoRoot, "package.json"))
 	const packages: ReleasePlanPackage[] = []
 
 	for (const workspace of await releaseWorkspaces(repoRoot)) {
-		const manifest = await readLocalJSONFile<{ name: string; version: string }>(
+		const manifest = await readPackageJSON<{ name: string; version: string }>(
 			resolvePath(repoRoot, workspace, "package.json")
 		)
 

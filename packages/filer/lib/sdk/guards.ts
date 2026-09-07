@@ -36,6 +36,7 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  * (`BuildFilerOptions.validFrom`, `ClusterFilersOptions.validFrom`) instead of relying on this function (or any other)
  * to guess one from a label.
  */
+// repo-health-ignore export-name-affix -- a guard that refuses a malformed value; `isoDate` formats and validates none.
 export function assertISODate(value: string, context: string, caller = "buildFilerDatabase"): string {
 	if (!ISO_DATE_PATTERN.test(value)) {
 		throw new Error(

@@ -11,10 +11,9 @@ The parser is a 39.4 MB ONNX graph and a SentencePiece tokenizer. Neither needs 
 can hold both, and `onnxruntime-web` can run the graph. `@mailwoman/neural/web-loader` is what wires
 them together, and it produces the same `AddressTree` the Node runtime does.
 
-If you have seen `@mailwoman/neural-web` referenced before, that package is now a deprecated
-re-export shim. The browser runtime moved into `@mailwoman/neural` itself, as the `./web-loader` and
-`./web-onnx-runner` subpaths, and the shim re-exports both at their original identity so existing
-imports keep working. Everything on this page uses the new subpaths.
+If you have seen `@mailwoman/neural-web` referenced before: the browser runtime moved into
+`@mailwoman/neural` itself, as the `./web-loader` and `./web-onnx-runner` subpaths, and the old package
+stopped publishing after 9.3.0. Everything on this page uses the subpaths.
 
 [The demo](/demo) is the finished version of this — the same loader, the same model files, plus a
 gazetteer and a map. By the end of this page you'll have the parse half of it in your own page: eight
