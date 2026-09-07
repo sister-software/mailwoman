@@ -43,7 +43,7 @@ module.exports = {
 				"EDGAR ingest along to reach three functions. Those three moved to the filer package root and the " +
 				"import now names them.",
 			severity: "error",
-			from: { path: "^packages/(?:react|neural-web|tile-worker|api|fastify|mcp)/" },
+			from: { path: "^packages/(?:react|neural-web|tile-worker|api|fastify|mcp|earth)/" },
 			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)/" },
 		},
 		{

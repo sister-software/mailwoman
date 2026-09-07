@@ -1,0 +1,14 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": "./lib",
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"noEmit": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./lib/**/*"],
+	"exclude": ["./out/**/*"],
+	"references": [{ "path": "../core" }]
+}
