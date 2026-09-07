@@ -38,6 +38,10 @@
 		"packages/api-kit": {
 			"entry": ["lib/index.ts", "test/fixtures/**/*.ts"]
 		},
+		"packages/astrogeology": {
+			"entry": ["lib/cli.ts", "lib/commands/*.tsx"],
+			"ignoreDependencies": ["wrangler"]
+		},
 		"packages/dev-mcp": {
 			"entry": ["lib/index.ts", "lib/cli.ts", "lib/worker.ts", "lib/hooks/*.ts"],
 			"ignoreDependencies": ["@vvago/vale"]
