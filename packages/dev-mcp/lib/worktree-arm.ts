@@ -140,7 +140,7 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
  * arm could not reach backwards past its own introduction — which is most of the refs anyone wants to compare against.
  * Its imports resolve inside the worktree, so it is the ref's pipeline that answers.
  *
- * It reads {@link ArmRequest} on stdin and writes {@link ArmResponse} on stdout, so nothing is passed by argv and an
+ * It reads one JSON request on stdin and writes one `WorktreeAnswer` on stdout, so nothing is passed by argv and an
  * input containing a quote or a newline cannot become a shell problem.
  */
 const RUNNER_SOURCE = `

@@ -27,7 +27,7 @@ import { join, relative, resolvePath } from "path-ts"
 
 /**
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer` payload enumerated by
- * {@link derivedWeightsInputPaths}.
+ * {@link derivedWeightsInputs}.
  *
  * The first entry mirrors the retired workflow cache key. The rest are what that key MISSED: the modules that generate
  * the binaries — each SOURCE module paired with its COMPILED counterpart, because the build spawns the compiled CLI.

@@ -79,7 +79,8 @@ export interface GeolocationCoordinatesLike {
 }
 
 /**
- * Type-predicate to determine if the given input appears to be a {@linkcode GeolocationCoordinates} object.
+ * Type-predicate to determine if the given input appears to be a {@linkcode GeolocationCoordinatesLike} object — the
+ * shape the browser's `GeolocationCoordinates` presents, without depending on the DOM type.
  */
 export function isGeolocationCoordinatesLike(input: unknown): input is GeolocationCoordinatesLike {
 	if (!input || typeof input !== "object") return false
@@ -225,7 +226,7 @@ export class GeoPoint implements PointLiteral {
 	 */
 	constructor()
 	/**
-	 * Create a new GeoPoint instance from another {@linkcode GeoJSONPosition} coordinates.
+	 * Create a new GeoPoint instance from another {@linkcode Point2DCoordinates} coordinates.
 	 */
 	constructor(
 		geoJSONPosition: Point2DCoordinates | Point3DCoordinates,
@@ -424,7 +425,7 @@ export class GeoPoint implements PointLiteral {
 /**
  * An array of positions for each point in the geometry.
  *
- * @see {@linkcode GeoJSONPosition} for more information.
+ * @see {@linkcode Point2DCoordinates} for more information.
  */
 export type MultiPointPath = [...points: Array<Point2DCoordinates | Point3DCoordinates>]
 
@@ -439,7 +440,7 @@ export interface MultiPointLiteral extends GeoObjectLiteral {
 	/**
 	 * An array of positions for each point in the geometry.
 	 *
-	 * @see {@linkcode GeoJSONPosition} for more information.
+	 * @see {@linkcode Point2DCoordinates} for more information.
 	 */
 	coordinates: MultiPointPath
 }

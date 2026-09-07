@@ -71,8 +71,8 @@ export interface NeuralAddressClassifierConfig {
 	endTransitions?: number[]
 	/**
 	 * #727 stage-2: the parsed semi-Markov segment-transition grammar (`semi-crf-transitions.json`), for the span head's
-	 * k-best decode. `loadFromWeights` populates it when the bundle ships the sidecar; exposed via {@link spanGrammar} so
-	 * the phase-4c name-evidence rerank can consume it without re-reading the file. Absent on a pre-v3 bundle.
+	 * k-best decode. `loadFromWeights` populates it when the bundle ships the sidecar; exposed as `spanGrammar` so the
+	 * phase-4c name-evidence rerank can consume it without re-reading the file. Absent on a pre-v3 bundle.
 	 */
 	semiCRFGrammar?: SemiCRFTransitions
 	/**
@@ -85,14 +85,14 @@ export interface NeuralAddressClassifierConfig {
 	/**
 	 * Path to the locale-general street-morphology FST binary shipped beside the resolved weights
 	 * (`fst-street-morphology.bin`), surfaced verbatim from {@link resolveWeights} — PATH ONLY, same posture as
-	 * {@link NeuralConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.streetMorphologyPath} so the runtime
-	 * pipeline's street-context check (#1315) deserializes the sealed artifact instead of rebuilding it from the
-	 * libpostal dictionaries per process.
+	 * {@link NeuralAddressClassifierConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.streetMorphologyPath} so
+	 * the runtime pipeline's street-context check (#1315) deserializes the sealed artifact instead of rebuilding it from
+	 * the libpostal dictionaries per process.
 	 */
 	streetMorphologyPath?: string
 	/**
 	 * Path to the `model.onnx` this instance actually loaded, surfaced verbatim from {@link resolveWeights} — PATH ONLY,
-	 * same posture as {@link NeuralConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.modelPath}.
+	 * same posture as {@link NeuralAddressClassifierConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.modelPath}.
 	 *
 	 * Resolution walks several rungs and an unusable rung is SKIPPED rather than reported, so which model answered is not
 	 * derivable from the options a caller passed: `resolveWeights` honours an explicit `cacheRoot` only when that
@@ -101,9 +101,9 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	modelPath?: string
 	/**
-	 * Which rung of the resolution ladder produced {@link NeuralConfig.modelPath} — `explicit`, `cache:<package>`,
-	 * `overlay:<package>`, or the installed package name. The path alone answers "which file"; this answers "and was that
-	 * the file I asked for", which is the question a mis-staged candidate turns on.
+	 * Which rung of the resolution ladder produced {@link NeuralAddressClassifierConfig.modelPath} — `explicit`,
+	 * `cache:<package>`, `overlay:<package>`, or the installed package name. The path alone answers "which file"; this
+	 * answers "and was that the file I asked for", which is the question a mis-staged candidate turns on.
 	 */
 	weightsSource?: string
 	/**
