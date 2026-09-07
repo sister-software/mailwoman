@@ -19,6 +19,12 @@
 		"esModuleInterop": true,
 		"jsx": "preserve",
 		"moduleResolution": "bundler",
+		// The `node` condition reaches a workspace package's `lib/*.ts` the way every other project here does. Without
+		// it this project can only take `types`, and inside one `tsc -b` that answer comes from a directory cache a
+		// project built BEFORE the package populated, so on a clean tree the lookup fails and the JavaScript fallback
+		// hands back signatures without their type parameters. This is the compiler's view only; webpack keeps its own
+		// conditions.
+		"customConditions": ["node"],
 		"module": "esnext",
 		"composite": true,
 		"emitDeclarationOnly": true,
