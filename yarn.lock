@@ -6090,7 +6090,7 @@ __metadata:
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
     "@vitest/runner": "npm:^4.1.11"
-    "@vitest/snapshot": "npm:^4.1.11"
+    "@vitest/snapshot": "npm:^5.0.0"
     hono: "npm:^4.13.7"
     kysely: "npm:^0.29.5"
     kysely-d1: "npm:^0.4.0"
@@ -11457,6 +11457,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vitest/pretty-format@npm:5.0.0":
+  version: 5.0.0
+  resolution: "@vitest/pretty-format@npm:5.0.0"
+  dependencies:
+    tinyrainbow: "npm:^3.1.1"
+  checksum: 10/a4b6d3ee6daa7541a6f2626e2b7771e769e1fe85c0e0c53e85c04a1b68ce2e77eca4314ef3b6e57f5a34fba4aea92420ff0379562b962b1c3e6e7e588ce58baf
+  languageName: node
+  linkType: hard
+
 "@vitest/runner@npm:4.1.11, @vitest/runner@npm:^4.1.11":
   version: 4.1.11
   resolution: "@vitest/runner@npm:4.1.11"
@@ -11467,7 +11476,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/snapshot@npm:4.1.11, @vitest/snapshot@npm:^4.1.11":
+"@vitest/snapshot@npm:4.1.11":
   version: 4.1.11
   resolution: "@vitest/snapshot@npm:4.1.11"
   dependencies:
@@ -11476,6 +11485,18 @@ __metadata:
     magic-string: "npm:^0.30.21"
     pathe: "npm:^2.0.3"
   checksum: 10/5d096373fb4b102f65ff884844a18c2d2e7d88caf68a64a842a245573311b2d531ca5a94ebf7e4fe39324e71a78670f74c949d4ec2cad3764c3f4c272b84d982
+  languageName: node
+  linkType: hard
+
+"@vitest/snapshot@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@vitest/snapshot@npm:5.0.0"
+  dependencies:
+    "@vitest/pretty-format": "npm:5.0.0"
+    "@vitest/utils": "npm:5.0.0"
+    magic-string: "npm:^1.2.3"
+    pathe: "npm:^2.0.3"
+  checksum: 10/83085014d6c8bea363d9f87924c1d72745da52947984dc2558d8e3a01464a71af8d8b5d56a6f3a3a7bb2ef038e98c805939ef5fda254fe7576502e92af71b45d
   languageName: node
   linkType: hard
 
@@ -11514,6 +11535,17 @@ __metadata:
     convert-source-map: "npm:^2.0.0"
     tinyrainbow: "npm:^3.1.0"
   checksum: 10/f05381e12d0926db7b01bfaae9a577fa664d36b96c23df185e4b0f6dad3a9fb59ac00931613da53b4511ee6ab473a14ac500c72c5ec5e9b3c3042875051f20c4
+  languageName: node
+  linkType: hard
+
+"@vitest/utils@npm:5.0.0":
+  version: 5.0.0
+  resolution: "@vitest/utils@npm:5.0.0"
+  dependencies:
+    "@vitest/pretty-format": "npm:5.0.0"
+    convert-source-map: "npm:^2.0.0"
+    tinyrainbow: "npm:^3.1.1"
+  checksum: 10/2cbf9849e388468ba9fa3e55767351cf36bfcadbe66abb9b7b9077cbfc6dc49afc0de479e3c07099a83ae5c5bf166bc8795abce8b8c16d6f3bd216f1145a46a1
   languageName: node
   linkType: hard
 
@@ -19277,7 +19309,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:^1.1.0":
+"magic-string@npm:^1.1.0, magic-string@npm:^1.2.3":
   version: 1.2.3
   resolution: "magic-string@npm:1.2.3"
   dependencies:
@@ -26282,6 +26314,13 @@ __metadata:
   version: 3.1.0
   resolution: "tinyrainbow@npm:3.1.0"
   checksum: 10/4c2c01dde1e5bb9a74973daaae141d4d733d246280b2f9a7f6a9e7dd8e940d48b2580a6086125278777897bc44635d6ccec5f9f563c2179dd2129f4542d0ec05
+  languageName: node
+  linkType: hard
+
+"tinyrainbow@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "tinyrainbow@npm:3.1.1"
+  checksum: 10/6aa4aadf89cc8ecf8c227ef189616911292c4f0d2d5708b669b00375c5a8b43058115685f043034ffb11a8744c24650a30493525ff62134b436d94c84fa33ed5
   languageName: node
   linkType: hard
 
