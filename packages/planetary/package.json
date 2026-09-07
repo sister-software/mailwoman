@@ -39,6 +39,16 @@
 			"types": "./out/routes.d.ts",
 			"node": "./lib/routes.ts",
 			"default": "./out/routes.js"
+		},
+		"./map/camera": {
+			"types": "./out/map/camera.d.ts",
+			"node": "./lib/map/camera.ts",
+			"default": "./out/map/camera.js"
+		},
+		"./features/selected": {
+			"types": "./out/features/selected.d.ts",
+			"node": "./lib/features/selected.ts",
+			"default": "./out/features/selected.js"
 		}
 	},
 	"scripts": {
