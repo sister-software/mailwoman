@@ -17,6 +17,10 @@ export interface LicenseEmail {
 	issued: string
 	expires: string
 	/**
+	 * The agreement version the license was bought under; the message links its page.
+	 */
+	agreement: string
+	/**
 	 * Present while the license's plaintext secret is still pending, which is until the first claim reads and clears it:
 	 * the first message carries it, and so does a re-send before that claim.
 	 */

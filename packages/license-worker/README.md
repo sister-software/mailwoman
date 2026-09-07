@@ -19,20 +19,20 @@ production only an `active` entry of the shipped register passes the self-test.
 
 ## Bindings
 
-| Binding                                              | Kind       | Meaning                                                                                                    |
-| ---------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `STRIPE_SECRET_KEY`                                  | secret     | a restricted key with read scope on checkout sessions, subscriptions, invoices, invoice payments, disputes |
-| `STRIPE_WEBHOOK_SECRET`                              | secret     | the webhook destination's signing secret                                                                   |
-| `LICENSE_SIGNING_KEY_PEM`                            | secret     | the worker's Ed25519 private key, PKCS#8 PEM                                                               |
-| `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone         |
-| `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                             |
-| `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                           |
-| `ISSUANCE_ENABLED`                                   | var        | the kill switch: `false` refuses to mint and answers claims `pending`; refresh and status keep working     |
-| `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts; an event or invoice from the other mode is refused               |
-| `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                 |
-| `EMAIL_FROM`                                         | var        | the sender address                                                                                         |
-| `LICENSE_LEDGER`                                     | D1         | the ledger: `licenses`, `license_tokens`, `stripe_events` (`migrations/0001_ledger.sql`)                   |
-| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid AND per client address, independently, for refresh and status       |
+| Binding                                              | Kind       | Meaning                                                                                                                                                                           |
+| ---------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `STRIPE_SECRET_KEY`                                  | secret     | a restricted key with read scope on checkout sessions, subscriptions, invoices, invoice payments, disputes                                                                        |
+| `STRIPE_WEBHOOK_SECRET`                              | secret     | the webhook destination's signing secret                                                                                                                                          |
+| `LICENSE_SIGNING_KEY_PEM`                            | secret     | the worker's Ed25519 private key, PKCS#8 PEM                                                                                                                                      |
+| `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone, as text and as HTML from the react-email template in `lib/email/template.tsx` |
+| `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                                                                                                    |
+| `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                                                                                                  |
+| `ISSUANCE_ENABLED`                                   | var        | the kill switch: `false` refuses to mint and answers claims `pending`; refresh and status keep working                                                                            |
+| `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts; an event or invoice from the other mode is refused                                                                                      |
+| `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                                                                                        |
+| `EMAIL_FROM`                                         | var        | the sender address                                                                                                                                                                |
+| `LICENSE_LEDGER`                                     | D1         | the ledger: `licenses`, `license_tokens`, `stripe_events` (`migrations/0001_ledger.sql`)                                                                                          |
+| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid AND per client address, independently, for refresh and status                                                                              |
 
 A production var still reading `REPLACE` makes `readEnv` refuse every request with 503, so an unfilled deploy never
 mints. Secrets arrive only through `wrangler secret put`; `.dev.vars.example` names the four for local `wrangler dev`.
@@ -173,4 +173,4 @@ imports `@mailwoman/core` through its `default` export condition, which names `o
 
 The bundle is checked at deploy time: `wrangler deploy --dry-run` writes it, and a `"node:` import, a private-key
 marker, or a Stripe key prefix in it fails the workflow, as does `upload_source_maps = true` in `wrangler.toml`. The worker runs without `nodejs_compat`, so the remedy for a hit is at the import's source, never a
-compatibility flag. Measured at 2.1 MB before compression.
+compatibility flag. Measured at 2.7 MB before compression, 0.4 MB gzipped.
