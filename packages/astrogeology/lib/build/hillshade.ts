@@ -6,11 +6,14 @@
  *   The hillshade build: shade the DEM in its own grid with the body's metres per degree, declare the shaded image
  *   as EPSG:4326 so GDAL tiles it on the XYZ grid, write MBTiles with overviews down to zoom 0, convert to PMTiles.
  *
- *   SHADING HAPPENS BEFORE THE EPSG:4326 LABEL, AND THAT ORDER IS THE CORRECTNESS RULE. `gdaldem` needs to know how
- *   many metres a degree spans to turn a height difference into a slope; on the Moon that is 30,323 m, on Mars
- *   59,158 m, and Earth's 111,320 m would flatten every slope by three to four times. The XYZ tile scheme is angular,
- *   the same lon/lat grid on any sphere, so once the image is shaded the Earth label costs nothing: it only tells GDAL
- *   which grid to tile.
+ *   SHADING HAPPENS BEFORE THE EPSG:4326 LABEL, AND THAT ORDER IS THE CORRECTNESS RULE. `gdaldem` needs the ratio of
+ *   the height unit to the grid unit to turn a height difference into a slope. The USGS mosaics are equirectangular
+ *   grids in the body's own metres, so that ratio is 1; a grid in degrees (the fixture) needs the body's metres per
+ *   degree, 30,323 m on the Moon and 59,158 m on Mars, and Earth's 111,320 m would flatten every slope by three to
+ *   four times. The build reads the grid's unit from the file rather than assuming either. The XYZ tile scheme is
+ *   angular, the same lon/lat grid on any sphere, so once the image is shaded the Earth label costs nothing: it only
+ *   tells GDAL which grid to tile, and the whole-body extent is assigned beside it so a grid in metres is not read as
+ *   degrees.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -19,6 +22,55 @@ import { runFile } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
 
 import { BODIES, type BuildableBodyID } from "#bodies"
+
+/**
+ * How far a source's width may differ from the body's circumference (or from 360°) and still count as a global mosaic.
+ */
+const GLOBAL_EXTENT_TOLERANCE = 0.005
+
+/**
+ * The whole-body extent every archive is tiled on, as `gdal_translate -a_ullr` takes it: west, north, east, south.
+ */
+const WHOLE_BODY_ULLR = ["-180", "90", "180", "-90"] as const
+
+interface DEMGrid {
+	/**
+	 * True when the grid's coordinates are the body's metres (a projected CRS); false for degrees.
+	 */
+	projectedMetres: boolean
+	width: number
+}
+
+/**
+ * The unit and width of a DEM's grid, from `gdalinfo`. A source that does not span the whole body is refused: the
+ * extent assigned below is the whole body's.
+ */
+async function readDEMGrid(demPath: string, body: BuildableBodyID): Promise<DEMGrid> {
+	const { stdout } = await runFile("gdalinfo", ["-json", demPath])
+
+	const info = parseJSONStrict<{
+		coordinateSystem?: { wkt?: string }
+		cornerCoordinates?: { upperLeft?: [number, number]; lowerRight?: [number, number] }
+	}>(stdout)
+
+	const wkt = info.coordinateSystem?.wkt ?? ""
+	const projectedMetres = wkt.startsWith("PROJCRS") && wkt.includes('LENGTHUNIT["metre"')
+	const [west] = info.cornerCoordinates?.upperLeft ?? []
+	const [east] = info.cornerCoordinates?.lowerRight ?? []
+
+	if (west === undefined || east === undefined) throw new Error(`${demPath}: gdalinfo reports no corner coordinates`)
+
+	const width = east - west
+	const expected = projectedMetres ? 2 * Math.PI * BODIES[body].meanRadiusKm * 1000 : 360
+
+	if (Math.abs(width - expected) / expected > GLOBAL_EXTENT_TOLERANCE) {
+		throw new Error(
+			`${demPath}: the grid spans ${width.toFixed(0)} ${projectedMetres ? "m" : "°"}, not the whole body (${expected.toFixed(0)}); the build assigns the whole-body extent and cannot tile a partial mosaic`
+		)
+	}
+
+	return { projectedMetres, width }
+}
 
 export interface HillshadeBuildOptions {
 	body: BuildableBodyID
@@ -46,19 +98,21 @@ const VERTICAL_EXAGGERATION = 1
  */
 export async function buildHillshadePMTiles(options: HillshadeBuildOptions): Promise<{ commands: string[][] }> {
 	const body = BODIES[options.body]
+	const grid = await readDEMGrid(options.demPath, options.body)
 
 	await using scratch = await temporaryDirectory("astrogeology-hillshade-")
 	const shaded = String(resolvePath(scratch.path, "hillshade.tif"))
 	const forTiling = String(resolvePath(scratch.path, "hillshade-4326.tif"))
 	const mbtiles = String(resolvePath(scratch.path, "hillshade.mbtiles"))
 
-	// 1. Shade in the source grid, where a degree is the body's arc length; `-s` is metres per degree on this body.
+	// 1. Shade in the source grid. `-s` is the height unit over the grid unit: 1 on a grid in the body's metres, the
+	//    body's metres per degree on a grid in degrees.
 	const shade = [
 		"hillshade",
 		options.demPath,
 		shaded,
 		"-s",
-		String(body.metresPerDegree),
+		grid.projectedMetres ? "1" : String(body.metresPerDegree),
 		"-z",
 		String(VERTICAL_EXAGGERATION),
 		"-az",
@@ -73,8 +127,9 @@ export async function buildHillshadePMTiles(options: HillshadeBuildOptions): Pro
 	await runFile("gdaldem", shade)
 
 	// 2. The XYZ tile scheme is angular: the same lon/lat grid on any sphere. Declaring the shaded image as EPSG:4326
-	//    makes GDAL tile it on that grid; the metres are Earth's, which is why shading happened before this step.
-	const declare = ["-a_srs", "EPSG:4326", shaded, forTiling]
+	//    with the whole-body extent makes GDAL tile it on that grid; the metres are Earth's, which is why shading
+	//    happened before this step.
+	const declare = ["-a_srs", "EPSG:4326", "-a_ullr", ...WHOLE_BODY_ULLR, shaded, forTiling]
 
 	await runFile("gdal_translate", declare)
 

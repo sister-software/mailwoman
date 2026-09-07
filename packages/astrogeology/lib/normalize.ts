@@ -11,24 +11,33 @@
 import type { BuildableBodyID } from "#bodies"
 import { type PlanetaryNomenclatureFeature, PlanetaryNomenclatureFeatureSchema } from "#schema/nomenclature"
 
+/**
+ * One shapefile row as the GeoJSON transport carries it. An absent text attribute arrives as `""` from some rows and as
+ * `null` from others (the Mars archive writes `null` for a missing `quad_name`); both mean absence.
+ */
 export interface NomenclatureSourceRow {
 	name: string
-	clean_name: string
-	approvaldt: string
-	origin: string
+	clean_name: string | null
+	approvaldt: string | null
+	origin: string | null
 	diameter: number | null
 	center_lon: number
 	center_lat: number
 	type: string
-	code: string
-	approval: string
+	code: string | null
+	approval: string | null
 	min_lon: number
 	max_lon: number
 	min_lat: number
 	max_lat: number
-	quad_name: string
+	quad_name: string | null
 	link: string
 }
+
+/**
+ * A text attribute with `null` folded into the blank the schema maps to absence.
+ */
+const text = (value: string | null): string => value ?? ""
 
 export interface NormalizedBBox {
 	minLon: number
@@ -99,17 +108,17 @@ export function featureFromSourceRow(body: BuildableBodyID, row: NomenclatureSou
 		id: featureIDFromLink(row.link),
 		body,
 		name: row.name,
-		cleanName: row.clean_name,
+		cleanName: text(row.clean_name),
 		featureType: row.type,
-		featureTypeCode: row.code,
+		featureTypeCode: text(row.code),
 		diameterKm: row.diameter ?? undefined,
 		centerLon: normalizeLongitude(row.center_lon),
 		centerLat: clampLat(row.center_lat),
 		bbox: normalizeBBox({ minLon: row.min_lon, maxLon: row.max_lon, minLat: row.min_lat, maxLat: row.max_lat }),
-		approvalStatus: row.approval,
-		approvalDate: approvalDateFromSource(row.approvaldt),
-		origin: row.origin,
-		quadName: row.quad_name,
+		approvalStatus: text(row.approval),
+		approvalDate: approvalDateFromSource(text(row.approvaldt)),
+		origin: text(row.origin),
+		quadName: text(row.quad_name),
 		source: "usgs-iau",
 	})
 }

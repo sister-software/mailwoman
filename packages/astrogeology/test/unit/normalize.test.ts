@@ -97,3 +97,29 @@ test("featureFromSourceRow projects Tycho", () => {
 	expect(feature.centerLat).toBeCloseTo(-43.2958, 4)
 	expect(feature.origin).toBeUndefined()
 })
+
+test("featureFromSourceRow takes null for an absent attribute, as the Mars archive writes it", () => {
+	const feature = featureFromSourceRow("mars", {
+		name: "Diacria",
+		clean_name: "Diacria",
+		approvaldt: "1958/01/01 00:00:00",
+		origin: null,
+		diameter: 0,
+		center_lon: 180,
+		center_lat: 49.6666,
+		type: "Albedo Feature",
+		code: "AL",
+		approval: "Adopted by IAU",
+		min_lon: 180,
+		max_lon: 180,
+		min_lat: 49.6666,
+		max_lat: 49.6666,
+		quad_name: null,
+		link: "http://planetarynames.wr.usgs.gov/Feature/1522",
+	})
+
+	expect(feature.origin).toBeUndefined()
+	expect(feature.quadName).toBeUndefined()
+	expect(feature.diameterKm).toBe(0)
+	expect(feature.centerLon).toBe(180)
+})

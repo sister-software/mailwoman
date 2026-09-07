@@ -19,9 +19,9 @@ import { publishTiles, uploadToBucket } from "mailwoman/tiles/publish"
 import { resolvePath } from "path-ts"
 
 import type { BuildableBodyID } from "#bodies"
-import { buildDirectory, buildOutputs } from "#commands/build"
-import { parseBody } from "#commands/fetch"
-import { verifyBody } from "#commands/verify"
+import { buildDirectory, buildOutputs } from "#build/layout"
+import { verifyBody } from "#build/verify"
+import { parseBody } from "#commands/options"
 import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "#schema/manifest"
 
 /**

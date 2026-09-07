@@ -11,7 +11,7 @@ import { Spinner } from "@inkjs/ui"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-import { BODIES, type BuildableBodyID } from "#bodies"
+import { parseBody } from "#commands/options"
 import { downloadPinned } from "#sdk/fetch"
 import { type PlanetarySourceKind, sourceFor } from "#sdk/sources"
 
@@ -33,15 +33,6 @@ interface Options {
 }
 
 const KINDS: readonly PlanetarySourceKind[] = ["nomenclature", "dem"]
-
-/**
- * The body a `--body` value names, or a usage error.
- */
-export function parseBody(value: string): BuildableBodyID {
-	if (value in BODIES) return value as BuildableBodyID
-
-	throw new CommandError(`--body must be one of ${Object.keys(BODIES).join(", ")}, got ${JSON.stringify(value)}`)
-}
 
 function parseKinds(value: string | undefined): readonly PlanetarySourceKind[] {
 	if (value === undefined) return KINDS

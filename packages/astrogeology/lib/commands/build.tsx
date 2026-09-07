@@ -9,7 +9,6 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
@@ -17,6 +16,7 @@ import { resolvePath } from "path-ts"
 
 import { BODIES, type BuildableBodyID } from "#bodies"
 import { buildHillshadePMTiles } from "#build/hillshade"
+import { buildDirectory, buildOutputs } from "#build/layout"
 import { emitManifest } from "#build/manifest"
 import { applyPMTilesMetadata, hillshadeMetadata, nomenclatureMetadata } from "#build/metadata"
 import {
@@ -26,7 +26,7 @@ import {
 	writeNomenclatureNDJSON,
 } from "#build/nomenclature"
 import { buildSearchIndex } from "#build/search-index"
-import { parseBody } from "#commands/fetch"
+import { parseBody, parseMaxZoom } from "#commands/options"
 import { featureFromSourceRow } from "#normalize"
 import type { PlanetaryBuildManifest } from "#schema/manifest"
 import type { PlanetaryNomenclatureFeature } from "#schema/nomenclature"
@@ -51,30 +51,6 @@ interface Options {
 	body: string
 	maxZoom: string
 	out?: string
-}
-
-/**
- * The artifact names a body's build writes, relative to its output directory.
- */
-export function buildOutputs(body: BuildableBodyID): {
-	nomenclature: string
-	hillshade: string
-	search: string
-	manifest: string
-} {
-	return {
-		nomenclature: `${body}.pmtiles`,
-		hillshade: `${body}-hillshade.pmtiles`,
-		search: `${body}-search.ancestrie`,
-		manifest: "manifest.json",
-	}
-}
-
-/**
- * The output directory a body builds into, unless `--out` names another.
- */
-export function buildDirectory(body: BuildableBodyID, out: string | undefined): string {
-	return out ?? String(dataRootPath("astrogeology", body, "build"))
 }
 
 async function pinnedSource(
@@ -184,15 +160,6 @@ export async function buildBody(
 	report(`wrote ${names.manifest}`)
 
 	return { directory, features: features.length, searchEntries, manifest }
-}
-
-function parseMaxZoom(value: string): number {
-	const zoom = Number(value)
-
-	if (!Number.isInteger(zoom) || zoom < 0)
-		throw new CommandError(`--max-zoom must be a non-negative integer, got ${value}`)
-
-	return zoom
 }
 
 const Build: ParsedCommandComponent<Options> = ({ options }) => {
