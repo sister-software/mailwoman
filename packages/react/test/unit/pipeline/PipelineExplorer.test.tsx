@@ -7,11 +7,11 @@
  *   presentational units) against a mock runtime — no model, no gazetteer.
  */
 
+import { makePipelineRuntime } from "@mailwoman/react/map/fake-runtime"
 import { PipelineExplorer } from "@mailwoman/react/pipeline/PipelineExplorer"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { makePipelineRuntime } from "../../mocks.tsx"
 import { renderComponent } from "../../render.tsx"
 
 test("parses on submit and renders components + resolved place", async () => {

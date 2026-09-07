@@ -11,12 +11,12 @@
  *   ONNX, no gazetteer, no tiles.
  */
 
+import { makeDemoRuntime } from "@mailwoman/react/map/fake-runtime"
 import { GeocoderDemo } from "@mailwoman/react/map/GeocoderDemo"
 import { act } from "react"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { makeDemoRuntime } from "../../mocks.tsx"
 import { renderComponent } from "../../render.tsx"
 
 /**
