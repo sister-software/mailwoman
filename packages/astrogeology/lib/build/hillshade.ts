@@ -10,7 +10,7 @@
  *   many metres a degree spans to turn a height difference into a slope; on the Moon that is 30,323 m, on Mars
  *   59,158 m, and Earth's 111,320 m would flatten every slope by three to four times. The XYZ tile scheme is angular,
  *   the same lon/lat grid on any sphere, so once the image is shaded the Earth label costs nothing: it only tells GDAL
- *   which grid to cut.
+ *   which grid to tile.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

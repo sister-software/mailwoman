@@ -13,7 +13,9 @@
  *   z1 halves differ; 1024 pixels across lands the MBTiles step at zoom 2, where overviews have something to average.
  */
 
+import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
 import { buildHillshadePMTiles } from "@mailwoman/astrogeology/build/hillshade"
+import { emitManifest } from "@mailwoman/astrogeology/build/manifest"
 import {
 	applyPMTilesMetadata,
 	hillshadeMetadata,
@@ -25,7 +27,10 @@ import {
 	minZoomForDiameter,
 	writeNomenclatureNDJSON,
 } from "@mailwoman/astrogeology/build/nomenclature"
+import { buildSearchIndex, nomenclatureTokens } from "@mailwoman/astrogeology/build/search-index"
 import { featureFromSourceRow, type NomenclatureSourceRow } from "@mailwoman/astrogeology/normalize"
+import { PlanetaryBuildManifestSchema } from "@mailwoman/astrogeology/schema/manifest"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runFile } from "@mailwoman/core/process"
@@ -79,6 +84,47 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	const tile = await runFile("pmtiles", ["tile", String(out), "4", "7", "10"])
 
 	expect(tile.stdout.length).toBeGreaterThan(0)
+
+	// The search artifact: five names plus the one alias whose clean name differs (Buys-Ballot H → Buys Ballot H).
+	const index = resolvePath(scratch.path, "moon-search.ancestrie")
+
+	expect(await buildSearchIndex(features, String(index))).toBe(6)
+
+	const trie = Ancestrie.from(await readLocalBuffer(index))
+	const { suggestions } = autocomplete(trie, nomenclatureTokens("tych"))
+
+	expect(suggestions[0]?.id).toBe(6163)
+	expect(suggestions[0]?.payload).toMatchObject({ id: "6163", name: "Tycho", body: "moon" })
+
+	// The manifest: two sources, two outputs with checksums, and the tippecanoe invocation.
+	const manifestPath = resolvePath(scratch.path, "manifest.json")
+
+	const manifest = await emitManifest(
+		{
+			body: "moon",
+			sources: [
+				{
+					id: "moon-nomenclature",
+					url: "https://example.test/moon.zip",
+					sha256: "a".repeat(64),
+					bytes: 1,
+					snapshot: "2026-09-07",
+				},
+			],
+			outputs: [
+				{ tileset: "moon", path: String(out) },
+				{ tileset: "moon-search", path: String(index) },
+			],
+			transformations: [command],
+		},
+		String(manifestPath)
+	)
+
+	expect(manifest.outputs).toHaveLength(2)
+	expect(manifest.outputs[0]?.sha256).toHaveLength(64)
+	expect(manifest.outputs[0]?.bytes).toBeGreaterThan(0)
+	expect(manifest.transformations[0]?.startsWith("tippecanoe -o ")).toBe(true)
+	expect(PlanetaryBuildManifestSchema.parse(await readLocalJSONFile(manifestPath))).toEqual(manifest)
 })
 
 /**
