@@ -41,7 +41,6 @@ const ADMITTED = new Set([
 	"awk",
 	"basename",
 	"cat",
-	"cut",
 	"date",
 	"diff",
 	"dirname",
@@ -117,6 +116,13 @@ const INTERPRETER_HEREDOC = /\b(?:node|python3?|ruby)\b[^\n;|&]*<<-?\s*['"]?[A-Z
 const REDIRECT = /(?<!\d)(?<!&)>>?\s*(?!&)(?<target>[^\s;|&<>]+)/gu
 
 /**
+ * Shell grammar, not commands. A loop header names a variable and a word list, so the whole segment is skipped; the
+ * words that introduce a body are dropped and the command after them is judged on its own.
+ */
+const CONTROL_FLOW_SEGMENTS = new Set(["for", "while", "until", "if", "case", "select"])
+const CONTROL_FLOW_WORDS = new Set(["do", "done", "then", "elif", "else", "fi", "esac", "time"])
+
+/**
  * Remove quoted spans and heredoc bodies, so their contents are never read as commands. A commit message that describes
  * a writer, a `grep` pattern that contains one, and a heredoc that carries source are all data.
  */
@@ -140,11 +146,18 @@ function commandHeads(stripped: string): Array<{ head: string; segment: string }
 
 		if (!segment) continue
 
-		const words = segment.split(/\s+/u).filter(Boolean)
+		const words = segment.split(/\s+/u).filter((word) => word.length > 0)
+
+		// A loop or conditional header carries a variable and a word list, neither of which is a command.
+		if (CONTROL_FLOW_SEGMENTS.has(words[0] ?? "")) continue
+
 		let index = 0
 
-		// Environment assignments, `sudo`-style prefixes and a subshell's `!` precede the command word.
-		while (index < words.length && (/^[A-Za-z_][A-Za-z0-9_]*=/u.test(words[index]!) || words[index] === "!")) {
+		// Environment assignments, a subshell's `!`, and the words that open a body all precede the command word.
+		while (
+			index < words.length &&
+			(/^[A-Za-z_][A-Za-z0-9_]*=/u.test(words[index]!) || words[index] === "!" || CONTROL_FLOW_WORDS.has(words[index]!))
+		) {
 			index += 1
 		}
 

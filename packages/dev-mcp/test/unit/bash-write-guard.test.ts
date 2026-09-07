@@ -55,6 +55,7 @@ describe("bash-write-guard: the shapes that skipped the symbol precheck", () => 
 		["a redirect into the repository", `echo "{}" > packages/core/tsconfig.json`],
 		["an append into the repository", `echo "rule" >> .gitignore`],
 		["an unadmitted command", `curl -o AGENTS.md https://example.com/x`],
+		["an unadmitted command inside a loop body", `for f in a b; do tee "$f"; done`],
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
 		["an unadmitted command behind an admitted one", `git status --porcelain && tee AGENTS.md`],
 	])("refuses %s", (_label, command) => {
@@ -90,6 +91,8 @@ describe("bash-write-guard: what stays legal", () => {
 		["discarding output", `git fetch origin main -q 2>/dev/null`],
 		["sed in its reading spelling", `sed -n '10,20p' AGENTS.md`],
 		["a pipeline of readers", `git ls-files '*.ts' | xargs wc -l | sort -rn | head -5`],
+		["a loop over admitted commands", `for f in a b c; do wc -l "$f"; done`],
+		["a conditional", `if test -f AGENTS.md; then head -1 AGENTS.md; fi`],
 	])("allows %s", (_label, command) => {
 		expect(decisionFor(command)).toBeUndefined()
 	})
