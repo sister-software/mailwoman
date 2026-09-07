@@ -34,7 +34,7 @@ import { useCallback } from "react"
 
 import "@mailwoman/react/styles.css"
 
-import { sqljsBaseURL } from "#shared/resources"
+import { adminGazetteerURL, poiLayerURL, sqljsBaseURL } from "#shared/resources"
 
 import { useSiteConfig } from "../../hooks/site.ts"
 
@@ -53,14 +53,15 @@ export function POIExplorer({ defaultText }: POIExplorerProps) {
 	// Preserves the tester's two failure modes — anchor unplaceable vs layer unreachable.
 	const runLiveSearch = useCallback<POILiveSearch>(
 		async ({ categoryID, overtureCategoryIDs, anchor }) => {
-			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } = await import("#shared/poi-httpvfs")
+			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } =
+				await import("@mailwoman/resolver-wof-wasm/httpvfs/poi")
 
-			const center = await resolveAnchorCenter(sqljsBase, anchor)
+			const center = await resolveAnchorCenter(adminGazetteerURL(), sqljsBase, anchor)
 
 			if (!center) return { status: "unplaced", anchor }
 
 			try {
-				const worker = await loadPOIWorker(sqljsBase)
+				const worker = await loadPOIWorker(poiLayerURL(), sqljsBase)
 
 				const hits = await searchPOICategory(worker, {
 					categoryID,

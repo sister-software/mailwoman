@@ -36,22 +36,26 @@ import type {
 } from "@mailwoman/react/map"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import {
+	type HTTPVFSAddressPointLookup,
+	type HTTPVFSInterpolator,
+	resolveStreet,
+	type StreetResolution,
+} from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import type { ReleaseInfo, StreetResolution } from "#shared/demo-helpers"
+import type { ReleaseInfo } from "#shared/demo-helpers"
 import {
 	DEFAULT_LOCALE,
 	fetchReleasesManifest,
 	parseStageLabelsFor,
 	projectCascadeHits,
 	resolveDualRoles,
-	resolveStreet,
 	runClassifyStage,
 } from "#shared/demo-helpers"
 import type { DocsDemoAssets } from "#shared/demo-loader"
 import { loadDemoAssets } from "#shared/demo-loader"
-import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "#shared/httpvfs-street"
 import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
 import {
 	assetURL,
@@ -279,9 +283,10 @@ export function useDemoMapRuntime({
 
 			if (!p) {
 				p = (async () => {
-					const { loadHTTPVFSDatabase } = await import("#shared/httpvfs-resolver")
+					const { loadHTTPVFSDatabase } = await import("@mailwoman/resolver-wof-wasm/httpvfs/resolver")
 
-					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("#shared/httpvfs-street")
+					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } =
+						await import("@mailwoman/resolver-wof-wasm/httpvfs/street")
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsW = await loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL)

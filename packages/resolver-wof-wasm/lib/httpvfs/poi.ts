@@ -22,9 +22,8 @@ import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
-import { loadHTTPVFSDatabase, WOFCandidateTableLookup } from "./httpvfs-resolver.ts"
-import { adminGazetteerURL, poiLayerURL } from "./resources/index.ts"
-import { rowsFromExec } from "./sqljs-rows.ts"
+import { loadHTTPVFSDatabase, WOFCandidateTableLookup } from "#httpvfs/resolver"
+import { rowsFromExec } from "#httpvfs/rows"
 
 /**
  * Resolution the published `poi.db`'s `h3_cell` column is keyed at — MUST match the builder (poi-lookup.ts's
@@ -42,8 +41,8 @@ export type POIHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>
  * Open a worker over the published POI layer. Independent of the admin-gazetteer worker — a fresh `createDbWorker`
  * call, same staged UMD.
  */
-export async function loadPOIWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
-	return loadHTTPVFSDatabase(poiLayerURL(), sqljsBaseURL)
+export async function loadPOIWorker(poiDatabaseURL: string, sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
+	return loadHTTPVFSDatabase(poiDatabaseURL, sqljsBaseURL)
 }
 
 const categoryCodesCache = new WeakMap<POIHTTPVFSWorker, Promise<Map<string, number>>>()
@@ -191,9 +190,9 @@ let candidateWorkerPromise: Promise<POIHTTPVFSWorker> | undefined
  * Independent of the POI-layer worker — a separate byte-ranged DB, the same one `/demo`'s cascade resolves localities
  * against ({@link WOFCandidateTableLookup}).
  */
-function loadCandidateWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
+function loadCandidateWorker(gazetteerURL: string, sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
 	if (!candidateWorkerPromise) {
-		candidateWorkerPromise = loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL).catch((error: unknown) => {
+		candidateWorkerPromise = loadHTTPVFSDatabase(gazetteerURL, sqljsBaseURL).catch((error: unknown) => {
 			candidateWorkerPromise = undefined
 			throw error
 		})
@@ -245,12 +244,16 @@ function splitAnchor(text: string): { localityText: string; regionText?: string 
  * the same disambiguation the `/demo` cascade uses. Returns `null` when nothing resolves — callers show "couldn't place
  * '<anchor>'" rather than silently defaulting to zero results.
  */
-export async function resolveAnchorCenter(sqljsBaseURL: string, anchorText: string): Promise<AnchorCenter | null> {
+export async function resolveAnchorCenter(
+	gazetteerURL: string,
+	sqljsBaseURL: string,
+	anchorText: string
+): Promise<AnchorCenter | null> {
 	const trimmed = anchorText.trim()
 
 	if (!trimmed) return null
 
-	const worker = await loadCandidateWorker(sqljsBaseURL)
+	const worker = await loadCandidateWorker(gazetteerURL, sqljsBaseURL)
 	const lookup = new WOFCandidateTableLookup(worker)
 
 	const { localityText, regionText } = splitAnchor(trimmed)

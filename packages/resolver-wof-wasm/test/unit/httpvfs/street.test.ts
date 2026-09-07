@@ -11,9 +11,12 @@
  *   the geocoder-demo spec.
  */
 
-import { resolveStreet } from "@mailwoman/docs/shared/demo-helpers"
-import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
+import {
+	HTTPVFSAddressPointLookup,
+	HTTPVFSInterpolator,
+	resolveStreet,
+} from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 

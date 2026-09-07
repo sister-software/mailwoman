@@ -15,9 +15,9 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { WOFCandidateTableLookup as NodeCandidateLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 

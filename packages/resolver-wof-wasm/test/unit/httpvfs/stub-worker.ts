@@ -11,7 +11,7 @@
  *   DisposableStack fixture those suites open their synthetic databases into.
  */
 
-import type { HTTPVFSWorker } from "@mailwoman/docs/shared/httpvfs-resolver"
+import type { HTTPVFSWorker } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aroundEach } from "vitest"
 

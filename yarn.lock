@@ -6446,6 +6446,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/react@workspace:packages/react"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
@@ -6580,8 +6581,11 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@sqlite.org/sqlite-wasm": "npm:^3.53.0-build1"
+    h3-js: "npm:^4.5.0"
+    sql.js-httpvfs: "npm:^0.8.12"
     zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft

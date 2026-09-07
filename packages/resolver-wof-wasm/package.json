@@ -59,6 +59,31 @@
 			"node": "./lib/lookup.ts",
 			"default": "./out/lookup.js",
 			"types": "./out/lookup.d.ts"
+		},
+		"./httpvfs/resolver": {
+			"node": "./lib/httpvfs/resolver.ts",
+			"default": "./out/httpvfs/resolver.js",
+			"types": "./out/httpvfs/resolver.d.ts"
+		},
+		"./httpvfs/street": {
+			"node": "./lib/httpvfs/street.ts",
+			"default": "./out/httpvfs/street.js",
+			"types": "./out/httpvfs/street.d.ts"
+		},
+		"./httpvfs/poi": {
+			"node": "./lib/httpvfs/poi.ts",
+			"default": "./out/httpvfs/poi.js",
+			"types": "./out/httpvfs/poi.d.ts"
+		},
+		"./httpvfs/rows": {
+			"node": "./lib/httpvfs/rows.ts",
+			"default": "./out/httpvfs/rows.js",
+			"types": "./out/httpvfs/rows.d.ts"
+		},
+		"./host-assets": {
+			"node": "./lib/host-assets.ts",
+			"default": "./out/host-assets.js",
+			"types": "./out/host-assets.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -69,8 +94,11 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@sqlite.org/sqlite-wasm": "^3.53.0-build1",
+		"h3-js": "^4.5.0",
+		"sql.js-httpvfs": "^0.8.12",
 		"zod": "^4.5.4"
 	}
 }

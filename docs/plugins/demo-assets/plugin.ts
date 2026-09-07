@@ -7,9 +7,10 @@
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { stageSQLJSAssets } from "@mailwoman/resolver-wof-wasm/host-assets"
 import { resolvePath } from "path-ts"
 
-import { stageMapLibreWorker, stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
+import { stageMapLibreWorker, stagePairIndexes } from "./artifacts.ts"
 import { bundleAliases, configureDemoWebpack } from "./webpack-policy.ts"
 
 export default async function demoAssetsPlugin(context: LoadContext): Promise<Plugin> {
@@ -30,7 +31,7 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 			await makeDirectories(staticDir)
 			const sqljsDir = resolvePath(staticDir, "sqljs")
 			await makeDirectories(sqljsDir)
-			await stageSQLJSHTTPVFS(sqljsDir)
+			await stageSQLJSAssets(sqljsDir)
 			const pairIndexDir = resolvePath(staticDir, "pair-index")
 			await makeDirectories(pairIndexDir)
 			await stagePairIndexes(pairIndexDir)
