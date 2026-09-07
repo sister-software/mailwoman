@@ -222,6 +222,7 @@ const MD5_HEX_LENGTH = 32
  *
  * The shared home for the copies the base linkers (`en-us`, `en-gb`, `en-nz`) each carry — new callers import this one.
  */
+// repo-health-ignore export-name-affix -- the sidecar cache IS the added behaviour; `md5File` hashes every time.
 export async function md5FileWithSidecar(path: string): Promise<string> {
 	const sidecarPath = `${path}.md5`
 	const sourceStats = await statPath(path)

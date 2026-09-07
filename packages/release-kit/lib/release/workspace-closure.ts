@@ -19,6 +19,7 @@ const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependen
 /**
  * Every workspace the root `workspaces` field names, expanded, keyed by package name, with its repo-relative directory.
  */
+// repo-health-ignore export-name-affix -- keys the shared reader's answer by package name; it adds the manifest read.
 export async function workspaceDirectories(repoRoot: string): Promise<Map<string, string>> {
 	const byName = new Map<string, string>()
 

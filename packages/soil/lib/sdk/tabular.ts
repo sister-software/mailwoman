@@ -281,6 +281,7 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
  *   a file that does not exist, and the host answers 400 rather than 404, which reads as a bad request rather than a
  *   bad date.
  */
+// repo-health-ignore export-name-affix -- parses the survey's M/D/YYYY form; `isoDate` formats a Date and reads none.
 export function saverestToISODate(value: string): string {
 	const matched = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/u.exec(value.trim())
 

@@ -8,10 +8,10 @@
  *   process.
  */
 
+import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { runCLICommand } from "@mailwoman/core/scripting/command"
-import { listTrackedFiles } from "@mailwoman/repo-health"
 
 import { dispatch } from "#dispatch"
 
@@ -23,6 +23,6 @@ process.exitCode =
 			stdout: (text) => process.stdout.write(text),
 			stderr: (text) => process.stderr.write(text),
 			repoRoot,
-			trackedFiles: () => listTrackedFiles(repoRoot),
+			trackedFiles: () => trackedFiles(repoRoot),
 		})
 	)) ?? 0

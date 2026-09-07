@@ -127,6 +127,7 @@ export function romanizeNameKey(key: string): string | null {
  * Edit similarity between a holder's primary name key and one of its alias keys, both romanized and
  * abbreviation-expanded. `null` when either side's script is uncovered.
  */
+// repo-health-ignore export-name-affix -- romanizes and expands abbreviations first; `nameSimilarity` compares as given.
 export function ownNameSimilarity(primaryKey: string, aliasKey: string): number | null {
 	const primary = romanizeNameKey(primaryKey)
 	const alias = romanizeNameKey(aliasKey)
