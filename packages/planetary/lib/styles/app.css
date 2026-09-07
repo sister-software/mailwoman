@@ -1,0 +1,29 @@
+html,
+body,
+#root {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	background: #05070d;
+	color: #e8eef7;
+	font-family: system-ui, sans-serif;
+}
+
+main[data-body="mars"] {
+	background: #0a0604;
+	color: #f6e3d1;
+}
+
+main[data-route] {
+	position: relative;
+	height: 100%;
+}
+
+.not-found {
+	display: grid;
+	place-content: center;
+	height: 100%;
+	text-align: center;
+}

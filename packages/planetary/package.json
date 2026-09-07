@@ -1,0 +1,70 @@
+{
+	"name": "@mailwoman/planetary",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Planetary — moon.mailwoman.ai and mars.mailwoman.ai from one source: a globe over the body's published nomenclature and hillshade archives, built per body with PLANETARY_BODY, as a React + Vite installable PWA on Cloudflare Workers Static Assets.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		"./body": {
+			"types": "./out/body.d.ts",
+			"node": "./lib/body.ts",
+			"default": "./out/body.js"
+		},
+		"./env": {
+			"types": "./out/env.d.ts",
+			"node": "./lib/env.ts",
+			"default": "./out/env.js"
+		},
+		"./bodies": {
+			"types": "./out/bodies/index.d.ts",
+			"node": "./lib/bodies/index.ts",
+			"default": "./out/bodies/index.js"
+		},
+		"./routes": {
+			"types": "./out/routes.d.ts",
+			"node": "./lib/routes.ts",
+			"default": "./out/routes.js"
+		}
+	},
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview --port 7790 --strictPort",
+		"deploy:dry-run": "wrangler deploy --dry-run"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/site-kit": "workspace:*",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"workbox-precaching": "^7.4.1",
+		"zod": "^4.5.4"
+	},
+	"devDependencies": {
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.7",
+		"@vitejs/plugin-react": "^6.1.1",
+		"vite": "^8.2.2",
+		"vite-plugin-pwa": "^1.3.0",
+		"workbox-window": "^7.4.1",
+		"wrangler": "^4.129.0"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

@@ -80,6 +80,8 @@
 		{ "path": "./packages/earth/tsconfig.test.json" },
 		{ "path": "./packages/site-kit" },
 		{ "path": "./packages/site-kit/tsconfig.test.json" },
+		{ "path": "./packages/planetary" },
+		{ "path": "./packages/planetary/tsconfig.test.json" },
 		{ "path": "./packages/license-worker" },
 		{ "path": "./packages/license-worker/tsconfig.test.json" },
 		{ "path": "./docker" },
