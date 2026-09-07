@@ -82,6 +82,11 @@
 			"types": "./out/base/composition.d.ts",
 			"node": "./lib/base/composition.ts",
 			"default": "./out/base/composition.js"
+		},
+		"./planetary": {
+			"types": "./out/planetary/index.d.ts",
+			"node": "./lib/planetary/index.ts",
+			"default": "./out/planetary/index.js"
 		}
 	},
 	"publishConfig": {

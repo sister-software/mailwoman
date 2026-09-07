@@ -133,6 +133,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 	browserRow("@mailwoman/neural/viterbi"),
 	browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
 	browserRow("@mailwoman/neural/web-loader", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
+	browserRow("@mailwoman/cartographer/planetary"),
 	browserRow("@mailwoman/neural/classifier", {
 		followDynamicImports: true,
 		allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS,
