@@ -8,11 +8,12 @@
  *   bucket, then fetch each public URL and report its status.
  *
  *   THE VERSION IS PART OF THE KEY so a republish never overwrites an artifact a deployed app pins: the manifest's
- *   build date compacted to `YYYYMMDD` plus the first eight hex characters of the nomenclature archive's SHA-256.
+ *   build date compacted to `YYYYMMDD` plus the first eight hex characters of a SHA-256 over every output's checksum.
  */
 
 import { Spinner } from "@inkjs/ui"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { sha256Hex } from "@mailwoman/core/hash"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { publishTiles, uploadToBucket } from "mailwoman/tiles/publish"
@@ -52,14 +53,22 @@ const PUBLIC_ORIGIN = "https://public.mailwoman.ai"
 const VERSION_HASH_LENGTH = 8
 
 /**
- * The version a build publishes under: its date compacted plus the nomenclature archive's hash prefix.
+ * The version a build publishes under: its date compacted plus a digest over every output's checksum, so a build that
+ * changes any one artifact (a re-tiled hillshade over an unchanged nomenclature) gets its own prefix.
  */
 export function publishVersion(manifest: PlanetaryBuildManifest): string {
-	const nomenclature = manifest.outputs.find((output) => output.tileset === manifest.body)
+	if (!manifest.outputs.some((output) => output.tileset === manifest.body)) {
+		throw new CommandError(`the manifest carries no ${manifest.body} output`)
+	}
 
-	if (!nomenclature) throw new CommandError(`the manifest carries no ${manifest.body} output`)
+	const digest = sha256Hex(
+		manifest.outputs
+			.toSorted((a, b) => a.tileset.localeCompare(b.tileset))
+			.map((output) => output.sha256)
+			.join("")
+	)
 
-	return `${manifest.builtAt.slice(0, 10).replaceAll("-", "")}-${nomenclature.sha256.slice(0, VERSION_HASH_LENGTH)}`
+	return `${manifest.builtAt.slice(0, 10).replaceAll("-", "")}-${digest.slice(0, VERSION_HASH_LENGTH)}`
 }
 
 /**
