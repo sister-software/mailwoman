@@ -56,18 +56,18 @@ _TAIL_START = re.compile(rf"[{_DIGITS}{_KANJI_NUMERAL}]")
 
 
 def split_typed_street(street: str, districts: set[str]) -> tuple[str, str, str, str] | None:
-    """Split ``丁目番地等`` into (district, chōme, number, rest) at the leftmost cut whose district the register lists.
+    """Split ``丁目番地等`` into (district, chōme, number, rest) at the leftmost split point whose district the register lists.
 
-    A district name may itself carry a kanji numeral (``一条通北２丁目３－２５``), so the cut is not "the first
+    A district name may itself carry a kanji numeral (``一条通北２丁目３－２５``), so the split point is not "the first
     numeral": every numeral position is tried left to right, and the first whose prefix is a listed district and
-    whose tail parses as chōme-then-number wins. Answers None when no cut does.
+    whose tail parses as chōme-then-number wins. Answers None when no split point does.
     """
     for match in _TAIL_START.finditer(street):
-        cut = match.start()
-        district = street[:cut]
+        boundary = match.start()
+        district = street[:boundary]
         if not district or normalize_name(district) not in districts:
             continue
-        tail = _TAIL_SHAPE.match(street[cut:])
+        tail = _TAIL_SHAPE.match(street[boundary:])
         if not tail:
             continue
         chome, number = tail.group("chome") or "", tail.group("number") or ""
