@@ -16,8 +16,9 @@
  *       influenced each parsed component.
  */
 
+import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
+
 import { confidenceTierOrMid } from "#shared/confidence-tiers"
-import type { ResultNode } from "#shared/resources"
 
 import styles from "./styles.module.css"
 
@@ -264,7 +265,7 @@ export interface ClassifierOverlayProps {
 	/**
 	 * Flattened nodes for display ordering and cross-reference.
 	 */
-	nodes: ResultNode[]
+	nodes: ParsedComponent[]
 	/**
 	 * Whether the FST gazetteer matcher was active for this parse.
 	 */
@@ -341,7 +342,7 @@ const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 
 //#region Dynamic per-component table
 
-const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: boolean }> = ({
+const DynamicOverlay: React.FC<{ tree: unknown; nodes: ParsedComponent[]; fstActive: boolean }> = ({
 	tree,
 	nodes,
 	fstActive,
@@ -349,7 +350,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 	const sourceNodes = flattenTreeWithSource(tree)
 
 	// Cross-reference source nodes with display nodes by tag + start/end
-	const enriched: Array<ResultNode & { sourceNode?: SourceNode }> = nodes.map((n, i) => {
+	const enriched: Array<ParsedComponent & { sourceNode?: SourceNode }> = nodes.map((n, i) => {
 		// Match by start/end when both have offsets, otherwise by tag + value + index proximity
 		const match =
 			sourceNodes.find((sn) => sn.tag === n.tag && sn.start === n.start && sn.end === n.end) ??

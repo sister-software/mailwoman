@@ -7,10 +7,10 @@
  *   Presentational; the selected index is owned by the caller (the pipeline hook).
  */
 
+import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
 
 import { cx } from "#common/cx"
-import type { ResolvedPlaceView } from "#pipeline/types"
 
 export interface CandidatePickerProps {
 	candidates: ResolvedPlaceView[]

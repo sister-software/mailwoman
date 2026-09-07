@@ -13,7 +13,7 @@
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
 import { clampConfidence, type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
-import type { ParseResult, ResolvedPlaceView } from "@mailwoman/react"
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources/index.ts"
 import { releasesManifestURL } from "./resources/index.ts"

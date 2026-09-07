@@ -11,14 +11,14 @@
  *   here so the staging route exercises the compare panel's injection point without touching `_app.tsx`.
  */
 
-import type { ParseResult } from "@mailwoman/react"
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import type React from "react"
 import { useEffect, useState } from "react"
 
 import { VersionCompare } from "#components/VersionCompare/VersionCompare"
 import type { ReleaseInfo } from "#shared/demo-helpers"
 import { DEFAULT_LOCALE, runClassifyStage } from "#shared/demo-helpers"
-import type { DemoResult, MailwomanClassifierLike } from "#shared/resources"
+import type { MailwomanClassifierLike } from "#shared/resources"
 import { neuralClassifierLoadURLs } from "#shared/resources"
 
 export interface DemoCompareProps {
@@ -63,7 +63,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 	const [backend, setBackend] = useState<string>("")
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const [compareResult, setCompareResult] = useState<DemoResult | null>(null)
+	const [compareResult, setCompareResult] = useState<ParseResult | null>(null)
 
 	// Load the compare classifier when compare mode + a compare version are active.
 	// Resetting the load state is the lifecycle boundary for a different requested classifier.
@@ -177,7 +177,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 			{error ? <p className="mw-error">{error}</p> : null}
 			{compareResult && primary ? (
 				<VersionCompare
-					primary={primary as DemoResult}
+					primary={primary as ParseResult}
 					compare={compareResult}
 					primaryVersion={primaryVersion}
 					compareVersion={compareVersion ?? "?"}

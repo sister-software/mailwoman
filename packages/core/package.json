@@ -466,6 +466,11 @@
 			"default": "./out/pipeline/types.js",
 			"types": "./out/pipeline/types.d.ts"
 		},
+		"./pipeline/client-result": {
+			"node": "./lib/pipeline/client-result.ts",
+			"default": "./out/pipeline/client-result.js",
+			"types": "./out/pipeline/client-result.d.ts"
+		},
 		"./resolver/types": {
 			"node": "./lib/resolver/types.ts",
 			"default": "./out/resolver/types.js",

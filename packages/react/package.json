@@ -225,6 +225,7 @@
 		"test:node": "vitest run --config vitest.node.config.ts"
 	},
 	"dependencies": {
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*"

@@ -23,6 +23,7 @@ import "@mailwoman/react/styles.css"
 import "#shared/maplibre-worker"
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { GeocoderDemo } from "@mailwoman/react/map"
 import type { DemoPanels } from "@mailwoman/react/map"
 import type { Coordinates2D } from "@mailwoman/spatial"
@@ -35,7 +36,6 @@ import { PermalinkButton } from "#components/PermalinkButton/PermalinkButton"
 import { ResultPanel as DocsResultPanel } from "#components/ResultPanel/ResultPanel"
 import { useSiteConfig } from "#hooks/site"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "#shared/demo-helpers"
-import type { DemoResult } from "#shared/resources"
 import { sqljsBaseURL } from "#shared/resources"
 
 import { DemoCompare } from "./_compare.tsx"
@@ -118,7 +118,7 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 
 				return (
 					<DocsResultPanel
-						result={displayResult as DemoResult}
+						result={displayResult as ParseResult}
 						selectedCandidateIndex={selectedCandidateIndex}
 						onSelectCandidate={onSelectCandidate}
 					/>

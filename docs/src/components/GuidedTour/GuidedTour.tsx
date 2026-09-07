@@ -22,13 +22,13 @@
  *   The GuidedTour is rendered inside PipelineExplorer — no separate provider needed.
  */
 
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { ConfidenceCell, LoadingIndicator } from "@mailwoman/react"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
 import { useDemoEmbed } from "#contexts/DemoEmbed"
 import { runClassifyStage } from "#shared/demo-helpers"
-import type { DemoResult } from "#shared/resources"
 
 import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
 
@@ -68,7 +68,7 @@ function statusBadgeClass(badge: StatusBadge): string {
 
 interface StopParseState {
 	address: string
-	result: DemoResult | null
+	result: ParseResult | null
 	busy: boolean
 	error: string | null
 }
@@ -132,7 +132,7 @@ export const GuidedTour: React.FC = () => {
 					selectPairIndex,
 				})
 
-				const result: DemoResult = {
+				const result: ParseResult = {
 					input: state.address,
 					tree,
 					nodes,

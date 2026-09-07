@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { ResultNode } from "#shared/resources"
+import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
 
 import styles from "./styles.module.css"
 
@@ -14,7 +14,7 @@ import styles from "./styles.module.css"
  * WOF's 22%-placeholder bucket). The hints are inferred from the parser output alone — no extra resolver round-trips.
  */
 export interface FailureDiagnosticProps {
-	nodes: ResultNode[]
+	nodes: ParsedComponent[]
 }
 
 export const FailureDiagnostic: React.FC<FailureDiagnosticProps> = ({ nodes }) => {

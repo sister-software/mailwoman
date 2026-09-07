@@ -23,13 +23,8 @@
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
-import type {
-	DemoAssetsLoadContext,
-	DemoManifest,
-	ParseResult,
-	ParsedComponent,
-	ResolvedPlaceView,
-} from "@mailwoman/react"
+import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { DemoAssetsLoadContext, DemoManifest } from "@mailwoman/react"
 import { useDemoRuntime } from "@mailwoman/react"
 import type {
 	DemoMapStyle,
@@ -66,7 +61,7 @@ import {
 	regionToStateSlug,
 	streetExtractURL,
 } from "#shared/resources"
-import type { ParseTraceLike, ResolvedHit } from "#shared/resources"
+import type { ParseTraceLike } from "#shared/resources"
 
 import {
 	fetchBasemapSource,
@@ -99,7 +94,7 @@ interface StreetLookups {
  * Per-candidate map-render extras stashed during a parse (bbox / street tier), read back by `resolveMapPlace`.
  */
 interface CandidateExtras {
-	bbox?: ResolvedHit["bbox"]
+	bbox?: ResolvedPlaceView["bbox"]
 	tier?: "address_point" | "interpolated"
 	uncertaintyM?: number
 }
@@ -467,7 +462,7 @@ export function useDemoMapRuntime({
 
 			// Street-level coordinate wins the pin (more precise than any admin centroid). id=0 → not a WOF place. The
 			// `tier` + `uncertaintyM` ride on the candidate itself (a structural superset of `ResolvedPlaceView`, exactly
-			// like the live demo's `ResolvedHit`) so the docs `<ResultPanel>` renders the "precision ≈ interpolated · ±N m"
+			// like the live demo's `ResolvedPlaceView`) so the docs `<ResultPanel>` renders the "precision ≈ interpolated · ±N m"
 			// row instead of a "WOF id 0" — the map render still reads them back through `extrasRef` below.
 			if (streetResolution) {
 				const streetCandidate: ResolvedPlaceView & { tier: StreetResolution["tier"]; uncertaintyM: number } = {

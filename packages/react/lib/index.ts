@@ -24,7 +24,7 @@ export type { CopyButtonProps } from "./common/CopyButton.tsx"
 export { cx } from "#common/cx"
 export type { ClassValue } from "#common/cx"
 export { KindBadge } from "./common/KindBadge.tsx"
-export type { KindBadgeProps, KindBadgeResult } from "./common/KindBadge.tsx"
+export type { KindBadgeProps } from "./common/KindBadge.tsx"
 export { LoadingIndicator } from "./common/LoadingIndicator.tsx"
 export type { LoadingIndicatorProps, LoadingMode } from "./common/LoadingIndicator.tsx"
 export { PresetChips } from "./common/PresetChips.tsx"
@@ -83,17 +83,7 @@ export type { QueryFormProps } from "./pipeline/QueryForm.tsx"
 export { ResolvedPlace } from "./pipeline/ResolvedPlace.tsx"
 export type { ResolvedPlaceProps } from "./pipeline/ResolvedPlace.tsx"
 
-export type {
-	DualRoleView,
-	FSTProvenance,
-	ParsedComponent,
-	ParseResult,
-	PipelineLoadingState,
-	PipelinePanels,
-	PipelineRuntime,
-	ResolvedPlaceView,
-	StageTiming,
-} from "#pipeline/types"
+export type { PipelineLoadingState, PipelinePanels, PipelineRuntime } from "#pipeline/types"
 
 export { useParsePipeline } from "#pipeline/useParsePipeline"
 export type { UseParsePipeline, UseParsePipelineOptions } from "#pipeline/useParsePipeline"

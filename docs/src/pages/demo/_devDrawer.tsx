@@ -10,7 +10,7 @@
  *   "🐛 Dev mode" toggle.
  */
 
-import type { ParseResult } from "@mailwoman/react"
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import type React from "react"
 import { useEffect, useState } from "react"
 

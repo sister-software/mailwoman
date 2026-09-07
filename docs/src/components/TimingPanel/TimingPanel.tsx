@@ -1,4 +1,4 @@
-import type { StageTiming } from "#shared/resources"
+import type { StageTiming } from "@mailwoman/core/pipeline/client-result"
 
 import styles from "./styles.module.css"
 

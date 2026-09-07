@@ -14,10 +14,10 @@
  *   NODE-SAFE: pure React + the shared units, no maplibre.
  */
 
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
 
 import { buildParsePayload } from "#pipeline/copy"
-import type { ParseResult, ResolvedPlaceView } from "#pipeline/types"
 
 import { CopyButton } from "../common/CopyButton.tsx"
 import { KindBadge } from "../common/KindBadge.tsx"

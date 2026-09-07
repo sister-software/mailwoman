@@ -6,9 +6,8 @@
  *   `ComponentTable` — the tag / value / confidence table of decoded components. Presentational.
  */
 
+import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
-
-import type { ParsedComponent } from "#pipeline/types"
 
 import { ConfidenceCell } from "./ConfidenceCell.tsx"
 

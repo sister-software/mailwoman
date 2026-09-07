@@ -7,7 +7,7 @@
  *   pretty-printed. Pure; shared by the explorer's copy button.
  */
 
-import type { ParseResult, ResolvedPlaceView } from "#pipeline/types"
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 
 export function buildParsePayload(result: ParseResult, selected: ResolvedPlaceView | null): string {
 	return JSON.stringify(

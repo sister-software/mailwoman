@@ -23,12 +23,13 @@
  * ```
  */
 
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import { PipelineExplorer as ReactPipelineExplorer } from "@mailwoman/react"
-import type { ParseResult, PipelinePanels, PipelineRuntime, ResolvedPlaceView } from "@mailwoman/react"
-import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import type { PipelinePanels, PipelineRuntime } from "@mailwoman/react"
 
 import "@mailwoman/react/styles.css"
 
+import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { useMemo } from "react"
 
 import { AboutDemo } from "#components/AboutDemo/AboutDemo"
