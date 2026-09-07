@@ -26,7 +26,7 @@ data:
     gcis-tw: 0.06
     coarse-placer-cn-units: 0.02
   coarse_filter: false
-  val_rows: 100000
+  val_rows: 94011
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-regs-2026-09-08/char-vocab-cjk.json

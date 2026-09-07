@@ -53,8 +53,9 @@ data:
     gcis-tw: 0.06
     coarse-placer-cn-units: 0.02
   coarse_filter: false
-  # Every val part the manifest lists (the count is written by the overlay builder into its report).
-  val_rows: 100000
+  # Every val part the manifest lists: JP 20,000 + CN 11 + KR 20,000 + KR registry 12,000 + TW 20,000 + TW registry
+  # 10,000 + JP registry 12,000.
+  val_rows: 94011
   # The 49-label CJK head. Supported ONLY on the char path; the SP path raises.
   label_set: stage3-cjk
   char_mode: char
