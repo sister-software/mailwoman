@@ -14,7 +14,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import type { ComponentTag } from "@mailwoman/core/types/component"
-import type { MailwomanLookupLike } from "@mailwoman/docs/shared/resources"
+import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { describe, expect, test, vi } from "vitest"
 

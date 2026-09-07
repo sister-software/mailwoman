@@ -30,11 +30,11 @@
 
 import { POIExplorer as ReactPOIExplorer } from "@mailwoman/react"
 import type { POILiveSearch } from "@mailwoman/react"
-import { useCallback } from "react"
+import { adminGazetteerURL, poiLayerURL, sqljsBaseURL } from "mailwoman/browser-runtime/resources"
 
 import "@mailwoman/react/styles.css"
 
-import { adminGazetteerURL, poiLayerURL, sqljsBaseURL } from "#shared/resources"
+import { useCallback } from "react"
 
 import { useSiteConfig } from "../../hooks/site.ts"
 

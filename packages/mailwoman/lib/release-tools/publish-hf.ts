@@ -282,8 +282,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	}
 
 	// Per-locale FST gazetteer (#1318 FST-distribution arc) — OPTIONAL (en-nz ships none). When provided,
-	// the remote name adapts to BCP-47 casing ("en-us" → "en-US" → "fst-en-US.bin") to match the demo
-	// fetcher (docs/src/shared/resources.tsx); a casing mismatch 404s the gazetteer at runtime.
+	// the remote name adapts to BCP-47 casing ("en-us" → "en-US" → "fst-en-US.bin") to match the browser
+	// runtime's fetcher (packages/mailwoman/lib/browser-runtime/resources.ts); a casing mismatch 404s the gazetteer at runtime.
 	const bcp47 = args.locale
 		.split("-")
 		.map((part: string, i: number) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))

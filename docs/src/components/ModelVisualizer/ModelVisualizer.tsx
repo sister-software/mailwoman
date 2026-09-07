@@ -20,9 +20,8 @@
  */
 
 import { softmax } from "@mailwoman/neural/viterbi"
+import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import React, { useMemo, useState } from "react"
-
-import type { ParseTraceLike } from "#shared/resources"
 
 import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, stripBIO } from "./helpers.ts"
 

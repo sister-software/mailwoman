@@ -3,22 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared helpers for the Mailwoman demo — types, constants, and utility functions used by both the
- *   PipelineExplorer embeddable component and the full demo page.
+ *   The classify stage of the browser runtime: query shape, kind, the neural pipeline and the tree flatten, with the
+ *   two front-half timings captured, plus the dual-role resolution and the projections a renderer takes. The caller
+ *   owns resolution (`runCascade`, a street tier, an anchor fallback) and the staged progress ticks.
  */
 
 // STATIC on purpose: a dynamic-import destructure of this barrel gets tree-shaken by webpack's
-// usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
-// which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
-// behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
-import { clampConfidence, type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
+// usedExports analysis, which once shipped the WOF cascade as `TypeError: i is not a function`.
+// Static named imports are fully analyzable; do not re-dynamize.
+import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
-import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources/index.ts"
-import { releasesManifestURL } from "./resources/index.ts"
-
-// Moved into the package so the resolvers can reach it; re-exported for the demo's callers.
+import type { FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
 /**
  * Project the cascade's hits onto the package's {@link ResolvedPlaceView} — the shape `useParsePipeline` and the result
@@ -38,111 +36,6 @@ export function parseStageLabelsFor(hasResolver: boolean): string[] {
 		? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
 		: ["Analyzing input shape…", "Running neural classifier…"]
 }
-
-//#region Types
-
-export interface ReleaseInfo {
-	version: string
-	label: string
-	description: string
-	modelSize: string
-	tokenizerVocab: number
-	steps: number
-	hasFST: boolean
-	hasWOFDB: boolean
-	hasAnchor?: boolean
-	hasPolygons?: boolean
-}
-
-export interface ReleasesManifest {
-	locale: string
-	defaultVersion: string
-	releases: ReleaseInfo[]
-}
-
-/**
- * The raw wire shape of one releases.json entry — either key generation may appear.
- */
-export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB"> {
-	hasFST?: boolean
-	hasWOFDB?: boolean
-	/**
-	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
-	 *
-	 * @deprecated use `hasFST` instead
-	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
-	hasFst?: boolean
-	/**
-	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
-	 *
-	 * @deprecated use `hasWOFDB` instead
-	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
-	hasWofDb?: boolean
-	/**
-	 * The spelling the LIVE 2026-08-11 manifest actually carries (WOF caps, lowercase b) — a wire key is a string
-	 * contract, and every spelling ever published must stay readable here.
-	 */
-	hasWOFDb?: boolean
-}
-
-/**
- * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields. ALL manifest consumption goes
- * through here — the wire tolerance lives in exactly one place, and everything past this boundary uses the acronym
- * convention (`hasFST` / `hasWOFDB`).
- *
- * Why the tolerance: the 2026-07-01 acronym sweep renamed the READS while the published R2 manifest kept the old keys —
- * every release read `undefined`, silently disabling the demo's WOF cascade AND the FST for three days (zero console
- * errors; "no WOF hits" was the only symptom). The fix is not to freeze the wire keys but to migrate them deliberately:
- * the publisher now writes house-cased keys, this normalizer accepts both generations (old HF mirrors still carry the
- * legacy keys), and the contract test pins all three parties.
- */
-export function normalizeReleasesManifest(raw: {
-	locale: string
-	defaultVersion: string
-	releases: WireReleaseEntry[]
-}): ReleasesManifest {
-	return {
-		locale: raw.locale,
-		defaultVersion: raw.defaultVersion,
-		releases: raw.releases.map((r) => ({
-			...r,
-			hasFST: r.hasFST ?? r.hasFst ?? false,
-			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes `hasWOFDb` — WOF caps,
-			// lowercase b. The 08-14 casing sweep renamed reader AND writer to `hasWOFDB` but missed this third
-			// live spelling, which turned the demo's whole WOF cascade off silently for four days.
-			hasWOFDB: r.hasWOFDB ?? r.hasWOFDb ?? r.hasWofDb ?? false,
-		})),
-	}
-}
-
-/**
- * Fetch + normalize the demo's releases manifest. `cache: "reload"` bypasses the (immutable-Cache-Control) HTTP cache
- * for the version pointer so a returning visitor sees a `defaultVersion` bump.
- */
-export async function fetchReleasesManifest(): Promise<ReleasesManifest | null> {
-	const res = await fetch(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })
-
-	return res.ok ? normalizeReleasesManifest(await res.json()) : null
-}
-
-export interface ParsedNode {
-	tag: string
-	value?: unknown
-	confidence?: number
-}
-
-export interface TreeNode {
-	tag: string
-	value?: unknown
-	confidence?: number
-	start?: number
-	end?: number
-	children?: unknown[]
-}
-
-//#endregion
 
 //#region Constants
 
@@ -208,18 +101,6 @@ export function pairCountryForInput(input: string): string | undefined {
 
 	return EXAMPLE_ADDRESSES.find((ex) => ex.address.trim() === trimmed)?.country
 }
-
-//#endregion
-
-//#region Tree flattening
-
-/**
- * Flatten a solver tree to its nodes in source order.
- *
- * Re-exported rather than declared: `@mailwoman/core/decoder`'s `flattenTreeNodes` is the shared home, and the local
- * copy this replaces sorted by TRAVERSAL order — which put a child ahead of its parent on 7 of 10 ordinary addresses
- * (`street_suffix` before `street`, `house_number` before `street`, `postcode` before `locality`).
- */
 
 //#endregion
 
@@ -377,80 +258,5 @@ export async function resolveDualRoles(
 		return undefined
 	}
 }
-
-//#endregion
-
-//#region Confidence calibration (browser-safe mirror)
-
-/**
- * Maps a raw span confidence in [0, 1] to its calibrated probability of correctness.
- */
-export type Calibrator = (raw: number) => number
-
-interface CalibrationBin {
-	center: number
-	calibrated: number
-}
-
-/**
- * Browser-safe twin of `@mailwoman/core/decoder/calibration`'s `createCalibrator`. The canonical lives in core for the
- * Node parse path; we can't import it into the docs webpack bundle (the `core/decoder` barrel pulls in node-only
- * siblings like `build-tree`, and the deep subpath isn't a published export), so the ~15-line piecewise-linear interp
- * is mirrored here verbatim. Keep the two in sync — both are pure, monotone, and clamp to the table's range outside
- * it.
- */
-export function createCalibrator(table: { table: CalibrationBin[] } | CalibrationBin[]): Calibrator {
-	const bins = Array.isArray(table) ? table : table.table
-
-	if (!bins || !bins.length) throw new Error("createCalibrator: empty calibration table")
-	const sorted = [...bins].toSorted((a, b) => a.center - b.center)
-	const centers = sorted.map((b) => b.center)
-	const cals = sorted.map((b) => clampConfidence(b.calibrated))
-	const n = centers.length
-
-	return (raw: number): number => {
-		const x = clampConfidence(raw)
-
-		if (x <= centers[0]!) return cals[0]!
-
-		if (x >= centers[n - 1]!) return cals[n - 1]!
-		let lo = 0
-		let hi = n - 1
-
-		while (hi - lo > 1) {
-			const mid = (lo + hi) >> 1
-
-			if (centers[mid]! <= x) {
-				lo = mid
-			} else {
-				hi = mid
-			}
-		}
-
-		const x0 = centers[lo]!
-		const x1 = centers[hi]!
-		const t = x1 === x0 ? 0 : (x - x0) / (x1 - x0)
-
-		return cals[lo]! + t * (cals[hi]! - cals[lo]!)
-	}
-}
-
-//#endregion
-
-//#region WOF resolution
-
-/**
- * Admin resolution for the demo (#861): run the SHARED `@mailwoman/resolver` `resolveTree` — the greedy walk + admin
- * descendant-coherence (#263/#267) + explicit-country coherence (#822) + the span-rescore recovery (#370) — over the
- * byte-range candidate lookup, via {@link CandidateResolverBackend}. This replaced the bespoke postcode→locality→raw
- * cascade that re-implemented the resolver's tier order beside it and silently trailed its joint-consistency passes
- * (the server↔demo parity gap #861 measured).
- *
- * Returns hits in the shape the map UI consumes: the pin first (most address-precise resolved node), then its runner-up
- * candidates, then the other resolved admin nodes for hierarchy context. Falls back to a raw-text lookup when nothing
- * in the tree resolves — same last-resort the old cascade had. Drops (lat=0, lon=0) placeholder hits throughout.
- */
-
-//#endregion
 
 //#endregion

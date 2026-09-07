@@ -7,7 +7,7 @@
  *   `@mailwoman/react/map` `<GeocoderDemo>` driven by the REAL docs runtime ({@link useDemoMapRuntime}):
  *
  *   - `@mailwoman/neural/web-loader` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier,
- *   - sql.js-httpvfs (`@mailwoman/docs/shared/httpvfs-resolver`) range-loading the same-origin WOF + polygon DBs,
+ *   - sql.js-httpvfs (`@mailwoman/resolver-wof-wasm/httpvfs/resolver`) range-loading the byte-range WOF + polygon DBs,
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
  *   The docs-only chrome (about box, permalink, result panel, geo-bias row, calibration + dev-mode
@@ -28,6 +28,8 @@ import { GeocoderDemo } from "@mailwoman/react/map"
 import type { DemoPanels } from "@mailwoman/react/map"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import Layout from "@theme/Layout"
+import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
+import { sqljsBaseURL } from "mailwoman/browser-runtime/resources"
 import type React from "react"
 import { useMemo, useState } from "react"
 
@@ -35,8 +37,6 @@ import { AboutDemo } from "#components/AboutDemo/AboutDemo"
 import { PermalinkButton } from "#components/PermalinkButton/PermalinkButton"
 import { ResultPanel as DocsResultPanel } from "#components/ResultPanel/ResultPanel"
 import { useSiteConfig } from "#hooks/site"
-import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "#shared/demo-helpers"
-import { sqljsBaseURL } from "#shared/resources"
 
 import { DemoCompare } from "./_compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./_controls.tsx"

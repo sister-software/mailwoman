@@ -66,9 +66,9 @@ import type { DataReleaseManifest } from "#data/release"
 
 /**
  * The public, unauthenticated bucket every bundle artifact resolves against — the same host `doctor/checks.ts`'s
- * (now-removed) `CANDIDATE_URL`/`POI_URL` and the demo's `ASSET_BASE_URL` (`docs/src/shared/resources.tsx`) point at.
- * No credentials: this is the read side of the R2 bucket `commands/tiles/publish.tsx`/`commands/gazetteer/publish.tsx`
- * write to.
+ * (now-removed) `CANDIDATE_URL`/`POI_URL` and the browser runtime's `ASSET_BASE_URL`
+ * (`packages/mailwoman/lib/browser-runtime/resources.ts`) point at. No credentials: this is the read side of the R2
+ * bucket `commands/tiles/publish.tsx`/`commands/gazetteer/publish.tsx` write to.
  */
 export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 

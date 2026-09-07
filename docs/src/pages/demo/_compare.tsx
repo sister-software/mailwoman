@@ -12,14 +12,14 @@
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
+import { DEFAULT_LOCALE, runClassifyStage } from "mailwoman/browser-runtime/classify"
+import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
+import { neuralClassifierLoadURLs } from "mailwoman/browser-runtime/resources"
+import type { MailwomanClassifierLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
 import { useEffect, useState } from "react"
 
 import { VersionCompare } from "#components/VersionCompare/VersionCompare"
-import type { ReleaseInfo } from "#shared/demo-helpers"
-import { DEFAULT_LOCALE, runClassifyStage } from "#shared/demo-helpers"
-import type { MailwomanClassifierLike } from "#shared/resources"
-import { neuralClassifierLoadURLs } from "#shared/resources"
 
 export interface DemoCompareProps {
 	/**

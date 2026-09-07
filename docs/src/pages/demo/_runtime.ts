@@ -43,20 +43,17 @@ import {
 	type StreetResolution,
 } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import type { Coordinates2D } from "@mailwoman/spatial"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-
-import type { ReleaseInfo } from "#shared/demo-helpers"
 import {
 	DEFAULT_LOCALE,
-	fetchReleasesManifest,
 	parseStageLabelsFor,
 	projectCascadeHits,
 	resolveDualRoles,
 	runClassifyStage,
-} from "#shared/demo-helpers"
-import type { DocsDemoAssets } from "#shared/demo-loader"
-import { loadDemoAssets } from "#shared/demo-loader"
-import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
+} from "mailwoman/browser-runtime/classify"
+import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
+import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
+import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
+import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import {
 	assetURL,
 	HOSTED_STREET_SLUGS,
@@ -64,8 +61,11 @@ import {
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
 	streetExtractURL,
-} from "#shared/resources"
-import type { ParseTraceLike } from "#shared/resources"
+} from "mailwoman/browser-runtime/resources"
+import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
 
 import {
 	fetchBasemapSource,
@@ -177,15 +177,13 @@ export function useDemoMapRuntime({
 	// ── Injected loaders ──────────────────────────────────────────────────────
 	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => fetchReleasesManifest(), [])
 
-	// Delegates to the shared `loadDemoAssets` (the ONE docs-side loader, also used by the MDX-embed context) so the
-	// two demo entry points can't drift on the classifier/calibration/FST/WOF load sequence.
 	const loadAssets = useCallback(
-		(release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<DocsDemoAssets> =>
-			loadDemoAssets(release, ctx, sqljsBaseURL),
+		(release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<ReleaseAssets> =>
+			loadReleaseAssets(release, ctx, { gazetteer: { sqljsBaseURL } }),
 		[sqljsBaseURL]
 	)
 
-	const rt = useDemoRuntime<DocsDemoAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useDemoRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
 
 	// ── Range-cache service worker (docs-only; persists validated DB range chunks across visits) ───────────
 	useEffect(() => {
@@ -221,7 +219,7 @@ export function useDemoMapRuntime({
 	}, [])
 
 	// ── Mutable refs the stable parse/enrich callbacks read (avoids stale closures without churning identity) ──
-	const assetsRef = useRef<DocsDemoAssets | null>(rt.assets)
+	const assetsRef = useRef<ReleaseAssets | null>(rt.assets)
 	const releaseRef = useRef<ReleaseInfo | null>(rt.selectedRelease)
 	const versionRef = useRef<string | null>(rt.selectedVersion)
 

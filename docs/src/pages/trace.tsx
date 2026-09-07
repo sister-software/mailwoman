@@ -9,12 +9,12 @@
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Layout from "@theme/Layout"
+import { sqljsBaseURL } from "mailwoman/browser-runtime/resources"
 import type React from "react"
 
 import { LiveModelVisualizer } from "../components/ModelVisualizer/LiveModelVisualizer.tsx"
 import { DemoEmbedProvider } from "../contexts/DemoEmbed.tsx"
 import { useSiteConfig } from "../hooks/site.ts"
-import { sqljsBaseURL } from "../shared/resources/index.ts"
 
 const TracePage: React.FC = () => {
 	const { baseURL } = useSiteConfig()

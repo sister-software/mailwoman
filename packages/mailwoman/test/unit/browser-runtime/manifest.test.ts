@@ -13,8 +13,9 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { normalizeReleasesManifest } from "@mailwoman/docs/shared/demo-helpers"
-import type { WireReleaseEntry } from "@mailwoman/docs/shared/demo-helpers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { normalizeReleasesManifest } from "mailwoman/browser-runtime/manifest"
+import type { WireReleaseEntry } from "mailwoman/browser-runtime/manifest"
 import { describe, expect, test } from "vitest"
 
 const entry = (over: Partial<WireReleaseEntry>) => ({
@@ -67,13 +68,10 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 })
 
 describe("no consumer reads raw legacy wire keys outside the boundary", () => {
-	for (const rel of [
-		"../../../../src/pages/demo/_runtime.ts",
-		"../../../../src/contexts/DemoEmbed.tsx",
-		"../../../../../packages/mailwoman/lib/release-tools/publish-hf.ts",
-	]) {
+	// The docs site's own consumers are pinned the same way by its `manifest-consumers.test.ts`.
+	for (const rel of ["lib/browser-runtime/load-assets.ts", "lib/release-tools/publish-hf.ts"]) {
 		test(`${rel} is house-cased only`, async () => {
-			const src = await readLocalTextFile(new URL(rel, import.meta.url))
+			const src = await readLocalTextFile(resolvePackagePath("mailwoman", rel))
 
 			expect(src).not.toContain("hasFst")
 			expect(src).not.toContain("hasWofDb")

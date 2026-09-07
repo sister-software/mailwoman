@@ -30,6 +30,13 @@ import type { PipelinePanels, PipelineRuntime } from "@mailwoman/react"
 import "@mailwoman/react/styles.css"
 
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import {
+	DEFAULT_ADDRESS,
+	parseStageLabelsFor,
+	projectCascadeHits,
+	resolveDualRoles,
+	runClassifyStage,
+} from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
 import { AboutDemo } from "#components/AboutDemo/AboutDemo"
@@ -44,13 +51,6 @@ import { SubwordExplorer } from "#components/SubwordExplorer/SubwordExplorer"
 import { TimingPanel } from "#components/TimingPanel/TimingPanel"
 import { TreeView } from "#components/TreeView/TreeView"
 import { useDemoEmbed } from "#contexts/DemoEmbed"
-import {
-	DEFAULT_ADDRESS,
-	parseStageLabelsFor,
-	projectCascadeHits,
-	resolveDualRoles,
-	runClassifyStage,
-} from "#shared/demo-helpers"
 
 import styles from "./styles.module.css"
 

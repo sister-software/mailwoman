@@ -2,108 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Where the browser runtime's assets live: the public data origin, the URL of each per-release asset, the dated pins
+ *   of the model-independent artifacts (the admin gazetteer, the POI layer, the national street extracts, the pair
+ *   indexes), and the loaders for the two FST artifacts. Every object on the origin ships an immutable Cache-Control,
+ *   so a rebuilt artifact takes a fresh dated path and the pin here is the only mutable pointer to it.
  */
 
-// Moved to @mailwoman/resolver-wof-wasm so the packages that resolve through a browser lookup can
-// reach them without importing from the docs site. Re-exported here so demo code is unchanged.
-// Imported rather than re-exported straight through: `DualRole` is used locally below, and a bare
-// re-export does not bind the name in this module.
-// oxlint-disable-next-line unicorn/prefer-export-from -- see above
-import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
-
-export type { DualRole, MailwomanLookupLike }
-
-export interface FSTProvenanceLike {
-	builtAt: string
-	stateCount: number
-	placeCount: number
-	importanceMatches: number
-}
-
-export interface FSTMatcherLike {
-	walk(tokens: string[]): { stateID: number; accepted: boolean; depth: number } | null
-	walkFrom(
-		prev: { stateID: number; accepted: boolean; depth: number },
-		token: string
-	): { stateID: number; accepted: boolean; depth: number } | null
-	accepting(stateID: number): Array<{
-		wofID: number
-		placetype: string
-		/**
-		 * The REFERENTIAL likelihood (population-anchored) the decoder bias reads — see ROAD_TO_V9 §2. Was `importance`
-		 * through FST format v4, where the same float could be either score with nothing to say which.
-		 */
-		referential: number
-		/**
-		 * Encyclopedic (Wikipedia) importance, when the artifact is v5+ and this place has an article. Displayed, never
-		 * ranked on; `undefined` is absence, not 0.
-		 */
-		encyclopedic?: number
-	}>
-	readonly stateCount: number
-	readonly placeCount: number
-}
-
-export interface MailwomanClassifierLike {
-	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
-	/**
-	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the `traceParse` hook lack it
-	 * — feature-detect before calling.
-	 */
-	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
-}
-
-export interface TraceChannelLike {
-	features: number[][]
-	confidence: number[]
-}
-
-export interface TracePieceLike {
-	piece: string
-	id: number
-	start: number
-	end: number
-}
-
-export interface TraceTokenLike {
-	piece: string
-	start: number
-	end: number
-	label: string
-	confidence: number
-}
-
-export interface TraceRepairLike {
-	pass: string
-	before: string[]
-	after: string[]
-}
-
-/**
- * Structural mirror of `@mailwoman/neural`'s `NeuralParseTrace` (spec 2026-07-03).
- */
-export interface ParseTraceLike {
-	text: string
-	caseNormalized: boolean
-	pieces: TracePieceLike[]
-	anchor?: TraceChannelLike
-	gazetteer?: TraceChannelLike
-	logits: number[][]
-	localeLogits?: number[]
-	/**
-	 * The locale-head axis (country code per `localeLogits` index) — self-describing, never hardcode the order.
-	 */
-	localeCountries?: string[]
-	detectedSystem: string | null
-	systemSource: "off" | "auto" | "pinned"
-	priors: Array<{ kind: string; applied: boolean }>
-	emissions: number[][]
-	labels: string[]
-	path: number[]
-	decode: "viterbi" | "argmax"
-	repairs: TraceRepairLike[]
-	tokens: TraceTokenLike[]
-}
+import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
 
 /**
  * All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain. R2 + Cloudflare gives a

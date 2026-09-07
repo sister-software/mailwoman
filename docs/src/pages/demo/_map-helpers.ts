@@ -44,6 +44,7 @@ export interface PolygonDB {
 export async function loadPolygonDB(url: string, sqljsBaseURL: string): Promise<PolygonDB> {
 	const { loadHTTPVFSDatabase, makeHTTPVFSPolygonLookup } =
 		await import("@mailwoman/resolver-wof-wasm/httpvfs/resolver")
+
 	const worker = await loadHTTPVFSDatabase(url, sqljsBaseURL)
 	const lookup = makeHTTPVFSPolygonLookup(worker)
 

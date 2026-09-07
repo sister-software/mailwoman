@@ -11,10 +11,9 @@
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
+import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
 import { useEffect, useState } from "react"
-
-import type { ParseTraceLike } from "#shared/resources"
 
 import { ModelVisualizer } from "../../components/ModelVisualizer/ModelVisualizer.tsx"
 

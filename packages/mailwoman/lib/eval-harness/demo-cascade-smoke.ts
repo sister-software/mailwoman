@@ -34,18 +34,8 @@
  *
  *   Measurement only: this script changes no pipeline or resolver behavior.
  *
- *   ONE SUBSTANTIVE CHANGE at the de-shell migration, and it is a REPAIR. This runner imported
- *   `flattenTree` and `runCascade` from `docs/src/shared/demo-helpers.ts` and its row schema from a
- *   sibling `demo-cascade-rows.ts`. That sibling was swept into the gitignored diagnostic drawer by
- *   the 2026-07-10 probe triage (c61159ef) and vanished, so the leg has been UNLOADABLE — a bare
- *   `ERR_MODULE_NOT_FOUND` — ever since; the runner spawned it with `nothrow` and only ever ran it
- *   when a `wof-hot.db` was present, so nothing surfaced it. The schema module is restored beside
- *   this file. `runCascade` now comes from `@mailwoman/resolver-wof-wasm/browser-cascade`, which is
- *   where `demo-helpers` re-exports it FROM — the same function, so the "measure the REAL cascade"
- *   guarantee is intact and the docs dependency (which `mailwoman`'s tsconfig cannot carry: `docs`
- *   depends on `mailwoman`, so a project reference would be a cycle) is gone. The flattener that was
- *   copied here for the same reason now comes from `@mailwoman/core/decoder` (`flattenTreeNodes`),
- *   which both this and the demo take it from — and which fixed the order both copies had wrong.
+ *   `runCascade` comes from `@mailwoman/resolver-wof-wasm/browser-cascade` and `flattenTreeNodes` from
+ *   `@mailwoman/core/decoder`: the same functions the browser runtime calls, so this measures the real cascade.
  */
 
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
