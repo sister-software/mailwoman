@@ -33,6 +33,11 @@ const GLOBAL_EXTENT_TOLERANCE = 0.005
  */
 const WHOLE_BODY_ULLR = ["-180", "90", "180", "-90"] as const
 
+/**
+ * Pixels along a tile edge; at zoom z the whole-body grid is 2^z tiles wide and 2^(z−1) tall in EPSG:4326.
+ */
+const TILE_PIXELS = 256
+
 interface DEMGrid {
 	/**
 	 * True when the grid's coordinates are the body's metres (a projected CRS); false for degrees.
@@ -128,22 +133,42 @@ export async function buildHillshadePMTiles(options: HillshadeBuildOptions): Pro
 
 	// 2. The XYZ tile scheme is angular: the same lon/lat grid on any sphere. Declaring the shaded image as EPSG:4326
 	//    with the whole-body extent makes GDAL tile it on that grid; the metres are Earth's, which is why shading
-	//    happened before this step.
-	const declare = ["-a_srs", "EPSG:4326", "-a_ullr", ...WHOLE_BODY_ULLR, shaded, forTiling]
+	//    happened before this step. The image is resampled here to exactly the requested zoom's pixel grid, because
+	//    the MBTiles driver picks the tiling zoom from the source resolution and nothing else: its MAXZOOM is a
+	//    metadata value and ZOOM_LEVEL an open option, and under both the 118 m Moon mosaic landed at zoom 7 and 8
+	//    (907 MB and 2.98 GB) against a requested 6.
+	const width = TILE_PIXELS * 2 ** options.maxZoom
+
+	const declare = [
+		"-a_srs",
+		"EPSG:4326",
+		"-a_ullr",
+		...WHOLE_BODY_ULLR,
+		"-outsize",
+		String(width),
+		String(width / 2),
+		"-r",
+		"average",
+		shaded,
+		forTiling,
+	]
 
 	await runFile("gdal_translate", declare)
 
-	// 3. MBTiles with PNG tiles at exactly the requested zoom, then overviews down to zoom 0, then PMTiles. The zoom is
-	//    pinned with ZOOM_LEVEL rather than left to a strategy and a cap: under ZOOM_LEVEL_STRATEGY=LOWER with
-	//    MAXZOOM=6 the 118 m Moon mosaic still landed at zoom 7 (21,845 tiles, 907 MB) while the 463 m Mars mosaic
-	//    landed at 6.
-	const tile = ["-of", "MBTILES", "-co", "TILE_FORMAT=PNG", "-co", `ZOOM_LEVEL=${options.maxZoom}`, forTiling, mbtiles]
+	// 3. MBTiles with PNG tiles at the source's zoom, then overviews down to zoom 0, then PMTiles. AUTO takes the
+	//    closest zoom, which the resample made exact; LOWER would step one below an exact match.
+	const tile = ["-of", "MBTILES", "-co", "TILE_FORMAT=PNG", "-co", "ZOOM_LEVEL_STRATEGY=AUTO", forTiling, mbtiles]
 
 	await runFile("gdal_translate", tile)
 
-	// GDAL lands the tiles at the zoom the source resolution supports, capped by MAXZOOM; overviews run from that zoom
-	// down to 0, and a source that lands at 0 has nothing to average.
+	// The driver's zoom is read back rather than assumed; the resample above is what makes it the requested one.
 	const zoom = await readMBTilesZoom(mbtiles)
+
+	if (zoom !== options.maxZoom) {
+		throw new Error(`${mbtiles}: GDAL tiled at zoom ${zoom}, not the requested ${options.maxZoom}`)
+	}
+
+	// Overviews run from that zoom down to 0; a source that lands at 0 has nothing to average.
 	const overviews = ["-r", "average", mbtiles, ...Array.from({ length: zoom }, (_, index) => String(2 ** (index + 1)))]
 
 	if (zoom > 0) {
