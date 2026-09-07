@@ -40,5 +40,19 @@
 	// A composite project must list every file it pulls in. Without an `include`, the default covers .ts/.tsx only, and
 	// the trace fixture a story imports through `resolveJsonModule` is left out.
 	"include": ["./**/*.ts", "./**/*.tsx", "./**/*.json"],
-	"exclude": [".docusaurus", "build", "out", "node_modules"]
+	"exclude": [".docusaurus", "build", "out", "node_modules"],
+	// Every workspace package the site imports, so `tsc -b` reads each one's source project instead of whatever its
+	// `out/` holds at the moment this project compiles.
+	"references": [
+		{ "path": "../packages/cartographer" },
+		{ "path": "../packages/core" },
+		{ "path": "../packages/license-worker" },
+		{ "path": "../packages/mailwoman" },
+		{ "path": "../packages/neural" },
+		{ "path": "../packages/react" },
+		{ "path": "../packages/resolver" },
+		{ "path": "../packages/resolver-wof-sqlite" },
+		{ "path": "../packages/resolver-wof-wasm" },
+		{ "path": "../packages/spatial" }
+	]
 }
