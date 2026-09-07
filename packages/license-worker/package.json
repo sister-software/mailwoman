@@ -160,11 +160,10 @@
 		}
 	},
 	"scripts": {
-		"dev": "wrangler dev --env sandbox",
-		"deploy:sandbox": "wrangler deploy --env sandbox",
-		"deploy:production": "wrangler deploy --env production",
-		"migrate:sandbox": "wrangler d1 migrations apply LICENSE_LEDGER --env sandbox --remote",
-		"migrate:production": "wrangler d1 migrations apply LICENSE_LEDGER --env production --remote",
+		"dev": "wrangler dev -c wrangler.sandbox.toml",
+		"deploy:sandbox": "wrangler deploy -c wrangler.sandbox.toml",
+		"migrate:sandbox": "wrangler d1 migrations apply LICENSE_LEDGER -c wrangler.sandbox.toml --remote",
+		"migrate:production": "wrangler d1 migrations apply LICENSE_LEDGER --remote",
 		"test": "vitest run"
 	},
 	"dependencies": {
