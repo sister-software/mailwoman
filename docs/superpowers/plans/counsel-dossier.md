@@ -63,12 +63,39 @@ GeoJSON). Compiling ALS into an FST/gazetteer artifact is adaptation — permitt
    data constitute "export" of the data? (Not needed for the current framework; a future-partner
    question.)
 
-**Facts:** the juso bulk DB ToS bars commercial use/redistribution without approval; the
-coordinate datasets carry a signed export pledge (국외 반출 금지); data.go.kr's portal metadata
-("no restriction") does not override the statute. All verified in the prior-art survey.
+**Facts (chain of custody, read 2026-09-07):**
 
-**Interim posture:** we never touch juso data; the KR parse recipe uses only KOGL/WOF/OSM-quarantined
-sources; the juso builder is written against the DOCUMENTED format + synthetic fixtures only.
+- What shipped: `@mailwoman/neural-weights-cjk` 0.0.2 (the `v8-cjk-kr` weights, trained on 2,000,000
+  rows of the KR corpus `v8-kr-2026-09-06`) and the 249-pair 시군구 register in `@mailwoman/codex/kr`.
+  No coordinates ship. The board's coordinates are read locally.
+- Where the corpus came from: OpenAddresses' `asia.zip` (collected 2021-10-20), whose `LICENSE.txt`
+  lists every `kr/<province>/provincewide` as `License: Unknown`, `Required attribution: Ministry of
+the Interior`. The source definition (`sources/kr/11/provincewide.json`) points at a contributor
+  upload, `korea-feb2017.zip`, and its `license` field carries only an attribution name. The pull
+  request that added it (openaddresses/openaddresses#2688, merged 2017-03-26) says "I did not see a
+  clear license". The file inside is the building-entrance point file (`entrc_<region>.txt`).
+- What that product is at the source: the ministry's 도로명주소 위치정보 요약DB (entrance coordinates) and
+  도로명주소 전자지도. On data.go.kr both carry 공공누리 제1유형 (attribution; commercial use and
+  derivatives permitted) AND the note that they are provided only after a separate application and a
+  purpose-of-use review by the local government or the ministry (시행령 제46조, 시행규칙 제53조,
+  별지 제32호서식). Nobody in the chain above applied. The application form's wording is unread.
+- The export rule: 도로명주소법 제25조 제10항 forbids taking a 주소정보기본도 or 주소정보안내도 that contains
+  disclosure-restricted spatial information out of Korea without the minister's permission (up to two
+  years or 20,000,000 won). Whether entrance coordinates count as restricted is unread.
+- The unrestricted products: the 도로명주소 한글 주소DB (시도, 시군구, 읍면동, 도로명, 건물본번·부번, 우편번호,
+  the 지번 file beside it; no coordinates) and the 영문 주소DB are direct downloads labelled
+  "이용허락범위 제한 없음" on data.go.kr, no application. Every field the weights learned from, and every
+  name in the register, is in those products.
+- KOGL's AI type (2026-01-28, 문화체육관광부 + 과학기술정보통신부): permits training and commercial use of
+  the trained model, forbids resale of the training set and outputs substantially similar to the source,
+  and applies only where the agency adds the AI mark. None of the address datasets carry it.
+
+**Posture:** the 2026-09-06 decisions (the KR spec, `docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md`)
+replaced the earlier "never touch juso data" line. The exposure is confined to the coordinate file in the
+2017 upload. The next CJK training run rebuilds the KR corpus from the unrestricted 주소DB (road-name and
+지번 registers, front-door download, provenance recorded in the build report), so the shipped weights
+rest on a product with no application step. Until that run promotes, the 0.0.2 weights stay as shipped
+with the attribution line in the card.
 
 ## 5. Japan (all green; two riders)
 
