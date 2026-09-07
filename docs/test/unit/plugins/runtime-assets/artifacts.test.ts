@@ -6,12 +6,12 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { relativeImportSpecifiers, stageMapLibreWorker } from "@mailwoman/docs/plugins/demo-assets/artifacts"
+import { relativeImportSpecifiers, stageMapLibreWorker } from "@mailwoman/docs/plugins/runtime-assets/artifacts"
 import { MAPLIBRE_WORKER_URL } from "@mailwoman/docs/shared/maplibre-worker-url"
 import { basename } from "path-ts"
 import { describe, expect, test } from "vitest"
 
-describe("demo-assets MapLibre worker staging", () => {
+describe("runtime-assets MapLibre worker staging", () => {
 	test("reads the relative imports a worker module depends on", () => {
 		const source = `import{a as b}from"./maplibre-gl-shared.mjs";import "./other.mjs";import x from "maplibre-gl";`
 

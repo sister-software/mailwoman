@@ -119,7 +119,7 @@ const config: Config = {
 	},
 
 	plugins: [
-		"./plugins/demo-assets/plugin.ts",
+		"./plugins/runtime-assets/plugin.ts",
 		[
 			// Wraps docusaurus-plugin-glossary: same validation/tooltips/remark, custom page with
 			// tag filters + category TOC. See plugins/glossary/plugin.ts.
@@ -203,7 +203,8 @@ const config: Config = {
 				sitemap: {
 					// Internal utility pages — keep them reachable but out of the sitemap
 					// (and thus out of crawler discovery). Patterns cover both slash forms.
-					ignorePatterns: ["/debug", "/debug/", "/trace", "/trace/"],
+					// Redirect pages to earth.mailwoman.ai; reachable, but not for crawlers.
+					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
 					customCss: [
@@ -308,8 +309,8 @@ const config: Config = {
 				},
 				{
 					// The call to action, styled as a button rather than a nav label.
-					to: "/demo",
-					label: "Try the demo",
+					href: "https://earth.mailwoman.ai/",
+					label: "Try the geocoder",
 					position: "right",
 					className: "navbar__cta",
 				},
@@ -326,7 +327,7 @@ const config: Config = {
 				{
 					title: "Try it",
 					items: [
-						{ label: "Demo", to: "/demo" },
+						{ label: "Earth", href: "https://earth.mailwoman.ai/" },
 						{ label: "Field notes", to: "/research" },
 						// /training is a published page with no other route into it since the navbar
 						// was trimmed back to the doors. This is the smallest fix for that, not a

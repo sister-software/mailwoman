@@ -2,7 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Docusaurus demo asset staging and bundle-policy entry point.
+ * @file Docusaurus runtime-asset staging and bundle-policy entry point: the sql.js worker the explainers resolve
+ *   through, the MapLibre worker the dashboard map spawns, and the webpack aliases and shim policy for the packages
+ *   the explainers import.
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
@@ -10,10 +12,10 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { stageSQLJSAssets } from "@mailwoman/resolver-wof-wasm/host-assets"
 import { resolvePath } from "path-ts"
 
-import { stageMapLibreWorker, stagePairIndexes } from "./artifacts.ts"
-import { bundleAliases, configureDemoWebpack } from "./webpack-policy.ts"
+import { stageMapLibreWorker } from "./artifacts.ts"
+import { bundleAliases, configureRuntimeWebpack } from "./webpack-policy.ts"
 
-export default async function demoAssetsPlugin(context: LoadContext): Promise<Plugin> {
+export default async function runtimeAssetsPlugin(context: LoadContext): Promise<Plugin> {
 	const docsDir = context.siteDir
 	const staticDir = resolvePath(docsDir, "static", "mailwoman")
 
@@ -25,16 +27,13 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 	}
 
 	return {
-		name: "demo-assets",
+		name: "runtime-assets",
 
 		async loadContent() {
 			await makeDirectories(staticDir)
 			const sqljsDir = resolvePath(staticDir, "sqljs")
 			await makeDirectories(sqljsDir)
 			await stageSQLJSAssets(sqljsDir)
-			const pairIndexDir = resolvePath(staticDir, "pair-index")
-			await makeDirectories(pairIndexDir)
-			await stagePairIndexes(pairIndexDir)
 			const maplibreDir = resolvePath(staticDir, "maplibre")
 			await makeDirectories(maplibreDir)
 			await stageMapLibreWorker(maplibreDir)
@@ -47,7 +46,7 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 		},
 
 		configureWebpack(config, isServer) {
-			return configureDemoWebpack(config, isServer ? aliases.server : aliases.client, isServer)
+			return configureRuntimeWebpack(config, isServer ? aliases.server : aliases.client, isServer)
 		},
 	}
 }

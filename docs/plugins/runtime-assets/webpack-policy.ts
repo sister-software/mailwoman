@@ -57,7 +57,7 @@ function filesystemCache(config: Configuration, alias: Record<string, string>): 
  * which Docusaurus does await — and handed in here. Resolving it at this point would return a promise the lifecycle
  * never unwraps.
  */
-export function configureDemoWebpack(
+export function configureRuntimeWebpack(
 	config: Configuration,
 	alias: Record<string, string>,
 	isServer: boolean

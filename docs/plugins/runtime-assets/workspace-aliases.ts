@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Source aliases used by the interactive docs demo.
+ * @file Source aliases for the packages the docs explainers import.
  */
 
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
@@ -37,7 +37,7 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	// them. Nothing noticed, because a missing target only warned. {@link requireAlias} now refuses instead —
 	// a HAND-LISTED entry naming a module that does not exist is a bug by definition, and this list is the
 	// mirror that goes stale every time a subpath moves.
-	// These are the BROWSER-SAFE LEAVES: each keeps a per-file subpath so the demo bundle never pulls
+	// These are the BROWSER-SAFE LEAVES: each keeps a per-file subpath so the site bundle never pulls
 	// the Node-only siblings that share its directory entry.
 	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts/index"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
@@ -71,14 +71,14 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	 *
 	 * The lists below are a hand-maintained mirror of several packages' `exports` maps, so they go stale every time a
 	 * subpath moves — and the failure was silent: `resolvePackageFile` answers `null` and the alias was simply skipped,
-	 * leaving the demo to resolve through the real exports map and nobody any the wiser. That is how
+	 * leaving the site to resolve through the real exports map and nobody any the wiser. That is how
 	 * `@mailwoman/resolver-wof-sqlite/geo` stayed on the list after the module was deleted. A named entry that cannot
 	 * resolve is a defect in THIS file, so it throws.
 	 */
 	const requireAlias = (specifier: string, target: string | null): void => {
 		if (!target) {
 			throw new Error(
-				`demo-assets: "${specifier}" is listed in workspace-aliases.ts but resolves to nothing. ` +
+				`runtime-assets: "${specifier}" is listed in workspace-aliases.ts but resolves to nothing. ` +
 					`Remove it, or point it at the module that replaced it.`
 			)
 		}
@@ -116,13 +116,13 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 		const target = tryResolvePackageSpecifier(import.meta.url, "@mailwoman/codex", subpath)
 
 		if (!target) {
-			console.warn(`[demo-assets] ${specifier} not resolvable — alias skipped`)
+			console.warn(`[runtime-assets] ${specifier} not resolvable — alias skipped`)
 
 			continue
 		}
 
 		if (!target.endsWith(".ts")) {
-			console.warn(`[demo-assets] ${specifier} resolved to compiled output (${target}) — dev exports drift?`)
+			console.warn(`[runtime-assets] ${specifier} resolved to compiled output (${target}) — dev exports drift?`)
 		}
 
 		aliases[`${specifier}$`] = target

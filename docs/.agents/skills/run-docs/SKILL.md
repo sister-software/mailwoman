@@ -27,16 +27,11 @@ npx playwright install chromium
 
 You don't need to build for dev. Two optional pre-steps:
 
-- **`/demo` static assets.** The page renders without them but live address resolution won't work. To enable, the weights workspace must have its binaries linked first:
-
-  ```bash
-  node ../neural-weights-en-us/scripts/link-dev-weights.ts
-  ```
-
-  The demo-assets Docusaurus plugin stages the assets automatically in `loadContent()` — both
-  `yarn start` and `yarn build` — once the weights are linked (the retired
-  `docs/scripts/build-demo-assets.ts` manual step is gone). Skip if you only care about prose
-  pages or the demo's static UI.
+- **Explainer runtime assets.** The explainers that resolve (`PipelineExplorer`, `GuidedTour`, `POIExplorer`)
+  read the model and the gazetteer from the public bucket at run time; the runtime-assets Docusaurus plugin stages
+  the sql.js worker and the MapLibre worker automatically in `loadContent()` for both `yarn start` and
+  `yarn build`. The geocoder itself is the Earth app (`packages/earth`), not a docs page: `/demo`, `/debug` and
+  `/trace` are redirect pages to https://earth.mailwoman.ai.
 
 - **Production build.** Static output to `build/`:
   ```bash
@@ -88,11 +83,13 @@ Both are useless headless except as a server for the driver above. `yarn start` 
 
 ```bash
 yarn typecheck                              # tsc, no emit
-yarn test:e2e                               # playwright against PROD by default
-MAILWOMAN_DEMO_URL=http://localhost:7770 yarn test:e2e   # against local dev
+yarn test:e2e                               # the build-health check: docusaurus build with no warnings
 ```
 
-The Playwright e2e suite (`test/browser/*.spec.ts`) targets the live `/demo` page and assumes the WOF+ONNX assets are in place. It's slow (cold-load budget is 180s; see `playwright.config.ts:42`). For "did my doc change render?" the driver above is the right tool — Playwright e2e is reserved for the `/demo`-app behavior.
+The geocoder's browser suite lives with the app: `yarn workspace @mailwoman/earth test:browser` builds and previews
+`packages/earth` on port 7770 (the local origin the public bucket's CORS rule admits), and
+`MAILWOMAN_EARTH_URL=https://earth.mailwoman.ai` runs it against the deployment. For "did my doc change render?" the
+driver above is the right tool.
 
 ## Gotchas
 
@@ -102,7 +99,7 @@ The Playwright e2e suite (`test/browser/*.spec.ts`) targets the live `/demo` pag
 - **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile knows about it; whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
 - **The dev server uses port 7770, not the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
 - **`networkidle` is required, not `domcontentloaded`.** Docusaurus is SPA-ish; `domcontentloaded` fires before the React hydration assets land and your screenshot will show "Loading..." The driver already uses `networkidle`; if you write your own Playwright snippet, do the same.
-- **`/demo/` renders without the `static/mailwoman/*.onnx,*.model,*.db` artifacts** but address resolution won't work — clicking "Parse + resolve" silently no-ops or errors in the console. The page screenshot looks correct; the feature is broken. If you're testing the demo _behavior_, link the weights (`node ../neural-weights-en-us/scripts/link-dev-weights.ts`) and restart `yarn start` — the demo-assets plugin stages the artifacts at server start (needs `$MAILWOMAN_DATA_ROOT/wof/...` or `PLAYPEN_WOF_*_DB` env overrides).
+- **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact; the geocoder's behaviour is tested in `packages/earth`, not here.
 - **The driver does not launch or kill the dev server.** This is deliberate — Docusaurus's first build is slow and you'll typically run the driver 5–20 times against one server. Tear down explicitly with `pkill -f 'docusaurus start'` when done.
 
 ## Troubleshooting

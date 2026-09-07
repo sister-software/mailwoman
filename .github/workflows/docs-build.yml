@@ -8,7 +8,7 @@
 #
 # Binary assets (model.onnx, tokenizer.model, fst-en-US.bin, wof-hot.db) are
 # fetched at runtime from the HF Bucket (sister-software/mailwoman), NOT bundled
-# into the static site. The demo-assets plugin still runs loadContent() to
+# into the static site. The runtime-assets plugin still runs loadContent() to
 # validate the model card, but binary staging is skipped in CI because the
 # neural-weights-en-us package has no model files without link-dev-weights.ts.
 name: Docs
@@ -34,16 +34,16 @@ on:
     branches: [main]
     paths:
       - "docs/**"
-      # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
-      - "packages/neural/**"
-      - "packages/resolver-wof-wasm/**"
-      - "packages/resolver-wof-sqlite/**"
-      - "packages/resolver/**"
+      # The packages a docs source file imports directly, measured by
+      # `grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src | sort -u`.
+      - "packages/cartographer/**"
       - "packages/core/**"
-      - "packages/spatial/**"
-      - "packages/codex/**"
-      # the demo shell is @mailwoman/react (GeocoderDemo, DemoMap, styles.css)
+      - "packages/license-worker/**"
+      - "packages/mailwoman/**"
+      - "packages/neural/**"
       - "packages/react/**"
+      - "packages/resolver-wof-wasm/**"
+      - "packages/spatial/**"
       - "*.md"
 
 permissions:
@@ -96,16 +96,15 @@ jobs:
           filters: |
             docs:
               - "docs/**"
-                      # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
-              - "packages/neural/**"
-              - "packages/resolver-wof-wasm/**"
-              - "packages/resolver-wof-sqlite/**"
-              - "packages/resolver/**"
+              # The same list as the push paths above: the packages a docs source file imports directly.
+              - "packages/cartographer/**"
               - "packages/core/**"
-              - "packages/spatial/**"
-              - "packages/codex/**"
-              # the demo shell is @mailwoman/react (GeocoderDemo, DemoMap, styles.css)
+              - "packages/license-worker/**"
+              - "packages/mailwoman/**"
+              - "packages/neural/**"
               - "packages/react/**"
+              - "packages/resolver-wof-wasm/**"
+              - "packages/spatial/**"
               - "*.md"
 
       - name: Setup Node

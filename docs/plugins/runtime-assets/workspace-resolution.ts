@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Source-first resolution of a workspace's files for the docs webpack build: each probe prefers the TypeScript
- *   under `lib/` and falls back to `out/`, so the demo bundles source where it exists.
+ *   under `lib/` and falls back to `out/`, so the site bundles source where it exists.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -13,7 +13,7 @@ import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
  * The directory a workspace keeps its TypeScript in, relative to the package root.
  *
  * Each source probe below is followed by an `out/` fallback, so a probe aimed at the WRONG directory does not fail
- * loudly — it silently hands the demo bundle compiled JavaScript instead of the source the alias exists to select. That
+ * loudly — it silently hands the site bundle compiled JavaScript instead of the source the alias exists to select. That
  * is what happened when source moved here from the package root, and only `webpack-policy.test.ts` noticed.
  */
 const SourceDirectoryName = "lib"
@@ -58,7 +58,7 @@ export async function resolvePackageDirectoryEntry(packageName: string, subpath:
 async function existingCompiledFile(target: string): Promise<string | null> {
 	if (await pathExists(target)) return target
 
-	console.warn(`[demo-assets] ${target} does not exist — alias skipped`)
+	console.warn(`[runtime-assets] ${target} does not exist — alias skipped`)
 
 	return null
 }

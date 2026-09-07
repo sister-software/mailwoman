@@ -7,8 +7,8 @@
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { bundleAliases, configureDemoWebpack } from "@mailwoman/docs/plugins/demo-assets/webpack-policy"
-import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/demo-assets/workspace-aliases"
+import { bundleAliases, configureRuntimeWebpack } from "@mailwoman/docs/plugins/runtime-assets/webpack-policy"
+import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/runtime-assets/workspace-aliases"
 import { join, resolvePath } from "path-ts"
 import { describe, expect, test } from "vitest"
 
@@ -104,7 +104,7 @@ describe("docs webpack policy", () => {
 	})
 
 	test("routes both public and private neural runner specifiers to the browser implementation for SSR", async () => {
-		const config = configureDemoWebpack({ cache: false }, await bundleAliases(true), true)
+		const config = configureRuntimeWebpack({ cache: false }, await bundleAliases(true), true)
 
 		expect(config.externals).toEqual([{ "isomorphic-dompurify": "commonjs isomorphic-dompurify" }])
 
