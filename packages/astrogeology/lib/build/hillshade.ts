@@ -155,9 +155,11 @@ export async function buildHillshadePMTiles(options: HillshadeBuildOptions): Pro
 
 	await runFile("gdal_translate", declare)
 
-	// 3. MBTiles with PNG tiles at the source's zoom, then overviews down to zoom 0, then PMTiles. AUTO takes the
-	//    closest zoom, which the resample made exact; LOWER would step one below an exact match.
-	const tile = ["-of", "MBTILES", "-co", "TILE_FORMAT=PNG", "-co", "ZOOM_LEVEL_STRATEGY=AUTO", forTiling, mbtiles]
+	// 3. MBTiles with PNG tiles at the source's zoom, then overviews down to zoom 0, then PMTiles. The driver's zoom
+	//    estimate for a grid of exactly 256·2^z pixels sits a hair under z: measured on blank whole-globe rasters, AUTO
+	//    and LOWER answered 5 for 16,384 pixels and LOWER answered 1 for 1,024, while UPPER answered 6 and 2. UPPER is
+	//    the strategy that lands on the requested zoom.
+	const tile = ["-of", "MBTILES", "-co", "TILE_FORMAT=PNG", "-co", "ZOOM_LEVEL_STRATEGY=UPPER", forTiling, mbtiles]
 
 	await runFile("gdal_translate", tile)
 
