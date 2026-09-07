@@ -11,6 +11,7 @@
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { DEFAULT_LOCALE, runClassifyStage } from "mailwoman/browser-runtime/classify"
+import { fetchWithRetry } from "mailwoman/browser-runtime/fetch"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
 import { neuralClassifierLoadURLs } from "mailwoman/browser-runtime/resources"
 import type { MailwomanClassifierLike } from "mailwoman/browser-runtime/types"
@@ -90,9 +91,10 @@ export const Compare: React.FC<CompareProps> = ({
 
 				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
-				const { classifier: cls, diagnostics } = await loadNeuralClassifierFromURLs(
-					neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
-				)
+				const { classifier: cls, diagnostics } = await loadNeuralClassifierFromURLs({
+					...neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM }),
+					fetchImpl: fetchWithRetry,
+				})
 
 				if (cancelled) return
 

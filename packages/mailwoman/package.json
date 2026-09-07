@@ -197,6 +197,11 @@
 			"node": "./lib/browser-runtime/index.ts",
 			"default": "./out/browser-runtime/index.js"
 		},
+		"./browser-runtime/fetch": {
+			"types": "./out/browser-runtime/fetch.d.ts",
+			"node": "./lib/browser-runtime/fetch.ts",
+			"default": "./out/browser-runtime/fetch.js"
+		},
 		"./browser-runtime/types": {
 			"types": "./out/browser-runtime/types.d.ts",
 			"node": "./lib/browser-runtime/types.ts",

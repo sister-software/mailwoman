@@ -9,6 +9,7 @@
  *   so a rebuilt artifact takes a fresh dated path and the pin here is the only mutable pointer to it.
  */
 
+import { fetchWithRetry } from "#browser-runtime/fetch"
 import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
 
 /**
@@ -320,7 +321,7 @@ export async function loadFSTGazetteer(
 ): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenanceLike }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web"),
-		fetch(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
+		fetchWithRetry(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
 
 			return r.arrayBuffer()
@@ -348,7 +349,7 @@ export async function loadFSTGazetteer(
  * present-but-corrupt binary throws; the caller's tolerant catch treats that as absent too.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
-	const res = await fetch(assetURL(locale, version, "fst-street-morphology.bin"))
+	const res = await fetchWithRetry(assetURL(locale, version, "fst-street-morphology.bin"))
 
 	if (!res.ok) return null
 	const fstModule = await import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web")
