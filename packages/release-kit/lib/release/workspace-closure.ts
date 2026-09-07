@@ -24,8 +24,7 @@ interface WorkspaceManifest {
 const DEPENDENCY_FIELDS = ["dependencies", "optionalDependencies", "peerDependencies"] as const
 
 /**
- * Every workspace the root manifest names, keyed by package name, with its repo-relative directory. The array itself is
- * read by {@link readWorkspaceDirectories}, which expands a pattern entry such as `packages/*`.
+ * Every workspace the root `workspaces` field names, expanded, keyed by package name, with its repo-relative directory.
  */
 export async function workspaceDirectories(repoRoot: string): Promise<Map<string, string>> {
 	const byName = new Map<string, string>()

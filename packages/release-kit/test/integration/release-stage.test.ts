@@ -46,10 +46,10 @@ describe("checkReleaseListIdentity", () => {
 			join(root, "package.json")
 		)
 
-		// A workspace IS a directory carrying a manifest, which is what the root array's reader expands a pattern
-		// against; a named directory with no `package.json` is a broken checkout rather than a workspace.
-		for (const workspace of ["a", "b", "frozen-one"]) {
-			await writeLocalJSONFile({ name: `@fixture/${workspace}` }, join(root, "packages", workspace, "package.json"))
+		// A workspace the field names must carry a manifest; the reader refuses a literal that does not.
+		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
+			await makeDirectories(join(root, workspace))
+			await writeLocalJSONFile({ name: workspace }, join(root, workspace, "package.json"))
 		}
 
 		await writeLocalJSONFile(

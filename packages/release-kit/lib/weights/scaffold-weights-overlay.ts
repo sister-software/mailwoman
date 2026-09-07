@@ -35,6 +35,7 @@
 
 import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
 /**
@@ -257,16 +258,13 @@ await materializeDevOverlay({
 
 	const registered: string[] = []
 
-	// 1. Root workspaces.
+	// 1. Root workspaces. The field is `packages/*` plus literals, so a new overlay directory is covered by the glob
+	//    the moment it exists; a literal entry is only written when no pattern already names the directory.
 	const rootPath = repoPath("package.json")
 	const rootPkg = await readLocalJSONFile<{ workspaces: string[] }>(rootPath)
 
-	if (!rootPkg.workspaces.includes(`packages/neural-weights-${slug}`)) {
-		rootPkg.workspaces.splice(
-			rootPkg.workspaces.indexOf("packages/neural-weights-en-nz") + 1,
-			0,
-			`packages/neural-weights-${slug}`
-		)
+	if (!(await isRegisteredWorkspace(repoPath(), `packages/neural-weights-${slug}`))) {
+		rootPkg.workspaces.push(`packages/neural-weights-${slug}`)
 
 		await writeLocalJSONFile(rootPkg, rootPath)
 		registered.push("root package.json workspaces")
