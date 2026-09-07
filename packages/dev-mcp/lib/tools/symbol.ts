@@ -6,15 +6,20 @@
  *   The `mwdev_symbol` tool definition — the description an agent reads, the input schema, and the handler wiring.
  *   The search itself lives in `../symbol-index.ts`; this file is the CONTRACT.
  *
- *   The pull half of the duplicate-avoidance pair. `scripts/hooks/symbol-precheck.ts` pushes the same answer at write
- *   time without being asked; this is for deciding BEFORE writing, when the question is "does this already exist" and
- *   the answer changes what gets written.
+ *   The pull half of the duplicate-avoidance pair. `../hooks/symbol-precheck.ts` pushes the same answer at write time
+ *   without being asked; this is for deciding BEFORE writing, when the question is "does this already exist" and the
+ *   answer changes what gets written.
+ *
+ *   TWO WAYS TO ASK, because a name search only helps someone who guessed the name. `query` matches an identifier
+ *   fragment; `describes` matches what each declaration's docstring says it does, which is the half that answers when
+ *   the intended name shares no substring with the existing one.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
 import { z } from "zod"
 
 import { searchDeclarations } from "#symbol-index"
+import { loadPurposeIndex, searchPurpose } from "#symbol-purpose"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
@@ -27,6 +32,14 @@ const NOT_COVERED = [
 	"node_modules/ and out/ — dependencies and build output, not authored source",
 	"types, interfaces and non-function constants — only declarations that can carry logic",
 	"nested declarations — a symbol inside a function body is not reachable to reuse",
+] as const
+
+/**
+ * What the `describes` half does not read, on top of the list above.
+ */
+const DESCRIBES_NOT_COVERED = [
+	"a declaration with no docstring — there is no sentence to match",
+	"anything outside packages/*/lib — the described set is the shipped surface",
 ] as const
 
 export const symbolTool = (_deps: DevToolDeps): DevTool => ({
@@ -43,13 +56,54 @@ export const symbolTool = (_deps: DevToolDeps): DevTool => ({
 		query: z
 			.string()
 			.min(2)
+			.optional()
 			.describe("An identifier fragment, matched case-insensitively against declared names. Letters, digits, `_`."),
+		describes: z
+			.string()
+			.min(3)
+			.optional()
+			.describe(
+				"What the thing DOES, in words — `reads a package.json`, `distance between two coordinates`. Matched " +
+					"against the first sentence of each exported declaration's docstring, which is how to ask when the name " +
+					"you would have written shares no substring with the one that exists. Give this or `query`, or both."
+			),
 		limit: z.number().int().positive().max(200).default(25),
 	}),
 	handler: async (args) => {
-		const query = args["query"] as string
+		const query = args["query"] as string | undefined
+		const describes = args["describes"] as string | undefined
 		const limit = (args["limit"] as number | undefined) ?? 25
-		const all = searchDeclarations(query, { cwd: String(repoRootPath()) })
+		const repoRoot = String(repoRootPath())
+
+		if (!query && !describes) {
+			return { error: "Give `query` (an identifier fragment) or `describes` (what the thing does), or both." }
+		}
+
+		const described = describes
+			? searchPurpose(describes, await loadPurposeIndex(repoRoot), limit).map((finding) => ({
+					name: finding.name,
+					file: finding.file,
+					line: finding.line,
+					says: finding.sentence,
+					matched: finding.matched,
+				}))
+			: []
+
+		if (!query) {
+			return {
+				describes,
+				n_described: described.length,
+				described,
+				not_covered: [...NOT_COVERED, ...DESCRIBES_NOT_COVERED],
+				summary: described.length
+					? `${described.length} declaration(s) whose stated purpose matches ${JSON.stringify(describes)}. Read ` +
+						"the sentence and the signature before reusing one."
+					: `No declaration describes ${JSON.stringify(describes)} in the covered set. See not_covered — a ` +
+						"declaration with no docstring is invisible to this half, so try `query` with a name fragment too.",
+			}
+		}
+
+		const all = searchDeclarations(query, { cwd: repoRoot })
 		const findings = all.slice(0, limit)
 		const nSites = findings.reduce((total, finding) => total + finding.sites.length, 0)
 		const withHome = findings.filter((finding) => finding.sites.some((site) => site.exported))
@@ -64,7 +118,8 @@ export const symbolTool = (_deps: DevToolDeps): DevTool => ({
 				has_exported_home: finding.sites.some((site) => site.exported),
 				sites: finding.sites,
 			})),
-			not_covered: [...NOT_COVERED],
+			...(describes ? { describes, n_described: described.length, described } : {}),
+			not_covered: describes ? [...NOT_COVERED, ...DESCRIBES_NOT_COVERED] : [...NOT_COVERED],
 			summary: findings.length
 				? `${findings.length} name(s) matching ${JSON.stringify(query)} across ${nSites} declaration site(s); ` +
 					`${withHome.length} have at least one exported declaration you could import. ` +
