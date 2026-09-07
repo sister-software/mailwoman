@@ -141,7 +141,7 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 
 	// The demo's parity contract is MODEL BYTES, not the bundle number. Bundle revisions that change only
 	// decode-side artifacts move the card version with ZERO model.onnx change — the demo serving the
-	// previous bundle serves the IDENTICAL model, and can't even use the new artifacts until neural-web
+	// previous bundle serves the IDENTICAL model, and can't even use the new artifacts until the web loader
 	// grows pair-prior wiring (#1278). So a trailing defaultVersion passes IFF the trailing version's
 	// shipped card records the same `files_md5["model.onnx"]` as the current card (fetched from the HF
 	// bucket — the same store the demo loads from). Different bytes = real drift = fail.

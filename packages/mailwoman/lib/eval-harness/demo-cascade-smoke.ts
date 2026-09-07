@@ -190,7 +190,7 @@ export async function demoCascadeSmoke(
 		return refused
 	}
 
-	// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromURLs defaults) ─────────
+	// ── Ship-config classifier (mirrors the web loader's loadNeuralClassifierFromURLs defaults) ─────
 	const card = await readLocalJSONFile<{ labels?: readonly string[] }>(CARD)
 
 	const postcodeBinaries = (

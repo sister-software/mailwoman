@@ -48,7 +48,7 @@ training_image = (
         # 28×DynamicQuantizeLinear/MatMulInteger, 0 reverse-slices) to the Safari-proven
         # v0.9.3 graph. INVARIANT: the int8 graph (opset + quant op scheme) must stay
         # within what the pinned `onnxruntime-web` native WebGPU EP runs on Metal (the
-        # JSEP int8-dequant slice bug — neural-web uses onnxruntime-web/webgpu). A bump
+        # JSEP int8-dequant slice bug — the neural web runner uses onnxruntime-web/webgpu). A bump
         # here that raises the opset or changes the quant scheme is a Safari decision, not
         # a free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
         # Query the live image set with `modal run scripts/modal/train_remote.py::versions`.

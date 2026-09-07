@@ -18,6 +18,13 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Removed — `@mailwoman/neural-web`
+
+The workspace is deleted and the package will not publish again; 9.3.0 is its last version on npm. Since 9.0.0 it
+was a re-export shim over `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`, the two subpaths
+the browser runtime moved to, and re-exporting another package's names is what `mailwoman/no-cross-package-reexport`
+refuses everywhere else. A consumer on the shim imports the same names from those two subpaths.
+
 ### Fixed — every stamped response body is a named OpenAPI component
 
 `stampedResponseSchema` now takes the component name as a required second argument and registers it. Unnamed, the

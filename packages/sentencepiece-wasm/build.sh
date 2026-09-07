@@ -18,7 +18,7 @@
 #
 # Single-file output on purpose: -sSINGLE_FILE=1 embeds the wasm as base64 in the .mjs, matching
 # how the previous runtime (@sctg/sentencepiece-js) shipped — no separate .wasm delivery path to
-# thread through neural-web, the docs demo, or the drop-in APIs. The size cost (~4/3× the wasm) is
+# thread through the neural web loader, the docs demo, or the drop-in APIs. The size cost (~4/3× the wasm) is
 # accepted; the artifact is fetched once and cached.
 
 set -euo pipefail

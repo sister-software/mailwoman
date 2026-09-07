@@ -253,7 +253,7 @@ async function loadPostcodeAnchorLookup(
 				return new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).toAnchorLookup()
 			} catch (error) {
 				console.warn(
-					`[mailwoman/neural-web] optional postcode anchor binary skipped: ${url} — ` +
+					`[@mailwoman/neural/web-loader] optional postcode anchor binary skipped: ${url} — ` +
 						`${error instanceof Error ? error.message : String(error)}. ` +
 						"The postcode anchor is a soft ranking channel; the classifier loads without it (degraded ranking only)."
 				)
@@ -302,7 +302,7 @@ async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch)
 				return { url, country: resolver.header.country, resolver }
 			} catch (error) {
 				console.warn(
-					`[mailwoman/neural-web] optional placetype-pair index skipped: ${url} — ` +
+					`[@mailwoman/neural/web-loader] optional placetype-pair index skipped: ${url} — ` +
 						`${error instanceof Error ? error.message : String(error)}. ` +
 						"The pair prior is a soft decode channel; the classifier loads without it (no placetype-pair bias only)."
 				)
@@ -496,7 +496,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 			configPairIndex = pinned.resolver
 		} else {
 			console.warn(
-				`[mailwoman/neural-web] country "${pinnedCountry}" was requested as the placetype-pair default posture, but no ` +
+				`[@mailwoman/neural/web-loader] country "${pinnedCountry}" was requested as the placetype-pair default posture, but no ` +
 					`loaded index matches it — loaded header countries: ${pairIndexes.map((index) => `"${index.country}"`).join(", ")}. ` +
 					"No config default is set; per-parse selection (selectPairIndexForText) still works for the countries that DID load."
 			)
@@ -581,7 +581,7 @@ function warnOnUnfedTrainedChannels(
 		urlOption: string,
 		degrade: string
 	): string =>
-		`[mailwoman/neural-web] This model is ${trainedAs} (its ONNX declares \`${input}\`) ` +
+		`[@mailwoman/neural/web-loader] This model is ${trainedAs} (its ONNX declares \`${input}\`) ` +
 		`but no ${noun} was loaded` +
 		(url
 			? ` — \`${fileName}\` could not be fetched from ${url}. ` +
@@ -590,7 +590,7 @@ function warnOnUnfedTrainedChannels(
 		` Running with zero-filled ${degrade}`
 
 	const unfedEvidenceMessage = (input: string, fileName: string, url: string | null): string =>
-		`[mailwoman/neural-web] This model is evidence-bundle-trained (its ONNX declares \`${input}\`) ` +
+		`[@mailwoman/neural/web-loader] This model is evidence-bundle-trained (its ONNX declares \`${input}\`) ` +
 		"but no evidence lexicon was loaded" +
 		(url
 			? ` — \`${fileName}\` could not be fetched from ${url}. Upload the lexicon next to model.onnx.`
@@ -642,7 +642,7 @@ function warnOnUnfedTrainedChannels(
 			required: declared.anchor?.required,
 			fed: !!fed.postcodeAnchorLookup,
 			message:
-				"[mailwoman/neural-web] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
+				"[@mailwoman/neural/web-loader] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
 				"but no `postcodeBinaryURLs` were provided (postcode-<cc>.bin). " +
 				"Running with zero-filled anchor features: the anchor-off identity, degraded vs the ship config.",
 		},

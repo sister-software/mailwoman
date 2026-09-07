@@ -157,8 +157,8 @@ export class MailwomanTokenizer {
 	/**
 	 * Load from a path to a `tokenizer.model` file on disk. **Node-only** — the dynamic `node:fs` import keeps this
 	 * method out of the static dependency graph so the rest of the tokenizer bundles cleanly for the browser. Calling it
-	 * in a browser throws at runtime; use `loadFromBase64` (or the URL-fetching loaders in `@mailwoman/neural-web`)
-	 * instead.
+	 * in a browser throws at runtime; use `loadFromBase64` (or the URL-fetching loaders in
+	 * `@mailwoman/neural/web-loader`) instead.
 	 */
 	static async loadFromFile(modelPath: PathBuilderLike): Promise<MailwomanTokenizer> {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")

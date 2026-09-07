@@ -262,7 +262,7 @@ export interface ClassifyStageResult {
  * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
  */
 /**
- * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape `neural-web`'s
+ * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape the web loader's
  * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs locale-check over the text SHAPE (postcode
  * format / script, never place names) and returns the matching loaded index wrapped as an opaque `placetypePair` opt —
  * or `undefined` when no loaded index matches (byte-stable no-prior). Typed opaquely here because the docs bundle

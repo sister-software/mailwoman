@@ -6163,14 +6163,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-web@workspace:packages/neural-web":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-web@workspace:packages/neural-web"
-  dependencies:
-    "@mailwoman/neural": "workspace:*"
-  languageName: unknown
-  linkType: soft
-
 "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn"

@@ -35,7 +35,8 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
  * so this is a PURE PASSTHROUGH: core never constructs or inspects it — it threads the value verbatim from
  * {@link PipelineOpts.placetypePair} into {@link ClassifierOpts.placetypePair}, and on into the neural classifier's
  * `parse` opts, where it is typed concretely (`PlacetypePairPriorOpts | false`). The browser demo produces it via
- * `neural-web`'s `LoadResult.selectPairIndexForText`. `undefined` (the default) is the byte-stable no-prior decode.
+ * `@mailwoman/neural/web-loader`'s `LoadResult.selectPairIndexForText`. `undefined` (the default) is the byte-stable
+ * no-prior decode.
  */
 export type PlacetypePairPassthrough = object | false
 
@@ -72,9 +73,9 @@ export interface PipelineOpts {
 	/**
 	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque, per-parse decode-channel handle threaded
 	 * verbatim to `ClassifierOpts.placetypePair` (and on to the neural classifier's `parse`). The browser demo derives it
-	 * per input via `neural-web`'s `LoadResult.selectPairIndexForText` (locale-hint over the text shape) so a GB/NZ input
-	 * gets its dependent_locality-resurrecting prior while a US/FR input stays byte-stable. `undefined` (default) = no
-	 * prior. See {@link PlacetypePairPassthrough}.
+	 * per input via `@mailwoman/neural/web-loader`'s `LoadResult.selectPairIndexForText` (locale-hint over the text
+	 * shape) so a GB/NZ input gets its dependent_locality-resurrecting prior while a US/FR input stays byte-stable.
+	 * `undefined` (default) = no prior. See {@link PlacetypePairPassthrough}.
 	 */
 	placetypePair?: PlacetypePairPassthrough
 	/**

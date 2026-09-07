@@ -113,7 +113,7 @@ export type DemoBackend = "webgpu" | "wasm"
  * `ready`) with the map + version/backend surface the demo needs. The host composes `mapStyle` (via cartographer's
  * `StyleSpecificationComposer` + the tile-worker TileJSON), supplies the overlay specs, the initial center (from
  * geolocation), the FST autocomplete, and the calibrator — nothing in the package imports `@mailwoman/cartographer`,
- * `@mailwoman/neural-web`, httpvfs, or Docusaurus.
+ * `@mailwoman/neural`'s web loader, httpvfs, or Docusaurus.
  */
 export interface DemoRuntime extends PipelineRuntime {
 	// ── Map ────────────────────────────────────────────────────────────────

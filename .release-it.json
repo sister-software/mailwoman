@@ -30,7 +30,6 @@
 				"packages/match",
 				"packages/mcp",
 				"packages/neural",
-				"packages/neural-web",
 				"packages/neural-weights-de-de",
 				"packages/neural-weights-en-au",
 				"packages/neural-weights-en-gb",

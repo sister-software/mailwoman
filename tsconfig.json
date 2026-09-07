@@ -47,7 +47,6 @@
 		{ "path": "./packages/evidence" },
 		{ "path": "./packages/geographic-model" },
 		{ "path": "./packages/neural" },
-		{ "path": "./packages/neural-web" },
 		{ "path": "./packages/normalize" },
 		{ "path": "./packages/kind-classifier" },
 		{ "path": "./packages/locale-hint" },
