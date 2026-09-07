@@ -52,18 +52,29 @@ export class GeocoderFixture {
 	 * Wait for the cold-load (~25 MB ONNX + map style + sqlite-wasm) to complete. The options are the THIRD argument:
 	 * `waitForFunction` reads its second as the function's argument, and an options object passed there leaves the wait
 	 * on the 30 s action budget. Polling is on an interval, not on animation frames: a page the browser treats as hidden
-	 * fires no frames, and the default polling then never re-evaluates an already-true predicate.
+	 * fires no frames, and the default polling then never re-evaluates an already-true predicate. A load error the page
+	 * reports ends the wait at once, with that text, instead of running out the budget.
 	 */
 	async expectReady(): Promise<void> {
-		await this.page.waitForFunction(
+		const outcome = await this.page.waitForFunction(
 			() => {
+				const error = document.querySelector(".mw-error")?.textContent?.trim()
+
+				if (error) return { error }
+
 				const btn = document.querySelector("button[type='submit']")
 
-				return btn instanceof HTMLButtonElement && !btn.disabled
+				return btn instanceof HTMLButtonElement && !btn.disabled ? { ready: true } : null
 			},
 			undefined,
 			{ timeout: 180_000, polling: 500 }
 		)
+
+		const value = await outcome.jsonValue()
+
+		if (value && "error" in value) {
+			throw new Error(`the geocoder reported a load error: ${value.error}`)
+		}
 	}
 
 	async setAddress(text: string): Promise<void> {
