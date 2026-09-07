@@ -1,0 +1,23 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": "./lib",
+		"allowSyntheticDefaultImports": true,
+		"emitDecoratorMetadata": true,
+		"emitDeclarationOnly": false,
+		"noEmit": false,
+		"experimentalDecorators": true,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
+	},
+	"include": ["./lib/**/*"],
+	"exclude": ["./out/**/*"],
+	"references": [
+		// ---
+		{ "path": "../core" },
+		{ "path": "../spatial" },
+		{ "path": "../ancestrie" },
+		{ "path": "../mailwoman" }
+	]
+}

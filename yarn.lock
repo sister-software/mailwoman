@@ -5707,6 +5707,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/astrogeology@workspace:packages/astrogeology":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/astrogeology@workspace:packages/astrogeology"
+  dependencies:
+    "@mailwoman/ancestrie": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    mailwoman: "workspace:*"
+    path-ts: "npm:^2.3.0"
+    zod: "npm:^4.5.4"
+  bin:
+    astrogeology: ./out/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/ban@workspace:*, @mailwoman/ban@workspace:packages/ban":
   version: 0.0.0-use.local
   resolution: "@mailwoman/ban@workspace:packages/ban"
