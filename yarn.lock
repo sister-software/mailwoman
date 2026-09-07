@@ -5720,6 +5720,7 @@ __metadata:
     path-ts: "npm:^2.3.0"
     react: "npm:^19.2.8"
     spliterator: "npm:^6.4.1"
+    wrangler: "npm:^4.129.0"
     zod: "npm:^4.5.4"
   bin:
     astrogeology: ./out/cli.js

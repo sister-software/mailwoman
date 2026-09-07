@@ -22,6 +22,7 @@ import type { BuildableBodyID } from "#bodies"
 import { buildDirectory, buildOutputs } from "#build/layout"
 import { verifyBody } from "#build/verify"
 import { parseBody } from "#commands/options"
+import { uploadWithWrangler } from "#publish/wrangler"
 import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "#schema/manifest"
 
 /**
@@ -92,6 +93,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 				bucket: TILES_BUCKET,
 				prefix: TILES_PREFIX,
 				dryRun,
+				upload: uploadWithWrangler,
 			})
 		)
 	}
@@ -104,6 +106,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 			bucket: PUBLIC_BUCKET,
 			key: `${prefix}/search.ancestrie`,
 			dryRun,
+			upload: uploadWithWrangler,
 		})
 	)
 
@@ -113,6 +116,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 			bucket: PUBLIC_BUCKET,
 			key: `${prefix}/manifest.json`,
 			dryRun,
+			upload: uploadWithWrangler,
 		})
 	)
 

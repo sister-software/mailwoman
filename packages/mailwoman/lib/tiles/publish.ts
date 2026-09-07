@@ -21,6 +21,13 @@
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
+/**
+ * A transport that puts one local file at `bucket/key`. The default is rclone over the `RCLONE_S3_*` credentials; a
+ * caller with another credential (the planetary pipeline uploads through wrangler and the account's API token) injects
+ * its own, and the key layout, the size report and the served-at line stay shared.
+ */
+export type UploadTransport = (target: { file: string; bucket: string; key: string }) => Promise<void>
+
 export interface UploadToBucketOptions {
 	/**
 	 * The local file to upload.
@@ -35,6 +42,10 @@ export interface UploadToBucketOptions {
 	 * Print the target without uploading.
 	 */
 	dryRun: boolean
+	/**
+	 * How the bytes travel. @default rclone
+	 */
+	upload?: UploadTransport
 }
 
 export interface PublishTilesOptions {
@@ -43,17 +54,38 @@ export interface PublishTilesOptions {
 	bucket: string
 	prefix: string
 	dryRun: boolean
+	upload?: UploadTransport
 }
 
 const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
 
 /**
- * Copy one local file to `bucket/key` through rclone. Answers a one-line report.
+ * The default transport: rclone over the inherited `RCLONE_S3_*` credentials, on the on-the-fly `:s3:` remote. The
+ * flags skip the post-PUT HEAD + checksum ops that 501 against R2.
  */
-export async function uploadToBucket(options: UploadToBucketOptions): Promise<string> {
+export const uploadWithRclone: UploadTransport = async ({ file, bucket, key }) => {
 	const { $private } = await import("#env")
 	const { $ } = await import("zx")
 
+	const missing = REQUIRED_ENV.filter((v) => !$private[v])
+
+	if (missing.length) {
+		throw new CommandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
+	}
+
+	const remote = `:s3:${bucket}/${key}`
+	const flags = ["--s3-no-head", "--s3-disable-checksum", "--no-update-modtime"]
+	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${file} ${remote} ${flags}`
+
+	if (result.exitCode !== 0) {
+		throw new CommandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
+	}
+}
+
+/**
+ * Copy one local file to `bucket/key`. Answers a one-line report.
+ */
+export async function uploadToBucket(options: UploadToBucketOptions): Promise<string> {
 	if (!(await pathExists(options.file))) throw new CommandError(`file not found: ${options.file}`)
 
 	const size = await formatFileSize(options.file)
@@ -62,21 +94,7 @@ export async function uploadToBucket(options: UploadToBucketOptions): Promise<st
 		return `[dry-run] ${options.file} (${size}) → ${options.bucket}/${options.key}`
 	}
 
-	const missing = REQUIRED_ENV.filter((v) => !$private[v])
-
-	if (missing.length) {
-		throw new CommandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
-	}
-
-	// rclone reads RCLONE_S3_* from the inherited env for the on-the-fly `:s3:` remote. The flags skip the post-PUT
-	// HEAD + checksum ops that 501 against R2.
-	const remote = `:s3:${options.bucket}/${options.key}`
-	const flags = ["--s3-no-head", "--s3-disable-checksum", "--no-update-modtime"]
-	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${options.file} ${remote} ${flags}`
-
-	if (result.exitCode !== 0) {
-		throw new CommandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
-	}
+	await (options.upload ?? uploadWithRclone)({ file: options.file, bucket: options.bucket, key: options.key })
 
 	return `✓ ${options.bucket}/${options.key} (${size})`
 }
@@ -89,7 +107,14 @@ export async function publishTiles(options: PublishTilesOptions): Promise<string
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
 	const servedAt = `https://tiles.mailwoman.ai/${options.tileset}.json`
-	const report = await uploadToBucket({ file: options.file, bucket: options.bucket, key, dryRun: options.dryRun })
+
+	const report = await uploadToBucket({
+		file: options.file,
+		bucket: options.bucket,
+		key,
+		dryRun: options.dryRun,
+		upload: options.upload,
+	})
 
 	return options.dryRun ? `${report}\n[dry-run] would serve at ${servedAt}` : `${report}\n  served at ${servedAt}`
 }
