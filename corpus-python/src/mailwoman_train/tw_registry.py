@@ -71,9 +71,14 @@ class TWKeyIndex:
             else min(max_row_groups, handle.metadata.num_row_groups)
         )
         index = cls()
-        for group in range(groups):
-            table = handle.read_row_group(group, columns=["address_levels", "street"])
-            for level, street in zip(table["address_levels"].to_pylist(), table["street"].to_pylist(), strict=True):
+        # Batches of 100,000 rows rather than whole row groups: the index is small, the transient Python lists of a
+        # multi-million-row group are not, and this host has killed the build for memory once.
+        for batch in handle.iter_batches(
+            batch_size=100_000, columns=["address_levels", "street"], row_groups=list(range(groups))
+        ):
+            for level, street in zip(
+                batch.column("address_levels").to_pylist(), batch.column("street").to_pylist(), strict=True
+            ):
                 if not level or len(level) < 3 or not street:
                     continue
                 region, district, village = (fold_key(entry["value"] or "") for entry in level[:3])
