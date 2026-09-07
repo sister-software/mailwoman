@@ -222,6 +222,11 @@
 			"node": "./lib/weights-channels.ts",
 			"default": "./out/weights-channels.js"
 		},
+		"./weights-lexicon": {
+			"types": "./out/weights-lexicon.d.ts",
+			"node": "./lib/weights-lexicon.ts",
+			"default": "./out/weights-lexicon.js"
+		},
 		"./postcode": {
 			"types": "./out/postcode/index.d.ts",
 			"node": "./lib/postcode/index.ts",
