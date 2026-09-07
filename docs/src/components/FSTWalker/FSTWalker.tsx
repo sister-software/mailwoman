@@ -11,12 +11,12 @@
  *   Usage in MDX:
  *
  *   ```mdx
- *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+ *   import { RuntimeEmbedProvider } from "@site/src/contexts/RuntimeEmbed"
  *   import { FSTWalker } from "@site/src/components/FSTWalker/FSTWalker"
  *
- *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
+ *   <RuntimeEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <FSTWalker input="New York, NY 10001" />
- *   </DemoEmbedProvider>
+ *   </RuntimeEmbedProvider>
  * ```
  */
 
@@ -26,7 +26,7 @@
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useMemo } from "react"
 
-import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
+import { useRuntimeEmbed } from "../../contexts/RuntimeEmbed.tsx"
 
 import styles from "./styles.module.css"
 
@@ -179,7 +179,7 @@ const ContinuationChip: React.FC<{ cont: ContinuationLike }> = ({ cont }) => (
 //#region Inner component (below BrowserOnly boundary)
 
 const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
-	const { fstMatcher, fstProvenance, ready } = useDemoEmbed()
+	const { fstMatcher, fstProvenance, ready } = useRuntimeEmbed()
 
 	// Tokenize the input for walking
 	const tokens = useMemo(() => normalizeTokens(input), [input])
@@ -406,7 +406,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
  * Walks the FST token-by-token for the given input, showing state transitions, accepting places, and valid
  * continuations. Wraps BrowserOnly for SSR safety.
  *
- * Must be used inside a `<DemoEmbedProvider>`.
+ * Must be used inside a `<RuntimeEmbedProvider>`.
  */
 export const FSTWalker: React.FC<FSTWalkerProps> = ({ input }) => {
 	return (

@@ -11,7 +11,7 @@
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { About } from "@mailwoman/react/common/About"
-import type { DemoPanels } from "@mailwoman/react/map"
+import type { GeocoderPanels } from "@mailwoman/react/map"
 import { ResultPanel } from "@mailwoman/react/map/ResultPanel"
 import { FailureDiagnostic } from "@mailwoman/react/pipeline/FailureDiagnostic"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
@@ -37,7 +37,7 @@ export interface GeocoderPanelsOptions {
 	debugDefault: boolean
 }
 
-export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOptions): DemoPanels {
+export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOptions): GeocoderPanels {
 	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = handle
 
 	// Opt-in display state: the calibrated-confidence view and the dev-mode decode-path drawer.
@@ -48,7 +48,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	const selectedRelease: ReleaseInfo | undefined = releases.find((r) => r.version === selectedVersion)
 
 	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: the controls call each member (`panels.result({…})`) rather than mounting it */
-	return useMemo<DemoPanels>(
+	return useMemo<GeocoderPanels>(
 		() => ({
 			header: <About />,
 			releaseInfo: selectedRelease ? (

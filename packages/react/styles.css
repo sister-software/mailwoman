@@ -676,7 +676,7 @@
 /* #region Demo map (react-map-gl/maplibre shell) */
 
 /*
- * The <DemoMap> wrapper. Sizing is the host's call (pass `style`/`className`), but a min-height keeps
+ * The <MapCanvas> wrapper. Sizing is the host's call (pass `style`/`className`), but a min-height keeps
  * the map from collapsing to zero when a consumer forgets. The inner <Map> fills 100% of this box.
  * The host must ALSO import `maplibre-gl/dist/maplibre-gl.css` for the map's own control/canvas styles.
  */

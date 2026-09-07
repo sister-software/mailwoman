@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the geocoder-demo map surface. Mirrors the pipeline boundary: the package owns the UI state
- *   machine + the declarative map, while the host injects a {@link DemoRuntime} that owns ONNX / httpvfs
- *   / R2 and the composed map style. {@link DemoRuntime} EXTENDS {@link PipelineRuntime} so the shared
+ *   Types for the geocoder map surface. Mirrors the pipeline boundary: the package owns the UI state
+ *   machine + the declarative map, while the host injects a {@link GeocoderRuntime} that owns ONNX / httpvfs
+ *   / R2 and the composed map style. {@link GeocoderRuntime} EXTENDS {@link PipelineRuntime} so the shared
  *   `runParse` / `parseStageLabels` / `loading` contract is reused, and adds the map-specific surface
  *   (style, overlays, initial center, viewport bias, backend/version selection). Phase 4 adds the
- *   `resolveMapPlace` enricher, the {@link DemoPanels} injection bag, and the {@link DemoCompareContext}.
+ *   `resolveMapPlace` enricher, the {@link GeocoderPanels} injection bag, and the {@link CompareContext}.
  *
  *   The map-spec types are imported type-only from `react-map-gl/maplibre`; nothing here loads maplibre at
- *   runtime, so this module stays node-safe (its concrete-value CONSUMERS — `DemoMap`, `GeocoderDemo` —
+ *   runtime, so this module stays node-safe (its concrete-value CONSUMERS — `MapCanvas`, `Geocoder` —
  *   are the ones behind the `@mailwoman/react/map` subpath).
  */
 
@@ -22,7 +22,7 @@ import type { LayerSpecification, SourceSpecification } from "react-map-gl/mapli
 import type { LngLat, ResolvedMapPlace } from "#map/place-render"
 import type { PipelineRuntime } from "#pipeline/types"
 
-import type { DemoMapStyle } from "./DemoMap.tsx"
+import type { MapCanvasStyle } from "./MapCanvas.tsx"
 
 /**
  * `[longitude, latitude]`.
@@ -93,7 +93,7 @@ export interface Suggestion {
 /**
  * A selectable model bundle (version tag + a display label the picker shows).
  */
-export interface DemoVersionOption {
+export interface VersionOption {
 	/**
 	 * The version tag (e.g. a git tag or model-card version).
 	 */
@@ -105,23 +105,23 @@ export interface DemoVersionOption {
 }
 
 /**
- * Which neural backend the demo is currently running on.
+ * Which neural backend the geocoder is currently running on.
  */
-export type DemoBackend = "webgpu" | "wasm"
+export type InferenceBackend = "webgpu" | "wasm"
 
 /**
- * The injected demo runtime. Extends {@link PipelineRuntime} (shared `runParse` / `parseStageLabels` / `loading` /
- * `ready`) with the map + version/backend surface the demo needs. The host composes `mapStyle` (via cartographer's
+ * The injected geocoder runtime. Extends {@link PipelineRuntime} (shared `runParse` / `parseStageLabels` / `loading` /
+ * `ready`) with the map + version/backend surface the geocoder needs. The host composes `mapStyle` (via cartographer's
  * `StyleSpecificationComposer` + the tile-worker TileJSON), supplies the overlay specs, the initial center (from
  * geolocation), the FST autocomplete, and the calibrator — nothing in the package imports `@mailwoman/cartographer`,
  * `@mailwoman/neural`'s web loader, httpvfs, or Docusaurus.
  */
-export interface DemoRuntime extends PipelineRuntime {
+export interface GeocoderRuntime extends PipelineRuntime {
 	// ── Map ────────────────────────────────────────────────────────────────
 	/**
 	 * The composed basemap style (URL or `StyleSpecification`).
 	 */
-	mapStyle: DemoMapStyle
+	mapStyle: MapCanvasStyle
 	/**
 	 * Host-supplied overlays (coverage, race-dots, …).
 	 */
@@ -137,7 +137,7 @@ export interface DemoRuntime extends PipelineRuntime {
 
 	// ── Parse extras layered over PipelineRuntime.runParse ──────────────────
 	/**
-	 * A bias-aware parse. The map demo feeds the current viewport center as a soft prior; when absent the host falls back
+	 * A bias-aware parse. The geocoder feeds the current viewport center as a soft prior; when absent the host falls back
 	 * to the base {@link PipelineRuntime.runParse}. Kept separate so the shared `runParse` contract is unchanged.
 	 */
 	runParseWithBias?: (
@@ -155,9 +155,9 @@ export interface DemoRuntime extends PipelineRuntime {
 	calibrator?: (raw: number) => number | null
 	/**
 	 * Enrich the selected candidate into the richer {@link ResolvedMapPlace} the declarative map render consumes (bbox,
-	 * street tier + uncertainty, a pre-fetched crisp polygon) — the fields that live on the demo's `ResolvedHit` but not
+	 * street tier + uncertainty, a pre-fetched crisp polygon) — the fields that live on the host's `ResolvedHit` but not
 	 * on the shared {@link ResolvedPlaceView}. The host owns this because those extras (and the async polygon fetch in the
-	 * real demo) are host/gazetteer concerns; the package keeps {@link ParseResult} unpolluted. Absent → the candidate
+	 * real runtime) are host/gazetteer concerns; the package keeps {@link ParseResult} unpolluted. Absent → the candidate
 	 * renders as a bare point (marker + a mid-zoom fly-to). Returning `null` also renders nothing.
 	 */
 	resolveMapPlace?: (candidate: ResolvedPlaceView, result: ParseResult) => ResolvedMapPlace | null
@@ -166,7 +166,7 @@ export interface DemoRuntime extends PipelineRuntime {
 	/**
 	 * The selectable model bundles the version picker offers.
 	 */
-	availableVersions?: DemoVersionOption[]
+	availableVersions?: VersionOption[]
 	/**
 	 * The currently-selected model version.
 	 */
@@ -190,9 +190,10 @@ export interface DemoRuntime extends PipelineRuntime {
 }
 
 /**
- * The compare-mode state a {@link DemoPanels.compare} render-prop receives (the second parse itself stays host-side).
+ * The compare-mode state a {@link GeocoderPanels.compare} render-prop receives (the second parse itself stays
+ * host-side).
  */
-export interface DemoCompareContext {
+export interface CompareContext {
 	/**
 	 * The current primary parse result, or `null` before the first submit.
 	 */
@@ -208,12 +209,12 @@ export interface DemoCompareContext {
 }
 
 /**
- * The state a {@link DemoPanels.result} render-prop receives, so a host can render its OWN result block (the docs
+ * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its OWN result block (a
  * `<ResultPanel>` with its span-highlight / timing / hierarchy / precision detail) in place of the package's default
  * {@link ResultPanel}. Everything the default panel needs is passed through; the candidate-selection state stays owned
- * by the package (`useDemoGeocode`).
+ * by the package (`useGeocode`).
  */
-export interface DemoResultContext {
+export interface ResultContext {
 	/**
 	 * The current parse+resolve result.
 	 */
@@ -233,14 +234,14 @@ export interface DemoResultContext {
 }
 
 /**
- * Host-injected panels for {@link GeocoderDemo}, the map analogue of `PipelinePanels`. Each is an already-rendered
- * `ReactNode` (or a thunk of the parse result / compare state) so the package needs neither the heavy docs visualizers
- * (ModelVisualizer, VersionCompare, AboutDemo, PermalinkButton) nor their data types. Every field is optional — the
- * fake-runtime Storybook stories pass none and still render the whole demo.
+ * Host-injected panels for {@link Geocoder}, the map analogue of `PipelinePanels`. Each is an already-rendered
+ * `ReactNode` (or a thunk of the parse result / compare state) so the package needs neither the heavy host visualizers
+ * (ModelVisualizer, VersionCompare, About, PermalinkButton) nor their data types. Every field is optional — the
+ * fake-runtime Storybook stories pass none and still render the whole geocoder.
  */
-export interface DemoPanels {
+export interface GeocoderPanels {
 	/**
-	 * Rendered at the top of the control panel (e.g. the docs "About this demo").
+	 * Rendered at the top of the control panel (e.g. the host's "About this geocoder").
 	 */
 	header?: ReactNode
 	/**
@@ -252,9 +253,9 @@ export interface DemoPanels {
 	 */
 	footer?: ReactNode
 	/**
-	 * A device-location / proximity-bias control, rendered between the query form and the autocomplete list (the demo's
-	 * "📍 Use my location" row). Host-owned so the geolocation permission + the bias it feeds into the host's
-	 * {@link DemoRuntime.runParseWithBias} stay a host concern.
+	 * A device-location / proximity-bias control, rendered between the query form and the autocomplete list (the "📍 Use
+	 * my location" row). Host-owned so the geolocation permission + the bias it feeds into the host's
+	 * {@link GeocoderRuntime.runParseWithBias} stay a host concern.
 	 */
 	bias?: ReactNode
 	/**
@@ -262,17 +263,17 @@ export interface DemoPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block (present or empty). The demo's opt-in display toggles live here — calibrated
+	 * Rendered just above the result block (present or empty). The opt-in display toggles live here — calibrated
 	 * confidence + dev-mode — because the host owns both the toggle state AND the {@link result} / {@link debugDrawer}
 	 * renderers those toggles drive.
 	 */
 	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
 	/**
 	 * Replace the package's default {@link ResultPanel} entirely. When provided, the host renders its own result block
-	 * (the docs `<ResultPanel>` — span highlight, timing, hierarchy, precision detail, calibrated confidences) from the
-	 * {@link DemoResultContext}. Absent → the built-in panel renders.
+	 * (span highlight, timing, hierarchy, precision detail, calibrated confidences) from the {@link ResultContext}. Absent
+	 * → the built-in panel renders.
 	 */
-	result?: (context: DemoResultContext) => ReactNode
+	result?: (context: ResultContext) => ReactNode
 	/**
 	 * Rendered in place of the resolved-place panel when nothing resolved (host's FailureDiagnostic). Ignored when
 	 * {@link result} is set.
@@ -281,7 +282,7 @@ export interface DemoPanels {
 	/**
 	 * The version-compare view — the host renders its own diff from the compare state it owns.
 	 */
-	compare?: (context: DemoCompareContext) => ReactNode
+	compare?: (context: CompareContext) => ReactNode
 	/**
 	 * The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). A render-prop so the host can
 	 * trace the CURRENT result (its input) — the package passes the live parse result; the host decides on its own
@@ -289,7 +290,7 @@ export interface DemoPanels {
 	 */
 	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode
 	/**
-	 * Extra map controls mounted as `<DemoMap>` children (host's DebugControl / LayerToggle via `useControl`).
+	 * Extra map controls mounted as `<MapCanvas>` children (host's DebugControl / LayerToggle via `useControl`).
 	 */
 	mapControls?: ReactNode
 	/**

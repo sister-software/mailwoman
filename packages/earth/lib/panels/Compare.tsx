@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<Compare>` — the host-side compare panel, injected into the geocoder via `DemoPanels.compare`. The package owns
+ *   `<Compare>` — the host-side compare panel, injected into the geocoder via `GeocoderPanels.compare`. The package owns
  *   only the compare TOGGLE + version selection (`useCompareState`); the SECOND parse stays host-side by design, so
  *   this component loads its own compare classifier and re-parses the current input whenever the primary result
  *   changes — then renders the `<VersionCompare>` diff.

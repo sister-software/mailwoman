@@ -3,22 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Direct hook test for `useDemoRuntime` — driven through a tiny harness with a FAKE injected loader
+ *   Direct hook test for `useReleaseRuntime` — driven through a tiny harness with a FAKE injected loader
  *   (no network, no ONNX, no httpvfs). Exercises the state machine: mount → manifest → default version
  *   → assets → ready; a version switch reloads the bundle; `forceWASM` reloads with the flag set; a
  *   rejecting `loadAssets` surfaces `errorMessage` and keeps `ready` false; and the staged
  *   progress/step channel is reported through `ctx`.
  */
 
-import type { DemoAssetsLoadContext, DemoManifest, DemoReleaseBase } from "@mailwoman/react/runtime/useDemoRuntime"
-import { useDemoRuntime } from "@mailwoman/react/runtime/useDemoRuntime"
+import type { AssetsLoadContext, ReleaseBase, ReleaseManifest } from "@mailwoman/react/runtime/useReleaseRuntime"
+import { useReleaseRuntime } from "@mailwoman/react/runtime/useReleaseRuntime"
 import type { ReactNode } from "react"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
 import { renderComponent } from "../../render.tsx"
 
-interface TestRelease extends DemoReleaseBase {
+interface TestRelease extends ReleaseBase {
 	modelSize: string
 }
 
@@ -27,7 +27,7 @@ interface TestAssets {
 	forcedWASM: boolean
 }
 
-const MANIFEST: DemoManifest<TestRelease> = {
+const MANIFEST: ReleaseManifest<TestRelease> = {
 	defaultVersion: "v2",
 	releases: [
 		{ version: "v1", label: "v1 (old)", modelSize: "10 MB" },
@@ -36,9 +36,9 @@ const MANIFEST: DemoManifest<TestRelease> = {
 }
 
 // Stable module-level loaders so the harness passes the same closures every render.
-const loadManifest = async (): Promise<DemoManifest<TestRelease>> => MANIFEST
+const loadManifest = async (): Promise<ReleaseManifest<TestRelease>> => MANIFEST
 
-const loadAssetsOK = async (release: TestRelease, ctx: DemoAssetsLoadContext): Promise<TestAssets> => {
+const loadAssetsOK = async (release: TestRelease, ctx: AssetsLoadContext): Promise<TestAssets> => {
 	ctx.setProgress(`Loading ${release.version} (~${release.modelSize})…`)
 	ctx.setStepLabels(["Loading classifier", "Loading gazetteer"])
 	ctx.setBackend(ctx.forceWASM ? "wasm" : "webgpu")
@@ -56,10 +56,10 @@ function Harness({
 	manifestLoader = loadManifest,
 	assetLoader = loadAssetsOK,
 }: {
-	manifestLoader?: () => Promise<DemoManifest<TestRelease> | null>
-	assetLoader?: (release: TestRelease, ctx: DemoAssetsLoadContext) => Promise<TestAssets>
+	manifestLoader?: () => Promise<ReleaseManifest<TestRelease> | null>
+	assetLoader?: (release: TestRelease, ctx: AssetsLoadContext) => Promise<TestAssets>
 }): ReactNode {
-	const rt = useDemoRuntime<TestAssets, TestRelease>({
+	const rt = useReleaseRuntime<TestAssets, TestRelease>({
 		loadManifest: manifestLoader,
 		loadAssets: assetLoader,
 	})

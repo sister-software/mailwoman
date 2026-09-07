@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useDemoGeocode` — the parse+resolve state machine for the geocoder map demo. It REUSES the pipeline's
+ *   `useGeocode` — the parse+resolve state machine for the geocoder map. It REUSES the pipeline's
  *   `useParsePipeline` (text / busy / stage / result / candidate selection) and layers on the two map-only
- *   concerns the demo adds over the base explorer:
+ *   concerns the geocoder adds over the base explorer:
  *
  *     1. Viewport bias — when the runtime exposes `runParseWithBias`, the current map center (read through
  *        an injected `getBias`, itself reading the `MapRef`) rides along as a soft proximity prior. The
@@ -21,15 +21,15 @@
 import { useMemo } from "react"
 
 import type { ResolvedMapPlace } from "#map/place-render"
-import type { DemoRuntime, MapBias } from "#map/types"
+import type { GeocoderRuntime, MapBias } from "#map/types"
 import type { PipelineRuntime } from "#pipeline/types"
 import { useParsePipeline, type UseParsePipeline } from "#pipeline/useParsePipeline"
 
-export interface UseDemoGeocodeOptions {
+export interface UseGeocodeOptions {
 	/**
-	 * The injected demo runtime (extends `PipelineRuntime` with the map + bias surface).
+	 * The injected geocoder runtime (extends `PipelineRuntime` with the map + bias surface).
 	 */
-	runtime: DemoRuntime
+	runtime: GeocoderRuntime
 	/**
 	 * Address to pre-fill.
 	 */
@@ -40,14 +40,14 @@ export interface UseDemoGeocodeOptions {
 	getBias?: () => MapBias | null
 }
 
-export interface UseDemoGeocode extends UseParsePipeline {
+export interface UseGeocode extends UseParsePipeline {
 	/**
 	 * The selected candidate enriched into the map-render shape (bbox / tier / polygon), or `null`.
 	 */
 	mapPlace: ResolvedMapPlace | null
 }
 
-export function useDemoGeocode({ runtime, defaultText, getBias }: UseDemoGeocodeOptions): UseDemoGeocode {
+export function useGeocode({ runtime, defaultText, getBias }: UseGeocodeOptions): UseGeocode {
 	// Bind the viewport bias into a derived `runParse` so `useParsePipeline` is reused unchanged. When the runtime has no
 	// bias-aware parse, pass it straight through.
 	const geoRuntime = useMemo<PipelineRuntime>(() => {

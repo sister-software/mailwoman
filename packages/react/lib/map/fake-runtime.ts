@@ -11,15 +11,15 @@
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 
 import type { ResolvedMapPlace } from "#map/place-render"
-import type { DemoRuntime, Suggestion } from "#map/types"
+import type { GeocoderRuntime, Suggestion } from "#map/types"
 import type { PipelineRuntime } from "#pipeline/types"
 
-import type { DemoMapStyle } from "./DemoMap.tsx"
+import type { MapCanvasStyle } from "./MapCanvas.tsx"
 
 /**
  * An offline stub map style — one solid `background` layer, zero sources, zero network. Safe for headless Storybook.
  */
-export const STUB_MAP_STYLE: DemoMapStyle = {
+export const STUB_MAP_STYLE: MapCanvasStyle = {
 	version: 8,
 	name: "demo-runtime-stub",
 	sources: {},
@@ -42,7 +42,7 @@ export const FAKE_SUGGESTIONS: Suggestion[] = [
  * network, no ONNX, no maplibre-at-runtime — everything is data. `runParseWithBias` delegates to the base parse (the
  * bias is ignored by the fake but present so the parameter is exercised).
  */
-export function makeDemoRuntime(overrides: Partial<DemoRuntime> = {}): DemoRuntime {
+export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}): GeocoderRuntime {
 	const base = makePipelineRuntime()
 
 	return {

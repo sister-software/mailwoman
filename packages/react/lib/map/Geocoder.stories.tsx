@@ -3,21 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   THE MILESTONE STORY (phase 4): the WHOLE `<GeocoderDemo>` runs here end-to-end over a FAKE runtime —
+ *   THE MILESTONE STORY: the WHOLE `<Geocoder>` runs here end-to-end over a FAKE runtime —
  *   offline stub map style (one background layer, no tiles), a canned geocode (no ONNX, no gazetteer), a
  *   synchronous autocomplete, a fake version list + backend. Open Storybook, type a query, hit
- *   "Parse + resolve", and the demo responds: the result panel fills in and the map drops a marker +
- *   outline and flies to it — with ZERO network. `FullDemo` is the bare composition; `WithPanels` slots in
+ *   "Parse + resolve", and the geocoder responds: the result panel fills in and the map drops a marker +
+ *   outline and flies to it — with ZERO network. `FullGeocoder` is the bare composition; `WithPanels` slots in
  *   host panels (about / release / compare / debug drawer / permalink) to exercise the injection point.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useMemo, useState } from "react"
 
-import { makeDemoRuntime } from "#map/fake-runtime"
-import type { DemoPanels } from "#map/types"
+import { makeFakeGeocoderRuntime } from "#map/fake-runtime"
+import type { GeocoderPanels } from "#map/types"
 
-import { GeocoderDemo } from "./GeocoderDemo.tsx"
+import { Geocoder } from "./Geocoder.tsx"
 
 const PRESETS = [
 	{ label: "White House", value: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
@@ -28,13 +28,13 @@ const PRESETS = [
 /**
  * A stateful wrapper so the version picker + WASM toggle actually drive (a plain fixture can't hold state).
  */
-function StatefulDemo({ panels }: { panels?: DemoPanels }) {
+function StatefulGeocoder({ panels }: { panels?: GeocoderPanels }) {
 	const [selectedVersion, setSelectedVersion] = useState("v7.2.0")
 	const [forceWASM, setForceWASM] = useState(false)
 
 	const runtime = useMemo(
 		() =>
-			makeDemoRuntime({
+			makeFakeGeocoderRuntime({
 				selectedVersion,
 				selectVersion: setSelectedVersion,
 				forceWASM,
@@ -45,18 +45,13 @@ function StatefulDemo({ panels }: { panels?: DemoPanels }) {
 	)
 
 	return (
-		<GeocoderDemo
-			runtime={runtime}
-			panels={panels}
-			defaultAddress="350 5th Ave, New York, NY 10118"
-			presets={PRESETS}
-		/>
+		<Geocoder runtime={runtime} panels={panels} defaultAddress="350 5th Ave, New York, NY 10118" presets={PRESETS} />
 	)
 }
 
-const meta: Meta<typeof StatefulDemo> = {
-	title: "Map/GeocoderDemo",
-	component: StatefulDemo,
+const meta: Meta<typeof StatefulGeocoder> = {
+	title: "Map/Geocoder",
+	component: StatefulGeocoder,
 	parameters: { layout: "fullscreen" },
 	decorators: [
 		(Story) => (
@@ -69,23 +64,23 @@ const meta: Meta<typeof StatefulDemo> = {
 
 export default meta
 
-type Story = StoryObj<typeof StatefulDemo>
+type Story = StoryObj<typeof StatefulGeocoder>
 
 /**
- * The whole demo over the fake runtime — type an address, parse, watch the map + panel respond.
+ * The whole geocoder over the fake runtime — type an address, parse, watch the map + panel respond.
  */
-export const FullDemo: Story = {}
+export const FullGeocoder: Story = {}
 
 /**
- * The same demo with host-injected panels wired into the DI bag (about / release / compare / debug / permalink).
+ * The same geocoder with host-injected panels wired into the DI bag (about / release / compare / debug / permalink).
  */
 export const WithPanels: Story = {
 	args: {
 		panels: {
-			header: <p style={{ margin: "0 0 0.75rem", fontWeight: 600 }}>Mailwoman geocoder — fake-runtime demo</p>,
+			header: <p style={{ margin: "0 0 0.75rem", fontWeight: 600 }}>Mailwoman geocoder — fake runtime</p>,
 			releaseInfo: (
 				<p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", opacity: 0.7 }}>
-					<strong>v7.2.0</strong> — the composed demo, mocked end-to-end.
+					<strong>v7.2.0</strong> — the composed geocoder, mocked end-to-end.
 				</p>
 			),
 			extras: (result) => (

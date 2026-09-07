@@ -1,5 +1,5 @@
 /**
- * `/demo` GeocoderDemo chrome overrides. The published `@mailwoman/react/map` `<GeocoderDemo>` ships a deliberately
+ * `/demo` Geocoder chrome overrides. The published `@mailwoman/react/map` `<Geocoder>` ships a deliberately
  * GENERIC floating-panel layout (`.mw-demo-controls`) — a host is expected to restyle it. Here we override those
  * classes to give the `/demo` page its signature chrome (below-navbar offset, 400px width, translucent
  * blur, 16px radius). Scoped under `.geocoderRoot` so the overrides never leak to other pages that embed

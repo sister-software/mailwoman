@@ -29,8 +29,9 @@ import { currentMatrixVersion } from "#release/verify-metadata"
 
 const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 /**
- * The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads, not what the
- * publisher believes it wrote.
+ * The browser runtime's own fetch path (`mailwoman/browser-runtime/manifest`, mounted by
+ * docs/src/contexts/RuntimeEmbed.tsx and the Earth app) — check what the runtime actually reads, not what the publisher
+ * believes it wrote.
  */
 const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
 

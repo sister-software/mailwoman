@@ -6,7 +6,7 @@
  *   `<PlaceMarker>` — the resolved-place pin, as a declarative `react-map-gl/maplibre` `<Marker>`. This
  *   replaces the old imperative `new maplibre.Marker(...).setLngLat(...).addTo(map)` (+ the manual
  *   `markerRef.current.remove()` teardown) from the demo's redraw effect: mounting/unmounting the marker
- *   is now React's job, keyed on the resolved candidate. Renders as a child of `<DemoMap>`.
+ *   is now React's job, keyed on the resolved candidate. Renders as a child of `<MapCanvas>`.
  *
  *   NODE-IMPORT SAFETY: imports `react-map-gl/maplibre` at module scope, so it is reachable ONLY through
  *   the `@mailwoman/react/map` subpath, never the package root.

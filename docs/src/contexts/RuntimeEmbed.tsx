@@ -3,23 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared React context for the Mailwoman demo. Manages classifier / FST / WOF lookup loading so
- *   multiple PipelineExplorer instances on the same page (or the main demo page) share one set of
- *   loaded assets instead of re-fetching on mount.
+ *   Shared React context for the explainers that run the browser runtime inline. Manages classifier / FST / WOF
+ *   lookup loading so multiple PipelineExplorer instances on the same page share one set of loaded assets instead
+ *   of re-fetching on mount.
  *
  *   The load ORCHESTRATION — the version-selection state machine, the per-version load sequencing, the
- *   ready / loading / error state — is owned by `@mailwoman/react`'s `useDemoRuntime`. This provider
+ *   ready / loading / error state — is owned by `@mailwoman/react`'s `useReleaseRuntime`. This provider
  *   supplies the DOCS-SIDE fetchers as injected async functions: the releases manifest, the ONNX
  *   classifier (onnxruntime-web; WASM SIMD with WebGPU fallback), the FST gazetteer, the WOF HTTP-VFS
  *   lookup, and the calibration table. Keeping the fetchers here (not in the package) is what holds
  *   onnxruntime-web + sql.js-httpvfs out of `@mailwoman/react`'s import graph. The provider then
- *   re-projects the loaded bundle onto the flat `DemoEmbedState` its consumers have always read — the
- *   public context shape is unchanged.
+ *   re-projects the loaded bundle onto the flat `RuntimeEmbedState` its consumers read.
  */
 
 import type { Calibrator } from "@mailwoman/core/decoder/calibration"
-import type { DemoAssetsLoadContext, DemoManifest } from "@mailwoman/react"
-import { useDemoRuntime } from "@mailwoman/react"
+import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
+import { useReleaseRuntime } from "@mailwoman/react"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import type { SelectPairIndex } from "mailwoman/browser-runtime/classify"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
@@ -32,7 +31,7 @@ import { createContext, useCallback, useContext, useMemo } from "react"
 
 //#region Types
 
-export interface DemoEmbedState {
+export interface RuntimeEmbedState {
 	/**
 	 * The releases manifest (fetched once on mount).
 	 */
@@ -69,8 +68,8 @@ export interface DemoEmbedState {
 	selectPairIndex: SelectPairIndex | null
 	/**
 	 * Maps a raw span confidence → its calibrated probability of correctness, built from the version's `calibration.json`
-	 * (isotonic table). `null` while loading or for a release that ships no calibration table. The demo applies it so a
-	 * displayed "97%" means ~97% correct — the capability a search index can't offer
+	 * (isotonic table). `null` while loading or for a release that ships no calibration table. The explainers apply it so
+	 * a displayed "97%" means ~97% correct — the capability a search index can't offer
 	 * (`docs/articles/evals/calibration/*-calibration-*.md`).
 	 */
 	calibrator: Calibrator | null
@@ -112,17 +111,17 @@ export interface DemoEmbedState {
 	forceWASM: boolean
 }
 
-const DemoEmbedContext = createContext<DemoEmbedState | null>(null)
+const RuntimeEmbedContext = createContext<RuntimeEmbedState | null>(null)
 
 //#endregion
 
 //#region Hook
 
-export function useDemoEmbed(): DemoEmbedState {
-	const ctx = useContext(DemoEmbedContext)
+export function useRuntimeEmbed(): RuntimeEmbedState {
+	const ctx = useContext(RuntimeEmbedContext)
 
 	if (!ctx) {
-		throw new Error("useDemoEmbed must be used within a <DemoEmbedProvider>")
+		throw new Error("useRuntimeEmbed must be used within a <RuntimeEmbedProvider>")
 	}
 
 	return ctx
@@ -132,7 +131,7 @@ export function useDemoEmbed(): DemoEmbedState {
 
 //#region Provider
 
-export interface DemoEmbedProviderProps {
+export interface RuntimeEmbedProviderProps {
 	/**
 	 * Base URL for the sql.js-httpvfs worker + wasm (same-origin, e.g. `/mailwoman/sqljs`).
 	 */
@@ -140,11 +139,11 @@ export interface DemoEmbedProviderProps {
 	children: React.ReactNode
 }
 
-export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseURL, children }) => {
-	// Fetch + normalize the releases manifest. `useDemoRuntime` runs this once on mount, then selects
+export const RuntimeEmbedProvider: React.FC<RuntimeEmbedProviderProps> = ({ sqljsBaseURL, children }) => {
+	// Fetch + normalize the releases manifest. `useReleaseRuntime` runs this once on mount, then selects
 	// its `defaultVersion`. Returns the full `ReleasesManifest` (a structural superset of the package's
-	// `DemoManifest` — it also carries `locale`), so the value below can re-expose it as `ReleasesManifest`.
-	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => {
+	// `ReleaseManifest` — it also carries `locale`), so the value below can re-expose it as `ReleasesManifest`.
+	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => {
 		try {
 			return await fetchReleasesManifest()
 		} catch (error) {
@@ -154,10 +153,10 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		}
 	}, [])
 
-	// The embed keeps the gazetteer: the explainers resolve through `wofLookup`. `useDemoRuntime` owns the terminal
+	// The embed keeps the gazetteer: the explainers resolve through `wofLookup`. `useReleaseRuntime` owns the terminal
 	// ready/error state; the try/catch keeps this path's diagnostic console log on a load failure.
 	const loadAssets = useCallback(
-		async (release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<ReleaseAssets> => {
+		async (release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> => {
 			try {
 				return await loadReleaseAssets(release, ctx, { gazetteer: { sqljsBaseURL } })
 			} catch (error) {
@@ -169,9 +168,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		[sqljsBaseURL]
 	)
 
-	const rt = useDemoRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
 
-	const value = useMemo<DemoEmbedState>(
+	const value = useMemo<RuntimeEmbedState>(
 		() => ({
 			// The runtime object is the `ReleasesManifest` `loadManifest` returned (the package stores it
 			// verbatim), so re-widening the type here is sound — it carries `locale` at run time.
@@ -197,7 +196,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 		[rt]
 	)
 
-	return <DemoEmbedContext.Provider value={value}>{children}</DemoEmbedContext.Provider>
+	return <RuntimeEmbedContext.Provider value={value}>{children}</RuntimeEmbedContext.Provider>
 }
 
 //#endregion

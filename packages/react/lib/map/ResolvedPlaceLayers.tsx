@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<ResolvedPlaceLayers>` — the drop-in that renders a whole {@link MapPlaceRenderSpec} as `<DemoMap>`
+ *   `<ResolvedPlaceLayers>` — the drop-in that renders a whole {@link MapPlaceRenderSpec} as `<MapCanvas>`
  *   children: the marker(s), the outline, and (optionally) the camera move. This is the declarative
  *   replacement for the demo's imperative marker/bbox/camera redraw effect — a consumer computes the spec
- *   with `useMapPlaceRender(place)` and drops `<ResolvedPlaceLayers spec={spec} />` inside `<DemoMap>`.
+ *   with `useMapPlaceRender(place)` and drops `<ResolvedPlaceLayers spec={spec} />` inside `<MapCanvas>`.
  *
  *   `spec = null` (no result / no candidate) renders nothing, which also unmounts the previous marker +
  *   outline — the teardown the old effect did by hand (`markerRef.remove()`, `clearBbox`) is now just
@@ -28,7 +28,7 @@ export interface ResolvedPlaceLayersProps {
 	spec: MapPlaceRenderSpec | null
 	/**
 	 * Apply the computed camera target via {@link ResultCamera}. @default true. Set false when the consumer drives the
-	 * camera itself (e.g. a controlled `<DemoMap viewState>` fed by {@link cameraToViewState}).
+	 * camera itself (e.g. a controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
 	 */
 	applyCamera?: boolean
 	/**

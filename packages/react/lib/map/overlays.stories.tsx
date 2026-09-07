@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stories for the declarative resolved-place overlays, over the SAME offline stub style as `DemoMap`
+ *   Stories for the declarative resolved-place overlays, over the SAME offline stub style as `MapCanvas`
  *   (one `background` layer, zero network — never hits `tiles.mailwoman.ai`). Each story feeds a fake
- *   resolved place through `computeMapPlaceRenderSpec` and drops `<ResolvedPlaceLayers>` into `<DemoMap>`,
+ *   resolved place through `computeMapPlaceRenderSpec` and drops `<ResolvedPlaceLayers>` into `<MapCanvas>`,
  *   covering every branch of the render cascade: bbox circle, crisp polygon, street-radius circle,
  *   anchor-centroid postcode, and the bare point — plus a host `<OverlayLayers>` overlay.
  */
@@ -16,11 +16,11 @@ import type { ReactNode } from "react"
 import { computeMapPlaceRenderSpec, type ResolvedMapPlace } from "#map/place-render"
 import type { OverlaySpec } from "#map/types"
 
-import { DemoMap, type DemoMapStyle } from "./DemoMap.tsx"
+import { MapCanvas, type MapCanvasStyle } from "./MapCanvas.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
 
-const STUB_STYLE: DemoMapStyle = {
+const STUB_STYLE: MapCanvasStyle = {
 	version: 8,
 	name: "overlays-stub",
 	sources: {},
@@ -56,14 +56,14 @@ function OverlayScene({ place: resolved, overlays, applyCamera = false }: SceneP
 	const spec = computeMapPlaceRenderSpec(resolved)
 
 	return (
-		<DemoMap
+		<MapCanvas
 			mapStyle={STUB_STYLE}
 			initialViewState={{ longitude: resolved.lon, latitude: resolved.lat, zoom: 9 }}
 			style={{ width: "100%", height: "480px" }}
 		>
 			<OverlayLayers overlays={overlays} />
 			<ResolvedPlaceLayers spec={spec} applyCamera={applyCamera} />
-		</DemoMap>
+		</MapCanvas>
 	)
 }
 

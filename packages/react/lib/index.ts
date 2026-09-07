@@ -100,31 +100,31 @@ export type { PipelineLoadingState, PipelinePanels, PipelineRuntime } from "#pip
 export { useParsePipeline } from "#pipeline/useParsePipeline"
 export type { UseParsePipeline, UseParsePipelineOptions } from "#pipeline/useParsePipeline"
 
-// ── Demo runtime (shared load orchestration; node-safe — no onnx/httpvfs/maplibre) ──
-export { useDemoRuntime } from "#runtime/useDemoRuntime"
+// ── Release runtime (shared load orchestration; node-safe — no onnx/httpvfs/maplibre) ──
+export { useReleaseRuntime } from "#runtime/useReleaseRuntime"
 
 export type {
-	DemoAssetsLoadContext,
-	DemoLoaderState,
-	DemoManifest,
-	DemoReleaseBase,
-	DemoRuntimeConfig,
-} from "#runtime/useDemoRuntime"
+	AssetsLoadContext,
+	ReleaseBase,
+	ReleaseLoaderState,
+	ReleaseManifest,
+	ReleaseRuntimeConfig,
+} from "#runtime/useReleaseRuntime"
 
 // ── Map (types only from root) ──────────────────────────────────────────────
-// The demo-map SURFACE lives behind the `@mailwoman/react/map` subpath so `maplibre-gl` / `react-map-gl`
+// The map SURFACE lives behind the `@mailwoman/react/map` subpath so `maplibre-gl` / `react-map-gl`
 // (WebGL + DOM at import) never enter the package-root graph — a bare `import("@mailwoman/react")` in node
 // must not pull them. Only the CONTRACT types are re-exported here (fully erased at compile time, so no
-// runtime linkage): the `DemoMap` component + hooks are import-able solely via `@mailwoman/react/map`.
+// runtime linkage): the `MapCanvas` component + hooks are import-able solely via `@mailwoman/react/map`.
 export type {
-	DemoBackend,
-	DemoMapExtraProps,
-	DemoMapProps,
-	DemoMapStyle,
-	DemoRuntime,
-	DemoVersionOption,
+	GeocoderRuntime,
+	InferenceBackend,
 	LngLatTuple,
 	MapBias,
+	MapCanvasExtraProps,
+	MapCanvasProps,
+	MapCanvasStyle,
 	OverlaySpec,
 	Suggestion,
+	VersionOption,
 } from "#map/index"

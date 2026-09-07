@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<DemoMap>` mounts a real `react-map-gl/maplibre` map over an offline stub style (one `background`
+ *   `<MapCanvas>` mounts a real `react-map-gl/maplibre` map over an offline stub style (one `background`
  *   layer, no network). The HARD assertion is on the component TREE — the `.mw-demo-map` wrapper and
  *   react-map-gl's container `<div>` render synchronously, without throwing. The WebGL SURFACE (the
  *   `<canvas>`) and the child slot only appear AFTER react-map-gl's async mount effect (a dynamic
@@ -13,13 +13,13 @@
  *   proves the component renders. That keeps this a component-mount test, not a GPU test.
  */
 
-import { DemoMap, type DemoMapStyle } from "@mailwoman/react/map/DemoMap"
+import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
 import { act } from "react"
 import { expect, test } from "vitest"
 
 import { renderComponent } from "../../render.tsx"
 
-const STUB_STYLE: DemoMapStyle = {
+const STUB_STYLE: MapCanvasStyle = {
 	version: 8,
 	name: "demo-map-test-stub",
 	sources: {},
@@ -51,9 +51,9 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 	return found
 }
 
-test("DemoMap mounts a map container over an offline stub style", async () => {
+test("MapCanvas mounts a map container over an offline stub style", async () => {
 	const { container } = renderComponent(
-		<DemoMap
+		<MapCanvas
 			mapStyle={STUB_STYLE}
 			initialViewState={{ longitude: -74.006, latitude: 40.7128, zoom: 10 }}
 			style={{ width: "600px", height: "400px" }}
@@ -76,11 +76,11 @@ test("DemoMap mounts a map container over an offline stub style", async () => {
 	}
 })
 
-test("DemoMap renders a children slot inside the map", async () => {
+test("MapCanvas renders a children slot inside the map", async () => {
 	const { container } = renderComponent(
-		<DemoMap mapStyle={STUB_STYLE} style={{ width: "600px", height: "400px" }}>
+		<MapCanvas mapStyle={STUB_STYLE} style={{ width: "600px", height: "400px" }}>
 			<div data-testid="overlay-slot">slot</div>
-		</DemoMap>
+		</MapCanvas>
 	)
 
 	// The wrapper renders synchronously.

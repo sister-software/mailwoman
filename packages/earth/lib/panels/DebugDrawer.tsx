@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<DebugDrawer>` — the dev-mode decode-path drawer, injected into the geocoder via `DemoPanels.debugDrawer`. When
+ *   `<DebugDrawer>` — the dev-mode decode-path drawer, injected into the geocoder via `GeocoderPanels.debugDrawer`. When
  *   dev mode is on and a result is present, it traces the current input through the loaded classifier and renders
  *   `<ModelVisualizer>` beside the map. Dev-mode-only by design — closed by default, opened by the "🐛 Dev mode"
  *   toggle.

@@ -12,8 +12,8 @@
 import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
-import { GeocoderDemo } from "@mailwoman/react/map"
-import { makeDemoRuntime } from "@mailwoman/react/map/fake-runtime"
+import { Geocoder } from "@mailwoman/react/map"
+import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
@@ -70,19 +70,14 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 	}
 
 	return (
-		<GeocoderDemo
-			runtime={handle.runtime}
-			panels={panels}
-			defaultAddress={query ?? DEFAULT_ADDRESS}
-			presets={PRESETS}
-		/>
+		<Geocoder runtime={handle.runtime} panels={panels} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
 	)
 }
 
 function FakeGeocoder({ query }: { query: string | null }) {
-	const runtime = useMemo(() => makeDemoRuntime(), [])
+	const runtime = useMemo(() => makeFakeGeocoderRuntime(), [])
 
-	return <GeocoderDemo runtime={runtime} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+	return <Geocoder runtime={runtime} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
 }
 
 export function App() {

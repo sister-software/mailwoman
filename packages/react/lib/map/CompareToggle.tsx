@@ -13,13 +13,13 @@
 
 import type { ReactNode } from "react"
 
-import type { DemoVersionOption } from "#map/types"
+import type { VersionOption } from "#map/types"
 
 export interface CompareToggleProps {
 	/**
 	 * The selectable model bundles (the primary version is filtered out of the compare list).
 	 */
-	versions: ReadonlyArray<DemoVersionOption>
+	versions: ReadonlyArray<VersionOption>
 	/**
 	 * The primary version, excluded from the compare options.
 	 */

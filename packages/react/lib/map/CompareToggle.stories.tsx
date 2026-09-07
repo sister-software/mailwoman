@@ -10,11 +10,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useState } from "react"
 
-import type { DemoVersionOption } from "#map/types"
+import type { VersionOption } from "#map/types"
 
 import { CompareToggle } from "./CompareToggle.tsx"
 
-const VERSIONS: DemoVersionOption[] = [
+const VERSIONS: VersionOption[] = [
 	{ version: "v7.2.0", label: "v7.2.0 (latest)" },
 	{ version: "v7.1.0", label: "v7.1.0" },
 	{ version: "v6.4.0", label: "v6.4.0" },

@@ -99,15 +99,15 @@
 			"node": "./lib/common/PresetChips.tsx",
 			"default": "./out/common/PresetChips.js"
 		},
-		"./map/DemoMap": {
-			"types": "./out/map/DemoMap.d.ts",
-			"node": "./lib/map/DemoMap.tsx",
-			"default": "./out/map/DemoMap.js"
+		"./map/MapCanvas": {
+			"types": "./out/map/MapCanvas.d.ts",
+			"node": "./lib/map/MapCanvas.tsx",
+			"default": "./out/map/MapCanvas.js"
 		},
-		"./map/GeocoderDemo": {
-			"types": "./out/map/GeocoderDemo.d.ts",
-			"node": "./lib/map/GeocoderDemo.tsx",
-			"default": "./out/map/GeocoderDemo.js"
+		"./map/Geocoder": {
+			"types": "./out/map/Geocoder.d.ts",
+			"node": "./lib/map/Geocoder.tsx",
+			"default": "./out/map/Geocoder.js"
 		},
 		"./map/place-render": {
 			"types": "./out/map/place-render.d.ts",
@@ -249,10 +249,10 @@
 			"node": "./lib/poi/usePOISearch.ts",
 			"default": "./out/poi/usePOISearch.js"
 		},
-		"./runtime/useDemoRuntime": {
-			"types": "./out/runtime/useDemoRuntime.d.ts",
-			"node": "./lib/runtime/useDemoRuntime.ts",
-			"default": "./out/runtime/useDemoRuntime.js"
+		"./runtime/useReleaseRuntime": {
+			"types": "./out/runtime/useReleaseRuntime.d.ts",
+			"node": "./lib/runtime/useReleaseRuntime.ts",
+			"default": "./out/runtime/useReleaseRuntime.js"
 		}
 	},
 	"publishConfig": {

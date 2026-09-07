@@ -3,22 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<DemoControls>` — the geocoder demo's floating control panel, assembled from the demo-specific units
+ *   `<GeocoderControls>` — the geocoder's floating control panel, assembled from the geocoder-specific units
  *   (VersionPicker / CompareToggle / BackendControl / PlaceAutocomplete / ResultPanel) and the REUSED
- *   pipeline units (QueryForm / PresetChips / LoadingIndicator). It is the presentational composition the
- *   `_app.tsx` control `<section>` (`:1222-1514`) becomes — it reads the injected {@link DemoRuntime} for
- *   ready/version/backend/loading state and threads the {@link useDemoGeocode} + {@link usePlaceAutocomplete}
- *   + {@link useCompareState} hooks into the controls. Host-specific visualizers arrive via {@link DemoPanels}.
+ *   pipeline units (QueryForm / PresetChips / LoadingIndicator). It reads the injected {@link GeocoderRuntime}
+ *   for ready/version/backend/loading state and threads the {@link useGeocode} + {@link usePlaceAutocomplete}
+ *   + {@link useCompareState} hooks into the controls. Host-specific visualizers arrive via {@link GeocoderPanels}.
  *
- *   NODE-SAFE: pure React + the shared/demo units, no maplibre. It rides `@mailwoman/react/map` as a
- *   demo-specific control, not for WebGL.
+ *   NODE-SAFE: pure React + the shared/geocoder units, no maplibre. It rides `@mailwoman/react/map` as a
+ *   geocoder-specific control, not for WebGL.
  */
 
 import type { ReactNode } from "react"
 
-import type { DemoPanels, DemoRuntime } from "#map/types"
+import type { GeocoderPanels, GeocoderRuntime } from "#map/types"
 import type { UseCompareState } from "#map/useCompareState"
-import type { UseDemoGeocode } from "#map/useDemoGeocode"
+import type { UseGeocode } from "#map/useGeocode"
 import type { UsePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
@@ -30,15 +29,15 @@ import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 import { ResultPanel } from "./ResultPanel.tsx"
 import { VersionPicker } from "./VersionPicker.tsx"
 
-export interface DemoControlsProps {
+export interface GeocoderControlsProps {
 	/**
-	 * The injected demo runtime.
+	 * The injected geocoder runtime.
 	 */
-	runtime: DemoRuntime
+	runtime: GeocoderRuntime
 	/**
 	 * The parse+resolve state machine.
 	 */
-	geocode: UseDemoGeocode
+	geocode: UseGeocode
 	/**
 	 * The place-autocomplete combobox state.
 	 */
@@ -50,7 +49,7 @@ export interface DemoControlsProps {
 	/**
 	 * Host-injected panels (about, release blurb, compare, permalink, extras, failure).
 	 */
-	panels: DemoPanels
+	panels: GeocoderPanels
 	/**
 	 * Example chips.
 	 */
@@ -60,7 +59,7 @@ export interface DemoControlsProps {
 	 */
 	placeholder: string
 	/**
-	 * Select a model version (the composed demo also clears a now-colliding compare selection).
+	 * Select a model version (the composed geocoder also clears a now-colliding compare selection).
 	 */
 	onSelectVersion: (version: string) => void
 	/**
@@ -72,7 +71,7 @@ export interface DemoControlsProps {
 /**
  * The floating control panel.
  */
-export function DemoControls({
+export function GeocoderControls({
 	runtime,
 	geocode,
 	autocomplete,
@@ -82,7 +81,7 @@ export function DemoControls({
 	placeholder,
 	onSelectVersion,
 	onForceWASMChange,
-}: DemoControlsProps): ReactNode {
+}: GeocoderControlsProps): ReactNode {
 	const versions = runtime.availableVersions ?? []
 	const { busy, result, selectedCandidate } = geocode
 	const loading = runtime.loading

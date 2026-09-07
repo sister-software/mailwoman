@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<GeocoderDemo>` — the WHOLE geocoder demo, composed. It is the map analogue of `PipelineExplorer`
- *   and takes the SAME DI shape: an injected {@link DemoRuntime} (the host owns ONNX / httpvfs / R2 /
- *   the composed map style) plus a {@link DemoPanels} bag (the host's ModelVisualizer / VersionCompare /
+ *   `<Geocoder>` — the WHOLE geocoder, composed. It is the map analogue of `PipelineExplorer`
+ *   and takes the SAME DI shape: an injected {@link GeocoderRuntime} (the host owns ONNX / httpvfs / R2 /
+ *   the composed map style) plus a {@link GeocoderPanels} bag (the host's ModelVisualizer / VersionCompare /
  *   About / Permalink). Everything here is composition + a `ClientOnly` boundary:
  *
- *     - the floating {@link DemoControls} panel (version / compare / backend / query+autocomplete / result),
- *     - the declarative {@link DemoMap} with the phase-2 overlays ({@link OverlayLayers}) and the
+ *     - the floating {@link GeocoderControls} panel (version / compare / backend / query+autocomplete / result),
+ *     - the declarative {@link MapCanvas} with the phase-2 overlays ({@link OverlayLayers}) and the
  *       resolved-place marker/outline/camera ({@link ResolvedPlaceLayers}) driven by the parse state,
- *     - the hooks that wire them: {@link useDemoGeocode} (parse + viewport bias + map place),
+ *     - the hooks that wire them: {@link useGeocode} (parse + viewport bias + map place),
  *       {@link usePlaceAutocomplete}, {@link useCompareState}.
  *
- *   Because it pulls {@link DemoMap} (→ `react-map-gl` → `maplibre-gl`, WebGL + DOM at import), it lives on
+ *   Because it pulls {@link MapCanvas} (→ `react-map-gl` → `maplibre-gl`, WebGL + DOM at import), it lives on
  *   the `@mailwoman/react/map` subpath ONLY — never the package root. The whole thing renders in Storybook
  *   over a fake runtime (offline stub style + canned geocode) with no network, no ONNX, no gazetteer.
  */
@@ -22,28 +22,28 @@
 import { type ReactNode, useCallback, useEffect, useRef } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
-import type { DemoPanels, DemoRuntime, MapBias } from "#map/types"
+import type { GeocoderPanels, GeocoderRuntime, MapBias } from "#map/types"
 import { useCompareState } from "#map/useCompareState"
-import { useDemoGeocode } from "#map/useDemoGeocode"
+import { useGeocode } from "#map/useGeocode"
 import { useMapPlaceRender } from "#map/useMapPlaceRender"
 import { usePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 import { ClientOnly } from "../common/ClientOnly.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
-import { DemoControls } from "./DemoControls.tsx"
-import { DemoMap } from "./DemoMap.tsx"
+import { GeocoderControls } from "./GeocoderControls.tsx"
+import { MapCanvas } from "./MapCanvas.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
 
-export interface GeocoderDemoProps {
+export interface GeocoderProps {
 	/**
-	 * The injected demo runtime (map style + overlays + parse + version/backend).
+	 * The injected geocoder runtime (map style + overlays + parse + version/backend).
 	 */
-	runtime: DemoRuntime
+	runtime: GeocoderRuntime
 	/**
 	 * Host-injected panels (about, release blurb, compare, permalink, debug drawer, map controls, …).
 	 */
-	panels?: DemoPanels
+	panels?: GeocoderPanels
 	/**
 	 * Address to pre-fill.
 	 */
@@ -54,54 +54,54 @@ export interface GeocoderDemoProps {
 	presets?: ReadonlyArray<Preset>
 	/**
 	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
-	 * Matches the demo's `map.getZoom() >= 4` threshold. @default 4
+	 * Matches the `map.getZoom() >= 4` threshold. @default 4
 	 */
 	minBiasZoom?: number
 	/**
 	 * Fly/fit the map to the resolved place on each result (via {@link ResolvedPlaceLayers}). @default true. Set false
-	 * for a host that drives the camera itself (a controlled `<DemoMap viewState>`), or to keep a headless test
+	 * for a host that drives the camera itself (a controlled `<MapCanvas viewState>`), or to keep a headless test
 	 * deterministic — the marker + outline still render, only the animated camera move is skipped.
 	 */
 	applyResultCamera?: boolean
 }
 
-interface GeocoderDemoInnerProps extends Required<
-	Pick<GeocoderDemoProps, "runtime" | "defaultAddress" | "minBiasZoom" | "applyResultCamera">
+interface GeocoderInnerProps extends Required<
+	Pick<GeocoderProps, "runtime" | "defaultAddress" | "minBiasZoom" | "applyResultCamera">
 > {
-	panels: DemoPanels
+	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
 }
 
-function GeocoderDemoInner({
+function GeocoderInner({
 	runtime,
 	panels,
 	defaultAddress,
 	presets,
 	minBiasZoom,
 	applyResultCamera,
-}: GeocoderDemoInnerProps): ReactNode {
+}: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
 
 	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias threshold)
 	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
-	// republished on `globalThis.__mailwomanDemoMap`, the same global the pre-port demo carried. The
-	// ref fills only after react-map-gl instantiates the map, hence the short poll; cleared on
-	// unmount so a torn-down demo never leaves a stale handle behind.
+	// republished on `globalThis.__mailwomanMapCanvas`. The ref fills only after react-map-gl instantiates
+	// the map, hence the short poll; cleared on unmount so a torn-down geocoder never leaves a stale
+	// handle behind.
 	useEffect(() => {
-		const host = globalThis as { __mailwomanDemoMap?: ReturnType<MapRef["getMap"]> }
+		const host = globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }
 
 		const timer = setInterval(() => {
 			const map = mapRef.current?.getMap()
 
 			if (map) {
-				host.__mailwomanDemoMap = map
+				host.__mailwomanMapCanvas = map
 				clearInterval(timer)
 			}
 		}, 250)
 
 		return () => {
 			clearInterval(timer)
-			delete host.__mailwomanDemoMap
+			delete host.__mailwomanMapCanvas
 		}
 	}, [])
 
@@ -119,7 +119,7 @@ function GeocoderDemoInner({
 		return { center: [center.lng, center.lat], zoom }
 	}, [minBiasZoom])
 
-	const geocode = useDemoGeocode({ runtime, defaultText: defaultAddress, getBias })
+	const geocode = useGeocode({ runtime, defaultText: defaultAddress, getBias })
 	const compare = useCompareState()
 
 	const autocomplete = usePlaceAutocomplete({
@@ -143,7 +143,7 @@ function GeocoderDemoInner({
 	return (
 		<div className="mw-geocoder-demo">
 			<div className="mw-geocoder-demo__map">
-				<DemoMap
+				<MapCanvas
 					mapStyle={runtime.mapStyle}
 					mapRef={mapRef}
 					initialViewState={{
@@ -152,17 +152,17 @@ function GeocoderDemoInner({
 						zoom: runtime.initialZoom ?? 3,
 					}}
 					style={{ width: "100%", height: "100%" }}
-					// Match the live demo's chrome: one compact attribution pill (the map's own default is a wide, always-open
-					// "MapLibre | © …" bar), no maplibre wordmark logo.
+					// One compact attribution pill (the map's own default is a wide, always-open "MapLibre | © …" bar), no
+					// maplibre wordmark logo.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false }}
 				>
 					<OverlayLayers overlays={runtime.overlays} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
 					{panels.mapControls}
-				</DemoMap>
+				</MapCanvas>
 			</div>
 
-			<DemoControls
+			<GeocoderControls
 				runtime={runtime}
 				geocode={geocode}
 				autocomplete={autocomplete}
@@ -182,30 +182,30 @@ function GeocoderDemoInner({
 /**
  * Stable empty defaults — a fresh `{}`/`[]` per render would churn every downstream memo dep.
  */
-const NO_PANELS: DemoPanels = {}
+const NO_PANELS: GeocoderPanels = {}
 const NO_PRESETS: ReadonlyArray<Preset> = []
 
 /**
- * The composed geocoder demo, behind a `ClientOnly` SSR boundary (the map is intrinsically a client component).
+ * The composed geocoder, behind a `ClientOnly` SSR boundary (the map is intrinsically a client component).
  */
-export function GeocoderDemo({
+export function Geocoder({
 	runtime,
 	panels = NO_PANELS,
 	defaultAddress = "",
 	presets = NO_PRESETS,
 	minBiasZoom = 4,
 	applyResultCamera = true,
-}: GeocoderDemoProps): ReactNode {
+}: GeocoderProps): ReactNode {
 	return (
 		<ClientOnly
 			fallback={
 				<div className="mw-geocoder-demo">
-					<p>Loading demo…</p>
+					<p>Loading the geocoder…</p>
 				</div>
 			}
 		>
 			{() => (
-				<GeocoderDemoInner
+				<GeocoderInner
 					runtime={runtime}
 					panels={panels}
 					defaultAddress={defaultAddress}

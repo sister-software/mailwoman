@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<DemoMap>` stories against a STUB style — a single `background` layer, zero sources, zero network.
+ *   `<MapCanvas>` stories against a STUB style — a single `background` layer, zero sources, zero network.
  *   Never hits `tiles.mailwoman.ai`; the whole point of the extracted map is that it renders in
  *   isolation (Storybook / a headless browser) with an injected offline style, exactly as the composed
  *   demo will with a fake runtime in a later phase.
@@ -11,21 +11,21 @@
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import { DemoMap, type DemoMapStyle } from "./DemoMap.tsx"
+import { MapCanvas, type MapCanvasStyle } from "./MapCanvas.tsx"
 
 /**
  * An offline style: one solid `background` layer. No glyphs, sprite, sources, or tiles → no network.
  */
-const STUB_STYLE: DemoMapStyle = {
+const STUB_STYLE: MapCanvasStyle = {
 	version: 8,
 	name: "demo-map-stub",
 	sources: {},
 	layers: [{ id: "background", type: "background", paint: { "background-color": "#dfe7ee" } }],
 }
 
-const meta: Meta<typeof DemoMap> = {
-	title: "Map/DemoMap",
-	component: DemoMap,
+const meta: Meta<typeof MapCanvas> = {
+	title: "Map/MapCanvas",
+	component: MapCanvas,
 	parameters: { layout: "fullscreen" },
 	args: {
 		mapStyle: STUB_STYLE,
@@ -36,7 +36,7 @@ const meta: Meta<typeof DemoMap> = {
 
 export default meta
 
-type Story = StoryObj<typeof DemoMap>
+type Story = StoryObj<typeof MapCanvas>
 
 /**
  * The bare shell over the stub style.

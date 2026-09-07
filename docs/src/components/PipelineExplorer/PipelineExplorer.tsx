@@ -6,7 +6,7 @@
  *   PipelineExplorer — the docs-site wrapper around `@mailwoman/react`'s `PipelineExplorer`. The
  *   package owns the UI state machine + the core result presentation (kind badge, component table,
  *   resolved place, candidate picker); this file supplies the docs-specific runtime: it reads the
- *   shared DemoEmbed context (classifier / FST / WOF lookup, all loaded browser-side) and implements
+ *   shared RuntimeEmbed context (classifier / FST / WOF lookup, all loaded browser-side) and implements
  *   `runParse` (the compute-shape → classify → resolve cascade). The heavy domain visualizers
  *   (SpanHighlight, TreeView, TimingPanel, …) are injected as `panels`, rendered from the parse result
  *   — so onnxruntime-web + httpvfs + those Docusaurus components stay out of the package's graph.
@@ -14,12 +14,12 @@
  *   Usage in MDX (unchanged):
  *
  *   ```mdx
- *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+ *   import { RuntimeEmbedProvider } from "@site/src/contexts/RuntimeEmbed"
  *   import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
  *
- *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
+ *   <RuntimeEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <PipelineExplorer />
- *   </DemoEmbedProvider>
+ *   </RuntimeEmbedProvider>
  * ```
  */
 
@@ -52,7 +52,7 @@ import { CRFDiff } from "#components/CRFDiff/CRFDiff"
 import { FSTWalker } from "#components/FSTWalker/FSTWalker"
 import { GuidedTour } from "#components/GuidedTour/GuidedTour"
 import { SubwordExplorer } from "#components/SubwordExplorer/SubwordExplorer"
-import { useDemoEmbed } from "#contexts/DemoEmbed"
+import { useRuntimeEmbed } from "#contexts/RuntimeEmbed"
 
 import styles from "./styles.module.css"
 
@@ -67,7 +67,7 @@ export interface PipelineExplorerProps {
  * The docs demo context, mapped to the package's injected `PipelineRuntime` + `panels`.
  */
 function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels } {
-	const ctx = useDemoEmbed()
+	const ctx = useRuntimeEmbed()
 
 	const {
 		manifest,

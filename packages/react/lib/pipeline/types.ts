@@ -5,7 +5,7 @@
  *
  *   Types for the pipeline (parse + resolve) explorer. The model/gazetteer runtime is INJECTED as a
  *   {@link PipelineRuntime}: this package owns the UI state machine + presentation, while the host
- *   (the docs site's DemoEmbed, or any app) owns loading ONNX/WOF and executing a parse. That keeps
+ *   (the docs site's RuntimeEmbed, or any app) owns loading ONNX/WOF and executing a parse. That keeps
  *   onnxruntime-web, sql.js-httpvfs, and node builtins entirely out of this package's browser graph.
  */
 

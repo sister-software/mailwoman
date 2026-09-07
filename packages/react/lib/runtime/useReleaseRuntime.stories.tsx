@@ -3,18 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Storybook coverage for `useDemoRuntime` — a small `<DemoRuntimeInspector>` renders the hook's state
+ *   Storybook coverage for `useReleaseRuntime` — a small `<ReleaseRuntimeInspector>` renders the hook's state
  *   over a FAKE injected loader (no network, no ONNX, no httpvfs). The `Interactive` story lets you
  *   switch versions + toggle WASM and watch the load state machine drive; `SlowLoad` adds artificial
  *   latency so the staged loading state is visible; `AssetError` exercises the failure branch.
  */
 
+import { sleep } from "@mailwoman/core/utils/sleep"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import type { DemoAssetsLoadContext, DemoManifest, DemoReleaseBase } from "#runtime/useDemoRuntime"
-import { useDemoRuntime } from "#runtime/useDemoRuntime"
+import type { AssetsLoadContext, ReleaseBase, ReleaseManifest } from "#runtime/useReleaseRuntime"
+import { useReleaseRuntime } from "#runtime/useReleaseRuntime"
 
-interface StoryRelease extends DemoReleaseBase {
+interface StoryRelease extends ReleaseBase {
 	modelSize: string
 }
 
@@ -23,7 +24,7 @@ interface StoryAssets {
 	forcedWASM: boolean
 }
 
-const MANIFEST: DemoManifest<StoryRelease> = {
+const MANIFEST: ReleaseManifest<StoryRelease> = {
 	defaultVersion: "v7.2.0",
 	releases: [
 		{ version: "v7.2.0", label: "v7.2.0 (latest)", modelSize: "28 MB" },
@@ -32,19 +33,14 @@ const MANIFEST: DemoManifest<StoryRelease> = {
 	],
 }
 
-const sleep = (ms: number) =>
-	new Promise((resolve) => {
-		setTimeout(resolve, ms)
-	})
-
 function makeLoaders(delayMs: number, fail: boolean) {
-	const loadManifest = async (): Promise<DemoManifest<StoryRelease>> => {
+	const loadManifest = async (): Promise<ReleaseManifest<StoryRelease>> => {
 		await sleep(delayMs)
 
 		return MANIFEST
 	}
 
-	const loadAssets = async (release: StoryRelease, ctx: DemoAssetsLoadContext): Promise<StoryAssets> => {
+	const loadAssets = async (release: StoryRelease, ctx: AssetsLoadContext): Promise<StoryAssets> => {
 		ctx.setProgress(`Loading ${release.version} model (~${release.modelSize})…`)
 		ctx.setStepLabels(["Loading classifier", "Loading FST gazetteer", "Loading WOF database"])
 
@@ -68,9 +64,9 @@ function makeLoaders(delayMs: number, fail: boolean) {
 	return { loadManifest, loadAssets }
 }
 
-function DemoRuntimeInspector({ delayMs = 0, fail = false }: { delayMs?: number; fail?: boolean }) {
+function ReleaseRuntimeInspector({ delayMs = 0, fail = false }: { delayMs?: number; fail?: boolean }) {
 	const { loadManifest, loadAssets } = makeLoaders(delayMs, fail)
-	const rt = useDemoRuntime<StoryAssets, StoryRelease>({ loadManifest, loadAssets })
+	const rt = useReleaseRuntime<StoryAssets, StoryRelease>({ loadManifest, loadAssets })
 
 	return (
 		<div style={{ fontFamily: "var(--ifm-font-family-monospace, monospace)", maxWidth: 520, display: "grid", gap: 8 }}>
@@ -120,14 +116,14 @@ function DemoRuntimeInspector({ delayMs = 0, fail = false }: { delayMs?: number;
 	)
 }
 
-const meta: Meta<typeof DemoRuntimeInspector> = {
-	title: "Runtime/useDemoRuntime",
-	component: DemoRuntimeInspector,
+const meta: Meta<typeof ReleaseRuntimeInspector> = {
+	title: "Runtime/useReleaseRuntime",
+	component: ReleaseRuntimeInspector,
 }
 
 export default meta
 
-type Story = StoryObj<typeof DemoRuntimeInspector>
+type Story = StoryObj<typeof ReleaseRuntimeInspector>
 
 /**
  * Instant fake loader — flip versions / WASM and watch the bundle reload.

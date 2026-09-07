@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useDemoRuntime` — the headless load-orchestration hook shared by every mailwoman demo surface (the
- *   inline doc-embeds via `DemoEmbed`, and the geocoder map page). It owns the version-selection state
+ *   `useReleaseRuntime` — the headless load-orchestration hook shared by every mailwoman browser surface (the
+ *   inline doc-embeds via `RuntimeEmbed`, and the geocoder). It owns the version-selection state
  *   machine, the per-version load SEQUENCING, cancellation, and the ready / loading / error state — but
  *   NOTHING model- or map-specific. The actual asset fetchers (the ONNX classifier factory, the httpvfs
  *   WOF opener, the FST fetch, the releases.json fetch) are INJECTED by the host as async functions, so
@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 /**
  * The minimal contract a release-manifest entry must satisfy. Hosts extend this with their own fields.
  */
-export interface DemoReleaseBase {
+export interface ReleaseBase {
 	/**
 	 * The version tag this entry describes (matched against `selectedVersion`).
 	 */
@@ -36,7 +36,7 @@ export interface DemoReleaseBase {
 /**
  * The releases manifest the host fetches — the default version plus the selectable release entries.
  */
-export interface DemoManifest<TRelease extends DemoReleaseBase = DemoReleaseBase> {
+export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 	/**
 	 * The version selected on first load (before the user picks another).
 	 */
@@ -52,7 +52,7 @@ export interface DemoManifest<TRelease extends DemoReleaseBase = DemoReleaseBase
  * staged step labels/index THROUGH these setters (all no-op once the load is superseded/aborted), while the hook owns
  * the terminal state (revealing the assets + clearing progress on success, surfacing the error on failure).
  */
-export interface DemoAssetsLoadContext {
+export interface AssetsLoadContext {
 	/**
 	 * Aborts when this load is superseded (version/backend switch) or the provider unmounts.
 	 */
@@ -82,18 +82,18 @@ export interface DemoAssetsLoadContext {
 /**
  * The injected loaders the hook orchestrates. Nothing here is model- or map-aware — the host owns all that.
  */
-export interface DemoRuntimeConfig<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase> {
+export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Fetch + normalize the releases manifest. Returns `null` when no manifest is available (the demo then shows nothing
-	 * selectable). Rejecting surfaces `errorMessage`. Runs once on mount.
+	 * Fetch + normalize the releases manifest. Returns `null` when no manifest is available (the surface then shows
+	 * nothing selectable). Rejecting surfaces `errorMessage`. Runs once on mount.
 	 */
-	loadManifest: (signal: AbortSignal) => Promise<DemoManifest<TRelease> | null>
+	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 	/**
 	 * Load the full asset bundle for one release — the classifier, FST, WOF lookup, calibrator, whatever the host needs.
 	 * Runs on every version or `forceWASM` change. Report progress via `ctx`; return the bundle. Rejecting surfaces
 	 * `errorMessage`. Bail early when `ctx.signal.aborted` — the hook discards a superseded result regardless.
 	 */
-	loadAssets: (release: TRelease, ctx: DemoAssetsLoadContext) => Promise<TAssets>
+	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 	/**
 	 * The progress line shown before the manifest arrives. @default "Loading releases…"
 	 */
@@ -101,19 +101,17 @@ export interface DemoRuntimeConfig<TAssets, TRelease extends DemoReleaseBase = D
 }
 
 /**
- * The state `useDemoRuntime` produces — the load-orchestration state a demo surface renders + re-projects.
+ * The state `useReleaseRuntime` produces — the load-orchestration state a surface renders + re-projects.
  *
- * NAMING (phase 4): this is the LOADER STATE, deliberately distinct from {@link DemoRuntime} (the injected runtime
- * contract `<GeocoderDemo>` consumes). The two were same-stem before (`UseDemoRuntime` vs `DemoRuntime`); phase 4
- * disambiguates by renaming the loader-state type to `DemoLoaderState`. A host builds a {@link DemoRuntime} by pairing
- * this loader state (assets + backend + version) with the map surface (style, overlays, bias, parse) — see the map
- * subpath's `DemoRuntime`.
+ * This is the LOADER STATE, deliberately distinct from {@link GeocoderRuntime} (the injected runtime contract
+ * `<Geocoder>` consumes). A host builds a {@link GeocoderRuntime} by pairing this loader state (assets + backend +
+ * version) with the map surface (style, overlays, bias, parse) — see the map subpath's `GeocoderRuntime`.
  */
-export interface DemoLoaderState<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase> {
+export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
 	 * The releases manifest, once fetched.
 	 */
-	manifest: DemoManifest<TRelease> | null
+	manifest: ReleaseManifest<TRelease> | null
 	/**
 	 * The currently-selected version, or `null` before the manifest resolves.
 	 */
@@ -171,12 +169,12 @@ export interface DemoLoaderState<TAssets, TRelease extends DemoReleaseBase = Dem
  * change reloads the bundle via `loadAssets`, the previous load aborted first. The assets are revealed ATOMICALLY when
  * `loadAssets` resolves (so `ready` flips exactly once per load), and consumers wait on `ready`.
  */
-export function useDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase>(
-	config: DemoRuntimeConfig<TAssets, TRelease>
-): DemoLoaderState<TAssets, TRelease> {
+export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
+	config: ReleaseRuntimeConfig<TAssets, TRelease>
+): ReleaseLoaderState<TAssets, TRelease> {
 	const { initialProgress = "Loading releases…" } = config
 
-	const [manifest, setManifest] = useState<DemoManifest<TRelease> | null>(null)
+	const [manifest, setManifest] = useState<ReleaseManifest<TRelease> | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [assets, setAssets] = useState<TAssets | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>(initialProgress)
@@ -194,7 +192,7 @@ export function useDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoR
 	// Latest manifest for the version-load effect, so it can resolve the release WITHOUT depending on `manifest`
 	// identity — which would double-fire the load the instant the manifest first arrives (the selection transition
 	// null → defaultVersion already fires it once).
-	const manifestRef = useRef<DemoManifest<TRelease> | null>(null)
+	const manifestRef = useRef<ReleaseManifest<TRelease> | null>(null)
 
 	useEffect(() => {
 		loadManifestRef.current = config.loadManifest
@@ -249,7 +247,7 @@ export function useDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoR
 				setLoadingStepLabels([])
 				setActiveBackend("")
 
-				const ctx: DemoAssetsLoadContext = {
+				const ctx: AssetsLoadContext = {
 					signal,
 					forceWASM,
 					setProgress: (progress) => guard(() => setLoadingProgress(progress)),

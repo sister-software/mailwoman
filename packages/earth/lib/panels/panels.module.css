@@ -1,6 +1,6 @@
 /* ============================================================================
  * `/demo` shared chrome — the classes the docs-side panels injected into
- * `@mailwoman/react/map`'s `<GeocoderDemo>` reuse. The floating-panel + map
+ * `@mailwoman/react/map`'s `<Geocoder>` reuse. The floating-panel + map
  * layout itself now lives in the package (`.mw-demo-controls`, restyled by
  * `geocoder.module.css`); what remains here is the full-viewport root, the
  * example-chip row (geo-bias), and the dev-mode model-visualizer drawer.

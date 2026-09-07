@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<MapControls>` — the map controls injected into the geocoder via `DemoPanels.mapControls` (rendered as
- *   `<DemoMap>` children, inside the react-map-gl `<Map>` context), on the declarative binding:
+ *   `<MapControls>` — the map controls injected into the geocoder via `GeocoderPanels.mapControls` (rendered as
+ *   `<MapCanvas>` children, inside the react-map-gl `<Map>` context), on the declarative binding:
  *
  *     - the top-right {@link LayerToggleControl} (per-group basemap-layer + coverage-fog visibility checkboxes),
  *       mounted via react-map-gl's `useControl`, and

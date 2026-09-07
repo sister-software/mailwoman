@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useGeocoderRuntime` — the app's runtime assembly. It builds the REAL {@link DemoRuntime} that
+ *   `useGeocoderRuntime` — the app's runtime assembly. It builds the REAL {@link GeocoderRuntime} that
  *   `@mailwoman/react/map`'s geocoder consumes, wiring the browser runtime's async fetchers and factories into the
  *   fully client-side geocoder.
  *
  *   The shared load orchestration (version-selection state machine, per-version sequencing, ready/error state) is
- *   owned by `@mailwoman/react`'s `useDemoRuntime`; this module injects the loaders from `mailwoman/browser-runtime`
+ *   owned by `@mailwoman/react`'s `useReleaseRuntime`; this module injects the loaders from `mailwoman/browser-runtime`
  *   into it (the onnx-web classifier, the httpvfs gazetteer, the FST, the releases manifest, the calibration table,
  *   the postcode-anchor lookup). Around that loader it assembles the map surface: the composed cartographer basemap
  *   style, the parse+resolve+street+anchor cascade as a bias-aware `runParseWithBias`, the FST autocomplete, and a
@@ -22,11 +22,11 @@
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
-import type { DemoAssetsLoadContext, DemoManifest } from "@mailwoman/react"
-import { useDemoRuntime } from "@mailwoman/react"
+import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
+import { useReleaseRuntime } from "@mailwoman/react"
 import type {
-	DemoMapStyle,
-	DemoRuntime,
+	MapCanvasStyle,
+	GeocoderRuntime,
 	MapBias,
 	OverlaySpec,
 	ResolvedMapPlace,
@@ -113,7 +113,7 @@ export interface GeocoderRuntimeHandle {
 	/**
 	 * The composed runtime the geocoder consumes.
 	 */
-	runtime: DemoRuntime
+	runtime: GeocoderRuntime
 	/**
 	 * The selectable releases (for the host compare panel that loads its own second classifier).
 	 */
@@ -153,7 +153,7 @@ export interface GeocoderRuntimeOptions {
 }
 
 /**
- * Build the real {@link DemoRuntime}. Injects the browser runtime's loaders into the shared `useDemoRuntime`
+ * Build the real {@link GeocoderRuntime}. Injects the browser runtime's loaders into the shared `useReleaseRuntime`
  * orchestration, then wraps the loaded assets with the map surface (style / overlays / bias-aware parse / autocomplete
  * / calibrator / map-place enricher).
  */
@@ -161,15 +161,18 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const { sqljsBaseURL } = config
 
 	// ── Injected loaders ──────────────────────────────────────────────────────
-	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => fetchReleasesManifest(), [])
+	const loadManifest = useCallback(
+		async (): Promise<ReleaseManifest<ReleaseInfo> | null> => fetchReleasesManifest(),
+		[]
+	)
 
 	const loadAssets = useCallback(
-		(release: ReleaseInfo, ctx: DemoAssetsLoadContext): Promise<ReleaseAssets> =>
+		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
 			loadReleaseAssets(release, ctx, { gazetteer: { sqljsBaseURL } }),
 		[sqljsBaseURL]
 	)
 
-	const rt = useDemoRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
 
 	// The service worker keeps one release's gazetteer chunks; tell it which.
 	useEffect(() => {
@@ -179,7 +182,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	}, [rt.selectedVersion])
 
 	// ── Composed basemap style: MapLibre reads the TileJSON itself when a vector source names its URL. ──────
-	const mapStyle = useMemo<DemoMapStyle>(
+	const mapStyle = useMemo<MapCanvasStyle>(
 		() =>
 			new StyleSpecificationComposer({
 				sources: { [MailwomanBaseTileSetID]: { type: "vector", url: String(config.basemapTileJSONURL) } },
@@ -229,7 +232,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
 	// Lazy crisp-polygon DB + per-id cache. The cache is STATE (not a ref) so a landed polygon rebuilds
-	// `resolveMapPlace` → the runtime → `useDemoGeocode`'s mapPlace memo, drawing the geometry. Cache value:
+	// `resolveMapPlace` → the runtime → `useGeocode`'s mapPlace memo, drawing the geometry. Cache value:
 	// `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	const polygonInflightRef = useRef<Set<number>>(new Set())
@@ -603,7 +606,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		return c ? (raw: number) => c(raw) : undefined
 	}, [rt.assets])
 
-	const runtime = useMemo<DemoRuntime>(() => {
+	const runtime = useMemo<GeocoderRuntime>(() => {
 		return {
 			// PipelineRuntime surface
 			ready: rt.ready,

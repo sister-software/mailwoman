@@ -15,19 +15,20 @@ test.describe("Demo — viewport bias (#938)", () => {
 
 		// Park the map on Ohio, zoomed in past the global-view threshold.
 		await page.evaluate(() => {
-			const w = globalThis as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
-			w.__mailwomanDemoMap?.jumpTo({ center: [-83.11, 40.1], zoom: 8 })
+			const w = globalThis as { __mailwomanMapCanvas?: { jumpTo: (o: unknown) => void } }
+			w.__mailwomanMapCanvas?.jumpTo({ center: [-83.11, 40.1], zoom: 8 })
 		})
 
 		// The map loads independently of the classifier — wait until the jump has actually taken (zoom
 		// past the global-view threshold) so the viewport bias is live before we submit.
 		await page.waitForFunction(
 			() => {
-				const m = (globalThis as { __mailwomanDemoMap?: { getZoom: () => number } }).__mailwomanDemoMap
+				const m = (globalThis as { __mailwomanMapCanvas?: { getZoom: () => number } }).__mailwomanMapCanvas
 
 				return !!m && m.getZoom() >= 7
 			},
-			{ timeout: 15_000 }
+			undefined,
+			{ timeout: 15_000, polling: 500 }
 		)
 
 		await demo.setAddress("Dublin")
@@ -43,8 +44,8 @@ test.describe("Demo — viewport bias (#938)", () => {
 		await demo.goto()
 
 		await page.evaluate(() => {
-			const w = globalThis as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
-			w.__mailwomanDemoMap?.jumpTo({ center: [-83, 42.3], zoom: 8 }) // Michigan
+			const w = globalThis as { __mailwomanMapCanvas?: { jumpTo: (o: unknown) => void } }
+			w.__mailwomanMapCanvas?.jumpTo({ center: [-83, 42.3], zoom: 8 }) // Michigan
 		})
 
 		await page.waitForTimeout(500)

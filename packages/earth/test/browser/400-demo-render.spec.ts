@@ -5,7 +5,7 @@
  *
  *   Structural render baseline for the geocoder page. Unlike the cold-load spec (which waits for the ~25
  *   MB model to finish loading before the submit button enables), this asserts the _static shell_
- *   paints correctly — header, intro copy, map container, the "About this demo" box, the address
+ *   paints correctly — header, intro copy, map container, the "About this geocoder" box, the address
  *   form, and the example chips — which all render immediately on hydration, before any heavy asset
  *   lands. A fast, deterministic "the page renders correctly" guard.
  */
@@ -26,8 +26,8 @@ test.describe("Demo — structural render", () => {
 		expect(mapBox?.width ?? 0).toBeGreaterThan(0)
 		expect(mapBox?.height ?? 0).toBeGreaterThan(0)
 
-		// Collapsible "About this demo" explainer.
-		await expect(page.getByText("About this demo")).toBeVisible()
+		// Collapsible "About this geocoder" explainer.
+		await expect(page.getByText("About this geocoder")).toBeVisible()
 
 		// Address form: label, input, submit.
 		await expect(page.getByLabel("Address")).toBeVisible()
