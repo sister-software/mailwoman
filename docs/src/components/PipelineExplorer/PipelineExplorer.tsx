@@ -24,7 +24,14 @@
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
-import { PipelineExplorer as ReactPipelineExplorer } from "@mailwoman/react"
+import {
+	About,
+	FailureDiagnostic,
+	PipelineExplorer as ReactPipelineExplorer,
+	SpanHighlight,
+	TimingPanel,
+	TreeView,
+} from "@mailwoman/react"
 import type { PipelinePanels, PipelineRuntime } from "@mailwoman/react"
 
 import "@mailwoman/react/styles.css"
@@ -39,17 +46,12 @@ import {
 } from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
-import { AboutDemo } from "#components/AboutDemo/AboutDemo"
 import { BIOHighlight } from "#components/BIOHighlight/BIOHighlight"
 import { ClassifierOverlay } from "#components/ClassifierOverlay/ClassifierOverlay"
 import { CRFDiff } from "#components/CRFDiff/CRFDiff"
-import { FailureDiagnostic } from "#components/FailureDiagnostic/FailureDiagnostic"
 import { FSTWalker } from "#components/FSTWalker/FSTWalker"
 import { GuidedTour } from "#components/GuidedTour/GuidedTour"
-import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
 import { SubwordExplorer } from "#components/SubwordExplorer/SubwordExplorer"
-import { TimingPanel } from "#components/TimingPanel/TimingPanel"
-import { TreeView } from "#components/TreeView/TreeView"
 import { useDemoEmbed } from "#contexts/DemoEmbed"
 
 import styles from "./styles.module.css"
@@ -165,7 +167,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 
 	const panels = useMemo<PipelinePanels>(
 		() => ({
-			header: <AboutDemo />,
+			header: <About />,
 			footer: <GuidedTour />,
 			releaseInfo: currentRelease ? (
 				<p className={styles.releaseInfo}>

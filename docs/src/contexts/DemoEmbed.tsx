@@ -28,10 +28,7 @@ import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/ma
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import type { FSTMatcherLike, FSTProvenanceLike, MailwomanClassifierLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
-import { createContext, useCallback, useContext, useEffect, useMemo } from "react"
-
-import { useSiteConfig } from "#hooks/site"
-import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
+import { createContext, useCallback, useContext, useMemo } from "react"
 
 //#region Types
 
@@ -144,8 +141,6 @@ export interface DemoEmbedProviderProps {
 }
 
 export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseURL, children }) => {
-	const { baseURL } = useSiteConfig()
-
 	// Fetch + normalize the releases manifest. `useDemoRuntime` runs this once on mount, then selects
 	// its `defaultVersion`. Returns the full `ReleasesManifest` (a structural superset of the package's
 	// `DemoManifest` — it also carries `locale`), so the value below can re-expose it as `ReleasesManifest`.
@@ -175,19 +170,6 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 	)
 
 	const rt = useDemoRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
-
-	// Mount: register the range-chunk service worker (docs-only; persists validated DB range chunks
-	// across visits; see static/range-cache-sw.js).
-	useEffect(() => {
-		registerRangeCacheServiceWorker(baseURL)
-	}, [baseURL])
-
-	// Drop cached range chunks from other (immutable, never-expiring) versions.
-	useEffect(() => {
-		if (rt.selectedVersion) {
-			pruneDBRangeCache(rt.selectedVersion)
-		}
-	}, [rt.selectedVersion])
 
 	const value = useMemo<DemoEmbedState>(
 		() => ({

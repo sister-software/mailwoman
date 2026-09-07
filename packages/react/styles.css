@@ -821,3 +821,375 @@
 	outline: 2px solid var(--ifm-color-primary, #e0367c);
 	outline-offset: 1px;
 }
+
+/* #endregion */
+
+/* #region Span ribbon (SpanHighlight) — each tagged span is a column: the text on top, tinted by tier, the tag beneath */
+
+.mw-spans {
+	margin: 0.5rem 0 1rem 0;
+}
+
+.mw-spans__legend {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ifm-color-emphasis-600, #6e6e6e);
+	margin-bottom: 0.5rem;
+}
+
+.mw-spans__swatch {
+	display: inline-block;
+	width: 0.8rem;
+	height: 0.8rem;
+	border-radius: 2px;
+	margin-left: 0.4rem;
+}
+
+.mw-spans__track {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	row-gap: 1.5rem;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var(--ifm-color-emphasis-200, #e0e0e0);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color, #fff);
+	font-family: var(--ifm-font-family-monospace, ui-monospace, monospace);
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.mw-spans__seg {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: stretch;
+}
+
+.mw-spans__text {
+	padding: 0.05rem 0.1rem;
+	border-bottom: 2px solid transparent;
+	white-space: pre;
+}
+
+.mw-spans__tag {
+	margin-top: 0.15rem;
+	font-size: 0.6rem;
+	line-height: 1;
+	text-align: center;
+	letter-spacing: 0.02em;
+	color: var(--ifm-color-emphasis-600, #6e6e6e);
+	white-space: nowrap;
+}
+
+.mw-spans__gap {
+	display: inline-flex;
+	align-items: flex-start;
+	white-space: pre;
+	color: var(--ifm-color-emphasis-500, #8a8a8a);
+}
+
+/* The tier tints match .mw-conf__bar--high/--mid/--low. */
+.mw-spans__seg--high .mw-spans__text {
+	background: rgba(26, 168, 77, 0.18);
+	border-bottom-color: #1aa84d;
+}
+
+.mw-spans__seg--mid .mw-spans__text {
+	background: rgba(230, 168, 0, 0.18);
+	border-bottom-color: #e6a800;
+}
+
+.mw-spans__seg--low .mw-spans__text {
+	background: rgba(216, 80, 74, 0.18);
+	border-bottom-color: #d8504a;
+}
+
+.mw-spans__swatch--high {
+	background: #1aa84d;
+}
+
+.mw-spans__swatch--mid {
+	background: #e6a800;
+}
+
+.mw-spans__swatch--low {
+	background: #d8504a;
+}
+
+/* #endregion */
+
+/* #region Stage timing (TimingPanel) — a stacked bar by wall-clock, stage hues, never the confidence colours */
+
+.mw-timing {
+	margin: 1rem 0;
+	font-size: 0.8rem;
+}
+
+.mw-timing__heading {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ifm-color-emphasis-700, #555);
+	margin-bottom: 0.35rem;
+}
+
+.mw-timing__total {
+	font-family: var(--ifm-font-family-monospace, ui-monospace, monospace);
+	text-transform: none;
+	letter-spacing: 0;
+	color: var(--ifm-color-emphasis-600, #6e6e6e);
+}
+
+.mw-timing__bar {
+	display: flex;
+	width: 100%;
+	height: 0.7rem;
+	border-radius: 4px;
+	overflow: hidden;
+	background: var(--ifm-color-emphasis-200, #e0e0e0);
+}
+
+.mw-timing__seg {
+	height: 100%;
+}
+
+.mw-timing__legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1rem;
+	margin-top: 0.4rem;
+	color: var(--ifm-color-emphasis-700, #555);
+}
+
+.mw-timing__item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.mw-timing__ms {
+	font-family: var(--ifm-font-family-monospace, ui-monospace, monospace);
+	color: var(--ifm-color-emphasis-600, #6e6e6e);
+}
+
+.mw-timing__swatch {
+	display: inline-block;
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: 2px;
+}
+
+.mw-timing__seg--shape {
+	background: #3578e5;
+}
+
+.mw-timing__seg--classify {
+	background: #8b5cf6;
+}
+
+.mw-timing__seg--resolve {
+	background: #14b8a6;
+}
+
+/* #endregion */
+
+/* #region Containment tree (TreeView) — nested lists with a guide rail per level */
+
+.mw-tree {
+	margin: 0.5rem 0 0 0;
+}
+
+.mw-tree__children {
+	list-style: none;
+	margin: 0;
+	padding-left: 1.1rem;
+}
+
+/* Nested levels get a guide rail; the outermost list sits flush. */
+.mw-tree__children .mw-tree__children {
+	border-left: 1px solid var(--ifm-color-emphasis-300, #ccc);
+	margin-left: 0.3rem;
+}
+
+.mw-tree__node {
+	margin: 0.15rem 0;
+}
+
+.mw-tree__row {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+}
+
+.mw-tree__tag {
+	font-weight: 600;
+	padding: 0 0.3rem;
+	border-radius: 3px;
+	border-bottom: 2px solid transparent;
+}
+
+.mw-tree__value {
+	font-family: var(--ifm-font-family-monospace, ui-monospace, monospace);
+}
+
+.mw-tree__conf {
+	font-family: var(--ifm-font-family-monospace, ui-monospace, monospace);
+	font-size: 0.75rem;
+	color: var(--ifm-color-emphasis-600, #6e6e6e);
+}
+
+.mw-tree__tag--high {
+	background: rgba(26, 168, 77, 0.18);
+	border-bottom-color: #1aa84d;
+}
+
+.mw-tree__tag--mid {
+	background: rgba(230, 168, 0, 0.18);
+	border-bottom-color: #e6a800;
+}
+
+.mw-tree__tag--low {
+	background: rgba(216, 80, 74, 0.18);
+	border-bottom-color: #d8504a;
+}
+
+/* #endregion */
+
+/* #region No-hit diagnostic (FailureDiagnostic) — a structured panel, tinted informational rather than red */
+
+.mw-failure {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	background: var(--ifm-color-warning-contrast-background, #fff8e1);
+	border-left: 3px solid var(--ifm-color-warning, #e6a800);
+	border-radius: 4px;
+}
+
+.mw-failure h2 {
+	font-size: 1rem;
+	margin: 0 0 0.5rem 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ifm-color-warning-darker, #b88500);
+}
+
+.mw-failure ul {
+	margin: 0;
+	padding-left: 1.25rem;
+	font-size: 0.875rem;
+	color: var(--ifm-color-emphasis-800, #444);
+}
+
+.mw-failure li + li {
+	margin-top: 0.35rem;
+}
+
+/* #endregion */
+
+/* #region About box (About) — the collapsible product explainer */
+
+.mw-about {
+	margin-bottom: 1rem;
+	border: 1px solid var(--ifm-color-emphasis-300, #ccc);
+	border-radius: 8px;
+	background: var(--ifm-background-surface-color, #fff);
+	font-size: 0.9rem;
+}
+
+.mw-about[open] {
+	background: var(--ifm-color-emphasis-0, #fff);
+}
+
+.mw-about__summary {
+	padding: 0.65rem 0.75rem;
+	cursor: pointer;
+	user-select: none;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	border-radius: 8px;
+}
+
+.mw-about__summary:hover {
+	background: var(--ifm-color-emphasis-100, #f5f5f5);
+}
+
+.mw-about__icon {
+	font-size: 1.1rem;
+	opacity: 0.7;
+}
+
+.mw-about__body {
+	padding: 0 0.75rem 0.75rem;
+}
+
+.mw-about__section {
+	margin-top: 0.75rem;
+}
+
+.mw-about__section:first-child {
+	margin-top: 0;
+}
+
+.mw-about__heading {
+	font-size: 0.9rem;
+	font-weight: 700;
+	margin: 0 0 0.3rem;
+	color: var(--ifm-color-emphasis-800, #444);
+}
+
+.mw-about__section p {
+	margin: 0;
+	line-height: 1.6;
+	color: var(--ifm-color-emphasis-700, #555);
+}
+
+.mw-about__section code {
+	font-size: 0.85rem;
+	padding: 0.1rem 0.3rem;
+	background: var(--ifm-color-emphasis-200, #e0e0e0);
+	border-radius: 3px;
+}
+
+.mw-about__legend {
+	list-style: none;
+	margin: 0.5rem 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.mw-about__item {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.85rem;
+}
+
+.mw-about__swatch {
+	flex-shrink: 0;
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+}
+
+.mw-about__swatch--high {
+	background: #22c55e;
+}
+
+.mw-about__swatch--mid {
+	background: #f59e0b;
+}
+
+.mw-about__swatch--low {
+	background: #ef4444;
+}

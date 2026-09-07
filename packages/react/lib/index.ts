@@ -67,6 +67,18 @@ export type {
 export { usePOISearch } from "#poi/usePOISearch"
 export type { UsePOISearch, UsePOISearchOptions } from "#poi/usePOISearch"
 
+// ── Result visualizers ─────────────────────────────────────────────────────
+
+export { About } from "./common/About.tsx"
+export { FailureDiagnostic } from "./pipeline/FailureDiagnostic.tsx"
+export type { FailureDiagnosticProps } from "./pipeline/FailureDiagnostic.tsx"
+export { SpanHighlight } from "./pipeline/SpanHighlight.tsx"
+export type { SpanHighlightProps } from "./pipeline/SpanHighlight.tsx"
+export { TimingPanel } from "./pipeline/TimingPanel.tsx"
+export type { TimingPanelProps } from "./pipeline/TimingPanel.tsx"
+export { TreeView } from "./pipeline/TreeView.tsx"
+export type { TreeViewProps } from "./pipeline/TreeView.tsx"
+
 // ── Pipeline explorer ──────────────────────────────────────────────────────
 export { CandidatePicker } from "./pipeline/CandidatePicker.tsx"
 export type { CandidatePickerProps } from "./pipeline/CandidatePicker.tsx"

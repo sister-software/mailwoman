@@ -24,8 +24,22 @@ export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNo
 				<dd>{place.name}</dd>
 				<dt>placetype</dt>
 				<dd>{place.placetype}</dd>
-				<dt>WOF id</dt>
-				<dd>{place.id}</dd>
+				{place.tier ? (
+					// A street-tier answer is not a gazetteer place: it carries a precision instead of an id.
+					<>
+						<dt>precision</dt>
+						<dd>
+							{place.tier === "address_point"
+								? "📍 exact address point (≤10 m)"
+								: `≈ interpolated · ±${place.uncertaintyM ?? "?"} m`}
+						</dd>
+					</>
+				) : (
+					<>
+						<dt>WOF id</dt>
+						<dd>{place.id}</dd>
+					</>
+				)}
 				<dt>coords</dt>
 				<dd>
 					{place.lat.toFixed(4)}, {place.lon.toFixed(4)}

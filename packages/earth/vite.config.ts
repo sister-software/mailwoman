@@ -9,6 +9,7 @@
 
 import { buildInfoPlugin } from "@mailwoman/site-kit/vite/build-info"
 import { installablePWA } from "@mailwoman/site-kit/vite/pwa"
+import { stageSQLJSPlugin } from "@mailwoman/site-kit/vite/stage-sqljs"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
@@ -16,6 +17,7 @@ import { VitePWA } from "vite-plugin-pwa"
 export default defineConfig({
 	plugins: [
 		react(),
+		stageSQLJSPlugin("public/sqljs"),
 		VitePWA(
 			installablePWA({
 				origin: "https://earth.mailwoman.ai/",

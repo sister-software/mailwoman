@@ -72,12 +72,13 @@ module.exports = {
 		},
 	],
 	options: {
-		doNotFollow: { path: "(?:^|/)(?:out|node_modules|sentencepiece[.]mjs)(?:/|$)" },
+		doNotFollow: { path: "(?:^|/)(?:out|dist|node_modules|sentencepiece[.]mjs)(?:/|$)" },
 		enhancedResolveOptions: {
 			conditionNames: ["node", "import", "default"],
 			exportsFields: ["exports"],
 		},
-		exclude: "(?:^|/)(?:out|node_modules|sentencepiece[.]mjs)(?:/|$)",
+		// `dist/` is an app's Vite output: bundled chunks whose cycles are the bundler's, not the source graph's.
+		exclude: "(?:^|/)(?:out|dist|node_modules|sentencepiece[.]mjs)(?:/|$)",
 		includeOnly: "^packages/",
 		preserveSymlinks: false,
 		progress: { type: "none" },

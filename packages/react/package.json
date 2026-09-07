@@ -164,6 +164,36 @@
 			"node": "./lib/map/fake-runtime.ts",
 			"default": "./out/map/fake-runtime.js"
 		},
+		"./map/map-debug": {
+			"types": "./out/map/map-debug.d.ts",
+			"node": "./lib/map/map-debug.ts",
+			"default": "./out/map/map-debug.js"
+		},
+		"./common/About": {
+			"types": "./out/common/About.d.ts",
+			"node": "./lib/common/About.tsx",
+			"default": "./out/common/About.js"
+		},
+		"./pipeline/FailureDiagnostic": {
+			"types": "./out/pipeline/FailureDiagnostic.d.ts",
+			"node": "./lib/pipeline/FailureDiagnostic.tsx",
+			"default": "./out/pipeline/FailureDiagnostic.js"
+		},
+		"./pipeline/SpanHighlight": {
+			"types": "./out/pipeline/SpanHighlight.d.ts",
+			"node": "./lib/pipeline/SpanHighlight.tsx",
+			"default": "./out/pipeline/SpanHighlight.js"
+		},
+		"./pipeline/TimingPanel": {
+			"types": "./out/pipeline/TimingPanel.d.ts",
+			"node": "./lib/pipeline/TimingPanel.tsx",
+			"default": "./out/pipeline/TimingPanel.js"
+		},
+		"./pipeline/TreeView": {
+			"types": "./out/pipeline/TreeView.d.ts",
+			"node": "./lib/pipeline/TreeView.tsx",
+			"default": "./out/pipeline/TreeView.js"
+		},
 		"./map/usePlaceAutocomplete": {
 			"types": "./out/map/usePlaceAutocomplete.d.ts",
 			"node": "./lib/map/usePlaceAutocomplete.ts",

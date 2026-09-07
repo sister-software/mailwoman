@@ -24,10 +24,10 @@
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { ConfidenceCell, LoadingIndicator } from "@mailwoman/react"
+import { SpanHighlight } from "@mailwoman/react/pipeline/SpanHighlight"
 import { runClassifyStage } from "mailwoman/browser-runtime/classify"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
 import { useDemoEmbed } from "#contexts/DemoEmbed"
 
 import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"

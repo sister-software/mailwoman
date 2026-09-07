@@ -1,3 +1,28 @@
+/* The app's theme tokens. The panels and the react components read Infima's `--ifm-*` names, so the app defines the
+   same names once here rather than restyling every sheet; a value is the dark palette the shell already used. */
+:root {
+	color-scheme: dark;
+	--ifm-font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--ifm-color-primary: #e0367c;
+	--ifm-color-primary-darkest: #a8215a;
+	--ifm-color-emphasis-0: #0b1020;
+	--ifm-color-emphasis-100: #151b2e;
+	--ifm-color-emphasis-200: #1f2740;
+	--ifm-color-emphasis-300: #2c3654;
+	--ifm-color-emphasis-500: #6b7590;
+	--ifm-color-emphasis-600: #8892ab;
+	--ifm-color-emphasis-700: #a9b1c6;
+	--ifm-color-emphasis-800: #cbd2e1;
+	--ifm-color-content: #e6edf3;
+	--ifm-color-content-inverse: #0b1020;
+	--ifm-background-surface-color: #121830;
+	--ifm-hover-overlay: rgba(255, 255, 255, 0.06);
+	--ifm-color-warning: #e6a800;
+	--ifm-color-warning-darker: #f0c040;
+	--ifm-color-warning-contrast-background: rgba(230, 168, 0, 0.12);
+	--ifm-navbar-height: 0px;
+}
+
 html,
 body,
 #root {
@@ -6,14 +31,20 @@ body,
 }
 
 body {
-	background: #0b1020;
-	color: #e6edf3;
+	background: var(--ifm-color-emphasis-0);
+	color: var(--ifm-color-content);
 	font-family: system-ui, sans-serif;
 }
 
 main[data-route] {
 	position: relative;
 	height: 100%;
+}
+
+.trace {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 1.5rem;
 }
 
 .not-found {

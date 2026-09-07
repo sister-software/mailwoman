@@ -12,10 +12,11 @@
 	],
 	"type": "module",
 	"imports": {
+		"#e2e": "./test/e2e/index.ts",
+		"#e2e/*": "./test/e2e/*",
 		"#*": {
 			"types": "./out/*.d.ts",
-			"node": "./lib/*.ts",
-			"default": "./out/*.js"
+			"default": "./lib/*.ts"
 		}
 	},
 	"exports": {
@@ -29,18 +30,30 @@
 			"types": "./out/config.d.ts",
 			"node": "./lib/config.ts",
 			"default": "./out/config.js"
+		},
+		"./explorers/ModelVisualizer/helpers": {
+			"types": "./out/explorers/ModelVisualizer/helpers.d.ts",
+			"node": "./lib/explorers/ModelVisualizer/helpers.ts",
+			"default": "./out/explorers/ModelVisualizer/helpers.js"
 		}
 	},
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"preview": "vite preview --port 7780 --strictPort",
+		"preview": "vite preview --port 7770 --strictPort",
 		"test:browser": "playwright test",
 		"deploy:dry-run": "wrangler deploy --dry-run"
 	},
 	"dependencies": {
+		"@mailwoman/cartographer": "workspace:*",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/react": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/site-kit": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
+		"mailwoman": "workspace:*",
 		"maplibre-gl": "^6.7.0",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
