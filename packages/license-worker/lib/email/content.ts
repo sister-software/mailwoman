@@ -126,9 +126,7 @@ export function licenseEmailSections(message: LicenseEmail, siteOrigin: string):
 					kind: "paragraph",
 					text: "Change the card, switch between monthly and yearly, download invoices, or cancel at the end of the paid period:",
 				},
-				BILLING_PORTAL_URL
-					? { kind: "link", label: "Billing portal", url: BILLING_PORTAL_URL }
-					: { kind: "link", label: "License page", url: `${origin}/license` },
+				{ kind: "link", label: "Billing portal", url: BILLING_PORTAL_URL },
 			],
 		},
 		{
