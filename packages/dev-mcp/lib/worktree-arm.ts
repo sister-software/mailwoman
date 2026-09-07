@@ -67,6 +67,14 @@ interface WorkspaceLink {
 }
 
 /**
+ * The one field a link needs. `name` is optional to the type checker because a manifest on disk may omit it; a
+ * workspace manifest that does raises rather than dropping the workspace from the link set.
+ */
+interface WorkspaceManifest {
+	name?: string
+}
+
+/**
  * Read the root `workspaces` globs and resolve each to a `name -> directory` pair.
  *
  * Reads the WORKTREE's own manifests, not the main checkout's, because a ref that predates a workspace must not have
@@ -76,12 +84,12 @@ async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
 	const links: WorkspaceLink[] = []
 
 	// A literal entry the older ref does not carry is "not a workspace at this ref", so it is skipped rather than raised.
-	for (const entry of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
-		const name = (await readLocalJSONFile<{ name?: string }>(join(root, entry, "package.json"))).name ?? ""
+	for (const directory of await readWorkspaceDirectories(root, { tolerateMissing: true })) {
+		const { name } = await readLocalJSONFile<WorkspaceManifest>(root, directory, "package.json")
 
-		if (name) {
-			links.push({ packageName: name, directory: entry })
-		}
+		if (!name) throw new Error(`${join(root, directory, "package.json")} declares no name`)
+
+		links.push({ packageName: name, directory })
 	}
 
 	return links
