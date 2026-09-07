@@ -1,0 +1,24 @@
+html,
+body,
+#root {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	background: #0b1020;
+	color: #e6edf3;
+	font-family: system-ui, sans-serif;
+}
+
+main[data-route] {
+	position: relative;
+	height: 100%;
+}
+
+.not-found {
+	display: grid;
+	place-content: center;
+	height: 100%;
+	text-align: center;
+}
