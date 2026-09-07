@@ -187,6 +187,11 @@
 			"node": "./lib/debug-view/command.tsx",
 			"default": "./out/debug-view/command.js"
 		},
+		"./tiles/publish": {
+			"types": "./out/tiles/publish.d.ts",
+			"node": "./lib/tiles/publish.ts",
+			"default": "./out/tiles/publish.js"
+		},
 		"./resolver-backend": {
 			"types": "./out/resolver-backend.d.ts",
 			"node": "./lib/resolver-backend.ts",

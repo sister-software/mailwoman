@@ -9,6 +9,7 @@
 		"experimentalDecorators": true,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true,
+		"jsx": "react-jsx",
 		"resolveJsonModule": true
 	},
 	"include": ["./lib/**/*"],

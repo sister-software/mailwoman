@@ -73,11 +73,14 @@
 		}
 	},
 	"dependencies": {
+		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/ancestrie": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"ink": "^7.1.1",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
+		"react": "^19.2.8",
 		"spliterator": "^6.4.1",
 		"zod": "^4.5.4"
 	},

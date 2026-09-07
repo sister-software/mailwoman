@@ -5711,11 +5711,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/astrogeology@workspace:packages/astrogeology"
   dependencies:
+    "@inkjs/ui": "npm:^2.0.0"
     "@mailwoman/ancestrie": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    ink: "npm:^7.1.1"
     mailwoman: "workspace:*"
     path-ts: "npm:^2.3.0"
+    react: "npm:^19.2.8"
     spliterator: "npm:^6.4.1"
     zod: "npm:^4.5.4"
   bin:
