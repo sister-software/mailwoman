@@ -4,12 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   The whole build chain over tiny fixtures with no network: five Moon rows through normalization, NDJSON, tippecanoe
- *   and the metadata block. The tools (`tippecanoe`, `pmtiles`, GDAL) are the lab's; a missing one fails with its
- *   name in the error.
+ *   and the metadata block; a synthetic DEM through gdaldem, the MBTiles writer, overviews and PMTiles. The tools
+ *   (`tippecanoe`, `pmtiles`, GDAL) are the lab's; a missing one fails with its name in the error.
+ *
+ *   `fixtures/dem-fixture.tif` was written once with GDAL's Python bindings: 1024×512 Int16 over the whole globe in
+ *   EPSG:4326, DEFLATE-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` metres. At the Moon's 30 km per row
+ *   that is near-flat ground in the north and slopes near 45° in the south, so the hillshade shows relief and its two
+ *   z1 halves differ; 1024 pixels across lands the MBTiles step at zoom 2, where overviews have something to average.
  */
 
+import { buildHillshadePMTiles } from "@mailwoman/astrogeology/build/hillshade"
 import {
 	applyPMTilesMetadata,
+	hillshadeMetadata,
 	nomenclatureMetadata,
 	readMailwomanMetadata,
 } from "@mailwoman/astrogeology/build/metadata"
@@ -72,4 +79,44 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	const tile = await runFile("pmtiles", ["tile", String(out), "4", "7", "10"])
 
 	expect(tile.stdout.length).toBeGreaterThan(0)
+})
+
+/**
+ * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte (0x89) reads as the replacement
+ * character and the seven bytes after it survive verbatim; that is enough to tell a PNG from anything else.
+ */
+const PNG_SIGNATURE_AS_UTF8 = "�PNG\r\n\n"
+
+test("the fixture DEM builds a hillshade archive of PNG tiles with relief", async () => {
+	await using scratch = await temporaryDirectory("astrogeology-test-")
+	const out = resolvePath(scratch.path, "hillshade.pmtiles")
+
+	const { commands } = await buildHillshadePMTiles({
+		body: "moon",
+		demPath: fixturePath("dem-fixture.tif"),
+		outPath: String(out),
+		maxZoom: 2,
+	})
+
+	expect(commands.map((command) => command[0])).toEqual([
+		"gdaldem",
+		"gdal_translate",
+		"gdal_translate",
+		"gdaladdo",
+		"pmtiles",
+	])
+
+	await applyPMTilesMetadata(String(out), hillshadeMetadata("moon", "test", "dem-fixture.tif"))
+	expect((await readMailwomanMetadata(String(out)))["mailwoman:kind"]).toBe("planetary-hillshade")
+
+	const root = await runFile("pmtiles", ["tile", String(out), "0", "0", "0"])
+
+	expect(root.stdout.startsWith(PNG_SIGNATURE_AS_UTF8)).toBe(true)
+
+	// The fixture's slope grows from north to south, so the two northern z1 tiles shade differently from the southern.
+	const north = await runFile("pmtiles", ["tile", String(out), "1", "0", "0"])
+	const south = await runFile("pmtiles", ["tile", String(out), "1", "0", "1"])
+
+	expect(north.stdout.startsWith(PNG_SIGNATURE_AS_UTF8)).toBe(true)
+	expect(north.stdout).not.toBe(south.stdout)
 })
