@@ -48,9 +48,9 @@ export async function verifyBody(body: BuildableBodyID, out: string | undefined)
 				throw new CommandError(`${output.tileset}: archive metadata names ${metadata["mailwoman:body"]}, not ${body}`)
 			}
 
-			lines.push(`✓ ${output.tileset}: ${bytes.toLocaleString()} bytes, ${metadata["mailwoman:kind"]}`)
+			lines.push(`${output.tileset}: ${bytes.toLocaleString()} bytes, ${metadata["mailwoman:kind"]}`)
 		} else {
-			lines.push(`✓ ${output.tileset}: ${bytes.toLocaleString()} bytes`)
+			lines.push(`${output.tileset}: ${bytes.toLocaleString()} bytes`)
 		}
 	}
 
