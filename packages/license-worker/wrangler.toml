@@ -1,90 +1,47 @@
 # The license worker: Stripe webhooks in, signed license tokens out, ledger in D1.
 #
-# Two environments and nothing at the top level that could deploy by accident. Every secret arrives through
-# `wrangler secret put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY); a var still
-# reading REPLACE makes `readEnv` refuse every request with 503, so an unfilled production deploy never mints.
-# No `nodejs_compat`: every dependency runs on the Workers runtime as shipped, and the `bundle-graph` health check holds the
-# license subpaths free of Node builtins.
+# This file is production, flat, the way `tile-worker` is: `wrangler deploy` with no flag deploys it, which is what
+# Cloudflare's Workers Builds runs on a push to main. The sandbox is `wrangler.sandbox.toml`, a separate file passed
+# with `-c`, so no flag can land the wrong environment on this name. Every secret arrives through `wrangler secret
+# put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY). No `nodejs_compat`: every
+# dependency runs on the Workers runtime as shipped, and the `bundle-graph` health check holds the license subpaths
+# free of Node builtins.
 
 name = "mailwoman-license"
 main = "./lib/index.ts"
 compatibility_date = "2026-08-22"
+routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
 
 [triggers]
 crons = ["0 */6 * * *"]
 
 [vars]
-ISSUANCE_ENABLED = "false"
-SITE_ORIGIN = "https://mailwoman.ai"
-EMAIL_FROM = "licenses@mailwoman.ai"
-STRIPE_LIVE_MODE = "false"
-LICENSE_SIGNING_KID = "REPLACE"
-
-[env.sandbox]
-name = "mailwoman-license-sandbox"
-
-[env.sandbox.vars]
-ISSUANCE_ENABLED = "true"
-SITE_ORIGIN = "https://mailwoman.ai"
-EMAIL_FROM = "licenses@mailwoman.ai"
-STRIPE_LIVE_MODE = "false"
-LICENSE_SIGNING_KID = "v9-ac522cf3"
-
-[[env.sandbox.send_email]]
-name = "EMAIL_SENDER"
-
-[[env.sandbox.d1_databases]]
-binding = "LICENSE_LEDGER"
-database_name = "mailwoman-license-sandbox"
-database_id = "8c9f596d-1597-4f04-90a2-f1a8d2d6f82f"
-migrations_dir = "migrations"
-
-[[env.sandbox.ratelimits]]
-name = "CLAIM_LIMITER"
-namespace_id = "1001"
-simple = { limit = 30, period = 60 }
-
-[[env.sandbox.ratelimits]]
-name = "REFRESH_LIMITER"
-namespace_id = "1002"
-simple = { limit = 10, period = 60 }
-
-[[env.sandbox.ratelimits]]
-name = "STATUS_LIMITER"
-namespace_id = "1003"
-simple = { limit = 60, period = 60 }
-
-[env.production]
-name = "mailwoman-license"
-routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
-
-[env.production.vars]
 ISSUANCE_ENABLED = "true"
 SITE_ORIGIN = "https://mailwoman.ai"
 EMAIL_FROM = "licenses@mailwoman.ai"
 STRIPE_LIVE_MODE = "true"
 LICENSE_SIGNING_KID = "v9-e3d8105a"
 
-[[env.production.send_email]]
+[[send_email]]
 name = "EMAIL_SENDER"
 
-[[env.production.d1_databases]]
+[[d1_databases]]
 binding = "LICENSE_LEDGER"
 database_name = "mailwoman-license"
 database_id = "a5103543-e2e9-4177-8b6a-d3ea3ed88691"
 migrations_dir = "migrations"
 
-[[env.production.ratelimits]]
+[[ratelimits]]
 name = "CLAIM_LIMITER"
 namespace_id = "2001"
 simple = { limit = 30, period = 60 }
 
-[[env.production.ratelimits]]
+[[ratelimits]]
 name = "REFRESH_LIMITER"
 namespace_id = "2002"
 simple = { limit = 10, period = 60 }
 
-[[env.production.ratelimits]]
+[[ratelimits]]
 name = "STATUS_LIMITER"
 namespace_id = "2003"
 simple = { limit = 60, period = 60 }
