@@ -15,7 +15,7 @@
  *
  *   A decode-time consumer of a positive attestation, not a prior: it changes labels only where the register states
  *   the boundary. The character model emits a second `B-` for a continuation it is unsure of (`해:B 운:B`); the pass
- *   reads each `B-` run on its own and absorbs across the seam, so both halves join the name.
+ *   reads each `B-` run on its own and absorbs across that split, so both halves join the name.
  */
 
 import { jpMunicipalityCompletion } from "@mailwoman/codex/jp"
