@@ -225,15 +225,21 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 
 - Parity: `packages/earth/test/browser/100-demo-cold-load.spec.ts` and `200-demo-resolve.spec.ts` run against the
   preview on port 7770 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
-  postcode anchors, the viewport and device biases, the debug trace and the theme. About one cold load in five stalls
-  on the classifier step for over 100 s with no console error and no failed request; the fixture waits 180 s.
+  postcode anchors, the viewport and device biases, the debug trace and the theme. The cold-load stall that read as
+  "one load in five" was `public.mailwoman.ai` resetting the 38 MB model download partway through; the artifact fetch
+  now buffers the body inside a three-attempt retry (`mailwoman/browser-runtime/fetch`), and the fixture ends its
+  readiness wait on the page's own error text. Two cases fail identically on the docs page on main and are marked
+  expected failures with their measured reason: `Praha 100 00, Czechia` (the classifier tags `Praha` as a street) and
+  `1502 A Cage Street, Houston, TX 77020` (the street tier answers nothing; the Houston locality centroid resolves on
+  both). Compare mode and the calibration toggle were driven by a script against the preview and recorded in the PR.
 - `?q=` links: `docs/src/components/EarthRedirect/EarthRedirect.tsx` forwards with `location.search` intact.
 - Removal: `ls docs/src/shared` prints the two maplibre worker files; `docs/src/pages/demo/index.tsx`, `debug.tsx` and
   `trace.tsx` are the redirects; `docs/static/range-cache-sw.js` is gone; the plugin is `docs/plugins/runtime-assets/`;
   `grep -rn "docs/src/shared" packages` prints nothing. `knip` measures no unused docs dependency after the move:
   `maplibre-gl`, `react-map-gl`, `@mailwoman/cartographer` serve `DashboardMap`, `onnxruntime-web` and
   `@mailwoman/neural` serve the explainers that classify, and `sql.js-httpvfs` left with the runtime-homes PR.
-- Names: the `@mailwoman/react/map` rename map is applied by the launch PR's rename commit.
+- Names: the `@mailwoman/react/map` rename map is applied (`a876b5ebe`); the docs embed context is `RuntimeEmbed`, and
+  `git grep -n Demo packages/react/lib/index.ts packages/react/lib/map/index.ts` prints nothing.
 - The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
 - Registers: unchanged since the shell PR (#2196).
 - Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and
