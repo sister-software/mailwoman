@@ -5,17 +5,14 @@ main = "./out/_worker.js"
 compatibility_date = "2024-06-03"
 minify = false
 
+# A top-level key placed after a table header joins that table. Keep `routes`
+# above [vars], or wrangler reads it as an environment variable and the custom
+# domain goes unmanaged.
+routes = [{ pattern = "tiles.mailwoman.ai", custom_domain = true }]
+
 [[r2_buckets]]
 binding = "NEXUS_ASSETS_BUCKET"
 bucket_name = "nexus-assets"
 
 [vars]
 PMTILES_PATH = "tiles"
-
-routes = [{ pattern = "tiles.mailwoman.ai", custom_domain = true }]
-
-[alias]
-"@mailwoman/cartographer" = "../cartographer/index.ts"
-"@mailwoman/cartographer/tiles/coords" = "../cartographer/tiles/coords.ts"
-"@mailwoman/spatial" = "../spatial/index.ts"
-"@mailwoman/tiger" = "../tiger/index.ts"
