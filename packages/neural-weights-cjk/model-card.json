@@ -1,15 +1,15 @@
 {
 	"name": "neural-weights-cjk",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"locale": "cjk",
-	"phase": "Second functional graph: the v8-cjk-kr 24k run (Japanese + Korean + Chinese under the 49-label head), staged at cjk/v0.0.2/ on the Hugging Face bucket (#2184). Replaces the v8-cjk-kana graph (cjk/v0.0.1/).",
+	"phase": "Third functional graph: the v8-cjk-regs 8k run (Japanese + Korean + Taiwanese + Chinese under the 49-label head, Korean re-sourced from the 주소DB, three aligned registries), staged at cjk/v0.0.3/ on the Hugging Face bucket (#2204). Replaces the v8-cjk-kr graph (cjk/v0.0.2/).",
 	"encoder": "char",
 	"char_vocab": "char-vocab.json",
 	"max_units": 96,
 	"max_unit_width": 7,
 	"char_ctx": 3,
 	"format": {
-		"model": "ONNX fp32 (opset 18), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (3,165 entries, <pad> 0, <unk> 1, code-point order).",
+		"model": "ONNX fp32 (opset 18), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (4,451 entries, <pad> 0, <unk> 1, code-point order).",
 		"tokenizer": null
 	},
 	"architecture": {
@@ -81,55 +81,80 @@
 	},
 	"files_md5": {
 		"$comment": "The candidate artifacts' md5s — what a materialized package is verified against.",
-		"model.onnx": "7a24dba39ee8b0a26aef62162b9fad3e",
-		"char-vocab.json": "d5f5a6f00ec72b0e001156b47427559d"
+		"model.onnx": "a876d99a1ce90faf1b3be5ab17ada97b",
+		"char-vocab.json": "0fa613bcf93677f129e08f993bdf02c2"
 	},
 	"training": {
-		"run": "v8-cjk-kr seed 42, 24,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-kr.yaml)",
-		"corpus": "v8-cjk-kr-2026-09-06 overlay: the v8-jp-kana-2026-09-06 JP corpus (2,000,000 train rows, Overture-JP, five registers) plus the v8-kr-2026-09-06 Korean road-name-address corpus (2,000,000 train rows from juso.go.kr, five registers, 27 held-out 시군구) plus 126 CN organizational-unit rows; source mixture overture-jp 0.60 / juso-kr 0.38 / coarse-placer-cn-units 0.02; vocabulary re-sealed over the union",
-		"modal_app": "ap-zmeeIk4rQpF2FcBftt6JCW"
+		"run": "v8-cjk-regs seed 42, 8,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-regs.yaml); resumed from step-006000 after the first launch's client was killed",
+		"corpus": "v8-cjk-regs-2026-09-08 overlay: the v8-jp-kana-2026-09-06 JP corpus (2,000,000 train rows, Overture-JP, five registers); the v8-kr-2026-09-08 Korean road-name address corpus rebuilt from the ministry's 2026-08 주소DB (2,000,000 train rows, seven registers incl. the lot-number form and the building name, 26 held-out 시군구); the v8-tw-2026-09-08 Taiwan corpus (2,000,000 train rows, Overture-TW, 15 of 22 縣市, five registers, 28 held-out 鄉鎮市區); three registries of typed business addresses aligned exactly against the LABEL keys before training — Korean permits (localdata-kr, 588,000 rows, 99.9% aligned), Japanese corporate numbers (houjin-jp, 588,000 rows, 88.3% aligned), Taiwanese companies (gcis-tw, 490,000 rows, 95.9% aligned); plus 126 CN organizational-unit rows. Source mixture overture-jp 0.34 / juso-kr 0.20 / overture-tw 0.20 / localdata-kr 0.09 / houjin-jp 0.09 / gcis-tw 0.06 / coarse-placer-cn-units 0.02; vocabulary re-sealed over the union",
+		"modal_app": "ap-y8snK5VbidRKWxM9EA49D0"
 	},
 	"eval": {
 		"jp_board_20000": {
-			"$comment": "Held-out municipalities on the v8-jp-kana-2026-09-06 board, coordinate-acceptability at 15 km via the municipality centroid table (corpus-python/scripts/score_jp_probe_board.py --label-set stage3-cjk --all-municipalities), PyTorch read, the v8-cjk-kana base re-scored beside it on the same scorer. The kana_municipality register (1,127 rows) is unresolved by the kanji-keyed centroid table on both arms (1,125 gold-exact), which is why the blended number sits under the native register's.",
-			"coordinate_acceptability": 0.9359,
-			"coordinate_acceptability_base": 0.9362,
-			"native_register": 0.9921,
-			"native_register_base": 0.9924,
-			"municipality_macro": 0.6098,
-			"municipality_macro_base": 0.6104,
-			"municipality_exact": 0.9937,
-			"district_exact": 0.9857,
+			"$comment": "Held-out municipalities on the v8-jp-kana-2026-09-06 board, coordinate-acceptability at 15 km via the municipality centroid table (corpus-python/scripts/score_jp_probe_board.py --label-set stage3-cjk --all-municipalities), PyTorch read, the v8-cjk-kr base re-scored beside it on the same scorer. The kana_municipality register (1,127 rows) is unresolved by the kanji-keyed centroid table on both arms (1,125 gold-exact), which is why the blended number sits under the native register's.",
+			"coordinate_acceptability": 0.9393,
+			"coordinate_acceptability_base": 0.9359,
+			"native_register": 0.9954,
+			"native_register_base": 0.9921,
+			"municipality_macro": 0.6173,
+			"municipality_macro_base": 0.6098,
+			"municipality_exact": 0.9971,
+			"district_exact": 0.989,
 			"prefecture_exact": 1.0,
 			"block_exact": 1.0,
-			"house_number_exact": 0.992,
-			"note": "かすみがうら市 (823 held-out rows) fails 0 on both arms; 中新川郡上市町 fails 124 of 130 (the base 120) — the model closes the municipality at the inner 市, which the runtime's JP municipality register repair closes for the six such towns (#2178)."
+			"sub_block_exact": 0.9992,
+			"house_number_exact": 0.9901,
+			"note": "かすみがうら市 (823 held-out rows) fails 0 on both arms; 中新川郡上市町 fails 42 of 130 (the base 124) — the corporate-registry rows carry the town whole often enough to move it, and the runtime's JP municipality register repair closes the rest (#2178). house_number reads 0.9901 against the base's 0.9924 (35 rows of 15,145), inside the 1 pp rule."
 		},
 		"kr_board_20000": {
-			"$comment": "27 held-out 시군구, five registers (official, no_dong, postcode_first, short_region, unspaced); per-tag span exact-match, PyTorch read (score_jp_probe_board.py --resolve-tags region,subregion --centroids kr-sigungu-centroids.json). Pre-registered bars: street and house_number ≥ 0.99, subregion ≥ 0.97, dependent_locality ≥ 0.95, region and postcode ≥ 0.99.",
+			"$comment": "26 held-out 시군구 on the 2026-08 주소DB board, seven registers (official, building, no_dong, postcode_first, short_region, unspaced, jibun); per-tag span exact-match with every same-tag span scored, PyTorch read (score_jp_probe_board.py --resolve-tags region,subregion --centroids kr-sigungu-centroids.json). Pre-registered bars: street and house_number ≥ 0.99, subregion ≥ 0.97, dependent_locality ≥ 0.95, region and postcode ≥ 0.99. The base reads region 0.9232 / subregion 0.9699 / dependent_locality 0.2076 / street 0.9179 on this board: it never saw the 2026 register names, the 읍/면 tier or the lot-number form.",
 			"region_exact": 1.0,
-			"subregion_exact": 0.9665,
+			"subregion_exact": 0.998,
 			"dependent_locality_exact": 0.9984,
-			"street_exact": 0.99,
-			"house_number_exact": 1.0,
+			"street_exact": 0.9993,
+			"house_number_exact": 0.9999,
 			"postcode_exact": 1.0,
-			"coordinate_acceptability": 0.7752,
-			"note": "subregion misses the 0.97 bar by 0.0035: 669 of the 671 misses are one held-out city, 해운대구 (669 of its 681 rows), emitted as 해 or 해운대 — zero training rows by design and 해남군 (9,614 rows) the only frequent 해-initial 시군구 in training. The other 26 held-out cities read 19,317 of 19,319. Coordinate acceptability carries the short_region register (2,992 rows, 서울 for 서울특별시) unresolved by the centroid key on every row, 2,722 of them gold-exact."
+			"venue_exact": 0.9044,
+			"coordinate_acceptability": 0.8883,
+			"note": "Every bar clears. Coordinate acceptability carries the short_region register (2,047 rows, 강원 for 강원특별자치도) unresolved by the centroid key on every row, 2,045 of them gold-exact, and 화성시 (169 rows, all gold-exact) has no key in the table."
+		},
+		"tw_board_20000": {
+			"$comment": "28 held-out 鄉鎮市區 on the v8-tw-2026-09-08 board, five registers (official, no_village, spaced, no_region, with_unit); per-tag span exact-match, PyTorch read (score_jp_probe_board.py --resolve-tags region,subregion --centroids tw-district-centroids.json). First read; pre-registered bars: street and house_number ≥ 0.97, subregion ≥ 0.95, region ≥ 0.99. Tags: 縣市 → region, 鄉鎮市區 → subregion, 村里 → dependent_locality, 巷/弄 inside street, 之/樓 → unit.",
+			"region_exact": 1.0,
+			"subregion_exact": 0.9999,
+			"dependent_locality_exact": 1.0,
+			"street_exact": 0.9992,
+			"house_number_exact": 0.9994,
+			"unit_exact": 0.9959,
+			"coordinate_acceptability": 0.8944,
+			"note": "Every bar clears. The no_region register (2,110 rows) is unresolved by the region-keyed centroid table on every row, 2,109 of them gold-exact."
+		},
+		"registry_boards": {
+			"$comment": "Aligned rows of the held-out typed registry strings (KR permits 3,522, TW companies 8,164, JP corporate numbers 3,193); per-tag span exact-match, no bar on the first read. The base reads near zero on every tag it never saw.",
+			"kr": "dependent_locality 0.9987, house_number 0.9994, subregion 1.0000, street 1.0000, unit 0.6993, venue 0.7307; coordinate acceptability 0.9165 (the permit rows carry coordinates)",
+			"tw": "every tag ≥ 0.9995",
+			"jp": "district 0.9828, building_name 0.9880, house_number 0.9837, block 0.9993, municipality 0.9987"
 		},
 		"cn_board_14": {
 			"$comment": "locality_unit span exact-match, PyTorch per-unit argmax.",
-			"locality_unit_exact": "12/14"
+			"locality_unit_exact": "13/14"
 		}
 	},
-	"model_lineage": "0.0.1: v8-cjk-full step-024000 (fp32 ONNX md5 e14ef4c426dabb22e9433ab04b584d48). Decision record: docs/superpowers/specs/2026-09-05-cjk-serving-path.md; receipts on #1176, #2034, #2164.",
+	"model_lineage": "0.0.2: v8-cjk-kr step-024000 (fp32 ONNX md5 7a24dba39ee8b0a26aef62162b9fad3e, vocabulary 3,165 entries). 0.0.1: v8-cjk-full step-024000 (fp32 ONNX md5 e14ef4c426dabb22e9433ab04b584d48). Decision record: docs/superpowers/specs/2026-09-05-cjk-serving-path.md; receipts on #1176, #2034, #2164, #2184, #2204.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"notes": [
 		"One CJK package a consumer installs as a unit (#1177 Phase B): Japanese and Chinese ride one 49-label head; ja-jp and zh-cn data-only overlays follow.",
 		"Channel-free by contract (D5): no postcode-anchor, gazetteer, country or evidence channels; the graph declares only char_ids and attention_mask.",
-		"Korean rides the same head with no new tag: 시/도 → region, 시군구 → subregion (WOF counties), 읍면동 → dependent_locality, 도로명 → street, 건물번호 → house_number, 우편번호 → postcode (docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md)."
+		"Korean rides the same head with no new tag: 시/도 → region, 시군구 → subregion (WOF counties), 읍/면 and 법정동/리 → dependent_locality (two spans when a row carries both), 도로명 → street, 건물번호 or the lot number → house_number, 우편번호 → postcode, the building name → venue (docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md).",
+		"Taiwan rides the same head with no new tag: 縣市 → region, 鄉鎮市區 → subregion, 村里 → dependent_locality, the street with its 段/巷/弄 → street, 號 → house_number, 之/樓 → unit. No postcode field is built (Chunghwa Post's codes carry no distribution grant).",
+		"The three registries are typed business addresses aligned exactly against the LABEL keys before training; an unaligned string became a board row, never a training row (docs/records/evals/2026-09-08-v8-cjk-regs.md)."
 	],
 	"attribution": [
 		"Japanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0); administrative names from Who's On First.",
-		"Korean road-name address data: 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (KOGL Type 1) — attribution required; commercial use, derivatives and redistribution permitted."
+		"Japanese corporate-number register: 国税庁 法人番号公表サイト (National Tax Agency, Corporate Number Publication Site) — the three published fields are free for anyone to use under the site's 利用規約.",
+		"Korean road-name address data (주소DB): 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (KOGL Type 1) — attribution required; commercial use, derivatives and redistribution permitted.",
+		"Korean permit registry: 행정안전부 (Ministry of the Interior and Safety), 지방행정인허가데이터 (localdata.go.kr), 이용허락범위 제한 없음 — attribution to the ministry.",
+		"Taiwanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0), from OpenAddresses under the 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution and voids the grant without it: New Taipei City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government; Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs Office (Overture release 2026-06-17.0).",
+		"Taiwanese company register: 提供機關／經濟部商業發展署 (Ministry of Economic Affairs, Administration for Commerce Development), 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0) — the 顯名聲明 each dataset prescribes."
 	]
 }

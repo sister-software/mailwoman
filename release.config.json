@@ -87,9 +87,9 @@
 	},
 	"charWeights": {
 		"cjk": {
-			"model": "models/v8-cjk-kr-s42/served-package/model.onnx",
-			"charVocab": "models/v8-cjk-kr-s42/served-package/char-vocab.json",
-			"lineage": "v8-cjk-kr step-024000 — fp32 ONNX behind char_ids (#2184): the kana base recipe plus the Korean road-name-address corpus at source share 0.38. JP board (v8-jp-kana-2026-09-06, same scorer as the base): 0.9359 blended against the base's 0.9362, native register 0.9921 / 0.9924, かすみがうら市 0 of 823 failed; KR board region 1.0000, subregion 0.9665, street 0.9900, house_number 1.0000, postcode 1.0000; CN locality_unit 12/14. Replaces v8-cjk-kana (cjk/v0.0.1/).",
+			"model": "models/v8-cjk-regs-s42/served-package/model.onnx",
+			"charVocab": "models/v8-cjk-regs-s42/served-package/char-vocab.json",
+			"lineage": "v8-cjk-regs step-008000 — fp32 ONNX behind char_ids (#2204): the v8-cjk-kr recipe with Korean re-sourced from the 주소DB (seven registers incl. the lot-number form), Taiwan from Overture-TW, and three aligned registries (Korean permits, Taiwanese companies, Japanese corporate numbers). JP board (v8-jp-kana-2026-09-06, same scorer as the base): 0.9393 blended against the base's 0.9359, native register 0.9954 / 0.9921, かすみがうら市 0 of 823 failed; KR board region 1.0000, subregion 0.9980, dependent_locality 0.9984, street 0.9993, house_number 0.9999, postcode 1.0000; TW board region 1.0000, subregion 0.9999, street 0.9992, house_number 0.9994; CN locality_unit 13/14. Replaces v8-cjk-kr (cjk/v0.0.2/).",
 			"overlays": ["ja-jp", "zh-cn"]
 		}
 	}
