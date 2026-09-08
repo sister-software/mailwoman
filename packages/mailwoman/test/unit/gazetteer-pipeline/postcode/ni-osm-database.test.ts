@@ -20,13 +20,10 @@ import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import {
-	buildPostcodeNIOSM,
-	NI_LIVE_POSTCODES,
-	NI_OSM_ID_BASE,
-} from "mailwoman/gazetteer-pipeline/postcode/ni-osm-database"
+import { buildPostcodeNIOSM, NI_LIVE_POSTCODES } from "mailwoman/gazetteer-pipeline/postcode/ni-osm-database"
 import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 

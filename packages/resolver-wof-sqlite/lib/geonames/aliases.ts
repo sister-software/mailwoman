@@ -26,18 +26,12 @@
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import { GEONAMES_POSTAL_ID_BASE } from "#geonames/postal"
 import type { WOFDatabase } from "#schema"
-
-/**
- * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
- * Overture, GeoNames) never collide in a combined DB.
- */
-export const GEONAMES_ID_BASE = 9_000_000_000_000
 
 /**
  * The four tables the alias fold writes into the range it owns. The purge and the ingest must agree on this list — a

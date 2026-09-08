@@ -29,6 +29,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
+import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
@@ -295,8 +296,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	if (!(await pathExists(opts.adminIn))) throw new Error(`admin DB not found: ${opts.adminIn}`)
 
-	const { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE, ingestGeonamesAliases, buildPlaceSearchFTS } =
-		await import("@mailwoman/resolver-wof-sqlite")
+	const { ingestGeonamesAliases, buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 
 	const countries = [...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)]
 

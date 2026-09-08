@@ -26,7 +26,8 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { GEONAMES_ID_BASE, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames"
+import { GEONAMES_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"

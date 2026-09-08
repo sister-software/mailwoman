@@ -41,6 +41,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -71,12 +72,6 @@ import {
 	readCodePointCSV,
 } from "#gazetteer-pipeline/postcode/codepoint/index"
 import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
-
-/**
- * Synthetic id base for Code-Point Open rows — its own namespace above GeoNames-postal (9.5e12) and NL PC6 (9.6e12), so
- * all sources coexist collision-free if a combined DB ever attaches them together.
- */
-export const CODEPOINT_ID_BASE = 9_700_000_000_000
 
 /**
  * ISO-3166-1 alpha-2 stamped on every row. Code-Point Open is a GB-only product; the ONS country code distinguishing

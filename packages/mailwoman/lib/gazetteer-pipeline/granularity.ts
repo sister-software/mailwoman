@@ -24,23 +24,15 @@
  *   Read-only against the admin DB: no network, no model, no writes.
  */
 
+import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { OVERTURE_ID_BASE } from "#gazetteer-pipeline/admin/fold-overture"
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 import { PLACETYPE_PROJECTION } from "#gazetteer-pipeline/placetype-census"
 
 export { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
-
-/**
- * Synthetic id base for the GeoNames alias fold. Mirrors `GEONAMES_ID_BASE` in
- * `@mailwoman/resolver-wof-sqlite/geonames-aliases` — duplicated rather than imported because that package is an
- * OPTIONAL peer of `mailwoman` (the `geocode.tsx` convention: type-only imports at module level, value imports dynamic
- * inside functions), and this module must stay importable without it.
- */
-const GEONAMES_ID_BASE = 9_000_000_000_000
 
 /**
  * The containment rungs, shallowest first. `postcode` is deliberately absent: it is an orthogonal channel (the

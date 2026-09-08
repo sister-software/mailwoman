@@ -476,6 +476,11 @@
 			"node": "./lib/resolver/types.ts",
 			"default": "./out/resolver/types.js"
 		},
+		"./resolver/synthetic-id-ranges": {
+			"types": "./out/resolver/synthetic-id-ranges.d.ts",
+			"node": "./lib/resolver/synthetic-id-ranges.ts",
+			"default": "./out/resolver/synthetic-id-ranges.js"
+		},
 		"./pipeline/span-proposer": {
 			"types": "./out/pipeline/span-proposer.d.ts",
 			"node": "./lib/pipeline/span-proposer.ts",

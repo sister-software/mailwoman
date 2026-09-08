@@ -134,6 +134,31 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 }
 
 /**
+ * The admin fixture plus a `names` table and a second US region, Indiana (103), whose alias bag carries `Illinois` —
+ * the shape of Hsinchu County carrying `新竹市`, Hsinchu City's official name. Illinois's `names` row is official.
+ */
+function buildFixtureAdminWithVariantRegion(path: string): void {
+	buildFixtureAdmin(path)
+
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec(`
+		INSERT INTO spr VALUES (103, 'Indiana', 'region', 'US', 40.0, -86.0, 37.8, -88.1, 41.8, -84.8, -1, 0);
+		INSERT INTO place_population VALUES (103, 6800000);
+		INSERT INTO place_search VALUES (103, 'Illinois${ALIAS_SEPARATOR}Hoosier State');
+		CREATE TABLE names (
+			id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
+			country TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '',
+			privateuse TEXT NOT NULL DEFAULT '', official INTEGER NOT NULL DEFAULT 0,
+			lastmodified INTEGER NOT NULL DEFAULT 0
+		);
+		INSERT INTO names VALUES (101, 'Illinois', 'region', 'US', 'eng', '', 1, 0);
+		INSERT INTO names VALUES (103, 'Indiana', 'region', 'US', 'eng', '', 1, 0);
+		INSERT INTO names VALUES (103, 'Illinois', 'region', 'US', 'eng', '', 0, 0);
+	`)
+}
+
+/**
  * A locality extract in the register-derived shape (`gazetteer build tw-districts`): two `locality` rows, one whose
  * `ancestors` table names the admin fixture's Illinois region (id 101) and one that names nothing — the NZ shape.
  */
@@ -380,6 +405,35 @@ describe("buildCandidateTable", () => {
 		expect(zip?.placetype).toBe("postalcode")
 		expect(zip?.latitude).toBeCloseTo(41.885, 3)
 		expect(probe(db, normalizeLocalityForKey("20500"))).toHaveLength(0)
+	})
+
+	test("a region's alias that is another same-country region's official name is refused, not staged", async () => {
+		const input = scratch.resolve("admin.db")
+		const output = scratch.resolve("candidate.db")
+		buildFixtureAdminWithVariantRegion(input)
+
+		const result = await buildCandidateTable({ input, output })
+
+		expect(result.regionOfficialRefused).toBe(1)
+
+		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+
+		// Only Illinois itself answers `illinois`; Indiana, the more populous namesake carrier, has no row for it.
+		const rows = probe(db, normalizeLocalityForKey("Illinois")).filter((r) => r.placetype === "region")
+
+		expect(rows.map((r) => r.name)).toEqual(["Illinois"])
+		// The refusal is exact: Indiana's other alias stages as before.
+		expect(probe(db, normalizeLocalityForKey("Hoosier State")).map((r) => r.name)).toEqual(["Indiana"])
+	})
+
+	test("without a names table the alias pass has no official evidence and refuses nothing", async () => {
+		const input = scratch.resolve("admin.db")
+		const output = scratch.resolve("candidate.db")
+		buildFixtureAdmin(input)
+
+		const result = await buildCandidateTable({ input, output })
+
+		expect(result.regionOfficialRefused).toBe(0)
 	})
 
 	test("a locality extract that names its region folds in with that region's scope and a closure row", async () => {

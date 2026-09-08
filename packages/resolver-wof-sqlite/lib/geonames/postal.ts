@@ -35,6 +35,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
@@ -46,13 +47,6 @@ import type { WOFDatabase } from "#schema"
  * allCountries.zip readme for the field list.
  */
 const GEONAMES_POSTAL_COLUMNS = 11
-
-/**
- * Synthetic id base for GeoNames-POSTAL rows — its own namespace above the alias fold's {@link GEONAMES_ID_BASE} (9e12)
- * allocation so all four sources (WOF, Overture, GeoNames-alias, GeoNames-postal) coexist collision-free in a combined
- * DB.
- */
-export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
 
 /**
  * The #920 name law: reduce a postcode to the sanitized-query token shape — strip every non-letter/number — so the

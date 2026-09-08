@@ -61,14 +61,7 @@ export {
 export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "#coverage-manifest-schema"
 export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street/name-lookup"
 
-export {
-	GEONAMES_ID_BASE,
-	type GeonamesIngestProgress,
-	ingestGeonamesAliases,
-	purgeGeonamesAliasRange,
-} from "#geonames/aliases"
-
-export { GEONAMES_POSTAL_ID_BASE } from "#geonames/postal"
+export { type GeonamesIngestProgress, ingestGeonamesAliases, purgeGeonamesAliasRange } from "#geonames/aliases"
 
 export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address/point-schema"
 export type { AddressPointDatabase, AddressPointTable } from "#address/point-schema"

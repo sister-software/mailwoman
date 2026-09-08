@@ -33,15 +33,11 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
+import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { CSVSpliterator } from "spliterator"
-
-/**
- * Synthetic id base — distinct from the GeoNames postal range (9500000000000) and the NL PC6 range (9600000000000).
- */
-const NZ_LOCALITY_ID_BASE = 9_700_000_000_000
 
 /**
  * Minimum address points a (CITY, DISTRICT) group needs before it earns a database row. Below this the "centroid" is a
@@ -219,7 +215,7 @@ export async function buildNZLocalitiesDatabase(
 	db.exec("ANALYZE")
 	await db.destroy()
 
-	swapDatabaseIntoPlace(tmpPath, outPath)
+	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)
 
 	return { out: outPath, inserted, skippedGroups, sourceMD5 }

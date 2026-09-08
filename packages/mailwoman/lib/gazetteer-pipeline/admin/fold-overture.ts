@@ -11,17 +11,12 @@
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { simpleSHA3 } from "@mailwoman/core/crypto"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 // Type-only, so it is erased at build and adds no runtime edge to what is an optional peer here (the
 // caller reaches the package through a lazy `await import`).
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
-
-/**
- * Synthetic id base for Overture-sourced rows — above any real WOF id (WOF ids are <~2e9), so a combined DB never
- * collides across sources.
- */
-export const OVERTURE_ID_BASE = 8_000_000_000_000
 
 /**
  * Overture division subtypes that map to the resolver's admin placetypes. `country` is included (#1015) so an

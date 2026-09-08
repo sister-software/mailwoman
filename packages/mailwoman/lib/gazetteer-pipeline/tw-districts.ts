@@ -34,6 +34,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
@@ -42,12 +43,6 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { resolvePath } from "path-ts"
 
 import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline"
-
-/**
- * Synthetic id base — distinct from the GeoNames postal range (9500000000000), the NL PC6 range (9600000000000), the NZ
- * locality range (9700000000000) and the CZ district range (9800000000000).
- */
-export const TW_DISTRICT_ID_BASE = 9_900_000_000_000
 
 /**
  * The Overture release the Taiwan parquet was fetched under. Overture prunes old releases, so a re-fetch lands under a

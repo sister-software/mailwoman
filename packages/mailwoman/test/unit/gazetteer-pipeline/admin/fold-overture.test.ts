@@ -11,10 +11,11 @@
  *   which is how an eval row scored a miss against two backends that had both answered correctly.
  */
 
+import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { assignSyntheticIDs, OVERTURE_ID_BASE, prepareInserts } from "mailwoman/gazetteer-pipeline/admin/fold-overture"
+import { assignSyntheticIDs, prepareInserts } from "mailwoman/gazetteer-pipeline/admin/fold-overture"
 import { describe, expect, test } from "vitest"
 
 /**

@@ -153,6 +153,12 @@ export interface BuildCandidateResult {
 	places: number
 	primaries: number
 	aliases: number
+	/**
+	 * Region aliases refused because another same-country region holds the name as its official name (three pairs in the
+	 * admin artifact: `新竹市`, `嘉義市`, `충청남도`). Zero on a source without a `names` table means the rule had nothing to read,
+	 * not that no pair exists.
+	 */
+	regionOfficialRefused: number
 	abbrevs: number
 	postcodes: number
 	/**
@@ -459,8 +465,19 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	// --- pass 2: distinct normalized aliases from place_search.alt_names (explodeAliasBags owns the loop) ---
 	progress("aliases", "exploding alias bags")
-	const { nAlias, keyCounts } = explodeAliasBags(src, kdb, attrs, stageRow)
-	progress("aliases", `${nAlias.toLocaleString()} aliases`)
+
+	const { nAlias, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
+		regionPlacetypeID: ptID("region"),
+		ccID,
+	})
+
+	progress(
+		"aliases",
+		`${nAlias.toLocaleString()} aliases` +
+			(regionOfficialRefused
+				? `; ${regionOfficialRefused.toLocaleString()} region aliases refused as another region's official name`
+				: "")
+	)
 
 	// --- pass 3: region abbreviations (place_abbr) ---
 	let nAbbr = 0
@@ -620,6 +637,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		places: attrs.size,
 		primaries: nPrim,
 		aliases: nAlias,
+		regionOfficialRefused,
 		abbrevs: nAbbr,
 		postcodes: nPostcode,
 		postcodeAliases: nPostcodeAlias,

@@ -11,11 +11,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import {
-	GEONAMES_POSTAL_ID_BASE,
-	ingestGeonamesPostal,
-	normalizePostcodeName,
-} from "@mailwoman/resolver-wof-sqlite/geonames"
+import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { ingestGeonamesPostal, normalizePostcodeName } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"

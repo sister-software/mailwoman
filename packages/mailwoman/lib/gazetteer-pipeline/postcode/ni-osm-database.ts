@@ -45,6 +45,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { md5File } from "@mailwoman/core/hash"
+import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -78,25 +79,6 @@ import {
 	type OverpassResponse,
 	parseNIPostcodes,
 } from "#gazetteer-pipeline/postcode/ni-osm/index"
-
-/**
- * Synthetic id base for the NI OSM rows — its own namespace above Code-Point Open (9.7e12), so every postcode source
- * coexists collision-free if a combined DB ever attaches them together.
- *
- * The registry, in allocation order, so the next author picks 9.9e12 rather than re-deriving it:
- *
- * - `8.0e12` — `OVERTURE_ID_BASE` (`../admin/fold-overture.ts`)
- * - `9.0e12` — `GEONAMES_ID_BASE`, the alias fold (`@mailwoman/resolver-wof-sqlite/geonames-aliases`)
- * - `9.5e12` — `GEONAMES_POSTAL_ID_BASE` (`@mailwoman/resolver-wof-sqlite/geonames-postal`)
- * - `9.6e12` — `NL_PC6_ID_BASE` (`./nl-pc6.ts`)
- * - `9.7e12` — `CODEPOINT_ID_BASE` (`./codepoint-database.ts`)
- * - `9.8e12` — **this database**
- *
- * Each range holds 100 billion ids against a largest-ever occupancy of 1.75 M (Code-Point Open), so the spacing is not
- * the constraint — the registry is, which is why it is written down at every base rather than in one file that the
- * others would have to be read to find.
- */
-export const NI_OSM_ID_BASE = 9_800_000_000_000
 
 /**
  * ISO-3166-1 alpha-2 stamped on every row. Northern Ireland is part of the United Kingdom, so `spr.country` is `GB` —

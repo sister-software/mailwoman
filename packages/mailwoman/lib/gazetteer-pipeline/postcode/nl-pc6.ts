@@ -24,15 +24,11 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { CSVSpliterator } from "spliterator"
-
-/**
- * Synthetic id base — distinct from the GeoNames postal range (9500000000000).
- */
-const NL_PC6_ID_BASE = 9_600_000_000_000
 
 export interface BuildNLPC6Options {
 	/**

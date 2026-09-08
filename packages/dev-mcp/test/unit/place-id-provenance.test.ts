@@ -6,9 +6,12 @@
  *   The id-band classifier, pinned against the folds that mint the bands.
  */
 
+import {
+	GEONAMES_ID_BASE,
+	GEONAMES_POSTAL_ID_BASE,
+	OVERTURE_ID_BASE,
+} from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { placeIDProvenance, PlaceIDSource, syntheticIDNote } from "@mailwoman/dev-mcp/place-id-provenance"
-import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/resolver-wof-sqlite/geonames"
-import { OVERTURE_ID_BASE } from "mailwoman/gazetteer-pipeline/admin/fold-overture"
 import { describe, expect, it } from "vitest"
 
 describe("placeIDProvenance", () => {

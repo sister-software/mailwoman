@@ -11,11 +11,10 @@
  *   artifact afterwards.
  */
 
+import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
-
-import { OVERTURE_ID_BASE } from "#gazetteer-pipeline/admin/fold-overture"
 
 export interface FreezeAdminOptions {
 	/**

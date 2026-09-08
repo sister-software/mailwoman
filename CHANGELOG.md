@@ -36,6 +36,24 @@ step. The pre-commit hook read its CLI-freshness reference after the formatter h
 commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
 first.
 
+### Fixed — one registry of synthetic place-id ranges; a region's variant name that is another region's official name is refused
+
+Two builders claimed the same synthetic id base each, and each kept its own docstring of the ranges it believed taken:
+the NZ locality database and Code-Point Open both minted from 9.7e12, the Prague districts and the Northern Ireland OSM
+postcodes both from 9.8e12. The candidate table's ancestry sidecars and a result's `placeID` are keyed by `spr_id`
+alone, so 3,033 ids in the served table named both a GB postcode and a New Zealand suburb (`9700000000000` was
+`AB101AB` and Abbey Caves). `@mailwoman/core/resolver/synthetic-id-ranges` now holds every base, with a test that
+keeps them distinct, ascending and at least 5e10 apart; the NZ localities move to 9.65e12 and the Prague districts to
+9.85e12, the postcode ranges stay, and every builder imports its constant from the registry. The NZ builder had also
+called the database swap without awaiting it, so a rebuild sealed an empty file; it awaits now.
+
+In the admin artifact exactly three regions carry, as a variant name, another same-country region's official name:
+Hsinchu County carries `新竹市` (Hsinchu City's), Chiayi County carries `嘉義市`, Sejong carries `충청남도`. Each let the
+more populous carrier outrank the place the name officially is, so the region node `新竹市` resolved the county and the
+city's three districts contradicted it. The candidate build's alias pass now refuses a region's alias when another
+region of the same country holds it as its official name, and counts what it refused; a source without a `names`
+table refuses nothing.
+
 ### Added — Taiwan's 鄉鎮市區 as register-derived localities, scoped to their 縣市
 
 `新北市林口區` resolved 54.5 km away, because the only candidate row keyed `林口區` is a WOF record with no parent and a

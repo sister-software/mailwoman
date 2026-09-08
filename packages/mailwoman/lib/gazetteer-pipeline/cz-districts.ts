@@ -25,15 +25,10 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
+import { CZ_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-
-/**
- * Synthetic id base — distinct from the GeoNames postal range (9500000000000), the NL PC6 range (9600000000000), and
- * the NZ locality range (9700000000000).
- */
-const CZ_DISTRICT_ID_BASE = 9_800_000_000_000
 
 export interface BuildCZDistrictsOptions {
 	/**
