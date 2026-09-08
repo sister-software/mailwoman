@@ -391,7 +391,13 @@ export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLo
  * itself (`１２２號`), which a parse also carries on the `house_number` span (`122號`). Both sides key `122`.
  */
 export function normalizeHouseNumberForKey(number: string, locale: StreetLocale): string {
-	if (locale === "zh") return foldHan(number).replace(/號$/u, "")
+	// The sub-number is written two ways — `30之19號` and `30號之19` — and the register stores the base `30` with the
+	// sub-number in `unit`; both key `30之19`, which the reader's sub-number rung then falls from.
+	if (locale === "zh") {
+		return foldHan(number)
+			.replace(/^(\d+)號之(\d+)$/u, "$1之$2")
+			.replace(/號$/u, "")
+	}
 
 	return number.trim().toLowerCase()
 }

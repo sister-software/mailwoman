@@ -55,6 +55,13 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		| PreparedGet<[postcode: string, locality: NameKey, street: StreetKey, number: string], AddressPointRow>
 		| undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey, number: string], AddressPointRow> | undefined
+	/**
+	 * The scope key matched by its TAIL — a `zh` query that names the 鄉鎮市區 without its 縣市. Narrowed by the (street,
+	 * number) index first, so the LIKE walks the handful of rows that share the pair.
+	 */
+	readonly #byLocalityTail:
+		| PreparedGet<[street: StreetKey, number: string, tailPattern: string], AddressPointRow>
+		| undefined
 	readonly #byBbox:
 		| PreparedGet<
 				[street: StreetKey, number: string, minLat: number, maxLat: number, minLon: number, maxLon: number],
@@ -104,6 +111,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE street_norm = ? AND number = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? LIMIT 1`
 			)
+
+			this.#byLocalityTail = prepareGet(
+				this.#db,
+				`SELECT ${SELECT_COLS} FROM address_point
+				 WHERE street_norm = ? AND number = ? AND locality_norm LIKE ? LIMIT 1`
+			)
 		}
 	}
 
@@ -123,10 +136,13 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 		// A `zh` extract scopes a point by 縣市 + 鄉鎮市區, the pair the parse tags `region` + `subregion`; the Taiwanese
 		// register carries no postcode and the parse no `locality`. The pair becomes the locality key here, on the
-		// reader that was built with the same fold, and a Latin extract never sees the two fields.
+		// reader that was built with the same fold, and a Latin extract never sees the two fields. A line that names
+		// only the 鄉鎮市區 (`中和區中興街281號`, 14.7% of the TW board) matches the stored pair by its tail instead.
 		const scoped =
 			this.#locale === "zh" && !query.locality && query.subregion
-				? { ...query, locality: `${query.region ?? ""}${query.subregion}` }
+				? query.region
+					? { ...query, locality: `${query.region}${query.subregion}` }
+					: { ...query, localityTail: normalizeLocalityForKeyLocale(query.subregion, "zh") }
 				: query
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
@@ -164,6 +180,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			number: string
 			postcode?: string
 			locality?: string
+			localityTail?: NameKey
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}
 	) {
@@ -222,6 +239,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		query: {
 			postcode?: string
 			locality?: string
+			localityTail?: NameKey
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}
 	): AddressPointRow | undefined {
@@ -247,6 +265,11 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			// builder + stripArrondissement) — fold the probe too so "Paris 13e Arrondissement" and
 			// "Paris" both hit. No-op for "us" extracts and every non-arrondissement commune.
 			row = this.#byLocality!(this.#localityKey(query.locality), streetNorm, number)
+		}
+
+		if (!row && query.localityTail && this.#byLocalityTail) {
+			// A Han key carries no `%` or `_`, so the tail is a literal suffix pattern.
+			row = this.#byLocalityTail(streetNorm, number, `%${query.localityTail}`)
 		}
 
 		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls

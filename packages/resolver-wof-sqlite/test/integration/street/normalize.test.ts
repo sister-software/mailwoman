@@ -252,6 +252,8 @@ describe("the zh branch — the Taiwanese register's Han keys", () => {
 		expect(normalizeHouseNumberForKey("122號", "zh")).toBe("122")
 		expect(normalizeHouseNumberForKey("122", "zh")).toBe("122")
 		expect(normalizeHouseNumberForKey("14之12號", "zh")).toBe("14之12")
+		expect(normalizeHouseNumberForKey("14號之12", "zh")).toBe("14之12")
+		expect(normalizeHouseNumberForKey("３０號之１９", "zh")).toBe("30之19")
 		// Every Latin locale keeps the trimmed, lower-cased number the extracts store.
 		expect(normalizeHouseNumberForKey(" 12A ", "us")).toBe("12a")
 		expect(normalizeHouseNumberForKey("3 a", "fr")).toBe("3 a")

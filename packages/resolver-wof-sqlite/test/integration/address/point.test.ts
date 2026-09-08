@@ -322,10 +322,18 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 		expect(zh.find({ street: "中正路", number: "122", region: "基隆市", subregion: "中正區" })?.lat).toBe(25.1283)
 	})
 
-	it("falls from a sub-number to its base number", () => {
-		expect(zh.find({ street: "旗下巷", number: "14之12號", region: "高雄市", subregion: "旗津區" })?.lat).toBe(
-			22.6133451
-		)
+	it("falls from a sub-number to its base number, in either written order", () => {
+		const scope = { region: "高雄市", subregion: "旗津區" }
+
+		expect(zh.find({ street: "旗下巷", number: "14之12號", ...scope })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "14號之12", ...scope })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "１４號之１２", ...scope })?.lat).toBe(22.6133451)
+	})
+
+	it("matches the stored pair by its tail when the line names only the 鄉鎮市區", () => {
+		expect(zh.find({ street: "重慶南路一段", number: "122號", subregion: "中正區" })?.lat).toBe(25.0399658)
+		expect(zh.find({ street: "中正路", number: "122號", subregion: "中正區" })?.lat).toBe(25.1283)
+		expect(zh.find({ street: "中正路", number: "122號", subregion: "信義區" })).toBeNull()
 	})
 
 	it("a scope-less query misses rather than answering the first row of the street", () => {
