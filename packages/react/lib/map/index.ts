@@ -15,6 +15,18 @@
 export { MapCanvas } from "./MapCanvas.tsx"
 export type { MapCanvasExtraProps, MapCanvasProps, MapCanvasStyle } from "./MapCanvas.tsx"
 
+// ── Map chrome (node-safe presentation; the host supplies the input and reads its own map) ──
+export { MapChipRow } from "./MapChipRow.tsx"
+export type { MapChip, MapChipRowProps } from "./MapChipRow.tsx"
+export { MapCompass } from "./MapCompass.tsx"
+export type { MapCompassProps } from "./MapCompass.tsx"
+export { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
+export type { MapControlButtonProps, MapControlGroupProps, MapControlStackProps } from "./MapControlStack.tsx"
+export { MapFooter } from "./MapFooter.tsx"
+export type { MapFooterProps } from "./MapFooter.tsx"
+export { MapSearchBar } from "./MapSearchBar.tsx"
+export type { MapSearchBarProps } from "./MapSearchBar.tsx"
+
 export type {
 	CompareContext,
 	GeocoderPanels,

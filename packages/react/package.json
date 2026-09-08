@@ -113,6 +113,31 @@
 			"node": "./lib/map/MapCanvas.tsx",
 			"default": "./out/map/MapCanvas.js"
 		},
+		"./map/MapSearchBar": {
+			"types": "./out/map/MapSearchBar.d.ts",
+			"node": "./lib/map/MapSearchBar.tsx",
+			"default": "./out/map/MapSearchBar.js"
+		},
+		"./map/MapChipRow": {
+			"types": "./out/map/MapChipRow.d.ts",
+			"node": "./lib/map/MapChipRow.tsx",
+			"default": "./out/map/MapChipRow.js"
+		},
+		"./map/MapControlStack": {
+			"types": "./out/map/MapControlStack.d.ts",
+			"node": "./lib/map/MapControlStack.tsx",
+			"default": "./out/map/MapControlStack.js"
+		},
+		"./map/MapCompass": {
+			"types": "./out/map/MapCompass.d.ts",
+			"node": "./lib/map/MapCompass.tsx",
+			"default": "./out/map/MapCompass.js"
+		},
+		"./map/MapFooter": {
+			"types": "./out/map/MapFooter.d.ts",
+			"node": "./lib/map/MapFooter.tsx",
+			"default": "./out/map/MapFooter.js"
+		},
 		"./map/Geocoder": {
 			"types": "./out/map/Geocoder.d.ts",
 			"node": "./lib/map/Geocoder.tsx",

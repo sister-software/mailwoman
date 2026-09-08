@@ -43,6 +43,18 @@
 		font-size: inherit;
 		line-height: inherit;
 	}
+
+	/*
+	 * A default face for a host that sets none. Wrapped in `:where()` so it carries ZERO specificity: Docusaurus's own
+	 * `body` rule wins on the docs site and keeps that page's typography, while Storybook and a bare React host — which
+	 * declare nothing — stop falling back to the user agent's serif.
+	 */
+	:where(body) {
+		font-family: var(--font-family-text);
+		font-size: var(--font-size-body);
+		line-height: var(--line-height-body);
+		color: var(--color-text-primary);
+	}
 }
 
 @layer components {
@@ -1230,4 +1242,253 @@
 	.mw-about__swatch--low {
 		background: #ef4444;
 	}
+
+	/* #endregion */
+
+	/* #region Map chrome */
+
+	/*
+	 * The floating controls over a map: a search pill on top, example chips beneath it, a control column down one
+	 * edge, a footer along the bottom. Each is a glass material composed from tokens, and each carries the opaque
+	 * fallback below — no control depends on `backdrop-filter` to stay readable.
+	 */
+
+	.mw-map-searchbar,
+	.mw-map-chip,
+	.mw-map-control-group,
+	.mw-map-compass,
+	.mw-map-footer {
+		background: var(--material-glass-background);
+		border: 1px solid var(--material-glass-border);
+		backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+		-webkit-backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+		color: var(--color-text-primary);
+	}
+
+	.mw-map-searchbar {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.4rem 0.75rem;
+		border-radius: var(--radius-pill);
+		box-shadow: var(--material-glass-shadow);
+	}
+
+	.mw-map-searchbar__field {
+		flex: 1;
+		min-width: 0;
+	}
+
+	/* The host's input carries no chrome of its own — the pill is the chrome. */
+	.mw-map-searchbar__field input {
+		width: 100%;
+		border: 0;
+		outline: 0;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		padding: 0.25rem 0;
+	}
+
+	.mw-map-searchbar:focus-within {
+		outline: 2px solid var(--color-selection);
+		outline-offset: 2px;
+	}
+
+	.mw-map-searchbar__slot {
+		display: inline-flex;
+		align-items: center;
+		color: var(--color-text-secondary);
+		font-family: var(--font-family-glyph);
+	}
+
+	/*
+	 * One line that scrolls, never a wrap. The scrollbar is hidden because the row sits over a map where a track
+	 * would read as chrome; the row stays reachable by keyboard through its buttons.
+	 */
+	.mw-map-chiprow {
+		display: flex;
+		gap: 0.4rem;
+		overflow-x: auto;
+		scrollbar-width: none;
+		padding: 0.15rem;
+		scroll-padding-inline: 0.15rem;
+	}
+
+	.mw-map-chiprow::-webkit-scrollbar {
+		display: none;
+	}
+
+	.mw-map-chip {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.35rem 0.7rem;
+		border-radius: var(--radius-pill);
+		font-size: var(--font-size-footnote);
+		font-weight: var(--font-weight-medium);
+		white-space: nowrap;
+		cursor: pointer;
+	}
+
+	.mw-map-chip--active {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+
+	.mw-map-chip:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.mw-map-chip__icon {
+		display: inline-flex;
+		font-family: var(--font-family-glyph);
+	}
+
+	.mw-map-control-stack {
+		position: absolute;
+		top: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		z-index: 2;
+	}
+
+	.mw-map-control-stack--right {
+		right: calc(1rem + var(--safe-area-right));
+	}
+
+	.mw-map-control-stack--left {
+		left: calc(1rem + var(--safe-area-left));
+	}
+
+	/* A capsule: related controls read as one object, divided by hairlines rather than gaps. */
+	.mw-map-control-group {
+		display: flex;
+		flex-direction: column;
+		border-radius: var(--radius-control);
+		overflow: hidden;
+		box-shadow: var(--material-glass-shadow);
+	}
+
+	.mw-map-control-group > * + * {
+		border-top: 1px solid var(--material-glass-border);
+	}
+
+	.mw-map-control {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border: 0;
+		background: transparent;
+		color: var(--color-text-primary);
+		font-family: var(--font-family-glyph);
+		cursor: pointer;
+	}
+
+	.mw-map-control:hover:not(:disabled) {
+		background: var(--control-background);
+	}
+
+	.mw-map-control:active:not(:disabled) {
+		background: var(--control-background-pressed);
+	}
+
+	.mw-map-control--active {
+		color: var(--color-accent);
+	}
+
+	.mw-map-control:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	/*
+	 * The compass keeps its box while invisible so the capsules above it do not shift as the map rotates.
+	 * `visibility` rather than `display` is what lets the opacity transition run at all.
+	 */
+	.mw-map-compass {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: var(--radius-pill);
+		color: var(--color-text-primary);
+		cursor: pointer;
+		box-shadow: var(--material-glass-shadow);
+		opacity: 1;
+		visibility: visible;
+		transition:
+			opacity var(--duration-standard) var(--easing-standard),
+			visibility 0s linear 0s;
+	}
+
+	.mw-map-compass--north {
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity var(--duration-standard) var(--easing-standard),
+			visibility 0s linear var(--duration-standard);
+	}
+
+	.mw-map-footer {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		padding: 0.35rem 0.75rem;
+		padding-bottom: calc(0.35rem + var(--safe-area-bottom));
+		border-radius: 0;
+		border-inline: 0;
+		border-bottom: 0;
+		font-size: var(--font-size-caption);
+		color: var(--color-text-secondary);
+	}
+
+	.mw-map-footer__attribution {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 0.75rem;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.mw-map-compass,
+		.mw-map-compass--north {
+			transition: none;
+		}
+	}
+
+	/*
+	 * Where the blur cannot run, or the viewer has asked for less transparency, every material becomes opaque.
+	 * Text contrast holds in all three states; the glass is never what makes a control legible.
+	 */
+	@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+		.mw-map-searchbar,
+		.mw-map-chip,
+		.mw-map-control-group,
+		.mw-map-compass,
+		.mw-map-footer {
+			background: var(--material-glass-fallback-background);
+		}
+	}
+
+	@media (prefers-reduced-transparency: reduce) {
+		.mw-map-searchbar,
+		.mw-map-chip,
+		.mw-map-control-group,
+		.mw-map-compass,
+		.mw-map-footer {
+			background: var(--material-glass-fallback-background);
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+		}
+	}
+
+	/* #endregion */
 }
