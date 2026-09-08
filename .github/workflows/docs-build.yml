@@ -1,7 +1,12 @@
-# Build + deploy the Docusaurus docs site.
+# Build + deploy the Docusaurus docs site, the prose site at mailwoman.ai.
+#
+# The geocoder map is not here: Earth, Moon and Mars are their own static apps on Cloudflare, deployed by
+# deploy.yml. What this site still bundles from the workspaces is the runtime embed the concept pages mount
+# (docs/src/contexts/RuntimeEmbed.tsx), the explorers and license pages under docs/src/components, and the
+# OpenAPI documents plus the CLI reference the `prebuild` script generates from four package CLIs.
 #
 # On pull_request: the build job runs on EVERY PR (so it can be a required status check), but the
-# structure check + build steps execute only when a demo-affecting path changed — otherwise the job
+# structure check + build steps execute only when a path the site reads changed — otherwise the job
 # reports green in seconds. Catches broken links, MDX parse errors, and — before any install —
 # frontmatter/duplicate-title/orphan regressions via docs/scripts/check-docs-structure.ts.
 # On push to main: same steps (path-filtered at the trigger), then deploy to GitHub Pages.
@@ -14,11 +19,14 @@
 name: Docs
 
 on:
-  # The demo BUNDLES these workspaces (the neural web loader pulls in the resolver), so a change to the
-  # resolver must rebuild + redeploy the demo — otherwise a merged resolver fix sits on main while
-  # the live demo serves the old bundle (which is exactly how the "New York → West New York" fix
-  # almost shipped invisibly). workflow_dispatch is the manual override when a dependency
-  # outside these paths changes.
+  # The site bundles the runtime embed and generates the OpenAPI documents at build time, so a change in one
+  # of these packages changes the built output; a change anywhere else does not reach it. The two lists below
+  # are the same list, and each entry is measured, not remembered: the packages a docs source file imports
+  # directly (`grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src docs/plugins docs/scripts | sort -u`)
+  # plus the three drop-in packages whose CLIs `docs/package.json`'s prebuild runs for their OpenAPI documents.
+  # A transitive dependency (the resolver behind the runtime embed, say) is deliberately not listed: the docs
+  # workspace's manifest closure is nearly the whole monorepo, and a list that long is no filter. workflow_dispatch
+  # is the override when a change outside these paths should rebuild the site.
   #
   # The pull_request trigger deliberately carries NO `paths:` filter, so the `build` job runs and
   # reports a check on EVERY PR — a prerequisite for making it a required status check in the
@@ -34,8 +42,7 @@ on:
     branches: [main]
     paths:
       - "docs/**"
-      # The packages a docs source file imports directly, measured by
-      # `grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src | sort -u`.
+      - ".github/workflows/docs-build.yml"
       - "packages/cartographer/**"
       - "packages/core/**"
       - "packages/license-worker/**"
@@ -44,6 +51,10 @@ on:
       - "packages/react/**"
       - "packages/resolver-wof-wasm/**"
       - "packages/spatial/**"
+      # The OpenAPI prebuild inputs.
+      - "packages/libpostal/**"
+      - "packages/nominatim/**"
+      - "packages/photon/**"
       - "*.md"
 
 permissions:
@@ -79,11 +90,11 @@ jobs:
       - uses: actions/checkout@v7
 
       # Change detection replaces the trigger-level `paths:` filter (see the `on:` comment). On a
-      # pull_request, this computes whether any demo-affecting path changed; the heavy steps below
+      # pull_request, this computes whether any path the site reads changed; the heavy steps below
       # run only when it did. On push/workflow_dispatch the filter is skipped and the steps run
       # unconditionally (the push trigger already path-filtered the event, and dispatch is manual).
       # This keeps the job — and therefore its status check — reported on EVERY PR.
-      - name: Detect demo-affecting changes
+      - name: Detect changes the site reads
         id: changes
         if: github.event_name == 'pull_request'
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -96,7 +107,8 @@ jobs:
           filters: |
             docs:
               - "docs/**"
-              # The same list as the push paths above: the packages a docs source file imports directly.
+              - ".github/workflows/docs-build.yml"
+              # The same list as the push paths above, measured the same way.
               - "packages/cartographer/**"
               - "packages/core/**"
               - "packages/license-worker/**"
@@ -105,6 +117,9 @@ jobs:
               - "packages/react/**"
               - "packages/resolver-wof-wasm/**"
               - "packages/spatial/**"
+              - "packages/libpostal/**"
+              - "packages/nominatim/**"
+              - "packages/photon/**"
               - "*.md"
 
       - name: Setup Node
