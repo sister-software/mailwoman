@@ -67,12 +67,12 @@ repair deployed on `9504425c7`, `mars.mailwoman.ai` still draws none.
 Measured on the deployed Mars app, with a HAR so that Web Worker traffic is counted — MapLibre fetches
 vector tiles from a worker, which a page-level request listener cannot see:
 
-| Kind | Requests |
-| --- | --- |
-| Hillshade raster tiles | 32, all 200 |
-| TileJSON documents | 3, all 200 |
-| Nomenclature vector tiles | **0** |
-| Glyph ranges | **0** |
+| Kind                      | Requests    |
+| ------------------------- | ----------- |
+| Hillshade raster tiles    | 32, all 200 |
+| TileJSON documents        | 3, all 200  |
+| Nomenclature vector tiles | **0**       |
+| Glyph ranges              | **0**       |
 
 So the source resolves and is then asked for nothing. Everything below that point is healthy: the tile
 worker answers `mars.json` and every tile 200 with `access-control-allow-origin` echoing the app origin,
@@ -83,8 +83,32 @@ composes into a bare `maplibre-gl` 6.7.0 page — the version the repo pins — 
 app's own opening camera, renders **131 labels** from 591 source features, with all four layers present, 6
 tile requests, 2 glyph requests and no error events. The spaced-capital region treatment reads as intended.
 
-The difference between that page and the app is `react-map-gl` 8.1.3 and `MapCanvas`. That is where the
-next measurement goes.
+The cause is the MapLibre web worker. `packages/planetary/lib/main.tsx` never called `setWorkerUrl`, so
+MapLibre derived the worker's script URL from `import.meta.url`, which a bundled build cannot answer. The
+derived path names a file the build never emitted, and the Worker's SPA fallback answers it with
+`index.html` at status 200 — so the web worker starts, fails parsing HTML as a module, and dies with
+nothing logged.
+
+| URL                                                        | Serves                                        |
+| ---------------------------------------------------------- | --------------------------------------------- |
+| `mars.mailwoman.ai/assets/maplibre-gl-worker.mjs`          | 200 `text/html`, 645 bytes — the SPA fallback |
+| `moon.mailwoman.ai/assets/maplibre-gl-worker.mjs`          | 200 `text/html`, 645 bytes                    |
+| `earth.mailwoman.ai/assets/maplibre-gl-worker-AbPoOmO0.js` | 200 `text/javascript`, 485,612 bytes          |
+
+MapLibre parses vector tiles and rasterizes glyph ranges inside that worker; only raster tiles decode on
+the main thread. That is the whole observed split — a hillshade that draws and labels that never appear,
+with the source reading `used: true`, `_sourceLoaded: true` and `_sourceErrored: false`, and its
+`_timers` holding 0 entries against the hillshade's 32.
+
+Earth escaped it because its `main.tsx` calls `setWorkerUrl(maplibreWorkerURL)` over a
+`?worker&url` import, and carries a comment naming this exact failure. A 404 would have been visible; the
+SPA fallback is what made it silent.
+
+It shipped because the planetary browser smoke asserted search and the feature panel, both of which work
+with a dead map worker. The guard added with the fix polls for a nomenclature `.mvt` request and a glyph
+`.pbf` request, and refuses any worker script served as `text/html`. Without the fix it reports
+`no nomenclature vector tile was requested`; with it, the Mars preview requests 11 vector tiles at the
+opening view and 96 after framing Olympus Mons.
 
 ### Mars and the Moon render as the same picture
 
@@ -357,15 +381,15 @@ being the front door.
 
 Each phase is deployable on its own.
 
-| #   | Contents                                                                                                                     | Result                                                                                                           |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| 1a  | `text-font` repair in both styles                                                                                            | Shipped on `9504425c7`. Both styles name a served stack; planetary labels still absent, so this was necessary and not sufficient |
-| 1b  | Localize the missing planetary labels in `react-map-gl` 8.1.3 / `MapCanvas`                                                  | Moon and Mars name their features at all — the app's first job, and a precondition for judging any framing or palette change |
-| 2   | DTCG tokens, styleframe compile, `fonts.css`, docs bridge, cascade layers, delete the orphan selector and the navbar offsets | Panel readable, brand palette and typeface live, no layout change                                                |
-| 3   | The five chrome components, glass material with fallback, safe-area and motion tokens                                        | Nothing in production yet; stories and tests                                                                     |
-| 4   | Earth relayout, Developer demotion                                                                                           | The new front door                                                                                               |
-| 5   | Mars ramp, star field, framing cap, planetary chrome                                                                         | Moon and Mars distinct and legible                                                                               |
-| 6   | An SDF glyph range built from a `@font-face` source and published to the bucket                                              | A face chosen for the DOM can also be bound to `font.family.map`, so the globe and the panel read as one product |
+| #   | Contents                                                                                                                       | Result                                                                                                                           |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1a  | `text-font` repair in both styles                                                                                              | Shipped on `9504425c7`. Both styles name a served stack; planetary labels still absent, so this was necessary and not sufficient |
+| 1b  | `setWorkerUrl` in planetary's `main.tsx`, plus the browser guard for vector tiles, glyph ranges and HTML-served worker scripts | Moon and Mars name their features at all — the app's first job, and a precondition for judging any framing or palette change     |
+| 2   | DTCG tokens, styleframe compile, `fonts.css`, docs bridge, cascade layers, delete the orphan selector and the navbar offsets   | Panel readable, brand palette and typeface live, no layout change                                                                |
+| 3   | The five chrome components, glass material with fallback, safe-area and motion tokens                                          | Nothing in production yet; stories and tests                                                                                     |
+| 4   | Earth relayout, Developer demotion                                                                                             | The new front door                                                                                                               |
+| 5   | Mars ramp, star field, framing cap, planetary chrome                                                                           | Moon and Mars distinct and legible                                                                                               |
+| 6   | An SDF glyph range built from a `@font-face` source and published to the bucket                                                | A face chosen for the DOM can also be bound to `font.family.map`, so the globe and the panel read as one product                 |
 
 ## Open items
 

@@ -47,3 +47,48 @@ test("an unknown path is the not-found view, not the globe", async ({ page }) =>
 	await page.goto("/nowhere")
 	await expect(page.getByTestId("not-found")).toBeVisible()
 })
+
+/**
+ * MapLibre parses vector tiles and rasterizes glyph ranges inside a web worker; only raster tiles decode on the main
+ * thread. So a worker that never runs leaves the hillshade drawing and every label missing, and it says nothing: the
+ * worker's script URL is served by the SPA fallback as index.html at status 200, and parsing HTML as a module fails
+ * inside the worker where no page listener sees it. These assertions read the two observable consequences.
+ */
+test("the map worker runs: nomenclature tiles and glyph ranges are requested", async ({ page }) => {
+	const vectorTiles: string[] = []
+	const glyphRanges: string[] = []
+	const workerBodies: Array<{ url: string; contentType: string | null }> = []
+
+	page.on("request", (request) => {
+		const url = request.url()
+
+		if (url.endsWith(".mvt")) {
+			vectorTiles.push(url)
+		}
+		if (url.includes("/fonts/") && url.endsWith(".pbf")) {
+			glyphRanges.push(url)
+		}
+	})
+
+	page.on("response", async (response) => {
+		if (!/worker/iu.test(response.url())) return
+
+		workerBodies.push({ url: response.url(), contentType: response.headers()["content-type"] ?? null })
+	})
+
+	await page.goto("/")
+	await expect(page.locator("canvas.maplibregl-canvas")).toBeVisible()
+
+	await expect
+		.poll(() => vectorTiles.length, { timeout: 60_000, message: "no nomenclature vector tile was requested" })
+		.toBeGreaterThan(0)
+
+	await expect
+		.poll(() => glyphRanges.length, { timeout: 60_000, message: "no glyph range was requested, so no label drew" })
+		.toBeGreaterThan(0)
+
+	// A worker script answered with HTML is the SPA fallback standing in for an asset the build never emitted.
+	for (const body of workerBodies) {
+		expect(body.contentType, `${body.url} is served as HTML, so the worker cannot parse it`).not.toContain("text/html")
+	}
+})
