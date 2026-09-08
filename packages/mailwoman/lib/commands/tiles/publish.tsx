@@ -3,32 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman tiles publish` — upload a PMTiles archive to the Cloudflare R2 bucket the tile worker
- *   serves from (nexus-assets → https://tiles.mailwoman.ai/...). The worker (`tile-worker`)
- *   reads the key `<prefix>/<tileset>.pmtiles` (prefix "tiles" per its wrangler config) and
- *   exposes:
- *
- *   - https://tiles.mailwoman.ai/<tileset>.json (TileJSON)
- *   - https://tiles.mailwoman.ai/<tileset>/{z}/{x}/{y}.{ext} (vector tiles) So `--tileset coverage`
- *       lights up the demo's coverage source with zero further wiring.
- *
- *   Uploads via `rclone` (the RCLONE_S3_* env vars ARE its s3-backend config — source the repo .env
- *   first: `set -a; . ./.env; set +a`). rclone handles multipart for large archives (no 300 MiB
- *   cap, unlike `wrangler r2 object put`); the documented anti-501 flags skip the post-PUT
- *   HEAD/checksum ops R2 rejects. The worker reads the object via its R2 binding, so
- *   Content-Type/Cache-Control don't matter.
- *
- *   CREDS for the `nexus-assets` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403
- *   on nexus-assets); the `RCLONE_S3_PUBLIC_*` keys write nexus-assets. Map them onto the
- *   on-the-fly `:s3:` remote: `RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID` (+
- *   SECRET/ENDPOINT) before running.
+ *   `mailwoman tiles publish` — upload a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from. The
+ *   upload itself is `publishTiles` in `#tiles/publish`, which the planetary pipeline calls as a function; this file
+ *   is the command's contract and its Ink rendering.
  */
 
 import { Spinner } from "@inkjs/ui"
-import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
-import { CommandError } from "@mailwoman/core/scripting/command"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { publishTiles, type PublishTilesOptions } from "#tiles/publish"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -45,52 +28,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	file: string
-	tileset: string
-	bucket: string
-	prefix: string
-	dryRun: boolean
-}
-
-const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
-
-async function publishTiles(options: Options): Promise<string> {
-	const { $private } = await import("#env")
-	const { $ } = await import("zx")
-
-	if (!(await pathExists(options.file))) throw new CommandError(`--file not found: ${options.file}`)
-
-	if (!options.file.endsWith(".pmtiles")) throw new CommandError(`--file must be a .pmtiles archive: ${options.file}`)
-
-	const key = `${options.prefix}/${options.tileset}.pmtiles`
-	const size = await formatFileSize(options.file)
-	const servedAt = `https://tiles.mailwoman.ai/${options.tileset}.json`
-
-	if (options.dryRun) {
-		return `[dry-run] ${options.file} (${size}) → ${options.bucket}/${key}\n[dry-run] would serve at ${servedAt}`
-	}
-
-	const missing = REQUIRED_ENV.filter((v) => !$private[v])
-
-	if (missing.length) {
-		throw new CommandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
-	}
-
-	// rclone reads RCLONE_S3_* from the inherited env for the on-the-fly `:s3:` remote. The flags skip the
-	// post-PUT HEAD + checksum ops that 501 against R2 (see docs/scripts/publish-demo-assets-to-r2.py rationale).
-	const remote = `:s3:${options.bucket}/${key}`
-	const flags = ["--s3-no-head", "--s3-disable-checksum", "--no-update-modtime"]
-	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${options.file} ${remote} ${flags}`
-
-	if (result.exitCode !== 0) {
-		throw new CommandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
-	}
-
-	return `✓ ${options.bucket}/${key} (${size})\n  served at ${servedAt}`
-}
-
-const TilesPublish: ParsedCommandComponent<Options> = ({ options }) => {
+const TilesPublish: ParsedCommandComponent<PublishTilesOptions> = ({ options }) => {
 	const state = useCommandTask(async () => publishTiles(options))
 
 	return (

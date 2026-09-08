@@ -1,0 +1,90 @@
+{
+	"name": "@mailwoman/astrogeology",
+	"version": "1.0.0",
+	"private": true,
+	"description": "USGS Astrogeology products (the planetary nomenclature gazetteer, the LOLA and MOLA global DEMs) built into PMTiles, search artifacts and manifests for the Moon and Mars maps.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"bin": "./out/cli.js",
+	"type": "module",
+	"imports": {
+		"#*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		"./bodies": {
+			"types": "./out/bodies.d.ts",
+			"node": "./lib/bodies.ts",
+			"default": "./out/bodies.js"
+		},
+		"./normalize": {
+			"types": "./out/normalize.d.ts",
+			"node": "./lib/normalize.ts",
+			"default": "./out/normalize.js"
+		},
+		"./schema/nomenclature": {
+			"types": "./out/schema/nomenclature.d.ts",
+			"node": "./lib/schema/nomenclature.ts",
+			"default": "./out/schema/nomenclature.js"
+		},
+		"./schema/manifest": {
+			"types": "./out/schema/manifest.d.ts",
+			"node": "./lib/schema/manifest.ts",
+			"default": "./out/schema/manifest.js"
+		},
+		"./schema/pmtiles-metadata": {
+			"types": "./out/schema/pmtiles-metadata.d.ts",
+			"node": "./lib/schema/pmtiles-metadata.ts",
+			"default": "./out/schema/pmtiles-metadata.js"
+		},
+		"./build/nomenclature": {
+			"types": "./out/build/nomenclature.d.ts",
+			"node": "./lib/build/nomenclature.ts",
+			"default": "./out/build/nomenclature.js"
+		},
+		"./build/hillshade": {
+			"types": "./out/build/hillshade.d.ts",
+			"node": "./lib/build/hillshade.ts",
+			"default": "./out/build/hillshade.js"
+		},
+		"./build/search-index": {
+			"types": "./out/build/search-index.d.ts",
+			"node": "./lib/build/search-index.ts",
+			"default": "./out/build/search-index.js"
+		},
+		"./build/metadata": {
+			"types": "./out/build/metadata.d.ts",
+			"node": "./lib/build/metadata.ts",
+			"default": "./out/build/metadata.js"
+		},
+		"./build/manifest": {
+			"types": "./out/build/manifest.d.ts",
+			"node": "./lib/build/manifest.ts",
+			"default": "./out/build/manifest.js"
+		}
+	},
+	"dependencies": {
+		"@inkjs/ui": "^2.0.0",
+		"@mailwoman/ancestrie": "workspace:*",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
+		"mailwoman": "workspace:*",
+		"path-ts": "^2.3.0",
+		"react": "^19.2.8",
+		"spliterator": "^6.4.1",
+		"wrangler": "^4.129.0",
+		"zod": "^4.5.4"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

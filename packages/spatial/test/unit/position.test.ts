@@ -4,12 +4,21 @@
  * @author Teffen Ellis, et al.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { greatCircleDistance, haversine, haversineKm } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
 
 // Earth mean radius the formula uses (RADII.km). Reference distances below are derived from it, not
 // looked up — so they pin the exact constant + formula, not an approximation.
 const R = 6371
+
+// `[longitude, latitude]` tuples; the object form keeps the Null-Island sentinel, so the equator pair starts ten
+// degrees east of (0, 0).
+test("greatCircleDistance takes the body radius: a quarter turn on the Moon is πR/2", () => {
+	const quarter = greatCircleDistance([10, 0], [100, 0], { body: "moon" })
+
+	expect(quarter).toBeCloseTo((Math.PI * 1737.4) / 2, 3)
+	expect(greatCircleDistance([10, 0], [100, 0])).toBeCloseTo(haversine([10, 0], [100, 0]), 9)
+})
 
 test("haversineKm: a point to itself is zero", () => {
 	expect(haversineKm(40.7128, -74.006, 40.7128, -74.006)).toBe(0)
