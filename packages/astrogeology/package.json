@@ -56,6 +56,11 @@
 			"node": "./lib/build/hillshade.ts",
 			"default": "./out/build/hillshade.js"
 		},
+		"./search/tokens": {
+			"types": "./out/search/tokens.d.ts",
+			"node": "./lib/search/tokens.ts",
+			"default": "./out/search/tokens.js"
+		},
 		"./build/search-index": {
 			"types": "./out/build/search-index.d.ts",
 			"node": "./lib/build/search-index.ts",

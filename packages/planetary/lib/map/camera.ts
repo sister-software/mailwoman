@@ -25,7 +25,7 @@ const SMALL_FEATURE_ZOOM = 9
 /**
  * The zoom a selected feature is framed at, from its diameter in kilometres.
  */
-export function zoomForDiameter(diameterKm: number | undefined): number {
+export function framingZoom(diameterKm: number | undefined): number {
 	if (diameterKm === undefined) return SMALL_FEATURE_ZOOM
 
 	for (const [minDiameterKm, zoom] of SELECTION_ZOOM_STEPS) {

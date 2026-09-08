@@ -49,23 +49,41 @@
 			"types": "./out/features/selected.d.ts",
 			"node": "./lib/features/selected.ts",
 			"default": "./out/features/selected.js"
+		},
+		"./features/tile-properties": {
+			"types": "./out/features/tile-properties.d.ts",
+			"node": "./lib/features/tile-properties.ts",
+			"default": "./out/features/tile-properties.js"
+		},
+		"./search": {
+			"types": "./out/search/index.d.ts",
+			"node": "./lib/search/index.ts",
+			"default": "./out/search/index.js"
 		}
 	},
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"preview": "vite preview --port 7790 --strictPort",
+		"preview": "vite preview --port 7770 --strictPort",
+		"test:browser": "playwright test",
 		"deploy:dry-run": "wrangler deploy --dry-run"
 	},
 	"dependencies": {
+		"@mailwoman/ancestrie": "workspace:*",
+		"@mailwoman/astrogeology": "workspace:*",
+		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/react": "workspace:*",
 		"@mailwoman/site-kit": "workspace:*",
+		"maplibre-gl": "^6.7.0",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
+		"react-map-gl": "^8.1.3",
 		"workbox-precaching": "^7.4.1",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.63.0",
 		"@types/react": "^19.2.18",
 		"@types/react-dom": "^19.2.7",
 		"@vitejs/plugin-react": "^6.1.1",

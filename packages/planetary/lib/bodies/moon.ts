@@ -16,6 +16,8 @@ export const MOON: PlanetaryMapConfig = {
 	title: "Mailwoman Moon",
 	hostname: "moon.mailwoman.ai",
 	initialView: { longitude: 0, latitude: 0, zoom: 1.5 },
+	latitudeType: "planetocentric",
+	terrainCredit: "NASA LRO LOLA",
 	tiles: {
 		nomenclature: "https://tiles.mailwoman.ai/moon.json",
 		hillshade: "https://tiles.mailwoman.ai/moon-hillshade.json",

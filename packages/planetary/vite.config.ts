@@ -8,15 +8,16 @@
  *   There is no server side; every output is a static asset Cloudflare serves without invoking a Worker.
  */
 
-// The package's own subpaths rather than `./lib/…`: the config sits outside `lib/`, so a relative path into the
-// emitting project cannot be rewritten by the test project that checks this file.
-import { BODY_CONFIGS } from "@mailwoman/planetary/bodies"
-import { $public } from "@mailwoman/planetary/env"
 import { buildInfoPlugin } from "@mailwoman/site-kit/vite/build-info"
 import { installablePWA } from "@mailwoman/site-kit/vite/pwa"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
+
+// The package's own `#` map rather than `./lib/…`: the config sits outside `lib/`, so a relative path into the
+// emitting project cannot be rewritten by the test project that checks this file.
+import { BODY_CONFIGS } from "#bodies/index"
+import { $public } from "#env"
 
 const body = $public.PLANETARY_BODY
 const config = BODY_CONFIGS[body]

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { zoomForDiameter } from "@mailwoman/planetary/map/camera"
+import { framingZoom } from "@mailwoman/planetary/map/camera"
 import { expect, test } from "vitest"
 
 test.each([
@@ -19,5 +19,5 @@ test.each([
 	[0, 9],
 	[undefined, 9],
 ])("a %s km feature is framed at zoom %d", (diameterKm, zoom) => {
-	expect(zoomForDiameter(diameterKm)).toBe(zoom)
+	expect(framingZoom(diameterKm)).toBe(zoom)
 })

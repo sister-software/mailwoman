@@ -27,9 +27,10 @@ import {
 	minZoomForDiameter,
 	writeNomenclatureNDJSON,
 } from "@mailwoman/astrogeology/build/nomenclature"
-import { buildSearchIndex, nomenclatureTokens } from "@mailwoman/astrogeology/build/search-index"
+import { buildSearchIndex } from "@mailwoman/astrogeology/build/search-index"
 import { featureFromSourceRow, type NomenclatureSourceRow } from "@mailwoman/astrogeology/normalize"
 import { PlanetaryBuildManifestSchema } from "@mailwoman/astrogeology/schema/manifest"
+import { nomenclatureTokens } from "@mailwoman/astrogeology/search/tokens"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"

@@ -16,6 +16,8 @@ export const MARS: PlanetaryMapConfig = {
 	title: "Mailwoman Mars",
 	hostname: "mars.mailwoman.ai",
 	initialView: { longitude: -110, latitude: 10, zoom: 2 },
+	latitudeType: "planetocentric",
+	terrainCredit: "NASA MGS MOLA",
 	tiles: {
 		nomenclature: "https://tiles.mailwoman.ai/mars.json",
 		hillshade: "https://tiles.mailwoman.ai/mars-hillshade.json",

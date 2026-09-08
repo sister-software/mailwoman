@@ -754,6 +754,16 @@ jobs:
       - name: Earth shell smoke
         run: yarn workspace @mailwoman/earth test:browser
 
+      # One source, two builds: the planetary smoke runs once per body against a fresh build of that body.
+      - name: Moon smoke
+        run: yarn workspace @mailwoman/planetary test:browser
+        env:
+          PLANETARY_BODY: moon
+      - name: Mars smoke
+        run: yarn workspace @mailwoman/planetary test:browser
+        env:
+          PLANETARY_BODY: mars
+
       # The license worker's tests run under the Workers runtime (Miniflare) through the workspace's own vitest
       # config; the root sweep excludes them for the same reason it excludes the react browser leg.
       - name: Test license worker (Workers pool)

@@ -10,5 +10,12 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./dist/**/*", "./test/**", "./vite.config.ts", "./playwright.config.ts"],
-	"references": [{ "path": "../core" }, { "path": "../site-kit" }]
+	"references": [
+		{ "path": "../ancestrie" },
+		{ "path": "../astrogeology" },
+		{ "path": "../cartographer" },
+		{ "path": "../core" },
+		{ "path": "../react" },
+		{ "path": "../site-kit" }
+	]
 }

@@ -23,6 +23,14 @@ export interface PlanetaryMapConfig {
 	title: string
 	hostname: string
 	initialView: PlanetaryView
+	/**
+	 * The latitude convention the archives carry, shown beside a coordinate so a reader knows which one they read.
+	 */
+	latitudeType: "planetocentric" | "planetographic"
+	/**
+	 * The mission and instrument behind the DEM the hillshade was rendered from, as the attribution names it.
+	 */
+	terrainCredit: string
 	tiles: {
 		/**
 		 * The TileJSON of the nomenclature vector tileset on the tile worker.

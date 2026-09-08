@@ -5707,7 +5707,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/astrogeology@workspace:packages/astrogeology":
+"@mailwoman/astrogeology@workspace:*, @mailwoman/astrogeology@workspace:packages/astrogeology":
   version: 0.0.0-use.local
   resolution: "@mailwoman/astrogeology@workspace:packages/astrogeology"
   dependencies:
@@ -6444,13 +6444,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/planetary@workspace:packages/planetary"
   dependencies:
+    "@mailwoman/ancestrie": "workspace:*"
+    "@mailwoman/astrogeology": "workspace:*"
+    "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/react": "workspace:*"
     "@mailwoman/site-kit": "workspace:*"
+    "@playwright/test": "npm:^1.63.0"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
     "@vitejs/plugin-react": "npm:^6.1.1"
+    maplibre-gl: "npm:^6.7.0"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
+    react-map-gl: "npm:^8.1.3"
     vite: "npm:^8.2.2"
     vite-plugin-pwa: "npm:^1.3.0"
     workbox-precaching: "npm:^7.4.1"
