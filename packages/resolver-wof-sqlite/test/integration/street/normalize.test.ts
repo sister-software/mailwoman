@@ -10,7 +10,9 @@
 
 import {
 	canonicalizeRouteKey,
+	normalizeHouseNumberForKey,
 	normalizeLocalityForKey,
+	normalizeLocalityForKeyLocale,
 	normalizeStreetForKey,
 	normalizeStreetForKeyLocale,
 	streetKeyVariants,
@@ -226,5 +228,32 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 	it("the letter maps stay OUT of the other locales — built extracts keep their keys", () => {
 		// A Polish-named street in a de extract keys with ł intact, exactly as the extract was built.
 		expect(normalizeStreetForKeyLocale("Łuckastraße", "de")).toBe("łuckastrasse")
+	})
+})
+
+describe("the zh branch — the Taiwanese register's Han keys", () => {
+	it("keys a street as its Han fold: no whitespace, kanji section numerals as written", () => {
+		expect(normalizeStreetForKeyLocale("重慶南路一段", "zh")).toBe("重慶南路一段")
+		expect(normalizeStreetForKeyLocale("重慶南路 一段", "zh")).toBe("重慶南路一段")
+		// Full-width Latin or digits inside a name fold to ASCII, as they do in the number.
+		expect(normalizeStreetForKeyLocale("中山路２段", "zh")).toBe("中山路2段")
+	})
+
+	it("keys 臺 and 台 as one locality: the register writes 臺北市, a query 台北市", () => {
+		expect(normalizeLocalityForKeyLocale("臺北市中正區", "zh")).toBe("台北市中正區")
+		expect(normalizeLocalityForKeyLocale("台北市 中正區", "zh")).toBe("台北市中正區")
+		// The shared fold is untouched: the candidate gazetteer keys 臺 names as written.
+		expect(normalizeLocalityForKey("臺北市")).toBe("臺北市")
+		expect(normalizeLocalityForKeyLocale("Paris", "fr")).toBe("paris")
+	})
+
+	it("keys the number without the register's 號 and without full width", () => {
+		expect(normalizeHouseNumberForKey("１２２號", "zh")).toBe("122")
+		expect(normalizeHouseNumberForKey("122號", "zh")).toBe("122")
+		expect(normalizeHouseNumberForKey("122", "zh")).toBe("122")
+		expect(normalizeHouseNumberForKey("14之12號", "zh")).toBe("14之12")
+		// Every Latin locale keeps the trimmed, lower-cased number the extracts store.
+		expect(normalizeHouseNumberForKey(" 12A ", "us")).toBe("12a")
+		expect(normalizeHouseNumberForKey("3 a", "fr")).toBe("3 a")
 	})
 })

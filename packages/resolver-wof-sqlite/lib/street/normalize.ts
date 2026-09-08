@@ -193,7 +193,17 @@ export function normalizeStreetForKey(street: string): StreetKey {
  * article, so no salient-token / multi-key index is built yet (deferred until probing shows the normalizer can't absorb
  * the false-negatives).
  */
-export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id"
+export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id" | "zh"
+
+/**
+ * The Han fold shared by every `zh` key: NFKC so a full-width digit or letter keys as its ASCII form (the Taiwanese
+ * civil-affairs registers write `１２２`, a person types `122`), 臺 → 台 (the register writes 臺北市, the common hand writes
+ * 台北市), and no whitespace at all, because a Han surface carries none and a stray space would split one key into two.
+ * Kanji numerals stay as written: the register spells a road section `一段`, and so does a query.
+ */
+function foldHan(input: string): string {
+	return input.normalize("NFKC").replaceAll("臺", "台").replaceAll(/\s+/g, "").toLowerCase()
+}
 
 /**
  * Country → street-locale registry surface for the acquisition SDKs (BAN, OSM). Each SDK keeps its own map — membership
@@ -288,6 +298,10 @@ const ID_STREET_ABBREV = new Map<string, string>([
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): StreetKey {
 	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
 
+	// A Han street name has no tokens, no type abbreviation and no diacritics; the Latin pipeline below would only
+	// split it on whitespace it never carries. `zh` keys are the Han fold and nothing else.
+	if (locale === "zh") return foldHan(street) as StreetKey
+
 	// Hyphen → space so a compound name keys the same whether the source or the query writes the
 	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure
 	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
@@ -360,6 +374,26 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
  */
 export function normalizeLocalityForKey(locality: string): NameKey {
 	return fold(locality) as NameKey
+}
+
+/**
+ * The locality key under a street locale: the Han fold for `zh`, {@link normalizeLocalityForKey} for every other.
+ * Separate from the shared fold on purpose — the candidate gazetteer's `name_key` column is the shared fold, and a Han
+ * rule inside it would re-key every 臺 name under an extract built without the rule.
+ */
+export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLocale): NameKey {
+	return locale === "zh" ? (foldHan(locality) as NameKey) : normalizeLocalityForKey(locality)
+}
+
+/**
+ * The house-number key under a street locale. Every Latin register stores a lower-cased, trimmed number and the reader
+ * probes the same; `zh` additionally folds width and drops the trailing 號 the Taiwanese registers write on the number
+ * itself (`１２２號`), which a parse also carries on the `house_number` span (`122號`). Both sides key `122`.
+ */
+export function normalizeHouseNumberForKey(number: string, locale: StreetLocale): string {
+	if (locale === "zh") return foldHan(number).replace(/號$/u, "")
+
+	return number.trim().toLowerCase()
 }
 
 /**

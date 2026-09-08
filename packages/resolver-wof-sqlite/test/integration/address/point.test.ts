@@ -15,7 +15,12 @@ import {
 	type AddressPointDatabase,
 	createAddressPointTable,
 } from "@mailwoman/resolver-wof-sqlite/address"
-import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import {
+	normalizeHouseNumberForKey,
+	normalizeLocalityForKeyLocale,
+	normalizeStreetForKey,
+	normalizeStreetForKeyLocale,
+} from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
@@ -260,5 +265,70 @@ describe("the postcode rung's locality contradiction (#1631)", () => {
 
 	it("holds a full-name extract to the locality it names", () => {
 		expect(fullKeys.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas" })).toBeNull()
+	})
+})
+
+describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區", () => {
+	let zh: AddressPointSqliteLookup
+
+	beforeAll(async () => {
+		const dir = fixtures.use(await temporaryDirectory("ap-lookup-zh-")).path
+		const path = join(dir, "tw.db")
+		using kdb = new DatabaseClient<AddressPointDatabase>(path)
+
+		await createAddressPointTable(kdb)
+
+		const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
+
+		// The register's own surfaces: 臺 in the 縣市, full-width digits and 號 on the number, the 里 in admin_code, no
+		// postcode. Two 中正區 exist (臺北市, 基隆市), so the scope key carries the 縣市 too.
+		const rows: Array<[string, string, string, string | null, string]> = [
+			["臺北市中正區", "重慶南路一段", "１２２號", null, "建國里"],
+			["基隆市中正區", "中正路", "１２２號", null, "正義里"],
+			["高雄市旗津區", "旗下巷", "１４", "之１２號", "旗下里"],
+		]
+
+		for (const [scope, street, number, unit, village] of rows) {
+			const streetNorm = normalizeStreetForKeyLocale(street, "zh")
+
+			insert.run(
+				streetNorm,
+				streetNorm,
+				normalizeHouseNumberForKey(number, "zh"),
+				unit,
+				null,
+				normalizeLocalityForKeyLocale(scope, "zh"),
+				street,
+				scope.startsWith("臺北") ? 25.0399658 : scope.startsWith("基隆") ? 25.1283 : 22.6133451,
+				scope.startsWith("臺北") ? 121.5124584 : scope.startsWith("基隆") ? 121.7419 : 120.2650804,
+				"overture:OpenAddresses/Taipei City Government Civil Affairs Bureau",
+				"2026-06-17.0",
+				village,
+				null
+			)
+		}
+
+		zh = fixtures.use(new AddressPointSqliteLookup(path, { streetLocale: "zh" }))
+	})
+
+	it("answers the parse's region + subregion as the scope, with the common 台 for the register's 臺", () => {
+		const hit = zh.find({ street: "重慶南路一段", number: "122號", region: "台北市", subregion: "中正區" })
+
+		expect(hit).toMatchObject({ lat: 25.0399658, lon: 121.5124584, localityNorm: "台北市中正區" })
+	})
+
+	it("keeps the two 中正區 apart: Keelung's 中正路 122 is not Taipei's", () => {
+		expect(zh.find({ street: "中正路", number: "122號", region: "台北市", subregion: "中正區" })).toBeNull()
+		expect(zh.find({ street: "中正路", number: "122", region: "基隆市", subregion: "中正區" })?.lat).toBe(25.1283)
+	})
+
+	it("falls from a sub-number to its base number", () => {
+		expect(zh.find({ street: "旗下巷", number: "14之12號", region: "高雄市", subregion: "旗津區" })?.lat).toBe(
+			22.6133451
+		)
+	})
+
+	it("a scope-less query misses rather than answering the first row of the street", () => {
+		expect(zh.find({ street: "重慶南路一段", number: "122號" })).toBeNull()
 	})
 })

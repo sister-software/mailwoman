@@ -52,6 +52,9 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	["LicenseRef-USGov-Public-Domain", []],
 	// Licence Ouverte 2.0 (etalab), BAN's elected license.
 	["etalab-2.0", [LicenseObligation.Attribution]],
+	// 政府資料開放授權條款－第1版, the Taiwanese civil-affairs address registers behind Overture-TW. Attribution is the
+	// condition of the grant itself: the license voids without the 顯名聲明, so the per-agency list travels with the data.
+	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],
 ])

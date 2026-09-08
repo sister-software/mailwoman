@@ -49,6 +49,7 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 import { resolverDefaultCountry } from "#country-scope"
 import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps } from "#geocode/core"
 import { layerDatabasePath } from "#geocode/layer-paths"
+import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode/regions"
 import type { GeocodeResult } from "#geocode/result"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
@@ -634,6 +635,18 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		nationalDatabases = undefined
 	}
 
+	// The national Overture rooftop tier (Taiwan today), composed BELOW BAN — a country BAN covers keeps BAN's
+	// register — and ABOVE OSM, since a civil-affairs register outranks the community map. In-package, so it needs no
+	// import guard; it is a no-op for a country with no database on disk.
+	const overtureProvider = await OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot))
+	const banDatabases = nationalDatabases
+
+	nationalDatabases = (country: string): RegionDatabases => {
+		const ban = banDatabases?.(country)
+
+		return ban?.addressPoints || ban?.streetCentroids ? ban : overtureProvider.for(country)
+	}
+
 	// Build-local OSM rooftop tier (#247), behind the package + on-disk-database boundary. The provider
 	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
 	// an absent unpublished @mailwoman/osm package or absent database remains an admin-only no-op.
@@ -842,7 +855,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(streetMorphology ? { streetMorphology } : {}),
 			resolver,
 			databases,
-			...(nationalDatabases ? { nationalDatabases } : {}),
+			nationalDatabases,
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),

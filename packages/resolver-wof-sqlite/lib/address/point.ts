@@ -21,7 +21,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { AddressPointDatabase, AddressPointTable } from "#address/point-schema"
 import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 import {
+	normalizeHouseNumberForKey,
 	normalizeLocalityForKey,
+	normalizeLocalityForKeyLocale,
 	type NameKey,
 	type StreetKey,
 	streetKeyVariants,
@@ -110,12 +112,22 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		number: string
 		postcode?: string
 		locality?: string
+		region?: string
+		subregion?: string
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	}): AddressPointHit | null {
 		if (!this.#byPostcode || !this.#byLocality || !this.#byBbox) return null
-		const number = query.number.trim().toLowerCase()
+		const number = normalizeHouseNumberForKey(query.number, this.#locale)
 
 		if (!number) return null
+
+		// A `zh` extract scopes a point by 縣市 + 鄉鎮市區, the pair the parse tags `region` + `subregion`; the Taiwanese
+		// register carries no postcode and the parse no `locality`. The pair becomes the locality key here, on the
+		// reader that was built with the same fold, and a Latin extract never sees the two fields.
+		const scoped =
+			this.#locale === "zh" && !query.locality && query.subregion
+				? { ...query, locality: `${query.region ?? ""}${query.subregion}` }
+				: query
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
 		// collapse and the saint↔st register swap — each variant runs the FULL number ladder below, and
@@ -123,7 +135,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		let row: AddressPointRow | undefined
 
 		for (const streetNorm of streetKeyVariants(query.street, streetLocaleForSurface(query.street, this.#locale))) {
-			row = this.#findForKey(streetNorm, number, query)
+			row = this.#findForKey(streetNorm, number, scoped)
 
 			if (row) break
 		}
@@ -183,6 +195,17 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				row = this.#probe(streetNorm, `${joined[1]}${joined[2]}`, query) ?? this.#probe(streetNorm, joined[1]!, query)
 			} else if (spaced) {
 				row = this.#probe(streetNorm, `${spaced[1]} ${spaced[2]}`, query) ?? this.#probe(streetNorm, spaced[1]!, query)
+			}
+		}
+
+		// Sub-number fallback for the Taiwanese register: `14之12` is building 12 off number 14, stored as number `14`
+		// with the sub-number in `unit`. A query that kept the pair on the number span falls to the base number — the
+		// same adjacent-parcel approximation the letter-suffix rung makes, priced the same.
+		if (!row && this.#locale === "zh") {
+			const base = /^(\d+)之\d+$/u.exec(number)?.[1]
+
+			if (base) {
+				row = this.#probe(streetNorm, base, query)
 			}
 		}
 
@@ -248,9 +271,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * 13e Arrondissement" and "Paris" both hit; a no-op for every other locale.
 	 */
 	#localityKey(locality: string): NameKey {
-		return this.#locale === "fr"
-			? stripArrondissement(normalizeLocalityForKey(locality))
-			: normalizeLocalityForKey(locality)
+		if (this.#locale === "fr") return stripArrondissement(normalizeLocalityForKey(locality))
+
+		return normalizeLocalityForKeyLocale(locality, this.#locale)
 	}
 
 	/**

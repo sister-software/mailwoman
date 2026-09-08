@@ -45,6 +45,14 @@ export interface AddressPointLookup {
 		postcode?: string
 		locality?: string
 		/**
+		 * The parse's `region` and `subregion` spans, for a register whose rows carry neither postcode nor locality. The
+		 * Taiwanese register scopes a point by 縣市 and 鄉鎮市區 (`臺北市` / `中正區`), which the parse tags `region` and `subregion`;
+		 * a reader built on that register composes its locality key from the pair. Every other reader ignores both, so the
+		 * Latin path is byte-stable.
+		 */
+		region?: string
+		subregion?: string
+		/**
 		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried AFTER postcode/locality. For extracts whose
 		 * points carry no postcode/locality of their own (OSM addr nodes often don't) but DO carry a coordinate — the
 		 * resolved locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it

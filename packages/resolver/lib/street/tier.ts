@@ -125,6 +125,10 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 	const localityNode = firstOfTag(roots, "locality")
 	const locality = localityNode?.value.trim()
 	const postcode = firstOfTag(roots, "postcode")?.value.trim()
+	// The admin pair a register with no postcode and no locality tier scopes by (the Taiwanese 縣市 + 鄉鎮市區). Carried
+	// beside `locality`, never in its place: a Latin reader ignores both.
+	const region = firstOfTag(roots, "region")?.value.trim()
+	const subregion = firstOfTag(roots, "subregion")?.value.trim()
 
 	if (!pairs.length) return
 
@@ -154,6 +158,8 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			number: pair.houseNumber.value,
 			postcode,
 			locality,
+			region,
+			subregion,
 			bbox,
 		})
 

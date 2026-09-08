@@ -9,6 +9,16 @@
  *   it up; you interpolate (#483) only on miss. This database is also the gold standard the future
  *   TIGER interpolation is graded against.
  *
+ *   `mailwoman situs address-points --country TW` — the NATIONAL shape of the same build, for a country whose
+ *   Overture addresses are one register rather than fifty: one `address-points-<cc>.db`, read by
+ *   `OvertureNationalDatabaseProvider`. The country names its street locale through that provider's
+ *   registry, so the keys here are the keys the reader probes with. Taiwan (`zh`) scopes a point by
+ *   縣市 + 鄉鎮市區 (`address_levels[1]` + `[2]`, folded together into `locality_norm`), carries no
+ *   postcode, writes the number as `１２２號`, and names the 村里 (`address_levels[3]`) which lands in
+ *   `admin_code`. `--bbox` drops rows whose coordinate falls outside the country: the 2026-06-17.0 TW
+ *   parquet carries one row placed in Alaska, and a mis-keyed source point served as a rooftop is the
+ *   highest-confidence wrong answer the pipeline can give.
+ *
  *   Keying uses THE shared normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize`) — the same
  *   function the lookup tier applies at query time. Provenance per row (epic #470 rules): source
  *   dataset + release pinned in-table.
@@ -42,7 +52,16 @@ export const spec = {
 	name: "address-points",
 	description: "Build a state address-point database",
 	options: {
-		state: { type: "string", required: true, description: "US state abbreviation" },
+		state: { type: "string", description: "US state abbreviation (the per-state build)" },
+		country: {
+			type: "string",
+			description:
+				"ISO alpha-2 country for a NATIONAL build from addresses-<cc>.parquet (registered in national-overture.ts)",
+		},
+		bbox: {
+			type: "string",
+			description: "minLon,minLat,maxLon,maxLat — drop rows whose coordinate falls outside (national builds)",
+		},
 		release: { type: "string", default: "2026-05-20.0", description: "Overture release" },
 		out: { type: "string", description: "Output DB path" },
 		"county-fips": { type: "string", validate: (v: string) => /^\d{5}$/u.test(v), description: "County FIPS" },
@@ -53,8 +72,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
+/**
+ * The four numbers a `--bbox` carries: minLon, minLat, maxLon, maxLat.
+ */
+const BBOX_FIELDS = 4
+
 interface Options {
-	state: string
+	state?: string
+	country?: string
+	bbox?: string
 	release: string
 	out?: string
 	countyFips?: string
@@ -72,9 +98,25 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
 		const OA_MODE = Boolean(options.oaCSV)
+		// National mode: one country's whole parquet, keyed with the locale its provider registers.
+		const COUNTRY = options.country?.toUpperCase()
 
-		if (!options.state) {
-			throw new CommandError("--state required (US state abbreviation, e.g. VT)")
+		if (!options.state && !COUNTRY) {
+			throw new CommandError("--state (a US state abbreviation, e.g. VT) or --country (e.g. TW) is required")
+		}
+
+		if (options.state && COUNTRY) {
+			throw new CommandError("--state and --country are two builds; pass one")
+		}
+
+		if (COUNTRY && (options.countyFips || options.oaCSV)) {
+			throw new CommandError("--country takes neither --county-fips nor --oa-csv")
+		}
+
+		const bbox = options.bbox?.split(",").map(Number)
+
+		if (bbox && (bbox.length !== BBOX_FIELDS || bbox.some((value) => !Number.isFinite(value)))) {
+			throw new CommandError("--bbox must be minLon,minLat,maxLon,maxLat")
 		}
 
 		if (options.countyFips && !/^\d{5}$/.test(options.countyFips)) {
@@ -87,11 +129,27 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 		}
 
-		const STATE = options.state.toUpperCase()
-		const PARQUET = dataRootPath("overture", options.release, "addresses-us.parquet")
+		const STATE = options.state?.toUpperCase() ?? ""
+
+		const PARQUET = COUNTRY
+			? dataRootPath("overture", options.release, `addresses-${COUNTRY.toLowerCase()}.parquet`)
+			: dataRootPath("overture", options.release, "addresses-us.parquet")
+
+		// The build's label in every message and in the layer manifest: the state or the country.
+		const SCOPE = COUNTRY ?? STATE
+
+		const { licenseForOvertureCountry, nationalAddressPointsPath, streetLocaleForOvertureCountry } =
+			await import("#geocode/national-overture")
+
+		// A national build keys with the locale the provider will read it with — the one-function discipline across the
+		// build/probe boundary; an unregistered country throws here rather than keying with the wrong rules.
+		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : undefined
 
 		const finalOut = resolvePath(
-			options.out ?? dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`)
+			options.out ??
+				(COUNTRY
+					? nationalAddressPointsPath(String(dataRootPath()), COUNTRY)
+					: dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`))
 		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
@@ -120,7 +178,15 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		const { ADDRESS_POINT_COLUMNS, createAddressPointTable, createAddressPointIndexes } = pointSchema
-		const { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } = streetNormalize
+
+		const {
+			canonicalizeRouteKey,
+			normalizeHouseNumberForKey,
+			normalizeLocalityForKey,
+			normalizeLocalityForKeyLocale,
+			normalizeStreetForKey,
+			normalizeStreetForKeyLocale,
+		} = streetNormalize
 
 		// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
 		// Empty = no filter (keep everything).
@@ -190,6 +256,8 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 					.join(", ")
 			: ""
 
+		const bboxFilter = bbox ? `AND lon BETWEEN ${bbox[0]} AND ${bbox[2]} AND lat BETWEEN ${bbox[1]} AND ${bbox[3]}` : ""
+
 		const streamSQL = OA_MODE
 			? `SELECT
 							NUMBER AS number, STREET AS street, NULLIF(trim(UNIT), '') AS unit,
@@ -199,7 +267,21 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 							LAT AS lat, LON AS lon
 						FROM read_csv([${oaCSVList}], header = true, all_varchar = true)
 						WHERE nullif(trim(STREET), '') IS NOT NULL AND nullif(trim(NUMBER), '') IS NOT NULL`
-			: `SELECT
+			: COUNTRY
+				? `SELECT
+							number, street, unit, postcode,
+							-- The scope pair: the country's top two admin levels, folded together at insert time.
+							concat(coalesce(trim(address_levels[1].value), ''), coalesce(trim(address_levels[2].value), '')) AS locality,
+							nullif(trim(address_levels[3].value), '') AS admin_code,
+							sources[1].dataset AS dataset,
+							lat, lon
+						FROM read_parquet('${PARQUET}')
+						WHERE country = '${COUNTRY}'
+							AND nullif(trim(street), '') IS NOT NULL
+							AND nullif(trim(number), '') IS NOT NULL
+							${bboxFilter}
+							${datasetFilter}`
+				: `SELECT
 							number, street, unit, postcode,
 							coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
 							sources[1].dataset AS dataset,
@@ -225,19 +307,33 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 				datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
 
 				const streetRaw = String(r.street)
-				const streetNorm = normalizeStreetForKey(streetRaw)
+
+				const streetNorm = nationalLocale
+					? normalizeStreetForKeyLocale(streetRaw, nationalLocale)
+					: normalizeStreetForKey(streetRaw)
 
 				if (!streetNorm) continue
 				const lat = Number(r.lat)
 				const lon = Number(r.lon)
 
-				if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue // OA rows can carry empty coords
-				const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
+				if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
+
+				// OA rows can carry empty coords
+
+				const locality = r.locality
+					? nationalLocale
+						? normalizeLocalityForKeyLocale(String(r.locality), nationalLocale)
+						: normalizeLocalityForKey(String(r.locality))
+					: null
+
+				const number = normalizeHouseNumberForKey(String(r.number), nationalLocale ?? "us")
+
+				if (!number) continue
 
 				insert.run(
 					streetNorm,
 					canonicalizeRouteKey(streetNorm),
-					String(r.number).trim().toLowerCase(),
+					number,
 					r.unit ? String(r.unit).trim().toLowerCase() : null,
 					r.postcode ? String(r.postcode).trim() : null,
 					locality,
@@ -246,8 +342,9 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 					lon,
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
 					OA_MODE ? "openaddresses-latest" : String(options.release),
-					// Neither source states a commune key or a certification flag.
-					null,
+					// The US and OA sources state no commune key; a national build carries the third admin level (the
+					// Taiwanese 村里) here, the finest place the register names below the scope pair.
+					r.admin_code ? String(r.admin_code) : null,
 					null
 				)
 
@@ -257,7 +354,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 
 		kdb.exec("COMMIT")
 
-		console.error(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
+		console.error(`${totalReturned} ${SCOPE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
 
 		await createAddressPointIndexes(kdb)
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
@@ -271,9 +368,9 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		// --- Provenance summary --- always emitted so the operator can audit which licenses a database carries.
 		const lines: string[] = [
 			`${kept} points → ${finalOut}`,
-			`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,
+			`${totalReturned} ${SCOPE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,
 			`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
-			`provenance (${STATE}, release ${options.release}):`,
+			`provenance (${SCOPE}, release ${options.release}):`,
 		]
 
 		const sortedDatasets = [...datasetCounts.entries()].toSorted((a, b) => b[1] - a[1])
@@ -289,10 +386,11 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			const totalResult = await duck.runAndReadAll(`
 						SELECT count(*) AS n
 						FROM read_parquet('${PARQUET}')
-						WHERE address_levels[1].value = '${STATE}'
+						WHERE ${COUNTRY ? `country = '${COUNTRY}'` : `address_levels[1].value = '${STATE}'`}
 							AND nullif(trim(street), '') IS NOT NULL
 							AND nullif(trim(number), '') IS NOT NULL
 							${countyFilter}
+							${bboxFilter}
 					`)
 
 			const totalUnfiltered = Number((totalResult.getRowObjects()[0] as Record<string, unknown>).n)
@@ -300,7 +398,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			const droppedCount = totalUnfiltered - keptCount
 
 			lines.push(
-				`license-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${STATE})`
+				`license-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${SCOPE})`
 			)
 		}
 
@@ -313,15 +411,16 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		const { repoRootPath } = await import("@mailwoman/core/utils")
 
 		await stampLayerManifest(tmpOut, {
-			name: `address-points-us-${STATE.toLowerCase()}`,
+			name: COUNTRY ? `address-points-${COUNTRY.toLowerCase()}` : `address-points-us-${STATE.toLowerCase()}`,
 			version: options.release,
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
-			// The dataset allow-list this build applied is the licence claim — a database built with a different
-			// filter carries different terms, and the filter is reported in the build output but was recorded
-			// nowhere in the artifact.
-			license: "see attribution; per-dataset, filtered at build time",
-			attribution: `Overture addresses (${[...allowedDatasets].toSorted().join(", ")})`,
+			// The manifest admits only an SPDX expression the obligations table knows. The US build records Overture's
+			// theme license; which source datasets it kept is the attribution beside it, since a database built with a
+			// different allow-list carries different per-dataset terms. A national build records the theme license AND
+			// the register's own.
+			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
+			attribution: `Overture addresses (${(allowedDatasets.size ? [...allowedDatasets] : sortedDatasets.map(([dataset]) => dataset)).toSorted().join(", ")})`,
 			source: "overture-addresses",
 			sourceVintage: options.release,
 			buildCmd: "mailwoman situs address-points",

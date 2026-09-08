@@ -7,6 +7,7 @@
 export * from "#geocode/command-options"
 export * from "#geocode/core"
 export * from "#geocode/diff"
+export * from "#geocode/national-overture"
 export * from "#geocode/regions"
 export * from "#geocode/result"
 export * from "#geocode/session"
