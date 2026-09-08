@@ -7,41 +7,15 @@
  *   a larger feature sorts first at an equal prefix. The trie carries no ancestry (nomenclature has no containment
  *   graph); what it gives the app is a prefix walk over the names with the feature's id and position as cargo.
  *
- *   The tokenizer is exported and the app calls the same one over the query: the package never normalizes on its own,
- *   so a builder and a reader that tokenize differently never meet.
+ *   The tokenizer lives in `#search/tokens`, the platform-free half an app bundles; the build calls the same one.
  */
 
 import { AncestrieBuilder } from "@mailwoman/ancestrie"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isoSeconds } from "@mailwoman/core/utils"
 
-import type { BuildableBodyID } from "#bodies"
 import type { PlanetaryNomenclatureFeature } from "#schema/nomenclature"
-
-/**
- * What a suggestion carries back: enough to place the feature without a second lookup.
- */
-export interface NomenclatureSearchPayload {
-	id: string
-	body: BuildableBodyID
-	name: string
-	featureType: string
-	centerLon: number
-	centerLat: number
-	[key: string]: string | number
-}
-
-/**
- * A name as the tokens the trie stores: lowercased, split on whitespace and hyphens, punctuation dropped. The app
- * tokenizes a query with this same function.
- */
-export function nomenclatureTokens(name: string): string[] {
-	return name
-		.toLowerCase()
-		.split(/[\s-]+/u)
-		.map((token) => token.replaceAll(/[^\p{L}\p{N}]/gu, ""))
-		.filter((token) => token.length > 0)
-}
+import { type NomenclatureSearchPayload, nomenclatureTokens } from "#search/tokens"
 
 /**
  * Build the search artifact over the features and write it to `outPath`. Answers the entry count.

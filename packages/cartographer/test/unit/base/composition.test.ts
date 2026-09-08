@@ -183,6 +183,28 @@ test("Composer.toJS: is an alias of toJSON", () => {
 	expect(composer.toJS()).toEqual(composer.toJSON())
 })
 
+test("Composer: a composition with no overrides is the Earth style: base layers, the terrarium hillshade source, the sprite", () => {
+	const style = new StyleSpecificationComposer({ sources: {} }).toJSON()
+
+	expect(style.sprite).toMatch(/protomaps\/sprites\/v4\/light$/u)
+	expect(Object.keys(style.sources)).toContain("hillshade")
+	expect(style.layers.length).toBeGreaterThan(5)
+})
+
+test("Composer: a composition can bring its own base layers, no hillshade source and no sprite", () => {
+	const style = new StyleSpecificationComposer({
+		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.ai/moon.json" } },
+		baseLayers: [{ id: "space", type: "background", paint: { "background-color": "#000" } }],
+		hillshadeSource: null,
+		sprite: null,
+	}).toJSON()
+
+	expect(style.layers.map((layer) => layer.id)).toEqual(["space"])
+	expect(Object.keys(style.sources)).toEqual(["moon"])
+	expect("sprite" in style).toBe(false)
+	expect(style.glyphs).toMatch(/protomaps\/fonts/u)
+})
+
 test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {
 	// Regression for the shared-mutable-link bug: LayerSpecificationList now copies its input, so
 	// constructing a second composer no longer rewrites the first's kNext/kPrev links in place.

@@ -37,6 +37,7 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/tile-worker": "private demo-map tile worker — never publishes",
 	"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes",
 	"packages/earth": "private Earth map app — Cloudflare infrastructure, never publishes",
+	"packages/planetary": "private Moon and Mars map app — Cloudflare infrastructure, never publishes",
 	"packages/site-kit": "private static-site build conventions for the Earth and planetary apps — never publishes",
 	"packages/astrogeology": "private planetary data pipeline — no published consumer yet",
 	"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",

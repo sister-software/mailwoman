@@ -76,6 +76,15 @@
 				"test/browser/**/*.ts"
 			]
 		},
+		"packages/planetary": {
+			"entry": [
+				"lib/main.tsx",
+				"lib/service-worker.ts",
+				"vite.config.ts",
+				"playwright.config.ts",
+				"test/browser/**/*.ts"
+			]
+		},
 		"packages/license-worker": {
 			"entry": ["lib/index.ts", "test/**/*.ts", "vitest.config.ts"],
 			"ignoreDependencies": ["@cloudflare/vitest-pool-workers", "cloudflare", "wrangler"]

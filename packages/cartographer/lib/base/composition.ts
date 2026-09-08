@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { SourceSpecification } from "@maplibre/maplibre-gl-style-spec"
+import type { LayerSpecification, SourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 import type { LightSpecification, SkySpecification, StyleSpecification, TerrainSpecification } from "maplibre-gl"
 
 import { BaseLayers } from "#base/layers"
@@ -50,12 +50,38 @@ export function createSkySpec(spec?: Partial<SkySpecification>): SkySpecificatio
 
 //#region Style Composition
 
+/**
+ * The glyph host every style composed here reads fonts from. The Protomaps font set, mirrored under the public bucket
+ * so a style never depends on an upstream host at render time.
+ */
+export const PROTOMAPS_GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
+
+/**
+ * The Earth sprite. It must match the basemap schema version: the v4 sprite carries the icons the v4 theme's layers
+ * reference by name, so a style over a different basemap version needs a different sprite.
+ */
+export const PROTOMAPS_SPRITE_URL = "https://public.mailwoman.ai/protomaps/sprites/v4/light"
+
 export interface StyleSpecificationComposition {
 	sources: Record<string, SourceSpecification>
 	layers?: LayerSpecificationListInput[]
 	light?: Partial<LightSpecification>
 	sky?: Partial<SkySpecification>
 	terrain?: Partial<TerrainSpecification>
+	/**
+	 * The layer list every `layers` entry inserts into. Earth's basemap layers by default; a body with no roads, water or
+	 * buildings brings its own.
+	 */
+	baseLayers?: LayerSpecification[]
+	/**
+	 * The `hillshade` source. Earth's terrarium DEM by default; `null` adds no such source.
+	 */
+	hillshadeSource?: SourceSpecification | null
+	/**
+	 * The sprite URL. Earth's Protomaps v4 sprite by default; `null` omits the key, for a style with no icons.
+	 */
+	sprite?: string | null
+	glyphs?: string
 }
 
 /**
@@ -67,23 +93,29 @@ export class StyleSpecificationComposer {
 	sky: SkySpecification
 	// terrain: TerrainSpecification
 	sources: TileSetSourceRecord
+	sprite: string | null
+	glyphs: string
 
 	constructor(spec: StyleSpecificationComposition) {
 		this.light = createLightSpec(spec.light)
 		this.sky = createSkySpec(spec.sky)
+		this.sprite = spec.sprite === undefined ? PROTOMAPS_SPRITE_URL : spec.sprite
+		this.glyphs = spec.glyphs ?? PROTOMAPS_GLYPHS_URL
 
 		// this.terrain = {
 		// 	source: TerrainTileSetID,
 		// 	...spec.terrain,
 		// }
 
+		const hillshadeSource = spec.hillshadeSource === undefined ? createTerrainDEMSource() : spec.hillshadeSource
+
 		this.sources = {
 			...spec.sources,
 			// [TerrainTileSetID]: createTerrainDEMSource(),
-			[HillshadeTileSetID]: createTerrainDEMSource(),
+			...(hillshadeSource ? { [HillshadeTileSetID]: hillshadeSource } : {}),
 		}
 
-		this.layersList = new LayerSpecificationList(BaseLayers)
+		this.layersList = new LayerSpecificationList(spec.baseLayers ?? BaseLayers)
 
 		for (const layer of spec.layers || []) {
 			this.layersList.insert(layer)
@@ -97,11 +129,8 @@ export class StyleSpecificationComposer {
 	toJSON(): StyleSpecification {
 		const styleSpec: StyleSpecification = {
 			version: 8,
-			// Sprite must match the basemap schema version — v4 sprites carry the icons referenced
-			// by the v4 theme spec. Currently upstream URLs; we mirror these to nexus-assets/{fonts,
-			// sprites/v4}/ for self-hosting, but no public route fronts that bucket yet.
-			glyphs: "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf",
-			sprite: "https://public.mailwoman.ai/protomaps/sprites/v4/light",
+			glyphs: this.glyphs,
+			...(this.sprite === null ? {} : { sprite: this.sprite }),
 			light: createLightSpec(this.light),
 			sky: createSkySpec(this.sky),
 			// terrain: this.terrain,

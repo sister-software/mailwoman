@@ -133,6 +133,11 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 	browserRow("@mailwoman/neural/viterbi"),
 	browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
 	browserRow("@mailwoman/neural/web-loader", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
+	browserRow("@mailwoman/cartographer/planetary"),
+	browserRow("@mailwoman/astrogeology/search/tokens"),
+	browserRow("@mailwoman/astrogeology/schema/nomenclature"),
+	browserRow("@mailwoman/astrogeology/schema/manifest"),
+	browserRow("@mailwoman/planetary/search"),
 	browserRow("@mailwoman/neural/classifier", {
 		followDynamicImports: true,
 		allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS,

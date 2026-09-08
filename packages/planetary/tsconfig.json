@@ -1,0 +1,21 @@
+{
+	"extends": "@sister.software/tsconfig/web",
+	"compilerOptions": {
+		"rootDir": "./lib",
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"types": ["vite/client", "vite-plugin-pwa/client"]
+	},
+	"include": ["./lib/**/*"],
+	"exclude": ["./out/**/*", "./dist/**/*", "./test/**", "./vite.config.ts", "./playwright.config.ts"],
+	"references": [
+		{ "path": "../ancestrie" },
+		{ "path": "../astrogeology" },
+		{ "path": "../cartographer" },
+		{ "path": "../core" },
+		{ "path": "../react" },
+		{ "path": "../site-kit" }
+	]
+}
