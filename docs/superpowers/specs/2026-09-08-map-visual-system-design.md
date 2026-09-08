@@ -58,9 +58,33 @@ both set `"text-font": ["Fira Sans Regular"]`. Probing `https://public.mailwoman
 | `Open Sans Regular` (MapLibre's default stack)                        | 404               |
 | `Noto Sans Bold`, `Iosevka Nexus Regular`, `Arial Unicode MS Regular` | 404               |
 
-MapLibre renders no text at all when a glyph range fails. The 404 for `Fira Sans Regular` appears in the
-live failed-request list on `moon.mailwoman.ai`, and it is why no nomenclature label draws at zoom 1.5 or
-at zoom 7. The nomenclature TileJSON serves zoom 0–8, so the data was never the limit.
+MapLibre renders no text at all when a glyph range fails, so naming an absent stack is a defect on its own
+terms and `#styles/fonts` now holds the served names. It is NOT what blanks the planetary labels: after the
+repair deployed on `9504425c7`, `mars.mailwoman.ai` still draws none.
+
+### No nomenclature tile is ever requested, and the cause is above the style
+
+Measured on the deployed Mars app, with a HAR so that Web Worker traffic is counted — MapLibre fetches
+vector tiles from a worker, which a page-level request listener cannot see:
+
+| Kind | Requests |
+| --- | --- |
+| Hillshade raster tiles | 32, all 200 |
+| TileJSON documents | 3, all 200 |
+| Nomenclature vector tiles | **0** |
+| Glyph ranges | **0** |
+
+So the source resolves and is then asked for nothing. Everything below that point is healthy: the tile
+worker answers `mars.json` and every tile 200 with `access-control-allow-origin` echoing the app origin,
+and the tiles carry features at every zoom — 314 in `z0/0/0`, 111 in `z2/1/1`, 53 in `z3/2/3`.
+
+The style is exonerated by exercising it directly. Loading the exact object `createPlanetaryStyle`
+composes into a bare `maplibre-gl` 6.7.0 page — the version the repo pins — under globe projection, at the
+app's own opening camera, renders **131 labels** from 591 source features, with all four layers present, 6
+tile requests, 2 glyph requests and no error events. The spaced-capital region treatment reads as intended.
+
+The difference between that page and the app is `react-map-gl` 8.1.3 and `MapCanvas`. That is where the
+next measurement goes.
 
 ### Mars and the Moon render as the same picture
 
@@ -335,7 +359,8 @@ Each phase is deployable on its own.
 
 | #   | Contents                                                                                                                     | Result                                                                                                           |
 | --- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| 1   | `text-font` repair in both styles                                                                                            | Planetary labels and Earth building labels draw. One-line change, ships ahead of everything else                 |
+| 1a  | `text-font` repair in both styles                                                                                            | Shipped on `9504425c7`. Both styles name a served stack; planetary labels still absent, so this was necessary and not sufficient |
+| 1b  | Localize the missing planetary labels in `react-map-gl` 8.1.3 / `MapCanvas`                                                  | Moon and Mars name their features at all — the app's first job, and a precondition for judging any framing or palette change |
 | 2   | DTCG tokens, styleframe compile, `fonts.css`, docs bridge, cascade layers, delete the orphan selector and the navbar offsets | Panel readable, brand palette and typeface live, no layout change                                                |
 | 3   | The five chrome components, glass material with fallback, safe-area and motion tokens                                        | Nothing in production yet; stories and tests                                                                     |
 | 4   | Earth relayout, Developer demotion                                                                                           | The new front door                                                                                               |
