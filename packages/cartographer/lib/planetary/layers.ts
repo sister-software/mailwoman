@@ -12,6 +12,7 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 
 import { PlanetaryHillshadeSourceID, PlanetaryNomenclatureSourceID } from "#planetary/sources"
+import { PROTOMAPS_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
 
 export interface PlanetaryPalette {
@@ -90,7 +91,7 @@ export function labelLayer(palette: PlanetaryPalette): SymbolLayerSpecification 
 		"source-layer": "nomenclature",
 		layout: {
 			"text-field": ["get", "name"],
-			"text-font": ["Fira Sans Regular"],
+			"text-font": [PROTOMAPS_FONT_REGULAR],
 			"text-size": ["interpolate", ["linear"], ["coalesce", ["get", "diameterKm"], 0], 0, 11, 100, 14, 1000, 18],
 			"text-transform": ["match", ["get", "featureTypeCode"], REGION_FEATURE_TYPE_CODES, "uppercase", "none"],
 			"text-letter-spacing": ["match", ["get", "featureTypeCode"], REGION_FEATURE_TYPE_CODES, 0.15, 0.02],

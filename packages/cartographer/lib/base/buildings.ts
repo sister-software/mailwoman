@@ -11,6 +11,7 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 
 import { MailwomanBaseTileSetID } from "#base/theme"
+import { PROTOMAPS_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
@@ -114,7 +115,7 @@ export const BuildingLayers: LayerSpecification[] = [
 			"text-field": ["to-string", ["id"]],
 			"text-offset": [0, 0],
 			"text-anchor": "center",
-			"text-font": ["Fira Sans Regular"],
+			"text-font": [PROTOMAPS_FONT_REGULAR],
 		},
 
 		paint: {
