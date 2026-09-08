@@ -1,7 +1,7 @@
 # Planetary: static assets only. No `main`, so a navigation or an asset request never invokes a Worker; the SPA
-# fallback serves index.html for every path and the app reads location.pathname. Two Workers Builds projects deploy
-# this file, one per body, each with its own PLANETARY_BODY build variable and custom domain; the dashboard project
-# name overrides `name` (README, "Deployment").
+# fallback serves index.html for every path and the app reads location.pathname. One file, two Workers: each body is
+# an environment that names its Worker and its custom domain, and `wrangler deploy --env <body>` after a build with
+# the matching PLANETARY_BODY publishes that body. The custom domain is created from this file on the first deploy.
 
 name = "mailwoman-planetary"
 compatibility_date = "2026-09-07"
@@ -9,3 +9,11 @@ compatibility_date = "2026-09-07"
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+
+[env.moon]
+name = "mailwoman-moon"
+routes = [{ pattern = "moon.mailwoman.ai", custom_domain = true }]
+
+[env.mars]
+name = "mailwoman-mars"
+routes = [{ pattern = "mars.mailwoman.ai", custom_domain = true }]
