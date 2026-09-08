@@ -328,6 +328,9 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 		expect(zh.find({ street: "旗下巷", number: "14之12號", ...scope })?.lat).toBe(22.6133451)
 		expect(zh.find({ street: "旗下巷", number: "14號之12", ...scope })?.lat).toBe(22.6133451)
 		expect(zh.find({ street: "旗下巷", number: "１４號之１２", ...scope })?.lat).toBe(22.6133451)
+		// The attached number, alone and after a sub-number.
+		expect(zh.find({ street: "旗下巷", number: "14附3號", ...scope })?.lat).toBe(22.6133451)
+		expect(zh.find({ street: "旗下巷", number: "14之12附1號", ...scope })?.lat).toBe(22.6133451)
 	})
 
 	it("matches the stored pair by its tail when the line names only the 鄉鎮市區", () => {

@@ -18,6 +18,24 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — the Taiwan rooftop tier: a national address-point database from the civil-affairs registers
+
+`台北市中正區重慶南路一段122號` parsed correctly and resolved to Taipei City's point, 5 km from the address, because no
+register below the admin ladder existed for Taiwan. `mailwoman situs address-points --country TW` now builds
+`address-points/address-points-tw.db` from the Overture-TW parquet (9,712,173 points across 173,642 streets, the
+fifteen civil-affairs bureaus in the provenance), and `OvertureNationalDatabaseProvider` serves it in the geocode
+session below BAN and above OSM. The register scopes a point by 縣市 + 鄉鎮市區 and carries no postcode, so the
+address-point query carries the parse's `region` and `subregion`, and a `zh` reader composes its scope from the pair
+(or matches the stored pair by its 鄉鎮市區 tail when the line names no 縣市). The `zh` street locale is the Han fold:
+NFKC, 臺 → 台, no whitespace, the 號 dropped from the number, and the sub-number forms `30之19號` / `30號之19` /
+`30附40號` falling to the base number. On a 2,000-row draw of the Taiwan board, 1,998 rows answer at the
+address-point tier and 1,958 within 100 m of the row's own point; the same probe address answers 25.0399658,
+121.5124584 at 1 m. `OGDL-Taiwan-1.0` joins the obligations table, and the situs manifest records an SPDX expression:
+the string it stamped before was refused by the manifest check, so the US per-state build had been failing at its last
+step. The pre-commit hook read its CLI-freshness reference after the formatter had touched every staged source, so a
+commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
+first.
+
 ### Changed — the CJK base is `v8-cjk-regs` (card 0.0.3): Korean re-sourced, Taiwan added, three registries
 
 `@mailwoman/neural-weights-cjk` 0.0.3 ships the `v8-cjk-regs` graph (#2204). Korean is rebuilt from the ministry's
