@@ -2,10 +2,12 @@
 #
 # This file is production, flat, the way `tile-worker` is: `wrangler deploy` with no flag deploys it, which is what
 # Cloudflare's Workers Builds runs on a push to main. The sandbox is `wrangler.sandbox.toml`, a separate file passed
-# with `-c`, so no flag can land the wrong environment on this name. Every secret arrives through `wrangler secret
-# put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY). No `nodejs_compat`: every
-# dependency runs on the Workers runtime as shipped, and the `bundle-graph` health check holds the license subpaths
-# free of Node builtins.
+# with `-c`, so no flag can land the wrong environment on this name. The build command that precedes it is the root
+# `yarn ci:workers`, which compiles the two worker projects and their references and nothing else — a type error in a
+# workspace neither worker imports, `docs` above all, must not hold a production license deploy. Every secret arrives
+# through `wrangler secret put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY).
+# No `nodejs_compat`: every dependency runs on the Workers runtime as shipped, and the `bundle-graph` health check
+# holds the license subpaths free of Node builtins.
 
 name = "mailwoman-license"
 main = "./lib/index.ts"

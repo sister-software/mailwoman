@@ -1,4 +1,7 @@
 # Cloudflare Wrangler Configuration
+#
+# `main` is emitted, not source, so Workers Builds runs the root `yarn ci:workers` before `wrangler deploy`. That
+# script names this workspace and `license-worker`; both worker deploys stop if either name leaves it.
 
 name = "mailwoman-tiles"
 main = "./out/_worker.js"

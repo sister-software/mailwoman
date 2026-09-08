@@ -74,7 +74,7 @@ the installed release does not trust is a token no installation accepts, which i
 
 4. Fill `LICENSE_SIGNING_KID` in `wrangler.toml`. Leave `ISSUANCE_ENABLED = "false"`.
 5. Apply the migrations, then deploy. Cloudflare's Workers Builds deploys the worker on every push to `main` with
-   `yarn compile` as the build command and `wrangler deploy` as the deploy command; a first deploy by hand is the
+   `yarn ci:workers` as the build command and `wrangler deploy` as the deploy command; a first deploy by hand is the
    same command:
 
    ```bash
