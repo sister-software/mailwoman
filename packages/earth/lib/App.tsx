@@ -71,7 +71,14 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 	}
 
 	return (
-		<Geocoder runtime={handle.runtime} panels={panels} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+		<Geocoder
+			runtime={handle.runtime}
+			panels={panels}
+			defaultAddress={query ?? DEFAULT_ADDRESS}
+			presets={PRESETS}
+			// `/debug` exists to show the model machinery, so it opens the disclosure the default view collapses.
+			developer={route === Route.Debug}
+		/>
 	)
 }
 

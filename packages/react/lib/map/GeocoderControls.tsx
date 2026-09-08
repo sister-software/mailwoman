@@ -66,6 +66,12 @@ export interface GeocoderControlsProps {
 	 * Toggle the forced WASM backend.
 	 */
 	onForceWASMChange: (forceWASM: boolean) => void
+	/**
+	 * Open the developer disclosure on mount. The model version, the backend readout and compare live inside it: they are
+	 * for someone evaluating the model, and above the address field they were the first thing every visitor read. They
+	 * are collapsed here, not removed. @default false
+	 */
+	developer?: boolean
 }
 
 /**
@@ -81,6 +87,7 @@ export function GeocoderControls({
 	placeholder,
 	onSelectVersion,
 	onForceWASMChange,
+	developer = false,
 }: GeocoderControlsProps): ReactNode {
 	const versions = runtime.availableVersions ?? []
 	const { busy, result, selectedCandidate } = geocode
@@ -90,30 +97,6 @@ export function GeocoderControls({
 	return (
 		<section className="mw-demo-controls">
 			{panels.header}
-			{panels.releaseInfo}
-
-			<VersionPicker
-				versions={versions}
-				selected={runtime.selectedVersion ?? null}
-				onSelect={onSelectVersion}
-				disabled={busy}
-			/>
-
-			<BackendControl
-				activeBackend={runtime.activeBackend}
-				forceWASM={runtime.forceWASM ?? false}
-				onForceWASMChange={onForceWASMChange}
-			/>
-
-			<CompareToggle
-				versions={versions}
-				primaryVersion={runtime.selectedVersion ?? null}
-				compareMode={compare.compareMode}
-				onCompareModeChange={compare.setCompareMode}
-				compareVersion={compare.compareVersion}
-				onCompareVersionChange={compare.setCompareVersion}
-				disabled={busy}
-			/>
 
 			<QueryForm
 				value={geocode.text}
@@ -186,6 +169,41 @@ export function GeocoderControls({
 			{panels.compare
 				? panels.compare({ result, compareMode: compare.compareMode, compareVersion: compare.compareVersion })
 				: null}
+
+			{/*
+			 * The expert set, collapsed. These four read on the model rather than on an address, and above the query
+			 * field they were what a first-time visitor met: a release note, a version select, a backend readout and a
+			 * compare toggle before anything asked for an address. Nothing is removed — a disclosure keeps them one
+			 * click away, and `developer` opens it for the route that exists to show them.
+			 */}
+			<details className="mw-demo-developer" open={developer}>
+				<summary>Developer</summary>
+
+				{panels.releaseInfo}
+
+				<VersionPicker
+					versions={versions}
+					selected={runtime.selectedVersion ?? null}
+					onSelect={onSelectVersion}
+					disabled={busy}
+				/>
+
+				<BackendControl
+					activeBackend={runtime.activeBackend}
+					forceWASM={runtime.forceWASM ?? false}
+					onForceWASMChange={onForceWASMChange}
+				/>
+
+				<CompareToggle
+					versions={versions}
+					primaryVersion={runtime.selectedVersion ?? null}
+					compareMode={compare.compareMode}
+					onCompareModeChange={compare.setCompareMode}
+					compareVersion={compare.compareVersion}
+					onCompareVersionChange={compare.setCompareVersion}
+					disabled={busy}
+				/>
+			</details>
 
 			{panels.footer}
 		</section>

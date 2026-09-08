@@ -113,12 +113,33 @@
 
 	/* #region Preset chips */
 
+	/*
+	 * One line that scrolls, never a wrap. Twelve examples wrapped down five ragged rows (3/3/2/1/1/1) and took a
+	 * third of the panel; a scrolling row costs a fixed height whatever the number of examples. The scrollbar is
+	 * hidden because the row sits inside a floating panel where a track reads as chrome, and every chip stays
+	 * reachable by keyboard.
+	 */
 	.mw-presets {
 		margin-top: 0.75rem;
 		display: flex;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
 		gap: 0.4rem;
 		align-items: baseline;
+		padding-bottom: 0.15rem;
+	}
+
+	.mw-presets::-webkit-scrollbar {
+		display: none;
+	}
+
+	.mw-presets > * {
+		flex: 0 0 auto;
+	}
+
+	.mw-chip {
+		white-space: nowrap;
 	}
 
 	.mw-presets__label {
@@ -1241,6 +1262,38 @@
 
 	.mw-about__swatch--low {
 		background: #ef4444;
+	}
+
+	/* #endregion */
+
+	/* #region Developer disclosure */
+
+	/*
+	 * The expert set lives here, below the result rather than above the address field. A hairline and a quieter
+	 * summary keep it legible without competing with the query, which is what the panel is for.
+	 */
+	.mw-demo-developer {
+		margin-top: 1rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--color-separator);
+	}
+
+	.mw-demo-developer > summary {
+		cursor: pointer;
+		user-select: none;
+		font-size: var(--font-size-footnote);
+		font-weight: var(--font-weight-medium);
+		color: var(--color-text-secondary);
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+	}
+
+	.mw-demo-developer > summary:hover {
+		color: var(--color-text-primary);
+	}
+
+	.mw-demo-developer[open] > summary {
+		margin-bottom: 0.75rem;
 	}
 
 	/* #endregion */

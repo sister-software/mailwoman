@@ -53,6 +53,11 @@ export interface GeocoderProps {
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
+	 * Open the developer disclosure on mount — the model version, the backend readout and compare. Collapsed by default
+	 * so the address field is the first thing a visitor meets. @default false
+	 */
+	developer?: boolean
+	/**
 	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
 	 * Matches the `map.getZoom() >= 4` threshold. @default 4
 	 */
@@ -66,7 +71,7 @@ export interface GeocoderProps {
 }
 
 interface GeocoderInnerProps extends Required<
-	Pick<GeocoderProps, "runtime" | "defaultAddress" | "minBiasZoom" | "applyResultCamera">
+	Pick<GeocoderProps, "runtime" | "defaultAddress" | "minBiasZoom" | "applyResultCamera" | "developer">
 > {
 	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
@@ -79,6 +84,7 @@ function GeocoderInner({
 	presets,
 	minBiasZoom,
 	applyResultCamera,
+	developer,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
 
@@ -172,6 +178,7 @@ function GeocoderInner({
 				placeholder={defaultAddress}
 				onSelectVersion={onSelectVersion}
 				onForceWASMChange={onForceWASMChange}
+				developer={developer}
 			/>
 
 			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}
@@ -195,6 +202,7 @@ export function Geocoder({
 	presets = NO_PRESETS,
 	minBiasZoom = 4,
 	applyResultCamera = true,
+	developer = false,
 }: GeocoderProps): ReactNode {
 	return (
 		<ClientOnly
@@ -212,6 +220,7 @@ export function Geocoder({
 					presets={presets}
 					minBiasZoom={minBiasZoom}
 					applyResultCamera={applyResultCamera}
+					developer={developer}
 				/>
 			)}
 		</ClientOnly>
