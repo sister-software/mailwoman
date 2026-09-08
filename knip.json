@@ -11,7 +11,7 @@
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
 		"packages/*/out/**"
 	],
-	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uv", "uvx"],
+	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uv", "uvx", "wrangler"],
 	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web"],
 	"workspaces": {
 		"packages/*": {
@@ -65,7 +65,8 @@
 			"entry": ["lib/index.ts", "lib/cli.ts", "lib/models/**/*.ts", "lib/tools/**/*.ts"]
 		},
 		"packages/tile-worker": {
-			"entry": ["lib/index.ts", "lib/_worker.ts"]
+			"entry": ["lib/index.ts", "lib/_worker.ts"],
+			"ignoreDependencies": ["wrangler"]
 		},
 		"packages/earth": {
 			"entry": [
@@ -83,7 +84,8 @@
 				"vite.config.ts",
 				"playwright.config.ts",
 				"test/browser/**/*.ts"
-			]
+			],
+			"vite": false
 		},
 		"packages/license-worker": {
 			"entry": ["lib/index.ts", "test/**/*.ts", "vitest.config.ts"],

@@ -44,23 +44,12 @@ custom domain and its certificate are created from the file on the first deploy.
 yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth wrangler deploy
 ```
 
-### Workers Builds
+### On a push to main
 
-A Cloudflare Workers Builds project deploys on every push to `main` without a hand deploy. Creating one needs the
-Workers Builds permission on the API token, which the lab's token does not carry, so the project is a dashboard step
-with these settings:
-
-| Setting           | Value                                                                                                                                                                                                                   |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Root directory    | `packages/earth`                                                                                                                                                                                                        |
-| Build command     | `yarn build`                                                                                                                                                                                                            |
-| Deploy command    | `npx wrangler deploy`                                                                                                                                                                                                   |
-| Production branch | `main`                                                                                                                                                                                                                  |
-| Watch paths       | `packages/earth/**`, `packages/site-kit/**`, `packages/react/**`, `packages/core/**`, `packages/mailwoman/**`, `packages/neural/**`, `packages/resolver-wof-wasm/**`, `packages/cartographer/**`, `packages/spatial/**` |
-
-Yarn locates the project root by walking up from the root directory, so the install covers the workspace graph. If the
-first build shows it does not, set the root directory to `.` and the build command to
-`yarn workspace @mailwoman/earth build`, and point the wrangler configuration path at `packages/earth/wrangler.toml`.
+`.github/workflows/deploy.yml` runs the same two commands when a push reaches this workspace or a dependency of it.
+The reach is not a path list: `mwops release deploy-targets` maps the changed files to workspaces and deploys the app
+when one of them lies in its dependency closure, walked from the manifests, or a root build file changed. The Worker
+table the workflow deploys from is `packages/release-kit/lib/deploy/targets.ts`.
 
 Two rules outside the repository decide whether a deployment works: the public bucket's CORS rule must admit the
 origin the app is served from (`https://earth.mailwoman.ai` is admitted; a `*.workers.dev` preview origin is not), and

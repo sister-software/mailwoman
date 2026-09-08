@@ -13,6 +13,7 @@ import type { ReleaseOperation } from "#operation"
 import { blessPackage } from "#operations/bless-package"
 import { checkParity } from "#operations/check-parity"
 import { copyWeightsOperation } from "#operations/copy-weights"
+import { deployTargets } from "#operations/deploy-targets"
 import { fetchHFWeightsOperation } from "#operations/fetch-hf-weights"
 import { generatedSurfaces } from "#operations/generated-surfaces"
 import { linkWeightsOverlayOperation } from "#operations/link-weights-overlay"
@@ -46,6 +47,7 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	linkWeightsOverlayOperation,
 	stageWeightsCacheOperation,
 	scaffoldWeightsOverlayOperation,
+	deployTargets,
 	publishWorkspaceOperation,
 	blessPackage,
 ] as ReadonlyArray<ReleaseOperation<unknown, unknown>>

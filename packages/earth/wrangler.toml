@@ -1,6 +1,6 @@
 # Earth: static assets only. No `main`, so a navigation or an asset request never invokes a Worker; the SPA fallback
-# serves index.html for every path and the app reads location.pathname. The Workers Builds project that deploys this
-# file is configured in the Cloudflare dashboard (README, "Deployment").
+# serves index.html for every path and the app reads location.pathname. `.github/workflows/deploy.yml` deploys this
+# file on a push to main that reaches the app; the custom domain is created from the route below on the first deploy.
 
 name = "mailwoman-earth"
 compatibility_date = "2026-09-07"

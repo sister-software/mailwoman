@@ -58,21 +58,9 @@ PLANETARY_BODY=mars yarn workspace @mailwoman/planetary build && yarn workspace 
 Deploying the wrong body to an environment is the one mistake the file cannot catch, which is why the app compares
 its production hostname with its compiled body at startup and renders an error instead of the other world.
 
-### Workers Builds
+### On a push to main
 
-A Cloudflare Workers Builds project deploys on every push to `main` without a hand deploy. Creating one needs the
-Workers Builds permission on the API token, which the lab's token does not carry, so the two projects are a dashboard
-step with these settings:
-
-| Setting           | Moon                                                                                                                                                                      | Mars                                        |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Project name      | `mailwoman-moon`                                                                                                                                                          | `mailwoman-mars`                            |
-| Root directory    | `packages/planetary`                                                                                                                                                      | `packages/planetary`                        |
-| Build variable    | `PLANETARY_BODY=moon`                                                                                                                                                     | `PLANETARY_BODY=mars`                       |
-| Build command     | `yarn build`                                                                                                                                                              | `yarn build`                                |
-| Deploy command    | `npx wrangler deploy --name mailwoman-moon`                                                                                                                               | `npx wrangler deploy --name mailwoman-mars` |
-| Custom domain     | `moon.mailwoman.ai`                                                                                                                                                       | `mars.mailwoman.ai`                         |
-| Production branch | `main`                                                                                                                                                                    | `main`                                      |
-| Watch paths       | `packages/planetary/**`, `packages/site-kit/**`, `packages/react/**`, `packages/cartographer/**`, `packages/astrogeology/**`, `packages/ancestrie/**`, `packages/core/**` | the same                                    |
-
-The dashboard's project name overrides the `name` in `wrangler.toml`, which is why one file serves both projects.
+`.github/workflows/deploy.yml` runs the same two commands per body when a push reaches this workspace or a
+dependency of it. The reach is not a path list: `mwops release deploy-targets` maps the changed files to workspaces
+and deploys a body when one of them lies in the app's dependency closure, walked from the manifests, or a root build
+file changed. The Worker table the workflow deploys from is `packages/release-kit/lib/deploy/targets.ts`.

@@ -31,6 +31,9 @@
 		"@mailwoman/spatial": "workspace:*",
 		"pmtiles": "^4.5.0"
 	},
+	"devDependencies": {
+		"wrangler": "^4.129.0"
+	},
 	"engines": {
 		"node": ">=24.18.0"
 	}

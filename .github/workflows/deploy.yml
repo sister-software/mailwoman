@@ -1,0 +1,162 @@
+# Deploy the Cloudflare Workers this repository owns: the tile worker, the license worker, and the three static
+# apps (Earth, Moon, Mars). One deployer per Worker, from here, on every push to main; the Workers Builds projects
+# that used to deploy the two workers are retired so nothing races this workflow.
+#
+# WHICH WORKERS A PUSH DEPLOYS is not a path list in this file. The `targets` job runs
+# `mwops release deploy-targets`, which diffs the push against its parent, maps each changed file to its workspace,
+# and deploys a Worker when a changed workspace lies in that Worker's dependency closure (walked from the manifests)
+# or a root build file changed. The Worker table — build command, wrangler environment, receipt URL — lives in
+# `packages/release-kit/lib/deploy/targets.ts`, and this job consumes it as the deploy matrix. A new Worker is one
+# row there and no YAML here.
+#
+# A hand deploy is `workflow_dispatch` with `targets`: `all`, or a comma-separated list of ids (`moon,mars`).
+#
+# Every job is hosted. The two credentials are secrets of the `worker-production` GitHub environment, which the
+# deploy job declares; a job without that declaration reads them as empty strings. A self-hosted lab runner would
+# read them from its own `.env` instead, and an `env:` block from `secrets` overrides that with an empty string on
+# any event whose store lacks the name, which is the shape test.yml warns about.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: "Workers to deploy: all, or a comma-separated list of tiles, license, earth, moon, mars"
+        type: string
+        default: all
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  ONNXRUNTIME_NODE_INSTALL: skip
+
+jobs:
+  targets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      count: ${{ steps.select.outputs.count }}
+      include: ${{ steps.select.outputs.include }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The diff needs the push's parent as well as its head; a depth-1 clone has only the head.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Select the Workers this change reaches
+        id: select
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.before }}
+          HEAD: ${{ github.sha }}
+          TARGETS: ${{ inputs.targets }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            yarn mwops release deploy-targets --json --targets "$TARGETS" > selection.json
+          else
+            yarn mwops release deploy-targets --json --base "$BASE" --head "$HEAD" > selection.json
+          fi
+
+          count=$(jq '.include | length' selection.json)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "include=$(jq -c '.include' selection.json)" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Deploy targets"
+            echo
+            if [ "$count" = "0" ]; then
+              echo "No Worker reached by this change."
+            else
+              jq -r '.include[] | "- **\(.id)** (\(.worker)): \(.reasons)"' selection.json
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: targets
+    if: needs.targets.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: worker-production
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.targets.outputs.include) }}
+    # One deploy per Worker at a time; a second push queues behind the first rather than racing it.
+    concurrency:
+      group: deploy-${{ matrix.worker }}
+      cancel-in-progress: false
+    name: ${{ matrix.worker }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # The compiled tree, content-keyed the way test.yml keys it; see that file for why there are no restore-keys.
+      - name: Restore compiled tree
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # wrangler and Vite both resolve the workspaces through the `default` condition, which names `out/`.
+      - name: Compile
+        run: yarn compile
+
+      - name: Build
+        if: matrix.build != ''
+        env:
+          PLANETARY_BODY: ${{ matrix.body }}
+        run: ${{ matrix.build }}
+
+      - name: Deploy ${{ matrix.worker }}
+        working-directory: ${{ matrix.cwd }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: yarn wrangler deploy ${{ matrix.deployArgs }}
+
+      # The receipt: the deployed origin answers. A static app answers its build.json, the license worker its
+      # health, the tile worker a TileJSON.
+      - name: Receipt
+        env:
+          RECEIPT: ${{ matrix.receipt }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if body=$(curl -fsS --max-time 30 "$RECEIPT"); then
+              echo "$RECEIPT"
+              echo "$body" | head -c 400
+              echo
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$RECEIPT did not answer after the deploy"
+          exit 1
