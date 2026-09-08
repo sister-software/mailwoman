@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { RasterSourceSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
+import type { RasterDEMSourceSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 
 import { TileSetSourceID } from "#styles/sources"
 
@@ -14,7 +14,8 @@ import { TileSetSourceID } from "#styles/sources"
 export const PlanetaryNomenclatureSourceID = TileSetSourceID("nomenclature")
 
 /**
- * The raster source carrying a body's hillshade, rendered from its DEM at build time.
+ * The elevation source a body's relief is shaded from. The archive carries terrarium-encoded height rather than a
+ * shaded picture, so the shading happens at draw time and each body can be tinted from the style.
  */
 export const PlanetaryHillshadeSourceID = TileSetSourceID("hillshade")
 
@@ -29,9 +30,11 @@ export function nomenclatureSource(tileJSONURL: string): VectorSourceSpecificati
 	}
 }
 
-export function hillshadeSource(tileJSONURL: string): RasterSourceSpecification {
+export function hillshadeSource(tileJSONURL: string): RasterDEMSourceSpecification {
 	return {
-		type: "raster",
+		type: "raster-dem",
+		// The build writes `height = (R * 256 + G + B / 256) - 32768`, which is terrarium's, not Mapbox's.
+		encoding: "terrarium",
 		url: tileJSONURL,
 		tileSize: 256,
 	}

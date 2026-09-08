@@ -77,7 +77,7 @@ export function publishVersion(manifest: PlanetaryBuildManifest): string {
 export function publishedURLs(body: BuildableBodyID, version: string) {
 	return {
 		nomenclatureTileJSON: `${TILES_ORIGIN}/${body}.json`,
-		hillshadeTileJSON: `${TILES_ORIGIN}/${body}-hillshade.json`,
+		hillshadeTileJSON: `${TILES_ORIGIN}/${body}-terrain.json`,
 		search: `${PUBLIC_ORIGIN}/planetary/${body}/${version}/search.ancestrie`,
 		manifest: `${PUBLIC_ORIGIN}/planetary/${body}/${version}/manifest.json`,
 	}
@@ -92,7 +92,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 	const version = publishVersion(manifest)
 	const lines: string[] = []
 
-	for (const tileset of [body, `${body}-hillshade`]) {
+	for (const tileset of [body, `${body}-terrain`]) {
 		const file = tileset === body ? names.nomenclature : names.hillshade
 
 		lines.push(

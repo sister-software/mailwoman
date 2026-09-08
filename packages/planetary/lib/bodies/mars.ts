@@ -6,7 +6,7 @@
 
 import type { PlanetaryMapConfig } from "#bodies/config"
 
-const VERSION = "20260907-e60bcc6a"
+const VERSION = "20260908-5f1232b9"
 
 /**
  * Mars at `mars.mailwoman.ai`, opening on Tharsis so Olympus Mons and the three Tharsis Montes are in the first view.
@@ -20,7 +20,7 @@ export const MARS: PlanetaryMapConfig = {
 	terrainCredit: "NASA MGS MOLA",
 	tiles: {
 		nomenclature: "https://tiles.mailwoman.ai/mars.json",
-		hillshade: "https://tiles.mailwoman.ai/mars-hillshade.json",
+		hillshade: "https://tiles.mailwoman.ai/mars-terrain.json",
 	},
 	artifacts: {
 		version: VERSION,

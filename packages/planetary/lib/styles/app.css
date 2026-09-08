@@ -1,3 +1,12 @@
+/*
+ * Space is painted HERE, not by the map. Under globe projection a MapLibre background layer paints the sphere, and
+ * the canvas is transparent everywhere outside it — so the field around the body, and the stars in it, belong to the
+ * page behind the canvas. The body's own surface tone is the style's `planetary/space` layer.
+ *
+ * Colour and type come from `@mailwoman/react/tokens.css`, which `styles.css` pulls in; the two space colours are
+ * the exception, because they are a property of the body rather than of the interface.
+ */
+
 html,
 body,
 #root {
@@ -7,23 +16,67 @@ body,
 
 body {
 	background: #05070d;
-	color: #e8eef7;
-	font-family: system-ui, sans-serif;
+	color: var(--color-text-primary);
+	font-family: var(--font-family-text);
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
 }
 
 main[data-body="mars"] {
 	background: #0a0604;
-	color: #f6e3d1;
 }
 
 main[data-route] {
 	position: relative;
 	height: 100%;
+	isolation: isolate;
+}
+
+/*
+ * The star field: three layers of point highlights at different scales, so the field does not read as one repeating
+ * grid. It sits behind the canvas rather than in the map, so it never rotates with the body — the same way a
+ * starfield does not turn when you turn a globe on a desk.
+ */
+main[data-route]::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background-image:
+		radial-gradient(1.4px 1.4px at 18% 24%, rgb(255 255 255 / 0.75), transparent 60%),
+		radial-gradient(1.2px 1.2px at 73% 12%, rgb(255 255 255 / 0.6), transparent 60%),
+		radial-gradient(1.1px 1.1px at 41% 67%, rgb(255 255 255 / 0.55), transparent 60%),
+		radial-gradient(0.9px 0.9px at 88% 54%, rgb(255 255 255 / 0.5), transparent 60%),
+		radial-gradient(1px 1px at 9% 81%, rgb(255 255 255 / 0.45), transparent 60%),
+		radial-gradient(0.8px 0.8px at 57% 91%, rgb(255 255 255 / 0.4), transparent 60%),
+		radial-gradient(0.7px 0.7px at 31% 8%, rgb(255 255 255 / 0.35), transparent 60%);
+	background-size:
+		320px 320px,
+		540px 540px,
+		420px 420px,
+		760px 760px,
+		280px 280px,
+		620px 620px,
+		200px 200px;
+	pointer-events: none;
+}
+
+/* A viewer who has asked for less motion or contrast gets a plain field rather than a busy one. */
+@media (prefers-reduced-transparency: reduce) {
+	main[data-route]::before {
+		display: none;
+	}
 }
 
 main[data-route] > .mw-demo-map {
 	position: absolute;
 	inset: 0;
+	z-index: 1;
+}
+
+/* The canvas must not paint its own ground, or the star field behind it is never seen. */
+main[data-route] .maplibregl-canvas {
+	background: transparent;
 }
 
 .visually-hidden {

@@ -7,7 +7,7 @@
 import type {
 	BackgroundLayerSpecification,
 	CircleLayerSpecification,
-	RasterLayerSpecification,
+	HillshadeLayerSpecification,
 	SymbolLayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 
@@ -16,7 +16,26 @@ import { PROTOMAPS_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
 
 export interface PlanetaryPalette {
+	/**
+	 * The body's own surface tone, under the relief. Named `space` for the layer it feeds, which paints the SPHERE under
+	 * globe projection rather than the area around it — the field around the globe is the page behind a transparent
+	 * canvas, and the app's stylesheet paints it.
+	 */
 	space: string
+	/**
+	 * Where a slope faces the light. With `shadow` and `accent` these are what make one body's relief differ from
+	 * another's; the tiles carry encoded elevation and no colour of their own.
+	 */
+	reliefHighlight: string
+	/**
+	 * Where a slope faces away. Kept translucent so the surface tone reads through flat ground, which would otherwise
+	 * take the shadow colour everywhere the terrain is level.
+	 */
+	reliefShadow: string
+	/**
+	 * The steepness wash, translucent for the same reason.
+	 */
+	reliefAccent: string
 	labelColor: string
 	labelHalo: string
 	selection: string
@@ -27,8 +46,24 @@ export interface PlanetaryPalette {
  * without a row here has no style rather than a wrong one.
  */
 export const PALETTES = {
-	moon: { space: "#05070d", labelColor: "#e8eef7", labelHalo: "#05070d", selection: "#7fd1ff" },
-	mars: { space: "#0a0604", labelColor: "#f6e3d1", labelHalo: "#1a0c06", selection: "#ffb37f" },
+	moon: {
+		space: "#8d8f95",
+		reliefHighlight: "#eef2f8",
+		reliefShadow: "rgba(20, 26, 40, 0.55)",
+		reliefAccent: "rgba(90, 100, 120, 0.4)",
+		labelColor: "#e8eef7",
+		labelHalo: "#05070d",
+		selection: "#7fd1ff",
+	},
+	mars: {
+		space: "#9a5334",
+		reliefHighlight: "#f4a26b",
+		reliefShadow: "rgba(74, 29, 14, 0.55)",
+		reliefAccent: "rgba(140, 58, 28, 0.4)",
+		labelColor: "#f6e3d1",
+		labelHalo: "#1a0c06",
+		selection: "#ffb37f",
+	},
 } as const satisfies Record<string, PlanetaryPalette>
 
 export type PlanetaryStyleBody = keyof typeof PALETTES
@@ -36,7 +71,9 @@ export type PlanetaryStyleBody = keyof typeof PALETTES
 const PLANETARY_NAMESPACE = "planetary"
 
 /**
- * The background layer: the body's space color, drawn first.
+ * The body's surface tone, under the relief. Under globe projection a background layer paints the SPHERE, not the
+ * viewport, so this is the ground the hillshade shades and not the field around the globe; the app's stylesheet paints
+ * that behind a transparent canvas.
  */
 export const PlanetarySpaceLayerID = LayerID(PLANETARY_NAMESPACE, "space")
 
@@ -69,12 +106,24 @@ export function spaceLayer(palette: PlanetaryPalette): BackgroundLayerSpecificat
 	}
 }
 
-export function hillshadeLayer(): RasterLayerSpecification {
+/**
+ * The relief, shaded at draw time from the body's encoded elevation. The tiles carry height and no colour, so every
+ * body-specific decision is here: a greyscale image could not be tinted at all, because MapLibre's raster paint
+ * properties are brightness, contrast, saturation and hue-rotate, and the last two do nothing without chroma.
+ */
+export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecification {
 	return {
 		id: PlanetaryHillshadeLayerID,
-		type: "raster",
+		type: "hillshade",
 		source: PlanetaryHillshadeSourceID,
-		paint: { "raster-opacity": 0.9, "raster-resampling": "linear" },
+		paint: {
+			// Under 1: these bodies carry relief far sharper than Earth's relative to their radius, and unexaggerated
+			// shading reads as noise at globe zooms.
+			"hillshade-exaggeration": 0.6,
+			"hillshade-highlight-color": palette.reliefHighlight,
+			"hillshade-shadow-color": palette.reliefShadow,
+			"hillshade-accent-color": palette.reliefAccent,
+		},
 	}
 }
 

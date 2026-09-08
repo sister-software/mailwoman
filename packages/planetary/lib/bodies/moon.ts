@@ -6,7 +6,7 @@
 
 import type { PlanetaryMapConfig } from "#bodies/config"
 
-const VERSION = "20260907-109dfab8"
+const VERSION = "20260908-4d07d153"
 
 /**
  * The Moon at `moon.mailwoman.ai`, opening on the near side at the sub-Earth point.
@@ -20,7 +20,7 @@ export const MOON: PlanetaryMapConfig = {
 	terrainCredit: "NASA LRO LOLA",
 	tiles: {
 		nomenclature: "https://tiles.mailwoman.ai/moon.json",
-		hillshade: "https://tiles.mailwoman.ai/moon-hillshade.json",
+		hillshade: "https://tiles.mailwoman.ai/moon-terrain.json",
 	},
 	artifacts: {
 		version: VERSION,

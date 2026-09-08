@@ -30,11 +30,33 @@ test.each(["moon", "mars"] as const)(
 		expect("sprite" in style).toBe(false)
 		expect(style.glyphs).toMatch(/protomaps\/fonts/u)
 
+		// MapLibre 6 reads the projection from the style; as a map option it is ignored and the body renders flat.
+		expect(style.projection).toEqual({ type: "globe" })
+
 		const labels = style.layers.find((layer) => layer.id === "planetary/nomenclature-labels")
 		expect(labels?.type).toBe("symbol")
 
-		const space = style.layers.find((layer) => layer.id === "planetary/space")
-		expect(space).toMatchObject({ type: "background", paint: { "background-color": PALETTES[body].space } })
+		// The archive carries terrarium-encoded elevation, so the relief is shaded at draw time and every body-specific
+		// colour lives here. A greyscale image could not be tinted at all.
+		expect(style.sources["hillshade"]).toMatchObject({ type: "raster-dem", encoding: "terrarium" })
+
+		const relief = style.layers.find((layer) => layer.id === "planetary/hillshade")
+
+		expect(relief).toMatchObject({
+			type: "hillshade",
+			paint: {
+				"hillshade-highlight-color": PALETTES[body].reliefHighlight,
+				"hillshade-shadow-color": PALETTES[body].reliefShadow,
+			},
+		})
+
+		// Under globe projection a background layer paints the SPHERE, so this is the body's surface tone rather than
+		// the field around it; the app's stylesheet paints that behind a transparent canvas.
+		const surface = style.layers.find((layer) => layer.id === "planetary/space")
+		expect(surface).toMatchObject({ type: "background", paint: { "background-color": PALETTES[body].space } })
+
+		// The two bodies must not render alike, which is what a shared grey ramp made them do.
+		expect(PALETTES.moon.reliefHighlight).not.toEqual(PALETTES.mars.reliefHighlight)
 	}
 )
 

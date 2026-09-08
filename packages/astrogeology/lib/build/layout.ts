@@ -20,11 +20,17 @@ export interface BuildOutputNames {
 
 /**
  * The artifact names a body's build writes, relative to its output directory.
+ *
+ * The elevation archive is `<body>-terrain`, not `<body>-hillshade`, and the rename is the point rather than a tidy-up.
+ * Its CONTENT changed — from a shaded greyscale picture to terrarium-encoded height — and the two are indistinguishable
+ * to a cache. Publishing the new bytes under the old name would leave the edge free to serve a cached picture to a
+ * client that reads it as elevation, which renders as relief that is wrong rather than absent. A new name also leaves
+ * the old archive in place to roll back to.
  */
 export function buildOutputs(body: BuildableBodyID): BuildOutputNames {
 	return {
 		nomenclature: `${body}.pmtiles`,
-		hillshade: `${body}-hillshade.pmtiles`,
+		hillshade: `${body}-terrain.pmtiles`,
 		search: `${body}-search.ancestrie`,
 		manifest: "manifest.json",
 	}

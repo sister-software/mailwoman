@@ -51,16 +51,20 @@ export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpeci
 
 	const baseLayers = [
 		spaceLayer(palette),
-		...(options.hillshadeTileJSONURL ? [hillshadeLayer()] : []),
+		...(options.hillshadeTileJSONURL ? [hillshadeLayer(palette)] : []),
 		labelLayer(palette),
 		selectionLayer(palette),
 	]
 
-	return new StyleSpecificationComposer({
+	const style = new StyleSpecificationComposer({
 		sources,
 		baseLayers,
 		hillshadeSource: null,
 		sprite: null,
 		sky: { "sky-color": palette.space, "horizon-color": palette.space },
 	}).toJSON()
+
+	// MapLibre 6 reads the projection from the STYLE. Passed as a map option instead it is ignored and the body
+	// renders flat, which is a mercator sheet of terrain rather than a world.
+	return { ...style, projection: { type: "globe" } }
 }

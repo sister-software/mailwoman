@@ -14,7 +14,9 @@ test.each([...PLANETARY_BODIES])("%s: the config names its own body, host, tiles
 	expect(config.body).toBe(body)
 	expect(config.hostname).toBe(`${body}.mailwoman.ai`)
 	expect(config.tiles.nomenclature).toMatch(new RegExp(`/${body}\\.json$`, "u"))
-	expect(config.tiles.hillshade).toMatch(new RegExp(`/${body}-hillshade\\.json$`, "u"))
+	// `-terrain`, not `-hillshade`: the archive carries terrarium-encoded elevation rather than a shaded picture, and
+	// the two are indistinguishable to a cache, so the new content took a new name.
+	expect(config.tiles.hillshade).toMatch(new RegExp(`/${body}-terrain\\.json$`, "u"))
 	expect(config.identity.origin).toBe(`https://${config.hostname}/`)
 	expect(config.artifacts.version).toMatch(/^\d{8}-[0-9a-f]{8}$/u)
 	expect(config.artifacts.searchIndexURL).toContain(`/planetary/${body}/${config.artifacts.version}/`)
