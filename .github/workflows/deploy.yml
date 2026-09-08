@@ -11,9 +11,10 @@
 #
 # A hand deploy is `workflow_dispatch` with `targets`: `all`, or a comma-separated list of ids (`moon,mars`).
 #
-# Every job is hosted. The two credentials arrive as repository secrets; a self-hosted lab runner would read them
-# from its own `.env`, and an `env:` block from `secrets` overrides that with an empty string on any event whose store
-# lacks the name, which is the shape test.yml warns about.
+# Every job is hosted. The two credentials are secrets of the `worker-production` GitHub environment, which the
+# deploy job declares; a job without that declaration reads them as empty strings. A self-hosted lab runner would
+# read them from its own `.env` instead, and an `env:` block from `secrets` overrides that with an empty string on
+# any event whose store lacks the name, which is the shape test.yml warns about.
 name: Deploy
 
 on:
@@ -91,6 +92,7 @@ jobs:
     if: needs.targets.outputs.count != '0'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: worker-production
     strategy:
       fail-fast: false
       matrix:
