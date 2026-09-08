@@ -10,6 +10,7 @@
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
+import "@mailwoman/react/fonts.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
 import { Geocoder } from "@mailwoman/react/map"

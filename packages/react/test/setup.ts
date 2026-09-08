@@ -3,15 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Browser-mode test setup: load the component styles + token shim (so layout-adjacent assertions
- *   are meaningful), flag the React act() environment, wrap the interaction/settle APIs in act() (see
- *   `./act.ts`), and unmount rendered trees after each test.
+ *   Browser-mode test setup: load the component styles (which pull the tokens in themselves, so a
+ *   layout-adjacent assertion reads the same values production does), flag the React act() environment,
+ *   wrap the interaction/settle APIs in act() (see `./act.ts`), and unmount rendered trees after each test.
  */
 
 import { afterEach } from "vitest"
 
 import "../styles.css"
-import "../.storybook/preview-tokens.css"
 
 import { installActWrappers } from "./act.ts"
 import { cleanup } from "./render.tsx"

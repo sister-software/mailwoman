@@ -1,25 +1,35 @@
-/* The app's theme tokens. The panels and the react components read Infima's `--ifm-*` names, so the app defines the
-   same names once here rather than restyling every sheet; a value is the dark palette the shell already used. */
+/*
+ * Earth's layout. Colour, type and radius come from `@mailwoman/react/tokens.css`, which `styles.css` pulls in;
+ * this file held 19 hand-copied Infima values, and the copy is what let the palette drift from the brand — a
+ * primary of #e0367c against the design system's #ff00b0.
+ *
+ * The theme is declared on `<html data-theme="dark">` in index.html, not inherited from a host.
+ */
+
+/*
+ * Earth's own panel modules still name Infima tokens, inherited from when this app lived inside Docusaurus. Rather
+ * than 15 undefined names, each is defined here FROM the semantic layer, so those panels take the brand palette
+ * instead of a hand-copied approximation of it and follow the theme like everything else.
+ *
+ * This block is temporary. It disappears when the panels are rewritten against the semantic names directly; it is
+ * here so that step is a separate, reviewable change rather than a condition of this one. `--ifm-navbar-height` is
+ * zero because the Docusaurus navbar these panels once sat below does not exist here.
+ */
 :root {
-	color-scheme: dark;
-	--ifm-font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-	--ifm-color-primary: #e0367c;
-	--ifm-color-primary-darkest: #a8215a;
-	--ifm-color-emphasis-0: #0b1020;
-	--ifm-color-emphasis-100: #151b2e;
-	--ifm-color-emphasis-200: #1f2740;
-	--ifm-color-emphasis-300: #2c3654;
-	--ifm-color-emphasis-500: #6b7590;
-	--ifm-color-emphasis-600: #8892ab;
-	--ifm-color-emphasis-700: #a9b1c6;
-	--ifm-color-emphasis-800: #cbd2e1;
-	--ifm-color-content: #e6edf3;
-	--ifm-color-content-inverse: #0b1020;
-	--ifm-background-surface-color: #121830;
-	--ifm-hover-overlay: rgba(255, 255, 255, 0.06);
-	--ifm-color-warning: #e6a800;
-	--ifm-color-warning-darker: #f0c040;
-	--ifm-color-warning-contrast-background: rgba(230, 168, 0, 0.12);
+	--ifm-color-primary: var(--color-accent);
+	--ifm-color-primary-darkest: var(--color-accent);
+	--ifm-color-content: var(--color-text-primary);
+	--ifm-color-content-inverse: var(--color-background-canvas);
+	--ifm-background-surface-color: var(--color-background-raised);
+	--ifm-color-emphasis-100: var(--control-background);
+	--ifm-color-emphasis-200: var(--color-background-sunken);
+	--ifm-color-emphasis-300: var(--control-border);
+	--ifm-color-emphasis-500: var(--color-text-tertiary);
+	--ifm-color-emphasis-600: var(--color-text-secondary);
+	--ifm-color-emphasis-700: var(--color-text-secondary);
+	--ifm-color-emphasis-800: var(--color-text-primary);
+	--ifm-font-family-monospace: var(--font-family-code);
+	--ifm-hover-overlay: oklch(100% 0 264 / 0.08);
 	--ifm-navbar-height: 0px;
 }
 
@@ -31,9 +41,11 @@ body,
 }
 
 body {
-	background: var(--ifm-color-emphasis-0);
-	color: var(--ifm-color-content);
-	font-family: system-ui, sans-serif;
+	background: var(--color-background-canvas);
+	color: var(--color-text-primary);
+	font-family: var(--font-family-text);
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
 }
 
 main[data-route] {
