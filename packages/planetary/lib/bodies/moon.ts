@@ -6,7 +6,7 @@
 
 import type { PlanetaryMapConfig } from "#bodies/config"
 
-const VERSION = "20260908-4d07d153"
+const VERSION = "20260908-a2c92ed2"
 
 /**
  * The Moon at `moon.mailwoman.ai`, opening on the near side at the sub-Earth point.

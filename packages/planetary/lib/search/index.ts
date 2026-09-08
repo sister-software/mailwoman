@@ -20,6 +20,15 @@ export interface SearchHit {
 	id: string
 	name: string
 	featureType: string
+	/**
+	 * The IAU feature-type code, when the gazetteer has one.
+	 */
+	featureTypeCode?: string
+	/**
+	 * What the camera needs to choose a zoom. Absent for a feature the gazetteer gives no diameter, which a caller must
+	 * read as unknown rather than as zero.
+	 */
+	diameterKm?: number
 	centerLon: number
 	centerLat: number
 }
@@ -32,6 +41,10 @@ const SearchPayloadSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().min(1),
 	featureType: z.string().min(1),
+	// Optional because the gazetteer leaves them unset for some features; an artifact built before they were written
+	// still loads, and the camera reads a missing diameter as unknown.
+	featureTypeCode: z.string().min(1).optional(),
+	diameterKm: z.number().optional(),
 	centerLon: z.number(),
 	centerLat: z.number(),
 })

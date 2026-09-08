@@ -6,7 +6,7 @@
 
 import type { PlanetaryMapConfig } from "#bodies/config"
 
-const VERSION = "20260908-5f1232b9"
+const VERSION = "20260908-e2d9f96c"
 
 /**
  * Mars at `mars.mailwoman.ai`, opening on Tharsis so Olympus Mons and the three Tharsis Montes are in the first view.

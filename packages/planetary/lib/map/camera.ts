@@ -23,9 +23,28 @@ const SELECTION_ZOOM_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom:
 const SMALL_FEATURE_ZOOM = 9
 
 /**
- * The zoom a selected feature is framed at, from its diameter in kilometres.
+ * How far past the terrain archive's deepest zoom the camera may go. One level of over-zoom is a sharp enough upsample
+ * to read as terrain; three, which is where an unclamped small-feature framing landed against a zoom-6 archive, is a
+ * grey blur with the tile boundaries showing.
  */
-export function framingZoom(diameterKm: number | undefined): number {
+const OVERZOOM_ALLOWANCE = 1
+
+/**
+ * The zoom a selected feature is framed at, from its diameter in kilometres.
+ *
+ * `maxTerrainZoom` is the deepest zoom the body's terrain archive carries, read from the live source rather than pinned
+ * here: the two bodies do not publish the same depth, and a constant would drift the first time either is rebuilt. Omit
+ * it and the framing is unclamped.
+ */
+export function framingZoom(diameterKm: number | undefined, maxTerrainZoom?: number): number {
+	const unclamped = framingZoomForDiameter(diameterKm)
+
+	if (maxTerrainZoom === undefined) return unclamped
+
+	return Math.min(unclamped, maxTerrainZoom + OVERZOOM_ALLOWANCE)
+}
+
+function framingZoomForDiameter(diameterKm: number | undefined): number {
 	if (diameterKm === undefined) return SMALL_FEATURE_ZOOM
 
 	for (const [minDiameterKm, zoom] of SELECTION_ZOOM_STEPS) {

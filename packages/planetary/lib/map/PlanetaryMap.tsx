@@ -10,12 +10,13 @@
 
 import {
 	createPlanetaryStyle,
+	PlanetaryHillshadeSourceID,
 	PlanetaryLabelsLayerID,
 	PlanetarySelectionLayerID,
 } from "@mailwoman/cartographer/planetary"
 import { MapCanvas } from "@mailwoman/react/map/MapCanvas"
 import { ResultCamera } from "@mailwoman/react/map/ResultCamera"
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { MapLayerMouseEvent, MapRef } from "react-map-gl/maplibre"
 
 import type { PlanetaryMapConfig } from "#bodies/config"
@@ -45,6 +46,33 @@ export function PlanetaryMap({ config, selected, onSelect }: PlanetaryMapProps) 
 
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
+
+	// The deepest zoom the body's terrain archive carries, read from the live source once it resolves its TileJSON.
+	// The two bodies do not publish the same depth, so a framing clamp that used a constant would over-zoom one of
+	// them the first time either was rebuilt.
+	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
+
+	useEffect(() => {
+		const map = mapRef.current?.getMap()
+
+		if (!map) return
+
+		const read = () => {
+			const source = map.getSource(PlanetaryHillshadeSourceID)
+			const maxzoom = (source as { maxzoom?: number } | undefined)?.maxzoom
+
+			if (typeof maxzoom === "number") {
+				setMaxTerrainZoom(maxzoom)
+			}
+		}
+
+		read()
+		map.on("sourcedata", read)
+
+		return () => {
+			map.off("sourcedata", read)
+		}
+	}, [])
 
 	useEffect(() => {
 		const map = mapRef.current?.getMap()
@@ -96,7 +124,7 @@ export function PlanetaryMap({ config, selected, onSelect }: PlanetaryMapProps) 
 					target={{
 						kind: "center",
 						center: [selected.centerLon, selected.centerLat],
-						zoom: framingZoom(selected.diameterKm),
+						zoom: framingZoom(selected.diameterKm, maxTerrainZoom),
 					}}
 					animate={!prefersReducedMotion()}
 				/>

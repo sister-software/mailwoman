@@ -35,6 +35,10 @@ export async function buildSearchIndex(
 			featureType: feature.featureType,
 			centerLon: feature.centerLon,
 			centerLat: feature.centerLat,
+			// Only when the gazetteer has them: an absent diameter is a real reading, and writing 0 would tell a camera
+			// the feature is a point.
+			...(feature.featureTypeCode ? { featureTypeCode: feature.featureTypeCode } : {}),
+			...(feature.diameterKm === undefined ? {} : { diameterKm: feature.diameterKm }),
 		}
 
 		const surfaces = new Set([feature.name, feature.cleanName ?? feature.name])

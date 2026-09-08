@@ -47,13 +47,17 @@ function WrongBody({ message }: { message: string }) {
 }
 
 /**
- * A search hit as a selection: the artifact carries the name, type and position, and nothing else.
+ * A search hit as a selection. `diameterKm` rides along because the camera frames by it, and without it every search
+ * result and every deep link landed on the smallest-feature zoom — a 4,000 km canyon framed as tightly as a 3 km
+ * crater, past the resolution the terrain archive carries.
  */
 function featureFromHit(hit: SearchHit): SelectedFeature {
 	return {
 		id: hit.id,
 		name: hit.name,
 		featureType: hit.featureType,
+		featureTypeCode: hit.featureTypeCode,
+		diameterKm: hit.diameterKm,
 		centerLon: hit.centerLon,
 		centerLat: hit.centerLat,
 	}

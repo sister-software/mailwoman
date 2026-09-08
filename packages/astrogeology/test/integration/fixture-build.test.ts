@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   The whole build chain over tiny fixtures with no network: five Moon rows through normalization, NDJSON, tippecanoe
- *   and the metadata block; a synthetic DEM through gdaldem, the MBTiles writer, overviews and PMTiles. The tools
- *   (`tippecanoe`, `pmtiles`, GDAL) are the lab's; a missing one fails with its name in the error.
+ *   and the metadata block; a synthetic DEM through the terrarium encode, the MBTiles writer, overviews and PMTiles.
+ *   The tools (`tippecanoe`, `pmtiles`, GDAL) are the lab's; a missing one fails with its name in the error.
  *
  *   `fixtures/dem-fixture.tif` was written once with GDAL's Python bindings: 1024×512 Int16 over the whole globe in
- *   EPSG:4326, DEFLATE-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` metres. At the Moon's 30 km per row
- *   that is near-flat ground in the north and slopes near 45° in the south, so the hillshade shows relief and its two
- *   z1 halves differ; 1024 pixels across lands the MBTiles step at zoom 2, where overviews have something to average.
+ *   EPSG:4326, DEFLATE-compressed, elevation `sin(row·π/8) · (row / 511) · 30000` metres. Its range sits inside
+ *   terrarium's ±32,768 m envelope, so the encode has something to carry at both ends; 1024 pixels across lands the
+ *   MBTiles step at zoom 2, where the pyramid has levels to build.
  */
 
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
@@ -145,13 +145,25 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 		maxZoom: 2,
 	})
 
+	// Resample the elevations, encode terrarium one band at a time, stack, tile, decimate the pyramid, convert. There
+	// is no `gdaldem` any more: the archive carries height rather than a shaded picture, so the shading happens at
+	// draw time and each body can be tinted from its style.
 	expect(commands.map((command) => command[0])).toEqual([
-		"gdaldem",
+		"gdal_translate",
+		"gdal_calc.py",
+		"gdal_calc.py",
+		"gdal_calc.py",
+		"gdalbuildvrt",
 		"gdal_translate",
 		"gdal_translate",
 		"gdaladdo",
 		"pmtiles",
 	])
+
+	// Overviews must DECIMATE. Averaging a base-256 numeral answers a height that is no sample of the terrain.
+	const overviews = commands.find((command) => command[0] === "gdaladdo")
+	expect(overviews).toContain("nearest")
+	expect(overviews).not.toContain("average")
 
 	await applyPMTilesMetadata(String(out), hillshadeMetadata("moon", "test", "dem-fixture.tif"))
 	expect((await readMailwomanMetadata(String(out)))["mailwoman:kind"]).toBe("planetary-hillshade")
