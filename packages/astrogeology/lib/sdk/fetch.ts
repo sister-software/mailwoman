@@ -55,7 +55,7 @@ export async function readLock(): Promise<SourcesLock> {
 /**
  * Write the lock with its keys sorted, so a re-fetch of one source is a one-entry diff.
  */
-export async function writeLock(lock: SourcesLock): Promise<void> {
+async function writeLock(lock: SourcesLock): Promise<void> {
 	const sorted = Object.fromEntries(
 		Object.entries(SourcesLockSchema.parse(lock)).toSorted(([a], [b]) => a.localeCompare(b))
 	)
@@ -66,7 +66,7 @@ export async function writeLock(lock: SourcesLock): Promise<void> {
 /**
  * Where a source's file lives: a nightly archive carries its snapshot date in the name; a product keeps its own.
  */
-export function sourceCachePath(source: PlanetarySource, snapshot: string | undefined): string {
+function sourceCachePath(source: PlanetarySource, snapshot: string | undefined): string {
 	const fileName = snapshot ? `${source.id}-${snapshot}${extname(source.url)}` : basename(source.url)
 
 	return String(dataRootPath("astrogeology", source.body, "source", fileName))

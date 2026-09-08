@@ -19,7 +19,7 @@ import { resolvePath } from "path-ts"
 /**
  * The largest object `wrangler r2 object put` accepts.
  */
-export const WRANGLER_OBJECT_CAP_BYTES = 300 * 1024 * 1024
+const WRANGLER_OBJECT_CAP_BYTES = 300 * 1024 * 1024
 
 /**
  * Put one local file at `bucket/key` through wrangler.

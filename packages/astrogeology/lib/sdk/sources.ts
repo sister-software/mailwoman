@@ -31,7 +31,7 @@ export interface PlanetarySource {
  * The four products the pipeline reads, as measured on 2026-09-07: the nomenclature centre-point shapefiles (9,086 Moon
  * points, 2,052 Mars points, longitude 0..360) and the LOLA 118 m and MOLA 463 m global DEMs.
  */
-export const SOURCES = {
+const SOURCES = {
 	"moon-nomenclature": {
 		id: "moon-nomenclature",
 		body: "moon",
@@ -70,7 +70,7 @@ export const SOURCES = {
 	},
 } as const satisfies Record<string, PlanetarySource>
 
-export type PlanetarySourceID = keyof typeof SOURCES
+type PlanetarySourceID = keyof typeof SOURCES
 
 /**
  * The source of one kind for one body.
