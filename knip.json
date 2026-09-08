@@ -38,6 +38,9 @@
 		"packages/api-kit": {
 			"entry": ["lib/index.ts", "test/fixtures/**/*.ts"]
 		},
+		"packages/react": {
+			"entry": ["lib/index.ts", "styleframe.config.ts"]
+		},
 		"packages/astrogeology": {
 			"entry": ["lib/cli.ts", "lib/commands/*.tsx"],
 			"ignoreDependencies": ["wrangler"]

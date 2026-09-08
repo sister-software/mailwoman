@@ -1,0 +1,59 @@
+/**
+ * The brand typeface, served from the same origin every app already preconnects to.
+ *
+ * Six faces, not the twenty the family ships. Each `@font-face` is a network fetch on first paint, and the token
+ * layer binds only these: regular and medium for running text, bold where a heading or a chip needs weight, italic
+ * for a caption, and two mono weights for the `code`, `number` and `glyph` roles. Iosevka provides no 600, so
+ * `--font-weight-semibold: 600` matches the 700 face by the CSS weight-matching rules rather than being synthesized.
+ *
+ * A rule never names a family here — it names a scale role from `tokens.css`, which names one of the five face
+ * roles. Replacing the typeface is an edit to `--font-family-*` in `styleframe.config.ts` plus this file.
+ */
+
+@font-face {
+	font-family: "Iosevka Nexus Web";
+	font-display: swap;
+	font-weight: 400;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/IoveskaNexus/WOFF2/IosevkaNexus-Regular.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Iosevka Nexus Web";
+	font-display: swap;
+	font-weight: 450;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/IoveskaNexus/WOFF2/IosevkaNexus-Book.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Iosevka Nexus Web";
+	font-display: swap;
+	font-weight: 700;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/IoveskaNexus/WOFF2/IosevkaNexus-Bold.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Iosevka Nexus Web";
+	font-display: swap;
+	font-weight: 400;
+	font-style: italic;
+	src: url("https://public.mailwoman.ai/fonts/IoveskaNexus/WOFF2/IosevkaNexus-Italic.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Iosevka Nexus Mono Web";
+	font-display: swap;
+	font-weight: 400;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/IosevkaNexusMono/WOFF2/IosevkaNexusMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Iosevka Nexus Mono Web";
+	font-display: swap;
+	font-weight: 450;
+	font-style: normal;
+	src: url("https://public.mailwoman.ai/fonts/IosevkaNexusMono/WOFF2/IosevkaNexusMono-Book.woff2") format("woff2");
+}

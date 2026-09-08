@@ -210,3 +210,8 @@ nightshift
 .dev.vars
 # Wrangler's local state (the local D1, cached builds) beside a worker
 .wrangler/
+
+# `styleframe build` writes a TypeScript companion beside the CSS it compiles from styleframe.config.ts. Nothing
+# imports it — consumers read tokens/index.css and tokens/tokens.json, and both of those ARE committed so a build
+# never needs the token compiler.
+packages/react/tokens/index.ts
