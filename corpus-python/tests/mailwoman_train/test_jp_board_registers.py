@@ -211,6 +211,48 @@ def test_resolve_tag_defaults_track_the_label_set():
     assert scorer.RESOLVE_TAGS["stage3-jp"] == ("prefecture", "municipality")
 
 
+def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
+    # `TOKYO CHIYODA KANDA`: the KR ladder's shape, where 읍/면 and the 리 below it share `dependent_locality`.
+    # The row carries two `municipality` spans; a model that labels both must read 2/2, and the first span
+    # is still what forms the centroid key.
+    raw = "TOKYO CHIYODA KANDA"
+    row = {
+        "raw": raw,
+        "span_starts": [0, 6, 14],
+        "span_ends": [5, 13, 19],
+        "span_tags": ["prefecture", "municipality", "municipality"],
+        "lon": 139.75,
+        "lat": 35.68,
+    }
+    ids = [JP.label_to_id["O"]] * len(raw)
+    for start, end, tag in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True):
+        ids[start] = JP.label_to_id[f"B-{tag}"]
+        for i in range(start + 1, end):
+            ids[i] = JP.label_to_id[f"I-{tag}"]
+
+    assert scorer.decode_all_spans(raw, ids, JP.id_to_label) == {
+        "prefecture": ["TOKYO"],
+        "municipality": ["CHIYODA", "KANDA"],
+    }
+    assert scorer.decode_spans(raw, ids, JP.id_to_label) == {"prefecture": "TOKYO", "municipality": "CHIYODA"}
+
+    result = scorer.score_board([row], lambda _raw: ids, CENTROIDS, id_to_label=JP.id_to_label, resolve_tags=_RESOLVE)
+    assert result["tag_total"]["municipality"] == 2
+    assert result["tag_hit"]["municipality"] == 2
+    assert result["fraction"] == 1.0
+    assert result["per_municipality"]["CHIYODA"]["rows"] == 1
+
+    # Label only the second run and the first gold span misses while the second still hits.
+    partial = list(ids)
+    for i in range(6, 13):
+        partial[i] = JP.label_to_id["O"]
+    result = scorer.score_board(
+        [row], lambda _raw: partial, CENTROIDS, id_to_label=JP.id_to_label, resolve_tags=_RESOLVE
+    )
+    assert result["tag_total"]["municipality"] == 2
+    assert result["tag_hit"]["municipality"] == 1
+
+
 def test_municipality_macro_weights_each_held_out_municipality_once():
     # CHIYODA carries 4 of 6 rows, KITA 2. Wiping KITA out moves the blended number by a third and the macro by a half:
     # the macro is what says "one of two municipalities failed", whatever the row split.
