@@ -9,6 +9,7 @@
  */
 
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
+import { fetchWithRetry } from "#browser-runtime/fetch"
 import { releasesManifestURL } from "#browser-runtime/resources"
 
 export interface ReleaseInfo {
@@ -97,7 +98,7 @@ export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesMa
  * for the version pointer so a returning visitor sees a `defaultVersion` bump.
  */
 export async function fetchReleasesManifest(): Promise<ReleasesManifest | null> {
-	const res = await fetch(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })
+	const res = await fetchWithRetry(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })
 
 	return res.ok ? normalizeReleasesManifest((await res.json()) as WireReleasesManifest) : null
 }

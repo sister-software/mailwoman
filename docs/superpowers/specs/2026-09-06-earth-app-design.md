@@ -2,7 +2,11 @@
 
 **Status:** design approved 2026-09-06. Decisions the operator took: the word "demo" is retired, the app lives
 under `packages/`, the browser runtime moves into the packages that own it (no `@mailwoman/browser`), and
-Cloudflare Workers Builds builds and deploys the app.
+Cloudflare Workers Builds builds and deploys the app. Shell landed in #2196, the runtime's package homes in #2203;
+the launch PR moves the runtime, the panels and the browser suite into the app and retires the docs page. The two
+dashboard steps are the Workers Builds project and the bucket's CORS rule for the workers.dev preview origin.
+Launch PR #2206 opened 2026-09-07; the Workers Builds project and the public bucket's CORS rule are the two dashboard
+steps the operator took.
 **Builds on:** `2026-09-06-browser-export-conditions-design.md` (the packages must bundle under Vite without
 aliases before this app can consume them).
 **Precedes:** `2026-09-06-planetary-app-design.md`, which copies this app's build and deployment shape.
@@ -218,6 +222,30 @@ in that path.
 - `packages/earth` is registered in the root `workspaces`, both root `tsconfig.json` reference entries,
   and `SANCTIONED_RELEASE_ABSENCES`; the `publishCount` pin in `release-stage.test.ts` is unchanged.
 - The Workers Builds project exists, deploys from `main`, and the README carries its settings table.
+
+Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
+
+- Parity: `packages/earth/test/browser/100-demo-cold-load.spec.ts` and `200-demo-resolve.spec.ts` run against the
+  preview on port 7770 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
+  postcode anchors, the viewport and device biases, the debug trace and the theme. The cold-load stall that read as
+  "one load in five" was `public.mailwoman.ai` resetting the 38 MB model download partway through; the artifact fetch
+  now buffers the body inside a three-attempt retry (`mailwoman/browser-runtime/fetch`), and the fixture ends its
+  readiness wait on the page's own error text. Two cases fail identically on the docs page on main and are marked
+  expected failures with their measured reason: `Praha 100 00, Czechia` (the classifier tags `Praha` as a street) and
+  `1502 A Cage Street, Houston, TX 77020` (the street tier answers nothing; the Houston locality centroid resolves on
+  both). Compare mode and the calibration toggle were driven by a script against the preview and recorded in the PR.
+- `?q=` links: `docs/src/components/EarthRedirect/EarthRedirect.tsx` forwards with `location.search` intact.
+- Removal: `ls docs/src/shared` prints the two maplibre worker files; `docs/src/pages/demo/index.tsx`, `debug.tsx` and
+  `trace.tsx` are the redirects; `docs/static/range-cache-sw.js` is gone; the plugin is `docs/plugins/runtime-assets/`;
+  `grep -rn "docs/src/shared" packages` prints nothing. `knip` measures no unused docs dependency after the move:
+  `maplibre-gl`, `react-map-gl`, `@mailwoman/cartographer` serve `DashboardMap`, `onnxruntime-web` and
+  `@mailwoman/neural` serve the explainers that classify, and `sql.js-httpvfs` left with the runtime-homes PR.
+- Names: the `@mailwoman/react/map` rename map is applied (`a876b5ebe`); the docs embed context is `RuntimeEmbed`, and
+  `git grep -n Demo packages/react/lib/index.ts packages/react/lib/map/index.ts` prints nothing.
+- The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
+- Registers: unchanged since the shell PR (#2196).
+- Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and
+  `http://localhost:7770` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
 
 ## Out of scope
 

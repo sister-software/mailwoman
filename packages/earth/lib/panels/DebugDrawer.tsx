@@ -1,0 +1,77 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `<DebugDrawer>` — the dev-mode decode-path drawer, injected into the geocoder via `GeocoderPanels.debugDrawer`. When
+ *   dev mode is on and a result is present, it traces the current input through the loaded classifier and renders
+ *   `<ModelVisualizer>` beside the map. Dev-mode-only by design — closed by default, opened by the "🐛 Dev mode"
+ *   toggle.
+ */
+
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
+import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
+import type React from "react"
+import { useEffect, useState } from "react"
+
+import { ModelVisualizer } from "../explorers/ModelVisualizer/ModelVisualizer.tsx"
+
+import demoStyles from "./panels.module.css"
+
+export interface DebugDrawerProps {
+	/**
+	 * The current parse result (its input is re-traced when dev mode is on).
+	 */
+	result: ParseResult | null
+	/**
+	 * Whether dev mode is on.
+	 */
+	devMode: boolean
+	/**
+	 * Trace an input through the decode path (host's classifier). Resolves `null` when unavailable.
+	 */
+	traceParse: (input: string) => Promise<ParseTraceLike | null>
+	/**
+	 * Close the drawer (flips dev mode off).
+	 */
+	onClose: () => void
+}
+
+/**
+ * The model-visualizer drawer — mounts only in dev mode once a trace is ready.
+ */
+export const DebugDrawer: React.FC<DebugDrawerProps> = ({ result, devMode, traceParse, onClose }) => {
+	const [storedTrace, setStoredTrace] = useState<{ input: string; trace: ParseTraceLike | null } | null>(null)
+	const input = result?.input ?? null
+	const trace = storedTrace?.input === input ? storedTrace.trace : null
+
+	useEffect(() => {
+		if (!devMode || !input) return
+
+		let cancelled = false
+
+		void traceParse(input).then((t) => {
+			if (!cancelled) {
+				setStoredTrace({ input, trace: t })
+			}
+		})
+
+		return () => {
+			cancelled = true
+		}
+	}, [devMode, input, traceParse])
+
+	if (!devMode || !trace) return null
+
+	return (
+		<aside className={demoStyles.debugDrawer} aria-label="Model decode-path visualizer">
+			<div className={demoStyles.debugDrawerHeader}>
+				<strong>🐛 Decode path</strong>
+				<button type="button" className={demoStyles.exampleBtn} onClick={onClose} aria-label="Close debug drawer">
+					✕
+				</button>
+			</div>
+			<ModelVisualizer trace={trace} />
+		</aside>
+	)
+}

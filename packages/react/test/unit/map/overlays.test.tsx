@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Browser-mode render test for the declarative overlays. Mounts `<DemoMap>` (offline stub style) with a
+ *   Browser-mode render test for the declarative overlays. Mounts `<MapCanvas>` (offline stub style) with a
  *   `<ResolvedPlaceLayers>` (built from a fixture render spec) + an `<OverlayLayers>` (a host geojson
  *   overlay) as children, then asserts the outputs on the LIVE map: the resolved-place fill/line layers
  *   and the host overlay layer exist in the style, and the marker element is in the DOM.
  *
- *   Same GL posture as `DemoMap.test.tsx`: the component TREE (`.mw-demo-map`) is asserted synchronously;
+ *   Same GL posture as `MapCanvas.test.tsx`: the component TREE (`.mw-demo-map`) is asserted synchronously;
  *   everything that needs the WebGL surface (layers via the map ref, the marker element) is awaited
  *   BEST-EFFORT so a Chromium without software WebGL skips those asserts rather than flaking.
  */
 
-import { DemoMap, type DemoMapStyle } from "@mailwoman/react/map/DemoMap"
+import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
 import { OverlayLayers } from "@mailwoman/react/map/OverlayLayers"
 import { computeMapPlaceRenderSpec } from "@mailwoman/react/map/place-render"
 import { ResolvedPlaceLayers } from "@mailwoman/react/map/ResolvedPlaceLayers"
@@ -24,7 +24,7 @@ import { expect, test } from "vitest"
 
 import { renderComponent } from "../../render.tsx"
 
-const STUB_STYLE: DemoMapStyle = {
+const STUB_STYLE: MapCanvasStyle = {
 	version: 8,
 	name: "overlays-test-stub",
 	sources: {},
@@ -80,7 +80,7 @@ test("ResolvedPlaceLayers + OverlayLayers render marker + fill/line/overlay laye
 	let mapRef: MapRef | null = null
 
 	const { container } = renderComponent(
-		<DemoMap
+		<MapCanvas
 			mapStyle={STUB_STYLE}
 			initialViewState={{ longitude: -74.006, latitude: 40.7128, zoom: 10 }}
 			style={{ width: "600px", height: "400px" }}
@@ -90,7 +90,7 @@ test("ResolvedPlaceLayers + OverlayLayers render marker + fill/line/overlay laye
 		>
 			<ResolvedPlaceLayers spec={SPEC} applyCamera={false} />
 			<OverlayLayers overlays={[OVERLAY]} />
-		</DemoMap>
+		</MapCanvas>
 	)
 
 	// Component tree — synchronous, independent of WebGL.
@@ -117,7 +117,7 @@ test("a null spec renders no marker and no result layers", async () => {
 	let mapRef: MapRef | null = null
 
 	const { container } = renderComponent(
-		<DemoMap
+		<MapCanvas
 			mapStyle={STUB_STYLE}
 			style={{ width: "600px", height: "400px" }}
 			mapRef={(ref) => {
@@ -125,7 +125,7 @@ test("a null spec renders no marker and no result layers", async () => {
 			}}
 		>
 			<ResolvedPlaceLayers spec={null} />
-		</DemoMap>
+		</MapCanvas>
 	)
 
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()

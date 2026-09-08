@@ -5,18 +5,18 @@
  *
  *   GuidedTour — interactive failure-mode walkthrough with 9 stops. Each stop has a pre-loaded
  *   example address, live parse button, diagnosis text, pipeline stage indicator, and status badge.
- *   Integrates into PipelineExplorer as a collapsible section and uses DemoEmbed context for live
+ *   Integrates into PipelineExplorer as a collapsible section and uses RuntimeEmbed context for live
  *   parses.
  *
  *   Usage in MDX (via PipelineExplorer):
  *
  *   ```mdx
- *   import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+ *   import { RuntimeEmbedProvider } from "@site/src/contexts/RuntimeEmbed"
  *   import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
  *
- *   <DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
+ *   <RuntimeEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
  *     <PipelineExplorer />
- *   </DemoEmbedProvider>
+ *   </RuntimeEmbedProvider>
  * ```
  *
  *   The GuidedTour is rendered inside PipelineExplorer — no separate provider needed.
@@ -24,11 +24,11 @@
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { ConfidenceCell, LoadingIndicator } from "@mailwoman/react"
+import { SpanHighlight } from "@mailwoman/react/pipeline/SpanHighlight"
 import { runClassifyStage } from "mailwoman/browser-runtime/classify"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
-import { useDemoEmbed } from "#contexts/DemoEmbed"
+import { useRuntimeEmbed } from "#contexts/RuntimeEmbed"
 
 import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
 
@@ -79,7 +79,7 @@ interface StopParseState {
 
 export const GuidedTour: React.FC = () => {
 	const { classifier, fstMatcher, fstProvenance, streetMorphologyMatcher, selectPairIndex, ready, loadingProgress } =
-		useDemoEmbed()
+		useRuntimeEmbed()
 
 	const [expanded, setExpanded] = useState(false)
 	const [currentIndex, setCurrentIndex] = useState(0)

@@ -11,7 +11,7 @@ import { expect, test } from "@playwright/test"
 
 test.describe("Mailwoman Earth shell", () => {
 	test("/ renders the geocoder and the fake runtime completes a query", async ({ page }) => {
-		await page.goto("/?q=90210")
+		await page.goto("/?q=90210&runtime=fake")
 
 		await expect(page.locator("main[data-route='geocoder']")).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toHaveValue("90210")
@@ -22,10 +22,10 @@ test.describe("Mailwoman Earth shell", () => {
 	})
 
 	test("/debug and /trace serve the app", async ({ page }) => {
-		await page.goto("/debug")
+		await page.goto("/debug?runtime=fake")
 		await expect(page.locator("main[data-route='debug']")).toBeVisible()
 
-		await page.goto("/trace")
+		await page.goto("/trace?runtime=fake")
 		await expect(page.locator("main[data-route='trace']")).toBeVisible()
 	})
 

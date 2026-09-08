@@ -99,15 +99,15 @@
 			"node": "./lib/common/PresetChips.tsx",
 			"default": "./out/common/PresetChips.js"
 		},
-		"./map/DemoMap": {
-			"types": "./out/map/DemoMap.d.ts",
-			"node": "./lib/map/DemoMap.tsx",
-			"default": "./out/map/DemoMap.js"
+		"./map/MapCanvas": {
+			"types": "./out/map/MapCanvas.d.ts",
+			"node": "./lib/map/MapCanvas.tsx",
+			"default": "./out/map/MapCanvas.js"
 		},
-		"./map/GeocoderDemo": {
-			"types": "./out/map/GeocoderDemo.d.ts",
-			"node": "./lib/map/GeocoderDemo.tsx",
-			"default": "./out/map/GeocoderDemo.js"
+		"./map/Geocoder": {
+			"types": "./out/map/Geocoder.d.ts",
+			"node": "./lib/map/Geocoder.tsx",
+			"default": "./out/map/Geocoder.js"
 		},
 		"./map/place-render": {
 			"types": "./out/map/place-render.d.ts",
@@ -164,6 +164,36 @@
 			"node": "./lib/map/fake-runtime.ts",
 			"default": "./out/map/fake-runtime.js"
 		},
+		"./map/map-debug": {
+			"types": "./out/map/map-debug.d.ts",
+			"node": "./lib/map/map-debug.ts",
+			"default": "./out/map/map-debug.js"
+		},
+		"./common/About": {
+			"types": "./out/common/About.d.ts",
+			"node": "./lib/common/About.tsx",
+			"default": "./out/common/About.js"
+		},
+		"./pipeline/FailureDiagnostic": {
+			"types": "./out/pipeline/FailureDiagnostic.d.ts",
+			"node": "./lib/pipeline/FailureDiagnostic.tsx",
+			"default": "./out/pipeline/FailureDiagnostic.js"
+		},
+		"./pipeline/SpanHighlight": {
+			"types": "./out/pipeline/SpanHighlight.d.ts",
+			"node": "./lib/pipeline/SpanHighlight.tsx",
+			"default": "./out/pipeline/SpanHighlight.js"
+		},
+		"./pipeline/TimingPanel": {
+			"types": "./out/pipeline/TimingPanel.d.ts",
+			"node": "./lib/pipeline/TimingPanel.tsx",
+			"default": "./out/pipeline/TimingPanel.js"
+		},
+		"./pipeline/TreeView": {
+			"types": "./out/pipeline/TreeView.d.ts",
+			"node": "./lib/pipeline/TreeView.tsx",
+			"default": "./out/pipeline/TreeView.js"
+		},
 		"./map/usePlaceAutocomplete": {
 			"types": "./out/map/usePlaceAutocomplete.d.ts",
 			"node": "./lib/map/usePlaceAutocomplete.ts",
@@ -219,10 +249,10 @@
 			"node": "./lib/poi/usePOISearch.ts",
 			"default": "./out/poi/usePOISearch.js"
 		},
-		"./runtime/useDemoRuntime": {
-			"types": "./out/runtime/useDemoRuntime.d.ts",
-			"node": "./lib/runtime/useDemoRuntime.ts",
-			"default": "./out/runtime/useDemoRuntime.js"
+		"./runtime/useReleaseRuntime": {
+			"types": "./out/runtime/useReleaseRuntime.d.ts",
+			"node": "./lib/runtime/useReleaseRuntime.ts",
+			"default": "./out/runtime/useReleaseRuntime.js"
 		}
 	},
 	"publishConfig": {

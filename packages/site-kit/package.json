@@ -35,6 +35,11 @@
 			"node": "./lib/vite/pwa.ts",
 			"default": "./out/vite/pwa.js"
 		},
+		"./vite/stage-sqljs": {
+			"types": "./out/vite/stage-sqljs.d.ts",
+			"node": "./lib/vite/stage-sqljs.ts",
+			"default": "./out/vite/stage-sqljs.js"
+		},
 		"./playwright": {
 			"types": "./out/playwright.d.ts",
 			"node": "./lib/playwright.ts",
@@ -43,7 +48,9 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@playwright/test": "^1.63.0",
+		"path-ts": "^2.3.0",
 		"vite": "^8.2.2",
 		"vite-plugin-pwa": "^1.3.0"
 	},

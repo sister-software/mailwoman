@@ -11,7 +11,7 @@
  *   `useMap()` (exactly as `DashboardMap`/`GeoJSONClipboardLayer` reach the map), never a threaded handle.
  *
  *   A consumer that prefers a hard, declarative jump can instead feed the target through
- *   {@link cameraToViewState} into a controlled `<DemoMap viewState>` and skip this component — the
+ *   {@link cameraToViewState} into a controlled `<MapCanvas viewState>` and skip this component — the
  *   `center` case has that declarative path; only `bounds` strictly requires this. Renders nothing.
  *
  *   `target` is expected to be the STABLE, memoized `camera` off a `useMapPlaceRender` spec, so listing it

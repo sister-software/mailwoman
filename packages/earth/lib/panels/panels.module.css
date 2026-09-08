@@ -1,0 +1,109 @@
+/* ============================================================================
+ * `/demo` shared chrome — the classes the docs-side panels injected into
+ * `@mailwoman/react/map`'s `<Geocoder>` reuse. The floating-panel + map
+ * layout itself now lives in the package (`.mw-demo-controls`, restyled by
+ * `geocoder.module.css`); what remains here is the full-viewport root, the
+ * example-chip row (geo-bias), and the dev-mode model-visualizer drawer.
+ * ============================================================================ */
+
+/* #region Root: fixed full-viewport layer behind Docusaurus navbar */
+
+.demoRoot {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 0;
+	overflow: hidden;
+	padding: 0;
+	margin: 0;
+	max-width: none;
+}
+
+/* #endregion */
+
+/* #region Example-chip row (reused by the injected geo-bias row) */
+
+.examples {
+	margin-top: 0.75rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: baseline;
+}
+
+.examplesLabel {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	margin-right: 0.25rem;
+}
+
+.exampleBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.exampleBtn:hover:not(:disabled) {
+	background: var(--ifm-color-emphasis-200);
+	border-color: var(--ifm-color-primary);
+}
+
+.exampleBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Model-visualizer debug drawer (#941 component, in-demo). Slides in over the map's right edge; on
+   mobile it becomes a full-width bottom sheet so the map + control panel stay usable. */
+.debugDrawer {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: min(560px, 92vw);
+	overflow-y: auto;
+	padding: 12px 16px 24px;
+	background: var(--ifm-background-surface-color);
+	border-left: 1px solid var(--ifm-color-emphasis-300);
+	box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
+	z-index: 6;
+	animation: debugDrawerSlideIn 0.25s ease-out;
+}
+
+.debugDrawerHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+@keyframes debugDrawerSlideIn {
+	from {
+		transform: translateX(16px);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
+@media (max-width: 768px) {
+	.debugDrawer {
+		top: auto;
+		width: 100%;
+		max-height: 60vh;
+		border-left: none;
+		border-top: 1px solid var(--ifm-color-emphasis-300);
+	}
+}

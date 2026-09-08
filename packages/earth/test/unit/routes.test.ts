@@ -4,8 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
-import { queryFromSearch, Route, routeForPath } from "@mailwoman/earth/routes"
+import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch } from "@mailwoman/earth/routes"
 import { describe, expect, test } from "vitest"
+
+describe("runtimeModeFromSearch", () => {
+	test("only ?runtime=fake selects the fake runtime", () => {
+		expect(runtimeModeFromSearch("?runtime=fake")).toBe("fake")
+		expect(runtimeModeFromSearch("?q=Chicago&runtime=fake")).toBe("fake")
+		expect(runtimeModeFromSearch("")).toBe("real")
+		expect(runtimeModeFromSearch("?runtime=real")).toBe("real")
+		expect(runtimeModeFromSearch("?runtime=")).toBe("real")
+	})
+})
 
 describe("routeForPath", () => {
 	test.each([

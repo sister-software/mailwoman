@@ -36,6 +36,16 @@ export function routeForPath(pathname: string): Route | null {
 }
 
 /**
+ * Which runtime the page mounts. `fake` is the canned runtime the shell smoke and the stories use; every other value,
+ * and no value, is the real geocoder.
+ */
+export type RuntimeMode = "real" | "fake"
+
+export function runtimeModeFromSearch(search: string): RuntimeMode {
+	return new URLSearchParams(search).get("runtime") === "fake" ? "fake" : "real"
+}
+
+/**
  * The `?q=` query, decoded, or null when absent or blank. Blank is null so a link that carries `?q=` with nothing after
  * it behaves like a link without it.
  */

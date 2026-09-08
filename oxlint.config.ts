@@ -272,7 +272,7 @@ export default {
 				"packages/mailwoman/lib/geocode/worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
-				"docs/plugins/demo-assets/workspace-resolution.ts",
+				"docs/plugins/runtime-assets/workspace-resolution.ts",
 				"packages/map-tui/test/unit/tile-source.test.ts",
 				"packages/neural/test/integration/browser-slo.test.ts",
 				"packages/resolver-wof-sqlite/test/integration/lookup-readonly-open.test.ts",

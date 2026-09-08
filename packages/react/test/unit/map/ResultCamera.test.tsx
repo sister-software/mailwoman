@@ -11,13 +11,13 @@
  *   start position. Any resolved place that produced a `bounds` target — every admin place with a crisp polygon or a
  *   real-extent bbox — hit it, in every browser, since the phase-2 overlays landed (#1232).
  *
- *   Nothing caught it because the camera is the one thing the map tests turn OFF: `GeocoderDemo.test.tsx` and
+ *   Nothing caught it because the camera is the one thing the map tests turn OFF: `Geocoder.test.tsx` and
  *   `overlays.test.tsx` both pass `applyCamera=false`, and their comments blame "a zero-size headless canvas" for the
  *   NaN LngLat. The canvas was innocent. So the guard here mounts the camera ON, with a bounds target, and lets a
  *   thrown RAF frame fail the run.
  */
 
-import { DemoMap, type DemoMapStyle } from "@mailwoman/react/map/DemoMap"
+import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
 import type { MapCameraTarget } from "@mailwoman/react/map/place-render"
 import { fitBoundsOptionsFor, ResultCamera } from "@mailwoman/react/map/ResultCamera"
 import { act } from "react"
@@ -26,7 +26,7 @@ import { expect, test } from "vitest"
 
 import { renderComponent } from "../../render.tsx"
 
-const STUB_STYLE: DemoMapStyle = {
+const STUB_STYLE: MapCanvasStyle = {
 	version: 8,
 	name: "result-camera-test-stub",
 	sources: {},
@@ -84,7 +84,7 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 	let mapRef: MapRef | null = null
 
 	const { container } = renderComponent(
-		<DemoMap
+		<MapCanvas
 			mapStyle={STUB_STYLE}
 			initialViewState={{ longitude: 0, latitude: 51.5, zoom: 3 }}
 			style={{ width: "600px", height: "400px" }}
@@ -93,7 +93,7 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 			}}
 		>
 			<ResultCamera target={BOUNDS_TARGET} />
-		</DemoMap>
+		</MapCanvas>
 	)
 
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()

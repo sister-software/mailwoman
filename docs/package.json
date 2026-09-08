@@ -5,8 +5,6 @@
 	"description": "Docusaurus knowledge base for Mailwoman Geocoder",
 	"imports": {
 		"#docs-sub-header": "./src/components/DocsSubHeader/index.tsx",
-		"#e2e": "./test/e2e/index.ts",
-		"#e2e/*": "./test/e2e/*",
 		"#unit/*": "./test/unit/*.ts",
 		"#glossary-plugin": "./plugins/glossary/plugin.ts",
 		"#components/*": "./src/components/*.tsx",
@@ -20,23 +18,20 @@
 		"./contexts/*": "./src/contexts/*.tsx",
 		"./hooks/*": "./src/hooks/*.ts",
 		"./shared/*": "./src/shared/*.ts",
-		"./components/ModelVisualizer/fixtures/white-house.trace.json": "./src/components/ModelVisualizer/fixtures/white-house.trace.json",
-		"./components/ModelVisualizer/helpers": "./src/components/ModelVisualizer/helpers.ts",
-		"./pages/demo/map-helpers": "./src/pages/demo/_map-helpers.ts",
-		"./plugins/demo-assets/artifacts": {
-			"types": "./plugins/demo-assets/artifacts.ts",
-			"node": "./plugins/demo-assets/artifacts.ts",
-			"default": "./plugins/demo-assets/artifacts.ts"
+		"./plugins/runtime-assets/artifacts": {
+			"types": "./plugins/runtime-assets/artifacts.ts",
+			"node": "./plugins/runtime-assets/artifacts.ts",
+			"default": "./plugins/runtime-assets/artifacts.ts"
 		},
-		"./plugins/demo-assets/webpack-policy": {
-			"types": "./plugins/demo-assets/webpack-policy.ts",
-			"node": "./plugins/demo-assets/webpack-policy.ts",
-			"default": "./plugins/demo-assets/webpack-policy.ts"
+		"./plugins/runtime-assets/webpack-policy": {
+			"types": "./plugins/runtime-assets/webpack-policy.ts",
+			"node": "./plugins/runtime-assets/webpack-policy.ts",
+			"default": "./plugins/runtime-assets/webpack-policy.ts"
 		},
-		"./plugins/demo-assets/workspace-aliases": {
-			"types": "./plugins/demo-assets/workspace-aliases.ts",
-			"node": "./plugins/demo-assets/workspace-aliases.ts",
-			"default": "./plugins/demo-assets/workspace-aliases.ts"
+		"./plugins/runtime-assets/workspace-aliases": {
+			"types": "./plugins/runtime-assets/workspace-aliases.ts",
+			"node": "./plugins/runtime-assets/workspace-aliases.ts",
+			"default": "./plugins/runtime-assets/workspace-aliases.ts"
 		},
 		"./scripts/docs-frontmatter-contract": {
 			"types": "./scripts/docs-frontmatter-contract.ts",

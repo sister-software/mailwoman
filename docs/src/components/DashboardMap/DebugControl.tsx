@@ -4,14 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
+import { DebugControlBase } from "@mailwoman/react/map/map-debug"
 
 import "maplibre-gl/dist/maplibre-gl.css"
+import type { LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
 import { memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { useControl, useMap } from "react-map-gl/maplibre"
-
-import { DebugControlBase } from "./map-debug.ts"
 
 /**
  * Map overlay exposing tile and layer state, for diagnosing a render without opening devtools.

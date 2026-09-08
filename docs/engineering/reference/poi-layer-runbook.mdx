@@ -129,8 +129,8 @@ search over httpvfs — multi-hop traversal is the slow path), ring budget cappe
 CLI default is 12). Contingency if the shipped file or probe latency surprises: a
 labeled regional slice, as fallback only.
 
-**Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the demo-assets
-uploader, not the gazetteer path: stage a hardlink dir mirroring the R2 layout
+**Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the R2 asset
+uploader (`docs/scripts/publish-demo-assets-to-r2.py`), not the gazetteer path: stage a hardlink dir mirroring the R2 layout
 `poi/<version>/poi.db` (a hardlink avoids re-copying the 3.7 GB file), then
 `set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py --src <staged-dir>`
 (source the repo `.env` first — the R2 credentials live there). Then bump the browser runtime's

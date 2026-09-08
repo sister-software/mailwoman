@@ -168,7 +168,7 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 }
 
 /**
- * The DECLARATIVE camera path: reshape a `center` target into a `viewState` patch a controlled `<DemoMap viewState>`
+ * The DECLARATIVE camera path: reshape a `center` target into a `viewState` patch a controlled `<MapCanvas viewState>`
  * can apply directly (a hard jump, no animation). Returns `null` for a `bounds` target — fitting a box to the viewport
  * needs the map's pixel dimensions, which only the live map has, so that case is applied imperatively by
  * `<ResultCamera>`. Pure + node-testable.

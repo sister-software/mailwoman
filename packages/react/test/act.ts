@@ -21,7 +21,7 @@
  *     • `vi.waitFor` (from `vitest`) — the settle surface. Reimplemented as a poll that completes ONE
  *       full `act()` per iteration and checks the assertion synchronously between iterations. Completing
  *       a fresh act each round is what lets an effect CHAIN advance (a held-open act swallows the passive
- *       effect flushes between steps — e.g. `useDemoRuntime`'s manifest → assets → ready effects would
+ *       effect flushes between steps — e.g. `useReleaseRuntime`'s manifest → assets → ready effects would
  *       stall). Because the ONLY code outside act is the synchronous callback invocation (no await, so
  *       no microtask/timer can interleave there), every async `setState` — a debounce firing, a runtime
  *       promise resolving, a parse completing — lands inside an act tick.

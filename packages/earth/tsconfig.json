@@ -10,5 +10,15 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./dist/**/*", "./test/**", "./vite.config.ts", "./playwright.config.ts"],
-	"references": [{ "path": "../react" }, { "path": "../site-kit" }]
+	"references": [
+		{ "path": "../cartographer" },
+		{ "path": "../core" },
+		{ "path": "../mailwoman" },
+		{ "path": "../neural" },
+		{ "path": "../react" },
+		{ "path": "../resolver-wof-sqlite" },
+		{ "path": "../resolver-wof-wasm" },
+		{ "path": "../site-kit" },
+		{ "path": "../spatial" }
+	]
 }

@@ -15,7 +15,7 @@ If you have seen `@mailwoman/neural-web` referenced before: the browser runtime 
 `@mailwoman/neural` itself, as the `./web-loader` and `./web-onnx-runner` subpaths, and the old package
 stopped publishing after 9.3.0. Everything on this page uses the subpaths.
 
-[The demo](/demo) is the finished version of this — the same loader, the same model files, plus a
+[Earth](https://earth.mailwoman.ai/) is the finished version of this — the same loader, the same model files, plus a
 gazetteer and a map. By the end of this page you'll have the parse half of it in your own page: eight
 files served from your own origin, one `await`, and a tree in the tab. You'll also have the measured
 byte and time cost of the load, and a clear line around what the browser build does not do. About
@@ -236,7 +236,7 @@ Two constraints ride on that:
 
 ## Resolving in the browser
 
-Components are not coordinates. The [demo](/demo) resolves them by range-loading a 1.65 GB gazetteer
+Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 1.65 GB gazetteer
 over HTTP: `sql.js-httpvfs` fetches only the SQLite pages a lookup touches, which the gazetteer's own
 build notes put at about a dozen range requests per session. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.

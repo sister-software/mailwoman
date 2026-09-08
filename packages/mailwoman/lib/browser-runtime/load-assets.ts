@@ -16,6 +16,7 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
+import { fetchWithRetry } from "#browser-runtime/fetch"
 import type { ReleaseInfo } from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
@@ -122,6 +123,7 @@ export async function loadReleaseAssets(
 				hasAnchor: release.hasAnchor,
 				forceWASM: progress.forceWASM,
 			}),
+			fetchImpl: fetchWithRetry,
 			// Every published pair index is loaded; the loader keeps each live and `selectPairIndexForText` picks per
 			// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
 			pairIndexURLs: pairIndexURLs(pairIndexBase),
@@ -144,7 +146,7 @@ export async function loadReleaseAssets(
 	let calibrator: Calibrator | null = null
 
 	try {
-		const calRes = await fetch(assetURL(DEFAULT_LOCALE, release.version, "calibration.json"))
+		const calRes = await fetchWithRetry(assetURL(DEFAULT_LOCALE, release.version, "calibration.json"))
 
 		if (calRes.ok) {
 			calibrator = createCalibrator((await calRes.json()) as CalibrationTable)

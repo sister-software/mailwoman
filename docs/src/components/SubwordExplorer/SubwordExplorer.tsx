@@ -6,9 +6,9 @@
  *   SubwordExplorer — educational word-level tokenization explorer that shows how Mailwoman's
  *   pipeline stages process each word token. Complements BIOHighlight by adding per-stage
  *   annotations (query shape, kind, phrase groups, classified spans) for each word of the input.
- *   Designed to work inside a DemoEmbedProvider context.
+ *   Designed to work inside a RuntimeEmbedProvider context.
  *
- *   Since direct SentencePiece access isn't available via the DemoEmbed context, this component shows
+ *   Since direct SentencePiece access isn't available via the RuntimeEmbed context, this component shows
  *   word-level tokenization derived from the pipeline result (classified spans with start/end
  *   offsets). Each pipeline stage's contribution is annotated per word where applicable.
  */

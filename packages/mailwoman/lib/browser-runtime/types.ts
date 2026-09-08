@@ -102,7 +102,7 @@ export interface ParseTraceLike {
 }
 
 /**
- * How a release loader reports progress to its host while assets arrive. `@mailwoman/react`'s `DemoAssetsLoadContext`
+ * How a release loader reports progress to its host while assets arrive. `@mailwoman/react`'s `AssetsLoadContext`
  * satisfies it structurally; a host without a UI passes no-op setters.
  */
 export interface AssetLoadProgress {

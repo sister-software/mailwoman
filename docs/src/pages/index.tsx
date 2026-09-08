@@ -22,8 +22,8 @@ function HomepageHeader(): ReactNode {
 					— with no server to call and no address leaving your infrastructure.
 				</p>
 				<div className={styles.heroButtons}>
-					<Link className="button button--primary button--lg" to="/demo">
-						Try the demo
+					<Link className="button button--primary button--lg" href="https://earth.mailwoman.ai/">
+						Try the geocoder
 					</Link>
 				</div>
 				{/* Measured, not decorative. `mailwoman geocode "1600 Pennsylvania Avenue NW, Washington, DC"`
@@ -101,7 +101,7 @@ function Fork(): ReactNode {
 								type an address → components, coordinate, and the source it came from
 							</code>
 							<p className={styles.cardLinks}>
-								<Link to="/demo">Open the demo →</Link>
+								<Link href="https://earth.mailwoman.ai/">Open Earth →</Link>
 							</p>
 						</div>
 					</div>
@@ -230,8 +230,8 @@ function FeatureStrip(): ReactNode {
 						<h3>Node and the browser</h3>
 						<p>
 							Node 24.18 or later, and the same pipeline in a browser tab: the classifier on{" "}
-							<code>onnxruntime-web</code>, the resolver on WASM SQLite over a byte-ranged gazetteer. The{" "}
-							<Link to="/demo">demo</Link> is that build, not a hosted API behind a text box.
+							<code>onnxruntime-web</code>, the resolver on WASM SQLite over a byte-ranged gazetteer.{" "}
+							<Link href="https://earth.mailwoman.ai/">Earth</Link> is that build, not a hosted API behind a text box.
 						</p>
 					</div>
 					<div className="col col--3">

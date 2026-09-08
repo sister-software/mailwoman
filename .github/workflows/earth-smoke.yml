@@ -1,0 +1,73 @@
+# Production functional smoke for Mailwoman Earth, the geocoder at earth.mailwoman.ai.
+#
+# Version parity is not functional parity: a deployment can serve the right model version while its gazetteer,
+# FST or street tier answers nothing, and every one of those failures produces zero console errors. This runs
+# the `@smoke` browser spec against the DEPLOYED app (`MAILWOMAN_EARTH_URL`) and grades the RESULTS (the
+# address_point tier, the WOF cascade, the markers), so a functional regression is visible the day it ships.
+#
+# The same spec also runs against the local preview on every app change; this workflow is the SCHEDULED
+# production half.
+name: Earth smoke
+
+on:
+  schedule:
+    # Daily, 06:37 UTC.
+    - cron: "37 6 * * *"
+  workflow_dispatch:
+    inputs:
+      earth_url:
+        description: "Deployed Earth origin to smoke (default: production)"
+        type: string
+        default: "https://earth.mailwoman.ai"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: earth-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 15
+    env:
+      # workflow_dispatch override wins; the scheduled run uses production.
+      MAILWOMAN_EARTH_URL: ${{ inputs.earth_url || 'https://earth.mailwoman.ai' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          # No `cache: yarn`: the actions-cache restore hangs through the lab's degraded path, and
+          # enableGlobalCache in .yarnrc.yml already serves installs offline on the runners.
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Remote mode (MAILWOMAN_EARTH_URL set) skips the local build and preview, so only the browser is
+      # needed. No --with-deps: it sudo-installs apt packages, and the lab runners have no passwordless
+      # sudo; system libs are provisioned on the host once (`playwright install-deps chromium`, operator sudo).
+      - name: Install Playwright chromium
+        working-directory: packages/earth
+        run: yarn playwright install chromium
+
+      - name: Smoke the deployed app
+        working-directory: packages/earth
+        run: yarn test:browser --grep @smoke
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: earth-smoke-report
+          path: packages/earth/playwright-report/
+          retention-days: 14
