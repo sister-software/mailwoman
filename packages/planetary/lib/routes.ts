@@ -8,6 +8,8 @@
  *   link fails visibly rather than showing the globe as if nothing were wrong.
  */
 
+import { withoutTrailingSlashes } from "@mailwoman/core/strings/format"
+
 import type { PlanetaryView } from "#bodies/config"
 
 /**
@@ -22,7 +24,7 @@ const FEATURE_PATH = /^\/feature\/([0-9]+)$/u
  * The route a pathname names, with a trailing slash forgiven, or null for a path the app does not serve.
  */
 export function routeForPath(pathname: string): PlanetaryRoute | null {
-	const normalized = pathname.replace(/\/+$/u, "") || "/"
+	const normalized = withoutTrailingSlashes(pathname) || "/"
 
 	if (normalized === "/") return { kind: "map" }
 

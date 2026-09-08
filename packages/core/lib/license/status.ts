@@ -14,8 +14,8 @@ import type { CacheRequestConfig } from "axios-cache-interceptor"
 import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { $public } from "#env"
 import { ResourceError } from "#errors/schema"
-import { withoutTrailingSlashes } from "#license/docs-site"
 import { silentLogger } from "#logging/index"
+import { withoutTrailingSlashes } from "#strings/format"
 
 /**
  * The license worker when `MAILWOMAN_LICENSE_URL` is unset.
