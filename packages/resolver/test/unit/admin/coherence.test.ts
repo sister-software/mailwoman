@@ -352,3 +352,139 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(region?.metadata?.["resolver_country"]).toBe("US")
 	})
 })
+
+describe("resolveTree + applyParentFallbackContradiction", () => {
+	// 臺南市 (Tainan City) and 新竹市 (Hsinchu City) are regions; only Hsinchu's 北區 carries a key. The walk scopes 北區 to
+	// Tainan, misses, and the parent-fallback retry answers Hsinchu's — a namesake 214 km away on the real gazetteer.
+	const TAINAN: ResolvedPlace = {
+		id: 100,
+		name: "Tainan City",
+		placetype: "region",
+		country: "TW",
+		lat: 23.15,
+		lon: 120.33,
+		score: 9,
+		exactMatch: true,
+	}
+
+	const HSINCHU: ResolvedPlace = {
+		id: 200,
+		name: "Hsinchu City",
+		placetype: "region",
+		country: "TW",
+		lat: 24.8,
+		lon: 120.97,
+		score: 8,
+		exactMatch: true,
+	}
+
+	const HSINCHU_BEI_QU: ResolvedPlace = {
+		id: 201,
+		name: "Bei Qu",
+		placetype: "locality",
+		country: "TW",
+		parent_id: 200,
+		lat: 24.816,
+		lon: 120.949,
+		score: 7,
+		exactMatch: true,
+	}
+
+	function beiQuTree(): AddressTree {
+		return {
+			raw: "臺南市北區",
+			roots: [
+				node({
+					tag: "region",
+					value: "Tainan City",
+					start: 0,
+					end: 3,
+					children: [node({ tag: "subregion", value: "Bei Qu", start: 3, end: 5 })],
+				}),
+			],
+		}
+	}
+
+	async function backendWithLineage(
+		ancestorsOf: Record<number, Array<{ id: number; placetype: string; name: string }>>
+	) {
+		const base = await makeBackend([TAINAN, HSINCHU, HSINCHU_BEI_QU])
+
+		return { ...base, ancestors: (id: number | string) => ancestorsOf[Number(id)] ?? [] } as ResolverBackend
+	}
+
+	const opts = { includeAncestors: true, placetypeMap: { region: "region", subregion: "locality" } }
+
+	function subregionOf(tree: AddressTree): AddressNode | undefined {
+		for (const n of walkNodes(tree.roots)) {
+			if (n.tag === "subregion") return n
+		}
+
+		return undefined
+	}
+
+	it("un-resolves a parent-fallback pick whose lineage names another region, so the ladder answers the parent", async () => {
+		const backend = await backendWithLineage({ 201: [{ id: 200, placetype: "region", name: "Hsinchu City" }] })
+		const out = await createWOFResolver(backend).resolveTree(beiQuTree(), opts)
+		const sub = subregionOf(out)
+
+		expect(regionOf(out)?.placeID).toBe("wof:100")
+		expect(sub?.placeID).toBeUndefined()
+		expect(sub?.lat).toBeUndefined()
+		expect(sub?.metadata?.["parent_fallback_refused"]).toBe(true)
+		expect(sub?.metadata?.["resolver_name"]).toBeUndefined()
+	})
+
+	it("keeps a parent-fallback pick whose lineage names no region at all — the incomplete chain the retry exists for", async () => {
+		const backend = await backendWithLineage({ 201: [{ id: 1, placetype: "country", name: "Taiwan" }] })
+		const out = await createWOFResolver(backend).resolveTree(beiQuTree(), opts)
+		const sub = subregionOf(out)
+
+		expect(sub?.placeID).toBe("wof:201")
+		expect(sub?.metadata?.["parent_fallback"]).toBe(true)
+		expect(sub?.metadata?.["parent_fallback_refused"]).toBeUndefined()
+	})
+
+	it("keeps a parent-fallback pick whose lineage names the resolved parent", async () => {
+		const backend = await backendWithLineage({ 201: [{ id: 100, placetype: "region", name: "Tainan City" }] })
+		const out = await createWOFResolver(backend).resolveTree(beiQuTree(), opts)
+
+		expect(subregionOf(out)?.placeID).toBe("wof:201")
+	})
+
+	it("refuses the same pick when the BACKEND widened the scope and stamped regionScopeMiss (#1731)", async () => {
+		// A backend that keeps the parent scope on the query and re-admits rows from outside it, the way the candidate
+		// table's interior region-scope fallback does — the resolver's own retry never runs.
+		const widened: ResolverBackend = {
+			async findPlace(query) {
+				const text = query.text.toLowerCase()
+
+				const under = [TAINAN, HSINCHU, HSINCHU_BEI_QU].filter(
+					(p) => p.name.toLowerCase() === text && (query.parentID === undefined || p.parent_id === query.parentID)
+				)
+
+				if (under.length || query.parentID === undefined) return under
+
+				return [TAINAN, HSINCHU, HSINCHU_BEI_QU]
+					.filter((p) => p.name.toLowerCase() === text)
+					.map((p) => ({ ...p, regionScopeMiss: true }))
+			},
+			ancestors: () => [{ id: 200, placetype: "region", name: "Hsinchu City" }],
+		}
+
+		const out = await createWOFResolver(widened).resolveTree(beiQuTree(), opts)
+		const sub = subregionOf(out)
+
+		expect(sub?.placeID).toBeUndefined()
+		expect(sub?.metadata?.["parent_fallback_refused"]).toBe(true)
+	})
+
+	it("is inert without the ancestor sidecar, since an unreadable chain is not a contradiction", async () => {
+		const out = await createWOFResolver(await makeBackend([TAINAN, HSINCHU, HSINCHU_BEI_QU])).resolveTree(
+			beiQuTree(),
+			opts
+		)
+
+		expect(subregionOf(out)?.placeID).toBe("wof:201")
+	})
+})

@@ -45,6 +45,33 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 }
 
 /**
+ * Where a country's WOF typing of a tier departs from {@link DEFAULT_PLACETYPE_MAP}, the entries that differ. The map
+ * names the tier by tag; WOF names it by placetype, and the two agree for most countries and not for all.
+ *
+ * - **TW** — 鄉鎮市區, the tier below the 縣市 that the parse tags `subregion`, is `locality` or `localadmin` in WOF for 164 of
+ *   the 178 held-out districts the candidate table carries and `county` for 14 (the census in
+ *   `docs/records/evals/2026-09-08-v8-cjk-regs.md` §5). Under the default `county` band `臺北市中正區` reached nothing and
+ *   the admin tier fell to the 縣市. The `locality` group admits `localadmin` too, the rule the JP `municipality` tag
+ *   already relies on, and the exact-type preference in ranking keeps a `locality` row ahead of a same-name
+ *   `localadmin` row.
+ */
+const COUNTRY_PLACETYPE_OVERRIDES: Readonly<Record<string, PlacetypeMap>> = {
+	tw: { subregion: "locality" },
+}
+
+/**
+ * The placetype map for a resolve scoped to `countryCode` (ISO alpha-2, any case): the default map with the country's
+ * overrides applied, or the default map itself when the country has none or is unknown. The identity of the default
+ * object is preserved in that case, so a caller comparing maps to decide whether a second resolve is needed reads
+ * "unchanged" correctly.
+ */
+export function placetypeMapForCountry(countryCode: string | null | undefined): PlacetypeMap {
+	const overrides = countryCode ? COUNTRY_PLACETYPE_OVERRIDES[countryCode.toLowerCase()] : undefined
+
+	return overrides ? { ...DEFAULT_PLACETYPE_MAP, ...overrides } : DEFAULT_PLACETYPE_MAP
+}
+
+/**
  * Placetype-equivalence groups for lookup FILTERING. WOF splits a single addressing tier across several placetypes, but
  * an address's span can name ANY of them. A backend that filters to the one "obvious" placetype makes the equivalents
  * unreachable, so a fuzzy same-name place in the wrong tier wins instead.

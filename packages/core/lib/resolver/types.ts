@@ -46,6 +46,7 @@ export {
 	expandPlacetypeFilter,
 	isPlacetypeFallback,
 	PLACETYPE_FILTER_GROUPS,
+	placetypeMapForCountry,
 	type PlacetypeMap,
 } from "#resolver/placetype-map"
 

@@ -14,6 +14,7 @@ import {
 	hardCountrySafelistFromCoverage,
 	isPlacetypeFallback,
 	PLACETYPE_FILTER_GROUPS,
+	placetypeMapForCountry,
 	type CountryCoverageFact,
 } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
@@ -32,6 +33,26 @@ describe("DEFAULT_PLACETYPE_MAP", () => {
 		expect(DEFAULT_PLACETYPE_MAP.district).toBe("locality")
 		expect(DEFAULT_PLACETYPE_MAP.street).toBeUndefined()
 		expect(DEFAULT_PLACETYPE_MAP.house_number).toBeUndefined()
+	})
+})
+
+describe("placetypeMapForCountry", () => {
+	it("types the Taiwanese 鄉鎮市區 (`subregion`) as a locality-band placetype, and leaves every other tag alone", () => {
+		const tw = placetypeMapForCountry("TW")
+
+		expect(tw.subregion).toBe("locality")
+		expect(tw.region).toBe(DEFAULT_PLACETYPE_MAP.region)
+		expect(tw.municipality).toBe(DEFAULT_PLACETYPE_MAP.municipality)
+		expect(placetypeMapForCountry("tw")).toEqual(tw)
+	})
+
+	it("answers the default map ITSELF for a country with no override, so a caller can compare by identity", () => {
+		expect(placetypeMapForCountry("KR")).toBe(DEFAULT_PLACETYPE_MAP)
+		expect(placetypeMapForCountry("us")).toBe(DEFAULT_PLACETYPE_MAP)
+		expect(placetypeMapForCountry(undefined)).toBe(DEFAULT_PLACETYPE_MAP)
+		expect(placetypeMapForCountry(null)).toBe(DEFAULT_PLACETYPE_MAP)
+		// The Korean 시군구 stay counties: a KR line under the default band reads exactly as before.
+		expect(placetypeMapForCountry("KR").subregion).toBe("county")
 	})
 })
 

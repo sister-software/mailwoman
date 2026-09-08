@@ -36,6 +36,19 @@ step. The pre-commit hook read its CLI-freshness reference after the formatter h
 commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
 first.
 
+### Changed — a widened-scope admin pick whose lineage names another region is refused; Taiwan's 鄉鎮市區 read as localities
+
+When a child lookup scoped to its resolved parent misses, two widenings exist so an incomplete hierarchy still
+resolves: the resolver's retry without the parent, and the candidate backend's interior region-scope fallback. Both
+also admitted a namesake under another region — `臺南市北區` resolved Tainan City, found no 北區 under it, and answered
+Hsinchu's 北區 214 km away with the coherence report reading `region: contradicted` while the point stood. The resolver
+now stamps a widened pick (`parent_fallback`) and `applyParentFallbackContradiction` un-resolves it when its stamped
+ancestors name a region other than the resolved parent, so the admin ladder answers the parent's own point; a chain
+that names no region is kept. `placetypeMapForCountry` gives Taiwan's `subregion` tag the `locality` band (WOF types
+164 of the 178 held-out 鄉鎮市區 the candidate table carries as `locality` or `localadmin`, 14 as `county`), on both
+resolve passes. On the 289 held-out 鄉鎮市區 as bare lines: 154 resolve the district within 15 km (at most 14 could
+under the `county` band), the fourteen namesakes at 21.6–238 km are refused, and the rest answer the 縣市.
+
 ### Changed — the CJK base is `v8-cjk-regs` (card 0.0.3): Korean re-sourced, Taiwan added, three registries
 
 `@mailwoman/neural-weights-cjk` 0.0.3 ships the `v8-cjk-regs` graph (#2204). Korean is rebuilt from the ministry's

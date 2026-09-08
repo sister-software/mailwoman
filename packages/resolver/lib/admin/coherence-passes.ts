@@ -11,9 +11,87 @@
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import type { AddressNode } from "@mailwoman/core/decoder"
-import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { PLACETYPE_FILTER_GROUPS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
+
+/**
+ * The region-band placetypes a lineage names a region by — `region` and its macro widening, the same set the lookup
+ * filter admits for a `region` request.
+ */
+const REGION_LINEAGE_PLACETYPES: ReadonlySet<string> = new Set(PLACETYPE_FILTER_GROUPS["region"] ?? ["region"])
+
+/**
+ * The numeric or string id behind a node's `placeID` (`wof:85679553` → `85679553`), or undefined when the node resolved
+ * to no place.
+ */
+function placeIDValue(node: AddressNode): string | undefined {
+	const match = /^[a-z]+:(.+)$/u.exec(node.placeID ?? "")
+
+	return match?.[1]
+}
+
+/**
+ * Refuse a pick admitted from outside its parent's scope whose own lineage names a DIFFERENT region than the one the
+ * walk resolved above it.
+ *
+ * The walk scopes a child lookup to its resolved parent. When that scoped probe misses, two widenings exist so an
+ * incomplete hierarchy (a real place whose ancestor chain lacks its region) still resolves: the resolver's retry
+ * without the parent, and the candidate backend's interior region-scope fallback (#1731), which re-admits rows from
+ * outside the region and stamps them `regionScopeMiss`. Both also admit a namesake under another region: `臺南市北區`
+ * resolved 臺南市 (Tainan City), found no 北區 under it — the candidate table carries no Han key for Tainan's — and the
+ * widening answered Hsinchu's 北區, 214 km away, which the coherence report then marked `region: contradicted` while the
+ * point stood. Of the 289 held-out Taiwanese 鄉鎮市區, 21 resolved this way at 15.6–238 km when the register was read as
+ * bare `縣市鄉鎮市區` lines.
+ *
+ * The two cases a widening conflates are told apart by the pick's stamped ancestors: an incomplete chain names NO
+ * region and is kept, the case the widenings exist for; a chain that names a region other than the resolved parent is a
+ * different place and is un-resolved here, so the admin ladder answers the parent's own point rather than a namesake
+ * elsewhere. Only widened picks are examined (`metadata.parent_fallback`, stamped by the walk for either mechanism),
+ * and only when the parent region resolved to a place identity; no-op without the ancestor sidecar, since a chain that
+ * cannot be read is not a contradiction. The classifier attribution stays on the node; `parent_fallback_refused`
+ * records what happened.
+ */
+export function applyParentFallbackContradiction(roots: readonly AddressNode[]): void {
+	const visit = (node: AddressNode, regionAncestor: AddressNode | null): void => {
+		const regionHere = node.tag === "region" && placeIDValue(node) !== undefined ? node : regionAncestor
+
+		if (regionHere && node !== regionHere && node.metadata?.["parent_fallback"] === true) {
+			const regionID = placeIDValue(regionHere)
+
+			const ancestors = node.metadata?.["ancestors"] as
+				| ReadonlyArray<{ id: number | string; placetype: string }>
+				| undefined
+
+			const regions = (ancestors ?? []).filter((a) => REGION_LINEAGE_PLACETYPES.has(a.placetype))
+
+			if (regionID !== undefined && regions.length && !regions.some((a) => String(a.id) === regionID)) {
+				delete node.lat
+				delete node.lon
+				delete node.placeID
+				delete node.alternatives
+
+				const kept: Record<string, unknown> = {}
+
+				for (const [key, value] of Object.entries(node.metadata ?? {})) {
+					if (!key.startsWith("resolver_") && key !== "ancestors" && key !== "resolution_quality") {
+						kept[key] = value
+					}
+				}
+
+				node.metadata = { ...kept, parent_fallback_refused: true }
+			}
+		}
+
+		for (const child of node.children) {
+			visit(child, regionHere)
+		}
+	}
+
+	for (const root of roots) {
+		visit(root, null)
+	}
+}
 
 /**
  * Admin descendant-consistency (#263) — the joint-consistency resolve, scoped to the admin assignment. The greedy walk

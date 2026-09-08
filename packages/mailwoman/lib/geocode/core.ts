@@ -43,7 +43,11 @@ import type {
 	ResolveOpts,
 	Resolver,
 } from "@mailwoman/core/resolver"
-import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
+import {
+	countriesFromPostcodeFormat,
+	countryFromPostcodeFormat,
+	placetypeMapForCountry,
+} from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
@@ -773,6 +777,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// An explicit defaultCountry wins; otherwise the coarse placer's country.
 	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 
+	// The tag → placetype map is the country's where WOF types a tier differently (TW `subregion` is a locality-band
+	// placetype, not a county). The default object is answered for every other country, so this line is byte-stable
+	// for them.
+	opts.placetypeMap = placetypeMapForCountry(preResolveCountry)
+
 	// A NON-US pre-resolve country outranks a US state-slug database match. The state-slug selection
 	// above is country-blind, and AU state codes collide with US postal states — 'Kingsley WA 6026'
 	// under an AU scope reads region 'WA' and opens the Washington database, which can only miss.
@@ -891,6 +900,14 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		if (rooftop) {
 			opts.addressPoints = rooftop
 			opts.addressPointBboxFallback = true
+			changed = true
+		}
+
+		// The corrected country may type a tier differently than the one the first pass resolved under.
+		const scopedMap = placetypeMapForCountry(scopeCountry)
+
+		if (scopedMap !== opts.placetypeMap) {
+			opts.placetypeMap = scopedMap
 			changed = true
 		}
 

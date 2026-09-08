@@ -35,6 +35,7 @@ import {
 import {
 	applyAdminCoherence,
 	applyExplicitCountryCoherence,
+	applyParentFallbackContradiction,
 	applyRegionCountryCoherence,
 } from "#admin/coherence-passes"
 import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin/containment"
@@ -287,6 +288,9 @@ class WOFResolver implements Resolver {
 		// off the postcode/street, not the admin coordinate this adjusts). Byte-stable when nothing fell
 		// through or the backend lacks `ancestors`.
 		if (opts.adminCoherence !== false) {
+			// First: a parent-fallback pick whose lineage names another region is un-resolved, so the passes below
+			// and the admin ladder read it as the fall-through it is, not as a resolved namesake elsewhere.
+			applyParentFallbackContradiction(newRoots)
 			await applyAdminCoherence(newRoots, this.#backend)
 			// #822 — same joint-consistency family, inverse trigger: an explicit country token whose resolved
 			// locality landed in the wrong country (the populous US namesake). Runs after the region pass so the
@@ -952,6 +956,15 @@ class WOFResolver implements Resolver {
 		const pickMetadata = {
 			...(containmentEligible ? { admin_containment: adminContainmentVerdict(ranked) } : {}),
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
+			// The pick was admitted from OUTSIDE the resolved parent's scope, by either widening: the resolver's own retry
+			// without the parent (the scope was set — a resolved parent with a numeric id — and the retry is the only
+			// thing that deletes it), or the backend's interior region-scope fallback, which keeps the query intact and
+			// stamps the rows it re-admitted (#1731). Stamped so `applyParentFallbackContradiction` can tell a namesake
+			// under another region from the incomplete chain both widenings exist for.
+			...((parentResolved && typeof parentResolved.id === "number" && query.parentID === undefined) ||
+			top.regionScopeMiss === true
+				? { parent_fallback: true }
+				: {}),
 		}
 
 		return {

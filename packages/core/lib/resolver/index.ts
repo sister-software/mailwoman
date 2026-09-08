@@ -50,6 +50,7 @@ export {
 	expandPlacetypeFilter,
 	hardCountrySafelistFromCoverage,
 	isPlacetypeFallback,
+	placetypeMapForCountry,
 } from "#resolver/types"
 
 export type {
