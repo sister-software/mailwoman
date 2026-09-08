@@ -22,7 +22,12 @@ import {
 } from "#cli-kit"
 
 const sources = [
+	"acra-sg",
 	"ban",
+	"gcis-tw",
+	"houjin-jp",
+	"juso-kr",
+	"localdata-kr",
 	"nad",
 	"geonames-dump",
 	"geonames-postal",
@@ -59,6 +64,8 @@ export const spec = {
 		"rate-sleep": { type: "number", description: "TIGER delay between downloads" },
 		"max-parallel": { type: "number", description: "TIGER concurrent downloads" },
 		"dry-run": { type: "boolean", default: false, description: "Print planned downloads" },
+		month: { type: "string", description: "juso-kr month as YYYYMM (default: the latest listed)" },
+		categories: { type: "string", description: "localdata-kr category slugs, comma-separated (default: all)" },
 	},
 } as const satisfies CommandSpec
 
@@ -77,15 +84,22 @@ interface Options {
 	rateSleep?: number
 	maxParallel?: number
 	dryRun: boolean
+	month?: string
+	categories?: string
 }
 
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {
+		fetchACRASG,
 		fetchBan,
+		fetchGCISTW,
 		fetchGeonamesDumps,
 		fetchGeonamesPostal,
+		fetchHoujinJP,
 		fetchHRSA,
 		fetchIMLSPLS,
+		fetchJusoKR,
+		fetchLocaldataKR,
 		fetchNAD,
 		fetchNPPES,
 		fetchOpenAddresses,
@@ -99,6 +113,19 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	const base = { outRoot: options.outRoot }
 
 	switch (source) {
+		case "acra-sg":
+			return fetchACRASG(base, reportToStderr)
+		case "gcis-tw":
+			return fetchGCISTW(base, reportToStderr)
+		case "houjin-jp":
+			return fetchHoujinJP(base, reportToStderr)
+		case "juso-kr":
+			return fetchJusoKR({ ...base, month: options.month }, reportToStderr)
+		case "localdata-kr":
+			return fetchLocaldataKR(
+				{ ...base, categories: options.categories === undefined ? undefined : splitList(options.categories) },
+				reportToStderr
+			)
 		case "ban":
 			return fetchBan(base, reportToStderr)
 		case "nad":
