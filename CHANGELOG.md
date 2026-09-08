@@ -18,6 +18,22 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Changed — the CJK base is `v8-cjk-regs` (card 0.0.3): Korean re-sourced, Taiwan added, three registries
+
+`@mailwoman/neural-weights-cjk` 0.0.3 ships the `v8-cjk-regs` graph (#2204). Korean is rebuilt from the ministry's
+own 주소DB (a direct download with no application step) in seven registers, including the lot-number form
+(`서울특별시 종로구 청운동 52-1`) and the building name; Taiwan is a served locale of the family for the first time, from
+Overture-TW in five registers (縣市 → `region`, 鄉鎮市區 → `subregion`, 村里 → `dependent_locality`, 之/樓 → `unit`);
+and 1,666,000 typed business addresses from three government registries (Korean permits, Taiwanese companies,
+Japanese corporate numbers) trained after each string was aligned exactly against those registers. Against the
+0.0.2 base on the same scorer: the JP native register 0.9954 from 0.9921; KR `subregion` 0.9980 from 0.9699 and
+`street` 0.9993 from 0.9179 on the 2026 board; TW `region` / `subregion` / `street` / `house_number` 1.0000 / 0.9999 /
+0.9992 / 0.9994 from a model that had never seen Taiwan; on typed registry rows, JP `building_name` 0.9880 from 0 and
+KR `dependent_locality` 0.9987 from 0.2893. The card names the fifteen Taiwanese civil-affairs bureaus the Open
+Government Data License requires. Record: `docs/records/evals/2026-09-08-v8-cjk-regs.md`. The five registers are
+`mailwoman corpus fetch` sources (`juso-kr`, `localdata-kr`, `gcis-tw`, `houjin-jp`, `acra-sg`), each fetch writing a
+collection manifest with the license label and attribution.
+
 ### Added — the CJK overlays join the lockstep release
 
 `@mailwoman/neural-weights-ja-jp` and `@mailwoman/neural-weights-zh-cn` are in the release list. Each is a data-only
