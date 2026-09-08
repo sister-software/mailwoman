@@ -174,14 +174,41 @@ const IMPORT_CHECK = [
 
 /**
  * Leaves whose tarball must import without the umbrella (no unrelated hoisting) — the undeclared-dep guard the closure
- * phase can't provide. Each entry names the first-party tarballs that form the leaf's declared runtime closure, keeping
- * the check source-coherent without making unrelated packages available.
+ * phase can't provide. Each leaf installs with its declared first-party closure supplied as local tarballs, derived
+ * from the manifests by {@link firstPartyClosure} rather than typed here: a hand list drifts the moment a manifest
+ * gains a `workspace:*` dependency, and the drift is invisible on main, where npm resolves the missing tarball from the
+ * registry at the current version, and fatal on a release branch, where the bumped version exists nowhere
+ * (`@mailwoman/evidence@9.4.0`, ETARGET, the v9.4.0 release PR).
  */
-const STANDALONE_LEAVES: Record<string, string[]> = {
-	// Core otherwise qualifies as a dependency-clean leaf. Its first-party runtime dependencies are supplied as local
-	// tarballs rather than resolved from npm: `@mailwoman/sqlite` is a NEW name with no publish yet, so a registry
-	// install answers E404 and the probe reports a packaging failure that is really an unblessed name.
-	"@mailwoman/core": ["@mailwoman/sqlite"],
+const STANDALONE_LEAVES: readonly string[] = ["@mailwoman/core"]
+
+/**
+ * The first-party runtime closure of one packed workspace: every `@mailwoman/*` / `mailwoman` name reachable through
+ * `dependencies`, `optionalDependencies` and `peerDependencies` (npm installs peers), transitively, read from the
+ * manifests on disk. `assertClosureComplete` has already refused a `workspace:*` edge that leaves the pack set, so
+ * every name found here has a tarball.
+ */
+async function firstPartyClosure(repoRoot: string, leaf: string): Promise<string[]> {
+	const closure = new Set<string>()
+	const pending = [leaf]
+
+	while (pending.length) {
+		const name = pending.pop()!
+		const manifest = await readPackageJSON(resolve(repoRoot, WORKSPACES[name]!, "package.json"))
+
+		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
+			for (const dep of Object.keys(manifest[depType] ?? {})) {
+				const firstParty = dep.startsWith("@mailwoman/") || dep === "mailwoman"
+
+				if (firstParty && dep in WORKSPACES && !closure.has(dep)) {
+					closure.add(dep)
+					pending.push(dep)
+				}
+			}
+		}
+	}
+
+	return [...closure].toSorted()
 }
 
 /**
@@ -465,12 +492,15 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 		// cannot catch a leaf package whose OWN manifest is missing a runtime dep. Install each
 		// dependency-clean leaf with only its declared first-party closure and import it. An undeclared import
 		// (the v7.0.0 `zx` bug, which the closure phase hid because `mailwoman` declares `zx`) crashes here and
-		// nowhere else. Keep each entry's first-party closure complete so npm never pulls a stale registry
+		// nowhere else. The first-party closure comes from the manifests so npm never pulls a stale registry
 		// version (the source-skew this file's header warns about).
-		for (const [leaf, firstPartyDependencies] of Object.entries(STANDALONE_LEAVES)) {
+		for (const leaf of STANDALONE_LEAVES) {
 			const leafDir = WORKSPACES[leaf]!
+			const firstPartyDependencies = await firstPartyClosure(repoRoot, leaf)
 
-			log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
+			log(
+				`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting; closure ${firstPartyDependencies.join(", ") || "none"})…`
+			)
 
 			const solo = tmp.resolve(`solo-${leafDir}`)
 			await makeDirectories(solo)
@@ -500,7 +530,7 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 		return {
 			packed: Object.keys(WORKSPACES).length,
 			mcpTools: toolCount,
-			standaloneLeaves: Object.keys(STANDALONE_LEAVES),
+			standaloneLeaves: [...STANDALONE_LEAVES],
 		}
 	} catch (error: unknown) {
 		const e = error as { stdout?: string; stderr?: string; message?: string }
