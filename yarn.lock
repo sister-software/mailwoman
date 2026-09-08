@@ -6731,6 +6731,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     pmtiles: "npm:^4.5.0"
+    wrangler: "npm:^4.129.0"
   languageName: unknown
   linkType: soft
 

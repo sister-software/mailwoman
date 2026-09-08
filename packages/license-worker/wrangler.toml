@@ -1,10 +1,10 @@
 # The license worker: Stripe webhooks in, signed license tokens out, ledger in D1.
 #
 # This file is production, flat, the way `tile-worker` is: `wrangler deploy` with no flag deploys it, which is what
-# Cloudflare's Workers Builds runs on a push to main. The sandbox is `wrangler.sandbox.toml`, a separate file passed
-# with `-c`, so no flag can land the wrong environment on this name. The build command that precedes it is the root
-# `yarn ci:workers`, which compiles the two worker projects and their references and nothing else — a type error in a
-# workspace neither worker imports, `docs` above all, must not hold a production license deploy. Every secret arrives
+# `.github/workflows/deploy.yml` runs on a push to main that reaches this worker. The sandbox is
+# `wrangler.sandbox.toml`, a separate file passed with `-c`, so no flag can land the wrong environment on this name.
+# The workflow compiles the tree before it deploys, and it deploys only from a push whose changed workspaces lie in
+# this worker's dependency closure, so a change in `docs` never redeploys a license worker. Every secret arrives
 # through `wrangler secret put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY).
 # No `nodejs_compat`: every dependency runs on the Workers runtime as shipped, and the `bundle-graph` health check
 # holds the license subpaths free of Node builtins.

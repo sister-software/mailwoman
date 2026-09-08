@@ -54,6 +54,11 @@
 			"node": "./lib/release/smoke-get-started.ts",
 			"default": "./out/release/smoke-get-started.js"
 		},
+		"./deploy/targets": {
+			"types": "./out/deploy/targets.d.ts",
+			"node": "./lib/deploy/targets.ts",
+			"default": "./out/deploy/targets.js"
+		},
 		"./release/workspace-closure": {
 			"types": "./out/release/workspace-closure.d.ts",
 			"node": "./lib/release/workspace-closure.ts",
