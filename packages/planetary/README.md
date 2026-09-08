@@ -43,10 +43,26 @@ names the search artifact and the manifest under `public.mailwoman.ai/planetary/
 version, move the pin by a commit here; the attribution line reads the manifest, so the snapshot date follows the
 pin without a second edit.
 
-## Deployment: Workers Builds
+## Deployment
 
-Two Cloudflare projects build and deploy this workspace from the repository, one per body; the settings live in the
-Cloudflare dashboard, not here.
+Each body is a Wrangler environment in `wrangler.toml` that names its Worker and its custom domain, so a deploy is a
+build with the matching `PLANETARY_BODY` followed by `wrangler deploy --env <body>`; the custom domain and its
+certificate are created from the file on the first deploy. With `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
+in the environment:
+
+```bash
+PLANETARY_BODY=moon yarn workspace @mailwoman/planetary build && yarn workspace @mailwoman/planetary wrangler deploy --env moon
+PLANETARY_BODY=mars yarn workspace @mailwoman/planetary build && yarn workspace @mailwoman/planetary wrangler deploy --env mars
+```
+
+Deploying the wrong body to an environment is the one mistake the file cannot catch, which is why the app compares
+its production hostname with its compiled body at startup and renders an error instead of the other world.
+
+### Workers Builds
+
+A Cloudflare Workers Builds project deploys on every push to `main` without a hand deploy. Creating one needs the
+Workers Builds permission on the API token, which the lab's token does not carry, so the two projects are a dashboard
+step with these settings:
 
 | Setting           | Moon                                                                                                                                                                      | Mars                                        |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |

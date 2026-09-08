@@ -34,9 +34,21 @@ with no model download. Cloudflare's SPA fallback serves `index.html` for each; 
 - `lib/service-worker.ts`: the precache and the range-chunk cache for the byte-range databases.
 - `test/browser/`: the Playwright suite; `test/e2e/`: its fixtures.
 
-## Deployment: Workers Builds
+## Deployment
 
-Cloudflare builds and deploys this app from the repository; the settings live in the Cloudflare dashboard, not here.
+`wrangler.toml` names the Worker and its custom domain, so a deploy is a build followed by `wrangler deploy`; the
+custom domain and its certificate are created from the file on the first deploy. With `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` in the environment:
+
+```bash
+yarn workspace @mailwoman/earth build && yarn workspace @mailwoman/earth wrangler deploy
+```
+
+### Workers Builds
+
+A Cloudflare Workers Builds project deploys on every push to `main` without a hand deploy. Creating one needs the
+Workers Builds permission on the API token, which the lab's token does not carry, so the project is a dashboard step
+with these settings:
 
 | Setting           | Value                                                                                                                                                                                                                   |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
