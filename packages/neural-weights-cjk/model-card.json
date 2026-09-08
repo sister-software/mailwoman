@@ -131,7 +131,7 @@
 		},
 		"registry_boards": {
 			"$comment": "Aligned rows of the held-out typed registry strings (KR permits 3,522, TW companies 8,164, JP corporate numbers 3,193); per-tag span exact-match, no bar on the first read. The base reads near zero on every tag it never saw.",
-			"kr": "dependent_locality 0.9987, house_number 0.9994, subregion 1.0000, street 1.0000, unit 0.6993, venue 0.7307; coordinate acceptability 0.9165 (the permit rows carry coordinates)",
+			"kr": "dependent_locality 0.9987, house_number 0.9994, subregion 1.0000, street 1.0000, unit 0.9954, venue 0.9730 (a multi-token unit such as 1층 141호 reads as one span once adjacent same-tag runs are joined through the raw's whitespace, the served projection's own rule); coordinate acceptability 0.9165 (the permit rows carry coordinates)",
 			"tw": "every tag ≥ 0.9995",
 			"jp": "district 0.9828, building_name 0.9880, house_number 0.9837, block 0.9993, municipality 0.9987"
 		},

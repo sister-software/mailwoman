@@ -230,9 +230,11 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
         for i in range(start + 1, end):
             ids[i] = JP.label_to_id[f"I-{tag}"]
 
+    # The two municipality runs are one space apart, so their joined surface is readable too (the served projection
+    # joins adjacent same-tag runs with the raw's whitespace).
     assert scorer.decode_all_spans(raw, ids, JP.id_to_label) == {
         "prefecture": ["TOKYO"],
-        "municipality": ["CHIYODA", "KANDA"],
+        "municipality": ["CHIYODA", "KANDA", "CHIYODA KANDA"],
     }
     assert scorer.decode_spans(raw, ids, JP.id_to_label) == {"prefecture": "TOKYO", "municipality": "CHIYODA"}
 
@@ -251,6 +253,30 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
     )
     assert result["tag_total"]["municipality"] == 2
     assert result["tag_hit"]["municipality"] == 1
+
+
+def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_runs():
+    # The permit register's unit `1층 141호` is one gold span; the model labels the space `O`, which the served
+    # projection joins back. Both single runs and the joined surface must be readable, and a run that a NON-space
+    # character separates stays apart.
+    raw = "X 1층 141호 Y"
+    ids = [JP.label_to_id["O"]] * len(raw)
+    for start, end in ((2, 4), (5, 9)):
+        ids[start] = JP.label_to_id["B-building_name"]
+        for i in range(start + 1, end):
+            ids[i] = JP.label_to_id["I-building_name"]
+
+    assert scorer.decode_all_spans(raw, ids, JP.id_to_label)["building_name"] == ["1층", "141호", "1층 141호"]
+
+    row = {"raw": raw, "span_starts": [2], "span_ends": [9], "span_tags": ["building_name"], "lon": 0.0, "lat": 0.0}
+    result = scorer.score_board([row], lambda _raw: ids, CENTROIDS, id_to_label=JP.id_to_label, resolve_tags=_RESOLVE)
+    assert result["tag_hit"]["building_name"] == 1
+
+    # Runs split by a letter are two spans, never one.
+    raw2 = "1층X141호"
+    ids2 = [JP.label_to_id["B-building_name"], JP.label_to_id["I-building_name"], JP.label_to_id["O"]]
+    ids2 += [JP.label_to_id["B-building_name"]] + [JP.label_to_id["I-building_name"]] * 3
+    assert scorer.decode_all_spans(raw2, ids2, JP.id_to_label)["building_name"] == ["1층", "141호"]
 
 
 def test_municipality_macro_weights_each_held_out_municipality_once():

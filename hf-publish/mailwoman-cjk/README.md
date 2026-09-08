@@ -84,7 +84,7 @@ road or street name is `street`, the building or house number `house_number`, a 
 | Korean board: street / house_number / postcode exact                                            |         0.999 / 1.000 / 1.000 |
 | Taiwanese board, 20,000 rows, 28 held-out 鄉鎮市區: region / subregion / street / house_number  | 1.000 / 1.000 / 0.999 / 0.999 |
 | Japanese corporate-register board, 3,193 typed rows: district / building_name / house_number    |         0.983 / 0.988 / 0.984 |
-| Korean permit-register board, 3,522 typed rows: dependent_locality / house_number / venue       |         0.999 / 0.999 / 0.731 |
+| Korean permit-register board, 3,522 typed rows: dependent_locality / house_number / venue       |         0.999 / 0.999 / 0.973 |
 | Chinese board, 14 rows: `locality_unit` span exact-match                                        |                         13/14 |
 
 The Chinese side is a supply-limited overlay (126 labeled rows in total); the number is reported, not claimed. The
