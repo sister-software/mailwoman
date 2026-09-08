@@ -158,12 +158,12 @@ const REFUSED_SPELLINGS: ReadonlyArray<{ head: string; pattern: RegExp; because:
 	{ head: "npm", pattern: /(?:^|\s)pkg\s+set\b/u, because: "`npm pkg set` writes a manifest" },
 	{ head: "yarn", pattern: /(?:^|\s)(?:dlx|exec|node)\b/u, because: "`yarn` is running an arbitrary program" },
 	{ head: "npx", pattern: /(?:^|\s)-{1,2}y(?:es)?\b/u, because: "`npx -y` fetches and runs an unreviewed package" },
-	{ head: "oxlint", pattern: /(?:^|\s)--fix\b/u, because: "`oxlint --fix` rewrites source" },
 	{ head: "vitest", pattern: /(?:^|\s)(?:-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
-	// The same tools arrive through the package manager, where `yarn` is the command word.
+	// The same tool arrives through the package manager, where `yarn` is the command word.
 	{ head: "yarn", pattern: /(?:^|\s)vitest\b[^\n]*(?:\s-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
-	{ head: "yarn", pattern: /(?:^|\s)oxlint\b[^\n]*--fix\b/u, because: "`oxlint --fix` rewrites source" },
-	{ head: "npx", pattern: /(?:^|\s)oxlint\b[^\n]*--fix\b/u, because: "`oxlint --fix` rewrites source" },
+	// `oxlint --fix` and `oxfmt --write` are admitted on the same ground as the formatter over its inputs: what they
+	// write they derive from the rule set, and no content the agent supplies passes through them. A snapshot update is
+	// different in kind — `vitest -u` writes whatever the code under test produced, which is the assertion being replaced.
 ]
 
 /**

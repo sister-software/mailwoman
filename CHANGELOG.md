@@ -36,6 +36,26 @@ step. The pre-commit hook read its CLI-freshness reference after the formatter h
 commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
 first.
 
+### Added — Taiwan's 鄉鎮市區 as register-derived localities, scoped to their 縣市
+
+`新北市林口區` resolved 54.5 km away, because the only candidate row keyed `林口區` is a WOF record with no parent and a
+centroid in the hills (WOF 102026697), while the correctly parented Linkou (WOF 890467835) carries only its Latin
+name. Across the 289 held-out 鄉鎮市區, 102 had no Han-keyed Taiwan row at all, 15 had one only on a namesake in
+another 縣市, and 10 only on a parentless row. `mailwoman gazetteer build tw-districts` now derives one locality row
+per (縣市, 鄉鎮市區) from the Overture-TW address register (290 rows, the median address point as the centroid, the
+p5–p95 envelope as the bbox, the 臺/台 twin as an alias) and writes each row's 縣市 as an `ancestors` row against the WOF
+region, matched by the official `zho` name, then any Han name naming exactly one region, then the name minus its 縣/市
+suffix (`桃園市` reaches the region WOF still names `桃園`). The candidate fold honors an extract's region ancestry: the
+row takes the region's scope and inherits the region's own closure chain, so a 縣市 that resolves to its macroregion
+record still confirms the lineage. `localities-tw-districts.db` joins the default locality databases. Two unmeasured
+same-country rows that tie on rank now order the row named X ahead of the row also-known-as X, where the tie had fallen
+to the B-tree's id order: six townships lost to an in-county village carrying the township's name as an alias (`溪州鄉`
+to the village 溪洲, 30.8 km). On the 289 held-out 鄉鎮市區 as bare lines, 286 resolve the district within 15 km, from
+154; the three under `新竹市` remain, because Hsinchu County carries `新竹市` as a variant name and outranks Hsinchu City
+by population. The Latin regression board reads 438 of 438 and a 300-row Taiwan rooftop draw is unchanged
+(300 at the address-point tier, 294 within 100 m). The Bash write guard admits `oxlint --fix` on the same ground as
+the formatter: what it writes it derives.
+
 ### Changed — a widened-scope admin pick whose lineage names another region is refused; Taiwan's 鄉鎮市區 read as localities
 
 When a child lookup scoped to its resolved parent misses, two widenings exist so an incomplete hierarchy still

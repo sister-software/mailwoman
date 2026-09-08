@@ -54,7 +54,6 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		["git config writing a manifest", `git config -f packages/core/package.json foo.bar baz`],
 		["npm rewriting a manifest", `npm pkg set scripts.evil=x`],
 		["yarn running an arbitrary program", `yarn dlx replace-in-file a b AGENTS.md`],
-		["oxlint rewriting source", `oxlint --fix packages/core/lib`],
 		["vitest rewriting snapshots", `yarn vitest run -u packages/core`],
 		["a copy into the repository", `cp /tmp/x AGENTS.md`],
 		["a removal inside the repository", `rm -rf packages/core/lib`],
@@ -79,6 +78,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
 		["a formatter over its own inputs", `npx oxfmt .`],
+		["the formatter writing its derivation", `yarn oxfmt --write packages/core/lib/env.ts`],
+		["the linter applying its own fixes", `yarn oxlint --fix packages/core/lib`],
+		["the linter applying its own fixes, bare", `oxlint --fix packages/core/lib`],
 		["a compiler emitting into out/", `yarn compile`],
 		["discarding output", `git fetch origin main -q 2>/dev/null`],
 		["sed in its reading spelling", `sed -n '10,20p' AGENTS.md`],

@@ -97,9 +97,11 @@ export interface BuildCandidateOptions {
 	/**
 	 * Optional LOCALITY extracts (`spr` rows with `placetype='locality'` + real coords, e.g. localities-nz-linz.db — the
 	 * #1564 NZ suburb tier) — folded through the same extract loop as the postcode extracts, staged as `locality`
-	 * candidate rows with no region scope and UNMEASURED population (`neg_rank 0`: a extract row ranks behind any
-	 * populated namesake and wins only where its key is the answer). Each extract's `names` table folds as aliases,
-	 * `is_primary = 0`, same as the delivery-city pass.
+	 * candidate rows with UNMEASURED population (`neg_rank 0`: a extract row ranks behind any populated namesake and wins
+	 * only where its key is the answer). Each extract's `names` table folds as aliases, `is_primary = 0`, same as the
+	 * delivery-city pass. An extract whose `ancestors` table names an admin region for a row gives that row the region's
+	 * scope (`region_id`) plus closure rows for the region and the region's own chain above it; an extract without one
+	 * stays unscoped, as before.
 	 */
 	localities?: string[]
 	/**
@@ -520,6 +522,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 
 	let nLocality = 0
+	let nLocalityScoped = 0
+	let nLocalityAncestor = 0
 
 	for (const locDB of opts.localities ?? []) {
 		const folded = foldExtract({
@@ -529,14 +533,23 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			ccID,
 			ptID,
 			stageRow,
+			attrs,
 			progress,
 		})
 
 		nLocality += folded.primaries
+		nLocalityScoped += folded.scoped
+		nLocalityAncestor += folded.ancestorRows
 	}
 
 	if (nLocality > 0) {
-		progress("localities", `${nLocality.toLocaleString()} extract localities folded`)
+		progress(
+			"localities",
+			`${nLocality.toLocaleString()} extract localities folded` +
+				(nLocalityScoped
+					? `; ${nLocalityScoped.toLocaleString()} carry a region scope (${nLocalityAncestor.toLocaleString()} closure rows)`
+					: "")
+		)
 	}
 
 	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
@@ -610,8 +623,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		abbrevs: nAbbr,
 		postcodes: nPostcode,
 		postcodeAliases: nPostcodeAlias,
-		ancestorRows: sidecar.ancestorRows,
-		ancestorPlaces: sidecar.ancestorPlaces,
+		ancestorRows: sidecar.ancestorRows + nLocalityAncestor,
+		ancestorPlaces: sidecar.ancestorPlaces + nLocalityScoped,
 		intervalPlaces: sidecar.intervalPlaces,
 		...roles,
 		...(importance ? { importanceScored: importance.matched, importanceFiltered: importance.refused } : {}),

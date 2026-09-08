@@ -608,6 +608,24 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 		expect(ranked.every((r) => !r.demoted)).toBe(true)
 		expect(ranked.every((r) => r.effectiveNegRank === r.neg_rank)).toBe(true)
 	})
+
+	test("two unmeasured same-country rows tied on rank: the row named X outranks the row also-known-as X", () => {
+		// The village 溪洲 carries `溪州鄉` as an alias and scans first (lower spr_id); the township row is the
+		// primary. Both population 0, both neg_rank 0 — the tie used to fall to scan order.
+		const alias = { neg_rank: 0, is_primary: 0, country_id: 1, population: 0, name_role: "abbr" }
+		const primary = { neg_rank: 0, is_primary: 1, country_id: 1, population: 0 }
+		const ranked = rankByPrimaryPreference([alias, primary], 5)
+
+		expect(ranked[0]!.is_primary).toBe(1)
+	})
+
+	test("a populated tie keeps scan order — the unmeasured-primary term never reaches a measured row", () => {
+		const alias = { neg_rank: -5, is_primary: 0, country_id: 1, population: 100_000 }
+		const primary = { neg_rank: -5, is_primary: 1, country_id: 1, population: 100_000 }
+		const ranked = rankByPrimaryPreference([alias, primary], 5)
+
+		expect(ranked[0]!.is_primary).toBe(0)
+	})
 })
 
 describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio setting, regression lock)", () => {

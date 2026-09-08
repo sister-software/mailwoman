@@ -207,17 +207,27 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 			? 1
 			: 0
 
+	// 1 for a PRIMARY-name row whose prominence is unmeasured (population 0), 0 for everything else. Two unmeasured
+	// rows tie on `neg_rank`, and that tie used to fall through to scan order — the B-tree's `spr_id`, which is no
+	// evidence about either place. A row that IS named X ranks ahead of one merely also-known-as X when nothing else
+	// separates them: Taiwan's 溪州鄉 township row (its own name, unmeasured) over the village 溪洲 30 km away that
+	// carries `溪州鄉` as an alias (unmeasured), which the lower WOF id had been winning. Populated ties are untouched —
+	// a populated alias ("NYC") never reaches this term, and two populated rows keep the order they had.
+	const unmeasuredPrimary = (r: R): number =>
+		r.is_primary === 1 && typeof r.population === "number" && r.population === 0 ? 1 : 0
+
 	return (
 		rows
 			.map((r, i) => ({ row: annotate(r), i }))
-			// Effective rank ASC; ties keep population order, then the seat preference DESC, then original
-			// index (stable).
+			// Effective rank ASC; ties keep population order, then the seat preference DESC, then the primary name
+			// among unmeasured rows, then original index (stable).
 			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort(
 				(a, b) =>
 					a.row.effectiveNegRank - b.row.effectiveNegRank ||
 					a.row.neg_rank - b.row.neg_rank ||
 					seatPreference(b.row) - seatPreference(a.row) ||
+					unmeasuredPrimary(b.row) - unmeasuredPrimary(a.row) ||
 					a.i - b.i
 			)
 			.slice(0, limit)

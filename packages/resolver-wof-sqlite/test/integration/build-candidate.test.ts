@@ -20,7 +20,7 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { allRows } from "@mailwoman/core/utils"
+import { allRows, getRow } from "@mailwoman/core/utils"
 import {
 	buildCandidateTable,
 	type PlaceAttrs,
@@ -84,6 +84,8 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (200, 101, 'region');
 		INSERT INTO ancestors VALUES (201, 101, 'region');
 		INSERT INTO ancestors VALUES (202, 101, 'region');
+		-- the region's own chain, which a scoped extract row inherits
+		INSERT INTO ancestors VALUES (101, 100, 'country');
 	`)
 }
 
@@ -129,6 +131,35 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 			INSERT INTO names VALUES (20500, 'The White House', 'postalcode', 'US', '', '', 0, 0);
 		`)
 	}
+}
+
+/**
+ * A locality extract in the register-derived shape (`gazetteer build tw-districts`): two `locality` rows, one whose
+ * `ancestors` table names the admin fixture's Illinois region (id 101) and one that names nothing — the NZ shape.
+ */
+function buildFixtureLocalities(path: string): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec(`
+		CREATE TABLE spr (
+			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
+			latitude REAL, longitude REAL,
+			min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
+			is_current INTEGER, is_deprecated INTEGER
+		);
+		INSERT INTO spr VALUES (9900000000001, '林口區', 'locality', 'US', 41.7, -87.7, 41.65, -87.75, 41.75, -87.65, 1, 0);
+		INSERT INTO spr VALUES (9900000000002, 'Stanmore Bay', 'locality', 'US', 41.9, -87.9, 41.9, -87.9, 41.9, -87.9, 1, 0);
+		CREATE TABLE names (
+			id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
+			country TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '',
+			privateuse TEXT NOT NULL DEFAULT '', official INTEGER NOT NULL DEFAULT 0,
+			lastmodified INTEGER NOT NULL DEFAULT 0
+		);
+		INSERT INTO names VALUES (9900000000001, '林口區', 'locality', 'US', '', '', 0, 0);
+		CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
+		INSERT INTO ancestors VALUES (9900000000001, 101, 'region');
+		INSERT INTO ancestors VALUES (9900000000001, 100, 'country');
+	`)
 }
 
 interface CandRow {
@@ -349,6 +380,43 @@ describe("buildCandidateTable", () => {
 		expect(zip?.placetype).toBe("postalcode")
 		expect(zip?.latitude).toBeCloseTo(41.885, 3)
 		expect(probe(db, normalizeLocalityForKey("20500"))).toHaveLength(0)
+	})
+
+	test("a locality extract that names its region folds in with that region's scope and a closure row", async () => {
+		const input = scratch.resolve("admin.db")
+		const localities = scratch.resolve("localities.db")
+		const output = scratch.resolve("candidate.db")
+		buildFixtureAdmin(input)
+		buildFixtureLocalities(localities)
+
+		const baseline = await buildCandidateTable({ input, output: scratch.resolve("baseline.db") })
+		const result = await buildCandidateTable({ input, output, localities: [localities] })
+		// The scoped district takes its region plus the region's own chain (Illinois, then United States); the
+		// unscoped row adds none.
+		expect(result.ancestorRows).toBe(baseline.ancestorRows + 2)
+
+		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+
+		const scoped = getRow<{ region_id: number }>(
+			db.prepare("SELECT region_id FROM candidate WHERE spr_id = 9900000000001 AND is_primary = 1")
+		)
+
+		expect(scoped?.region_id).toBe(101)
+
+		const unscoped = getRow<{ region_id: number }>(
+			db.prepare("SELECT region_id FROM candidate WHERE spr_id = 9900000000002 AND is_primary = 1")
+		)
+
+		expect(unscoped?.region_id).toBe(0)
+
+		const closure = allRows<{ depth: number; parent_spr_id: number; parent_name: string }>(
+			db.prepare("SELECT depth, parent_spr_id, parent_name FROM candidate_ancestor WHERE spr_id = 9900000000001")
+		)
+
+		expect(closure).toEqual([
+			{ depth: 1, parent_spr_id: 101, parent_name: "Illinois" },
+			{ depth: 2, parent_spr_id: 100, parent_name: "United States" },
+		])
 	})
 
 	test("folds postcode delivery-city aliases into the exact tier (#1495)", async () => {
