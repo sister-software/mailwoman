@@ -19,6 +19,7 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"
 
@@ -34,6 +35,10 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	docs: "private Docusaurus site — never publishes",
 	"packages/tile-worker": "private demo-map tile worker — never publishes",
 	"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes",
+	"packages/earth": "private Earth map app — Cloudflare infrastructure, never publishes",
+	"packages/planetary": "private Moon and Mars map app — Cloudflare infrastructure, never publishes",
+	"packages/site-kit": "private static-site build conventions for the Earth and planetary apps — never publishes",
+	"packages/astrogeology": "private planetary data pipeline — no published consumer yet",
 	"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",
 	"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
 	"packages/dev-mcp": "private maintainer MCP server — never publishes",
@@ -42,10 +47,6 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/ops-cli": "private operator CLI (mwops) — never publishes",
 	"packages/release-mcp": "private maintainer MCP server over the release registry — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
-	"packages/neural-weights-ja-jp":
-		"held out until its fst-ja-jp.bin is staged and the name is blessed — the manifest promises a file no build produces yet",
-	"packages/neural-weights-zh-cn":
-		"held out until its artifacts are staged and the name is blessed — the manifest promises files no build produces yet",
 }
 
 /**
@@ -96,7 +97,7 @@ export interface ReleaseListIdentity {
  * discrepancy is reported by NAME, so the failure is actionable without counting.
  */
 export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promise<ReleaseListIdentity> {
-	const root = (await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(repoRoot, "package.json"))).workspaces
+	const root = await readWorkspaceDirectories(repoRoot)
 
 	const release = new Set(await releaseWorkspaces(repoRoot))
 	const rootSet = new Set(root)

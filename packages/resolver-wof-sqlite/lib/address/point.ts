@@ -20,7 +20,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { AddressPointDatabase, AddressPointTable } from "#address/point-schema"
 import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 import {
+	normalizeHouseNumberForKey,
 	normalizeLocalityForKey,
+	normalizeLocalityForKeyLocale,
 	type NameKey,
 	type StreetKey,
 	streetKeyVariants,
@@ -52,6 +54,13 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		| PreparedGet<[postcode: string, locality: NameKey, street: StreetKey, number: string], AddressPointRow>
 		| undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey, number: string], AddressPointRow> | undefined
+	/**
+	 * The scope key matched by its TAIL — a `zh` query that names the 鄉鎮市區 without its 縣市. Narrowed by the (street,
+	 * number) index first, so the LIKE walks the handful of rows that share the pair.
+	 */
+	readonly #byLocalityTail:
+		| PreparedGet<[street: StreetKey, number: string, tailPattern: string], AddressPointRow>
+		| undefined
 	readonly #byBbox:
 		| PreparedGet<
 				[street: StreetKey, number: string, minLat: number, maxLat: number, minLon: number, maxLon: number],
@@ -101,6 +110,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE street_norm = ? AND number = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? LIMIT 1`
 			)
+
+			this.#byLocalityTail = prepareGet(
+				this.#db,
+				`SELECT ${SELECT_COLS} FROM address_point
+				 WHERE street_norm = ? AND number = ? AND locality_norm LIKE ? LIMIT 1`
+			)
 		}
 	}
 
@@ -109,12 +124,25 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		number: string
 		postcode?: string
 		locality?: string
+		region?: string
+		subregion?: string
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	}): AddressPointHit | null {
 		if (!this.#byPostcode || !this.#byLocality || !this.#byBbox) return null
-		const number = query.number.trim().toLowerCase()
+		const number = normalizeHouseNumberForKey(query.number, this.#locale)
 
 		if (!number) return null
+
+		// A `zh` extract scopes a point by 縣市 + 鄉鎮市區, the pair the parse tags `region` + `subregion`; the Taiwanese
+		// register carries no postcode and the parse no `locality`. The pair becomes the locality key here, on the
+		// reader that was built with the same fold, and a Latin extract never sees the two fields. A line that names
+		// only the 鄉鎮市區 (`中和區中興街281號`, 14.7% of the TW board) matches the stored pair by its tail instead.
+		const scoped =
+			this.#locale === "zh" && !query.locality && query.subregion
+				? query.region
+					? { ...query, locality: `${query.region}${query.subregion}` }
+					: { ...query, localityTail: normalizeLocalityForKeyLocale(query.subregion, "zh") }
+				: query
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
 		// collapse and the saint↔st register swap — each variant runs the FULL number ladder below, and
@@ -122,7 +150,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		let row: AddressPointRow | undefined
 
 		for (const streetNorm of streetKeyVariants(query.street, streetLocaleForSurface(query.street, this.#locale))) {
-			row = this.#findForKey(streetNorm, number, query)
+			row = this.#findForKey(streetNorm, number, scoped)
 
 			if (row) break
 		}
@@ -151,6 +179,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			number: string
 			postcode?: string
 			locality?: string
+			localityTail?: NameKey
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}
 	) {
@@ -185,6 +214,19 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			}
 		}
 
+		// Sub-number fallback for the Taiwanese register: `14之12` is building 12 off number 14, `30附40` an attached
+		// number, stored as number `14` / `30` with the rest in `unit`. A query that kept the pair on the number span
+		// falls to the base number — the same adjacent-parcel approximation the letter-suffix rung makes, priced the
+		// same: on the 2,000-row served read the rows answered this way sit a median 256 m and at most 1.0 km from the
+		// building.
+		if (!row && this.#locale === "zh") {
+			const base = /^(\d+)(?:[之附]\d+)+$/u.exec(number)?.[1]
+
+			if (base) {
+				row = this.#probe(streetNorm, base, query)
+			}
+		}
+
 		return row
 	}
 
@@ -198,6 +240,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		query: {
 			postcode?: string
 			locality?: string
+			localityTail?: NameKey
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}
 	): AddressPointRow | undefined {
@@ -225,6 +268,11 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			row = this.#byLocality!(this.#localityKey(query.locality), streetNorm, number)
 		}
 
+		if (!row && query.localityTail && this.#byLocalityTail) {
+			// A Han key carries no `%` or `_`, so the tail is a literal suffix pattern.
+			row = this.#byLocalityTail(streetNorm, number, `%${query.localityTail}`)
+		}
+
 		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls
 		// inside the resolved locality's box. Only reached when the scoped probes missed AND a bbox was supplied.
 		if (!row && query.bbox) {
@@ -247,9 +295,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * 13e Arrondissement" and "Paris" both hit; a no-op for every other locale.
 	 */
 	#localityKey(locality: string): NameKey {
-		return this.#locale === "fr"
-			? stripArrondissement(normalizeLocalityForKey(locality))
-			: normalizeLocalityForKey(locality)
+		if (this.#locale === "fr") return stripArrondissement(normalizeLocalityForKey(locality))
+
+		return normalizeLocalityForKeyLocale(locality, this.#locale)
 	}
 
 	/**

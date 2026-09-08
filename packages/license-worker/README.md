@@ -10,29 +10,29 @@ Spec: `docs/superpowers/specs/2026-09-05-self-service-commercial-license-design.
 
 ## Two environments
 
-`wrangler.toml` defines `sandbox` and `production` and nothing deployable at the top level. Each has its own D1
-database, rate-limit namespaces, webhook secret, signing key, key id, Price allowlist and email credentials. Test-mode
-Stripe keys never meet production. The sandbox signing key is never in the shipped register, so in a sandbox the worker
+`wrangler.toml` is production, flat, and `wrangler.sandbox.toml` is the sandbox, passed with `-c`; a plain
+`wrangler deploy` can only mean production. Each has its own D1 database, rate-limit namespaces, webhook secret,
+signing key, key id and Price allowlist. Test-mode Stripe keys never meet production. The sandbox signing key is never in the shipped register, so in a sandbox the worker
 trusts its own key: the self-test derives the public half from the private key and requires it to digest to the
 configured kid. Tokens a sandbox mints verify against that public key and against nothing a release ships. In
 production only an `active` entry of the shipped register passes the self-test.
 
 ## Bindings
 
-| Binding                                              | Kind       | Meaning                                                                                                    |
-| ---------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `STRIPE_SECRET_KEY`                                  | secret     | a restricted key with read scope on checkout sessions, subscriptions, invoices, invoice payments, disputes |
-| `STRIPE_WEBHOOK_SECRET`                              | secret     | the webhook destination's signing secret                                                                   |
-| `LICENSE_SIGNING_KEY_PEM`                            | secret     | the worker's Ed25519 private key, PKCS#8 PEM                                                               |
-| `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone         |
-| `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                             |
-| `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                           |
-| `ISSUANCE_ENABLED`                                   | var        | the kill switch: `false` refuses to mint and answers claims `pending`; refresh and status keep working     |
-| `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts; an event or invoice from the other mode is refused               |
-| `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                 |
-| `EMAIL_FROM`                                         | var        | the sender address                                                                                         |
-| `LICENSE_LEDGER`                                     | D1         | the ledger: `licenses`, `license_tokens`, `stripe_events` (`migrations/0001_ledger.sql`)                   |
-| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid AND per client address, independently, for refresh and status       |
+| Binding                                              | Kind       | Meaning                                                                                                                                                                           |
+| ---------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `STRIPE_SECRET_KEY`                                  | secret     | a restricted key with read scope on checkout sessions, subscriptions, invoices, invoice payments, disputes                                                                        |
+| `STRIPE_WEBHOOK_SECRET`                              | secret     | the webhook destination's signing secret                                                                                                                                          |
+| `LICENSE_SIGNING_KEY_PEM`                            | secret     | the worker's Ed25519 private key, PKCS#8 PEM                                                                                                                                      |
+| `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone, as text and as HTML from the react-email template in `lib/email/template.tsx` |
+| `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                                                                                                    |
+| `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                                                                                                  |
+| `ISSUANCE_ENABLED`                                   | var        | the kill switch: `false` refuses to mint and answers claims `pending`; refresh and status keep working                                                                            |
+| `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts; an event or invoice from the other mode is refused                                                                                      |
+| `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                                                                                        |
+| `EMAIL_FROM`                                         | var        | the sender address                                                                                                                                                                |
+| `LICENSE_LEDGER`                                     | D1         | the ledger: `licenses`, `license_tokens`, `stripe_events` (`migrations/0001_ledger.sql`)                                                                                          |
+| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid AND per client address, independently, for refresh and status                                                                              |
 
 A production var still reading `REPLACE` makes `readEnv` refuse every request with 503, so an unfilled deploy never
 mints. Secrets arrive only through `wrangler secret put`; `.dev.vars.example` names the four for local `wrangler dev`.
@@ -55,7 +55,8 @@ the installed release does not trust is a token no installation accepts, which i
 
    `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY`; `--mode live` reads
    `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses any other prefix. Both write `lib/shop/ids.json`, the one file that
-   names the Price ids the worker allowlists and the Payment Links the site renders. A Payment Link is created only with consent collection; if Stripe
+   names the Price ids the worker allowlists, the Payment Links the site renders, and the portal's login address the
+   site and the email hand a customer. A Payment Link is created only with consent collection; if Stripe
    refuses it, the report reads `blocked` and the remedy is the terms-of-service URL under the account's public details
    in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing. An object that
    differs from the catalog is reported under `drift`; `--apply` updates what an update can change (a link's promotion
@@ -65,31 +66,38 @@ the installed release does not trust is a token no installation accepts, which i
 3. Set the four secrets for the environment:
 
    ```bash
-   yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_SECRET_KEY --env production
-   yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET --env production
-   yarn workspace @mailwoman/license-worker wrangler secret put LICENSE_SIGNING_KEY_PEM --env production
-   yarn workspace @mailwoman/license-worker wrangler secret put EMAIL_API_KEY --env production
+   yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_SECRET_KEY
+   yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET
+   yarn workspace @mailwoman/license-worker wrangler secret put LICENSE_SIGNING_KEY_PEM
+   yarn workspace @mailwoman/license-worker wrangler secret put EMAIL_API_KEY
    ```
 
 4. Fill `LICENSE_SIGNING_KID` in `wrangler.toml`. Leave `ISSUANCE_ENABLED = "false"`.
-5. Run the `license-worker` workflow with `migrate` checked. It tests, bundles, refuses a `node:` import, applies the
-   migrations, and deploys.
+5. Apply the migrations, then deploy. `.github/workflows/deploy.yml` deploys the worker on every push to `main` that
+   reaches it or a dependency of it, with `yarn compile` before `wrangler deploy`; a first deploy by hand is the same
+   command:
+
+   ```bash
+   yarn workspace @mailwoman/license-worker migrate:production
+   yarn workspace @mailwoman/license-worker wrangler deploy
+   ```
+
 6. Confirm `GET /health` reads `{"issuance":false,"liveMode":true,"signing":"ok","ledger":"ok","email":"ok"}`; it answers 503
    when the ledger does not respond.
 7. Create the webhook destination against the deployed origin, and store the secret it answers once:
 
    ```bash
    yarn mwops shop provision --mode live --apply --worker-origin https://license.mailwoman.ai
-   yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET --env production
+   yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET
    ```
 
    The destination subscribes to the seven event types in `lib/stripe/webhook.ts` and pins the API version the SDK is
    built against. A verified event of another type answers 200 and is logged; only a failed signature answers 400,
    which Stripe retries for three days.
 
-8. Set `ISSUANCE_ENABLED = "true"` and run the workflow again without `migrate`.
+8. Set `ISSUANCE_ENABLED = "true"` in `wrangler.toml` and push; the next build deploys it.
 
-The same steps with `--env sandbox` stand up the sandbox on a key pair generated for it alone
+The same steps with `-c wrangler.sandbox.toml` stand up the sandbox on a key pair generated for it alone
 (`generateLicenseSigningKeyPair` from `@mailwoman/core/license/key`, kid from `licenseKeyID(publicKeyPEM, 9)`). Its
 `/health` reads `signing: ok`, and a Payment Link in Stripe test mode runs the whole path: checkout, webhook, claim,
 email, refresh. Verify a sandbox token with `verifyLicenseKey` against the sandbox public key; no release trusts it.
@@ -144,14 +152,14 @@ Public status answers carry no reason, no name and no date.
 
 ## Running it locally
 
-`wrangler dev --env sandbox` runs the worker on the local Workers runtime with a local D1 and the sandbox rate limiters;
+`yarn dev` runs the worker on the local Workers runtime with a local D1 and the sandbox rate limiters;
 no Cloudflare credential is needed. Secrets and overrides come from `.dev.vars` (gitignored; `.dev.vars.example` is
 the shape): the test-mode Stripe key, any string as the webhook secret, the sandbox signing pair's private half, and
 `ISSUANCE_ENABLED=true` to mint. Then:
 
 ```bash
-yarn workspace @mailwoman/license-worker wrangler d1 migrations apply LICENSE_LEDGER --env sandbox --local
-yarn workspace @mailwoman/license-worker wrangler dev --env sandbox --test-scheduled
+yarn workspace @mailwoman/license-worker wrangler d1 migrations apply LICENSE_LEDGER -c wrangler.sandbox.toml --local
+yarn workspace @mailwoman/license-worker wrangler dev -c wrangler.sandbox.toml --test-scheduled
 curl -s http://localhost:8787/health
 curl -s "http://localhost:8787/__scheduled?cron=0+*/6+*+*+*"     # one reconciliation pass
 ```
@@ -171,6 +179,6 @@ migrations applied per file, a Stripe client over a fetch stub that answers by m
 per run. The root Vitest sweep excludes these files; CI runs them as their own step. `yarn compile` first: the worker
 imports `@mailwoman/core` through its `default` export condition, which names `out/`.
 
-The bundle is checked at deploy time: `wrangler deploy --dry-run` writes it, and a `"node:` import, a private-key
-marker, or a Stripe key prefix in it fails the workflow, as does `upload_source_maps = true` in `wrangler.toml`. The worker runs without `nodejs_compat`, so the remedy for a hit is at the import's source, never a
-compatibility flag. Measured at 2.1 MB before compression.
+The worker runs without `nodejs_compat`: the `bundle-graph` health check holds the license subpaths free of Node
+builtins, so the remedy for a hit is at the import's source, never a compatibility flag. Secrets never enter the
+bundle: each is a Wrangler secret binding, and `upload_source_maps` stays unset. Measured at 2.7 MB before compression, 0.4 MB gzipped.

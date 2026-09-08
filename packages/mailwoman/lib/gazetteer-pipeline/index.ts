@@ -178,6 +178,10 @@ export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
 	// from GeoNames CZ, `gazetteer build cz-districts`). Verified 2026-08-12: the Chabeřická panel row
 	// moved from a 6,733 km US answer to CZ at ~400 m.
 	"localities-cz-districts.db",
+	// Taiwan's 鄉鎮市區 from the civil-affairs address register (`gazetteer build tw-districts`), each row carrying its
+	// 縣市's WOF region as an `ancestors` row so the fold stamps the region scope. The admin artifact's own copies of
+	// the tier are unusable for a Han query: the Han-keyed record has no parent, the parented one no Han name.
+	"localities-tw-districts.db",
 ]
 
 /**
@@ -496,7 +500,7 @@ export interface PublishOptions {
 	 */
 	stageDir: PathBuilderLike
 	/**
-	 * `docs/src/shared/resources/index.ts` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump.
+	 * `packages/mailwoman/lib/browser-runtime/resources.ts` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the pin bump.
 	 */
 	resourcesFile?: string
 	bucket?: string

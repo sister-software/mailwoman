@@ -7,7 +7,8 @@
 		"paymentLinks": {
 			"commercial-monthly-v1": "https://buy.stripe.com/test_bJe00iabDeqibfk9D90RG00",
 			"commercial-yearly-v1": "https://buy.stripe.com/test_bJeaEW4Rj4PI97c3eL0RG01"
-		}
+		},
+		"portalURL": "https://billing.stripe.com/p/login/test_bJe00iabDeqibfk9D90RG00"
 	},
 	"live": {
 		"prices": {
@@ -17,6 +18,7 @@
 		"paymentLinks": {
 			"commercial-monthly-v1": "https://buy.stripe.com/00weVffho9G7bgfeMl9oc00",
 			"commercial-yearly-v1": "https://buy.stripe.com/5kQbJ3c5c05xdonaw59oc01"
-		}
+		},
+		"portalURL": "https://billing.stripe.com/p/login/00weVffho9G7bgfeMl9oc00"
 	}
 }

@@ -49,6 +49,32 @@ export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: st
 }
 
 /**
+ * Every `git status --porcelain` line, staged and unstaged and untracked alike.
+ *
+ * The sibling {@linkcode dirtyTrackedFiles} answers a publish path's question — which committed files have moved — and
+ * excludes what a build creates. This answers a CACHE's question: has anything at all changed since a derived artifact
+ * was built. A key built from the narrower reading goes stale over a staged edit and over a new file, and a stale index
+ * reports that a helper written an hour ago does not exist.
+ */
+export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
+	const scope = pathspecs.length ? ["--", ...pathspecs] : []
+	const output = await git(repoRoot, ["status", "--porcelain", ...scope])
+
+	return [...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length > 0)
+}
+
+/**
+ * The repo-relative paths that differ between two commits, added, modified, renamed or deleted alike, read
+ * NUL-delimited so an unusual path survives. Both commits must be present in the checkout: a shallow clone that lacks
+ * `base` fails here with git's own message rather than answering an empty list.
+ */
+export async function changedFiles(repoRoot: PathBuilderLike, base: string, head: string): Promise<string[]> {
+	const output = await git(repoRoot, ["diff", "--name-only", "-z", base, head], 64 * 1024 * 1024)
+
+	return output.split("\0").filter((path) => path.length > 0)
+}
+
+/**
  * Every tracked path, repo-relative, optionally narrowed by git pathspecs. Read NUL-delimited so a path with a newline
  * or a non-ASCII byte survives; the 64 MiB buffer covers this repository's listing several times over.
  */

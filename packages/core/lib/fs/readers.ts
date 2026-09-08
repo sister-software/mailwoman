@@ -307,13 +307,25 @@ export function readLocalTextFile<S extends Array<PathBuilderLike | URL>>(...pat
 }
 
 /**
+ * @deprecated Use `readLocalJSONFile` instead
+ */
+export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}/package.json`): Promise<never>
+
+/**
  * Read a local JSON file.
  *
  * Parsing is strict: a file that is not JSON throws here rather than answering `undefined` several frames later.
  *
  * @category Node
  * @category Files
+ * @see `readPackageJSON` in `#module/resolve-from` for a `package.json`, which answers the manifest shape and takes a
+ *   package name as readily as a path.
  */
+export function readLocalJSONFile<
+	T = Record<string, unknown>,
+	S extends Array<PathBuilderLike | URL> = Array<PathBuilderLike | URL>,
+>(...pathSegments: S): Promise<T>
+
 export function readLocalJSONFile<
 	T = Record<string, unknown>,
 	S extends Array<PathBuilderLike | URL> = Array<PathBuilderLike | URL>,

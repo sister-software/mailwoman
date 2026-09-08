@@ -20,5 +20,10 @@
 		"./vitest.config.ts",
 		"./vitest.node.config.ts"
 	],
-	"references": [{ "path": "../kind-classifier" }, { "path": "../poi-taxonomy" }, { "path": "../query-shape" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../kind-classifier" },
+		{ "path": "../poi-taxonomy" },
+		{ "path": "../query-shape" }
+	]
 }

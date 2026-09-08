@@ -751,6 +751,18 @@ jobs:
 
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
+      - name: Earth shell smoke
+        run: yarn workspace @mailwoman/earth test:browser
+
+      # One source, two builds: the planetary smoke runs once per body against a fresh build of that body.
+      - name: Moon smoke
+        run: yarn workspace @mailwoman/planetary test:browser
+        env:
+          PLANETARY_BODY: moon
+      - name: Mars smoke
+        run: yarn workspace @mailwoman/planetary test:browser
+        env:
+          PLANETARY_BODY: mars
 
       # The license worker's tests run under the Workers runtime (Miniflare) through the workspace's own vitest
       # config; the root sweep excludes them for the same reason it excludes the react browser leg.
@@ -764,7 +776,7 @@ jobs:
   #
   # PATH-CONDITIONAL on pull_request: the smoke test validates the PACKAGING pipeline, so changes to
   # docs, root *.md, data/, .github/, or any workspace NOT packed by smoke-clean-install.ts
-  # (osm, tile-worker, resolver-wof-wasm, neural-web) can't affect it. On a docs-only or
+  # (osm, tile-worker, resolver-wof-wasm) can't affect it. On a docs-only or
   # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
   # (release flow), and any PR that TOUCHES a smoke-relevant path, every step runs.
   # NOT PORTABLE — job-skipped when the fleet is down, for the same reason as unit-slow but a

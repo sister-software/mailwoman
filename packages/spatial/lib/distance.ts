@@ -35,6 +35,27 @@ const RADII = {
 	meters: 6_371_000,
 } as const satisfies Record<EarthRadiusUnit, number>
 
+export type PlanetaryBodyID = "earth" | "moon" | "mars"
+
+/**
+ * Mean radii in kilometres. Earth's is the value `RADII` scales to its units; the Moon's and Mars's are the IAU mean
+ * radii the USGS planetary products reference (the Moon as a sphere; Mars's mean radius, its DEM being on the areoid).
+ * A distance on a body other than Earth is meaningless without one of these.
+ */
+export const BODY_RADII_KM = {
+	earth: RADII.km,
+	moon: 1737.4,
+	mars: 3389.5,
+} as const satisfies Record<PlanetaryBodyID, number>
+
+export interface GreatCircleOptions {
+	unit?: EarthRadiusUnit
+	/**
+	 * Which body's mean radius scales the arc. @default "earth"
+	 */
+	body?: PlanetaryBodyID
+}
+
 /**
  * Shared great-circle math with no sentinel handling. `unit` selects the Earth radius.
  */
@@ -68,6 +89,24 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 	if (!p1 || !p2) return Number.NaN
 
 	return greatCircle(p1.latitude, p1.longitude, p2.latitude, p2.longitude, unit)
+}
+
+/**
+ * Great-circle distance on the named body. {@link haversine} is this function on Earth; a caller with a body passes it
+ * here. The Null-Island sentinel of the object form applies: a `(0, 0)` input answers `NaN`.
+ *
+ * @category Position
+ */
+export function greatCircleDistance(
+	point1: GeoPointInput,
+	point2: GeoPointInput,
+	options: GreatCircleOptions = {}
+): number {
+	const unit = options.unit ?? "km"
+	const body = options.body ?? "earth"
+	const scale = BODY_RADII_KM[body] / BODY_RADII_KM.earth
+
+	return haversine(point1, point2, unit) * scale
 }
 
 /**

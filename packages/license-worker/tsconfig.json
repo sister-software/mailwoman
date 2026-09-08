@@ -8,7 +8,9 @@
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true,
 		"types": ["@cloudflare/workers-types"],
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"jsx": "react-jsx",
+		"customConditions": ["workerd"]
 	},
 	"include": ["./lib/**/*", "./lib/**/*.json"],
 	"exclude": ["./out/**/*"],

@@ -2,7 +2,11 @@
 
 **Status:** design approved 2026-09-06. Decisions the operator took: the word "demo" is retired, the app lives
 under `packages/`, the browser runtime moves into the packages that own it (no `@mailwoman/browser`), and
-Cloudflare Workers Builds builds and deploys the app.
+Cloudflare Workers Builds builds and deploys the app. Shell landed in #2196, the runtime's package homes in #2203;
+the launch PR moves the runtime, the panels and the browser suite into the app and retires the docs page. The two
+dashboard steps are the Workers Builds project and the bucket's CORS rule for the workers.dev preview origin.
+Launch PR #2206 opened 2026-09-07; the Workers Builds project and the public bucket's CORS rule are the two dashboard
+steps the operator took.
 **Builds on:** `2026-09-06-browser-export-conditions-design.md` (the packages must bundle under Vite without
 aliases before this app can consume them).
 **Precedes:** `2026-09-06-planetary-app-design.md`, which copies this app's build and deployment shape.
@@ -136,22 +140,29 @@ compatibility re-export is left behind.
 
 | From (`docs/src/…`)                                                                                                                              | To                                                                                                                                         | Renamed to                                                               |
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `shared/httpvfs-resolver.ts` (749 lines)                                                                                                         | `@mailwoman/resolver-wof-wasm/httpvfs-resolver`                                                                                            | unchanged; the twin comments in `resolver-wof-sqlite` now name a package |
-| `shared/candidate-resolver-backend.ts`                                                                                                           | `@mailwoman/resolver-wof-wasm/candidate-backend`                                                                                           |                                                                          |
-| `shared/httpvfs-street.ts`                                                                                                                       | `@mailwoman/resolver-wof-wasm/httpvfs-street` (the geometry already lives in `@mailwoman/spatial/polyline`; only the I/O moves)            |                                                                          |
-| `shared/poi-httpvfs.ts`                                                                                                                          | `@mailwoman/resolver-wof-wasm/poi-httpvfs`                                                                                                 |                                                                          |
-| `shared/demo-loader.ts`                                                                                                                          | `@mailwoman/neural/web-loader` (merge; one loader)                                                                                         | `loadReleaseAssets`                                                      |
-| `shared/demo-helpers.ts` (540 lines)                                                                                                             | `@mailwoman/resolver-wof-wasm/cascade` for `runCascade` and `flattenTree`; the rest to the app                                             | `demo-cascade-smoke.ts` imports the package instead of copying           |
-| `shared/confidence-tiers.ts`                                                                                                                     | `@mailwoman/react/common/confidence-tiers` (`ConfidenceCell.tsx` already wants it)                                                         |                                                                          |
-| `shared/resources/index.ts`                                                                                                                      | `packages/earth/lib/resources.ts`; `mailwoman gazetteer publish` prints this path                                                          |                                                                          |
+| `shared/httpvfs-resolver.ts` (749 lines)                                                                                                         | `@mailwoman/resolver-wof-wasm/httpvfs/resolver` (landed)                                                                                   | unchanged; the twin comments in `resolver-wof-sqlite` now name a package |
+| `shared/candidate-resolver-backend.ts`                                                                                                           | deleted (landed): `runCascade` in `@mailwoman/resolver-wof-wasm/browser-cascade` already carried the resolver backend                      |                                                                          |
+| `shared/httpvfs-street.ts`                                                                                                                       | `@mailwoman/resolver-wof-wasm/httpvfs/street` with `resolveStreet` (landed; the geometry already lives in `@mailwoman/spatial/polyline`)   |                                                                          |
+| `shared/poi-httpvfs.ts`, `sqljs-rows.ts`                                                                                                         | `@mailwoman/resolver-wof-wasm/httpvfs/poi` and `httpvfs/rows` (landed); the sql.js host staging is `./host-assets`                         |                                                                          |
+| `shared/demo-loader.ts`                                                                                                                          | `mailwoman/browser-runtime/load-assets` (landed), the gazetteer an option                                                                  | `loadReleaseAssets`, `ReleaseAssets`, `AssetLoadProgress`                |
+| `shared/demo-helpers.ts` (540 lines)                                                                                                             | `mailwoman/browser-runtime/classify` and `manifest` (landed); `createCalibrator` collapsed into `@mailwoman/core/decoder/calibration`      | `demo-cascade-smoke.ts` imports the packages instead of copying          |
+| `shared/confidence-tiers.ts`, `text-tokens.ts`                                                                                                   | `@mailwoman/react/common/confidence-tiers` and `common/text-tokens` (landed; `ConfidenceCell.tsx` reads the shared tiers)                  |                                                                          |
+| `shared/resources/index.ts`                                                                                                                      | `mailwoman/browser-runtime/resources` and `types` (landed); `mailwoman gazetteer publish` names this path                                  |                                                                          |
 | `shared/register-range-sw.ts`, `static/range-cache-sw.js`                                                                                        | `packages/earth/lib/service-worker.ts` and its registration                                                                                |                                                                          |
-| `shared/maplibre-worker*.ts`, `sqljs-rows.ts`, `text-tokens.ts`                                                                                  | the app, or the package whose type they serve; decided per file at move time                                                               |                                                                          |
-| `pages/demo/_runtime.ts` (701 lines)                                                                                                             | `@mailwoman/react/map/useGeocoderRuntime` over the existing `useDemoRuntime` orchestration hook, which becomes `useRuntime`                | `GeocoderRuntime`, `useGeocoderRuntime`                                  |
+| `shared/maplibre-worker*.ts`                                                                                                                     | the app, or the package whose type they serve; decided per file at move time                                                               |                                                                          |
+| `pages/demo/_runtime.ts` (701 lines)                                                                                                             | application code: the app's runtime assembly over `useDemoRuntime`, which becomes `useRuntime`                                             | `GeocoderRuntime`, `useGeocoderRuntime`                                  |
 | `pages/demo/_map-helpers.ts`                                                                                                                     | constants to `packages/earth/lib/config.ts`; `fetchBasemapSource` and `loadPolygonDB` to `@mailwoman/cartographer` and `resolver-wof-wasm` |                                                                          |
 | `pages/demo/_compare.tsx`, `_controls.tsx`, `_debug.tsx`, `_devDrawer.tsx`, `_mapControls.tsx`, `_hooks.tsx`, `index.tsx`, the three CSS modules | `packages/earth/lib/panels/`                                                                                                               |                                                                          |
 | `components/AboutDemo`, `PermalinkButton`, `VersionCompare`, `LayerToggleControl`, `ResultPanel` (docs copy)                                     | the app; `ResultPanel` already exists in `@mailwoman/react/map`, so the docs copy is deleted                                               | `About`                                                                  |
 | `pages/debug.tsx`, `pages/trace.tsx`                                                                                                             | the app's routes                                                                                                                           |                                                                          |
 | `plugins/demo-assets/`                                                                                                                           | deleted; asset staging becomes a Vite build step in the app                                                                                |                                                                          |
+
+The runtime assembly (`_runtime.ts`) stays application code: `@mailwoman/react` keeps its runtime hook
+free of the ONNX, httpvfs and maplibre graph by design, and the assembly imports all three. The loader
+lives in `mailwoman`, the one package that already depends on `neural` and `resolver-wof-wasm`, so the
+version pins `mailwoman gazetteer publish` bumps are package-local. The sql.js staging stays in docs:
+`PipelineExplorer` and `GuidedTour` resolve against the gazetteer, so the docs embed keeps the gazetteer
+half of the loader and the staged worker.
 
 Renames in `@mailwoman/react/map`, applied when `_runtime.ts` lands and the package's own tests are
 touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` to `GeocoderControls`,
@@ -161,12 +172,9 @@ touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` 
 
 ### Docs after the move
 
-- `docs/package.json` loses `onnxruntime-web`, `maplibre-gl`, `react-map-gl`, `sql.js-httpvfs`,
-  `@mailwoman/neural`, `@mailwoman/resolver`, `@mailwoman/resolver-wof-sqlite`,
-  `@mailwoman/resolver-wof-wasm`, `@mailwoman/cartographer`, `@mailwoman/kind-classifier`,
-  `@mailwoman/phrase-grouper`, `@mailwoman/query-shape`. It keeps `@mailwoman/react`, `@mailwoman/core`
-  and `@mailwoman/codex` for the explainers. If an explainer needs one of the removed packages, that
-  explainer moves to the Earth app under `/debug`; a docs page links to it.
+- `docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave;
+  the list is measured at that point, not predicted here. If an explainer needs one of the removed
+  packages, that explainer moves to the Earth app under `/debug`; a docs page links to it.
 - `/demo`, `/debug` and `/trace` become redirects to `earth.mailwoman.ai` with the same path and query,
   through `@docusaurus/plugin-client-redirects` (not yet a docs dependency) or a static page with a
   `meta refresh` and a link, whichever preserves `?q=` in the docs build.
@@ -214,6 +222,30 @@ in that path.
 - `packages/earth` is registered in the root `workspaces`, both root `tsconfig.json` reference entries,
   and `SANCTIONED_RELEASE_ABSENCES`; the `publishCount` pin in `release-stage.test.ts` is unchanged.
 - The Workers Builds project exists, deploys from `main`, and the README carries its settings table.
+
+Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
+
+- Parity: `packages/earth/test/browser/100-demo-cold-load.spec.ts` and `200-demo-resolve.spec.ts` run against the
+  preview on port 7770 with the real assets; the remaining ten specs cover the FST autocomplete, the street tier, the
+  postcode anchors, the viewport and device biases, the debug trace and the theme. The cold-load stall that read as
+  "one load in five" was `public.mailwoman.ai` resetting the 38 MB model download partway through; the artifact fetch
+  now buffers the body inside a three-attempt retry (`mailwoman/browser-runtime/fetch`), and the fixture ends its
+  readiness wait on the page's own error text. Two cases fail identically on the docs page on main and are marked
+  expected failures with their measured reason: `Praha 100 00, Czechia` (the classifier tags `Praha` as a street) and
+  `1502 A Cage Street, Houston, TX 77020` (the street tier answers nothing; the Houston locality centroid resolves on
+  both). Compare mode and the calibration toggle were driven by a script against the preview and recorded in the PR.
+- `?q=` links: `docs/src/components/EarthRedirect/EarthRedirect.tsx` forwards with `location.search` intact.
+- Removal: `ls docs/src/shared` prints the two maplibre worker files; `docs/src/pages/demo/index.tsx`, `debug.tsx` and
+  `trace.tsx` are the redirects; `docs/static/range-cache-sw.js` is gone; the plugin is `docs/plugins/runtime-assets/`;
+  `grep -rn "docs/src/shared" packages` prints nothing. `knip` measures no unused docs dependency after the move:
+  `maplibre-gl`, `react-map-gl`, `@mailwoman/cartographer` serve `DashboardMap`, `onnxruntime-web` and
+  `@mailwoman/neural` serve the explainers that classify, and `sql.js-httpvfs` left with the runtime-homes PR.
+- Names: the `@mailwoman/react/map` rename map is applied (`a876b5ebe`); the docs embed context is `RuntimeEmbed`, and
+  `git grep -n Demo packages/react/lib/index.ts packages/react/lib/map/index.ts` prints nothing.
+- The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
+- Registers: unchanged since the shell PR (#2196).
+- Workers Builds: the project from the shell PR; the bucket's CORS rule admits `https://earth.mailwoman.ai` and
+  `http://localhost:7770` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
 
 ## Out of scope
 

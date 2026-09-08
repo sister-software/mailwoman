@@ -1,0 +1,60 @@
+{
+	"name": "@mailwoman/site-kit",
+	"version": "1.0.0",
+	"private": true,
+	"description": "The static-site build conventions the Earth and planetary apps share: the build.json Vite plugin, the installable-PWA manifest options, the Playwright preview configuration.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		"./build-info": {
+			"types": "./out/build-info.d.ts",
+			"node": "./lib/build-info.ts",
+			"default": "./out/build-info.js"
+		},
+		"./vite/build-info": {
+			"types": "./out/vite/build-info.d.ts",
+			"node": "./lib/vite/build-info.ts",
+			"default": "./out/vite/build-info.js"
+		},
+		"./vite/pwa": {
+			"types": "./out/vite/pwa.d.ts",
+			"node": "./lib/vite/pwa.ts",
+			"default": "./out/vite/pwa.js"
+		},
+		"./vite/stage-sqljs": {
+			"types": "./out/vite/stage-sqljs.d.ts",
+			"node": "./lib/vite/stage-sqljs.ts",
+			"default": "./out/vite/stage-sqljs.js"
+		},
+		"./playwright": {
+			"types": "./out/playwright.d.ts",
+			"node": "./lib/playwright.ts",
+			"default": "./out/playwright.js"
+		}
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
+		"@playwright/test": "^1.63.0",
+		"path-ts": "^2.3.0",
+		"vite": "^8.2.2",
+		"vite-plugin-pwa": "^1.3.0"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

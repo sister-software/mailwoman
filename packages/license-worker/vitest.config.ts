@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker's tests run under the Workers runtime through Miniflare, with the sandbox environment's bindings and a
+ *   The worker's tests run under the Workers runtime through Miniflare, with the sandbox config's bindings and a
  *   fresh D1 per test file. Secrets are placeholders here; a `wrangler dev` run reads `.dev.vars` instead. The root
  *   vitest sweep excludes this workspace, and CI runs it as its own step.
  */
@@ -17,7 +17,7 @@ const migrations = await readD1Migrations(`${import.meta.dirname}/migrations`)
 export default defineConfig({
 	plugins: [
 		cloudflareTest({
-			wrangler: { configPath: "./wrangler.toml", environment: "sandbox" },
+			wrangler: { configPath: "./wrangler.sandbox.toml" },
 			miniflare: {
 				bindings: {
 					STRIPE_SECRET_KEY: "sk_test_placeholder",

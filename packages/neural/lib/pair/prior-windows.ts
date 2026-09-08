@@ -276,7 +276,7 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
 
 /**
  * Strip a LEADING postcode-shaped run from a segment's parent-candidate key — the mirror of
- * {@link stripTrailingSegmentPostcode} for countries that write "POSTCODE Commune" (see
+ * {@link trailingSegmentPostcodeTake} for countries that write "POSTCODE Commune" (see
  * {@link LEADING_POSTCODE_COUNTRIES}).
  *
  * Anchored full-match against the country shape exactly like the trailing form, so this can only ever remove a run that

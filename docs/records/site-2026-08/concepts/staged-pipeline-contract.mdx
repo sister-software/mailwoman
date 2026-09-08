@@ -159,12 +159,12 @@ You should **not** swap a stage to bypass it cheaply. If you want the pipeline w
 
 ## See it in action
 
-import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+import { RuntimeEmbedProvider } from "@site/src/contexts/RuntimeEmbed"
 import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
 
-<DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
+<RuntimeEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
 	<PipelineExplorer />
-</DemoEmbedProvider>
+</RuntimeEmbedProvider>
 
 Expand the **Classification origin** section to see which pipeline stage contributed to each parsed component.
 

@@ -502,7 +502,7 @@ curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, bo
 `--pair-indexes` above stages the binaries on **Hugging Face**. The copies the browser demo reads are a separate
 push: they only reach the bucket through `publish-demo-assets-to-r2.py`, from a `--src` tree you assemble by hand.
 Nothing else produces them — not `publish.yml` (it downloads them from HF into the weights workspaces for the npm
-tarballs), not the docs demo-assets plugin (that copies them into the Pages deploy for dev preview only).
+tarballs), not the docs runtime-assets plugin (that copies them into the Pages deploy for dev preview only).
 
 Stage them under a generation segment:
 

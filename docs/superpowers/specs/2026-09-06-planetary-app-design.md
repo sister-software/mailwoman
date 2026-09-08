@@ -6,6 +6,9 @@
 **Builds on:** `2026-09-06-earth-app-design.md` (the Vite, PWA and Workers Builds shape, and `MapCanvas` in
 `@mailwoman/react/map`) and `2026-09-06-astrogeology-pipeline-design.md` (the archives it renders).
 **Supersedes:** the application half of the uploaded "Planetary Maps for Mailwoman" proposal.
+**Receipt:** PR #2209 opened 2026-09-08 over the archives published as moon `20260907-109dfab8` and mars
+`20260907-e60bcc6a`; the two Workers Builds projects are the dashboard step, and the public bucket's CORS rule already
+admits both production origins. The preview serves on port 7770, the one local origin that rule admits.
 
 ## The problem
 

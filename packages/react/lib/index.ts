@@ -23,7 +23,7 @@ export type { CopyButtonProps } from "./common/CopyButton.tsx"
 export { cx } from "#common/cx"
 export type { ClassValue } from "#common/cx"
 export { KindBadge } from "./common/KindBadge.tsx"
-export type { KindBadgeProps, KindBadgeResult } from "./common/KindBadge.tsx"
+export type { KindBadgeProps } from "./common/KindBadge.tsx"
 export { LoadingIndicator } from "./common/LoadingIndicator.tsx"
 export type { LoadingIndicatorProps, LoadingMode } from "./common/LoadingIndicator.tsx"
 export { PresetChips } from "./common/PresetChips.tsx"
@@ -66,6 +66,18 @@ export type {
 export { usePOISearch } from "#poi/usePOISearch"
 export type { UsePOISearch, UsePOISearchOptions } from "#poi/usePOISearch"
 
+// ── Result visualizers ─────────────────────────────────────────────────────
+
+export { About } from "./common/About.tsx"
+export { FailureDiagnostic } from "./pipeline/FailureDiagnostic.tsx"
+export type { FailureDiagnosticProps } from "./pipeline/FailureDiagnostic.tsx"
+export { SpanHighlight } from "./pipeline/SpanHighlight.tsx"
+export type { SpanHighlightProps } from "./pipeline/SpanHighlight.tsx"
+export { TimingPanel } from "./pipeline/TimingPanel.tsx"
+export type { TimingPanelProps } from "./pipeline/TimingPanel.tsx"
+export { TreeView } from "./pipeline/TreeView.tsx"
+export type { TreeViewProps } from "./pipeline/TreeView.tsx"
+
 // ── Pipeline explorer ──────────────────────────────────────────────────────
 export { CandidatePicker } from "./pipeline/CandidatePicker.tsx"
 export type { CandidatePickerProps } from "./pipeline/CandidatePicker.tsx"
@@ -82,46 +94,36 @@ export type { QueryFormProps } from "./pipeline/QueryForm.tsx"
 export { ResolvedPlace } from "./pipeline/ResolvedPlace.tsx"
 export type { ResolvedPlaceProps } from "./pipeline/ResolvedPlace.tsx"
 
-export type {
-	DualRoleView,
-	FSTProvenance,
-	ParsedComponent,
-	ParseResult,
-	PipelineLoadingState,
-	PipelinePanels,
-	PipelineRuntime,
-	ResolvedPlaceView,
-	StageTiming,
-} from "#pipeline/types"
+export type { PipelineLoadingState, PipelinePanels, PipelineRuntime } from "#pipeline/types"
 
 export { useParsePipeline } from "#pipeline/useParsePipeline"
 export type { UseParsePipeline, UseParsePipelineOptions } from "#pipeline/useParsePipeline"
 
-// ── Demo runtime (shared load orchestration; node-safe — no onnx/httpvfs/maplibre) ──
-export { useDemoRuntime } from "#runtime/useDemoRuntime"
+// ── Release runtime (shared load orchestration; node-safe — no onnx/httpvfs/maplibre) ──
+export { useReleaseRuntime } from "#runtime/useReleaseRuntime"
 
 export type {
-	DemoAssetsLoadContext,
-	DemoLoaderState,
-	DemoManifest,
-	DemoReleaseBase,
-	DemoRuntimeConfig,
-} from "#runtime/useDemoRuntime"
+	AssetsLoadContext,
+	ReleaseBase,
+	ReleaseLoaderState,
+	ReleaseManifest,
+	ReleaseRuntimeConfig,
+} from "#runtime/useReleaseRuntime"
 
 // ── Map (types only from root) ──────────────────────────────────────────────
-// The demo-map SURFACE lives behind the `@mailwoman/react/map` subpath so `maplibre-gl` / `react-map-gl`
+// The map SURFACE lives behind the `@mailwoman/react/map` subpath so `maplibre-gl` / `react-map-gl`
 // (WebGL + DOM at import) never enter the package-root graph — a bare `import("@mailwoman/react")` in node
 // must not pull them. Only the CONTRACT types are re-exported here (fully erased at compile time, so no
-// runtime linkage): the `DemoMap` component + hooks are import-able solely via `@mailwoman/react/map`.
+// runtime linkage): the `MapCanvas` component + hooks are import-able solely via `@mailwoman/react/map`.
 export type {
-	DemoBackend,
-	DemoMapExtraProps,
-	DemoMapProps,
-	DemoMapStyle,
-	DemoRuntime,
-	DemoVersionOption,
+	GeocoderRuntime,
+	InferenceBackend,
 	LngLatTuple,
 	MapBias,
+	MapCanvasExtraProps,
+	MapCanvasProps,
+	MapCanvasStyle,
 	OverlaySpec,
 	Suggestion,
+	VersionOption,
 } from "#map/index"

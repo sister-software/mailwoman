@@ -13,9 +13,9 @@
 	"type": "module",
 	"imports": {
 		"#*": {
+			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
-			"default": "./out/*.js",
-			"types": "./out/*.d.ts"
+			"default": "./out/*.js"
 		}
 	},
 	"exports": {
@@ -30,6 +30,9 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"pmtiles": "^4.5.0"
+	},
+	"devDependencies": {
+		"wrangler": "^4.129.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

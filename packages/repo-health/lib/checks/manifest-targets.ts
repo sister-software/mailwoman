@@ -21,15 +21,13 @@
  *   subpath. So a compiled target is also read against the workspace's own `include` / `exclude` globs.
  */
 
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
-
-interface RootManifest {
-	workspaces: string[]
-}
 
 type ExportValue = string | null | ExportValue[] | { [condition: string]: ExportValue }
 
@@ -227,11 +225,10 @@ export const manifestTargetsCheck: RepoCheck = {
 	async run(context) {
 		const root = context.repoRoot
 		const tracked = new Set(context.trackedFiles)
-		const rootManifest = await readLocalJSONFile<RootManifest>(resolvePath(root, "package.json"))
 		const diagnostics: Diagnostic[] = []
 
-		for (const workspace of rootManifest.workspaces) {
-			const manifest = await readLocalJSONFile<WorkspaceManifest>(resolvePath(root, `${workspace}/package.json`))
+		for (const workspace of await readWorkspaceDirectories(root)) {
+			const manifest = await readPackageJSON(resolvePath(root, workspace, "package.json"))
 			const scope = await readCompileScope(root, workspace)
 
 			for (const [field, map] of manifestMaps(manifest)) {

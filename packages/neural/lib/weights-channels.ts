@@ -189,7 +189,7 @@ export type UnfedChannel = "anchor" | "gazetteer" | "country" | "street_type" | 
 const warnedUnfedChannels = new Set<string>()
 
 /**
- * Build the loud-degrade warner for one weights package (#718 D1) — the Node mirror of neural-web's
+ * Build the loud-degrade warner for one weights package (#718 D1) — the Node mirror of the web loader's
  * `warnOnUnfedTrainedChannels`. A card that declares a channel REQUIRED, paired with a package that didn't ship (or
  * could not parse) its data, runs that channel OFF. Structural fallback (the parse still works), loud console (a
  * silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this exists to surface).

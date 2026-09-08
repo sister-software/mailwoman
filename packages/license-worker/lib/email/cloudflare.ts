@@ -8,7 +8,7 @@
  */
 
 import type { EmailProvider } from "#email/provider"
-import { licenseEmailSubject, renderLicenseEmail } from "#email/render"
+import { licenseEmailSubject, renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
 import type { LicenseWorkerEnv } from "#env"
 
 export function cloudflareEmailProvider(env: LicenseWorkerEnv, sender: SendEmail): EmailProvider {
@@ -19,6 +19,7 @@ export function cloudflareEmailProvider(env: LicenseWorkerEnv, sender: SendEmail
 				to: message.to,
 				subject: licenseEmailSubject(message),
 				text: renderLicenseEmail(message, env.SITE_ORIGIN),
+				html: renderLicenseEmailHTML(message, env.SITE_ORIGIN, env.EMAIL_FROM),
 				headers: { "x-mailwoman-invoice": idempotencyKey },
 			})
 

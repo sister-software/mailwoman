@@ -240,12 +240,12 @@ The FST is one node in a longer pipeline of cached work. The unified SQLite is a
 
 ## See it in action
 
-import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+import { RuntimeEmbedProvider } from "@site/src/contexts/RuntimeEmbed"
 import { FSTWalker } from "@site/src/components/FSTWalker/FSTWalker"
 
-<DemoEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
+<RuntimeEmbedProvider sqljsBaseURL="/mailwoman/sqljs">
 	<FSTWalker input="New York, NY 10001" />
-</DemoEmbedProvider>
+</RuntimeEmbedProvider>
 
 ## See also
 

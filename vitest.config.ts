@@ -15,6 +15,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 import type { Alias } from "vite"
 import { defineConfig } from "vite"
@@ -51,10 +52,9 @@ async function readManifest<T>(path: string): Promise<T> {
 }
 
 async function workspaceAliases(): Promise<Alias[]> {
-	const root = await readManifest<{ workspaces: string[] }>(resolvePath(here, "package.json"))
 	const aliases: Array<Alias & { specificity: number; wildcard: boolean }> = []
 
-	for (const workspace of root.workspaces) {
+	for (const workspace of await readWorkspaceDirectories(here)) {
 		const manifest = await readManifest<{
 			name?: string
 			exports?: Record<string, string | Record<string, string>>
@@ -147,6 +147,9 @@ export default defineConfig({
 			// — the `docusaurus build` health check — was missing here, so it surfaced the moment CI
 			// could reach the test phase again.)
 			"**/docs/test/browser/**",
+			// A package that runs Playwright (a playwright.config.ts beside its manifest) keeps the same layout.
+			"**/packages/*/test/browser/**",
+			"**/packages/*/test/e2e/**",
 			"**/docs/test/build/**",
 			"**/docs/test/e2e/**",
 			// Agent worktrees under .claude/worktrees/ are isolated git checkouts; each contains a

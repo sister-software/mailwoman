@@ -22,8 +22,8 @@ updates:
           - "patch"
     ignore:
       # onnxruntime bumps change inference output. They go through the eval
-      # check as deliberate operator moves (neural-web additionally pins an
-      # exact ORT dev build), never as bot PRs.
+      # check as deliberate operator moves (the browser runtime in @mailwoman/neural
+      # additionally pins an exact ORT dev build), never as bot PRs.
       - dependency-name: "onnxruntime-node"
       - dependency-name: "onnxruntime-web"
       # release-it is pinned to ^19.x: @release-it-plugins/workspaces (the

@@ -82,4 +82,39 @@ describe("applyAddressPoint", () => {
 
 		expect(probed).toEqual(["22", "1802"])
 	})
+
+	test("carries the region and subregion spans beside the locality, for a register scoped by that pair", () => {
+		const raw = "台北市中正區重慶南路一段122號"
+
+		const tree = buildAddressTree(raw, [
+			tok("台北市", 0, 3, "B-region"),
+			tok("中正區", 3, 6, "B-subregion"),
+			tok("重慶南路一段", 6, 12, "B-street"),
+			tok("122號", 12, 16, "B-house_number"),
+		])
+
+		const queries: Array<Parameters<AddressPointLookup["find"]>[0]> = []
+
+		const lookup: AddressPointLookup = {
+			find(query) {
+				queries.push(query)
+
+				return { lat: 25.0399658, lon: 121.5124584, source: "test", release: "r" }
+			},
+		} as AddressPointLookup
+
+		applyAddressPoint(tree.roots, lookup)
+
+		expect(queries).toHaveLength(1)
+
+		expect(queries[0]).toMatchObject({
+			street: "重慶南路一段",
+			number: "122號",
+			region: "台北市",
+			subregion: "中正區",
+		})
+
+		expect(queries[0]?.locality).toBeUndefined()
+		expect(queries[0]?.postcode).toBeUndefined()
+	})
 })

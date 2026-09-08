@@ -17,6 +17,19 @@ STAGED=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r f
 	[ -f "$f" ] && printf '%s\n' "$f"
 done)
 
+# The CLI-freshness reference (see the block below) is read BEFORE the formatter runs: `oxfmt --write` rewrites a
+# staged source with byte-identical content and still bumps its mtime, so a guard that reads `-newer` after it fires
+# on every commit that stages a command file, and `yarn compile` cannot clear it because the compile precedes the hook.
+CLI_REF=packages/mailwoman/tsconfig.tsbuildinfo
+[ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/tsconfig.tsbuildinfo
+[ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/cli.js
+CLI_STALE_SRC=""
+if [ -f "$CLI_REF" ]; then
+	# cli-native holds the specs of the native commands (license, doctor, geocode …); the reference reads them from
+	# the compiled CLI too, so a spec edit there is the same staleness as one under commands/.
+	CLI_STALE_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli-kit packages/mailwoman/lib/cli-native \( -name '*.tsx' -o -name '*.ts' \) -newer "$CLI_REF" -print -quit 2>/dev/null)
+fi
+
 if [ -n "$STAGED" ]; then
 	# oxlint errors on paths it can't lint, so scope it to code files. Config discovery
 	# (oxlint.config.ts, incl. the sister-software/no-process-globals raw-access check) is
@@ -70,16 +83,10 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 		# This named `out/tsconfig.tsbuildinfo`, which has not existed for some time, so the guard silently fell
 		# through to the cli.js branch below and lost the property it was reaching for: tsc touches the buildinfo
 		# on every run, including one that finds every output byte-identical, whereas cli.js is only rewritten
-		# when its bytes change. A formatter that rewrites a source without changing it then trips the guard
-		# forever, and `yarn compile` cannot clear it because there is nothing to rebuild.
-		REF=packages/mailwoman/tsconfig.tsbuildinfo
-		[ -f "$REF" ] || REF=packages/mailwoman/out/tsconfig.tsbuildinfo
-		[ -f "$REF" ] || REF=packages/mailwoman/out/cli.js
-		# cli-native holds the specs of the native commands (license, doctor, geocode …); the reference reads them from
-		# the compiled CLI too, so a spec edit there is the same staleness as one under commands/.
-		NEWEST_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli-kit packages/mailwoman/lib/cli-native \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
-		if [ -n "$NEWEST_SRC" ]; then
-			echo "pre-commit: $NEWEST_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
+		# when its bytes change. The comparison itself ran at the top of this hook, before the formatter touched
+		# any staged source (`CLI_STALE_SRC`).
+		if [ -n "$CLI_STALE_SRC" ]; then
+			echo "pre-commit: $CLI_STALE_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
 			exit 1
 		fi
 		node docs/scripts/generate-cli-reference.ts

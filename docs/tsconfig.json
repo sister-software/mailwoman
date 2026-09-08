@@ -19,6 +19,12 @@
 		"esModuleInterop": true,
 		"jsx": "preserve",
 		"moduleResolution": "bundler",
+		// The `node` condition reaches a workspace package's `lib/*.ts` the way every other project here does. Without
+		// it this project can only take `types`, and inside one `tsc -b` that answer comes from a directory cache a
+		// project built BEFORE the package populated, so on a clean tree the lookup fails and the JavaScript fallback
+		// hands back signatures without their type parameters. This is the compiler's view only; webpack keeps its own
+		// conditions.
+		"customConditions": ["node"],
 		"module": "esnext",
 		"composite": true,
 		"emitDeclarationOnly": true,
@@ -40,5 +46,19 @@
 	// A composite project must list every file it pulls in. Without an `include`, the default covers .ts/.tsx only, and
 	// the trace fixture a story imports through `resolveJsonModule` is left out.
 	"include": ["./**/*.ts", "./**/*.tsx", "./**/*.json"],
-	"exclude": [".docusaurus", "build", "out", "node_modules"]
+	"exclude": [".docusaurus", "build", "out", "node_modules"],
+	// Every workspace package the site imports, so `tsc -b` reads each one's source project instead of whatever its
+	// `out/` holds at the moment this project compiles.
+	"references": [
+		{ "path": "../packages/cartographer" },
+		{ "path": "../packages/core" },
+		{ "path": "../packages/license-worker" },
+		{ "path": "../packages/mailwoman" },
+		{ "path": "../packages/neural" },
+		{ "path": "../packages/react" },
+		{ "path": "../packages/resolver" },
+		{ "path": "../packages/resolver-wof-sqlite" },
+		{ "path": "../packages/resolver-wof-wasm" },
+		{ "path": "../packages/spatial" }
+	]
 }

@@ -18,6 +18,86 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — the Taiwan rooftop tier: a national address-point database from the civil-affairs registers
+
+`台北市中正區重慶南路一段122號` parsed correctly and resolved to Taipei City's point, 5 km from the address, because no
+register below the admin ladder existed for Taiwan. `mailwoman situs address-points --country TW` now builds
+`address-points/address-points-tw.db` from the Overture-TW parquet (9,712,173 points across 173,642 streets, the
+fifteen civil-affairs bureaus in the provenance), and `OvertureNationalDatabaseProvider` serves it in the geocode
+session below BAN and above OSM. The register scopes a point by 縣市 + 鄉鎮市區 and carries no postcode, so the
+address-point query carries the parse's `region` and `subregion`, and a `zh` reader composes its scope from the pair
+(or matches the stored pair by its 鄉鎮市區 tail when the line names no 縣市). The `zh` street locale is the Han fold:
+NFKC, 臺 → 台, no whitespace, the 號 dropped from the number, and the sub-number forms `30之19號` / `30號之19` /
+`30附40號` falling to the base number. On a 2,000-row draw of the Taiwan board, 1,998 rows answer at the
+address-point tier and 1,958 within 100 m of the row's own point; the same probe address answers 25.0399658,
+121.5124584 at 1 m. `OGDL-Taiwan-1.0` joins the obligations table, and the situs manifest records an SPDX expression:
+the string it stamped before was refused by the manifest check, so the US per-state build had been failing at its last
+step. The pre-commit hook read its CLI-freshness reference after the formatter had touched every staged source, so a
+commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
+first.
+
+### Added — Taiwan's 鄉鎮市區 as register-derived localities, scoped to their 縣市
+
+`新北市林口區` resolved 54.5 km away, because the only candidate row keyed `林口區` is a WOF record with no parent and a
+centroid in the hills (WOF 102026697), while the correctly parented Linkou (WOF 890467835) carries only its Latin
+name. Across the 289 held-out 鄉鎮市區, 102 had no Han-keyed Taiwan row at all, 15 had one only on a namesake in
+another 縣市, and 10 only on a parentless row. `mailwoman gazetteer build tw-districts` now derives one locality row
+per (縣市, 鄉鎮市區) from the Overture-TW address register (290 rows, the median address point as the centroid, the
+p5–p95 envelope as the bbox, the 臺/台 twin as an alias) and writes each row's 縣市 as an `ancestors` row against the WOF
+region, matched by the official `zho` name, then any Han name naming exactly one region, then the name minus its 縣/市
+suffix (`桃園市` reaches the region WOF still names `桃園`). The candidate fold honors an extract's region ancestry: the
+row takes the region's scope and inherits the region's own closure chain, so a 縣市 that resolves to its macroregion
+record still confirms the lineage. `localities-tw-districts.db` joins the default locality databases. Two unmeasured
+same-country rows that tie on rank now order the row named X ahead of the row also-known-as X, where the tie had fallen
+to the B-tree's id order: six townships lost to an in-county village carrying the township's name as an alias (`溪州鄉`
+to the village 溪洲, 30.8 km). On the 289 held-out 鄉鎮市區 as bare lines, 286 resolve the district within 15 km, from
+154; the three under `新竹市` remain, because Hsinchu County carries `新竹市` as a variant name and outranks Hsinchu City
+by population. The Latin regression board reads 438 of 438 and a 300-row Taiwan rooftop draw is unchanged
+(300 at the address-point tier, 294 within 100 m). The Bash write guard admits `oxlint --fix` on the same ground as
+the formatter: what it writes it derives.
+
+### Changed — a widened-scope admin pick whose lineage names another region is refused; Taiwan's 鄉鎮市區 read as localities
+
+When a child lookup scoped to its resolved parent misses, two widenings exist so an incomplete hierarchy still
+resolves: the resolver's retry without the parent, and the candidate backend's interior region-scope fallback. Both
+also admitted a namesake under another region — `臺南市北區` resolved Tainan City, found no 北區 under it, and answered
+Hsinchu's 北區 214 km away with the coherence report reading `region: contradicted` while the point stood. The resolver
+now stamps a widened pick (`parent_fallback`) and `applyParentFallbackContradiction` un-resolves it when its stamped
+ancestors name a region other than the resolved parent, so the admin ladder answers the parent's own point; a chain
+that names no region is kept. `placetypeMapForCountry` gives Taiwan's `subregion` tag the `locality` band (WOF types
+164 of the 178 held-out 鄉鎮市區 the candidate table carries as `locality` or `localadmin`, 14 as `county`), on both
+resolve passes. On the 289 held-out 鄉鎮市區 as bare lines: 154 resolve the district within 15 km (at most 14 could
+under the `county` band), the fourteen namesakes at 21.6–238 km are refused, and the rest answer the 縣市.
+
+### Changed — the CJK base is `v8-cjk-regs` (card 0.0.3): Korean re-sourced, Taiwan added, three registries
+
+`@mailwoman/neural-weights-cjk` 0.0.3 ships the `v8-cjk-regs` graph (#2204). Korean is rebuilt from the ministry's
+own 주소DB (a direct download with no application step) in seven registers, including the lot-number form
+(`서울특별시 종로구 청운동 52-1`) and the building name; Taiwan is a served locale of the family for the first time, from
+Overture-TW in five registers (縣市 → `region`, 鄉鎮市區 → `subregion`, 村里 → `dependent_locality`, 之/樓 → `unit`);
+and 1,666,000 typed business addresses from three government registries (Korean permits, Taiwanese companies,
+Japanese corporate numbers) trained after each string was aligned exactly against those registers. Against the
+0.0.2 base on the same scorer: the JP native register 0.9954 from 0.9921; KR `subregion` 0.9980 from 0.9699 and
+`street` 0.9993 from 0.9179 on the 2026 board; TW `region` / `subregion` / `street` / `house_number` 1.0000 / 0.9999 /
+0.9992 / 0.9994 from a model that had never seen Taiwan; on typed registry rows, JP `building_name` 0.9880 from 0 and
+KR `dependent_locality` 0.9987 from 0.2893. The card names the fifteen Taiwanese civil-affairs bureaus the Open
+Government Data License requires. Record: `docs/records/evals/2026-09-08-v8-cjk-regs.md`. The five registers are
+`mailwoman corpus fetch` sources (`juso-kr`, `localdata-kr`, `gcis-tw`, `houjin-jp`, `acra-sg`), each fetch writing a
+collection manifest with the license label and attribution.
+
+### Added — the CJK overlays join the lockstep release
+
+`@mailwoman/neural-weights-ja-jp` and `@mailwoman/neural-weights-zh-cn` are in the release list. Each is a data-only
+overlay over `@mailwoman/neural-weights-cjk`: its locale FST plus a card, with the graph reached through
+`mailwoman.baseWeights`. Both names were blessed at 9.3.0; the next release bumps them with every sibling.
+
+### Removed — `@mailwoman/neural-web`
+
+The workspace is deleted and the package will not publish again; 9.3.0 is its last version on npm. Since 9.0.0 it
+was a re-export shim over `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`, the two subpaths
+the browser runtime moved to, and re-exporting another package's names is what `mailwoman/no-cross-package-reexport`
+refuses everywhere else. A consumer on the shim imports the same names from those two subpaths.
+
 ### Fixed — every stamped response body is a named OpenAPI component
 
 `stampedResponseSchema` now takes the component name as a required second argument and registers it. Unnamed, the

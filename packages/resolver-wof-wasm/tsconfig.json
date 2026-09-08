@@ -2,6 +2,9 @@
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
 		"rootDir": "./lib",
+		// The browser resolver: the httpvfs loader injects a script tag and the WASM loader reads the page, so the DOM
+		// library joins the Node preset here and nowhere else in the package graph below it.
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
@@ -9,5 +12,10 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }, { "path": "../resolver" }, { "path": "../resolver-wof-sqlite" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../resolver" },
+		{ "path": "../resolver-wof-sqlite" },
+		{ "path": "../spatial" }
+	]
 }

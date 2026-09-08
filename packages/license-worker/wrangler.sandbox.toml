@@ -1,0 +1,41 @@
+# The sandbox: the same worker against Stripe's test mode, its own D1 and its own signing key, deployed by hand with
+# `wrangler deploy -c wrangler.sandbox.toml` and read by the test pool. A separate file rather than an environment
+# of `wrangler.toml`, so a plain `wrangler deploy` can only ever mean production.
+
+name = "mailwoman-license-sandbox"
+main = "./lib/index.ts"
+compatibility_date = "2026-08-22"
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[vars]
+ISSUANCE_ENABLED = "true"
+SITE_ORIGIN = "https://mailwoman.ai"
+EMAIL_FROM = "licenses@mailwoman.ai"
+STRIPE_LIVE_MODE = "false"
+LICENSE_SIGNING_KID = "v9-ac522cf3"
+
+[[send_email]]
+name = "EMAIL_SENDER"
+
+[[d1_databases]]
+binding = "LICENSE_LEDGER"
+database_name = "mailwoman-license-sandbox"
+database_id = "8c9f596d-1597-4f04-90a2-f1a8d2d6f82f"
+migrations_dir = "migrations"
+
+[[ratelimits]]
+name = "CLAIM_LIMITER"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+
+[[ratelimits]]
+name = "REFRESH_LIMITER"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
+[[ratelimits]]
+name = "STATUS_LIMITER"
+namespace_id = "1003"
+simple = { limit = 60, period = 60 }

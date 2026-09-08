@@ -43,7 +43,7 @@ module.exports = {
 				"EDGAR ingest along to reach three functions. Those three moved to the filer package root and the " +
 				"import now names them.",
 			severity: "error",
-			from: { path: "^packages/(?:react|neural-web|tile-worker|api|fastify|mcp)/" },
+			from: { path: "^packages/(?:react|tile-worker|api|fastify|mcp|earth|planetary)/" },
 			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)/" },
 		},
 		{
@@ -72,12 +72,13 @@ module.exports = {
 		},
 	],
 	options: {
-		doNotFollow: { path: "(?:^|/)(?:out|node_modules|sentencepiece[.]mjs)(?:/|$)" },
+		doNotFollow: { path: "(?:^|/)(?:out|dist|node_modules|sentencepiece[.]mjs)(?:/|$)" },
 		enhancedResolveOptions: {
 			conditionNames: ["node", "import", "default"],
 			exportsFields: ["exports"],
 		},
-		exclude: "(?:^|/)(?:out|node_modules|sentencepiece[.]mjs)(?:/|$)",
+		// `dist/` is an app's Vite output: bundled chunks whose cycles are the bundler's, not the source graph's.
+		exclude: "(?:^|/)(?:out|dist|node_modules|sentencepiece[.]mjs)(?:/|$)",
 		includeOnly: "^packages/",
 		preserveSymlinks: false,
 		progress: { type: "none" },
