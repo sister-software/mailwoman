@@ -19,13 +19,19 @@
  *   the runtime handle's trace hook. Spec: docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md.
  */
 
+import { tagOf } from "@mailwoman/neural/span"
 import { softmax } from "@mailwoman/neural/viterbi"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import React, { useMemo, useState } from "react"
 
-import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, stripBIO } from "./helpers.ts"
+import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay } from "./helpers.ts"
 
 import styles from "./styles.module.css"
+
+/**
+ * A label as the ribbon shows it: the bare tag, `O` for outside, and a placeholder unchanged.
+ */
+const labelText = (label: string): string => tagOf(label) || label
 
 /**
  * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits. Live traces are
@@ -141,7 +147,7 @@ export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: Mo
 					{trace.tokens.map((t, i) => (
 						<span key={i} className={styles.decoded} data-o={t.label === "O" || undefined} title={t.label}>
 							<span className={styles.decodedPiece}>{pieceDisplay(t.piece)}</span>
-							<span className={styles.decodedLabel}>{stripBIO(t.label)}</span>
+							<span className={styles.decodedLabel}>{labelText(t.label)}</span>
 							<span className={styles.confidenceBar} style={{ width: `${(t.confidence * 100).toFixed(0)}%` }} />
 						</span>
 					))}
@@ -153,7 +159,7 @@ export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: Mo
 						{changedIndices(repair.before, repair.after)
 							.map(
 								(i) =>
-									`${pieceDisplay(trace.pieces[i]?.piece ?? `#${i}`)} ${stripBIO(repair.before[i] ?? "?")}→${stripBIO(repair.after[i] ?? "?")}`
+									`${pieceDisplay(trace.pieces[i]?.piece ?? `#${i}`)} ${labelText(repair.before[i] ?? "?")}→${labelText(repair.after[i] ?? "?")}`
 							)
 							.join(", ")}
 					</p>

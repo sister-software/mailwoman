@@ -53,13 +53,6 @@ export function emissionColor(value: number, absMax: number): string {
 }
 
 /**
- * `B-street` → `street`, `I-street` → `street`, `O` → `O`.
- */
-export function stripBIO(label: string): string {
-	return label.replace(/^[BI]-/, "")
-}
-
-/**
  * Replace the SentencePiece space sentinel (`▁`, U+2581) with a visible open-box marker.
  */
 export function pieceDisplay(piece: string): string {

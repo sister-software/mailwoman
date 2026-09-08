@@ -12,7 +12,6 @@ import {
 	emissionColor,
 	matrixAbsMax,
 	pieceDisplay,
-	stripBIO,
 } from "@mailwoman/earth/explorers/ModelVisualizer/helpers"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
@@ -42,12 +41,6 @@ describe("ModelVisualizer helpers", () => {
 		expect(emissionColor(0, 5)).toContain("0%")
 		expect(emissionColor(5, 5)).not.toBe(emissionColor(-5, 5))
 		expect(emissionColor(500, 5)).toBe(emissionColor(5, 5))
-	})
-
-	it("stripBIO drops the prefix, keeps O", () => {
-		expect(stripBIO("B-house_number")).toBe("house_number")
-		expect(stripBIO("I-street")).toBe("street")
-		expect(stripBIO("O")).toBe("O")
 	})
 
 	it("pieceDisplay swaps the SP space sentinel for a visible marker", () => {
