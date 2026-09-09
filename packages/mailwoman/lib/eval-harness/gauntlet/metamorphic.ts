@@ -315,16 +315,11 @@ const KNOWN_INV_XFAIL = new Map<string, string>()
  * gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street in ship-config, so some of these
  * may hold with the retrieval channels ON — tracked here as the anchor-off floor, not a claim about production.
  */
-const KNOWN_BAND_XFAIL = new Map<string, string>([
-	// House-number spelling is neither normalized nor trained — the expected miss (input-robustness matrix).
-	["num-house|100 Centre Street, New York, NY", "untrained: house-number spelling (input-robustness matrix)"],
-	// A single-char corruption of a rooftop street token drops the exact match to a ~6.4km fallback (anchor-off).
-	["transpose|100 Centre Street, New York, NY", "anchor-off: corrupted street token loses the rooftop (~6.4km)"],
-	["typo-sub|100 Centre Street, New York, NY", "anchor-off: corrupted street token loses the rooftop (~6.4km)"],
-	// The Damrak transpose/typo-sub pair ("typo'd NL locality, no postcode anchor → no-resolve") was removed
-	// 2026-08-12: the word-level fuzzy measure (#1614) corrects the corrupted locality and both perturbations
-	// now land in-band.
-])
+// Empty on the shipped stack. An entry belongs here only while a BAND perturbation misses deterministically; the
+// self-check names an entry that has started passing, and it leaves then (the Damrak locality pair left once the
+// word-level fuzzy measure corrected the corrupted locality; the `100 Centre Street, New York, NY` trio — the spelled
+// house number and the two street-token corruptions — left once the rooftop survived them).
+const KNOWN_BAND_XFAIL = new Map<string, string>()
 
 /**
  * Strip a 5-digit (US/FR) postcode token for the DIR test.
