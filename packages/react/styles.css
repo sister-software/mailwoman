@@ -1514,7 +1514,9 @@
 		cursor: pointer;
 	}
 
-	.mw-map-chip--active {
+	/* A chip that carries a state reports it through `aria-pressed`, so the accent follows the attribute, not a class. */
+	.mw-map-chip--active,
+	.mw-map-chip[aria-pressed="true"] {
 		border-color: var(--color-accent);
 		color: var(--color-accent);
 	}

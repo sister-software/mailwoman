@@ -1,43 +1,83 @@
-/* Layer-toggle control — a stack of checkboxes pinned in the map's top-right corner.
-   Debug-leaning UI: dense, monospace, no fluff. Width caps at ~14em so it doesn't crowd
-   the map when expanded with longer group labels. */
+/*
+ * The layer control: a disclosure button that opens a checkbox list. It is the same glass the rest of the map chrome
+ * is made of, composed from `@mailwoman/react/tokens.css` rather than from colours of its own, so a theme change
+ * reaches it. The list caps at 60vh because seventeen groups over a ~70-layer basemap otherwise runs off the screen.
+ */
 .layerToggleCtrl {
-	background: rgba(20, 20, 25, 0.85);
-	color: #f0f0f5;
-	padding: 0.5rem 0.6rem;
-	font-family: var(--ifm-font-family-monospace);
-	font-size: 0.75rem;
-	min-width: 11em;
-	max-width: 14em;
-	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+	background: var(--material-glass-background);
+	border: 1px solid var(--material-glass-border);
+	backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+	-webkit-backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+	box-shadow: var(--material-glass-shadow);
+	border-radius: var(--radius-panel);
+	color: var(--color-text-primary);
+	font-family: var(--font-family-text);
+	font-size: var(--font-size-caption);
+	/* The corner lays its controls out right-aligned, so the panel grows leftward from the button rather than off-screen. */
+	min-width: max-content;
+	margin-left: auto;
+	overflow: hidden;
 }
 
-.layerToggleHeading {
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	margin-bottom: 0.35rem;
-	padding-bottom: 0.25rem;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-	color: #cfcfdb;
+/*
+ * MapLibre sizes every button inside a `.maplibregl-ctrl-group` to its 29px icon square, at `.maplibregl-ctrl-group
+ * button` — one class and one element. This one carries a word, so the metrics are restated at a selector that
+ * outranks it; a single class does not, and the label came out clipped to five characters.
+ */
+.layerToggleCtrl .layerToggleButton {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	height: auto;
+	padding: 0.45rem 0.75rem;
+	font: inherit;
+	font-weight: var(--font-weight-medium);
+	color: inherit;
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.layerToggleCtrl .layerToggleButton:hover,
+.layerToggleCtrl .layerToggleButton[aria-expanded="true"] {
+	background: var(--control-background);
+}
+
+.layerToggleCtrl .layerToggleButton:focus-visible {
+	outline: 2px solid var(--color-selection);
+	outline-offset: -2px;
+}
+
+.layerTogglePanel {
+	max-height: 60vh;
+	overflow: auto;
+	overscroll-behavior: contain;
+	padding: 0.35rem 0.6rem 0.5rem;
+	border-top: 1px solid var(--color-separator);
+	min-width: 12em;
+	max-width: 16em;
 }
 
 .layerToggleRow {
 	display: flex;
 	align-items: center;
 	gap: 0.4rem;
-	padding: 0.1rem 0;
+	padding: 0.12rem 0;
 	cursor: pointer;
 	user-select: none;
+	color: var(--color-text-secondary);
 }
 
 .layerToggleRow:hover {
-	color: #ffffff;
+	color: var(--color-text-primary);
 }
 
 .layerToggleRow input[type="checkbox"] {
 	margin: 0;
 	cursor: pointer;
+	accent-color: var(--color-accent);
 }
 
 .layerToggleLabel {

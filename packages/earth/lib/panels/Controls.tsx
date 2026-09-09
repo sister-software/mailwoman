@@ -11,8 +11,6 @@
 
 import type React from "react"
 
-import demoStyles from "./panels.module.css"
-
 export interface GeoBiasRowProps {
 	/**
 	 * Whether a device location is currently applied as a bias.
@@ -25,24 +23,22 @@ export interface GeoBiasRowProps {
 }
 
 /**
- * The "Bias: 📍 Use my location" row + the "map view already biases" helper text. Mirrors `_app.tsx`.
+ * The device-location bias, as one chip in the map chrome.
+ *
+ * The explanation rides the button's title rather than the map surface: prose laid over a map reads as a caption on the
+ * world beneath it, and the chip's pressed state already says whether the hint is on.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, onToggle }) => (
-	<div className={demoStyles.examples}>
-		<span className={demoStyles.examplesLabel}>Bias:</span>
+	<div className="mw-map-chiprow">
 		<button
 			type="button"
-			className={demoStyles.exampleBtn}
+			className="mw-map-chip"
 			aria-pressed={active}
-			style={active ? { outline: "2px solid var(--ifm-color-primary)", outlineOffset: "1px" } : undefined}
-			title="Add your device location as a soft proximity hint (in addition to the map view). Never a hard filter — a strong population signal still wins."
+			title="Add your device location as a soft proximity hint, in addition to the map view. Never a filter — a strong population signal still wins."
 			onClick={onToggle}
 		>
-			{active ? "📍 Using your location" : "📍 Use my location"}
+			{active ? "Using your location" : "Use my location"}
 		</button>
-		<span className={demoStyles.examplesLabel} style={{ opacity: 0.7 }}>
-			the map view already biases nearby namesakes
-		</span>
 	</div>
 )
 

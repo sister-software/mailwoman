@@ -59,6 +59,37 @@ main[data-route] {
 	padding: 1.5rem;
 }
 
+/*
+ * MapLibre's own control corners are not part of the chrome column, so they have to be told where the chrome already
+ * is: the control capsule occupies the top right down to 98px, and the footer strip owns the bottom 30px.
+ */
+main[data-route] .maplibregl-ctrl-top-right {
+	top: calc(6.5rem + var(--safe-area-top));
+	right: var(--safe-area-right);
+}
+
+main[data-route] .maplibregl-ctrl-bottom-right,
+main[data-route] .maplibregl-ctrl-bottom-left {
+	bottom: calc(2rem + var(--safe-area-bottom));
+}
+
+/* MapLibre paints its controls white; every one of them belongs to the same glass the rest of the chrome is. */
+main[data-route] .maplibregl-ctrl-group {
+	background: var(--material-glass-background);
+	border: 1px solid var(--material-glass-border);
+	box-shadow: var(--material-glass-shadow);
+	border-radius: var(--radius-panel);
+	color: var(--color-text-primary);
+}
+
+/*
+ * MapLibre's own attribution control is hidden because the footer strip carries the same credits, and the licence
+ * obligation is discharged there. Two copies of "© OpenStreetMap" on one screen reads as a defect, not as diligence.
+ */
+main[data-route] .maplibregl-ctrl-attrib {
+	display: none;
+}
+
 .not-found {
 	display: grid;
 	place-content: center;

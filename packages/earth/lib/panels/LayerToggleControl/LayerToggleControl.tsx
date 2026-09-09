@@ -4,7 +4,13 @@ import styles from "./styles.module.css"
 
 // The control builds its DOM by hand, so the module's classes are read once; a name the sheet does not declare is a
 // defect the empty string makes visible as an unstyled panel rather than a type error at every assignment.
-const { layerToggleCtrl = "", layerToggleHeading = "", layerToggleLabel = "", layerToggleRow = "" } = styles
+const {
+	layerToggleCtrl = "",
+	layerToggleButton = "",
+	layerTogglePanel = "",
+	layerToggleLabel = "",
+	layerToggleRow = "",
+} = styles
 
 /**
  * MapLibre custom control: per-group checkboxes that toggle layer visibility. Useful while debugging cartography
@@ -53,6 +59,9 @@ export class LayerToggleControl implements IControl {
 	private map: MapLibreMap | null = null
 	private container: HTMLDivElement | null = null
 	private styleListener: (() => void) | null = null
+	// Collapsed until asked for. The list runs to seventeen groups over a basemap of ~70 layers, which is a reading
+	// for someone debugging cartography; open by default it covered a quarter of the map for every other visitor.
+	private expanded = false
 
 	onAdd(map: MapLibreMap): HTMLElement {
 		this.map = map
@@ -78,17 +87,28 @@ export class LayerToggleControl implements IControl {
 		return this.container
 	}
 
+	/**
+	 * The disclosure button. It is the whole control while collapsed, and the panel's header once open.
+	 */
+	private makeButton(): HTMLButtonElement {
+		const button = document.createElement("button")
+		button.type = "button"
+		button.className = layerToggleButton
+		button.textContent = "Layers"
+		button.setAttribute("aria-expanded", String(this.expanded))
+		button.title = "Show or hide groups of basemap layers"
+
+		button.addEventListener("click", () => {
+			this.expanded = !this.expanded
+			this.render()
+		})
+
+		return button
+	}
+
 	private renderPlaceholder(): void {
 		if (!this.container) return
-		this.container.replaceChildren()
-		const heading = document.createElement("div")
-		heading.className = layerToggleHeading
-		heading.textContent = "Layers"
-		this.container.appendChild(heading)
-		const spinner = document.createElement("div")
-		spinner.className = layerToggleLabel
-		spinner.textContent = "loading…"
-		this.container.appendChild(spinner)
+		this.container.replaceChildren(this.makeButton())
 	}
 
 	onRemove(): void {
@@ -151,11 +171,13 @@ export class LayerToggleControl implements IControl {
 			})
 		}
 
-		this.container.replaceChildren()
-		const heading = document.createElement("div")
-		heading.className = layerToggleHeading
-		heading.textContent = "Layers"
-		this.container.appendChild(heading)
+		this.container.replaceChildren(this.makeButton())
+
+		if (!this.expanded) return
+
+		const panel = document.createElement("div")
+		panel.className = layerTogglePanel
+		this.container.appendChild(panel)
 
 		// Stable display order: pattern order first, then "Other".
 		const orderedNames = [...LAYER_GROUP_PATTERNS.map((g) => g.name), "Other"]
@@ -187,7 +209,7 @@ export class LayerToggleControl implements IControl {
 			label.className = layerToggleLabel
 			label.textContent = `${name} (${bucket.layerIDs.length})`
 			row.appendChild(label)
-			this.container.appendChild(row)
+			panel.appendChild(row)
 		}
 	}
 }
