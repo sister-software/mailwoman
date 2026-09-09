@@ -4701,6 +4701,81 @@ def sync_v530_reviewed_postcode_tail():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v540_target_families():
+    """Stage the v5.4.0 target-family corpus and configs through R2, and verify mounted visibility.
+
+    v0.29.0 is a pure overlay ADD of eight parquets onto v0.28.0's 711 slices, so only those eight and the
+    manifest travel; every base directory the manifest names is already on the volume from prior runs.
+
+    The verify block below reaches a slice in EACH of the three tiers the manifest spans, not just the new
+    one. An overlay manifest that resolves its own slices and none of its base is the exact shape of the
+    2026-09-01 defect: the loader answered ONE file of 706 declared and the run would have trained on it.
+    """
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.29.0-target-families/corpus-v0.29.0-target-families"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.29.0-target-families/ {corpus}/ {retry}",
+    ]
+    for command in commands:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+
+    slices = [
+        "synth-sg-register-00000.parquet",
+        "synth-pk-register-00000.parquet",
+        "synth-bd-register-00000.parquet",
+        "synth-trailing-region-es-v28-00000.parquet",
+        "synth-po-box-military-00000.parquet",
+        "osm-pk-00000.parquet",
+        "osm-bd-00000.parquet",
+        "osm-vn-00000.parquet",
+    ]
+    checks = {
+        "v5.4 run config": os.path.isfile(f"{package}/configs/v5.4.0-target-families-60k.yaml"),
+        "v5.4 probe config": os.path.isfile(f"{package}/configs/v5.4.0-target-families-2k.yaml"),
+        "dose module": os.path.isfile(f"{package}/dose.py"),
+        "overlay manifest": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        # The base tiers the manifest names. v0.5.0 carries 690 of the 719 slices, so its absence would be
+        # the whole corpus missing; v0.28.0's own overlay slice is the nearest base and the easiest to lose.
+        "v0.5.0 base slice": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0000.parquet"
+        ),
+        "v0.5.0 val slice": os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/val/part-0000.parquet"),
+        "v0.28.0 overlay slice": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.28.0-reviewed-postcode-tail/"
+            f"corpus-v0.28.0-reviewed-postcode-tail/train/reviewed-postcode-tail-00000.parquet"
+        ),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for name in slices:
+        checks[f"slice {name}"] = os.path.isfile(f"{corpus}/train/{name}")
+
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v5.4 sync verification failed: {', '.join(missing)}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=3600,
 )
 def sync_v8cjk_kana():
