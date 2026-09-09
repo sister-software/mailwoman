@@ -186,8 +186,15 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * **The JP row is the JP board through the served path** (`jp-served-resolve.run.ts`, 2,000 rows, seed 42): the 586
  * rows carrying a postcode the candidate table keys, graded on the row's own entrance point — the locality-first answer
  * is the municipality centroid, the postcode answer the code's 町域 centroid from the WOF extract.
+ *
+ * **SG** is the limiting case of the tier: a six-digit Singapore postcode names ONE building, so the code's point IS
+ * the address, and the only locality above it is the city-state itself. Measured on a 300-row seeded draw of the
+ * Overture-SG register (`postalcode-sg-overture.db` folded, each row geocoded as `<number> <street> Singapore
+ * <postcode>` and graded on its own point): the postcode point answers 300 of 300 within 1 km (p99 0.16 km);
+ * locality-first answers 185, and the other 115 take the "Singapore" locality centroid (p75 6.30 km, p90 11.43 km, p99
+ * 24.18 km). The postcode point is closer on those 115 and equal on the rest; it is never farther.
  */
-export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP"])
+export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP", "SG"])
 
 /**
  * True when this country's area-grade postal code outranks its locality. Absent or unknown country → false, so the

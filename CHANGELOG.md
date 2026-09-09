@@ -36,6 +36,18 @@ step. The pre-commit hook read its CLI-freshness reference after the formatter h
 commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
 first.
 
+### Added — Singapore postcodes answer at the building
+
+A six-digit Singapore postcode names one building, so `postalcode-sg-overture.db` — the per-postcode centroid of the
+Overture-SG register (123,883 codes; OneMap / Singapore Land Authority under the Singapore Open Data Licence 1.0,
+through Overture's CDLA-Permissive-2.0), built with `mailwoman eval es-postcode-centroids --country SG --pc-len 0` —
+joins the default postcode databases, and `SG` joins the codex table of address systems whose postcode outranks
+their locality. On a 300-row seeded draw of the register, each row geocoded as `<number> <street> Singapore
+<postcode>` and graded on its own point, the postcode point answers 300 of 300 within 1 km (p99 0.16 km) where
+locality-first answered 185 and sent the rest to the "Singapore" locality centroid (p90 11.43 km). The `#NN-NN` unit
+and `S(NNNNNN)` register forms still wait on the Latin model (#2204 §4). The centroid builder's `source` stamp now
+names the Overture release the parquet came from; it had written the pinned default's release on every row.
+
 ### Fixed — one registry of synthetic place-id ranges; a region's variant name that is another region's official name is refused
 
 Two builders claimed the same synthetic id base each, and each kept its own docstring of the ranges it believed taken:

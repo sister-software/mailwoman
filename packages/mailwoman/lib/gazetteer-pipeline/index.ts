@@ -115,6 +115,11 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
 		(cc) => `postalcode-${cc}-overture.db`
 	),
+	// Singapore: a six-digit postcode names one building, so the per-postcode centroid of the Overture rows (123,883
+	// codes from the OneMap / Singapore Land Authority register, Singapore Open Data Licence 1.0 under Overture's
+	// CDLA-Permissive-2.0) answers at rooftop grade with no training. Rebuild: `mailwoman eval es-postcode-centroids
+	// --country SG --pc-len 0 --parquet <overture>/addresses-sg.parquet`.
+	"postalcode-sg-overture.db",
 ]
 
 /**
