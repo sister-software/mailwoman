@@ -31,6 +31,7 @@ import { poBoxRecipe } from "#recipes/po-box"
 import { poBoxCedexRecipe } from "#recipes/po-box-cedex"
 import { reviewedPostcodeTailRecipe } from "#recipes/reviewed-postcode-tail"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { sgRegisterRecipe } from "#recipes/sg-register"
 import { siBareVillageRecipe } from "#recipes/si-bare-village"
 import { streetRecipe } from "#recipes/street"
 import { streetAffixRecipe, suffixBoundaryRecipe } from "#recipes/street-affix"
@@ -60,6 +61,7 @@ const RECIPES: readonly CorpusRecipe[] = [
 	intersectionRecipe,
 	germanRecipe,
 	cnOrganizationalUnitsRecipe,
+	sgRegisterRecipe,
 	localeRecipe,
 	frOrderRecipe,
 	frAdminSplitRecipe,

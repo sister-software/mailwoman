@@ -18,7 +18,7 @@
 
 import zod from "zod"
 
-import type { AddressKind, CaseStatus, ResolutionTier } from "#eval-harness/gauntlet/schema"
+import type { AddressKind, CaseStatus, GauntletCaseTable, ResolutionTier } from "#eval-harness/gauntlet/schema"
 import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertions"
 
 /**
@@ -188,4 +188,36 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 	}
 
 	return out as SeedCase
+}
+
+/**
+ * The `gauntlet_case` row a seed case becomes: the camelCase seed keys onto the snake_case columns, every absent
+ * expectation an explicit `null`, the JSON-valued expectations serialized. The regression-db builder inserts through
+ * this, and a board author grades a candidate row through it BEFORE committing it, so the two cannot disagree about
+ * what a seed field means.
+ */
+export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {
+	return {
+		id: c.id,
+		input: c.input,
+		source: c.source,
+		address_kind: c.addressKind,
+		country: c.country,
+		status: c.status,
+		expect_components: c.expectComponents ? JSON.stringify(c.expectComponents) : null,
+		expect_component_renderings: c.expectComponentRenderings ? JSON.stringify(c.expectComponentRenderings) : null,
+		expect_place_id: c.expectPlaceID ?? null,
+		expect_place_name: c.expectPlaceName ?? null,
+		expect_lat: c.expectLat ?? null,
+		expect_lon: c.expectLon ?? null,
+		expect_tolerance_m: c.expectToleranceM ?? null,
+		expect_tier: c.expectTier ?? null,
+		default_country: c.defaultCountry ?? null,
+		added_at: c.addedAt,
+		bug_ref: c.bugRef ?? null,
+		note: c.note ?? null,
+		ablation_expect: c.ablationExpect ? JSON.stringify(c.ablationExpect) : null,
+		locale: c.locale ?? null,
+		expect_abstain: c.expectAbstain ? 1 : null,
+	}
 }

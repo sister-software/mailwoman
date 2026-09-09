@@ -9,6 +9,7 @@ import {
 	OVERTURE_ADAPTER_ID,
 	OVERTURE_DEFAULT_LICENSE,
 	createOvertureAdapter,
+	unitFieldIsDesignator,
 } from "@mailwoman/corpus/adapters/overture/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
@@ -35,7 +36,47 @@ const ES = [
 	{ street: "AVENIDA DE LA CONSTITUCION", number: "3", unit: "2A", postcode: "28013", locality: "Madrid" },
 ]
 
+describe("unitFieldIsDesignator", () => {
+	it("keeps a digit-bearing or one-word unit and drops a name or NIL", () => {
+		expect(unitFieldIsDesignator("2A")).toBe(true)
+		expect(unitFieldIsDesignator("#05-67")).toBe(true)
+		expect(unitFieldIsDesignator("EG")).toBe(true)
+		expect(unitFieldIsDesignator("Penthouse")).toBe(true)
+		expect(unitFieldIsDesignator("NIL")).toBe(false)
+		expect(unitFieldIsDesignator("nil")).toBe(false)
+		expect(unitFieldIsDesignator("SERANGOON GARDEN ESTATE")).toBe(false)
+		expect(unitFieldIsDesignator("NATIONAL SHOOTING CENTRE")).toBe(false)
+		expect(unitFieldIsDesignator("  ")).toBe(false)
+	})
+})
+
 describe("overture adapter", () => {
+	it("never emits an estate or building name, or NIL, as a unit — the Singapore register's shape", async () => {
+		const input = await writeFixture([
+			{
+				street: "OLD CHOA CHU KANG ROAD",
+				number: "990",
+				unit: "NATIONAL SHOOTING CENTRE",
+				postcode: "699814",
+				locality: "Singapore",
+			},
+			{ street: "SERANGOON GARDEN WAY", number: "12", unit: "NIL", postcode: "555933", locality: "Singapore" },
+			{ street: "ANG MO KIO AVENUE 3", number: "123", unit: "#05-67", postcode: "560123", locality: "Singapore" },
+		])
+
+		await runAdapter({
+			adapter: createOvertureAdapter(),
+			adapterOptions: { inputPath: input, country: "SG" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const rows = await loadRows()
+
+		expect(rows).toHaveLength(3)
+		expect(rows.map((r) => r.components.unit ?? null)).toEqual([null, null, "#05-67"])
+	})
+
 	it("emits a row per JSONL line, stamping country from --country and source=overture", async () => {
 		const input = await writeFixture(ES)
 

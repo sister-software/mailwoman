@@ -23,6 +23,7 @@ import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "#eval-harness/gauntlet/cases/load"
+import { seedCaseToTableRow } from "#eval-harness/gauntlet/cases/seed-case"
 import { assertCorpusIsNonEmpty, writeCorpusStamp } from "#eval-harness/gauntlet/corpus-stamp"
 import {
 	createGauntletMetaTable,
@@ -69,30 +70,10 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 		const insert = kdb.prepare(`INSERT INTO gauntlet_case VALUES (${GAUNTLET_CASE_COLUMNS.map(() => "?").join(", ")})`)
 
 		for (const c of cases) {
+			const row = seedCaseToTableRow(c)
+
 			// Positional, in GAUNTLET_CASE_COLUMNS order.
-			insert.run(
-				c.id,
-				c.input,
-				c.source,
-				c.addressKind,
-				c.country,
-				c.status,
-				c.expectComponents ? JSON.stringify(c.expectComponents) : null,
-				c.expectPlaceID ?? null,
-				c.expectPlaceName ?? null,
-				c.expectLat ?? null,
-				c.expectLon ?? null,
-				c.expectToleranceM ?? null,
-				c.expectTier ?? null,
-				c.defaultCountry ?? null,
-				c.addedAt,
-				c.bugRef ?? null,
-				c.note ?? null,
-				c.ablationExpect ? JSON.stringify(c.ablationExpect) : null,
-				c.expectComponentRenderings ? JSON.stringify(c.expectComponentRenderings) : null,
-				c.locale ?? null,
-				c.expectAbstain ? 1 : null
-			)
+			insert.run(...GAUNTLET_CASE_COLUMNS.map((column) => row[column]))
 		}
 
 		// The stamp goes in LAST and inside the same handle: an artifact that reached the swap without one would be

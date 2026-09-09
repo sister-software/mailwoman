@@ -45,8 +45,20 @@ async function weightsPresent(): Promise<boolean> {
  * An entry is a debt with a name. Removing one because it started passing is the good outcome; adding one needs the
  * defect written down first, because a row added here silently is a defect converted into a permanent exemption.
  */
+const SG_GENERIC_FIRST_STREET =
+	"The Malay generic-first street (`Jalan Sukachita`, `Lengkong Empat`) reads as locality, so the house number has no street anchor. The shipped Latin model has no Singapore register; the `sg-register` corpus recipe (#1931) targets it, and the board row is `improvement_target`."
+
 const KNOWN_INVALID: Record<string, string> = {
 	"ie-op2-pairc-adhamhnain": "`Letterkenny` read as dependent_locality with no locality anchor. Undiagnosed.",
+	"sg-register-building-led-128799-14": SG_GENERIC_FIRST_STREET,
+	"sg-register-official-358886-10": SG_GENERIC_FIRST_STREET,
+	"sg-register-official-399429-9a": SG_GENERIC_FIRST_STREET,
+	"sg-register-official-417611-3": SG_GENERIC_FIRST_STREET,
+	"sg-register-official-468658-8": SG_GENERIC_FIRST_STREET,
+	"sg-register-official-578038-7": SG_GENERIC_FIRST_STREET,
+	"sg-register-official-762522-522b":
+		"`522B Yishun St 53`: the block `522B` reads as a postcode and `53`, the street's own number, as the house number, which then has no street anchor. Same register gap as the Jalan rows; the `sg-register` corpus recipe (#1931) targets it.",
+	"sg-register-official-769796-74": SG_GENERIC_FIRST_STREET,
 }
 
 interface Row {

@@ -18,6 +18,22 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — the Singapore typed registers in the corpus, and a board that grades them
+
+`Blk 533A Upper Cross St #27-40 Singapore 051533` parses with the street span running through the unit and `Blk`
+read as a locality; `17 Tanglin Rise S(247998)` yields no postcode and resolves to a namesake 11,300 km away. The
+Latin model had never seen either form: the Overture-SG source rows carry the register's own shape only. The
+`sg-register` corpus recipe now renders the 142,210 Overture-SG rows in the four forms a person in Singapore types —
+the HDB block line with a synthesized `#NN-NN` unit, the bracketed `S(NNNNNN)` postcode, the building-led line (the
+register's `unit` field holds a building or estate name on 91,818 rows), and the official line — 142,083 aligned rows,
+none quarantined, `Blk` and `S(` `)` untagged. The Overture corpus adapter no longer emits that field as a `unit`
+unless it carries a digit or is one word: `NIL` (47,407 rows) and `SERANGOON GARDEN ESTATE` were being taught as
+secondary-unit designators. `gauntlet/cases/sg/register.jsonl` is a 240-row board, 60 per form, drawn from the same
+register with the rooftop as the truth, graded through the gauntlet's grader by
+`packages/mailwoman/lib/dev-tools/sg-register-board.run.ts` before it was written: block 0/60, bracket_postcode 0/60,
+building_led 12/60, official 38/60 on the shipped model; the 50 passes are pinned. The regression-database builder and
+the board builder share one seed-to-row mapping, `seedCaseToTableRow`.
+
 ### Added — the Taiwan rooftop tier: a national address-point database from the civil-affairs registers
 
 `台北市中正區重慶南路一段122號` parsed correctly and resolved to Taipei City's point, 5 km from the address, because no

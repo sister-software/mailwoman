@@ -16,6 +16,27 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 ## Batches
 
+### `sg-register-board:2026-09-09`
+
+240 rows · `cases/sg/register.jsonl`
+
+> The Singapore register board, written by `packages/mailwoman/lib/dev-tools/sg-register-board.run.ts` (seed 7):
+> a seeded draw of Overture-SG rooftop rows, 60 in each of the four typed forms the `sg-register` corpus recipe
+> renders — the HDB block line with a `#NN-NN` unit (`Blk 533A Upper Cross St #27-40 Singapore 051533`), the
+> bracketed postcode (`17 Tanglin Rise S(247998)`), the building-led line (`Oue Downtown, 6A Shenton Way,
+Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). `expectComponents` is what the
+> recipe tags (`Blk` and `S(` `)` untagged; the floor-unit is `unit`; `Singapore` is the locality); the point is
+> the register row's rooftop at the postcode's tolerance (1 km: one six-digit code is one building).
+>
+> Every row was graded through the gauntlet's own grader before it was written, and `status` is what the shipped
+> model (`neural-weights-en-us`, md5 `98a49b5c`) did on that day: block 0/60, bracket_postcode 0/60, building_led
+> 12/60, official 38/60. The 50 passes are regression pins; the 190 `improvement_target` rows are the reason the
+> recipe exists. The block rows fail because the street span runs through the unit (`street "Bedok Reservoir Rd
+#04-51"`) and `Blk` reads as a locality; the bracketed-postcode rows because `S(560123)` yields no postcode and
+> the line resolves to a foreign namesake 11,300 km away; the building-led rows because the lead name reads as a
+> locality rather than a venue. Re-grade with the builder after a model that trained on the recipe, and promote
+> the rows that flip.
+
 ### `bug:#905`
 
 5 rows · `cases/au/`, `cases/ca/`, `cases/fi/`, `cases/fr/`, `cases/ie/`
