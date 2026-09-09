@@ -77,24 +77,37 @@ export function LiveModelVisualizer({
 
 	return (
 		<div className={styles.root}>
+			<h1 className={styles.traceTitle}>Trace the decode path</h1>
+
+			<p className={styles.traceHint}>
+				Run an address through the classifier and read the four bands it produced: tokens, retrieval channels, emissions
+				and repairs.
+			</p>
+
 			<form
-				onSubmit={(e) => {
-					e.preventDefault()
+				className={styles.traceForm}
+				onSubmit={(event) => {
+					event.preventDefault()
 					void run()
 				}}
 			>
 				<input
 					type="text"
+					className={styles.traceInput}
 					value={text}
-					onChange={(e) => setText(e.target.value)}
-					size={60}
+					onChange={(event) => setText(event.target.value)}
 					aria-label="Address to trace"
 				/>
-				<button type="submit" disabled={pending}>
+				<button type="submit" className={styles.traceButton} disabled={pending}>
 					{pending ? "Tracing…" : "Trace"}
 				</button>
 			</form>
-			{error ? <p role="alert">{error}</p> : null}
+
+			{error ? (
+				<p className="mw-error" role="alert">
+					{error}
+				</p>
+			) : null}
 			{trace ? <ModelVisualizer trace={trace} /> : null}
 		</div>
 	)

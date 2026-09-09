@@ -2,7 +2,68 @@
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	font-size: 0.85rem;
+	font-size: var(--font-size-footnote);
+}
+
+/*
+ * The trace page's own form. It is not map chrome — nothing floats over anything — so it takes the control palette
+ * directly rather than the glass, and stays a plain row of a field and its button.
+ */
+.traceForm {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.traceInput {
+	flex: 1;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 0.5rem 0.75rem;
+	font: inherit;
+	font-family: var(--font-family-text);
+	color: var(--control-foreground);
+	background: var(--control-background);
+	border: 1px solid var(--control-border);
+	border-radius: var(--radius-control);
+}
+
+.traceInput:focus-visible,
+.traceButton:focus-visible {
+	outline: 2px solid var(--color-selection);
+	outline-offset: 1px;
+}
+
+.traceButton {
+	flex: 0 0 auto;
+	padding: 0.5rem 1rem;
+	font: inherit;
+	font-family: var(--font-family-text);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-accent-contrast);
+	background: var(--color-accent);
+	border: 0;
+	border-radius: var(--radius-control);
+	cursor: pointer;
+}
+
+.traceButton:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.traceTitle {
+	margin: 0;
+	font-family: var(--font-family-display);
+	font-size: var(--font-size-title);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-primary);
+}
+
+.traceHint {
+	margin: 0;
+	color: var(--color-text-tertiary);
+	font-size: var(--font-size-caption);
 }
 
 .header {
