@@ -86,31 +86,72 @@ training_image = (
 )
 
 
-# R2 credentials — reads from local .env at deploy time via dotenv fallback.
-# The script loads .env itself so `source .env` before `modal run` is NOT required.
-def _load_r2_env() -> dict[str, str]:
-    """Read RCLONE_S3_* from .env, falling back to os.environ."""
+#: The RCLONE_S3_* keys rclone needs to reach R2. PROVIDER and the two credentials are what an empty
+#: secret loses first: rclone then answers `s3 provider "" not known`, inside the container.
+R2_KEYS = (
+    "RCLONE_S3_PROVIDER",
+    "RCLONE_S3_ACCESS_KEY_ID",
+    "RCLONE_S3_SECRET_ACCESS_KEY",
+    "RCLONE_S3_ENDPOINT",
+    "RCLONE_S3_REGION",
+    "RCLONE_S3_NO_CHECK_BUCKET",
+)
+
+
+def _env_file() -> str:
+    """The checkout's untracked .env, resolved so a git WORKTREE finds the main checkout's copy.
+
+    `.env` is untracked and lives only in the main checkout, so walking `..` from this file lands a
+    worktree on a path that does not exist. `--git-common-dir` answers the main checkout's `.git` from
+    inside any worktree, and its parent is the directory that holds `.env`. The plain relative path is
+    the fallback for a tarball or a checkout git cannot answer for.
+    """
+    fallback = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+    try:
+        common = subprocess.run(  # noqa: S603
+            ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],  # noqa: S607
+            cwd=os.path.dirname(__file__),
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return fallback
+    return os.path.join(os.path.dirname(common), ".env") if common else fallback
+
+
+def _read_env_keys(keys: tuple[str, ...]) -> dict[str, str]:
+    """Read the named keys from the .env file, letting os.environ override what the file says."""
     env: dict[str, str] = {}
-    env_file = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    env_file = _env_file()
     if os.path.isfile(env_file):
         with open(env_file) as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
                     key, _, val = line.partition("=")
-                    if key.startswith("RCLONE_S3_"):
+                    if key in keys:
                         env[key] = val
-    # os.environ overrides file values
-    for key in [
-        "RCLONE_S3_PROVIDER",
-        "RCLONE_S3_ACCESS_KEY_ID",
-        "RCLONE_S3_SECRET_ACCESS_KEY",
-        "RCLONE_S3_ENDPOINT",
-        "RCLONE_S3_REGION",
-        "RCLONE_S3_NO_CHECK_BUCKET",
-    ]:
+    for key in keys:
         if key in os.environ:
             env[key] = os.environ[key]
+    return env
+
+
+def _load_r2_env() -> dict[str, str]:
+    """The R2 credentials, or a raise naming the file that did not supply them.
+
+    An empty secret is NOT a usable state and must not be built quietly: the container starts, rclone
+    reports `s3 provider "" not known`, and the operator reads a storage error for a missing file. So
+    the absence is reported here, where the path is known, rather than a Modal app later.
+    """
+    env = _read_env_keys(R2_KEYS)
+    missing = [key for key in R2_KEYS[:3] if not env.get(key)]
+    if missing:
+        raise RuntimeError(
+            f"no R2 credentials: {_env_file()} supplied none of {missing} and neither did the "
+            f"environment. rclone cannot reach the bucket without them."
+        )
     return env
 
 
@@ -123,20 +164,10 @@ r2_secret = modal.Secret.from_dict(_load_r2_env())
 # 401s and trackio_logging.py swallows it), so a token is only needed to push the
 # dashboard to a Space.
 def _load_hf_env() -> dict[str, str]:
-    env: dict[str, str] = {}
-    env_file = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-    if os.path.isfile(env_file):
-        with open(env_file) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, _, val = line.partition("=")
-                    if key in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
-                        env[key] = val
-    for key in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
-        if key in os.environ:
-            env[key] = os.environ[key]
-    return env
+    """The HF token, or nothing. Absence is tolerated here and refused in `_load_r2_env` — a run
+    without R2 cannot read its corpus, while a run without this token still trains and logs to CSV.
+    """
+    return _read_env_keys(("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"))
 
 
 hf_secret = modal.Secret.from_dict(_load_hf_env())
