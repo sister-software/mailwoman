@@ -39,25 +39,14 @@ export interface PlanetaryMapProps {
 export function PlanetaryMap({ config, selected, onSelect, onMapReady }: PlanetaryMapProps) {
 	const mapRef = useRef<MapRef>(null)
 
-	// The ref fills only after react-map-gl instantiates the map, and a ref assignment does not re-render the chrome,
-	// so the handle is polled out and published once.
-	useEffect(() => {
-		if (!onMapReady) return
+	// The map announces itself through `onLoad`; nothing polls for it. The chrome sits outside this component, so a
+	// ref assignment would not re-render it — the handle goes up to the parent as state instead.
+	const publishMap = useCallback(
+		(event: { target: ReturnType<MapRef["getMap"]> }) => onMapReady?.(event.target),
+		[onMapReady]
+	)
 
-		const timer = setInterval(() => {
-			const map = mapRef.current?.getMap()
-
-			if (map) {
-				onMapReady(map)
-				clearInterval(timer)
-			}
-		}, 250)
-
-		return () => {
-			clearInterval(timer)
-			onMapReady(null)
-		}
-	}, [onMapReady])
+	useEffect(() => () => onMapReady?.(null), [onMapReady])
 
 	const style = useMemo(
 		() =>
@@ -142,7 +131,12 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 			projection="globe"
 			mapRef={mapRef}
 			style={{ width: "100%", height: "100%" }}
-			mapProps={{ interactiveLayerIds: [PlanetaryLabelsLayerID], onClick, attributionControl: false }}
+			mapProps={{
+				interactiveLayerIds: [PlanetaryLabelsLayerID],
+				onClick,
+				onLoad: publishMap,
+				attributionControl: false,
+			}}
 		>
 			{selected ? (
 				<ResultCamera

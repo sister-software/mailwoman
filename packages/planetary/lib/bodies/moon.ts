@@ -14,6 +14,7 @@ const VERSION = "20260908-a2c92ed2"
 export const MOON: PlanetaryMapConfig = {
 	body: "moon",
 	title: "Mailwoman Moon",
+	displayName: "Moon",
 	hostname: "moon.mailwoman.ai",
 	initialView: { longitude: 0, latitude: 0, zoom: 1.5 },
 	latitudeType: "planetocentric",

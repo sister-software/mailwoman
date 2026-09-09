@@ -120,89 +120,15 @@ main[data-route] .maplibregl-canvas {
 }
 
 /*
- * The feature panel is a sheet: the glass surface the shared chrome defines, sat BESIDE the control column on a wide
- * screen and against the bottom edge on a phone, where a side panel would take the map's whole height.
- *
- * Beside, not below: opening below made the panel's top depend on how many controls the capsule held, and the column
- * grows. Clearing it sideways costs 2.5rem of control plus its inset and a gap, whatever it holds.
+ * The feature panel is `<MapSheet>` — the glass, the position beside the control column, the phone treatment and the
+ * close button all come from `@mailwoman/react`. Only the record inside it is this app's.
  */
-.feature-panel {
-	position: absolute;
-	top: calc(1rem + var(--safe-area-top));
-	right: calc(4rem + var(--safe-area-right));
-	width: min(24rem, calc(100vw - 6rem));
-	max-height: calc(100% - 2rem - var(--map-footer-height));
-	overflow: auto;
-	overscroll-behavior: contain;
-	box-sizing: border-box;
-	padding: 1rem 1.2rem;
-	background: var(--material-glass-background);
-	border: 1px solid var(--material-glass-border);
-	backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
-	-webkit-backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
-	box-shadow: var(--material-glass-shadow);
-	border-radius: var(--radius-panel);
-	z-index: 3;
-}
-
 @media (max-width: 600px) {
 	/* Clear of the control capsule in the same corner: 2.5rem of control, its 1rem inset, and a 0.5rem gap. */
 	.search-slot {
 		max-width: none;
 		right: calc(4rem + var(--safe-area-right));
 	}
-
-	/* Above the footer strip, never under it: a sheet that ends at the screen's edge hides its own last rows. */
-	.feature-panel {
-		top: auto;
-		left: 0;
-		right: 0;
-		bottom: calc(var(--map-footer-height) + var(--safe-area-bottom));
-		width: auto;
-		max-height: 60vh;
-		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
-		border-inline: 0;
-		border-bottom: 0;
-		padding-bottom: 1rem;
-	}
-}
-
-.feature-panel__header {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 1rem;
-}
-
-.feature-panel h2 {
-	margin: 0;
-	font-size: 1.25rem;
-}
-
-.feature-panel__close {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 1.75rem;
-	height: 1.75rem;
-	font: inherit;
-	font-size: 1.25rem;
-	line-height: 1;
-	color: var(--color-text-secondary);
-	background: none;
-	border: 0;
-	border-radius: var(--radius-pill);
-	cursor: pointer;
-}
-
-.feature-panel__close:hover {
-	color: var(--color-text-primary);
-	background: var(--control-background);
-}
-
-.feature-panel__close:focus-visible {
-	outline: 2px solid var(--color-selection);
-	outline-offset: 1px;
 }
 
 .feature-panel dl {

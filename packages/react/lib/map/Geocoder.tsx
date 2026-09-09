@@ -99,30 +99,24 @@ function GeocoderInner({
 	// handle also puts it in state — one poll, two consumers.
 	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
+	// The map announces itself; nothing polls for it. `onLoad` carries the instance, so the compass and the layer
+	// control render on the frame the map is ready rather than up to an interval later.
+	//
 	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias threshold)
-	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
-	// republished on `globalThis.__mailwomanMapCanvas`. The ref fills only after react-map-gl instantiates
-	// the map, hence the short poll; cleared on unmount so a torn-down geocoder never leaves a stale
-	// handle behind.
-	useEffect(() => {
-		const host = globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }
-
-		const timer = setInterval(() => {
-			const ready = mapRef.current?.getMap()
-
-			if (ready) {
-				host.__mailwomanMapCanvas = ready
-				setMap(ready)
-				clearInterval(timer)
-			}
-		}, 250)
-
-		return () => {
-			clearInterval(timer)
-			setMap(null)
-			delete host.__mailwomanMapCanvas
-		}
+	// before submitting, and a browser test cannot reach a React ref — so the same handle is republished on
+	// `globalThis.__mailwomanMapCanvas`, and cleared on unmount so a torn-down geocoder leaves no stale handle.
+	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
+		;(globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas = event.target
+		setMap(event.target)
 	}, [])
+
+	useEffect(
+		() => () => {
+			setMap(null)
+			delete (globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas
+		},
+		[]
+	)
 
 	// Read the viewport bias at submit time — through the map handle, never a threaded state value, so granting/zooming
 	// mid-session doesn't re-create the parse callback. Below the min-bias zoom, a whole-globe center is noise → null.
@@ -173,7 +167,7 @@ function GeocoderInner({
 					style={{ width: "100%", height: "100%" }}
 					// One compact attribution pill (the map's own default is a wide, always-open "MapLibre | © …" bar), no
 					// maplibre wordmark logo.
-					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false }}
+					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
 					<OverlayLayers overlays={runtime.overlays} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />

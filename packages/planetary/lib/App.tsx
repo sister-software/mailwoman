@@ -151,15 +151,13 @@ export function App() {
 			<div className="search-slot">
 				<SearchBox
 					search={search.index}
-					placeholder={
-						search.status === "failed" ? "Search is unavailable" : `Search ${config.title.replace("Mailwoman ", "")}`
-					}
+					placeholder={search.status === "failed" ? "Search is unavailable" : `Search ${config.displayName}`}
 					onSelect={(hit) => select(featureFromHit(hit))}
 				/>
 
 				<MapChipRow
 					chips={config.exampleFeatures.map((name) => ({ label: name, value: name }))}
-					label={`Example features on ${config.title.replace("Mailwoman ", "")}`}
+					label={`Example features on ${config.displayName}`}
 					disabled={search.status !== "ready"}
 					onPick={pickByName}
 				/>
@@ -169,7 +167,7 @@ export function App() {
 			<MapControlStack label="Map controls">
 				<MapControlGroup>
 					<MapControlButton
-						label={`About ${config.title.replace("Mailwoman ", "")}`}
+						label={`About ${config.displayName}`}
 						active={aboutOpen}
 						onPress={() => setAboutOpen((value) => !value)}
 					>
@@ -183,18 +181,18 @@ export function App() {
 			</MapControlStack>
 
 			{aboutOpen ? (
-				<MapSheet title={`About ${config.title.replace("Mailwoman ", "")}`} onClose={closeAbout}>
+				<MapSheet title={`About ${config.displayName}`} onClose={closeAbout}>
 					<BodyAbout config={config} />
 				</MapSheet>
 			) : null}
 
 			{selected ? <FeaturePanel feature={selected} latitudeType={config.latitudeType} onClose={close} /> : null}
 			{route.kind === "feature" && !selected && search.status === "ready" ? (
-				<section className="feature-panel" data-testid="feature-missing">
-					<p>
+				<MapSheet title="Not in this archive" onClose={close} className="feature-panel">
+					<p data-testid="feature-missing">
 						No feature <code>{route.id}</code> in this archive. <a href="/">Go to the globe.</a>
 					</p>
-				</section>
+				</MapSheet>
 			) : null}
 			<Attribution config={config} />
 		</main>

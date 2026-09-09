@@ -35,7 +35,7 @@ function sourceTitle(id: string): string {
 
 export function BodyAbout({ config }: BodyAboutProps): ReactNode {
 	const state = useBuildManifest(config.artifacts.manifestURL)
-	const bodyName = config.title.replace("Mailwoman ", "")
+	const bodyName = config.displayName
 
 	return (
 		<>

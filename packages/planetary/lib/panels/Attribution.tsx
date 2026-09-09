@@ -50,7 +50,7 @@ export function Attribution({ config }: AttributionProps) {
 
 	return (
 		<div className="attribution" data-manifest={state.status}>
-			<MapFooter identity={<strong>{config.title.replace("Mailwoman ", "")}</strong>} attribution={lines} />
+			<MapFooter identity={<strong>{config.displayName}</strong>} attribution={lines} />
 		</div>
 	)
 }

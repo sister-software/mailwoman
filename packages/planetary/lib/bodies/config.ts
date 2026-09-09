@@ -21,6 +21,14 @@ export interface PlanetaryView {
 export interface PlanetaryMapConfig {
 	body: PlanetaryBody
 	title: string
+	/**
+	 * The body's own name, for prose that already sits under the title — "Search Mars", "About Mars".
+	 *
+	 * Carried rather than derived: six call sites stripped the `"Mailwoman "` prefix off {@link title} themselves, and
+	 * every one of them answers the WHOLE title the day that prefix changes, which reads as a bug in the sentence rather
+	 * than in the config.
+	 */
+	displayName: string
 	hostname: string
 	initialView: PlanetaryView
 	/**

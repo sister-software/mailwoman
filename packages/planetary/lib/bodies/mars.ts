@@ -14,6 +14,7 @@ const VERSION = "20260908-e2d9f96c"
 export const MARS: PlanetaryMapConfig = {
 	body: "mars",
 	title: "Mailwoman Mars",
+	displayName: "Mars",
 	hostname: "mars.mailwoman.ai",
 	initialView: { longitude: -110, latitude: 10, zoom: 2 },
 	latitudeType: "planetocentric",
