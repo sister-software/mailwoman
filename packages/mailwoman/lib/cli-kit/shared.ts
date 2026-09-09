@@ -295,6 +295,29 @@ export function splitUpperList(raw: string | undefined): string[] {
 }
 
 /**
+ * A count flag: a non-negative integer, or `fallback` when the flag is absent. Throws on anything else.
+ *
+ * The reason this is a function and not `Number(raw) || fallback`: ZERO IS FALSY, so that idiom silently answers the
+ * fallback for a flag whose whole purpose is to switch something off. `corpus slice --variants 0` asks the po-box
+ * recipe to emit its self-contained military rows and none of its tuple-driven ones; `Number("0") || 1` read it as one
+ * and the slice came out at 10,558 rows against the 5,279 requested. A typo is refused for the same reason rather than
+ * falling back — a count nobody asked for is a slice size nobody chose.
+ */
+export function countOption(raw: string | undefined, fallback: number): number {
+	if (raw == null) return fallback
+
+	// `Number("")` and `Number("  ")` are ZERO, so a blank flag value would switch a slice off with no one asking —
+	// the same defect the falsy-zero idiom caused, arriving from the other side.
+	const parsed = raw.trim() === "" ? Number.NaN : Number(raw)
+
+	if (!Number.isInteger(parsed) || parsed < 0) {
+		throw new CommandError(`expected a non-negative integer, got ${JSON.stringify(raw)}`)
+	}
+
+	return parsed
+}
+
+/**
  * {@linkcode splitList} as numbers — resolution and size flags. Blank entries are dropped BEFORE conversion, so a
  * trailing comma is not a NaN.
  */

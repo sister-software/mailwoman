@@ -30,9 +30,11 @@ guard sees the declared slices and reports honestly. The assembler also takes a 
 single-slice overlays would leave seven dead directories and an eight-deep base chain for one version.
 
 `mailwoman corpus slice --variants 0` was silently one, because the command read `Number(options.variants) || 1`
-and zero is falsy. It doubled a slice built to emit only its self-contained rows; the count is now parsed and a
-non-integer refuses. The `po-box` and `trailing-region` recipes honour `--source-name`, so a slice built to
-outweigh rows already in the mixture can carry its own dose instead of pooling with them.
+and zero is falsy. It doubled a slice built to emit only its self-contained rows: the po-box military slice came out
+at 10,558 rows against the 5,279 asked for. The count now goes through `countOption`, which also refuses a blank
+value, since `Number("")` is zero and would switch a slice off from the other direction. The `po-box` and
+`trailing-region` recipes honour `--source-name`, so a slice can be dosed apart from the rows that share its label
+rather than drawing whatever they draw.
 
 ### Added — the v5.4.0 target-family corpus and config, each family named by its dose
 

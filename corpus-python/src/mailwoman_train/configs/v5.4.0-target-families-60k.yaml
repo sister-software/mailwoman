@@ -19,11 +19,18 @@
 #
 #   F2 (#1748/#1673) synth-trailing-region-es-v28, 4,944 rows. The Spanish trailing-region surfaces
 #                    re-read from the gazetteer in the languages the province writes: `Illes Balears`
-#                    and `Islas Baleares` beside `Balearic Islands`, `Córdoba` with its accent. KNOWN
-#                    LIMIT: the base's three trailing-region generations still carry ~8,489 ES rows
-#                    with the English exonyms, so this slice is dosed to outweigh them rather than to
-#                    replace them. The full treatment regenerates those three generations through the
-#                    corrected extraction; it is not in this run.
+#                    and `Islas Baleares` beside `Balearic Islands`, `Córdoba` with its accent.
+#
+#                    This is the ONLY trailing-region source this run draws, and the measurement behind
+#                    that sentence matters because an earlier draft of this header claimed the opposite.
+#                    The three older generations (`trailing-region-{structured,placement-v25,
+#                    leftcontext-v26}-tuples.jsonl`, ~83,000 rows, ~8,489 of them ES rows carrying the
+#                    English exonyms) were built for the 2026-08-23 arc that closed DO-NOT-SHIP, and
+#                    they are in NEITHER this corpus lineage NOR any shipped config's mixture: no
+#                    v0.29.0 slice is labelled `synth-trailing-region*`, and neither v5.0.0 nor v5.3.0
+#                    weights that source, so a row carrying it would be dropped at load anyway. The
+#                    corrected slice therefore replaces nothing and competes with nothing — read a
+#                    result on the three F2 board rows as this slice's own.
 #
 #   F6 + SG (#1822) synth-sg-register, 142,083 rows. The four Singapore registers: the HDB block line
 #                    with a `#NN-NN` unit, the `S(NNNNNN)` postcode, the building-led venue, the

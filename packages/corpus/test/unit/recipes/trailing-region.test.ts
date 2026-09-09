@@ -88,3 +88,31 @@ describe("trailing-region postcode placement", () => {
 		}
 	})
 })
+
+describe("trailing-region source labelling", () => {
+	it("takes `--source-name`, so a rebuilt slice can be dosed apart from the rows it must outweigh", async () => {
+		// The sampler buckets by `source` and weights each bucket. #1673's corrected Spanish surfaces are the same
+		// recipe over the same shape as the rows they exist to outweigh, so emitting them under the shipped label
+		// would have dosed them at exactly whatever those rows already draw — no treatment at all.
+		const tuples = repeat({ ...base, postcode: "07691", postcodePlacement: "leading" })
+		const { rows } = await run(tuples, [], { sourceName: "synth-trailing-region-es-v28" })
+
+		expect(rows.every((row) => row.source === "synth-trailing-region-es-v28")).toBe(true)
+	})
+
+	it("keeps the structured and bare rows apart under an overridden name too", async () => {
+		// The split exists because pooling the structured rows with the 88,904 bare ones makes the new surface
+		// unweightable; an override that collapsed the two would reintroduce that on the renamed slice.
+		const { rows } = await run(repeat({ ...base }), [], { sourceName: "synth-trailing-region-es-v28" })
+
+		expect(rows.every((row) => row.source === "synth-trailing-region-es-v28-bare")).toBe(true)
+	})
+
+	it("keeps the shipped labels when no name is given", async () => {
+		const structured = await run(repeat({ ...base, postcode: "07691", postcodePlacement: "leading" }), [])
+		const bare = await run(repeat({ ...base }), [])
+
+		expect(structured.rows.every((row) => row.source === "synth-trailing-region-structured")).toBe(true)
+		expect(bare.rows.every((row) => row.source === "synth-trailing-region")).toBe(true)
+	})
+})
