@@ -20,6 +20,7 @@ import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
+import { stylesheetContractCheck } from "#checks/stylesheet-contract"
 import { testContractCheck } from "#checks/test-contract"
 import { typecheckTestsCheck } from "#checks/typecheck-tests"
 import { versionSyncCheck } from "#checks/version-sync"
@@ -39,6 +40,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	privateNameShadowsCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
+	stylesheetContractCheck,
 	runtimeFlagsCheck,
 	debtCheck,
 	bundleGraphCheck,
