@@ -18,6 +18,9 @@ export const MARS: PlanetaryMapConfig = {
 	initialView: { longitude: -110, latitude: 10, zoom: 2 },
 	latitudeType: "planetocentric",
 	terrainCredit: "NASA MGS MOLA",
+	// The tallest volcano, the largest canyon, the deepest basin, a landing site and a polar cap — five features that
+	// carry the range of the body, so the chips are a tour rather than a sample.
+	exampleFeatures: ["Olympus Mons", "Valles Marineris", "Hellas Planitia", "Gale", "Planum Boreum"],
 	tiles: {
 		nomenclature: "https://tiles.mailwoman.ai/mars.json",
 		hillshade: "https://tiles.mailwoman.ai/mars-terrain.json",

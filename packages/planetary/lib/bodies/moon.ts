@@ -18,6 +18,9 @@ export const MOON: PlanetaryMapConfig = {
 	initialView: { longitude: 0, latitude: 0, zoom: 1.5 },
 	latitudeType: "planetocentric",
 	terrainCredit: "NASA LRO LOLA",
+	// The Apollo 11 landing sea, a ray crater, the near side's largest mare, the south-polar basin and a rille — five
+	// features that carry the range of the body, so the chips are a tour rather than a sample.
+	exampleFeatures: ["Mare Tranquillitatis", "Copernicus", "Oceanus Procellarum", "Tycho", "Vallis Alpes"],
 	tiles: {
 		nomenclature: "https://tiles.mailwoman.ai/moon.json",
 		hillshade: "https://tiles.mailwoman.ai/moon-terrain.json",

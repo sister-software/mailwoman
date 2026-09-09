@@ -89,8 +89,10 @@ main[data-route] .maplibregl-canvas {
 }
 
 /*
- * The search pill rides at the top in the same column the Earth geocoder uses, so the three apps read as one family.
- * The pill itself is `@mailwoman/react`'s `.mw-map-searchbar`; this rule places the column and nothing more.
+ * The top column, the same one the Earth geocoder uses so the three apps read as one family: the search pill, the
+ * example chips, then the compass. The controls inside it are `@mailwoman/react`'s; this rule places the column.
+ *
+ * It is click-through between its controls, or the strip across the top of the globe would refuse a drag.
  */
 .search-slot {
 	position: absolute;
@@ -99,6 +101,18 @@ main[data-route] .maplibregl-canvas {
 	right: calc(1rem + var(--safe-area-right));
 	max-width: 34rem;
 	z-index: 3;
+	display: grid;
+	gap: 0.5rem;
+	justify-items: stretch;
+	pointer-events: none;
+}
+
+.search-slot > * {
+	pointer-events: auto;
+}
+
+.search-slot > .mw-map-compass {
+	justify-self: start;
 }
 
 .search-box .mw-demo-suggest {
@@ -106,15 +120,18 @@ main[data-route] .maplibregl-canvas {
 }
 
 /*
- * The feature panel is a sheet: the glass surface the shared chrome defines, sat under the top column on a wide
+ * The feature panel is a sheet: the glass surface the shared chrome defines, sat under the control capsule on a wide
  * screen and against the bottom edge on a phone, where a side panel would take the map's whole height.
+ *
+ * The capsule holds one control, so it starts at 1rem and ends at 3.5rem; the panel opens at 4.5rem. A panel that
+ * overlapped it would cover the About button while its own sheet was open.
  */
 .feature-panel {
 	position: absolute;
-	top: calc(1rem + var(--safe-area-top));
+	top: calc(4.5rem + var(--safe-area-top));
 	right: calc(1rem + var(--safe-area-right));
 	width: min(24rem, calc(100vw - 2rem));
-	max-height: calc(100% - 5rem);
+	max-height: calc(100% - 8rem);
 	overflow: auto;
 	overscroll-behavior: contain;
 	box-sizing: border-box;
@@ -129,21 +146,24 @@ main[data-route] .maplibregl-canvas {
 }
 
 @media (max-width: 600px) {
+	/* Clear of the control capsule in the same corner: 2.5rem of control, its 1rem inset, and a 0.5rem gap. */
 	.search-slot {
 		max-width: none;
+		right: calc(4rem + var(--safe-area-right));
 	}
 
+	/* Above the footer strip, never under it: a sheet that ends at the screen's edge hides its own last rows. */
 	.feature-panel {
 		top: auto;
 		left: 0;
 		right: 0;
-		bottom: 0;
+		bottom: calc(var(--map-footer-height) + var(--safe-area-bottom));
 		width: auto;
 		max-height: 60vh;
 		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
 		border-inline: 0;
 		border-bottom: 0;
-		padding-bottom: calc(1rem + var(--safe-area-bottom));
+		padding-bottom: 1rem;
 	}
 }
 
@@ -189,6 +209,14 @@ main[data-route] .maplibregl-canvas {
 .feature-panel__source {
 	opacity: 0.6;
 	font-size: 0.85em;
+}
+
+/*
+ * The shared rule opens a side sheet under a two-control capsule; this app's capsule holds one, so its About sheet
+ * lines up with the feature panel beside it instead of floating 3rem below the button that opened it.
+ */
+main[data-route] .mw-map-sheet--side {
+	top: calc(4.5rem + var(--safe-area-top));
 }
 
 /* The footer strip owns its own layout; this rule only pins it to the map's lower edge. */

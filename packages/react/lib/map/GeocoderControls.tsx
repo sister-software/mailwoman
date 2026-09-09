@@ -14,10 +14,12 @@
  */
 
 import { type ReactNode, useState } from "react"
+import type { MapInstance } from "react-map-gl/maplibre"
 
 import type { GeocoderPanels, GeocoderRuntime } from "#map/types"
 import type { UseCompareState } from "#map/useCompareState"
 import type { UseGeocode } from "#map/useGeocode"
+import { useMapBearing } from "#map/useMapBearing"
 import type { UsePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
@@ -25,6 +27,7 @@ import type { Preset } from "../common/PresetChips.tsx"
 import { BackendControl } from "./BackendControl.tsx"
 import { CompareToggle } from "./CompareToggle.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
+import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
 import { MapSearchBar } from "./MapSearchBar.tsx"
 import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
@@ -61,6 +64,11 @@ export interface GeocoderControlsProps {
 	 */
 	placeholder: string
 	/**
+	 * The live map, for the controls that read it: the compass takes its bearing, the host's layer control reads its
+	 * style. `null` until react-map-gl instantiates the map.
+	 */
+	map?: MapInstance | null
+	/**
 	 * Select a model version (the composed geocoder also clears a now-colliding compare selection).
 	 */
 	onSelectVersion: (version: string) => void
@@ -88,6 +96,7 @@ export function GeocoderControls({
 	panels,
 	presets,
 	placeholder,
+	map = null,
 	onSelectVersion,
 	onForceWASMChange,
 	developer = false,
@@ -99,6 +108,7 @@ export function GeocoderControls({
 
 	const [developerOpen, setDeveloperOpen] = useState(developer)
 	const [aboutOpen, setAboutOpen] = useState(false)
+	const { bearing, resetNorth } = useMapBearing(map)
 
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
 	const showSheet = Boolean(busy || result || errorMessage || (loading && !runtime.ready))
@@ -169,6 +179,11 @@ export function GeocoderControls({
 				/>
 
 				{panels.bias}
+
+				{/* The layer control and the compass close the column, in the order the reference apps put them. */}
+				{panels.layers?.({ map })}
+
+				<MapCompass bearing={bearing} onResetNorth={resetNorth} />
 			</div>
 
 			<MapControlStack label="Map controls">
@@ -186,34 +201,52 @@ export function GeocoderControls({
 				</MapControlGroup>
 			</MapControlStack>
 
-			{aboutOpen ? <aside className="mw-map-sheet mw-map-sheet--side">{panels.header}</aside> : null}
+			{aboutOpen ? (
+				<aside className="mw-map-sheet mw-map-sheet--side" aria-label="About this geocoder">
+					<h2 className="mw-map-sheet__title">About</h2>
+					{panels.header}
+				</aside>
+			) : null}
 
 			{developerOpen ? (
 				<aside className="mw-map-sheet mw-map-sheet--side" aria-label="Developer controls">
-					{panels.releaseInfo}
+					<h2 className="mw-map-sheet__title">Developer</h2>
 
-					<VersionPicker
-						versions={versions}
-						selected={runtime.selectedVersion ?? null}
-						onSelect={onSelectVersion}
-						disabled={busy}
-					/>
+					{panels.releaseInfo ? (
+						<div className="mw-map-sheet__row">
+							<span className="mw-map-sheet__label">This release</span>
+							{panels.releaseInfo}
+						</div>
+					) : null}
 
-					<BackendControl
-						activeBackend={runtime.activeBackend}
-						forceWASM={runtime.forceWASM ?? false}
-						onForceWASMChange={onForceWASMChange}
-					/>
+					<div className="mw-map-sheet__row">
+						<VersionPicker
+							versions={versions}
+							selected={runtime.selectedVersion ?? null}
+							onSelect={onSelectVersion}
+							disabled={busy}
+						/>
+					</div>
 
-					<CompareToggle
-						versions={versions}
-						primaryVersion={runtime.selectedVersion ?? null}
-						compareMode={compare.compareMode}
-						onCompareModeChange={compare.setCompareMode}
-						compareVersion={compare.compareVersion}
-						onCompareVersionChange={compare.setCompareVersion}
-						disabled={busy}
-					/>
+					<div className="mw-map-sheet__row">
+						<BackendControl
+							activeBackend={runtime.activeBackend}
+							forceWASM={runtime.forceWASM ?? false}
+							onForceWASMChange={onForceWASMChange}
+						/>
+					</div>
+
+					<div className="mw-map-sheet__row">
+						<CompareToggle
+							versions={versions}
+							primaryVersion={runtime.selectedVersion ?? null}
+							compareMode={compare.compareMode}
+							onCompareModeChange={compare.setCompareMode}
+							compareVersion={compare.compareVersion}
+							onCompareVersionChange={compare.setCompareVersion}
+							disabled={busy}
+						/>
+					</div>
 				</aside>
 			) : null}
 

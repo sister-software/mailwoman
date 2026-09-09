@@ -29,10 +29,35 @@ export interface PlanetaryMapProps {
 	config: PlanetaryMapConfig
 	selected: SelectedFeature | null
 	onSelect: (feature: SelectedFeature) => void
+	/**
+	 * The live map, once react-map-gl has instantiated it, and `null` again on unmount. The chrome sits outside this
+	 * component and cannot reach the handle through `useMap()`; the compass reads its bearing from here.
+	 */
+	onMapReady?: (map: ReturnType<MapRef["getMap"]> | null) => void
 }
 
-export function PlanetaryMap({ config, selected, onSelect }: PlanetaryMapProps) {
+export function PlanetaryMap({ config, selected, onSelect, onMapReady }: PlanetaryMapProps) {
 	const mapRef = useRef<MapRef>(null)
+
+	// The ref fills only after react-map-gl instantiates the map, and a ref assignment does not re-render the chrome,
+	// so the handle is polled out and published once.
+	useEffect(() => {
+		if (!onMapReady) return
+
+		const timer = setInterval(() => {
+			const map = mapRef.current?.getMap()
+
+			if (map) {
+				onMapReady(map)
+				clearInterval(timer)
+			}
+		}, 250)
+
+		return () => {
+			clearInterval(timer)
+			onMapReady(null)
+		}
+	}, [onMapReady])
 
 	const style = useMemo(
 		() =>

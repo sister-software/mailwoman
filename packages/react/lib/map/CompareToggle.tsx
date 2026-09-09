@@ -69,8 +69,9 @@ export function CompareToggle({
 
 	return (
 		<div className="mw-demo-compare">
-			<label className="mw-demo-compare__toggle">
-				<input type="checkbox" checked={compareMode} onChange={(e) => onCompareModeChange(e.target.checked)} /> Compare
+			<label className="mw-map-sheet__check mw-demo-compare__toggle">
+				<input type="checkbox" checked={compareMode} onChange={(event) => onCompareModeChange(event.target.checked)} />
+				Compare two model versions
 			</label>
 			{compareMode ? (
 				<div className="mw-demo-control">

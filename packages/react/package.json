@@ -228,6 +228,11 @@
 			"node": "./lib/pipeline/TreeView.tsx",
 			"default": "./out/pipeline/TreeView.js"
 		},
+		"./map/useMapBearing": {
+			"types": "./out/map/useMapBearing.d.ts",
+			"node": "./lib/map/useMapBearing.ts",
+			"default": "./out/map/useMapBearing.js"
+		},
 		"./map/usePlaceAutocomplete": {
 			"types": "./out/map/usePlaceAutocomplete.d.ts",
 			"node": "./lib/map/usePlaceAutocomplete.ts",

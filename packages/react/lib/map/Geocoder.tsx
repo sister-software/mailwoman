@@ -19,7 +19,7 @@
  *   over a fake runtime (offline stub style + canned geocode) with no network, no ONNX, no gazetteer.
  */
 
-import { type ReactNode, useCallback, useEffect, useRef } from "react"
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import type { GeocoderPanels, GeocoderRuntime, MapBias } from "#map/types"
@@ -87,6 +87,10 @@ function GeocoderInner({
 	developer,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
+	// The chrome sits OUTSIDE `<MapCanvas>`, so it cannot take the handle from `useMap()`. A ref alone does not
+	// re-render the compass or the layer control when the map arrives, so the same poll that publishes the test
+	// handle also puts it in state — one poll, two consumers.
+	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
 	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias threshold)
 	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
@@ -97,16 +101,18 @@ function GeocoderInner({
 		const host = globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }
 
 		const timer = setInterval(() => {
-			const map = mapRef.current?.getMap()
+			const ready = mapRef.current?.getMap()
 
-			if (map) {
-				host.__mailwomanMapCanvas = map
+			if (ready) {
+				host.__mailwomanMapCanvas = ready
+				setMap(ready)
 				clearInterval(timer)
 			}
 		}, 250)
 
 		return () => {
 			clearInterval(timer)
+			setMap(null)
 			delete host.__mailwomanMapCanvas
 		}
 	}, [])
@@ -114,13 +120,13 @@ function GeocoderInner({
 	// Read the viewport bias at submit time — through the map handle, never a threaded state value, so granting/zooming
 	// mid-session doesn't re-create the parse callback. Below the min-bias zoom, a whole-globe center is noise → null.
 	const getBias = useCallback((): MapBias | null => {
-		const map = mapRef.current?.getMap()
+		const live = mapRef.current?.getMap()
 
-		if (!map) return null
-		const zoom = map.getZoom()
+		if (!live) return null
+		const zoom = live.getZoom()
 
 		if (zoom < minBiasZoom) return null
-		const center = map.getCenter()
+		const center = live.getCenter()
 
 		return { center: [center.lng, center.lat], zoom }
 	}, [minBiasZoom])
@@ -176,6 +182,7 @@ function GeocoderInner({
 				panels={panels}
 				presets={presets}
 				placeholder={defaultAddress}
+				map={map}
 				onSelectVersion={onSelectVersion}
 				onForceWASMChange={onForceWASMChange}
 				developer={developer}

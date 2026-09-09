@@ -23,6 +23,7 @@ import type { GeocoderRuntimeHandle } from "#runtime/use-geocoder-runtime"
 import { Compare } from "./Compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./Controls.tsx"
 import { DebugDrawer } from "./DebugDrawer.tsx"
+import { LayerToggleControl } from "./LayerToggleControl/LayerToggleControl.tsx"
 import { MapControls } from "./MapControls.tsx"
 import { PermalinkButton } from "./PermalinkButton/PermalinkButton.tsx"
 import { ResultExtras } from "./ResultExtras.tsx"
@@ -51,7 +52,8 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
 		() => ({
-			header: <About />,
+			// The sheet's own title and its capsule button are the disclosure; a second one inside would repeat them.
+			header: <About collapsible={false} />,
 			releaseInfo: selectedRelease ? (
 				<p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", opacity: 0.75 }}>
 					<strong>{selectedRelease.version}</strong> — {selectedRelease.description} ({selectedRelease.modelSize},{" "}
@@ -100,6 +102,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
 			mapControls: <MapControls />,
+			layers: ({ map }) => <LayerToggleControl map={map} />,
 			footer: (
 				<MapFooter
 					identity={<strong>Mailwoman Earth</strong>}

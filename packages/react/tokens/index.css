@@ -53,6 +53,7 @@
 	--safe-area-right: env(safe-area-inset-right, 0px);
 	--safe-area-bottom: env(safe-area-inset-bottom, 0px);
 	--safe-area-left: env(safe-area-inset-left, 0px);
+	--map-footer-height: 1.9rem;
 	--color-background-canvas: var(--neutral-50);
 	--color-background-raised: var(--neutral-0);
 	--color-background-sunken: var(--neutral-100);

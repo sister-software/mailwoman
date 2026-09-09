@@ -143,6 +143,12 @@ variable("safe-area-right", "env(safe-area-inset-right, 0px)")
 variable("safe-area-bottom", "env(safe-area-inset-bottom, 0px)")
 variable("safe-area-left", "env(safe-area-inset-left, 0px)")
 
+/**
+ * How tall the footer strip stands, so a sheet ending above it and the strip itself read one number instead of two that
+ * drift. One line of caption type over 0.35rem of padding on each side.
+ */
+variable("map-footer-height", "1.9rem")
+
 //#endregion
 
 //#region Semantics
