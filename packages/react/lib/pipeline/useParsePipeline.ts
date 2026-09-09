@@ -36,9 +36,12 @@ export interface UseParsePipeline {
 	 */
 	selectedCandidate: ResolvedPlaceView | null
 	/**
-	 * Run a parse for the current text. Safe to bind to a form's `onSubmit`.
+	 * Parse and resolve the current text. Safe to bind to a form's `onSubmit`.
+	 *
+	 * Pass `query` to submit a value the field has not re-rendered with yet — a preset press sets the text and submits in
+	 * one handler, and that state update is not visible to this call.
 	 */
-	submit: () => Promise<void>
+	submit: (query?: string) => Promise<void>
 	/**
 	 * Clear the result (used when a preset replaces the input).
 	 */
@@ -53,24 +56,32 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [parseError, setParseError] = useState<string | null>(null)
 
-	const submit = useCallback(async () => {
-		if (!runtime.ready || busy) return
+	// `query` exists because `setText` does not reach this closure before the call after it runs. A preset that called
+	// `setText(value)` then `submit()` parsed the PREVIOUS text — the field showed the preset and the map answered the
+	// address before it. A caller that already knows the query passes it; the field's own submit passes nothing.
+	const submit = useCallback(
+		async (query?: string) => {
+			if (!runtime.ready || busy) return
 
-		setBusy(true)
-		setParseStage(0)
-		setParseError(null)
+			const input = query ?? text
 
-		try {
-			const parsed = await runtime.runParse(text, { onStage: setParseStage })
-			setSelectedCandidateIndex(0)
-			setResult(parsed)
-		} catch (error) {
-			setParseError(error instanceof Error ? error.message : String(error))
-		} finally {
-			setBusy(false)
-			setParseStage(-1)
-		}
-	}, [runtime, text, busy])
+			setBusy(true)
+			setParseStage(0)
+			setParseError(null)
+
+			try {
+				const parsed = await runtime.runParse(input, { onStage: setParseStage })
+				setSelectedCandidateIndex(0)
+				setResult(parsed)
+			} catch (error) {
+				setParseError(error instanceof Error ? error.message : String(error))
+			} finally {
+				setBusy(false)
+				setParseStage(-1)
+			}
+		},
+		[runtime, text, busy]
+	)
 
 	const reset = useCallback(() => setResult(null), [])
 

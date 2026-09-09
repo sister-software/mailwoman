@@ -9,7 +9,12 @@
  *   nothing about the query belongs here.
  *
  *   The slots are elements rather than icon names because a leading mark and a trailing control differ per app — a
- *   magnifier and a clear button on one, a body glyph and nothing on another.
+ *   magnifier on one, a body glyph on another.
+ *
+ *   BUSY IS A LINE, NOT A SLOT. A spinner placed in the trailing slot changed the pill's height on every submit,
+ *   because a slot is laid out and an indicator is not part of the query. `busy` draws a hairline across the pill's
+ *   lower edge instead, which costs no layout. A host that wants `type="search"` also gets the browser's own clear
+ *   button in that corner, and two crosses side by side is one control too many.
  *
  *   NODE-SAFE: pure React, no maplibre.
  */
@@ -28,9 +33,13 @@ export interface MapSearchBarProps {
 	 */
 	leading?: ReactNode
 	/**
-	 * Rendered after the input — a clear button, a microphone, a spinner.
+	 * Rendered after the input — a microphone, a menu. Not a spinner: pass {@link busy} instead.
 	 */
 	trailing?: ReactNode
+	/**
+	 * A query is running. Draws a progress hairline along the pill's lower edge, which takes no layout.
+	 */
+	busy?: boolean
 	/**
 	 * Extra class on the pill.
 	 */
@@ -41,9 +50,14 @@ export interface MapSearchBarProps {
 	label?: string
 }
 
-export function MapSearchBar({ children, leading, trailing, className, label }: MapSearchBarProps): ReactNode {
+export function MapSearchBar({ children, leading, trailing, busy, className, label }: MapSearchBarProps): ReactNode {
 	return (
-		<div className={cx("mw-map-searchbar", className)} role={label ? "search" : undefined} aria-label={label}>
+		<div
+			className={cx("mw-map-searchbar", busy && "mw-map-searchbar--busy", className)}
+			role={label ? "search" : undefined}
+			aria-label={label}
+			aria-busy={busy}
+		>
 			{leading ? <span className="mw-map-searchbar__slot mw-map-searchbar__slot--leading">{leading}</span> : null}
 
 			<span className="mw-map-searchbar__field">{children}</span>

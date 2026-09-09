@@ -263,11 +263,17 @@ export interface GeocoderPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block (present or empty). The opt-in display toggles live here — calibrated
-	 * confidence + dev-mode — because the host owns both the toggle state AND the {@link result} / {@link debugDrawer}
-	 * renderers those toggles drive.
+	 * Rendered just above the result block (present or empty), for content that reads on THIS answer.
+	 *
+	 * A control that reads on the model rather than on an address belongs in {@link developerExtras}: above the result it
+	 * is the first thing a visitor meets, and on a phone it pushes the answer below the fold.
 	 */
 	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
+	/**
+	 * Host controls appended to the Developer sheet — the opt-in display toggles, whose state and the renderers they
+	 * drive both belong to the host.
+	 */
+	developerExtras?: ReactNode
 	/**
 	 * Replace the package's default {@link ResultPanel} entirely. When provided, the host renders its own result block
 	 * (span highlight, timing, hierarchy, precision detail, calibrated confidences) from the {@link ResultContext}. Absent

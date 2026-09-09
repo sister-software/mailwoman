@@ -56,3 +56,22 @@ export function queryFromSearch(search: string): string | null {
 
 	return value.trim() === "" ? null : value
 }
+
+/**
+ * The URL a search should leave behind: the current one with `q` set, or with `q` removed when the query is empty.
+ *
+ * It returns a string rather than writing history, so the caller decides between `pushState` and `replaceState` and
+ * this stays testable without a document. Every other parameter is carried through untouched — a viewport or a runtime
+ * flag in the address bar must survive a search.
+ */
+export function searchWithQuery(url: URL, query: string): string {
+	const next = new URL(url)
+
+	if (query.trim() === "") {
+		next.searchParams.delete("q")
+	} else {
+		next.searchParams.set("q", query)
+	}
+
+	return `${next.pathname}${next.search}${next.hash}`
+}

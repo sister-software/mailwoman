@@ -20,7 +20,7 @@ import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/cl
 import { useMemo } from "react"
 
 import { PRODUCTION_CONFIG } from "#config"
-import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch } from "#routes"
+import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch, searchWithQuery } from "#routes"
 import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use-browser-geolocation"
 import { useGeocoderRuntime } from "#runtime/use-geocoder-runtime"
 
@@ -79,8 +79,19 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			presets={PRESETS}
 			// `/debug` exists to show the model machinery, so it opens the disclosure the default view collapses.
 			developer={route === Route.Debug}
+			onSubmitQuery={writeQueryToURL}
 		/>
 	)
+}
+
+/**
+ * Put the submitted query in the address bar, so a result can be linked and a reload returns to it.
+ *
+ * `replaceState`, not `pushState`: a search refines the same view rather than opening a new one, and pushing would make
+ * the back button walk every keystroke-completed query a visitor tried before leaving the page.
+ */
+function writeQueryToURL(query: string): void {
+	history.replaceState(history.state, "", searchWithQuery(new URL(location.href), query))
 }
 
 /**

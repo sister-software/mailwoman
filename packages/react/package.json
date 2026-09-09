@@ -133,6 +133,16 @@
 			"node": "./lib/map/MapCompass.tsx",
 			"default": "./out/map/MapCompass.js"
 		},
+		"./map/MapSheet": {
+			"types": "./out/map/MapSheet.d.ts",
+			"node": "./lib/map/MapSheet.tsx",
+			"default": "./out/map/MapSheet.js"
+		},
+		"./map/MapProgressBar": {
+			"types": "./out/map/MapProgressBar.d.ts",
+			"node": "./lib/map/MapProgressBar.tsx",
+			"default": "./out/map/MapProgressBar.js"
+		},
 		"./map/MapFooter": {
 			"types": "./out/map/MapFooter.d.ts",
 			"node": "./lib/map/MapFooter.tsx",

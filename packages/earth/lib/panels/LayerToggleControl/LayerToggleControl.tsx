@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The layer control: a disclosure button in the map chrome's top column that opens per-group visibility checkboxes.
+ *   The layer control: the per-group visibility checkboxes inside the chrome's Layers sheet.
  *
  *   Useful while debugging cartography — the protomaps basemap stacks ~70 layers, many of which (POI labels,
- *   hillshade, building outlines) get in the way of seeing what's underneath. It is collapsed until asked for, because
- *   seventeen groups open by default covered a quarter of the map for every visitor who did not want them.
+ *   hillshade, building outlines) get in the way of seeing what's underneath. The sheet owns the disclosure, so this
+ *   renders the list and nothing that opens or closes it.
  *
  *   Groups come from the layer-ID prefix the protomaps theme uses (`roads_*`, `places_*`, `landuse_*`, `buildings_*`,
  *   `boundaries`, …), so the control adapts to whatever layers the current style carries. A layer no pattern matches
@@ -93,7 +93,6 @@ export interface LayerToggleControlProps {
 }
 
 export function LayerToggleControl({ map }: LayerToggleControlProps) {
-	const [open, setOpen] = useState(false)
 	const [groups, setGroups] = useState<LayerGroup[]>([])
 
 	useEffect(() => {
@@ -149,27 +148,19 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 	if (!map) return null
 
 	return (
-		<div className={`mw-map-layers ${styles.layerToggleCtrl}`}>
-			<button
-				type="button"
-				className={styles.layerToggleButton}
-				aria-expanded={open}
-				title="Show or hide groups of basemap layers"
-				onClick={() => setOpen((value) => !value)}
-			>
-				Layers
-			</button>
+		<div className={styles.layerTogglePanel}>
+			<p className="mw-map-sheet__hint">
+				Groups of the basemap's ~70 layers. Switching one off hides every layer in it; the resolver's own marker and
+				outline are not listed, because losing them would lose the answer.
+			</p>
 
-			{open ? (
-				<div className={styles.layerTogglePanel}>
-					{groups.map((group) => (
-						<label key={group.name} className={styles.layerToggleRow}>
-							<input type="checkbox" checked={group.visible} onChange={() => toggle(group)} />
-							<span className={styles.layerToggleLabel}>{`${group.name} (${group.layerIDs.length})`}</span>
-						</label>
-					))}
-				</div>
-			) : null}
+			{groups.map((group) => (
+				<label key={group.name} className={styles.layerToggleRow}>
+					<input type="checkbox" checked={group.visible} onChange={() => toggle(group)} />
+					<span className={styles.layerToggleLabel}>{group.name}</span>
+					<span className={styles.layerToggleCount}>{group.layerIDs.length}</span>
+				</label>
+			))}
 		</div>
 	)
 }

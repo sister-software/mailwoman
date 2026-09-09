@@ -5,11 +5,19 @@
  *
  *   `<MapCompass>` — the needle that appears when the map leaves north and fades out when it returns.
  *
- *   It stays mounted through the fade rather than unmounting on the bearing crossing zero, because a control that
- *   vanishes mid-gesture is the thing that reads as a glitch. `HIDE_BELOW_DEGREES` is the dead zone: a map settled
- *   by a snap-to-north lands a fraction off zero, and a compass that lingers over that fraction never goes away.
+ *   It is a compass ROSE, the way the reference map apps draw it: a ringed dial carrying a two-tone needle whose red
+ *   half points north and whose pale half points south. A single-color arrow cannot say which end is north, so a
+ *   reader has to already know the convention to read it; two tones say it outright. There is no `N` on the dial —
+ *   at this size the letter and the needle's north tip want the same few pixels, and the tip is the clearer of them.
  *
- *   Under `prefers-reduced-motion` it appears and disappears with no transition, and the needle still rotates —
+ *   The whole dial counter-rotates the bearing, so the needle keeps pointing at true north while the map turns under
+ *   it. Pressing it returns the map to north, which is why the control is a button rather than an ornament.
+ *
+ *   It stays mounted through the fade rather than unmounting on the bearing crossing zero, because a control that
+ *   vanishes mid-gesture is the thing that reads as a glitch. `HIDE_BELOW_DEGREES` is the dead zone: a map settled by
+ *   a snap-to-north lands a fraction off zero, and a compass that lingers over that fraction never goes away.
+ *
+ *   Under `prefers-reduced-motion` it appears and disappears with no transition, and the dial still rotates —
  *   rotation IS the information, not decoration.
  *
  *   NODE-SAFE: pure React, no maplibre. The host reads the bearing off its own map and passes it in.
@@ -55,10 +63,13 @@ export function MapCompass({ bearing, onResetNorth, label, className }: MapCompa
 			tabIndex={facingNorth ? -1 : 0}
 			onClick={onResetNorth}
 		>
-			<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-				<g style={{ transform: `rotate(${-bearing}deg)`, transformOrigin: "12px 12px" }}>
-					<path d="M12 3 L15.5 13 L12 11 L8.5 13 Z" fill="currentColor" />
-					<path d="M12 21 L8.5 11 L12 13 L15.5 11 Z" fill="currentColor" opacity="0.35" />
+			<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true" focusable="false">
+				<g style={{ transform: `rotate(${-bearing}deg)`, transformOrigin: "16px 16px" }}>
+					<circle cx="16" cy="16" r="12.5" className="mw-map-compass__dial" />
+
+					{/* North, then south. Two triangles meeting at the hub rather than one arrow through it. */}
+					<path d="M16 5.5 L20.5 16 L16 16 Z M16 5.5 L11.5 16 L16 16 Z" className="mw-map-compass__north" />
+					<path d="M16 26.5 L20.5 16 L16 16 Z M16 26.5 L11.5 16 L16 16 Z" className="mw-map-compass__south" />
 				</g>
 			</svg>
 		</button>

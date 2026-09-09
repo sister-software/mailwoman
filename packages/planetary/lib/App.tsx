@@ -16,6 +16,7 @@ import "./styles/app.css"
 import { MapChipRow } from "@mailwoman/react/map/MapChipRow"
 import { MapCompass } from "@mailwoman/react/map/MapCompass"
 import { MapControlButton, MapControlGroup, MapControlStack } from "@mailwoman/react/map/MapControlStack"
+import { MapSheet } from "@mailwoman/react/map/MapSheet"
 import { useMapBearing } from "@mailwoman/react/map/useMapBearing"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
@@ -123,6 +124,7 @@ export function App() {
 	)
 
 	const { bearing, resetNorth } = useMapBearing(map)
+	const closeAbout = useCallback(() => setAboutOpen(false), [setAboutOpen])
 
 	const selected = useMemo<SelectedFeature | null>(() => {
 		if (route?.kind !== "feature") return null
@@ -161,9 +163,9 @@ export function App() {
 					disabled={search.status !== "ready"}
 					onPick={pickByName}
 				/>
-
-				<MapCompass bearing={bearing} onResetNorth={resetNorth} />
 			</div>
+
+			{/* Every floating control in one column, so nothing lands on top of anything else. */}
 			<MapControlStack label="Map controls">
 				<MapControlGroup>
 					<MapControlButton
@@ -174,13 +176,16 @@ export function App() {
 						<span aria-hidden="true">i</span>
 					</MapControlButton>
 				</MapControlGroup>
+
+				<MapControlGroup className="mw-map-control-group--compass">
+					<MapCompass bearing={bearing} onResetNorth={resetNorth} />
+				</MapControlGroup>
 			</MapControlStack>
 
 			{aboutOpen ? (
-				<aside className="mw-map-sheet mw-map-sheet--side" aria-label={`About ${config.title}`}>
-					<h2 className="mw-map-sheet__title">About</h2>
+				<MapSheet title={`About ${config.title.replace("Mailwoman ", "")}`} onClose={closeAbout}>
 					<BodyAbout config={config} />
-				</aside>
+				</MapSheet>
 			) : null}
 
 			{selected ? <FeaturePanel feature={selected} latitudeType={config.latitudeType} onClose={close} /> : null}

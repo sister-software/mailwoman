@@ -54,22 +54,8 @@ export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 
 	return (
 		<div className="search-box">
-			<MapSearchBar
-				label="Search named features"
-				leading={<span aria-hidden="true">⌕</span>}
-				trailing={
-					text ? (
-						<button
-							type="button"
-							className="mw-map-searchbar__clear"
-							aria-label="Clear the search"
-							onClick={() => setText("")}
-						>
-							×
-						</button>
-					) : null
-				}
-			>
+			{/* `type="search"` brings its own clear button; a second cross beside it is two controls for one job. */}
+			<MapSearchBar label="Search named features" leading={<span aria-hidden="true">⌕</span>}>
 				<input
 					{...autocomplete.inputProps}
 					type="search"

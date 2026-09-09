@@ -58,6 +58,11 @@ export interface GeocoderProps {
 	 */
 	developer?: boolean
 	/**
+	 * Fired with the query each time one is submitted. The host writes it into its own URL — this package never touches
+	 * `location`, because which parameter carries a query is the app's decision.
+	 */
+	onSubmitQuery?: (query: string) => void
+	/**
 	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
 	 * Matches the `map.getZoom() >= 4` threshold. @default 4
 	 */
@@ -75,6 +80,7 @@ interface GeocoderInnerProps extends Required<
 > {
 	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
+	onSubmitQuery?: (query: string) => void
 }
 
 function GeocoderInner({
@@ -85,6 +91,7 @@ function GeocoderInner({
 	minBiasZoom,
 	applyResultCamera,
 	developer,
+	onSubmitQuery,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
 	// The chrome sits OUTSIDE `<MapCanvas>`, so it cannot take the handle from `useMap()`. A ref alone does not
@@ -183,6 +190,7 @@ function GeocoderInner({
 				presets={presets}
 				placeholder={defaultAddress}
 				map={map}
+				onSubmitQuery={onSubmitQuery}
 				onSelectVersion={onSelectVersion}
 				onForceWASMChange={onForceWASMChange}
 				developer={developer}
@@ -210,6 +218,7 @@ export function Geocoder({
 	minBiasZoom = 4,
 	applyResultCamera = true,
 	developer = false,
+	onSubmitQuery,
 }: GeocoderProps): ReactNode {
 	return (
 		<ClientOnly
@@ -228,6 +237,7 @@ export function Geocoder({
 					minBiasZoom={minBiasZoom}
 					applyResultCamera={applyResultCamera}
 					developer={developer}
+					onSubmitQuery={onSubmitQuery}
 				/>
 			)}
 		</ClientOnly>

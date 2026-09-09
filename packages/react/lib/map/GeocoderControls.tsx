@@ -13,13 +13,14 @@
  *   NODE-SAFE: pure React + the shared units, no maplibre.
  */
 
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useCallback, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
 
 import type { GeocoderPanels, GeocoderRuntime } from "#map/types"
 import type { UseCompareState } from "#map/useCompareState"
 import type { UseGeocode } from "#map/useGeocode"
 import { useMapBearing } from "#map/useMapBearing"
+import { useMapLabelPick } from "#map/useMapLabelPick"
 import type { UsePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
@@ -29,7 +30,9 @@ import { CompareToggle } from "./CompareToggle.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
+import { MapProgressBar } from "./MapProgressBar.tsx"
 import { MapSearchBar } from "./MapSearchBar.tsx"
+import { MapSheet } from "./MapSheet.tsx"
 import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 import { ResultPanel } from "./ResultPanel.tsx"
 import { VersionPicker } from "./VersionPicker.tsx"
@@ -69,6 +72,11 @@ export interface GeocoderControlsProps {
 	 */
 	map?: MapInstance | null
 	/**
+	 * Fired with the query whenever one is submitted, before the parse starts. The host writes it into the URL; this
+	 * package never touches `location`, because the address bar is the app's state, not a control's.
+	 */
+	onSubmitQuery?: (query: string) => void
+	/**
 	 * Select a model version (the composed geocoder also clears a now-colliding compare selection).
 	 */
 	onSelectVersion: (version: string) => void
@@ -86,6 +94,11 @@ export interface GeocoderControlsProps {
 }
 
 /**
+ * Which side sheet is open. At most one, because they share an edge and a phone gives each the whole panel.
+ */
+type SheetName = "about" | "layers" | "developer" | null
+
+/**
  * The chrome. Everything positioned here floats over the map; nothing occupies a column of the page.
  */
 export function GeocoderControls({
@@ -97,6 +110,7 @@ export function GeocoderControls({
 	presets,
 	placeholder,
 	map = null,
+	onSubmitQuery,
 	onSelectVersion,
 	onForceWASMChange,
 	developer = false,
@@ -106,44 +120,65 @@ export function GeocoderControls({
 	const loading = runtime.loading
 	const errorMessage = geocode.parseError ?? runtime.errorMessage ?? null
 
-	const [developerOpen, setDeveloperOpen] = useState(developer)
-	const [aboutOpen, setAboutOpen] = useState(false)
+	// One sheet at a time. Two open at once stack on the same edge, and on a phone each is the full panel.
+	const [openSheet, setOpenSheet] = useState<SheetName>(developer ? "developer" : null)
 	const { bearing, resetNorth } = useMapBearing(map)
 
+	const toggleSheet = (name: Exclude<SheetName, null>) => setOpenSheet((current) => (current === name ? null : name))
+	const closeSheet = useCallback(() => setOpenSheet(null), [])
+
+	// Every path that starts a query goes through here, so the URL is written in exactly one place — the event that
+	// caused it, rather than an effect watching the result after the fact.
+	const runQuery = useCallback(
+		(query: string) => {
+			onSubmitQuery?.(query)
+			void geocode.submit(query)
+		},
+		[onSubmitQuery, geocode]
+	)
+
+	// A label on the map is a search a visitor already typed by pointing at it.
+	const pickLabel = useCallback(
+		(name: string) => {
+			geocode.setText(name)
+			geocode.reset()
+			runQuery(name)
+		},
+		[geocode, runQuery]
+	)
+
+	useMapLabelPick(map, pickLabel)
+
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
-	const showSheet = Boolean(busy || result || errorMessage || (loading && !runtime.ready))
+	// The bundle load no longer opens the result sheet: it reports on the bar at the top of the viewport and in the
+	// footer, so an empty sheet does not sit over the map for the length of a 38 MB download.
+	const showSheet = Boolean(busy || result || errorMessage)
+
+	const bundleLoading = Boolean(loading && !runtime.ready)
+	const steps = loading?.stepLabels.length ?? 0
 
 	return (
 		<>
+			<MapProgressBar
+				active={bundleLoading}
+				fraction={steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null}
+				label="Loading the geocoder"
+			/>
+
 			<div className="mw-map-chrome mw-map-chrome--top">
 				<form
 					className="mw-map-chrome__search"
 					onSubmit={(event) => {
 						event.preventDefault()
-						geocode.submit()
+						runQuery(geocode.text)
 					}}
 				>
-					<MapSearchBar
-						label="Search addresses"
-						leading={<span aria-hidden="true">⌕</span>}
-						trailing={
-							busy ? (
-								<LoadingIndicator mode="spinner" size="small" />
-							) : geocode.text ? (
-								<button
-									type="button"
-									className="mw-map-searchbar__clear"
-									aria-label="Clear the address"
-									onClick={() => {
-										geocode.setText("")
-										geocode.reset()
-									}}
-								>
-									×
-								</button>
-							) : null
-						}
-					>
+					{/*
+					 * `type="search"` brings its own clear button, so the pill carries no trailing slot: a second cross
+					 * beside the native one is two controls for one job, and the spinner that used to live there changed
+					 * the field's height on every submit.
+					 */}
+					<MapSearchBar label="Search addresses" leading={<span aria-hidden="true">⌕</span>} busy={busy}>
 						<input
 							id="mw-pipeline-input"
 							type="search"
@@ -170,48 +205,67 @@ export function GeocoderControls({
 				<MapChipRow
 					chips={chips}
 					label="Example addresses"
+					activeValue={geocode.text}
 					disabled={!runtime.ready || busy}
 					onPick={(value) => {
 						geocode.setText(value)
 						geocode.reset()
-						geocode.submit()
+						runQuery(value)
 					}}
 				/>
 
 				{panels.bias}
-
-				{/* The layer control and the compass close the column, in the order the reference apps put them. */}
-				{panels.layers?.({ map })}
-
-				<MapCompass bearing={bearing} onResetNorth={resetNorth} />
 			</div>
 
+			{/*
+			 * Every floating control lives in this one column, so nothing can land on top of anything else: the layer
+			 * control joins the capsule rather than sitting in the left column, and the compass takes its own capsule
+			 * below because it comes and goes and would otherwise resize the one above it.
+			 */}
 			<MapControlStack label="Map controls">
 				<MapControlGroup>
-					<MapControlButton label="About this geocoder" active={aboutOpen} onPress={() => setAboutOpen((v) => !v)}>
+					<MapControlButton
+						label="About this geocoder"
+						active={openSheet === "about"}
+						onPress={() => toggleSheet("about")}
+					>
 						<span aria-hidden="true">i</span>
 					</MapControlButton>
+
+					{panels.layers ? (
+						<MapControlButton label="Map layers" active={openSheet === "layers"} onPress={() => toggleSheet("layers")}>
+							<span aria-hidden="true">≡</span>
+						</MapControlButton>
+					) : null}
+
 					<MapControlButton
 						label="Developer controls"
-						active={developerOpen}
-						onPress={() => setDeveloperOpen((v) => !v)}
+						active={openSheet === "developer"}
+						onPress={() => toggleSheet("developer")}
 					>
 						<span aria-hidden="true">⚙</span>
 					</MapControlButton>
 				</MapControlGroup>
+
+				<MapControlGroup className="mw-map-control-group--compass">
+					<MapCompass bearing={bearing} onResetNorth={resetNorth} />
+				</MapControlGroup>
 			</MapControlStack>
 
-			{aboutOpen ? (
-				<aside className="mw-map-sheet mw-map-sheet--side" aria-label="About this geocoder">
-					<h2 className="mw-map-sheet__title">About</h2>
+			{openSheet === "about" ? (
+				<MapSheet title="About" onClose={closeSheet}>
 					{panels.header}
-				</aside>
+				</MapSheet>
 			) : null}
 
-			{developerOpen ? (
-				<aside className="mw-map-sheet mw-map-sheet--side" aria-label="Developer controls">
-					<h2 className="mw-map-sheet__title">Developer</h2>
+			{openSheet === "layers" ? (
+				<MapSheet title="Layers" onClose={closeSheet}>
+					{panels.layers?.({ map })}
+				</MapSheet>
+			) : null}
 
+			{openSheet === "developer" ? (
+				<MapSheet title="Developer" onClose={closeSheet}>
 					{panels.releaseInfo ? (
 						<div className="mw-map-sheet__row">
 							<span className="mw-map-sheet__label">This release</span>
@@ -247,21 +301,14 @@ export function GeocoderControls({
 							disabled={busy}
 						/>
 					</div>
-				</aside>
+
+					{panels.developerExtras}
+				</MapSheet>
 			) : null}
 
 			{showSheet ? (
 				<section className="mw-map-sheet mw-map-sheet--bottom" aria-label="Result">
 					<div className="mw-map-sheet__handle" aria-hidden="true" />
-
-					{loading && !runtime.ready ? (
-						<LoadingIndicator
-							mode="staged"
-							steps={loading.stepLabels.length ? loading.stepLabels : undefined}
-							activeStep={loading.stepIndex}
-							label={loading.progress}
-						/>
-					) : null}
 
 					{errorMessage ? <p className="mw-error">{errorMessage}</p> : null}
 

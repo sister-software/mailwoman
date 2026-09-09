@@ -1,63 +1,24 @@
 /*
- * The layer control: a disclosure button that opens a checkbox list, sat in the chrome's top column. It is the same
- * glass the rest of the chrome is made of, composed from `@mailwoman/react/tokens.css` rather than from colors of its
- * own, so a theme change reaches it. The list caps at 50vh because seventeen groups over a ~70-layer basemap
- * otherwise runs past the bottom of the screen.
+ * The layer list inside the chrome's Layers sheet. The sheet supplies the glass, the title and the scroll, so this
+ * file styles rows and nothing around them.
  */
-.layerToggleCtrl {
-	background: var(--material-glass-background);
-	border: 1px solid var(--material-glass-border);
-	backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
-	-webkit-backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
-	box-shadow: var(--material-glass-shadow);
-	border-radius: var(--radius-panel);
-	color: var(--color-text-primary);
-	font-family: var(--font-family-text);
-	font-size: var(--font-size-caption);
-	width: max-content;
-	overflow: hidden;
-}
-
-.layerToggleButton {
-	display: block;
-	box-sizing: border-box;
-	width: 100%;
-	padding: 0.45rem 0.75rem;
-	font: inherit;
-	font-weight: var(--font-weight-medium);
-	color: inherit;
-	background: transparent;
-	border: 0;
-	cursor: pointer;
-	text-align: left;
-	white-space: nowrap;
-}
-
-.layerToggleButton:hover,
-.layerToggleButton[aria-expanded="true"] {
-	background: var(--control-background);
-}
-
-.layerToggleButton:focus-visible {
-	outline: 2px solid var(--color-selection);
-	outline-offset: -2px;
-}
-
 .layerTogglePanel {
-	max-height: 50vh;
-	overflow: auto;
-	overscroll-behavior: contain;
-	padding: 0.35rem 0.6rem 0.5rem;
-	border-top: 1px solid var(--color-separator);
-	min-width: 12em;
-	max-width: 16em;
+	display: grid;
+	gap: 0.1rem;
+	font-size: var(--font-size-footnote);
+}
+
+/* The panel's own lead paragraph is not a row, so it carries the space before the first one. */
+.layerTogglePanel > p {
+	margin: 0 0 0.75rem;
 }
 
 .layerToggleRow {
 	display: flex;
 	align-items: center;
-	gap: 0.4rem;
-	padding: 0.12rem 0;
+	gap: 0.5rem;
+	padding: 0.3rem 0.35rem;
+	border-radius: var(--radius-control);
 	cursor: pointer;
 	user-select: none;
 	color: var(--color-text-secondary);
@@ -65,6 +26,12 @@
 
 .layerToggleRow:hover {
 	color: var(--color-text-primary);
+	background: var(--control-background);
+}
+
+.layerToggleRow:focus-within {
+	outline: 2px solid var(--color-selection);
+	outline-offset: -2px;
 }
 
 .layerToggleRow input[type="checkbox"] {
@@ -75,4 +42,14 @@
 
 .layerToggleLabel {
 	flex: 1;
+	min-width: 0;
+}
+
+/* How many layers the group carries, set apart from its name so the row reads as a name and a count, not one phrase. */
+.layerToggleCount {
+	flex: 0 0 auto;
+	font-family: var(--font-family-number);
+	font-size: var(--font-size-caption);
+	color: var(--color-text-tertiary);
+	font-variant-numeric: tabular-nums;
 }

@@ -39,6 +39,24 @@ export interface GeocoderPanelsOptions {
 	debugDefault: boolean
 }
 
+/**
+ * What the loader is fetching, as one line for the footer: the named step, then the loader's own progress text.
+ *
+ * Each part is tested for on its own rather than filtered out of a list — an absent step and an absent progress line
+ * are different readings, and a filter would report the same string for both.
+ */
+function describeLoad(loading: NonNullable<GeocoderRuntimeHandle["runtime"]["loading"]>): string {
+	const step = loading.stepLabels[loading.stepIndex]
+
+	if (step && loading.progress) return `${step} · ${loading.progress}`
+
+	if (step) return step
+
+	if (loading.progress) return loading.progress
+
+	return "Loading…"
+}
+
 export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOptions): GeocoderPanels {
 	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = handle
 
@@ -48,6 +66,11 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 
 	const selectedVersion = runtime.selectedVersion ?? null
 	const selectedRelease: ReleaseInfo | undefined = releases.find((r) => r.version === selectedVersion)
+
+	// The named step first, then the loader's own line — "Gazetteer · 12.4 MB". Null once the runtime is ready, which
+	// is what removes the status from the footer rather than leaving a stale label there.
+	const loading = runtime.loading
+	const loadStatus = runtime.ready || !loading ? null : describeLoad(loading)
 
 	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
@@ -62,11 +85,12 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			) : undefined,
 			bias: <GeoBiasRow active={geoBias.active} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
-			aboveResult: ({ result }) => (
+			// The two display toggles read on the MODEL, not on an address, so they live behind the Developer capsule
+			// rather than above every result — at the top of the result sheet they were the first thing a visitor met,
+			// and on a phone they pushed the answer below the fold.
+			developerExtras: (
 				<>
-					{result && calibrator ? (
-						<CalibrationToggle checked={calibrateConfidence} onChange={setCalibrateConfidence} />
-					) : null}
+					{calibrator ? <CalibrationToggle checked={calibrateConfidence} onChange={setCalibrateConfidence} /> : null}
 					{supportsTrace ? <DevModeToggle checked={devMode} onChange={setDevMode} /> : null}
 				</>
 			),
@@ -106,6 +130,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			footer: (
 				<MapFooter
 					identity={<strong>Mailwoman Earth</strong>}
+					// What is loading, beside the identity. The bar across the top of the viewport says how far along it
+					// is; this says which artifact it is fetching, which is the part a number cannot carry.
+					status={loadStatus}
 					attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]}
 				/>
 			),
@@ -131,6 +158,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			devMode,
 			supportsTrace,
 			traceParse,
+			loadStatus,
 		]
 	)
 	/* oxlint-enable react/no-unstable-nested-components */

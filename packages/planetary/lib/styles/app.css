@@ -120,18 +120,18 @@ main[data-route] .maplibregl-canvas {
 }
 
 /*
- * The feature panel is a sheet: the glass surface the shared chrome defines, sat under the control capsule on a wide
+ * The feature panel is a sheet: the glass surface the shared chrome defines, sat BESIDE the control column on a wide
  * screen and against the bottom edge on a phone, where a side panel would take the map's whole height.
  *
- * The capsule holds one control, so it starts at 1rem and ends at 3.5rem; the panel opens at 4.5rem. A panel that
- * overlapped it would cover the About button while its own sheet was open.
+ * Beside, not below: opening below made the panel's top depend on how many controls the capsule held, and the column
+ * grows. Clearing it sideways costs 2.5rem of control plus its inset and a gap, whatever it holds.
  */
 .feature-panel {
 	position: absolute;
-	top: calc(4.5rem + var(--safe-area-top));
-	right: calc(1rem + var(--safe-area-right));
-	width: min(24rem, calc(100vw - 2rem));
-	max-height: calc(100% - 8rem);
+	top: calc(1rem + var(--safe-area-top));
+	right: calc(4rem + var(--safe-area-right));
+	width: min(24rem, calc(100vw - 6rem));
+	max-height: calc(100% - 2rem - var(--map-footer-height));
 	overflow: auto;
 	overscroll-behavior: contain;
 	box-sizing: border-box;
@@ -180,13 +180,29 @@ main[data-route] .maplibregl-canvas {
 }
 
 .feature-panel__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
 	font: inherit;
 	font-size: 1.25rem;
 	line-height: 1;
-	color: inherit;
+	color: var(--color-text-secondary);
 	background: none;
 	border: 0;
+	border-radius: var(--radius-pill);
 	cursor: pointer;
+}
+
+.feature-panel__close:hover {
+	color: var(--color-text-primary);
+	background: var(--control-background);
+}
+
+.feature-panel__close:focus-visible {
+	outline: 2px solid var(--color-selection);
+	outline-offset: 1px;
 }
 
 .feature-panel dl {
@@ -196,8 +212,9 @@ main[data-route] .maplibregl-canvas {
 	margin: 1rem 0;
 }
 
+/* A colour, not an opacity: a faded term also fades the glass behind it toward the map, which is where contrast goes. */
 .feature-panel dt {
-	opacity: 0.7;
+	color: var(--color-text-secondary);
 }
 
 .feature-panel dd {
@@ -207,16 +224,8 @@ main[data-route] .maplibregl-canvas {
 .feature-panel__code,
 .feature-panel__convention,
 .feature-panel__source {
-	opacity: 0.6;
-	font-size: 0.85em;
-}
-
-/*
- * The shared rule opens a side sheet under a two-control capsule; this app's capsule holds one, so its About sheet
- * lines up with the feature panel beside it instead of floating 3rem below the button that opened it.
- */
-main[data-route] .mw-map-sheet--side {
-	top: calc(4.5rem + var(--safe-area-top));
+	color: var(--color-text-tertiary);
+	font-size: var(--font-size-caption);
 }
 
 /* The footer strip owns its own layout; this rule only pins it to the map's lower edge. */
