@@ -8,6 +8,7 @@
  */
 
 import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "@mailwoman/astrogeology/schema/manifest"
+import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { useEffect, useState } from "react"
 
 import type { PlanetaryMapConfig } from "#bodies/config"
@@ -78,10 +79,8 @@ export function Attribution({ config }: AttributionProps) {
 			: ["USGS Astrogeology / IAU WGPSN — nomenclature", `${config.terrainCredit} — terrain`, "MapLibre"]
 
 	return (
-		<aside className="attribution" aria-label="Attribution" data-manifest={state.status}>
-			{lines.map((line) => (
-				<span key={line}>{line}</span>
-			))}
-		</aside>
+		<div className="attribution" data-manifest={state.status}>
+			<MapFooter identity={<strong>{config.title.replace("Mailwoman ", "")}</strong>} attribution={lines} />
+		</div>
 	)
 }

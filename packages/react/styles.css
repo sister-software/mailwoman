@@ -1298,6 +1298,129 @@
 
 	/* #endregion */
 
+	/* #region Chrome layout — where the floating pieces sit over a map */
+
+	/*
+	 * The search pill and the chips ride at the top, centred and width-capped rather than stretched: a search field
+	 * the width of a desktop screen reads as a page header, not as a control over a map. The column clears the
+	 * device's top and side safe-area insets because both apps install as PWAs.
+	 */
+	.mw-map-chrome--top {
+		position: absolute;
+		top: calc(1rem + var(--safe-area-top));
+		left: calc(1rem + var(--safe-area-left));
+		right: calc(1rem + var(--safe-area-right));
+		z-index: 3;
+		display: grid;
+		gap: 0.5rem;
+		justify-items: stretch;
+		max-width: 34rem;
+		pointer-events: none;
+	}
+
+	/* The container is click-through so the map stays draggable between the controls; each control takes its own. */
+	.mw-map-chrome--top > * {
+		pointer-events: auto;
+	}
+
+	.mw-map-chrome__search {
+		margin: 0;
+	}
+
+	.mw-map-searchbar__clear {
+		border: 0;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+		font: inherit;
+		line-height: 1;
+		padding: 0 0.15rem;
+	}
+
+	/*
+	 * A sheet: the glass surface a result or a panel arrives on. The bottom one rises over the map's lower edge with
+	 * a drag handle, the side one sits under the control column it belongs to.
+	 */
+	.mw-map-sheet {
+		position: absolute;
+		z-index: 3;
+		background: var(--material-glass-background);
+		border: 1px solid var(--material-glass-border);
+		backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+		-webkit-backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+		box-shadow: var(--material-glass-shadow);
+		color: var(--color-text-primary);
+		overflow: auto;
+		overscroll-behavior: contain;
+	}
+
+	.mw-map-sheet--bottom {
+		left: calc(1rem + var(--safe-area-left));
+		right: calc(1rem + var(--safe-area-right));
+		bottom: calc(2.5rem + var(--safe-area-bottom));
+		max-height: 52vh;
+		max-width: 34rem;
+		padding: 0.5rem 1rem 1rem;
+		border-radius: var(--radius-sheet);
+	}
+
+	.mw-map-sheet--side {
+		top: calc(4.5rem + var(--safe-area-top));
+		right: calc(1rem + var(--safe-area-right));
+		width: min(24rem, calc(100vw - 2rem));
+		max-height: 60vh;
+		padding: 1rem;
+		border-radius: var(--radius-panel);
+	}
+
+	/* The grab affordance the reference sheets carry. Decorative: the sheet scrolls, it does not drag. */
+	.mw-map-sheet__handle {
+		width: 2.25rem;
+		height: 0.25rem;
+		margin: 0 auto 0.6rem;
+		border-radius: var(--radius-pill);
+		background: var(--color-separator);
+	}
+
+	.mw-map-sheet__actions {
+		margin-top: 0.75rem;
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	/*
+	 * On a phone the chrome spans the width and the sheet becomes a true bottom sheet against the edge, which is what
+	 * leaves the map its full height.
+	 */
+	@media (max-width: 600px) {
+		.mw-map-chrome--top {
+			max-width: none;
+		}
+
+		.mw-map-sheet--bottom {
+			left: 0;
+			right: 0;
+			bottom: 0;
+			max-width: none;
+			max-height: 60vh;
+			border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+			border-inline: 0;
+			border-bottom: 0;
+			padding-bottom: calc(1rem + var(--safe-area-bottom));
+		}
+
+		.mw-map-sheet--side {
+			left: 0;
+			right: 0;
+			top: auto;
+			bottom: 0;
+			width: auto;
+			border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+		}
+	}
+
+	/* #endregion */
+
 	/* #region Map chrome */
 
 	/*
@@ -1348,11 +1471,14 @@
 		outline-offset: 2px;
 	}
 
+	/* The glyph face draws its control marks small, so a leading or trailing mark is sized up to the field's own weight. */
 	.mw-map-searchbar__slot {
 		display: inline-flex;
 		align-items: center;
 		color: var(--color-text-secondary);
 		font-family: var(--font-family-glyph);
+		font-size: 1.15rem;
+		line-height: 1;
 	}
 
 	/*
@@ -1366,6 +1492,9 @@
 		scrollbar-width: none;
 		padding: 0.15rem;
 		scroll-padding-inline: 0.15rem;
+		/* With the track hidden, a chip clipped at the edge reads as broken; the fade is what says the row scrolls. */
+		mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
+		-webkit-mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
 	}
 
 	.mw-map-chiprow::-webkit-scrollbar {

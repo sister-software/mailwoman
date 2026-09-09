@@ -38,8 +38,7 @@ export function MapFooter({ identity, attribution, className }: MapFooterProps):
 			{attribution?.length ? (
 				<div className="mw-map-footer__attribution">
 					{attribution.map((entry, index) => (
-						// The entries are a fixed, ordered credit list rather than a keyed collection.
-						// eslint-disable-next-line react/no-array-index-key
+						// The entries are a fixed, ordered credit list that never reorders, so position is the identity.
 						<span key={index} className="mw-map-footer__credit">
 							{entry}
 						</span>

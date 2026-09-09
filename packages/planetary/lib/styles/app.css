@@ -88,45 +88,63 @@ main[data-route] .maplibregl-canvas {
 	white-space: nowrap;
 }
 
+/*
+ * The search pill rides at the top in the same column the Earth geocoder uses, so the three apps read as one family.
+ * The pill itself is `@mailwoman/react`'s `.mw-map-searchbar`; this rule places the column and nothing more.
+ */
 .search-slot {
 	position: absolute;
-	top: 1rem;
-	left: 1rem;
-	width: min(24rem, calc(100% - 2rem));
-	z-index: 2;
-}
-
-.search-box input[type="search"] {
-	width: 100%;
-	box-sizing: border-box;
-	padding: 0.6rem 0.8rem;
-	font: inherit;
-	color: inherit;
-	background: rgb(0 0 0 / 0.65);
-	border: 1px solid rgb(255 255 255 / 0.2);
-	border-radius: 0.5rem;
+	top: calc(1rem + var(--safe-area-top));
+	left: calc(1rem + var(--safe-area-left));
+	right: calc(1rem + var(--safe-area-right));
+	max-width: 34rem;
+	z-index: 3;
 }
 
 .search-box .mw-demo-suggest {
 	margin-top: 0.4rem;
-	background: rgb(0 0 0 / 0.75);
-	border-radius: 0.5rem;
-	padding: 0.4rem;
 }
 
+/*
+ * The feature panel is a sheet: the glass surface the shared chrome defines, sat under the top column on a wide
+ * screen and against the bottom edge on a phone, where a side panel would take the map's whole height.
+ */
 .feature-panel {
 	position: absolute;
-	top: 1rem;
-	right: 1rem;
-	width: min(22rem, calc(100% - 2rem));
-	max-height: calc(100% - 2rem);
+	top: calc(1rem + var(--safe-area-top));
+	right: calc(1rem + var(--safe-area-right));
+	width: min(24rem, calc(100vw - 2rem));
+	max-height: calc(100% - 5rem);
 	overflow: auto;
+	overscroll-behavior: contain;
 	box-sizing: border-box;
 	padding: 1rem 1.2rem;
-	background: rgb(0 0 0 / 0.75);
-	border: 1px solid rgb(255 255 255 / 0.15);
-	border-radius: 0.75rem;
-	z-index: 2;
+	background: var(--material-glass-background);
+	border: 1px solid var(--material-glass-border);
+	backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+	-webkit-backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
+	box-shadow: var(--material-glass-shadow);
+	border-radius: var(--radius-panel);
+	z-index: 3;
+}
+
+@media (max-width: 600px) {
+	.search-slot {
+		max-width: none;
+	}
+
+	.feature-panel {
+		top: auto;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		width: auto;
+		max-height: 60vh;
+		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+		border-inline: 0;
+		border-bottom: 0;
+		padding-bottom: calc(1rem + var(--safe-area-bottom));
+	}
 }
 
 .feature-panel__header {
@@ -173,16 +191,13 @@ main[data-route] .maplibregl-canvas {
 	font-size: 0.85em;
 }
 
+/* The footer strip owns its own layout; this rule only pins it to the map's lower edge. */
 .attribution {
 	position: absolute;
-	bottom: 0.5rem;
-	left: 0.5rem;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0 0.75rem;
-	font-size: 0.7rem;
-	opacity: 0.75;
-	z-index: 2;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 3;
 }
 
 .not-found {

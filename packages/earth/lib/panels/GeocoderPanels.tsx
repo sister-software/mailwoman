@@ -12,6 +12,7 @@
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { About } from "@mailwoman/react/common/About"
 import type { GeocoderPanels } from "@mailwoman/react/map"
+import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { ResultPanel } from "@mailwoman/react/map/ResultPanel"
 import { FailureDiagnostic } from "@mailwoman/react/pipeline/FailureDiagnostic"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
@@ -99,6 +100,12 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
 			mapControls: <MapControls />,
+			footer: (
+				<MapFooter
+					identity={<strong>Mailwoman Earth</strong>}
+					attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]}
+				/>
+			),
 			compare: (ctx) => (
 				<Compare
 					primary={ctx.result}

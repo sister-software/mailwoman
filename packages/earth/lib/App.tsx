@@ -13,8 +13,9 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/fonts.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
-import { Geocoder } from "@mailwoman/react/map"
+import { Geocoder, type GeocoderPanels } from "@mailwoman/react/map"
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
+import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
@@ -82,10 +83,22 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 	)
 }
 
+/**
+ * The app's identity and source credits. They belong to the page rather than to the runtime, so the canned runtime the
+ * smoke and the stories mount shows the same footer the real one does.
+ */
+const IDENTITY_PANELS: GeocoderPanels = {
+	footer: (
+		<MapFooter identity={<strong>Mailwoman Earth</strong>} attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]} />
+	),
+}
+
 function FakeGeocoder({ query }: { query: string | null }) {
 	const runtime = useMemo(() => makeFakeGeocoderRuntime(), [])
 
-	return <Geocoder runtime={runtime} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+	return (
+		<Geocoder runtime={runtime} panels={IDENTITY_PANELS} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+	)
 }
 
 export function App() {

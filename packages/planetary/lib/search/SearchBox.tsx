@@ -7,6 +7,7 @@
  *   keyboard contract (arrows, Enter, Escape) and the ARIA wiring are the Earth geocoder's, not a second copy.
  */
 
+import { MapSearchBar } from "@mailwoman/react/map/MapSearchBar"
 import { PlaceAutocomplete } from "@mailwoman/react/map/PlaceAutocomplete"
 import type { Suggestion } from "@mailwoman/react/map/types"
 import { usePlaceAutocomplete } from "@mailwoman/react/map/usePlaceAutocomplete"
@@ -53,35 +54,53 @@ export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 
 	return (
 		<div className="search-box">
-			<input
-				{...autocomplete.inputProps}
-				type="search"
-				value={text}
-				placeholder={placeholder}
-				aria-label="Search named features"
-				disabled={!search}
-				onChange={(event) => setText(event.target.value)}
-				onKeyDown={(event) => {
-					if (event.key === "Enter" && autocomplete.activeIndex < 0 && autocomplete.suggestions[0]) {
-						event.preventDefault()
-						pick(autocomplete.suggestions[0].value)
+			<MapSearchBar
+				label="Search named features"
+				leading={<span aria-hidden="true">⌕</span>}
+				trailing={
+					text ? (
+						<button
+							type="button"
+							className="mw-map-searchbar__clear"
+							aria-label="Clear the search"
+							onClick={() => setText("")}
+						>
+							×
+						</button>
+					) : null
+				}
+			>
+				<input
+					{...autocomplete.inputProps}
+					type="search"
+					value={text}
+					placeholder={placeholder}
+					aria-label="Search named features"
+					disabled={!search}
+					onChange={(event) => setText(event.target.value)}
+					onKeyDown={(event) => {
+						if (event.key === "Enter" && autocomplete.activeIndex < 0 && autocomplete.suggestions[0]) {
+							event.preventDefault()
+							pick(autocomplete.suggestions[0].value)
 
-						return
-					}
-
-					autocomplete.onInputKeyDown(event)
-
-					if (event.key === "Enter" && autocomplete.activeIndex >= 0) {
-						const active = autocomplete.suggestions[autocomplete.activeIndex]
-
-						const hit = active ? lastHits.current.get(active.value) : undefined
-
-						if (hit) {
-							onSelect(hit)
+							return
 						}
-					}
-				}}
-			/>
+
+						autocomplete.onInputKeyDown(event)
+
+						if (event.key === "Enter" && autocomplete.activeIndex >= 0) {
+							const active = autocomplete.suggestions[autocomplete.activeIndex]
+
+							const hit = active ? lastHits.current.get(active.value) : undefined
+
+							if (hit) {
+								onSelect(hit)
+							}
+						}
+					}}
+				/>
+			</MapSearchBar>
+
 			<PlaceAutocomplete
 				suggestions={autocomplete.suggestions}
 				activeIndex={autocomplete.activeIndex}

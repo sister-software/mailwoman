@@ -239,7 +239,9 @@ theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(stateInfoBackground, "oklch(78% 0.12 230 / 0.18)")
 	themeVariable(accentBackground, "oklch(65% 0.29 340 / 0.18)")
 
-	themeVariable(glassBackground, "oklch(18% 0.026 264 / 0.72)")
+	// Denser than the light theme's 0.72: a dark pane over a bright map lets a white label under it read through the
+	// blur, and the pane a search field sits on may never compete with the text typed into it.
+	themeVariable(glassBackground, "oklch(18% 0.026 264 / 0.86)")
 	themeVariable(glassBorder, "oklch(100% 0 264 / 0.14)")
 	themeVariable(glassShadow, "0 4px 28px oklch(0% 0 264 / 0.45)")
 	themeVariable(glassHighlight, "oklch(100% 0 264 / 0.12)")
