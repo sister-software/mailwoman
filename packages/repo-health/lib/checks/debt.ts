@@ -367,6 +367,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
+	[
+		"packages/mailwoman/lib/eval-harness/gauntlet/cases/",
+		"board rows are register data and carry real building names verbatim: Kew Gate, Singapore",
+	],
 	["evals/", "the score ledger's rows are dated notes on committed board cases"],
 	["packages/corpus/data/", "the sub-venue lexicon: an airport gate is a real sub-venue token"],
 	["packages/corpus/lib/recipes/sub-venue", "sub-venue recipes name the physical gate"],
