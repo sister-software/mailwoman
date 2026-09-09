@@ -37,6 +37,10 @@ export const poBoxRecipe: CorpusRecipe = {
 		const random = makeLcg(opts.seed)
 		const pmbRatio = opts.pmbRatio ?? 0.15
 		const militaryRatio = opts.militaryRatio ?? 0
+		// `--source-name` so a slice built for one class carries its own source label and its own dose. A
+		// military-only slice (`--variants 0 --military-ratio 1`) is otherwise indistinguishable from the
+		// leader-template rows in the mixture, and the two are dosed for different reasons (#517).
+		const source = opts.sourceName ?? "synth-po-box"
 		let read = 0
 		let emitted = 0
 		let skipped = 0
@@ -64,8 +68,8 @@ export const poBoxRecipe: CorpusRecipe = {
 						components: synth.components,
 						country: tuple.country,
 						locale: synth.locale,
-						source: "synth-po-box",
-						source_id: sliceSourceID("synth-po-box", {
+						source,
+						source_id: sliceSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,
 							postcode: tuple.postcode,
@@ -97,8 +101,8 @@ export const poBoxRecipe: CorpusRecipe = {
 						components: mil.components,
 						country: "US",
 						locale: mil.locale,
-						source: "synth-po-box",
-						source_id: sliceSourceID("synth-po-box", {
+						source,
+						source_id: sliceSourceID(source, {
 							po_box: mil.components.po_box,
 							locality: mil.components.locality,
 							region: mil.components.region,

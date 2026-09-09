@@ -80,6 +80,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 	mode: "tuples",
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
+		const structuredSource = opts.sourceName ?? "synth-trailing-region-structured"
+		const bareSource = opts.sourceName ? `${opts.sourceName}-bare` : "synth-trailing-region"
 		let read = 0
 		let emitted = 0
 		let skipped = 0
@@ -152,7 +154,10 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			// A DISTINCT source for the structured rows. The sampler buckets by `source` and weights each bucket,
 			// so emitting these under `synth-trailing-region` would pool them with the 88,904 bare rows and make
 			// the new surface unweightable — the dose would silently be whatever the bare slice's weight bought.
-			const sourceLabel = postcode ? "synth-trailing-region-structured" : "synth-trailing-region"
+			// `--source-name` overrides both, and for the same reason one rung up: a rebuild of one country's
+			// surfaces (#1673's corrected Spanish names) pooled under the shipped label would be dosed at
+			// whatever the rows it was built to outweigh are already drawing.
+			const sourceLabel = postcode ? structuredSource : bareSource
 			const source_id = sliceSourceID(sourceLabel, { ...components, v: String(read) })
 
 			const canonical = {

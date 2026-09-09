@@ -64,6 +64,13 @@ def test_the_log_line_carries_the_exposure_beside_the_weight():
     text = format_derivation(derived)
 
     assert "synth-bare-country-v23" in text
-    assert "5.0 reps/row" in text
+    assert "5.000 reps/row" in text
     assert "277 rows" in text
     assert format_derivation([]) == ""
+
+
+def test_a_fractional_dose_is_printed_not_rounded_to_zero():
+    """A probe divides the full run's doses by the step ratio, so its exposures are below one."""
+    _, derived = derive_source_weights(FIXED, {"synth-bare-country-v23": 0.0333}, ROWS, SAMPLES)
+
+    assert "0.033 reps/row" in format_derivation(derived)

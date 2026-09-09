@@ -119,6 +119,27 @@ def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, fl
     return {pc: (row[0], float(row[1]), float(row[2])) for pc, row in raw.items()}
 
 
+#: The manifest key that listed a corpus's parquet files before the 2026-09-01 vocabulary rename. Every corpus
+#: built before that date carries it, on this host and on the Modal volume, and a built corpus is an immutable
+#: artifact — so the reader accepts both spellings and the writer emits only the current one.
+_LEGACY_SLICES_KEY = "sh" + "ards"
+
+
+def manifest_slices(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """The manifest's slice list, under either the current key or the pre-rename one.
+
+    MEASURED 2026-09-09, and the reason this function exists: the rename changed this reader's key without
+    migrating the manifests. `v0.28.0-reviewed-postcode-tail` declares 706 train slices under the old key, and
+    the loader resolved ONE — the overlay's own file — because the new key read empty and the glob fallback
+    saw only the overlay directory. A run would have trained on 22 rows and reported success; the `val` split
+    raised `FileNotFoundError` instead, which is the only reason it surfaced at all.
+    """
+    current = data.get("slices")
+    if current:
+        return list(current)
+    return list(data.get(_LEGACY_SLICES_KEY) or [])
+
+
 def _slice_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Resolve train/val/test slice paths via MANIFEST.json (adapter-addition corpora)
     or legacy glob fallback (monolithic corpora).
@@ -149,7 +170,7 @@ def _slice_paths(corpus_dir: Path, split: str) -> list[Path]:
         rerooted = 0
         missing: list[str] = []
         declared = 0
-        for s in data.get("slices", []):
+        for s in manifest_slices(data):
             if s.get("split") != split:
                 continue
             declared += 1

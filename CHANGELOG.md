@@ -18,6 +18,34 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Fixed — an overlay corpus resolved ONE slice of 706, silently
+
+The 2026-09-01 vocabulary rename changed the manifest key the trainer's loader reads without migrating the
+manifests, which are immutable build artifacts. Measured on 2026-09-09: `v0.28.0-reviewed-postcode-tail`
+declares 706 train slices, and the loader resolved one — the overlay's own file — because the new key read
+empty and the glob fallback saw only the overlay directory. A run would have trained on 22 rows and reported
+success; the `val` split raised `FileNotFoundError`, which is the only reason it surfaced. The loader and the
+overlay assembler now accept either spelling and write only the current one, so the strict partial-resolution
+guard sees the declared slices and reports honestly. The assembler also takes a SET of parquets: eight chained
+single-slice overlays would leave seven dead directories and an eight-deep base chain for one version.
+
+`mailwoman corpus slice --variants 0` was silently one, because the command read `Number(options.variants) || 1`
+and zero is falsy. It doubled a slice built to emit only its self-contained rows; the count is now parsed and a
+non-integer refuses. The `po-box` and `trailing-region` recipes honour `--source-name`, so a slice built to
+outweigh rows already in the mixture can carry its own dose instead of pooling with them.
+
+### Added — the v5.4.0 target-family corpus and config, each family named by its dose
+
+`v0.29.0-target-families` is a pure overlay add of eight parquets, 390,903 rows, onto v0.28.0's 711 slices.
+It carries the Singapore registers (142,083 rows, F6 and the SG board), the Pakistan and Bangladesh register
+lines (84,632) and the OpenStreetMap PK/BD/VN base formats (153,965) for F8, the corrected Spanish
+trailing-region surfaces (4,944) for F2, and the military po_box line (5,279) for F9. The config names each
+family in `source_doses` — reps per row, with the weight derived at launch — rather than guessing a weight:
+the six sources take 5.43% of the run, and the 2k probe holds the same 5.43% by dividing its doses by the step
+ratio. The launch log prints each derivation to three decimals, since a probe's exposures are legitimately
+below one and one decimal printed every one of them as zero. The OpenStreetMap sources are ODbL, so a
+proprietary build drops them from the mixture; the config header says so.
+
 ### Added — board rows for the four target families that had none, graded before they were written
 
 `Camden, London`, `Barcelona 6001, Venezuela`, `St Mary's, Oxford` and `GPO Box 1234, Sydney NSW 2001` each named a

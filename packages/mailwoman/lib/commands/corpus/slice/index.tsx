@@ -106,6 +106,22 @@ interface Options {
 
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 
+/**
+ * Variants per tuple: a non-negative integer, defaulting to one. Refuses a value that is not one rather than falling
+ * back, so a typo cannot silently change a slice's size.
+ */
+function variantCount(raw: string | undefined): number {
+	if (raw == null) return 1
+
+	const parsed = Number(raw)
+
+	if (!Number.isInteger(parsed) || parsed < 0) {
+		throw new CommandError(`--variants must be a non-negative integer (got ${JSON.stringify(raw)})`)
+	}
+
+	return parsed
+}
+
 const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { getSliceRecipe, listSliceRecipes } = await import("@mailwoman/corpus")
@@ -138,7 +154,9 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 		const opts: SliceRecipeOpts = {
 			output: options.output,
 			seed,
-			variants: Number(options.variants) || 1,
+			// `?? 1` and not `|| 1`: `--variants 0` is a real request (the po-box recipe emits its military rows with
+			// the tuple-driven rows switched off) and `Number("0") || 1` silently answered 1, doubling the slice.
+			variants: variantCount(options.variants),
 			input: options.input,
 			count: num(options.count),
 			golden: options.golden,

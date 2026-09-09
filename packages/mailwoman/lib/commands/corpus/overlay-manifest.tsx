@@ -6,7 +6,9 @@
  *   Generate a corpus overlay manifest.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { CommandError } from "@mailwoman/core/scripting/command"
+
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -23,8 +25,8 @@ export const spec = {
 			description: "Modal volume root the manifest paths are relative to",
 		},
 		"corpus-version": { type: "string", required: true, description: "New corpus version" },
-		"slice-parquet": { type: "string", required: true, description: "The ONE slice parquet to add" },
-		source: { type: "string", required: true, description: "Slice source label" },
+		"slice-parquet": { type: "string", required: true, description: "Slice parquets to add, comma-separated" },
+		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
 		note: { type: "string", required: true, description: "Manifest note" },
 	},
 } as const satisfies CommandSpec
@@ -43,13 +45,21 @@ const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
 
+		const parquets = splitList(options.sliceParquet)
+		const sources = splitList(options.source)
+
+		if (parquets.length !== sources.length) {
+			throw new CommandError(
+				`--slice-parquet names ${parquets.length} parquets and --source ${sources.length} labels; one label per parquet`
+			)
+		}
+
 		await assembleOverlayManifest({
 			base: options.base,
 			newDir: options.newDir,
 			modalRoot: options.modalRoot,
 			version: options.corpusVersion,
-			sliceParquet: options.sliceParquet,
-			source: options.source,
+			slices: parquets.map((parquet, index) => ({ parquet, source: sources[index]! })),
 			note: options.note,
 		})
 

@@ -119,7 +119,10 @@ def format_derivation(derived: list[DerivedDose]) -> str:
         return ""
     lines = ["source_doses → source_weights (#1677):"]
     for d in derived:
+        # Three decimals, not one: a probe holds the full run's mixture SHARE by dividing its doses by the
+        # step ratio, so its exposures are legitimately fractional and `%.1f` printed every one of them as
+        # `0.0` — the launch log hiding the exact number this whole mechanism exists to put in front of someone.
         lines.append(
-            f"  {d.source:<32} {d.target_reps_per_row:>7.1f} reps/row × {d.rows:>9,} rows → weight {d.weight:.4f}"
+            f"  {d.source:<32} {d.target_reps_per_row:>9.3f} reps/row × {d.rows:>9,} rows → weight {d.weight:.4f}"
         )
     return "\n".join(lines)
