@@ -15,7 +15,7 @@
 
 export { classifyCodepoint, classifyToken, foldInputClass } from "#character-class"
 export { computeQueryShape } from "#compute"
-export { detectKnownFormats } from "#known-formats"
+export { detectKnownFormats, isPostcodeFormat } from "#known-formats"
 export { detectRegionAbbreviations, isRegionAbbreviationToken } from "#region-abbreviations"
 export type { RegionAbbreviationTokenOpts } from "#region-abbreviations"
 export { segment } from "#segmentation"

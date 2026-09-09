@@ -61,6 +61,17 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 const PO_BOX_LEADERS = new Set(["po", "p.o.", "p.o", "box", "bp", "b.p.", "b.p", "casilla", "apartado"])
 
 /**
+ * Whether a known-format name names a postcode shape. Every entry in {@link PATTERNS} is one, and the names follow one
+ * convention — `us_zip`, `us_zip4`, or `<cc>_postcode` — which is what this reads, so a format added to the table is a
+ * postcode to every consumer the moment it is named that way. The convention rather than a set, because
+ * `@mailwoman/core`'s runtime pipeline cannot depend on this package and reads the same names; the test over
+ * {@link PATTERNS} pins every table entry to it. `us_zip4` is the trap a naive `endsWith("_zip")` would miss.
+ */
+export function isPostcodeFormat(format: string): boolean {
+	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
+}
+
+/**
  * Detect known-format hits among the tokenized input.
  *
  * Strategy: for each token (or adjacent pair), try every pattern. Multiple format hits on the same span are allowed

@@ -129,8 +129,10 @@ export interface ModelSelectOptions {
 
 /**
  * The suite's fixture rows are keyed by ISO country code; the production pipeline wants a BCP-47 locale tag. These are
- * the tags whose weights-package FST the release ships for the suite's countries (mirrors the gauntlet's
- * `OVERLAY_LOCALE_BY_COUNTRY`); unknown countries fall back to en-US.
+ * the tags for the four countries `suite.jsonl` carries (DE, FR, GB, US), and nothing more: the gauntlet's
+ * `OVERLAY_LOCALE_BY_COUNTRY` lists the overlay locales (GB, NZ, DE, IN, ES, IT) and this table lists the suite's, and
+ * they overlap on GB and DE only. An unlisted country falls back to en-US, so a row added for a country that ships an
+ * overlay (ES, IT, NZ, IN) parses under the wrong weights unless its entry is added here beside the row.
  */
 export const COUNTRY_TO_LOCALE: Readonly<Record<string, string>> = {
 	US: "en-US",

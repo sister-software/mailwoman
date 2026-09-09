@@ -5,9 +5,61 @@
  */
 
 import { classifyToken, tokenizeForClass } from "@mailwoman/query-shape/character-class"
-import { detectKnownFormats } from "@mailwoman/query-shape/known-formats"
+import { detectKnownFormats, isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 import type { KnownFormat, TokenClass } from "@mailwoman/query-shape/types"
 import { describe, expect, it } from "vitest"
+
+describe("isPostcodeFormat", () => {
+	it("reads the naming convention every known format follows, `us_zip4` included", () => {
+		expect(isPostcodeFormat("us_zip")).toBe(true)
+		expect(isPostcodeFormat("us_zip4")).toBe(true) // the trap a naive endsWith("_zip") misses
+		expect(isPostcodeFormat("uk_postcode")).toBe(true)
+		expect(isPostcodeFormat("gr_postcode")).toBe(true)
+		expect(isPostcodeFormat("po_box")).toBe(false)
+		expect(isPostcodeFormat("nonsense")).toBe(false)
+	})
+
+	it("holds for every format the table can emit", () => {
+		// The convention is what `@mailwoman/core`'s runtime pipeline reads in place of a copied list, so a format
+		// named outside it would be a postcode here and not there. Every pattern is exercised through detection.
+		const probes = [
+			"10001",
+			"10001-1234",
+			"M5V 3L9",
+			"M5V3L9",
+			"100-0005",
+			"SW1A 2AA",
+			"SW1A2AA",
+			"1012 LG",
+			"1012LG",
+			"110 00",
+		]
+
+		const seen = new Set<string>()
+
+		for (const probe of probes) {
+			for (const hit of detectKnownFormats(probe, tokenize(probe))) {
+				seen.add(hit.format)
+				expect(isPostcodeFormat(hit.format), hit.format).toBe(true)
+			}
+		}
+
+		expect([...seen].toSorted()).toEqual([
+			"ca_postcode",
+			"cz_postcode",
+			"de_postcode",
+			"fr_postcode",
+			"gr_postcode",
+			"jp_postcode",
+			"nl_postcode",
+			"se_postcode",
+			"sk_postcode",
+			"uk_postcode",
+			"us_zip",
+			"us_zip4",
+		])
+	})
+})
 
 function tokenize(text: string): TokenClass[] {
 	return tokenizeForClass(text).map((span) => ({

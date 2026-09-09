@@ -25,6 +25,7 @@ import { COUNTRIES, IN_MAP_EU, NEW_EU } from "#coarse-placer/tools/country-sets"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
 import { writeLocalTextFile, makeDirectories } from "#fs/writers"
+import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
 import { dataRootPath } from "#utils"
 
 interface DatasetRow {
@@ -108,7 +109,7 @@ export async function buildDataset(
 		"*.parquet"
 	)
 
-	const OVERTURE_DIR = dataRootPath("overture", "2026-06-17.0")
+	const OVERTURE_DIR = dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
 	await makeDirectories(OUT_DIR)
 
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.

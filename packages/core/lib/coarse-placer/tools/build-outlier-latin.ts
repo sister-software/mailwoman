@@ -20,7 +20,7 @@
  *   without rebuilding train/val).
  *
  *   Run: `mailwoman placer build-dataset --outliers latin [--per-country 6000] [--overture
- *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]`
+ *   $MAILWOMAN_DATA_ROOT/overture/<release>]` (default: the addresses-theme pin, `OVERTURE_ADDRESSES_RELEASE`)
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -30,6 +30,7 @@ import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-
 import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
+import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
 import { dataRootPath } from "#utils"
 
 interface LatinTestRow {
@@ -48,7 +49,7 @@ export interface BuildOutlierLatinOptions {
 	 */
 	perCountry?: number
 	/**
-	 * Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/2026-05-20.0`.
+	 * Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`.
 	 */
 	overture?: PathBuilderLike
 	/**
@@ -116,7 +117,7 @@ export async function buildOutlierLatin(
 	report?: (line: string) => void
 ): Promise<BuildOutlierLatinResult> {
 	const PER = options.perCountry ?? 6000
-	const overtureDir = options.overture || dataRootPath("overture", "2026-05-20.0")
+	const overtureDir = options.overture || dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
 	const dataDir = options.data || defaultDataDir()
 
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.

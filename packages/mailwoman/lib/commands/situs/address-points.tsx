@@ -38,6 +38,7 @@
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { Box, Text } from "ink"
@@ -62,7 +63,11 @@ export const spec = {
 			type: "string",
 			description: "minLon,minLat,maxLon,maxLat — drop rows whose coordinate falls outside (national builds)",
 		},
-		release: { type: "string", default: "2026-05-20.0", description: "Overture release" },
+		release: {
+			type: "string",
+			default: OVERTURE_ADDRESSES_RELEASE,
+			description: "Overture release (the addresses-theme pin)",
+		},
 		out: { type: "string", description: "Output DB path" },
 		"county-fips": { type: "string", validate: (v: string) => /^\d{5}$/u.test(v), description: "County FIPS" },
 		"county-boundary": { type: "string", description: "TIGER county boundary shapefile" },

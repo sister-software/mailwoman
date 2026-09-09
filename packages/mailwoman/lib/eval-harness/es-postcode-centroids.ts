@@ -18,6 +18,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -35,7 +36,8 @@ export interface ESPostcodeCentroidsOptions {
 	 */
 	pcLen?: number
 	/**
-	 * Overture addresses parquet. Default: the pinned 2026-05-20.0 release under `$MAILWOMAN_DATA_ROOT`.
+	 * Overture addresses parquet. Default: the addresses-theme pin (`OVERTURE_ADDRESSES_RELEASE`) under
+	 * `$MAILWOMAN_DATA_ROOT`.
 	 */
 	parquet?: string
 	/**
@@ -58,7 +60,8 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	const PC_LEN = options.pcLen ?? 5
 
 	const PARQUET =
-		options.parquet || String(dataRootPath("overture", "2026-05-20.0", `addresses-${CC.toLowerCase()}.parquet`))
+		options.parquet ||
+		String(dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`))
 
 	const OUT_DB = options.out || String(dataRootPath("wof", `postalcode-${CC.toLowerCase()}-overture.db`))
 	// The `source` stamp names the Overture release the rows came from, read off the parquet's release directory rather

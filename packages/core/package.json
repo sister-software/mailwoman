@@ -546,6 +546,11 @@
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js"
 		},
+		"./overture-pins": {
+			"types": "./out/overture-pins.d.ts",
+			"node": "./lib/overture-pins.ts",
+			"default": "./out/overture-pins.js"
+		},
 		"./crypto/base64url": {
 			"types": "./out/crypto/base64url.d.ts",
 			"node": "./lib/crypto/base64url.ts",

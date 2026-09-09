@@ -5,7 +5,6 @@
  */
 
 import {
-	isPostcodeFormat,
 	scoreIntersection,
 	scoreLandmark,
 	scoreLocalityOnly,
@@ -27,14 +26,6 @@ const fmt = (format: KnownFormat, start: number, end: number, confidence = 0.9) 
 })
 
 const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
-
-test("isPostcodeFormat: set membership avoids the `us_zip4.endsWith('_zip')` false-negative trap", () => {
-	expect(isPostcodeFormat("us_zip")).toBe(true)
-	expect(isPostcodeFormat("us_zip4")).toBe(true) // the trap: a naive endsWith('_zip') would miss this
-	expect(isPostcodeFormat("uk_postcode")).toBe(true)
-	expect(isPostcodeFormat("po_box")).toBe(false)
-	expect(isPostcodeFormat("nonsense")).toBe(false)
-})
 
 test("scorePoBox: fires (boosted) on a po_box format hit, zero otherwise", () => {
 	expect(scorePoBox(input("PO Box 123"), shape({ knownFormats: [fmt("po_box", 0, 6, 0.8)] }))).toBeCloseTo(0.9, 5)

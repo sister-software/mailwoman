@@ -48,21 +48,14 @@ const SHORT_CIRCUIT_MIN_CONFIDENCE = 0.95
 const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
 
 /**
- * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in
- * `@mailwoman/kind-classifier` — kept duplicated so core/pipeline has no dep on kind-classifier.
+ * Whether a QueryShape known-format name names a postcode shape. `@mailwoman/query-shape` owns the format table and its
+ * naming convention — `us_zip`, `us_zip4`, or `<cc>_postcode` — and its test pins every table entry to that convention;
+ * this package cannot depend on query-shape, so it reads the convention rather than a copied list. The copied list it
+ * replaces held seven of the table's twelve names, so a Dutch, Czech, Slovak, Swedish or Greek postcode passed the
+ * query-shape and kind-classifier checks and missed this pipeline's own.
  */
-const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
-	"us_zip",
-	"us_zip4",
-	"uk_postcode",
-	"fr_postcode",
-	"de_postcode",
-	"ca_postcode",
-	"jp_postcode",
-])
-
 function isPostcodeFormat(format: string): boolean {
-	return POSTCODE_FORMATS.has(format)
+	return format === "us_zip" || format === "us_zip4" || format.endsWith("_postcode")
 }
 
 /**

@@ -34,6 +34,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -43,13 +44,6 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { resolvePath } from "path-ts"
 
 import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline"
-
-/**
- * The Overture release the Taiwan parquet was fetched under. Overture prunes old releases, so a re-fetch lands under a
- * newer directory and the recipe takes it through `--release`; the default names the vintage the shipped artifacts and
- * the CJK training board were built from.
- */
-export const DEFAULT_TW_OVERTURE_RELEASE = "2026-06-17.0"
 
 /**
  * The license expression the artifact carries — Overture's theme license AND the register's own, the pair the rooftop
@@ -135,7 +129,7 @@ export interface TaiwanDistrictGroup {
 
 export interface BuildTWDistrictsOptions {
 	/**
-	 * The Overture release directory under `<data-root>/overture/`. Default {@link DEFAULT_TW_OVERTURE_RELEASE}.
+	 * The Overture release directory under `<data-root>/overture/`. Default {@link OVERTURE_ADDRESSES_RELEASE}.
 	 */
 	release?: string
 	/**
@@ -249,7 +243,7 @@ async function readDistrictGroups(parquetPath: string, threads: number | undefin
 export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {}): Promise<BuildTWDistrictsResult> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const release = opts.release ?? DEFAULT_TW_OVERTURE_RELEASE
+	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
 	const parquetPath = opts.parquetPath ?? String(dataRootPath("overture", release, "addresses-tw.parquet"))
 	const adminPath = opts.adminPath ?? resolvePath(wofDir(), DEFAULT_ADMIN_DB)
 	const outPath = opts.out ?? String(dataRootPath("wof", "localities-tw-districts.db"))

@@ -18,6 +18,7 @@
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { allRows } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -37,7 +38,11 @@ export const spec = {
 			type: "string",
 			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/address-points",
 		},
-		release: { type: "string", default: "2026-05-20.0", description: "Overture release tag stamped into the manifest" },
+		release: {
+			type: "string",
+			default: OVERTURE_ADDRESSES_RELEASE,
+			description: "Overture release tag stamped into the manifest (the addresses-theme pin)",
+		},
 	},
 } as const satisfies CommandSpec
 

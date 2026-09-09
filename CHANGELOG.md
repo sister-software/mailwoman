@@ -36,6 +36,21 @@ step. The pre-commit hook read its CLI-freshness reference after the formatter h
 commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
 first.
 
+### Fixed — one naming convention for postcode formats; one pin for the Overture addresses theme
+
+An inventory of every hardcoded locale, country, script and Overture-release constant that steers training or the
+pipeline (#2219) found three copies of "which known-format names are postcodes" — `@mailwoman/query-shape`'s table,
+`@mailwoman/kind-classifier`'s copy of its twelve names, and `@mailwoman/core`'s copy of SEVEN, whose docstring said it
+mirrored the second. A Dutch, Czech, Slovak, Swedish or Greek postcode token passed the first two checks and missed
+core's short-circuit. `isPostcodeFormat` now lives in query-shape and reads the naming convention its table follows
+(`us_zip`, `us_zip4`, `<cc>_postcode`); kind-classifier imports it; core, which cannot depend on query-shape,
+implements the same convention, and a query-shape test pins every table entry to it. Five addresses-theme tools each
+carried their own Overture release literal at two different vintages, one of which named a directory that holds no
+addresses parquet; `@mailwoman/core/overture-pins` now carries the one addresses-theme pin and every one of them
+defaults to it. Two docstrings stated things that were no longer true: the locale hint's `ja-JP` for every CJK-script
+input ("only CJK locale we ship today", against the `ja-jp` and `zh-cn` overlays that ship over one family), and the
+invariance suite's country table ("mirrors the gauntlet's", against a two-entry overlap).
+
 ### Added — Singapore postcodes answer at the building
 
 A six-digit Singapore postcode names one building, so `postalcode-sg-overture.db` — the per-postcode centroid of the

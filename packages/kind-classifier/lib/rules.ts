@@ -12,6 +12,7 @@
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 /**
  * Longest input still plausible as a bare venue or landmark name. Beyond it the query is carrying an address as well,
  * and belongs to the structured-address scorer.
@@ -205,32 +206,6 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 	}
 
 	return 0
-}
-
-/**
- * Known QueryShape format strings that indicate "this token is a postcode".
- */
-const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
-	"us_zip",
-	"us_zip4",
-	"uk_postcode",
-	"fr_postcode",
-	"de_postcode",
-	"ca_postcode",
-	"jp_postcode",
-	"nl_postcode",
-	"cz_postcode",
-	"sk_postcode",
-	"se_postcode",
-	"gr_postcode",
-])
-
-/**
- * Test whether a format string is a postcode variant. Use the set rather than ad-hoc string-matching to avoid the
- * `us_zip4.endsWith("_zip")` false-negative trap.
- */
-export function isPostcodeFormat(format: string): boolean {
-	return POSTCODE_FORMATS.has(format)
 }
 
 /**
