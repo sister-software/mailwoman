@@ -14,10 +14,16 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	applyCountryBudget,
 	applyLocalityQuota,
+	localityWrittenForm,
 	POSTCODE_CONVENTIONS,
 	type PostcodeTriple,
 	readTriplesFromGeonames,
+	readTriplesFromParentJoin,
+	regionWrittenForms,
 } from "@mailwoman/corpus/tools/postcode-triples"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
 
 const TAB = String.fromCharCode(9)
@@ -196,6 +202,109 @@ describe("applyCountryBudget", () => {
 		const triples = [make("FR", "a", "1"), make("FR", "b", "2"), make("MX", "c", "3")]
 
 		expect(applyCountryBudget(triples, 1).map((row) => row.cc)).toEqual(["FR", "MX"])
+	})
+})
+
+describe("regionWrittenForms", () => {
+	it("emits the official-language names, the co-official ones, then the exonym, without repeats", () => {
+		const balearic = { official: ["Islas Baleares"], coOfficial: ["Illes Balears"] }
+		const surfaces = regionWrittenForms("Balearic Islands", balearic)
+
+		expect(surfaces).toEqual(["Islas Baleares", "Illes Balears", "Balearic Islands"])
+		expect(regionWrittenForms("Zamora", { official: ["Zamora"], coOfficial: [] })).toEqual(["Zamora"])
+
+		// The Catalan preferred name keeps the provincial generic; an envelope does not, so it dedupes with the Castilian.
+		const barcelona = { official: ["Barcelona"], coOfficial: ["Província de Barcelona"] }
+		const corunna = { official: ["La Coruña"], coOfficial: ["Província d'A Coruña", "A Coruña"] }
+
+		expect(regionWrittenForms("Barcelona", barcelona)).toEqual(["Barcelona"])
+		expect(regionWrittenForms("Corunna", corunna)).toEqual(["La Coruña", "A Coruña", "Corunna"])
+		expect(regionWrittenForms("Highland", { official: [], coOfficial: [] })).toEqual(["Highland"])
+	})
+})
+
+describe("localityWrittenForm", () => {
+	it("restores the diacritics of the gazetteer's stripped name and never fans out", () => {
+		const palma = { official: ["Palma", "Palma de Mallorca"], coOfficial: [] }
+
+		expect(localityWrittenForm("Cordoba", { official: ["Córdoba"], coOfficial: [] })).toBe("Córdoba")
+		expect(localityWrittenForm("Palma de Mallorca", palma)).toBe("Palma de Mallorca")
+		expect(localityWrittenForm("Leon", { official: [], coOfficial: [] })).toBe("Leon")
+	})
+})
+
+/**
+ * A fixture pair of gazetteers on the unified schema: a Balearic and a Zamoran postcode whose parents resolve, plus a
+ * postcode whose parent has no region. Names carry the WOF shape #1673 measured: `spr.name` is the English exonym or
+ * the stripped Castilian, the `spa` preferred form is accented, and the `cat` preferred form of a Castilian province
+ * names the whole community.
+ */
+async function writeFixtureGazetteers(): Promise<{ adminDB: string; postcodeDB: string }> {
+	const adminDB = String(root.resolve("admin.db"))
+	const postcodeDB = String(root.resolve("postalcode-intl.db"))
+
+	{
+		using admin = new DatabaseClient<WOFDatabase>(adminDB)
+		await createUnifiedSchema(admin)
+
+		const spr = admin.prepare("INSERT INTO spr (id, parent_id, name, placetype, country) VALUES (?, ?, ?, ?, ?)")
+		spr.run(1, -1, "Spain", "country", "ES")
+		spr.run(10, 1, "Balearic Islands", "region", "ES")
+		spr.run(11, 1, "Zamora", "region", "ES")
+		spr.run(100, 10, "Palma de Mallorca", "locality", "ES")
+		spr.run(101, 11, "Toro", "locality", "ES")
+		spr.run(102, 1, "Adrift", "locality", "ES")
+
+		const ancestors = admin.prepare("INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)")
+		ancestors.run(100, 10, "region")
+		ancestors.run(100, 1, "country")
+		ancestors.run(101, 11, "region")
+		ancestors.run(101, 1, "country")
+		ancestors.run(102, 1, "country")
+
+		const names = admin.prepare("INSERT INTO names (id, name, language, privateuse, official) VALUES (?, ?, ?, ?, ?)")
+		names.run(10, "Islas Baleares", "spa", "preferred", 1)
+		names.run(10, "Illes Balears", "cat", "preferred", 0)
+		names.run(10, "Balear Uharteak", "eus", "preferred", 0)
+		names.run(10, "Balearic Islands", "eng", "preferred", 0)
+		names.run(10, "Baleares", "spa", "variant", 0)
+		names.run(11, "Zamora", "spa", "preferred", 1)
+		names.run(11, "Castella i Lleó", "cat", "preferred", 0)
+		names.run(100, "Palma", "spa", "preferred", 1)
+		names.run(100, "Palma de Mallorca", "spa", "preferred", 1)
+		names.run(100, "Palma", "cat", "preferred", 0)
+	}
+
+	{
+		using postcodes = new DatabaseClient<WOFDatabase>(postcodeDB)
+		await createUnifiedSchema(postcodes)
+
+		const spr = postcodes.prepare("INSERT INTO spr (id, parent_id, name, placetype, country) VALUES (?, ?, ?, ?, ?)")
+		spr.run(1000, 100, "07001", "postalcode", "ES")
+		spr.run(1001, 101, "49800", "postalcode", "ES")
+		spr.run(1002, 102, "99999", "postalcode", "ES")
+		spr.run(1003, 0, "00000", "postalcode", "ES")
+	}
+
+	return { adminDB, postcodeDB }
+}
+
+describe("readTriplesFromParentJoin", () => {
+	it("emits one row per region surface in the languages the province is written in, and none for a Castilian-only province's parent community", async () => {
+		const { adminDB, postcodeDB } = await writeFixtureGazetteers()
+		const triples = await readTriplesFromParentJoin(["ES"], { adminDB, postcodeDB })
+
+		const lines = triples.map((t) => `${t.postcode} ${t.locality}, ${t.region}, ${t.country}`)
+
+		const expected = [
+			"07001 Palma de Mallorca, Islas Baleares, Spain",
+			"07001 Palma de Mallorca, Illes Balears, Spain",
+			"07001 Palma de Mallorca, Balearic Islands, Spain",
+			"49800 Toro, Zamora, Spain",
+		]
+
+		expect(lines).toEqual(expected)
+		expect(triples.every((t) => t.cc === "ES" && t.locale === "es-ES" && t.postcodePlacement === "leading")).toBe(true)
 	})
 })
 

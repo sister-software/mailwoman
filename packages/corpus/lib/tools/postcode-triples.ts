@@ -41,6 +41,8 @@
  *   recipe's header for the measurement.
  */
 
+import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "@mailwoman/codex/country"
+import { foldName } from "@mailwoman/codex/normalize"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -173,12 +175,73 @@ export function applyCountryBudget(
 }
 
 /**
+ * A place's preferred names in the languages its addresses are written in, read from the gazetteer's `names` table.
+ */
+interface PreferredNames {
+	/**
+	 * Preferred names in the country's official languages, in the table's order.
+	 */
+	official: readonly string[]
+	/**
+	 * Preferred names in the region's co-official languages.
+	 */
+	coOfficial: readonly string[]
+}
+
+/**
+ * The surfaces a REGION is written as: its preferred names in the official language(s), then in the region's
+ * co-official languages, then the gazetteer's own `spr.name` (the English exonym). Deduplicated, order kept.
+ *
+ * `spr.name` is the English-preferred, diacritic-stripped label, and reading it alone is the defect #1673 measured:
+ * 53,078 ES rows teaching `Balearic Islands` (2,872 `Andalusia`, 5,680 `Castile and Leon`) against 4 rows of `Illes
+ * Balears`, and every province with its accent gone (`Cordoba`, `Leon`). A Spanish user writes `Islas Baleares` or
+ * `Illes Balears`; the exonym stays as ONE surface among them because a user may write it too.
+ */
+export function regionWrittenForms(sprName: string, names: PreferredNames): string[] {
+	const out: string[] = []
+
+	for (const raw of [...names.official, ...names.coOfficial, sprName]) {
+		const name = raw.replace(PROVINCE_GENERIC, "")
+
+		if (name && !out.includes(name)) {
+			out.push(name)
+		}
+	}
+
+	return out
+}
+
+/**
+ * The provincial generic Who's On First keeps in a province's Catalan and Asturian preferred names (`Província de
+ * Barcelona`, `Província d'A Coruña`). An envelope carries the name alone, so the generic is dropped and the surface
+ * dedupes against the Castilian one.
+ */
+const PROVINCE_GENERIC = /^prov[ií]ncia (?:de |d')/iu
+
+/**
+ * The surface a LOCALITY is written as: the official-language preferred name that is `spr.name` with its diacritics
+ * restored (`Cordoba` → `Córdoba`), else the first official-language preferred name, else `spr.name`. One surface, not
+ * a fan-out: the region carries the multiplicity and the locality would multiply it.
+ */
+export function localityWrittenForm(sprName: string, names: PreferredNames): string {
+	const folded = foldName(sprName)
+
+	return names.official.find((name) => foldName(name) === folded) ?? names.official[0] ?? sprName
+}
+
+/**
  * Read triples out of `postalcode-intl.db` by following each postcode's `parent_id` into the admin gazetteer and that
  * place's ancestry to a region.
  *
  * A postcode whose parent does not resolve, or whose parent has no region ancestor, is DROPPED rather than emitted with
  * a blank — the recipe already skips a tuple with no region, and a blank here would hide how much of the source is
  * actually reachable.
+ *
+ * One triple per REGION SURFACE (see {@link regionWrittenForms}): a Balearic postcode yields `Islas Baleares`, `Illes
+ * Balears` and `Balearic Islands` rows, a Zamora one `Zamora` alone. The languages come from the codex — the country's
+ * official languages plus the province's co-official ones — and never from the names table's own language list, whose
+ * "preferred" name in a language not spoken in the province is often the parent community's (`Zamora` → `Castella i
+ * Lleó`).
  */
 export async function readTriplesFromParentJoin(
 	countries: readonly string[],
@@ -194,7 +257,8 @@ export async function readTriplesFromParentJoin(
 	db.exec(`ATTACH DATABASE '${escapeSQLString(postcodeDB)}' AS pc`)
 
 	const statement = db.prepare(`
-		SELECT p.name AS postcode, a.name AS locality, r.name AS region, c.name AS country, p.country AS cc
+		SELECT p.name AS postcode, a.id AS locality_id, a.name AS locality, r.id AS region_id, r.name AS region,
+		       c.name AS country, p.country AS cc
 		FROM pc.spr p
 		JOIN spr a ON a.id = p.parent_id AND a.placetype IN ('locality', 'localadmin')
 		JOIN ancestors anc ON anc.id = a.id AND anc.ancestor_placetype = 'region'
@@ -205,6 +269,37 @@ export async function readTriplesFromParentJoin(
 		ORDER BY p.id
 	`)
 
+	const preferredStatement = db.prepare(
+		`SELECT language, name FROM names WHERE id = ? AND privateuse = 'preferred' AND language IS NOT NULL ORDER BY language, name`
+	)
+
+	const preferredByID = new Map<number, Map<string, string[]>>()
+
+	/**
+	 * Preferred names of one place, grouped by language, read once per id.
+	 */
+	const preferredNames = (id: number): Map<string, string[]> => {
+		let byLanguage = preferredByID.get(id)
+
+		if (!byLanguage) {
+			byLanguage = new Map()
+
+			for (const row of preferredStatement.all(id) as Array<{ language: string; name: string }>) {
+				const list = byLanguage.get(row.language) ?? []
+
+				list.push(row.name)
+				byLanguage.set(row.language, list)
+			}
+
+			preferredByID.set(id, byLanguage)
+		}
+
+		return byLanguage
+	}
+
+	const namesIn = (byLanguage: Map<string, string[]>, languages: readonly string[]): string[] =>
+		languages.flatMap((language) => byLanguage.get(language) ?? [])
+
 	const out: PostcodeTriple[] = []
 
 	for (const cc of countries) {
@@ -212,18 +307,47 @@ export async function readTriplesFromParentJoin(
 
 		if (!convention) continue
 
-		for (const row of statement.all(cc) as Array<Record<string, string>>) {
-			if (!row["postcode"] || !row["locality"] || !row["region"]) continue
+		const officialLanguages = officialLanguagesAlpha3(cc)
 
-			out.push({
-				postcode: row["postcode"],
-				locality: row["locality"],
-				region: row["region"],
-				country: row["country"] ?? "",
-				cc,
-				locale: convention.locale,
-				postcodePlacement: convention.placement,
-			})
+		for (const row of statement.all(cc) as Array<{
+			postcode: string | null
+			locality_id: number
+			locality: string | null
+			region_id: number
+			region: string | null
+			country: string | null
+		}>) {
+			if (!row.postcode || !row.locality || !row.region) continue
+
+			const regionOfficial = namesIn(preferredNames(row.region_id), officialLanguages)
+			// The co-official table is keyed by the region's name in the first official language; a region the names
+			// table has no such name for is looked up by its `spr.name`, which for a monolingual country is the same string.
+			const regionLanguages = regionLanguagesAlpha3(cc, regionOfficial[0] ?? row.region)
+			const regionCoOfficialLanguages = regionLanguages.filter((language) => !officialLanguages.includes(language))
+
+			const regionNames: PreferredNames = {
+				official: regionOfficial,
+				coOfficial: namesIn(preferredNames(row.region_id), regionCoOfficialLanguages),
+			}
+
+			const localityNames: PreferredNames = {
+				official: namesIn(preferredNames(row.locality_id), officialLanguages),
+				coOfficial: [],
+			}
+
+			const locality = localityWrittenForm(row.locality, localityNames)
+
+			for (const region of regionWrittenForms(row.region, regionNames)) {
+				out.push({
+					postcode: row.postcode,
+					locality,
+					region,
+					country: row.country ?? "",
+					cc,
+					locale: convention.locale,
+					postcodePlacement: convention.placement,
+				})
+			}
 		}
 	}
 

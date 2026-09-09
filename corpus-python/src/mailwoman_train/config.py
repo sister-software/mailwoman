@@ -42,6 +42,10 @@ class DataConfig:
     # When set: rows from unlisted sources are dropped. Weight / max_weight acceptance
     # multiplies with country_weights — a row must pass both filters to survive.
     source_weights: dict[str, float] | None = None
+    # Per-source target EXPOSURE in reps per row (#1677), for the slices whose weight nobody can pick:
+    # the weight is derived at launch from the slice's row count and the run's total samples, beside the
+    # fixed ``source_weights`` (see ``dose.py``). A source takes a weight or a dose, never both.
+    source_doses: dict[str, float] | None = None
     # Hypothesis-bearing corpus receipts enforced by ``audit_epoch_mixture``. Empty keeps
     # historical configs unchanged. A run must not start until its audit passes.
     required_corpus_receipts: list[CorpusReceiptConfig] = field(default_factory=list)

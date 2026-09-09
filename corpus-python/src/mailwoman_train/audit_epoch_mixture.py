@@ -43,6 +43,7 @@ from typing import TYPE_CHECKING, Any
 
 from .augment import augment_row
 from .data_loader import _raw_row_stream, source_row_counts
+from .dose import format_derivation, resolve_config_doses
 
 if TYPE_CHECKING:
     from .config import CorpusReceiptConfig
@@ -330,6 +331,10 @@ def run(
     cfg = load_config(config_path)
     d = cfg.data
     resolved_corpus_dir = corpus_dir or Path(d.corpus_dir)
+    # The same resolution the trainer runs (#1677), so the audit reports the weights the run will sample with.
+    derived_doses = resolve_config_doses(cfg, resolved_corpus_dir)
+    if derived_doses:
+        print(format_derivation(derived_doses))
     epoch_rows = draws or getattr(d, "train_rows_per_epoch", None)
     if not epoch_rows:
         raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")

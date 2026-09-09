@@ -34,6 +34,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
 from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
+from .dose import format_derivation, resolve_config_doses
 from .labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
@@ -666,6 +667,11 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         return
     # Mandatory on gfx1103 — flash/mem-efficient SDPA paths crash bf16 on this GPU.
     force_math_sdpa()
+    # #1677: a dosed source's weight is derived here, from the corpus's row counts and this run's samples, so
+    # the mixture the loader samples is the one the config named in reps per row.
+    derived_doses = resolve_config_doses(cfg)
+    if derived_doses:
+        print(format_derivation(derived_doses), flush=True)
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 

@@ -18,6 +18,24 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Fixed — the trailing-region tuples name a Spanish region as its addresses do; a slice names its dose
+
+The Spanish trailing-region tuples taught the region in English: 3,289 rows on disk carried `Balearic Islands` (113),
+`Corunna` (214) and the accent-stripped `Leon` (143), and zero carried `Illes Balears`, the surface of the board row
+`…, 07691 Portopetro, Illes Balears, Spain` (#1673). The extraction read the gazetteer's English-preferred `spr.name`.
+It now reads the region's preferred names in the languages the region's addresses are written in, the country's
+official languages plus the province's co-official ones, and keeps the English exonym as one surface beside them; the
+locality takes its accented official form. The languages come from the codex, not from the names table's own list,
+because Who's On First's preferred name in a language not spoken in a province is often the parent community's
+(`Zamora` → `Castella i Lleó`): `@mailwoman/codex/es` carries the sixteen provinces the statutes give a co-official
+language, and `@mailwoman/codex/country`'s `regionLanguagesAlpha3` answers per region. `mailwoman corpus tuples` is the
+command that rebuilds them. Rebuilt, the Spanish tuples are 5,279 rows over 79 surfaces: `Islas Baleares`, `Illes
+Balears` and `Balearic Islands` at 101 each, `La Coruña`, `A Coruña` and `Corunna` at 163 each, `León` beside `Leon`.
+
+A training config may now name a slice's exposure instead of its weight (#1677): `source_doses` gives reps per row,
+and the trainer and the epoch audit derive the weight from the slice's row count and the run's samples at launch,
+printing the derivation. The 277-row slice that took 165 passes per row at weight 1.0 takes weight 0.030 for 5.
+
 ### Added — OpenStreetMap corpus rows for Pakistan, Bangladesh and Vietnam, behind `--exclude-share-alike`
 
 `House 4, Street 25, F-7/2, Islamabad` parses `House` as the street and `F-7/2` as the house number;
