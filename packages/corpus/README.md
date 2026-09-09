@@ -27,6 +27,7 @@ The corpus pipeline assembles training data from multiple sources:
 | **libpostal**      | Multilingual street/place name dictionaries                              |
 | **Synthetic rows** | Generated address variations (boundary stress, order variants, all-caps) |
 | **Overture Maps**  | Address theme ingestion (alpha)                                          |
+| **OpenStreetMap**  | Pakistan, Bangladesh, Vietnam — ODbL, dropped by `--exclude-share-alike` |
 
 Output format: TSV rows with `raw<TAB>BIO_labels` consumed by the Python
 training pipeline (`corpus-python/`).

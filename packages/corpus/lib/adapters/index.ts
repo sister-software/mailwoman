@@ -25,6 +25,7 @@ import { geonamesPostalAdapter } from "#adapters/geonames-postal/adapter"
 import { geonamesAdapter } from "#adapters/geonames/adapter"
 import { gnafAdapter } from "#adapters/gnaf/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
+import { osmAdapter } from "#adapters/osm/adapter"
 import { overtureAdapter } from "#adapters/overture/adapter"
 import { stateHiSchoolsAdapter } from "#adapters/state-hi-schools/adapter"
 import { stateIaContractorsAdapter } from "#adapters/state-ia-contractors/adapter"
@@ -60,6 +61,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	tigerAdapter,
 	openaddressesAdapter,
 	overtureAdapter,
+	osmAdapter,
 	gnafAdapter,
 	fccBdcAdapter,
 	usgovHrsaFqhcAdapter,

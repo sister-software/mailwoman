@@ -34,8 +34,55 @@ export interface OSMAddrRecord {
 	postcode: string | null
 	suburb: string | null
 	city: string | null
+	/**
+	 * `addr:unit` — the secondary-unit designator, where a country tags one.
+	 */
+	unit: string | null
+	/**
+	 * `addr:place` — the named scheme or estate that stands in for a street where none is named (Pakistan's `DHA Phase
+	 * 6`, `Gulshan e Iqbal Block 2`).
+	 */
+	place: string | null
+	/**
+	 * `addr:subdistrict` — the ward below a district (Vietnam's `Phường Tân Phú`).
+	 */
+	subdistrict: string | null
+	/**
+	 * `addr:district` — the district below the city or province (Vietnam's `Quận 7`, `Hoàn Kiếm`).
+	 */
+	district: string | null
+	/**
+	 * `addr:province` — the province, where the mapper tagged one beside or instead of a city.
+	 */
+	province: string | null
 	lon: number
 	lat: number
+}
+
+/**
+ * The `addr:*` tags the extract projects, in the order the record names them. The rooftop builder reads the first five;
+ * the corpus JSONL carries them all.
+ */
+const ADDR_TAGS = [
+	"housenumber",
+	"street",
+	"postcode",
+	"suburb",
+	"city",
+	"unit",
+	"place",
+	"subdistrict",
+	"district",
+	"province",
+] as const
+
+/**
+ * A tag value as the driver returns it: absent, empty, or a string worth keeping.
+ */
+function tagValue(properties: Record<string, unknown>, tag: string): string | null {
+	const value = properties[tag]
+
+	return value != null && value !== "" ? String(value) : null
 }
 
 /**
@@ -44,17 +91,12 @@ export interface OSMAddrRecord {
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * OGRSQL projecting the four `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
+ * OGRSQL projecting the `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
  */
 function addrSQL(layer: string): string {
-	return (
-		`SELECT hstore_get_value(other_tags,'addr:housenumber') AS housenumber, ` +
-		`hstore_get_value(other_tags,'addr:street') AS street, ` +
-		`hstore_get_value(other_tags,'addr:postcode') AS postcode, ` +
-		`hstore_get_value(other_tags,'addr:suburb') AS suburb, ` +
-		`hstore_get_value(other_tags,'addr:city') AS city ` +
-		`FROM ${layer} WHERE other_tags LIKE '%addr:housenumber%'`
-	)
+	const projection = ADDR_TAGS.map((tag) => `hstore_get_value(other_tags,'addr:${tag}') AS ${tag}`).join(", ")
+
+	return `SELECT ${projection} FROM ${layer} WHERE other_tags LIKE '%addr:housenumber%'`
 }
 
 function toRecord(feature: {
@@ -71,10 +113,15 @@ function toRecord(feature: {
 
 	return {
 		housenumber: String(housenumber),
-		street: p["street"] != null && p["street"] !== "" ? String(p["street"]) : null,
-		postcode: p["postcode"] != null && p["postcode"] !== "" ? String(p["postcode"]) : null,
-		suburb: p["suburb"] != null && p["suburb"] !== "" ? String(p["suburb"]) : null,
-		city: p["city"] != null && p["city"] !== "" ? String(p["city"]) : null,
+		street: tagValue(p, "street"),
+		postcode: tagValue(p, "postcode"),
+		suburb: tagValue(p, "suburb"),
+		city: tagValue(p, "city"),
+		unit: tagValue(p, "unit"),
+		place: tagValue(p, "place"),
+		subdistrict: tagValue(p, "subdistrict"),
+		district: tagValue(p, "district"),
+		province: tagValue(p, "province"),
 		lon: pt[0],
 		lat: pt[1],
 	}

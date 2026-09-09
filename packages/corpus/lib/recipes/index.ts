@@ -33,6 +33,7 @@ import { reviewedPostcodeTailRecipe } from "#recipes/reviewed-postcode-tail"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { sgRegisterRecipe } from "#recipes/sg-register"
 import { siBareVillageRecipe } from "#recipes/si-bare-village"
+import { bdRegisterRecipe, pkRegisterRecipe } from "#recipes/south-asia-register"
 import { streetRecipe } from "#recipes/street"
 import { streetAffixRecipe, suffixBoundaryRecipe } from "#recipes/street-affix"
 import { streetBareRecipe } from "#recipes/street-bare"
@@ -62,6 +63,8 @@ const RECIPES: readonly CorpusRecipe[] = [
 	germanRecipe,
 	cnOrganizationalUnitsRecipe,
 	sgRegisterRecipe,
+	pkRegisterRecipe,
+	bdRegisterRecipe,
 	localeRecipe,
 	frOrderRecipe,
 	frAdminSplitRecipe,

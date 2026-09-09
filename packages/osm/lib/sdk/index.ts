@@ -13,6 +13,7 @@
 export * from "#sdk/fetch"
 export * from "#sdk/address-point-schema"
 export * from "#sdk/extract"
+export * from "#sdk/corpus-jsonl"
 export * from "#sdk/extract-boundary"
 export * from "#sdk/extract-poi"
 export * from "#sdk/extract-subvenue"

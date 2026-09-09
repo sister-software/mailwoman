@@ -168,9 +168,22 @@ export function formatAddress(components: ComponentDict, country: string, opts: 
 		raw = injectDependentLocalityLine(raw, components.locality, components.dependent_locality)
 	}
 
-	const trimmed = raw.replaceAll(/\s+$/g, "")
+	const trimmed = stripDanglingConnectors(raw).replaceAll(/\s+$/g, "")
 
 	return opts.separator !== undefined ? trimmed.replaceAll(/\n+/g, opts.separator) : trimmed
+}
+
+/**
+ * Drop a connector a template wrote between two slots when one of them was empty. Bangladesh's template joins the city
+ * and the postcode with a spaced hyphen, so a row with no postcode came out as `Dhaka -`; the engine's own cleanup
+ * removes doubled commas and blank lines but leaves a literal hyphen or slash standing at a line's edge. Exported for
+ * testing.
+ */
+export function stripDanglingConnectors(raw: string): string {
+	return [...TextSpliterator.from(raw)]
+		.map((line) => line.replace(/^[\s\-–/]+/u, "").replace(/[\s\-–/]+$/u, ""))
+		.filter((line) => line.length > 0)
+		.join("\n")
 }
 
 /**

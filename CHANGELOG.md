@@ -18,6 +18,22 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — OpenStreetMap corpus rows for Pakistan, Bangladesh and Vietnam, behind `--exclude-share-alike`
+
+`House 4, Street 25, F-7/2, Islamabad` parses `House` as the street and `F-7/2` as the house number;
+`01 Đường Trần Hưng Đạo, Buôn Ma Thuột` tags the street as a locality. The corpus held zero rows for the three
+countries: Overture's addresses theme has none (the three parquets are 532-byte headers), and the only open source is
+OpenStreetMap, which is ODbL. The `osm` corpus adapter (#733) now reads a per-country JSONL that `@mailwoman/osm`'s
+`emit-corpus-jsonl` script writes from a Geofabrik extract, and stamps every row `ODbL-1.0`, which the share-alike
+pattern matches, so a proprietary-weights build passing `--exclude-share-alike` drops them at ingest and the open
+weights alone learn from them. Over the three extracts: Pakistan 100,790 register rows → 77,636 corpus rows, Vietnam
+70,069 → 62,899, Bangladesh 21,847 → 5,753. Two register recipes render the forms the country templates do not,
+`pk-register` (`House 4, Street 25, F-7/2, Islamabad`, the sector drawn from the capital's grid; 80,081 rows) and
+`bd-register` (`58 Kalabagan 1st Ln, Dhaka 1205`, the trailing postcode without the template's dash; 4,551 rows). The
+extract now projects `addr:unit`, `addr:place`, `addr:subdistrict`, `addr:district` and `addr:province` beside the five
+tags the rooftop builder reads. The formatter strips a connector a template left standing when a slot was empty:
+Bangladesh's rows rendered `24 Road 104, Dhaka -` with no postcode.
+
 ### Added — the Singapore typed registers in the corpus, and a board that grades them
 
 `Blk 533A Upper Cross St #27-40 Singapore 051533` parses with the street span running through the unit and `Blk`

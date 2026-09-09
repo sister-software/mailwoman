@@ -11,6 +11,7 @@ import {
 	formatFromClassificationMap,
 	injectDependentLocalityLine,
 	reconcileComponents,
+	stripDanglingConnectors,
 	toOpenCageComponents,
 } from "@mailwoman/formatter/format"
 import { describe, expect, it } from "vitest"
@@ -114,7 +115,23 @@ describe("toOpenCageComponents", () => {
 	})
 })
 
+describe("stripDanglingConnectors", () => {
+	it("drops a connector left standing at a line's edge and keeps the ones between values", () => {
+		expect(stripDanglingConnectors("24 Road 104\nDhaka - \n")).toBe("24 Road 104\nDhaka")
+		expect(stripDanglingConnectors("Dhaka - 1207")).toBe("Dhaka - 1207")
+		expect(stripDanglingConnectors("- Hà Nội")).toBe("Hà Nội")
+	})
+})
+
 describe("formatAddress", () => {
+	it("renders the Bangladesh template without a dangling dash when the postcode is absent", () => {
+		const noPostcode = { house_number: "24", street: "Road 104", locality: "Dhaka" }
+		const withPostcode = { ...noPostcode, postcode: "1207" }
+
+		expect(formatAddress(noPostcode, "BD", { separator: ", " })).toBe("24 Road 104, Dhaka")
+		expect(formatAddress(withPostcode, "BD", { separator: ", " })).toBe("24 Road 104, Dhaka - 1207")
+	})
+
 	it("renders an idiomatic single-line US address", () => {
 		const formatted = formatAddress(US_ADDRESS, "US", { separator: ", " })
 
