@@ -18,6 +18,20 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — board rows for the four target families that had none, graded before they were written
+
+`Camden, London`, `Barcelona 6001, Venezuela`, `St Mary's, Oxford` and `GPO Box 1234, Sydney NSW 2001` each named a
+failure class on an issue and had no board row to hold it. Sixty-seven rows now do, under `gauntlet/cases/<cc>/family-*.jsonl`,
+written by `packages/mailwoman/lib/dev-tools/family-board.run.ts` over a curated list: every point is a gazetteer
+record the builder resolves by name and refuses when absent or tied, and every status is what the shipped pipeline did
+when the file was written. The read moves two of the four issues. District plus city (#1914) parses on 20 of 21 rows,
+with the district as `dependent_locality`, and fails on the coordinate alone, 2.7–8.7 km off at the parent city's
+point: the stage that must change is the resolver, not the parse. Commonwealth and military po_box (#517) passes 14 of 16, `GPO Box`,
+`Locked Bag`, `Private Bag`, `PSC … Box` and `CMR … Box` all among them; the class is now the two `Unit … Box` rows.
+The locality-postcode family (#1821) reads 10 of 17, every Venezuelan row failing as measured; the possessive qualifier
+(#1754) 4 of 13. The grading and the case-file writer are one module, `grade-seed-cases.ts`, which the Singapore
+register board builder now shares.
+
 ### Fixed — the trailing-region tuples name a Spanish region as its addresses do; a slice names its dose
 
 The Spanish trailing-region tuples taught the region in English: 3,289 rows on disk carried `Balearic Islands` (113),

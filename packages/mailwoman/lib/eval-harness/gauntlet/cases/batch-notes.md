@@ -16,6 +16,37 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 ## Batches
 
+### `family-board:2026-09-09`
+
+67 rows · `cases/{gb,de,fr,us,es,it}/family-district-city.jsonl`, `cases/{nz,za,ve}/family-locality-postcode.jsonl`,
+`cases/{gb,us,ca}/family-possessive-qualifier.jsonl`, `cases/{au,nz,gb,us}/family-po-box.jsonl`
+
+> The four target families of #1931 that had no board rows, each authored from the set its issue attests and
+> written by `packages/mailwoman/lib/dev-tools/family-board.run.ts` over `family-board-rows.ts`. Every point
+> is a gazetteer record named in the row's note (`Point: Camden (borough 1158857277)`); every status is what
+> the shipped model and resolver did on the day the file was written.
+>
+> **F3, district plus city (#1914), 0/21.** The issue's parse defect (the district tagged `street`) is NOT
+> what the shipped model does now: 20 of 21 rows parse `Camden, London` as `dependent_locality` +
+> `locality` and fail on the COORDINATE alone, 2.7–8.7 km off at the parent city's point. The one parse
+> failure is the Montmartre row, where the district is read as the locality. The stage that must change
+> moved from the parse to the resolver: a `dependent_locality` the parse names is not the place the
+> resolver answers. Tolerance 2 km, the district's own point.
+>
+> **F5, «locality» «postcode» (#1821), 10/17.** New Zealand and South Africa pass bare (`Auckland 1010`,
+> `Cape Town 8001`); `Hamilton 3204` resolves 13,847 km away (a namesake); `Queen Street, Auckland 1010`
+> swaps street and locality; every Venezuelan row fails as the issue measured (`Barcelona 6001, Venezuela`
+> yields no locality and no postcode).
+>
+> **F7, the possessive qualifier (#1754), 4/13.** `St Mary's, Oxford` still decodes to one component and
+> answers Georgia, 6,739 km; the London neighbourhoods parse and miss the point by 3.5–8 km (the F3 shape);
+> `King's Lynn, Norfolk`, `Bishop's Stortford, Hertfordshire`, `Lee's Summit, Missouri` and `St. John's,
+Newfoundland and Labrador` pass.
+>
+> **F9, Commonwealth and military po_box (#517), 14/16.** `GPO Box`, `Locked Bag`, `Private Bag`, `PSC … Box`
+> and `CMR … Box` all pass on the shipped model, so the "last 0% class" is now two rows: `Unit 2050 Box 4190,
+DPO AP 96278` tags `Box 4190` alone, dropping the `Unit 2050` head of the unit line.
+
 ### `sg-register-board:2026-09-09`
 
 240 rows · `cases/sg/register.jsonl`

@@ -23,23 +23,15 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate, mulberry32 } from "@mailwoman/core/utils"
 import { isBuildingName, renderSGRegister, type SGRegister } from "@mailwoman/corpus/recipes/sg-register"
 import { join } from "path-ts"
 
+import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#dev-tools/grade-seed-cases"
 import { CASES_DIR } from "#eval-harness/gauntlet/cases/load"
-import {
-	canonicalizeSeedCase,
-	SEED_CASE_KEY_ORDER,
-	type SeedCase,
-	seedCaseToTableRow,
-} from "#eval-harness/gauntlet/cases/seed-case"
-import { checkCase } from "#eval-harness/gauntlet/check-case"
-import { buildGauntletDeps, runOne } from "#eval-harness/gauntlet/harness"
-import { routeCountry } from "#eval-harness/gauntlet/routing"
+import type { SeedCase } from "#eval-harness/gauntlet/cases/seed-case"
 
 const { values } = parseArguments({
 	options: {
@@ -65,11 +57,6 @@ const ADDED_AT = isoDate()
 const TOLERANCE_M = 1000
 
 const REGISTERS: readonly SGRegister[] = ["block", "bracket_postcode", "building_led", "official"]
-
-/**
- * How many failing rows the per-register read prints; the file carries every row's status.
- */
-const ISSUES_SHOWN_PER_REGISTER = 12
 
 const ADDRESS_KIND: Record<SGRegister, string> = {
 	block: "sg_block_postal",
@@ -164,66 +151,12 @@ for (const register of REGISTERS) {
 	}
 }
 
-const byID = new Map<string, SeedCase>()
-
-for (const c of cases) {
-	if (byID.has(c.id)) throw new Error(`duplicate case id ${c.id} — two register rows share a postcode and number`)
-	byID.set(c.id, c)
-}
-
 if (!values["skip-grade"]) {
-	const deps = await buildGauntletDeps()
-	const read = new Map<SGRegister, { pass: number; total: number; issues: string[] }>()
-
-	for (const register of REGISTERS) {
-		read.set(register, { pass: 0, total: 0, issues: [] })
-	}
-
-	for (const c of cases) {
-		const table = seedCaseToTableRow(c)
-		const overlayCountry = routeCountry(c)
-		const result = await runOne(c.input, deps, overlayCountry ? { caseCountry: overlayCountry } : undefined)
-		const issues = checkCase(table, result)
-		const register = REGISTERS.find((r) => ADDRESS_KIND[r] === c.addressKind)!
-		const tally = read.get(register)!
-
-		tally.total++
-
-		if (issues.length) {
-			tally.issues.push(`  ~ ${c.id} "${c.input}": ${issues.join("; ")}`)
-		} else {
-			tally.pass++
-			c.status = "pass"
-		}
-	}
-
-	deps[Symbol.dispose]()
+	const graded = await gradeSeedCases(cases)
 
 	console.log(`\n=== Singapore register board (${cases.length} rows, seed ${SEED}, Overture ${RELEASE}) ===`)
 
-	for (const register of REGISTERS) {
-		const tally = read.get(register)!
-
-		console.log(`${register}: ${tally.pass}/${tally.total} pass`)
-
-		for (const line of tally.issues.slice(0, ISSUES_SHOWN_PER_REGISTER)) {
-			console.log(line)
-		}
-
-		if (tally.issues.length > ISSUES_SHOWN_PER_REGISTER) {
-			console.log(`  … ${tally.issues.length - ISSUES_SHOWN_PER_REGISTER} more`)
-		}
-	}
+	reportGradedGroups(graded, (seed) => REGISTERS.find((r) => ADDRESS_KIND[r] === seed.addressKind)!)
 }
 
-const sorted = cases.toSorted((a, b) => a.id.localeCompare(b.id))
-
-const lines = sorted.map((c) => {
-	const canonical = canonicalizeSeedCase(c)
-
-	return JSON.stringify(canonical, [...SEED_CASE_KEY_ORDER, ...Object.keys(canonical.expectComponents ?? {})])
-})
-
-await writeLocalTextFile(lines.join("\n") + "\n", OUT)
-
-console.log(`wrote ${sorted.length} rows → ${OUT}`)
+await writeSeedCaseFile(cases, OUT)
