@@ -1,9 +1,20 @@
 # v5.4.0 — FROM-SCRATCH treatment: the #1931 target families, each named by its dose
 #
-# Control: v5.0.0-base-alltails-60k.yaml at seed 42. This config names its target families from the
-# #1931 register, which is the standing requirement for a v5-lineage run.
+# Control: v5.3.0-reviewed-ve-postcode-tail-60k.yaml at seed 42, whose step-060000 checkpoint and
+# exported graph are on the volume. It is the attribution control because this config's
+# `source_weights` block is BYTE-IDENTICAL to v5.3.0's and its corpus is v5.3.0's plus eight
+# parquets — so every difference between the two arms is named in `source_doses` below.
 #
-# Treatment deltas, and no others:
+# v5.0.0-base-alltails-60k.yaml at seed 42 is the LINEAGE reference, not the attribution control.
+# Against v5.0.0 this arm carries a third delta neither `corpus_dir` nor `source_doses` names:
+# `synth-reviewed-postcode-tail: 0.05` over v0.28.0's 22 reviewed Venezuelan rows, which is v5.3.0's
+# whole treatment riding along. Read any movement on the four `ve_city_postcode_trailing_state` rows
+# against v5.0.0 as v5.3.0's result, never as this arm's.
+#
+# This config names its target families from the #1931 register, which is the standing requirement
+# for a v5-lineage run.
+#
+# Treatment deltas against v5.3.0, and no others:
 #
 #   corpus_dir     v0.28.0 -> v0.29.0-target-families, a pure overlay ADD of eight parquets
 #                  (390,903 rows) onto v0.28.0's 711 slices. Nothing is removed or rewritten.
@@ -13,7 +24,15 @@
 #                  is not dose: the 277-row slice that took 165 passes per row was picked at 1.0, the
 #                  smallest number in its config. The derivation prints at launch; read it.
 #
-#   receipts       one per family, so the audit fails if a family does not actually draw.
+#   receipts       one per family, so the audit fails if a family does not actually draw. The
+#                  seventh, `ve-locality-postcode-region`, is INHERITED from v5.3.0 and guards that
+#                  arm riding along; it is not a target of this one.
+#
+# The audit's DOSE OUTLIER warning on this config lists seven sources and none of them is new here:
+# six carry v5.0.0's weights unchanged, and `synth-reviewed-postcode-tail` at 12.8 reps/row over 22
+# rows is v5.3.0's arm by construction (its receipt asks for 250 draws from 22 rows). The six sources
+# this config adds realize 0.1 to 1.0 reps/row, all under the audit's threshold. Read the warning as
+# a property both arms share, which is what a controlled comparison wants.
 #
 # Families targeted, and what each slice teaches:
 #
@@ -27,7 +46,7 @@
 #                    leftcontext-v26}-tuples.jsonl`, ~83,000 rows, ~8,489 of them ES rows carrying the
 #                    English exonyms) were built for the 2026-08-23 arc that closed DO-NOT-SHIP, and
 #                    they are in NEITHER this corpus lineage NOR any shipped config's mixture: no
-#                    v0.29.0 slice is labelled `synth-trailing-region*`, and neither v5.0.0 nor v5.3.0
+#                    v0.29.0 slice is labeled `synth-trailing-region*`, and neither v5.0.0 nor v5.3.0
 #                    weights that source, so a row carrying it would be dropped at load anyway. The
 #                    corrected slice therefore replaces nothing and competes with nothing — read a
 #                    result on the three F2 board rows as this slice's own.
@@ -60,9 +79,10 @@
 # register slices both teach a leading untagged token (`Blk`, `House`), which is the shape most
 # likely to loosen the bare-locality boundary.
 #
-# Grade the candidate against v5.0 seed 42 on the routed board plus the promotion battery. The target
-# metrics are the family board rows (`cases/<cc>/family-*.jsonl`) and the SG register board
-# (`cases/sg/register.jsonl`); tier-1 regressions remain disqualifying.
+# Grade the candidate against v5.3.0 seed 42 on the routed board plus the promotion battery, and
+# report v5.0.0 seed 42 beside it so the lineage is readable. The target metrics are the family board
+# rows (`cases/<cc>/family-*.jsonl`) and the SG register board (`cases/sg/register.jsonl`); tier-1
+# regressions remain disqualifying against BOTH arms.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.29.0-target-families/corpus-v0.29.0-target-families
