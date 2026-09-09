@@ -155,7 +155,11 @@ def _load_r2_env() -> dict[str, str]:
     return env
 
 
-r2_secret = modal.Secret.from_dict(_load_r2_env())
+# The secret is built from the LOCAL checkout at deploy time, so the lookup runs only there. This
+# module is imported inside every container too, where there is no .env and where only the functions
+# that declare this secret are given the keys — so raising unconditionally crash-looped every
+# function that does not use R2, the epoch audit included.
+r2_secret = modal.Secret.from_dict(_load_r2_env() if modal.is_local() else {})
 
 
 # HF token for Trackio's Hugging Face Space upload. Reads HF_TOKEN (or the
@@ -170,7 +174,7 @@ def _load_hf_env() -> dict[str, str]:
     return _read_env_keys(("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"))
 
 
-hf_secret = modal.Secret.from_dict(_load_hf_env())
+hf_secret = modal.Secret.from_dict(_load_hf_env() if modal.is_local() else {})
 
 BUCKET = "mailwoman-assets"
 VOL_MOUNT = "/data"
