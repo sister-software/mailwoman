@@ -22,6 +22,12 @@ from mailwoman_train import data_loader
 from mailwoman_train.config import DataConfig
 from mailwoman_train.data_loader import iter_encoded, iter_rows
 
+#: Stands in for the SentencePiece tokenizer in the tests below. Each of them replaces ``encode_row``,
+#: which is the only thing that would touch a tokenizer, so the object is never called — but
+#: ``iter_encoded`` refuses a None tokenizer on the SentencePiece path before it reaches the patched
+#: function, and refusing is correct: a None there crashes deeper in, with no row named.
+UNUSED_TOKENIZER = object()
+
 FULL_SCHEMA = pa.schema(
     [
         ("raw", pa.string()),
@@ -238,7 +244,7 @@ def test_iter_encoded_hands_the_triple_to_encode_row(tmp_path: Path, monkeypatch
 
     monkeypatch.setattr(data_loader, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
-    list(iter_encoded(cfg, tokenizer=None, split="train"))
+    list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
     assert len(captured) == 1
     assert captured[0]["span_starts"] == [0, 13, 22, 25]
     assert captured[0]["span_ends"] == [11, 20, 24, 30]
@@ -255,7 +261,7 @@ def test_iter_encoded_legacy_path_passes_none(tmp_path: Path, monkeypatch) -> No
 
     monkeypatch.setattr(data_loader, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
-    list(iter_encoded(cfg, tokenizer=None, split="train"))
+    list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
     assert captured[0]["span_starts"] is None
     assert captured[0]["span_tags"] is None
 
@@ -281,7 +287,7 @@ def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch
 
     monkeypatch.setattr(data_loader, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
-    list(iter_encoded(cfg, tokenizer=None, split="train"))
+    list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
     # Only the BMP row reached encode_row; the astral row was skipped before it (no crash).
     assert len(captured) == 1
     assert captured[0]["raw"] == "P.O. Box 19, Buffalo, NY 14201"

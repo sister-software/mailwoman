@@ -21,9 +21,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
 	# Local toolchain + tests. ruff is EXACT-pinned because package.json and .husky/pre-commit
-	# call the same version through uvx (0.15.20) — a dev-local ruff that disagrees with CI
-	# lints or formats differently than the check does. mypy/bandit resolve through uv.lock, so
-	# they carry floors only.
+	# call the same version through uvx — a dev-local ruff that disagrees with CI lints or formats
+	# differently than the check does. This pin is the one those call sites must match, and
+	# `scripts/verify_toolchain.py` fails when they do not, because a bump that moved this line
+	# alone left them a minor version behind. mypy/bandit resolve through uv.lock, so they carry
+	# floors only.
 	"pytest>=9.1.1",
 	"ruff==0.16.5",
 	"mypy>=1.15",

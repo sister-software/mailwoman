@@ -56,8 +56,8 @@ if [ -n "$STAGED" ]; then
 	# ANYTHING under corpus-python/ is staged (pyproject/modal edits must keep agreeing).
 	PY=$(printf '%s\n' "$STAGED" | grep -E '^corpus-python/.*\.py$' || true)
 	if [ -n "$PY" ]; then
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 check --fix
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 format
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.16.5 check --fix
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.16.5 format
 	fi
 	if printf '%s\n' "$STAGED" | grep -q '^corpus-python/'; then
 		python3 corpus-python/scripts/verify_toolchain.py

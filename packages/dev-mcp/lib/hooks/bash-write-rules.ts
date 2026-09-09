@@ -99,6 +99,10 @@ const ADMITTED = new Set([
 	"sqlite3",
 	"tar",
 	"tsc",
+	// The python toolchain, the same shape as `yarn` beside it: `uv run` and `uvx` resolve an
+	// environment and run a named tool, deriving the venv they write rather than taking content.
+	"uv",
+	"uvx",
 	"vale",
 	"vitest",
 	"wrangler",

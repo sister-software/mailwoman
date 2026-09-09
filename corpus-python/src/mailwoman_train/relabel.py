@@ -73,7 +73,7 @@ class AffixRelabelLexicon:
     suffixes: dict[str, str]  # lowercase variant -> canonical suffix
     version: str
     # v2 (2026-08-10, #1569): Pub-28 canonicals that are also common street-name head nouns
-    # (PARK/HILL/CREEK...). Sourced from codex/us/street-suffix.json via the
+    # (PARK/HILL/CREEK...). Sourced from packages/codex/lib/us/street-suffix.json via the
     # `mailwoman gazetteer affix-relabel` builder — never hand-typed here. Empty (a v1
     # artifact) leaves the positional licensing in split_street_span OFF: old artifacts keep
     # the old blanket-rejection behavior, by construction.
@@ -134,8 +134,8 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
         # whose FINAL word is merely a name-prone head noun (PARK/HILL/CREEK...) is licensed by
         # the TRUE suffix that follows it. Single-word names ('W Park Ave' -> name ['Park']) and
         # non-name-prone suffix-shaped tails ('Old Avenue Road') stay refused. `lex.name_prone`
-        # rides the v2 lexicon artifact (built from codex/us/street-suffix.json); a v1 artifact
-        # has it empty, so licensing is inert and old runs reproduce byte-for-byte.
+        # rides the v2 lexicon artifact (built from packages/codex/lib/us/street-suffix.json); a v1
+        # artifact has it empty, so licensing is inert and old runs reproduce byte-for-byte.
         tail_canonical = lex.suffixes.get(name[-1].lower())
         licensed = len(name) >= 2 and tail_canonical in lex.name_prone and name[0].lower() not in lex.directionals
         if not licensed:

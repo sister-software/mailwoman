@@ -289,6 +289,15 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      # corpus-python's 971 tests — the training data loader, the relabel licensing, the dose
+      # derivation, the resume/LR restamp. CI ran ruff, mypy and bandit over this tree and never
+      # pytest, so four of those tests were red on main and no check could see it: three called
+      # `iter_encoded` with a None tokenizer that a later guard correctly refuses, and the
+      # affix-relabel drift guard read `codex/us/street-suffix.json`, a path two workspace moves
+      # had left behind. It reuses the venv the Lint step already synced, so it costs ~30s.
+      - name: Test python
+        run: yarn python:test
+
       # The docs app ships real runtime code (the /demo page). Its typecheck sat outside CI and
       # went 7-errors red on main unnoticed — one of those errors was the LIVE demo's undefined
       # baseUrl paths (#917, broken in production since v5.0.0). This step is that bug's class fix.

@@ -2,7 +2,9 @@
 
 Guards that the export/quant pins stay consistent across pyproject, the Modal image, and the
 export opset — so a one-sided pin bump (the drift that broke mobile-Safari int8 once) goes red
-here instead of at the next export.
+here instead of at the next export. The ruff pin is guarded on the same grounds: its version is
+named in pyproject and in every `uvx ruff@` shell call site, and a bump that moves one leaves a
+local linter that disagrees with the one CI runs.
 """
 
 from __future__ import annotations
@@ -42,3 +44,20 @@ def test_export_opset_holds_safari_invariant():
 def test_main_passes_on_a_consistent_tree():
     vt = _load()
     assert vt.main() == 0
+
+
+def test_every_ruff_call_site_names_the_pinned_version():
+    """The [dev] ruff pin and every `uvx ruff@` call site must name one version.
+
+    The bump that added this: `pyproject.toml` moved to 0.16.5 and the three call sites in
+    `package.json` and `.husky/pre-commit` stayed at 0.15.20, so a developer's ruff and CI's ruff
+    were different minor versions with nothing checking.
+    """
+    vt = _load()
+    pin = vt._ruff_dev_pin()
+    assert pin, "pyproject [dev] carries no exact ruff== pin"
+    sites = vt._ruff_call_site_versions()
+    assert sites, "no ruff call sites are declared"
+    for path, versions in sites.items():
+        assert versions, f"{path} declares no `uvx ruff@<version>` — the check reads a file it no longer guards"
+        assert versions == {pin}, f"{path} calls ruff@{sorted(versions)} but the pin is =={pin}"

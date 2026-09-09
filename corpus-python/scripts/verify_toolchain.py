@@ -11,7 +11,13 @@ or a local export silently differs from the browser-shipped graph:
 3. ``corpus-python/src/mailwoman_train/export_onnx.py`` — the opset the graph is exported at
    (the ``<= 17`` invariant onnxruntime-web's native WebGPU EP needs).
 
-This script asserts all three agree, and (when the heavy ML deps are actually installed) that the
+The ruff pin has the same shape and one more copy: ``pyproject.toml``'s ``[dev]`` extra names the
+version a developer's venv installs, and three shell call sites (``package.json``'s ``lint:python``
+and ``fix:python``, ``.husky/pre-commit``) name the version ``uvx`` fetches. A bump that moves the
+pin without the call sites leaves a local ruff that lints differently from the one CI runs, which is
+the failure the pyproject comment warns about — and it happened, so this script now checks all four.
+
+This script asserts they agree, and (when the heavy ML deps are actually installed) that the
 installed versions match the pins too. It needs none of torch/onnx to run the cross-file checks, so
 it is a cheap CI guard — run it in the lint/CI lane, not just on a train machine.
 
@@ -36,6 +42,10 @@ PYPROJECT = REPO_ROOT / "corpus-python" / "pyproject.toml"
 MODAL_IMAGE = REPO_ROOT / "corpus-python" / "modal" / "train_remote.py"
 EXPORT_ONNX = REPO_ROOT / "corpus-python" / "src" / "mailwoman_train" / "export_onnx.py"
 
+# Every file that names a ruff version for `uvx` to fetch. Each must agree with the [dev] pin.
+RUFF_CALL_SITES = (REPO_ROOT / "package.json", REPO_ROOT / ".husky" / "pre-commit")
+RUFF_UVX_RE = re.compile(r"uvx ruff@([0-9][^\s\"']*)")
+
 PIN_RE = re.compile(r"^([A-Za-z0-9_.-]+)==([0-9][^\"'\s]*)$")
 
 
@@ -59,6 +69,24 @@ def _pins_from_modal() -> dict[str, str]:
         if m:
             out[dep] = m.group(1)
     return out
+
+
+def _ruff_dev_pin() -> str | None:
+    data = tomllib.loads(PYPROJECT.read_text())
+    for spec in data["project"]["optional-dependencies"]["dev"]:
+        m = PIN_RE.match(spec.strip())
+        if m and m.group(1) == "ruff":
+            return m.group(2)
+    return None
+
+
+def _ruff_call_site_versions() -> dict[Path, set[str]]:
+    """Every ruff version each call site asks `uvx` for. A file naming none is reported by its caller.
+
+    A file with no match is a real finding, not a skip: it means the call site moved or the command
+    was respelled, and this check would then pass over a copy it no longer reads.
+    """
+    return {path: set(RUFF_UVX_RE.findall(path.read_text())) for path in RUFF_CALL_SITES}
 
 
 def _export_opset() -> int | None:
@@ -91,6 +119,20 @@ def main() -> int:
     elif opset > MAX_OPSET:
         problems.append(f"export opset is {opset} but the onnxruntime-web invariant requires <= {MAX_OPSET}")
 
+    # 4: the ruff pin and every `uvx ruff@` call site must name the same version.
+    ruff_pin = _ruff_dev_pin()
+    ruff_sites = _ruff_call_site_versions()
+    if ruff_pin is None:
+        problems.append("pyproject [dev] extras carry no exact ruff== pin")
+    for path, versions in ruff_sites.items():
+        name = path.relative_to(REPO_ROOT)
+        if not versions:
+            problems.append(f"{name}: no `uvx ruff@<version>` call found — this check reads a file it no longer guards")
+            continue
+        wrong = sorted(v for v in versions if v != ruff_pin)
+        if wrong:
+            problems.append(f"{name}: calls ruff@{', ruff@'.join(wrong)} but pyproject [dev] pins =={ruff_pin}")
+
     # Conditional: if the heavy deps are actually installed (train machine / Modal), they must match
     # the pins. In a lint-only checkout they are absent by design — skip with a note, don't fail.
     installed_checked = 0
@@ -107,6 +149,10 @@ def main() -> int:
     print(f"[verify-toolchain] modal pins:     {modal}")
     print(f"[verify-toolchain] export opset:   {opset}")
     print(
+        f"[verify-toolchain] ruff pin =={ruff_pin}, call sites: "
+        + ", ".join(f"{p.relative_to(REPO_ROOT)} {sorted(v) or '(none)'}" for p, v in ruff_sites.items())
+    )
+    print(
         f"[verify-toolchain] installed-version check: {installed_checked}/{len(pyproject)} deps present"
         + (" (heavy deps not installed — cross-file checks only)" if installed_checked == 0 else "")
     )
@@ -117,7 +163,7 @@ def main() -> int:
             print(f"  - {p}", file=sys.stderr)
         return 1
 
-    print("[verify-toolchain] OK — pyproject, Modal image, and export opset agree.")
+    print("[verify-toolchain] OK — pyproject, Modal image, export opset, and the ruff pin agree.")
     return 0
 
 
