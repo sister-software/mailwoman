@@ -7,7 +7,7 @@
  *   inputs, and the report names every input whose first token is not decoded as a postcode.
  */
 
-import { BARE_POSTCODE_EVAL_CASES, type BarePostcodeEvalFamily } from "@mailwoman/corpus/recipes/bare-postcode-eval"
+import { BARE_POSTCODE_EVAL_CASES, type BarePostcodeEvalFamily } from "@mailwoman/corpus/recipes/bare/postcode-eval"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 
 import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gauntlet/harness"

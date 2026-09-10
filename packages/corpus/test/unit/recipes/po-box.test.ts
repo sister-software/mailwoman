@@ -11,7 +11,7 @@
  *   asked for. The tests below pin each.
  */
 
-import { poBoxRecipe } from "@mailwoman/corpus/recipes/po-box"
+import { poBoxRecipe } from "@mailwoman/corpus/recipes/po/box"
 import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 

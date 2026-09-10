@@ -373,7 +373,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	],
 	["evals/", "the score ledger's rows are dated notes on committed board cases"],
 	["packages/corpus/data/", "the sub-venue lexicon: an airport gate is a real sub-venue token"],
-	["packages/corpus/lib/recipes/sub-venue", "sub-venue recipes name the physical gate"],
+	["packages/corpus/lib/recipes/sub/venue", "sub-venue recipes name the physical gate"],
 	["packages/corpus/lib/tools/sub-venue", "sub-venue tooling names the physical gate"],
 	["packages/corpus/test/unit/recipes/sub-venue", "sub-venue recipe tests name the physical gate"],
 	["packages/corpus/test/unit/tools/sub-venue", "sub-venue tooling tests name the physical gate"],

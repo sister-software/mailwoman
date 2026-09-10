@@ -29,7 +29,7 @@ import {
 	sampleIdentifier,
 	SUBVENUE_LEGS,
 	type SubVenueLeg,
-} from "@mailwoman/corpus/recipes/sub-venue"
+} from "@mailwoman/corpus/recipes/sub/venue"
 import { SUBVENUE_PROMOTIONS } from "@mailwoman/corpus/tools"
 import { describe, expect, it } from "vitest"
 

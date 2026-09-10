@@ -17,7 +17,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { noStreetLedRecipe } from "@mailwoman/corpus/recipes/no-street-led"
+import { noStreetLedRecipe } from "@mailwoman/corpus/recipes/no/street-led"
 import { scratch, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 

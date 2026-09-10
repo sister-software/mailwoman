@@ -14,7 +14,7 @@
  *      digit. The bare-LOCALITY and bare-POSTCODE counter rows must both exist and carry no street.
  */
 
-import { noFragmentRecipe } from "@mailwoman/corpus/recipes/no-fragment"
+import { noFragmentRecipe } from "@mailwoman/corpus/recipes/no/fragment"
 import { scratch, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 

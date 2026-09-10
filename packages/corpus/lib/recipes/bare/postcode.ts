@@ -34,7 +34,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 import { join, type PathBuilderLike } from "path-ts"
 
-import { isReservedBarePostcode } from "#recipes/bare-postcode-eval"
+import { isReservedBarePostcode } from "#recipes/bare/postcode-eval"
 import { alignAndWrite, type CorpusRecipe, readCSVRecords, sliceSourceID } from "#recipes/scaffold"
 
 /**

@@ -86,13 +86,13 @@ import {
 	sampleIdentifier,
 	type StreetNegatives,
 	titleCase,
-} from "#recipes/sub-venue-sources"
+} from "#recipes/sub/venue-sources"
 import type { LocaleBaseTuple } from "#synthesizers/german"
 import { pick } from "#synthesizers/utils"
 import type { SubVenueLexiconTable } from "#tools"
 import { alignRow } from "#utils"
 
-export * from "#recipes/sub-venue-sources"
+export * from "#recipes/sub/venue-sources"
 
 //#region Plan
 
