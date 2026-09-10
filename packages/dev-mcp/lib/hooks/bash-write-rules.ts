@@ -200,7 +200,13 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
 	{ head: "npm", pattern: /(?:^|\s)pkg\s+set\b/u, because: "`npm pkg set` writes a manifest" },
-	{ head: "yarn", pattern: /(?:^|\s)(?:dlx|exec|node)\b/u, because: "`yarn` is running an arbitrary program" },
+	// The subcommand has to be a WHOLE argument. `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops
+	// health node-modules-reacharound` as `yarn node …` and refused a read-only check by its own name.
+	{
+		head: "yarn",
+		pattern: /(?:^|\s)(?:dlx|exec|node)(?=\s|$)/u,
+		because: "`yarn` is running an arbitrary program",
+	},
 	{ head: "npx", pattern: /(?:^|\s)-{1,2}y(?:es)?\b/u, because: "`npx -y` fetches and runs an unreviewed package" },
 	{ head: "vitest", pattern: /(?:^|\s)(?:-u\b|--update\b)/u, because: "`vitest -u` rewrites snapshots" },
 	// The same tool arrives through the package manager, where `yarn` is the command word.

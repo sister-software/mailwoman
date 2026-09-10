@@ -58,6 +58,7 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		["git config writing a manifest", `git config -f packages/core/package.json foo.bar baz`],
 		["npm rewriting a manifest", `npm pkg set scripts.evil=x`],
 		["yarn running an arbitrary program", `yarn dlx replace-in-file a b AGENTS.md`],
+		["yarn running a script through node", `yarn node scripts/rewrite.js`],
 		["vitest rewriting snapshots", `yarn vitest run -u packages/core`],
 		["a copy into the repository", `cp /tmp/x AGENTS.md`],
 		["a removal inside the repository", `rm -rf packages/core/lib`],
@@ -142,6 +143,10 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node docs/scripts/check-vale-rules.ts`],
 		["a redirect after changing directory", `cd /tmp && echo hi > probe.txt`],
 		["a home-relative redirect", `echo x > ~/notes.txt`],
+		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's own NAME as `yarn node …` and
+		// refused a read-only guard. The subcommand has to be a whole argument.
+		["a health check whose name starts with a refused subcommand", `yarn mwops health node-modules-reacharound`],
+		["a script whose name starts with a refused subcommand", `yarn exec-plan --dry-run`],
 	])("admits %s", (_label, command) => {
 		expect(refusalFor(command)).toBeNull()
 	})

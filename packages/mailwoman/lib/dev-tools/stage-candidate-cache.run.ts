@@ -31,6 +31,7 @@ import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { join } from "path-ts"
 
 const { values } = parseArguments({
@@ -90,7 +91,9 @@ for (const locale of locales) {
 	}
 
 	const manifest = await readPackageJSON(manifestPath)
-	const packageDirectory = join(outRoot, "node_modules", "@mailwoman", `neural-weights-${locale}`)
+	// The npm-prefix layout has one home, and this is a caller of it: the directory does not exist yet, so there is
+	// nothing to resolve, and spelling it out here would put a second copy of the layout beside the first.
+	const packageDirectory = weightsCachePackageDir(outRoot, locale)
 
 	// The manifest's `files` mixes concrete siblings with globs, negations and the source patterns a published tarball
 	// needs. Only the concrete data siblings belong in a cache; a glob has nothing to link.
