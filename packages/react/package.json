@@ -324,6 +324,7 @@
 		"@storybook/addon-docs": "^10.6.0",
 		"@storybook/react-vite": "^10.6.0",
 		"@styleframe/core": "^3.6.2",
+		"@styleframe/license": "^2.0.2",
 		"@styleframe/loader": "^3.0.4",
 		"@styleframe/plugin": "^3.4.1",
 		"@styleframe/transpiler": "^3.4.2",
