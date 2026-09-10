@@ -8,7 +8,13 @@
  *   reaches the rendering and the agreement without it.
  */
 
-import { detectedAsPostcode, renderBarePostcode } from "@mailwoman/corpus/recipes/bare-postcode"
+import {
+	detectedAsPostcode,
+	findMissingPostcodeSources,
+	renderBarePostcode,
+	selectPostcodes,
+} from "@mailwoman/corpus/recipes/bare-postcode"
+import { BARE_POSTCODE_EVAL_CASES, isReservedBarePostcode } from "@mailwoman/corpus/recipes/bare-postcode-eval"
 import { describe, expect, it } from "vitest"
 
 describe("renderBarePostcode", () => {
@@ -46,6 +52,60 @@ describe("renderBarePostcode", () => {
 	it("renders nothing for a code that does not fit the country's shape", () => {
 		expect(renderBarePostcode("CZ", "1190")).toEqual([])
 		expect(renderBarePostcode("NL", "1012")).toEqual([])
+	})
+})
+
+describe("selectPostcodes", () => {
+	it("samples reproducibly across the complete sorted input", () => {
+		const codes = Array.from({ length: 100 }, (_, index) => `${String(1000 + index).padStart(4, "0")}AA`)
+
+		const selected = selectPostcodes(codes, 10, 42)
+
+		expect(selected).toHaveLength(10)
+		expect(new Set(selected)).toHaveLength(10)
+		expect(selected).toEqual(selectPostcodes(codes.toReversed(), 10, 42))
+		expect(selected).not.toEqual(codes.slice(0, 10))
+		expect(selectPostcodes(codes, 10, 43)).not.toEqual(selected)
+	})
+
+	it("keeps every distinct code when the cap exceeds supply", () => {
+		expect(selectPostcodes(["11900", "15000", "11900"], 10, 42)).toEqual(["11900", "15000"])
+	})
+})
+
+describe("findMissingPostcodeSources", () => {
+	it("checks every declared input and returns all absent paths in declaration order", async () => {
+		const checked: string[] = []
+
+		const missing = await findMissingPostcodeSources(["cz.csv", "sk.csv", "se.csv"], async (path) => {
+			checked.push(path)
+
+			return path === "cz.csv"
+		})
+
+		expect(checked).toEqual(["cz.csv", "sk.csv", "se.csv"])
+		expect(missing).toEqual(["sk.csv", "se.csv"])
+	})
+})
+
+describe("bare-postcode capability reservation", () => {
+	it("keeps 32 NNN NN and 24 NNNN LL inputs exclusively for evaluation", () => {
+		expect(BARE_POSTCODE_EVAL_CASES.filter(({ family }) => family === "nnn_nn")).toHaveLength(32)
+		expect(BARE_POSTCODE_EVAL_CASES.filter(({ family }) => family === "nnnn_ll")).toHaveLength(24)
+		expect(new Set(BARE_POSTCODE_EVAL_CASES.map(({ input }) => input.replaceAll(" ", ""))).size).toBe(56)
+	})
+
+	it("reserves both written forms without depending on country", () => {
+		expect(isReservedBarePostcode("120 00")).toBe(true)
+		expect(isReservedBarePostcode("12000")).toBe(true)
+		expect(isReservedBarePostcode("1011 ab")).toBe(true)
+		expect(isReservedBarePostcode("999 99")).toBe(false)
+	})
+
+	it("keeps every reserved input recognizable as a postcode", () => {
+		for (const { input } of BARE_POSTCODE_EVAL_CASES) {
+			expect(detectedAsPostcode(input)).toBe(true)
+		}
 	})
 })
 

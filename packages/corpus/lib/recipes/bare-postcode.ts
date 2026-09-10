@@ -29,11 +29,12 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { SeededRandom } from "@mailwoman/core/utils"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 import { join, type PathBuilderLike } from "path-ts"
 
+import { isReservedBarePostcode } from "#recipes/bare-postcode-eval"
 import { alignAndWrite, type CorpusRecipe, readCSVRecords, sliceSourceID } from "#recipes/scaffold"
 
 /**
@@ -130,6 +131,32 @@ function spacedThree(compact: string): string[] {
 }
 
 /**
+ * Choose distinct postcodes without inheriting the publisher's row order.
+ *
+ * Sorting first makes the result independent of input-file order; the seeded sample then gives a reproducible spread
+ * across the complete set instead of taking the first municipality or numeric prefix that happens to fill the cap.
+ */
+export function selectPostcodes(codes: Iterable<string>, limit: number, seed: number): string[] {
+	const pool = [...new Set(codes)].toSorted()
+
+	if (limit >= pool.length) return pool
+
+	return new SeededRandom(seed).sample(pool, Math.max(0, limit))
+}
+
+/**
+ * Return every required input path that is absent, preserving declaration order for diagnostics.
+ */
+export async function findMissingPostcodeSources(
+	paths: readonly string[],
+	exists: (path: string) => Promise<boolean> = pathExists
+): Promise<string[]> {
+	const results = await Promise.all(paths.map(async (path) => ({ path, exists: await exists(path) })))
+
+	return results.filter((result) => !result.exists).map(({ path }) => path)
+}
+
+/**
  * Every surface a country writes for one postcode, spaced form first, or `[]` when this recipe carries no form for that
  * country or the code does not fit the one it carries.
  *
@@ -172,37 +199,36 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0
 		let skipped = 0
 		let unrecognized = 0
 
-		// One row per DISTINCT code, not per address. A countrywide file repeats a postcode once per
-		// building, and emitting all of them would teach one country's densest municipality and nothing else.
-		const seen = new Set<string>()
+		// Check the complete input set before writing the first row. A missing municipality otherwise
+		// produces a plausible non-empty artifact with less Swedish coverage than the recipe declares.
+		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => String(csv)))
+
+		if (missing.length) {
+			throw new Error(
+				`bare-postcode is missing ${missing.length} of ${SOURCES.length} required OpenAddresses files, ` +
+					`starting with ${missing[0]}. Fetch the per-source runs into \`openaddresses/extracted/\` ` +
+					"(anonymous, see packages/corpus/CLAUDE.md)."
+			)
+		}
 
 		// A PER-COUNTRY budget, because supply is wildly uneven and the shortage is where the capability
 		// broke: the Netherlands publishes ~460,000 distinct `NNNN LL` codes against Czechia's 2,669 and
 		// Slovakia's 1,059, so an uncapped pass emits 98.9% Dutch rows and teaches the `NNN NN` countries —
 		// the ones reading 0/32 — almost nothing. Equal shares, each country keeping whatever it can fill.
-		const missing: string[] = []
 		const countries = [...new Set(SOURCES.map((source) => source.country))]
 		const budget = opts.count ? Math.ceil(opts.count / countries.length) : Number.POSITIVE_INFINITY
 		const perCountry = new Map(countries.map((country) => [country, 0]))
+		const codesByCountry = new Map(countries.map((country) => [country, new Set<string>()]))
 
 		for (const source of SOURCES) {
 			const form = WRITTEN_FORMS.get(source.country)
 
-			if (perCountry.get(source.country)! >= budget) continue
-
 			if (!form) continue
-
-			if (!(await pathExists(String(source.csv)))) {
-				missing.push(String(source.csv))
-
-				continue
-			}
 
 			for await (const row of readCSVRecords(source.csv)) {
 				read++
@@ -212,27 +238,36 @@ export const barePostcodeRecipe: CorpusRecipe = {
 					.toUpperCase()
 					.replaceAll(/\s+/gu, "")
 
-				// `:` separates safely without a NUL: the country is two ASCII letters and `compact` has had
-				// its whitespace stripped, so neither half can contain one.
-				const key = `${source.country}:${compact}`
+				const countryCodes = codesByCountry.get(source.country)!
 
-				if (!compact || seen.has(key)) {
+				if (!compact || isReservedBarePostcode(compact) || countryCodes.has(compact)) {
 					skipped++
 
 					continue
 				}
 
-				seen.add(key)
+				if (!form.render(compact).length) {
+					skipped++
 
+					continue
+				}
+
+				countryCodes.add(compact)
+			}
+		}
+
+		for (const country of countries) {
+			const form = WRITTEN_FORMS.get(country)!
+			const maximumCodes = Number.isFinite(budget) ? Math.ceil(budget / 2) : Number.POSITIVE_INFINITY
+			const countrySeed = opts.seed ^ (country.charCodeAt(0) << 8) ^ country.charCodeAt(1)
+			const selected = selectPostcodes(codesByCountry.get(country)!, maximumCodes, countrySeed)
+
+			for (const compact of selected) {
 				const surfaces = form.render(compact)
 
-				if (!surfaces.length) {
-					skipped++
-
-					continue
-				}
-
 				for (const surface of surfaces) {
+					if (perCountry.get(country)! >= budget) break
+
 					// A surface the detector does not read as a postcode is a disagreement between this table
 					// and `known-formats.ts`, and emitting it would teach a string the prior cannot support.
 					if (!detectedAsPostcode(surface)) {
@@ -246,12 +281,12 @@ export const barePostcodeRecipe: CorpusRecipe = {
 					const canonical = {
 						raw: surface,
 						components,
-						country: source.country,
+						country,
 						locale: form.locale,
 						source: "synth-bare-postcode",
 						source_id: sliceSourceID("synth-bare-postcode", {
 							...components,
-							c: source.country,
+							c: country,
 						}),
 						corpus_version: "0.30.0",
 						license:
@@ -260,13 +295,11 @@ export const barePostcodeRecipe: CorpusRecipe = {
 
 					if (alignAndWrite(write, canonical, "bare-postcode")) {
 						emitted++
-						perCountry.set(source.country, perCountry.get(source.country)! + 1)
+						perCountry.set(country, perCountry.get(country)! + 1)
 					} else {
 						skipped++
 					}
 				}
-
-				if (perCountry.get(source.country)! >= budget) break
 			}
 		}
 
@@ -280,17 +313,12 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			)
 		}
 
-		// AN EMPTY BUILD IS A FAILURE, NOT AN EMPTY ANSWER. When the OpenAddresses tree is not on this host
-		// every source reads nothing, and a recipe that returns 0 rows with exit 0 writes an empty file over
-		// a good one — which is what happened here the first time the archives were cleared. Naming the
-		// missing files is the difference between "this host lacks the data" and "the recipe is broken".
+		// AN EMPTY BUILD IS A FAILURE, NOT AN EMPTY ANSWER. Required files were preflighted above, so zero
+		// rows here means their postcode columns or the written-form rules no longer provide usable data.
 		if (emitted === 0) {
 			throw new Error(
-				`bare-postcode emitted no rows from ${SOURCES.length} sources. ` +
-					(missing.length
-						? `${missing.length} are not on this host, starting with ${missing[0]}. Fetch the OpenAddresses ` +
-							"per-source runs into `openaddresses/extracted/` (anonymous, see packages/corpus/CLAUDE.md)."
-						: "Every source was readable, so the postcode column or the written forms changed.")
+				`bare-postcode emitted no rows from ${SOURCES.length} readable sources. ` +
+					"The postcode columns or the written-form rules changed."
 			)
 		}
 
