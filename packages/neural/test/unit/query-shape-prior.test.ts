@@ -5,6 +5,7 @@
  */
 
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "@mailwoman/neural/query-shape-prior"
+import { computeQueryShape } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-postcode", "I-postcode", "B-po_box", "I-po_box"]
@@ -243,4 +244,38 @@ describe("addEmissionMatrix", () => {
 			[3, 4],
 		])
 	})
+})
+
+/**
+ * A format the detector produces and this prior has no label for contributes zero bias and raises nothing, so the two
+ * lists can disagree for as long as nobody reads a board row that needed the bias. Driving the REAL detector is what
+ * makes the assertion hold for formats added later: a hardcoded list here would be the second list all over again.
+ */
+describe("format coverage", () => {
+	const ALL_LABELS = [...LABELS, "B-street", "I-street", "B-house_number", "I-house_number"]
+
+	// One input per `KnownFormat` member. A single input may produce several hits — `100 00` produces four.
+	const SAMPLES = ["90210", "90210-1234", "SW1A 1AA", "K1A 0B1", "100-0001", "1012 LG", "1012LG", "100 00", "PO Box 74"]
+
+	for (const input of SAMPLES) {
+		it(`biases every format hit produced for ${JSON.stringify(input)}`, () => {
+			const shape = computeQueryShape(input)
+
+			expect(shape.knownFormats.length).toBeGreaterThan(0)
+
+			for (const hit of shape.knownFormats) {
+				// ONE hit per call. `100 00` produces four, and passing the whole shape lets a mapped sibling
+				// supply the bias an unmapped format did not.
+				const matrix = buildEmissionPriors(
+					{ knownFormats: [hit] },
+					[{ start: hit.span.start, end: hit.span.end }],
+					ALL_LABELS
+				)
+
+				const biased = matrix[0]?.some((value) => value > 0)
+
+				expect(biased, `${hit.format} produced no bias — it names no label in query-shape-prior.ts`).toBe(true)
+			}
+		})
+	}
 })
