@@ -28,28 +28,27 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
-import type { PathBuilderLike } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
-import { alignAndWrite, type CorpusRecipe, readZippedCSVRecords, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readCSVRecords, sliceSourceID } from "#recipes/scaffold"
 
 /**
- * One country's postcodes: the cached archive, the member inside it, and the country the member covers.
+ * One country's postcodes: the CSV under the extracted OpenAddresses tree, and the country it covers.
  *
- * `europe.zip` rather than the per-source `oa-cache` archives its siblings read, because it is what this lab holds for
- * these countries and its members are byte-identical to what OpenAddresses' current run serves
- * (`packages/corpus/CLAUDE.md`). Sweden publishes per municipality, so SE is sixteen entries; CZ, SK and NL are one
- * countrywide file each.
+ * `openaddresses/extracted/` rather than a cached zip, because the extracted tree is what survives on this lab and its
+ * paths mirror the archive's member paths exactly (`cz/countrywide.csv`). Sweden publishes per municipality, so SE is
+ * sixteen files; CZ, SK and NL are one countrywide file each.
  */
 interface PostcodeSource {
-	zip: PathBuilderLike
-	csv: string
+	csv: PathBuilderLike
 	country: string
 }
 
-const EUROPE = dataRootPath("openaddresses", "europe.zip")
+const EXTRACTED = dataRootPath("openaddresses", "extracted")
 
 /**
  * Read from the archive rather than guessed: `readZippedCSVRecords` throws on a member that is not there, and
@@ -81,12 +80,11 @@ const SWEDISH_MUNICIPALITIES = [
  * Greek.
  */
 const SOURCES: PostcodeSource[] = [
-	{ zip: EUROPE, csv: "cz/countrywide.csv", country: "CZ" },
-	{ zip: EUROPE, csv: "sk/countrywide.csv", country: "SK" },
-	{ zip: EUROPE, csv: "nl/countrywide.csv", country: "NL" },
+	{ csv: join(EXTRACTED, "cz", "countrywide.csv"), country: "CZ" },
+	{ csv: join(EXTRACTED, "sk", "countrywide.csv"), country: "SK" },
+	{ csv: join(EXTRACTED, "nl", "countrywide.csv"), country: "NL" },
 	...SWEDISH_MUNICIPALITIES.map((name) => ({
-		zip: EUROPE,
-		csv: `se/municipality_of_${name}.csv`,
+		csv: join(EXTRACTED, "se", `municipality_of_${name}.csv`),
 		country: "SE",
 	})),
 ]
@@ -188,6 +186,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		// broke: the Netherlands publishes ~460,000 distinct `NNNN LL` codes against Czechia's 2,669 and
 		// Slovakia's 1,059, so an uncapped pass emits 98.9% Dutch rows and teaches the `NNN NN` countries —
 		// the ones reading 0/32 — almost nothing. Equal shares, each country keeping whatever it can fill.
+		const missing: string[] = []
 		const countries = [...new Set(SOURCES.map((source) => source.country))]
 		const budget = opts.count ? Math.ceil(opts.count / countries.length) : Number.POSITIVE_INFINITY
 		const perCountry = new Map(countries.map((country) => [country, 0]))
@@ -199,7 +198,13 @@ export const barePostcodeRecipe: CorpusRecipe = {
 
 			if (!form) continue
 
-			for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
+			if (!(await pathExists(String(source.csv)))) {
+				missing.push(String(source.csv))
+
+				continue
+			}
+
+			for await (const row of readCSVRecords(source.csv)) {
 				read++
 
 				const compact = String(row.postcode ?? "")
@@ -207,7 +212,9 @@ export const barePostcodeRecipe: CorpusRecipe = {
 					.toUpperCase()
 					.replaceAll(/\s+/gu, "")
 
-				const key = `${source.country} ${compact}`
+				// `:` separates safely without a NUL: the country is two ASCII letters and `compact` has had
+				// its whitespace stripped, so neither half can contain one.
+				const key = `${source.country}:${compact}`
 
 				if (!compact || seen.has(key)) {
 					skipped++
@@ -270,6 +277,20 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			throw new Error(
 				`${unrecognized} rendered surfaces were not read as a postcode by detectKnownFormats — the ` +
 					"WRITTEN_FORMS table and known-formats.ts's PATTERNS disagree. Reconcile them before building."
+			)
+		}
+
+		// AN EMPTY BUILD IS A FAILURE, NOT AN EMPTY ANSWER. When the OpenAddresses tree is not on this host
+		// every source reads nothing, and a recipe that returns 0 rows with exit 0 writes an empty file over
+		// a good one — which is what happened here the first time the archives were cleared. Naming the
+		// missing files is the difference between "this host lacks the data" and "the recipe is broken".
+		if (emitted === 0) {
+			throw new Error(
+				`bare-postcode emitted no rows from ${SOURCES.length} sources. ` +
+					(missing.length
+						? `${missing.length} are not on this host, starting with ${missing[0]}. Fetch the OpenAddresses ` +
+							"per-source runs into `openaddresses/extracted/` (anonymous, see packages/corpus/CLAUDE.md)."
+						: "Every source was readable, so the postcode column or the written forms changed.")
 			)
 		}
 
