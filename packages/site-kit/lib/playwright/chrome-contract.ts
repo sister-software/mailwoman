@@ -34,6 +34,12 @@ export interface Box {
 const BEARING_OFF_NORTH = 42
 
 /**
+ * How many pointer moves the scoped-query check drives. Enough that the hook's per-frame throttle lets several through,
+ * and few enough that the walk stays inside one test's budget.
+ */
+const POINTER_MOVES = 8
+
+/**
  * The chrome pieces that float over a map, by selector. A missing one is skipped rather than failed: the planetary apps
  * carry no chip row on every route, and a test for one app must not fail on the other's absences.
  */
@@ -221,6 +227,59 @@ export async function expectReachable(page: Page, selector: string): Promise<voi
 	})
 
 	expect(reached, `${selector} is clipped or covered at its own centre`).toBe(true)
+}
+
+/**
+ * Every `queryRenderedFeatures` the page runs while the pointer moves names the layers it wants.
+ *
+ * Unscoped, that call walks the whole style: measured at 64.3 ms returning 4,819 features over the 79-layer basemap at
+ * zoom 14 in Manhattan, against 5.7 ms and 44 features scoped to the 11 label layers. One per pointer move is the map's
+ * entire frame budget, and nothing about the page LOOKS wrong when it happens — which is why it is a contract rather
+ * than a timing assertion, and why a timing assertion would be the flaky way to write this.
+ *
+ * @param handle The global the app republishes its map instance under.
+ */
+export async function expectPointerQueriesStayScoped(page: Page, handle: string): Promise<void> {
+	await page.evaluate((name) => {
+		const map = Reflect.get(globalThis, name) as
+			| { queryRenderedFeatures(point: unknown, options?: { layers?: string[] }): unknown[] }
+			| undefined
+
+		if (!map) return
+
+		const calls: boolean[] = []
+
+		Reflect.set(globalThis, "__mailwomanQueryScopes", calls)
+
+		const original = map.queryRenderedFeatures.bind(map)
+
+		map.queryRenderedFeatures = (point: unknown, options?: { layers?: string[] }) => {
+			calls.push(Array.isArray(options?.layers))
+
+			return original(point, options)
+		}
+	}, handle)
+
+	const canvas = page.locator(".maplibregl-canvas")
+	const box = await canvas.boundingBox()
+
+	if (!box) return
+
+	for (let step = 0; step < POINTER_MOVES; step++) {
+		await page.mouse.move(box.x + box.width / 2 + step * 7, box.y + box.height / 2 + step * 5)
+	}
+
+	// The hover query runs on an animation frame, so the moves are given one to land in.
+	await page.waitForTimeout(300)
+
+	const scopes = await page.evaluate(() => (Reflect.get(globalThis, "__mailwomanQueryScopes") as boolean[]) ?? [])
+
+	expect(scopes.length, "the pointer ran at least one rendered-feature query").toBeGreaterThan(0)
+
+	expect(
+		scopes.filter((scoped) => !scoped).length,
+		`${scopes.filter((scoped) => !scoped).length} of ${scopes.length} pointer queries walked every layer in the style`
+	).toBe(0)
 }
 
 /**

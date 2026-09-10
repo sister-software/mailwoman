@@ -23,6 +23,7 @@ import {
 	expectEverySheetControlCloses,
 	expectNoChromeOverlap,
 	expectNothingUnderTheFooter,
+	expectPointerQueriesStayScoped,
 	expectReachable,
 } from "@mailwoman/site-kit/playwright/chrome-contract"
 import { expect, test } from "@playwright/test"
@@ -86,6 +87,52 @@ test.describe("Chrome — the floating controls", () => {
 		await openChrome(page)
 
 		await expectCompassFollowsBearing(page, "__mailwomanMapCanvas")
+	})
+
+	test("a pointer move never queries every layer in the style", async ({ page }) => {
+		// The REAL basemap, because the canned runtime's style carries no label layers and the hook returns before it
+		// queries anything — a pass there would mean nothing. The basemap arrives well before the model, so this waits
+		// on the style having layers rather than on the geocoder being ready.
+		await page.goto("/")
+
+		await page.waitForFunction(
+			() => {
+				const map = Reflect.get(globalThis, "__mailwomanMapCanvas") as
+					| { getStyle(): { layers?: unknown[] } | undefined }
+					| undefined
+
+				return (map?.getStyle()?.layers?.length ?? 0) > 10
+			},
+			undefined,
+			{ timeout: 120_000 }
+		)
+
+		await expectPointerQueriesStayScoped(page, "__mailwomanMapCanvas")
+	})
+
+	test("the bundled stylesheet keeps both halves of every vendor pair", async ({ page, request }) => {
+		await openChrome(page)
+
+		// The minifier collapses two declarations carrying the same value and keeps the last, so a standard property
+		// written before its `-webkit-` twin is dropped from the OUTPUT while the source still reads correctly. This is
+		// the only place that difference is visible.
+		const href = await page.locator('link[rel="stylesheet"]').first().getAttribute("href")
+
+		expect(href, "the page links a stylesheet").not.toBeNull()
+
+		const css = await (await request.get(href!)).text()
+
+		for (const property of ["backdrop-filter", "mask-image"]) {
+			const prefixed = css.split(`-webkit-${property}:`).length - 1
+
+			if (prefixed === 0) continue
+
+			// Every prefixed declaration has a standard one beside it. `-webkit-x:` also contains `x:`, so the standard
+			// count is the raw count minus the prefixed ones.
+			const standard = css.split(`${property}:`).length - 1 - prefixed
+
+			expect(standard, `${property} survived the bundle beside its -webkit- twin`).toBeGreaterThanOrEqual(prefixed)
+		}
 	})
 
 	test("the sources button shows the credits where a reader can see them", async ({ page }) => {
