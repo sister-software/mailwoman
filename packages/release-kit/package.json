@@ -102,7 +102,7 @@
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
 		"semver": "^7.8.5",
-		"spliterator": "^6.5.0",
+		"spliterator": "^7.0.0",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},

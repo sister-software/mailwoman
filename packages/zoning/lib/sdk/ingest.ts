@@ -280,13 +280,13 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 			// mis-splits every feature into hundreds of columns.
 			enableQuoteHandling: true,
 		})) {
-			const areaID = row.OBJECTID ?? ""
+			const areaID = row.objectid ?? ""
 
 			if (!areaID) {
 				throw new Error("zoning ingest: a row carries no OBJECTID — the authority's own key is the artifact's key")
 			}
 
-			const wkt = row.WKT
+			const wkt = row.wkt
 
 			if (!wkt) {
 				throw new Error(`zoning ingest: feature ${areaID} carries no geometry`)
@@ -302,7 +302,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 				"zoning ingest"
 			)
 
-			const localCode = row.ZONE_ORIG ?? ""
+			const localCode = row.zone_orig ?? ""
 
 			// The local code is what this layer exists to repeat, so a blank one is refused rather than stored: it would read
 			// as a zone the authority named nothing, which is not a reading the authority ever makes.
@@ -314,22 +314,22 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 
 			yield {
 				areaID,
-				authorityCode: row.LA_CODE ?? "",
-				authorityName: row.LA_NAME ?? "",
-				planID: row.PLAN_ID ?? "",
-				planName: row.PLAN_NAME ?? "",
-				planLevel: row.PLAN_LEVEL ?? "",
-				planFrom: blankToNull(row.PLAN_FROM),
-				planTo: blankToNull(row.PLAN_TO),
-				currentPlan: Number(row.CURRENT_PLAN ?? 0),
+				authorityCode: row.la_code ?? "",
+				authorityName: row.la_name ?? "",
+				planID: row.plan_id ?? "",
+				planName: row.plan_name ?? "",
+				planLevel: row.plan_level ?? "",
+				planFrom: blankToNull(row.plan_from),
+				planTo: blankToNull(row.plan_to),
+				currentPlan: Number(row.current_plan ?? 0),
 				// VERBATIM, and deliberately un-trimmed: `Proposed Residential ` carries a trailing space in the source, and
 				// five of the 581 distinct strings collide with another only on case or that space.
 				localCode,
-				localDescription: blankToNull(row.ZONE_DESC),
-				localCodeURL: blankToNull(row.ZONE_LINK),
-				crosswalkCode: blankToNull(row.ZONE_GZT),
-				crosswalkDescription: blankToNull(row.GZT_DESC),
-				crosswalkRollup: blankToNull(row.SZO),
+				localDescription: blankToNull(row.zone_desc),
+				localCodeURL: blankToNull(row.zone_link),
+				crosswalkCode: blankToNull(row.zone_gzt),
+				crosswalkDescription: blankToNull(row.gzt_desc),
+				crosswalkRollup: blankToNull(row.szo),
 				rings: resolveRingRoles(polygons, areaID),
 			}
 		}

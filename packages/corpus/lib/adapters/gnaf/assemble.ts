@@ -143,13 +143,13 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 
 	progress(`loading STREET_LOCALITY (${streetPaths.length} files) + LOCALITY (${localityPaths.length})…`)
 
-	const streetMap = await loadMap(streetPaths, "STREET_LOCALITY_PID", (r) => ({
-		name: String(r.STREET_NAME ?? ""),
-		type: String(r.STREET_TYPE_CODE ?? ""),
-		suffix: String(r.STREET_SUFFIX_CODE ?? ""),
+	const streetMap = await loadMap(streetPaths, "street_locality_pid", (r) => ({
+		name: String(r.street_name ?? ""),
+		type: String(r.street_type_code ?? ""),
+		suffix: String(r.street_suffix_code ?? ""),
 	}))
 
-	const localityMap = await loadMap(localityPaths, "LOCALITY_PID", (r) => String(r.LOCALITY_NAME ?? ""))
+	const localityMap = await loadMap(localityPaths, "locality_pid", (r) => String(r.locality_name ?? ""))
 	progress(`streets=${streetMap.size.toLocaleString()} localities=${localityMap.size.toLocaleString()}`)
 
 	const reservoir: Array<{ house_number: string; street: string; locality: string; region: string; postcode: string }> =
@@ -162,16 +162,16 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 		const state = (p.match(/\/([A-Z]+)_ADDRESS_DETAIL/) ?? [])[1] ?? ""
 
 		for await (const r of psvObjects(p)) {
-			const numberFirst = String(r.NUMBER_FIRST ?? "")
+			const numberFirst = String(r.number_first ?? "")
 
-			if (!numberFirst || r.DATE_RETIRED || !r.POSTCODE) continue
-			const st = streetMap.get(String(r.STREET_LOCALITY_PID ?? ""))
-			const suburbRaw = localityMap.get(String(r.LOCALITY_PID ?? ""))
+			if (!numberFirst || r.date_retired || !r.postcode) continue
+			const st = streetMap.get(String(r.street_locality_pid ?? ""))
+			const suburbRaw = localityMap.get(String(r.locality_pid ?? ""))
 
 			if (!st?.name || !suburbRaw) continue
 			const street = `${titlecase(st.name)} ${titlecase(st.type)}${st.suffix ? " " + titlecase(st.suffix) : ""}`.trim()
 			const locality = titlecase(suburbRaw)
-			const postcode = String(r.POSTCODE)
+			const postcode = String(r.postcode)
 
 			if (holdout.has(gnafHoldoutKey(street, locality, postcode))) {
 				heldOut++
@@ -179,14 +179,14 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 				continue
 			}
 
-			let house = numberFirst + (r.NUMBER_FIRST_SUFFIX ? String(r.NUMBER_FIRST_SUFFIX) : "")
+			let house = numberFirst + (r.number_first_suffix ? String(r.number_first_suffix) : "")
 
-			if (r.NUMBER_LAST) {
-				house = `${house}-${String(r.NUMBER_LAST)}`
+			if (r.number_last) {
+				house = `${house}-${String(r.number_last)}`
 			}
 
-			if (r.FLAT_NUMBER) {
-				house = `${String(r.FLAT_NUMBER)}/${house}`
+			if (r.flat_number) {
+				house = `${String(r.flat_number)}/${house}`
 			}
 
 			const tuple = { house_number: house, street, locality, region: state, postcode }
