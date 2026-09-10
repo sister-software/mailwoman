@@ -512,10 +512,34 @@ def _raw_row_stream(
     )
 
     if source_weights is not None:
-        dropped = {src for src in by_source if source_weights.get(src, 0) <= 0}
+        # TWO different things get dropped here and only one of them is deliberate.
+        #
+        # A source NAMED at zero is the config declining it, and the config has no other way to say so
+        # — ``synth-no-street-led: 0.0`` is that sentence. A source the weights never MENTION is an
+        # oversight, and it is invisible from every direction: the guard above raises only for the
+        # mirror case (a positive weight with no slice), the sampler cannot miss what it never indexed,
+        # and the run log carries no trace. Because intent is expressible, the absence of intent is an
+        # error, so an unnamed source refuses on the split whose recipe claims coverage.
+        #
+        # The shape it hides: a regenerated slice takes a version suffix in its ``source`` column
+        # (``synth-fr-bare-street`` -> ``synth-fr-bare-street-v22``), the config keeps the old key, and
+        # training silently continues on the superseded vintage while the current generation sits out.
+        # The dose audit then reports the old vintage as a DOSE OUTLIER, because the whole weight lands
+        # on a fraction of the rows — which reads as an aggressive dose rather than a missing one.
+        unnamed = sorted(src for src in by_source if src not in source_weights)
+        if unnamed and split == "train":
+            detail = ", ".join(f"{src} ({len(by_source[src])} slices)" for src in unnamed)
+            raise ValueError(
+                f"{len(unnamed)} source(s) in the {split!r} split are absent from source_weights and would "
+                f"be dropped without a trace: {detail}. Name each one — give it a weight to train on it, "
+                "or 0.0 to decline it deliberately. Check for a superseded generation still holding the "
+                "weight (a `-vNN` sibling of the same name)."
+            )
+
+        declined = {src for src in by_source if source_weights.get(src, 0) <= 0}
         by_source = {src: slices for src, slices in by_source.items() if source_weights.get(src, 0) > 0}
-        if dropped:
-            logger.info("Dropped %d zero-weighted sources: %s", len(dropped), dropped)
+        if declined:
+            logger.info("Declined %d sources named at zero weight: %s", len(declined), sorted(declined))
         if not by_source:
             raise ValueError(
                 "no slices remain after applying source_weights — every slice's source "
