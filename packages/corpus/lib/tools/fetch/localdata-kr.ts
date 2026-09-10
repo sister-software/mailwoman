@@ -91,6 +91,7 @@ async function validateDownloadCount(session: Session): Promise<boolean> {
 	if (session.xsrf) {
 		headers["X-XSRF-TOKEN"] = session.xsrf
 	}
+
 	const res = await fetch(`${PORTAL}/file/validate/download-count`, { headers })
 
 	return res.status !== HTTP_TOO_MANY_REQUESTS

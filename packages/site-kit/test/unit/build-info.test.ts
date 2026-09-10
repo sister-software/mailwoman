@@ -17,5 +17,6 @@ test("renderBuildInfo emits the three fields as tab-indented JSON with a trailin
 		revision: "abc1234",
 		buildTime: "2026-09-07T10:00:00Z",
 	})
+
 	expect(text.endsWith("\n")).toBe(true)
 })

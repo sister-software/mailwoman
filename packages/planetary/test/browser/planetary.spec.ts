@@ -65,6 +65,7 @@ test("the map worker runs: nomenclature tiles and glyph ranges are requested", a
 		if (url.endsWith(".mvt")) {
 			vectorTiles.push(url)
 		}
+
 		if (url.includes("/fonts/") && url.endsWith(".pbf")) {
 			glyphRanges.push(url)
 		}

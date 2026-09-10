@@ -113,6 +113,7 @@ export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) 
 			if (frame) {
 				cancelAnimationFrame(frame)
 			}
+
 			map.off("styledata", readLayers)
 			map.off("click", onClick)
 			map.off("mousemove", onMove)

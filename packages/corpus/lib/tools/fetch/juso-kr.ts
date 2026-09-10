@@ -43,6 +43,7 @@ const PRODUCTS = [
 
 const LICENSE =
 	"이용허락범위 제한 없음 (data.go.kr label for 행정안전부_도로명주소 주소DB); 공공누리 attribution to 행정안전부"
+
 const ATTRIBUTION = "행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr)"
 
 interface ListedFile {
@@ -147,6 +148,7 @@ export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: s
 			sha256: sha,
 			bytes,
 		})
+
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 	}
 
