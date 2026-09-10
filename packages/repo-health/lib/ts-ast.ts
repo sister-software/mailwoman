@@ -18,13 +18,21 @@ export interface ModuleSpecifierOptions {
 }
 
 /**
- * Every module specifier `source` imports, re-exports, or dynamically imports, in document order.
+ * Every module specifier `source` imports, re-exports, or dynamically imports, in document order, as the string literal
+ * that HOLDS it.
+ *
+ * A rewriter needs the node rather than its text: two specifiers in one file can read alike, and the offsets are the
+ * only thing that tells them apart. {@linkcode moduleSpecifiers} is the text-only reading of the same walk, so a guard
+ * that counts specifiers and a fixer that edits them can never disagree about which ones exist.
  *
  * String-literal-LIKE specifiers are collected — a no-substitution template literal counts, since `` import(`./x.ts`)
  * `` resolves exactly as the quoted form does.
  */
-export function moduleSpecifiers(source: ts.SourceFile, options: ModuleSpecifierOptions = {}): string[] {
-	const specifiers: string[] = []
+export function moduleSpecifierLiterals(
+	source: ts.SourceFile,
+	options: ModuleSpecifierOptions = {}
+): ts.StringLiteralLike[] {
+	const specifiers: ts.StringLiteralLike[] = []
 
 	const visit = (node: ts.Node): void => {
 		let specifier: ts.Expression | undefined
@@ -45,7 +53,7 @@ export function moduleSpecifiers(source: ts.SourceFile, options: ModuleSpecifier
 		}
 
 		if (specifier && ts.isStringLiteralLike(specifier)) {
-			specifiers.push(specifier.text)
+			specifiers.push(specifier)
 		}
 
 		ts.forEachChild(node, visit)
@@ -54,4 +62,11 @@ export function moduleSpecifiers(source: ts.SourceFile, options: ModuleSpecifier
 	visit(source)
 
 	return specifiers
+}
+
+/**
+ * The text of every module specifier {@linkcode moduleSpecifierLiterals} collects, in document order.
+ */
+export function moduleSpecifiers(source: ts.SourceFile, options: ModuleSpecifierOptions = {}): string[] {
+	return moduleSpecifierLiterals(source, options).map((literal) => literal.text)
 }

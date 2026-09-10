@@ -19,6 +19,7 @@ import { manifestTargetsCheck } from "#checks/manifest-targets"
 import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
+import { recipePrefixDirectoriesCheck } from "#checks/recipe-prefix-directories"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
 import { stylesheetContractCheck } from "#checks/stylesheet-contract"
 import { testContractCheck } from "#checks/test-contract"
@@ -38,6 +39,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	noRootScriptsCheck,
 	manifestTargetsCheck,
 	privateNameShadowsCheck,
+	recipePrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
 	stylesheetContractCheck,

@@ -52,6 +52,22 @@ describe("mwops dispatch", () => {
 		expect(h.err.join("")).toContain('no baseline "nope"')
 	})
 
+	it("refuses a fix for a check that has none, naming the ones that do", async () => {
+		const h = io()
+
+		expect(await dispatch(["health", "fix", "nope"], h.io)).toBe(2)
+		expect(h.err.join("")).toContain('no fix for "nope"')
+		expect(h.err.join("")).toContain("recipe-prefix-directories")
+	})
+
+	it("reports nothing to move when the check already passes", async () => {
+		const h = io()
+
+		// An empty tracked-file list has no repeated recipe prefix in it, so the fix plans no move and writes nothing.
+		expect(await dispatch(["health", "fix", "recipe-prefix-directories"], h.io)).toBe(0)
+		expect(h.out.join("")).toContain("nothing to move")
+	})
+
 	it("parses --key value, --key=value and bare flags, leaving values as strings for the schema", () => {
 		expect(parseOptions(["plan", "--json", "--version", "9.3.0", "--out=x.json", "--dry-run"])).toEqual({
 			options: { json: true, version: "9.3.0", out: "x.json", "dry-run": true },

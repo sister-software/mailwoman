@@ -8,17 +8,22 @@
  *   the registered capability, and prints the result; every decision about WHAT happens belongs to the operation or the
  *   check. Kept free of `process` so it is unit-testable: the bin wrapper supplies argv, stdout, and the exit code.
  *
- *   `health baseline debt` is the ONE mutation the health verb performs: it rewrites `packages/repo-health/baseline.json`
- *   from the current readings. Writing a baseline is not a check, so `writeBaseline` is exported by repo-health and not
- *   registered; this is the only caller.
+ *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites
+ *   `packages/repo-health/baseline.json` from the current readings, and `health fix <check>` applies the mechanical
+ *   repair a check's diagnostics describe. Both are exported by repo-health and left out of the check registry, whose
+ *   type admits nothing that writes; this is the only caller of either.
  */
 
 import { shopOperations } from "@mailwoman/license-worker/shop"
 import { operations, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"
 import {
+	applyModuleMoves,
 	checkPassed,
 	checks,
 	findCheck,
+	findFix,
+	fixes,
+	planModuleMoves,
 	type Diagnostic,
 	type RepoContext,
 	writeBaseline,
@@ -71,11 +76,13 @@ function usage(io: DispatchIO): number {
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
-			"  mwops health baseline debt        (the one mutation: rewrite packages/repo-health/baseline.json)",
+			"  mwops health baseline debt        (rewrite packages/repo-health/baseline.json from the current readings)",
+			"  mwops health fix <check> [--dry-run] [--json]",
 			"",
 			`release operations: ${operations.length ? operations.map((operation) => `${operation.id} (${operation.effect})`).join(", ") : "(none registered yet)"}`,
 			`shop operations:    ${shopOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
+			`health fixes:       ${fixes.length ? fixes.map((fix) => fix.id).join(", ") : "(none registered yet)"}`,
 			"",
 		].join("\n")
 	)
@@ -168,6 +175,69 @@ async function runBaseline(
 	return 0
 }
 
+/**
+ * `mwops health fix <check>` — apply the mechanical repair for one check.
+ *
+ * The plan is built and proven before anything is written, so `--dry-run` reports exactly what the write would do. A
+ * plan carrying a specifier with no proven replacement is refused by `applyModuleMoves`, which is why this function has
+ * no force flag to offer.
+ */
+async function runFix(
+	targets: readonly string[],
+	options: Record<string, string | boolean>,
+	io: DispatchIO
+): Promise<number> {
+	const id = targets[0]
+	const fix = id ? findFix(id) : undefined
+
+	if (!fix) {
+		io.stderr(
+			`mwops health fix: no fix for ${JSON.stringify(id ?? "")}; registered: ${fixes.map((entry) => entry.id).join(", ") || "(none)"}\n`
+		)
+
+		return 2
+	}
+
+	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+	const moves = await fix.plan(context)
+	const dryRun = options["dry-run"] === true
+
+	if (!moves.length) {
+		io.stdout(options.json === true ? "{}\n" : `${fix.id}: nothing to move\n`)
+
+		return 0
+	}
+
+	const plan = await planModuleMoves(context, moves)
+	const result = await applyModuleMoves(context, plan, { dryRun })
+
+	if (options.json === true) {
+		io.stdout(`${JSON.stringify({ ...result, unresolved: plan.unresolved, scanned: plan.scanned }, null, 2)}\n`)
+
+		return 0
+	}
+
+	io.stdout(
+		`${fix.id}: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s) across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
+	)
+
+	for (const move of plan.moves) {
+		io.stdout(`    ${move.from} -> ${move.to}\n`)
+	}
+
+	for (const rewrite of plan.rewrites) {
+		io.stdout(`    ${rewrite.file}: ${rewrite.specifier} -> ${rewrite.replacement}\n`)
+	}
+
+	io.stdout(
+		dryRun
+			? "Nothing written. Drop --dry-run to apply.\n"
+			: `Verified ${result.verified} rewritten specifier(s) against the moved tree. Next: yarn typecheck:tests\n`
+	)
+
+	return 0
+}
+
 async function runHealth(args: readonly string[], io: DispatchIO): Promise<number> {
 	const { options, rest } = parseOptions(args)
 	const id = rest[0]
@@ -175,6 +245,8 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 	if (!id) return usage(io)
 
 	if (id === "baseline") return await runBaseline(rest.slice(1), options, io)
+
+	if (id === "fix") return await runFix(rest.slice(1), options, io)
 
 	const selected = id === "all" ? checks : [findCheck(id)].filter((check) => check !== undefined)
 

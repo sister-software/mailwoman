@@ -2,7 +2,7 @@
 	"name": "@mailwoman/repo-health",
 	"version": "9.2.0",
 	"private": true,
-	"description": "Repository health checks as a registry — each inspects the checkout and returns diagnostics or pass/fail, and nothing here mutates, generates, publishes, benchmarks, or probes.",
+	"description": "Repository health checks as a registry — each inspects the checkout and returns diagnostics or pass/fail; a check never writes, and the two exports that do (the debt baseline, and the module-move fixes) sit beside the registry rather than in it.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -54,6 +54,21 @@
 			"types": "./out/ts-ast.d.ts",
 			"node": "./lib/ts-ast.ts",
 			"default": "./out/ts-ast.js"
+		},
+		"./fix": {
+			"types": "./out/fix.d.ts",
+			"node": "./lib/fix.ts",
+			"default": "./out/fix.js"
+		},
+		"./fixes": {
+			"types": "./out/fixes.d.ts",
+			"node": "./lib/fixes.ts",
+			"default": "./out/fixes.js"
+		},
+		"./move/*": {
+			"types": "./out/move/*.d.ts",
+			"node": "./lib/move/*.ts",
+			"default": "./out/move/*.js"
 		},
 		"./checks/*": {
 			"types": "./out/checks/*.d.ts",

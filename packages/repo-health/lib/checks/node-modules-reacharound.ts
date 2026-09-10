@@ -68,6 +68,11 @@ const ALLOWED: Record<string, string> = {
 	// The ORACLE for that farm, on the same principle as the weights-cache pair above: a fixture built with the
 	// implementation's own helper cannot fail when the implementation is wrong.
 	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
+	// BUILDS a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves the way yarn makes
+	// it resolve. The move planner under test rewrites package-subpath specifiers, and a fixture with no install layout
+	// cannot exercise that family at all.
+	"packages/repo-health/test/unit/move-plan.test.ts":
+		"builds the scratch workspace's install link; nothing exists to resolve yet",
 	// Writes a FIXTURE cache in the npm-prefix layout `weightsCachePackageDir` reads. Spelling it out here is what
 	// makes the cache rung's test independent of the helper it is exercising.
 	"packages/neural/test/integration/weights-overlay.test.ts":

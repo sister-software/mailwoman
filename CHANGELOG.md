@@ -18,6 +18,28 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — `mwops health fix`, a module move that proves every specifier it rewrites
+
+`@mailwoman/repo-health` gains a second, much shorter registry beside the checks: a fix, for a check whose repair is
+a mechanical consequence of its diagnostic. `recipe-prefix-directories` is the first, moving each repeated-prefix
+corpus recipe into its prefix directory. The move operation under it re-derives a replacement specifier from the
+owning package's own `imports`/`exports` patterns and writes it only once it RESOLVES to the moved file, so a
+replacement stays in the family the author wrote and a specifier nobody can prove refuses the whole plan.
+
+TypeScript's own `getEditsForFileRename` was measured first and is not the mechanism. Asked to move a corpus recipe,
+it rewrote a test file's `@mailwoman/corpus/recipes/fr/fragment` to `#lib/recipes/fr-fragment` — a public export
+subpath turned into a package-private import, naming `packages/corpus/lib/lib/recipes/…`, a path no checkout has.
+
+### Fixed — three imports that resolved to nothing while `tsc` reported success
+
+Moving the corpus recipes into prefix directories left `bare/postcode.ts` and `sub/venue.ts` importing their siblings
+at the old flat paths, plus seven test-file imports and one in `@mailwoman/neural`'s eval harness.
+`tsc -p packages/corpus/tsconfig.json` exited 0 on all of it: every subpath map lists `types` first, so the stale
+`out/recipes/bare-postcode-eval.d.ts` answered for a source file that had already moved, while Node took the `node`
+condition and raised `ERR_MODULE_NOT_FOUND`. Three path-keyed registers had gone stale with them — the
+duplicate-export allowlist, the banned-vocabulary exemption, and both Vale code configs' sub-venue globs, none of
+which is a module specifier and none of which the new move operation can see.
+
 ### Fixed — an overlay corpus resolved ONE slice of 706, silently
 
 The 2026-09-01 vocabulary rename changed the manifest key the trainer's loader reads without migrating the
