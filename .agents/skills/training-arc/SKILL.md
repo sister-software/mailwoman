@@ -39,7 +39,7 @@ mwdev_compare inputs={"kind":"board"} \
   variable=["weights_cache"] grade=auto
 ```
 
-Expect **0 of 649 differ**. Anything else means the rig is noisy and no candidate number from this session
+Expect **zero rows to differ**. Anything else means the rig is noisy and no candidate number from this session
 means anything. It costs one board run and it is the only thing separating _"the candidate is worse"_ from
 _"my harness is."_
 
@@ -110,7 +110,7 @@ Grading a tier fall-through against a model wastes a run.
 The placebo is the right baseline for _attributing_ a regression. It never authorizes shipping one:
 publishing costs a user the difference from what they have today.
 
-- net improved-minus-regressed ≥ 0 on the 649-row board
+- net improved-minus-regressed ≥ 0 on the full regression board
 - FR, GB and DE show no regression anywhere — iron rule 6, the D-rule
 - the promotion battery `mwdev_promotion_eval --spec v9.0.0-base` passes every floor declared by the eval
   spec; use the passed and total counts printed by the command rather than a count copied into this

@@ -53,7 +53,7 @@ export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 					"from-scratch run inherits no base, so there is no fine-tune tax to subtract and shipped is already the " +
 					"right baseline. Defaults to fine-tune, which is the shape that needs the null."
 			),
-		inputs: INPUT_SET_SCHEMA.optional().describe("Defaults to the 649-row board."),
+		inputs: INPUT_SET_SCHEMA.optional().describe("Defaults to the full regression board."),
 		locale: z.string().optional(),
 	}),
 	handler: async (args) => {
