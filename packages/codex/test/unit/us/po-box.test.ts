@@ -4,13 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isPOBox, matchPOBox, normalizePOBox } from "@mailwoman/codex/us"
+import { isPOBox, isUSPoBoxDesignator, matchPOBox, normalizePOBox } from "@mailwoman/codex/us"
 import { expect, test } from "vitest"
 
 test("isPOBox: recognizes the USPS designator phrases with an id", () => {
 	for (const yes of [
 		"PO Box 123",
 		"P.O. Box 12-A",
+		"P O Box 12-A",
 		"Post Office Box 7",
 		"po box 5",
 		"PO Box #123", // the optional '#'
@@ -27,6 +28,16 @@ test("isPOBox: recognizes the USPS designator phrases with an id", () => {
 test("isPOBox: rejects non-PO-box input (incl. a designator with no id)", () => {
 	for (const no of ["123 Main St", "PO Box", "Boxford 12", "", "  ", 42, null, undefined]) {
 		expect(isPOBox(no)).toBe(false)
+	}
+})
+
+test("isUSPoBoxDesignator: recognizes only the USPS designator portion", () => {
+	for (const yes of ["PO Box", "P.O. Box", "P O Box", "Post Office Box", "Firm Caller", "Box"]) {
+		expect(isUSPoBoxDesignator(yes)).toBe(true)
+	}
+
+	for (const no of ["POB", "PMB", "#", "PO Box 123", "Private Bag", 42]) {
+		expect(isUSPoBoxDesignator(no)).toBe(false)
 	}
 })
 

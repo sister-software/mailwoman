@@ -31,11 +31,37 @@ export const US_PO_BOX_DESIGNATORS = [
 export type USPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
 
 /**
- * Matches a leading PO-box designator + its identifier. Allows "P.O. Box", "PO BOX", "Post Office Box", "Box 12-A",
- * etc. The id is alphanumeric with optional dashes (USPS caller/firm ids exist).
+ * Recognition patterns for {@link US_PO_BOX_DESIGNATORS}. Keeping the surface grammar next to the canonical designator
+ * prevents the exported lexicon and matcher from drifting apart.
  */
-const PO_BOX_RE =
-	/^\s*(?:(p\.?\s*o\.?\s*box)|(post\s+office\s+box)|(firm\s+caller)|(caller)|(drawer)|(lockbox)|(box))\s*#?\s*([\dA-Za-z][\dA-Za-z-]*)\s*$/i
+const PO_BOX_DESIGNATOR_PATTERNS: ReadonlyArray<readonly [USPoBoxDesignator, string]> = [
+	["POST OFFICE BOX", String.raw`post\s+office\s+box`],
+	["PO BOX", String.raw`p\.?\s*o\.?\s*box`],
+	["P O BOX", String.raw`p\.?\s*o\.?\s*box`],
+	["FIRM CALLER", String.raw`firm\s+caller`],
+	["CALLER", "caller"],
+	["DRAWER", "drawer"],
+	["LOCKBOX", "lockbox"],
+	["BOX", "box"],
+]
+
+/**
+ * One standalone matcher per USPS designator. The id is alphanumeric with optional dashes (USPS caller/firm ids exist).
+ */
+const PO_BOX_MATCHERS = PO_BOX_DESIGNATOR_PATTERNS.map(([designator, pattern]) => ({
+	designator,
+	designatorRe: new RegExp(String.raw`^\s*${pattern}\s*$`, "i"),
+	phraseRe: new RegExp(String.raw`^\s*(${pattern})\s*#?\s*([\dA-Za-z][\dA-Za-z-]*)\s*$`, "i"),
+}))
+
+/**
+ * True when `input` is a USPS PO-box designator without its box identifier. This is useful to consumers that compose a
+ * phrase and need to distinguish USPS vocabulary from their own locale-specific aliases (for example, the corpus's
+ * `POB` training variant).
+ */
+export function isUSPoBoxDesignator(input: unknown): input is string {
+	return typeof input === "string" && PO_BOX_MATCHERS.some(({ designatorRe }) => designatorRe.test(input))
+}
 
 /**
  * Type-predicate: does the input look like a standalone PO Box address? Case-insensitive and tolerant of "P.O. Box",
@@ -43,7 +69,7 @@ const PO_BOX_RE =
  * all-caps "PO BOX 123".)
  */
 export function isPOBox(input: unknown): boolean {
-	return typeof input === "string" && PO_BOX_RE.test(input)
+	return matchPOBox(input) !== null
 }
 
 /**
@@ -67,13 +93,14 @@ export interface PoBoxMatch {
  */
 export function matchPOBox(input: unknown): PoBoxMatch | null {
 	if (typeof input !== "string") return null
-	const m = PO_BOX_RE.exec(input)
 
-	if (!m) return null
-	const matched = (m[1] ?? m[2] ?? m[3] ?? m[4] ?? m[5] ?? m[6] ?? m[7] ?? "").trim()
-	const id = m[8]!
+	for (const { phraseRe } of PO_BOX_MATCHERS) {
+		const match = phraseRe.exec(input)
 
-	return { matched, id }
+		if (match) return { matched: match[1]!.trim(), id: match[2]! }
+	}
+
+	return null
 }
 
 /**

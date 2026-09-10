@@ -8,7 +8,7 @@
  *   self-contained. Ported from scripts/build-po-box-cedex-slice.mjs.
  *
  *   Surface vocabulary is provenance-first: US designators come from `@mailwoman/codex/us`
- *   (`isPOBox`, USPS Pub 28 §29); non-US leaders from the corpus `PO_BOX_LOCALE_TEMPLATES`;
+ *   (`matchPOBox`, USPS Pub 28 §29); non-US leaders from the corpus `PO_BOX_LOCALE_TEMPLATES`;
  *   Canadian postcodes are synthesized to the `@mailwoman/codex/ca` pattern; CEDEX rides
  *   `@mailwoman/codex/fr` (`isCedex`); AU/NZ delivery services round-trip
  *   `@mailwoman/codex/{au,nz}`. Span convention: the WHOLE designator+number phrase is the `po_box`
@@ -34,7 +34,7 @@ import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailw
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
-import { isPOBox } from "@mailwoman/codex/us"
+import { isUSPoBoxDesignator, matchPOBox, US_PO_BOX_DESIGNATORS } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
@@ -98,10 +98,21 @@ const T: Record<string, LocaleTemplate> = Object.fromEntries(PO_BOX_LOCALE_TEMPL
  * PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box.
  */
 const US_LEADERS_COMMON = T["en-US"]!.leaders
+
 /**
- * Codex US_PO_BOX_DESIGNATORS tail.
+ * USPS's less-common caller-service designators. The codex supplies the vocabulary; this recipe only assigns the low
+ * sampling weight.
  */
-const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"]
+const US_LEADERS_RARE = US_PO_BOX_DESIGNATORS.filter(
+	(designator) => !["POST OFFICE BOX", "PO BOX", "P O BOX", "BOX"].includes(designator)
+).map((designator) =>
+	designator
+		.toLowerCase()
+		.split(" ")
+		.map((word) => `${word[0]!.toUpperCase()}${word.slice(1)}`)
+		.join(" ")
+)
+
 // "#" EXCLUDED (v4.4.0 probe finding): bare "#N" is a secondary-unit designator per USPS Pub 28 and
 // the shipped unit change labels it `unit` — the corpus template's po_box reading CONTRADICTS a
 // shipped convention. PMB stays — a genuine commercial-mail-receiving designator, no unit collision.
@@ -423,14 +434,6 @@ function caseDial(random: () => number, s: string): string {
 	return s.toLowerCase()
 }
 
-/**
- * Leaders the codex PO_BOX_RE genuinely covers (everything en-US except "POB"; PMB/"#" are the corpus's CMRA forms,
- * outside USPS Pub-28 §29). Used to scope the isPOBox round-trip assertion.
- */
-const CODEX_COVERED_LEADERS = new Set(
-	["PO Box", "P.O. Box", "P.O.Box", "PO BOX", "Post Office Box", "Box", ...US_LEADERS_RARE].map((l) => l.toLowerCase())
-)
-
 // One leader in ten comes from the rare list when the caller supplies one (shared with the AU/NZ composer).
 const RARE_LEADER_SHARE = 0.1
 
@@ -454,7 +457,7 @@ function makePoBoxPhrase(
 	// Codex round-trip: a phrase built from a codex-known designator and a clean id must satisfy the
 	// matcher (the noisy ids — commas/spaces — are corpus-designed adversarial forms the regex rightly
 	// rejects, so they're exempt). A failure here is a generation bug; fail loud.
-	if (CODEX_COVERED_LEADERS.has(leader.toLowerCase()) && /^[\dA-Za-z][\dA-Za-z-]*$/.test(num) && !isPOBox(phrase)) {
+	if (isUSPoBoxDesignator(leader) && /^[\dA-Za-z][\dA-Za-z-]*$/.test(num) && !matchPOBox(phrase)) {
 		throw new Error(`generated a po_box phrase the codex matcher rejects: "${phrase}"`)
 	}
 
