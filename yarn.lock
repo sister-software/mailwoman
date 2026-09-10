@@ -5828,6 +5828,7 @@ __metadata:
     fast-glob: "npm:^3.3.3"
     htmlparser2: "npm:^12.0.0"
     http-status-codes: "npm:^2.3.0"
+    iconv-lite: "npm:^0.7.3"
     isomorphic-dompurify: "npm:^4.1.0"
     kysely: "npm:^0.29.5"
     path-ts: "npm:^2.3.0"
@@ -17558,7 +17559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"iconv-lite@npm:^0.7.0, iconv-lite@npm:^0.7.2, iconv-lite@npm:~0.7.0":
+"iconv-lite@npm:^0.7.0, iconv-lite@npm:^0.7.2, iconv-lite@npm:^0.7.3, iconv-lite@npm:~0.7.0":
   version: 0.7.3
   resolution: "iconv-lite@npm:0.7.3"
   dependencies:

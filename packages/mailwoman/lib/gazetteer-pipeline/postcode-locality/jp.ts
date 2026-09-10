@@ -37,6 +37,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { decodeBytes } from "@mailwoman/core/fs/streams"
 import { pyRound } from "@mailwoman/core/numeric"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -97,7 +98,12 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
  */
 async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
-	const text = new TextDecoder("shift_jis").decode(await readLocalBuffer(path))
+
+	// `cp932` through iconv, not `TextDecoder("shift_jis")`. Japan Post ships CP932, and Node's WHATWG `shift_jis` reads
+	// 801 of CP932's 20,296 two-byte sequences differently — silently, since most yield a different character rather than
+	// a replacement. MEASURED on the 2026 edition: the file contains ZERO of those 801, in any column, so this changes no
+	// value today. It is here because the file is reissued monthly and the next edition is not measured.
+	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 
 	// KEN_ALL is Shift-JIS and the spliterator's text path decodes UTF-8, so streaming it means dropping
 	// to raw byte ranges and decoding per row — for an 11 MB file whose size Japan Post fixes.

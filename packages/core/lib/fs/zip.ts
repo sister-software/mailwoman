@@ -20,6 +20,7 @@ import { pipeline } from "node:stream/promises"
 import { crc32 } from "node:zlib"
 
 import ADMZip from "adm-zip"
+import iconv from "iconv-lite"
 import { resolvePath, dirname, basename, type PathBuilderLike } from "path-ts"
 import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-promise"
 
@@ -60,21 +61,25 @@ async function openStreamingArchive(
  */
 export interface ZipNameOptions {
 	/**
-	 * A `TextDecoder` label — `euc-kr` for CP949, `shift_jis`, `gbk`. Omit when the archive's names are ASCII or properly
-	 * flagged UTF-8, which is every other archive this repository reads.
+	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`. Omit when the archive's names are ASCII or properly flagged
+	 * UTF-8, which is every other archive this repository reads.
 	 */
 	filenameEncoding?: string
 }
 
 /**
  * A member's name, decoded as {@link ZipNameOptions} asks.
+ *
+ * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's WHATWG `euc-kr` is EUC-KR
+ * proper and reads 8,824 of CP949's 17,048 two-byte sequences differently, so a member whose name uses the UHC
+ * extension would be looked for under a name that does not exist.
  */
 function entryName(entry: Entry, options?: ZipNameOptions): string {
 	const raw = entry.filename as unknown
 
 	if (typeof raw === "string") return raw
 
-	return new TextDecoder(options?.filenameEncoding ?? "utf8").decode(raw as Uint8Array)
+	return iconv.decode(Buffer.from(raw as Uint8Array), options?.filenameEncoding ?? "utf8")
 }
 
 /**
