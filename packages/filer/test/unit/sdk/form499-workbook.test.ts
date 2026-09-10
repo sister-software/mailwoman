@@ -39,10 +39,9 @@ describe("parseForm499Workbook — real FCC rows", () => {
 		expect((await readFixture()).map((row) => row.form499ID)).toEqual(["801003", "801004", "802131", "821002"])
 	})
 
-	it("reads CORESID as the FRN — the ALL-CAPS header the snake-caser leaves alone", async () => {
+	it("reads the FRN, whatever case the FCC ships the column in", async () => {
 		const [otelco] = await readFixture()
 
-		// A reader assuming `coresid` gets undefined here on every row, silently.
 		expect(otelco?.frn).toBe("0018538512")
 	})
 
@@ -131,11 +130,10 @@ describe("assertWorkbookHeader", () => {
 		expect(() => assertWorkbookHeader(["filer_499_id", "CORESID"])).toThrow(/legal_name_of_carrier/)
 	})
 
-	it("rejects a header using the lower-cased FRN spelling", () => {
-		// The failure mode this guard exists for: `coresid` reads as undefined on every row.
-		const header = Object.values(FORM_499_WORKBOOK_KEYS).map((key) => (key === "CORESID" ? "coresid" : key))
+	it("rejects a header whose FRN column is not the lower-cased key", () => {
+		const header = Object.values(FORM_499_WORKBOOK_KEYS).map((key) => (key === "coresid" ? "CORESID" : key))
 
-		expect(() => assertWorkbookHeader(header)).toThrow(/CORESID/)
+		expect(() => assertWorkbookHeader(header)).toThrow(/coresid/)
 	})
 
 	it("refuses a file that is not a workbook rather than yielding empty rows", async () => {

@@ -18,6 +18,22 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Fixed — a half-materialized char-weights package parsed as a Latin model
+
+`packageHasBinaries` answered `false` for a weights directory holding `model.onnx` and `char-vocab.json` with no
+card, because the card is what declares the char encoder. The family then loaded as Latin and
+`富山県中新川郡上市町大岩148-7` came back as one locality with a postcode of `7` — a well-formed wrong answer with no
+signal anywhere. The vocabulary and the card ship together, so the pairing is the whole claim that this is a
+character-path family, and a directory carrying one without the other is now refused by name.
+
+### Fixed — the Form 499 reader keyed a column on the normalizer's old casing
+
+`normalizeColumnNames` returns every key lower case; the reader spelled the FRN column `CORESID` and read
+`undefined` on every row. Its own header assertion caught it. A survey of all 166 spliterator readers found this to
+be the only affected one — the five state and federal adapters that key human-readable headers all pass
+`normalizeKeys: false`, and `form499-workbook.ts` is the only file in the repository that calls
+`normalizeColumnNames` directly.
+
 ### Changed — a command's name is what it declares, not where its file sits
 
 `listCommandNames` in the native CLI router read a command's name off its filename, so the layout was a user-facing

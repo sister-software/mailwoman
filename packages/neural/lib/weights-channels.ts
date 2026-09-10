@@ -494,9 +494,31 @@ export async function packageHasBinaries(dir: PathBuilderLike): Promise<boolean>
 
 	if (await pathExists(resolvePath(dir, "tokenizer.model"))) return true
 
-	const encoder = await readEncoderFromModelCard(resolvePath(dir, "model-card.json"))
+	const cardPath = resolvePath(dir, "model-card.json")
+	const encoder = await readEncoderFromModelCard(cardPath)
 
-	return encoder.kind === "char" && (await pathExists(resolvePath(dir, encoder.charVocab)))
+	if (encoder.kind === "char") return await pathExists(resolvePath(dir, encoder.charVocab))
+
+	await assertNoOrphanedCharVocab(dir, cardPath)
+
+	return false
+}
+
+/**
+ * Refuse a directory holding a character vocabulary whose card does not declare the char encoder that reads it.
+ *
+ * The two ship together, so the pairing is the whole signal that this is a character-path family. Answering `false` for
+ * a half-materialized one degrades it to a Latin model and the parse is merely WRONG — a bare kanji line comes back as
+ * one locality — where a refusal names the file that is missing.
+ */
+async function assertNoOrphanedCharVocab(dir: PathBuilderLike, cardPath: PathBuilderLike): Promise<void> {
+	if (!(await pathExists(resolvePath(dir, "char-vocab.json")))) return
+
+	throw new Error(
+		`${dir}: char-vocab.json is present but ${cardPath} declares no char encoder — the model card is missing or ` +
+			"does not carry an `encoder` block, so this package would load as a Latin model and mis-parse every line " +
+			"its script covers."
+	)
 }
 
 /**

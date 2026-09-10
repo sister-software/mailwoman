@@ -31,10 +31,10 @@
  *      raw value is the literal `TRUE`, so a pass-through makes every filer a non-contributor.
  *   3. The address is six columns (`HQ_Address1..3`, city, state, zip) where the row shape has one string.
  *
- *   **Header keys come from `normalizeColumnNames`, which deliberately leaves ALL-CAPS headers alone** — so
- *   the FRN column is `CORESID`, not `coresid`. Reading the lower-cased spelling yields `undefined` on
- *   every row, silently, and every filer loses its FRN. {@linkcode FORM_499_WORKBOOK_KEYS} pins the exact
- *   keys this reader depends on and {@linkcode assertWorkbookHeader} fails loudly when the export changes.
+ *   **Header keys come from `normalizeColumnNames`, which returns every key LOWER CASE** whatever case the
+ *   FCC ships. A key spelled with a capital reads `undefined` on every row, silently, losing that column for
+ *   every filer — so {@linkcode FORM_499_WORKBOOK_KEYS} pins the keys this reader depends on and
+ *   {@linkcode assertWorkbookHeader} refuses a header missing any of them.
  *
  *   **Memory:** `XLSXSpliterator` materializes the sheet — XLSX is a ZIP of XML with shared strings in a
  *   separate entry, so bounded-memory streaming is not available. ~20k × 122 is fine; this note exists so
@@ -49,10 +49,7 @@ import type { Form499Row } from "#sdk/form499"
 import { parseForm499Notes } from "#sdk/form499-notes"
 
 /**
- * The workbook keys this reader reads by name, as {@linkcode normalizeColumnNames} renders them.
- *
- * `CORESID` keeps its upper case ON PURPOSE — see the module docstring. It is listed here rather than inlined so the
- * casing is stated once, next to the note explaining it.
+ * The workbook keys this reader reads by name, as {@linkcode normalizeColumnNames} renders them: lower case.
  */
 export const FORM_499_WORKBOOK_KEYS = {
 	form499ID: "filer_499_id",
@@ -62,7 +59,7 @@ export const FORM_499_WORKBOOK_KEYS = {
 	doingBusinessAs: "doing_business_as",
 	principalCommType: "principal_comm_type_1",
 	holdingCompany: "holding_company",
-	frn: "CORESID",
+	frn: "coresid",
 	managementCompany: "management_company",
 	customerInquiriesTelephone: "customer_inquiries_telephone",
 	dcAgentDisplayName: "dc_agent1",
