@@ -56,7 +56,7 @@
 	"dependencies": {
 		"@fragaria/address-formatter": "^7.0.0",
 		"@mailwoman/core": "workspace:*",
-		"spliterator": "^6.4.1"
+		"spliterator": "^6.5.0"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1"

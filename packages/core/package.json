@@ -623,7 +623,7 @@
 		"path-ts": "^2.3.0",
 		"pino": "^10.3.1",
 		"regenerate": "^1.4.2",
-		"spliterator": "^6.4.1",
+		"spliterator": "^6.5.0",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.9.0",
 		"yauzl-promise": "^4.0.0",

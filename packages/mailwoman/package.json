@@ -482,7 +482,7 @@
 		"onnxruntime-node": "^1.29.0",
 		"path-ts": "^2.3.0",
 		"react": "^19.2.8",
-		"spliterator": "^6.4.1",
+		"spliterator": "^6.5.0",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},
