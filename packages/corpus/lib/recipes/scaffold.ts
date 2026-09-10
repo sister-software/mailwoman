@@ -87,45 +87,32 @@ export interface SliceTuple {
 export type CSVRecord = Record<string, string | undefined>
 
 /**
- * Quote handling spans the ROW split, not only the column split: a newline inside a quoted field belongs to a single
- * record, so the record boundaries can only be found by a scanner that already knows where the quotes are. Find the
- * lines first and unquote afterwards and such a record splits in two — the first half short by however many columns
- * followed the newline, which is how a `street` value comes to be read as `city`.
+ * Line breaks inside a value become single spaces, and every value is trimmed.
  *
- * `header: false` keeps the first record in the stream, so this module owns the lower-casing rather than
- * `normalizeKeys` — see {@link toHeader}.
- */
-const CSV_INIT = { header: false, enableQuoteHandling: true } as const
-
-/**
- * Header names are lower-cased on the way in. `normalizeKeys` will not do it: it leaves an ALL CAPS header alone, and
- * OpenAddresses ships `LON,LAT,NUMBER,STREET` while other extracts ship the same names lower-case. A recipe names its
- * columns in lower case either way.
- */
-function toHeader(cells: readonly string[]): string[] {
-	return cells.map((name) => name.trim().toLowerCase())
-}
-
-/**
- * Line breaks inside a value become single spaces. A quote-aware parse is the first thing here able to return a value
- * CONTAINING one — `us/ia/statewide.csv` has 12, all unit designators like `"#2\n#2"` — and every consumer synthesizes
- * one-line address text from these cells with no guard, because until that parse landed no value could carry one.
- * Collapsing keeps the record (the address is fine; the source's line break is not part of it) without emitting a
- * training row with a newline inside it.
+ * A quote-aware parse is the first thing able to return a value CONTAINING a line break — `us/ia/statewide.csv` has 12,
+ * all unit designators like `"#2\n#2"` — and every consumer synthesizes one-line address text from these cells with no
+ * guard, because until that parse landed no value could carry one. Collapsing keeps the record (the address is fine;
+ * the source's line break is not part of it) without emitting a training row with a newline inside it.
  *
  * Only `\r` and `\n`, deliberately — NOT `\s`. Runs of spaces and tabs pass through exactly as the source wrote them
  * (OA's IA extract writes `NORTH`, three spaces, `MAIN STREET`), because those could always appear and every slice
  * built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at all.
- * `scaffold.test.ts` pins both halves, against both readers.
+ * `scaffold.test.ts` pins both halves.
+ *
+ * This is what a CSV reader here still owns. Quote handling, object rows and lower-case keys are `CSVSpliterator`'s
+ * defaults as of 7.0.0, so a recipe reads a source with `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and
+ * needs nothing else.
+ *
+ * @category CSV
  */
-function toRecord(header: readonly string[], cells: readonly string[]): CSVRecord {
-	const record: CSVRecord = {}
+export function withoutLineBreaks(record: CSVRecord): CSVRecord {
+	const out: CSVRecord = {}
 
-	for (let i = 0; i < header.length; i++) {
-		record[header[i]!] = (cells[i] ?? "").replaceAll(/[\r\n]+/g, " ").trim()
+	for (const [key, value] of Object.entries(record)) {
+		out[key] = (value ?? "").replaceAll(/[\r\n]+/g, " ").trim()
 	}
 
-	return record
+	return out
 }
 
 /**
@@ -141,17 +128,7 @@ function toRecord(header: readonly string[], cells: readonly string[]): CSVRecor
  * @category CSV
  */
 export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): AsyncSequence<CSVRecord> {
-	let header: string[] | null = null
-
-	return CSVSpliterator.fromAsync<string[]>(source, CSV_INIT)
-		.filter((cells) => {
-			if (header) return true
-
-			header = toHeader(cells)
-
-			return false
-		})
-		.map((cells) => toRecord(header!, cells))
+	return CSVSpliterator.fromAsync<CSVRecord>(source).map(withoutLineBreaks)
 }
 
 /**

@@ -320,7 +320,9 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 	const pool: string[] = []
 
 	for await (const record of readCSVRecords(csvPath)) {
-		const name = (record["site name"] ?? record["Site Name"] ?? "").trim().replaceAll(/\s+/gu, " ")
+		// One key, where the source's `Site Name` and `SITE NAME` both used to need naming: the reader snake-cases and
+		// lower-cases a header, so either spelling arrives here as `site_name`.
+		const name = (record.site_name ?? "").trim().replaceAll(/\s+/gu, " ")
 
 		if (
 			name.length < VENUE_NAME_MIN_LENGTH ||

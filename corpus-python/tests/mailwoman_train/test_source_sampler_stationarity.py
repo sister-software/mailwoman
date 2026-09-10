@@ -137,3 +137,61 @@ def test_positive_weight_source_with_zero_selectable_rows_raises(tmp_path: Path)
     )
     with pytest.raises(ValueError, match="empty"):
         _emit(corpus, {"big": 1.0, "empty": 1.0})
+
+
+def test_source_absent_from_source_weights_raises(tmp_path: Path) -> None:
+    """The mirror of the guard above, and the one that was missing. A positive weight with no slice
+    raises; a slice with no weight used to be filtered out and logged at INFO as "zero-weighted",
+    which is what a DELIBERATE zero also says. The shape it hid: a regenerated slice takes a version
+    suffix in its ``source`` column, the config keeps the old key, and training continues on the
+    superseded vintage."""
+    corpus = _write_corpus(
+        tmp_path,
+        {
+            "part-old.parquet": _rows("synth-fr-bare-street", 12),
+            "part-new.parquet": _rows("synth-fr-bare-street-v22", 24),
+        },
+    )
+    with pytest.raises(ValueError, match="synth-fr-bare-street-v22"):
+        _emit(corpus, {"synth-fr-bare-street": 12.0})
+
+
+def test_source_named_at_zero_is_declined_without_raising(tmp_path: Path) -> None:
+    """Naming a source at zero is how the config declines it, so that path stays silent and legal —
+    the refusal above must not make ``synth-no-street-led: 0.0`` unexpressible."""
+    corpus = _write_corpus(
+        tmp_path,
+        {
+            "part-big.parquet": _rows("big", 24),
+            "part-off.parquet": _rows("off", 6),
+        },
+    )
+    emitted = _emit(corpus, {"big": 1.0, "off": 0.0})
+
+    assert {row["source"] for row in emitted} == {"big"}
+
+
+def test_val_split_still_tolerates_an_unnamed_source(tmp_path: Path) -> None:
+    """Validation corpora carry their own fixed source subset, so the refusal is scoped to the split
+    whose recipe claims coverage — the same scoping the unreachable-positive-weight guard already
+    uses."""
+    corpus = tmp_path / "corpus"
+    (corpus / "val").mkdir(parents=True)
+    pq.write_table(
+        pa.Table.from_pylist(_rows("held-out", 8), schema=LEGACY_SCHEMA),
+        corpus / "val" / "part-val.parquet",
+    )
+
+    emitted = list(
+        iter_rows(
+            corpus,
+            "val",
+            rng=random.Random(0),
+            country_weights={"US": 1.0},
+            source_weights={"something-else": 1.0},
+            coarse_filter=False,
+            shuffle_buffer=1,
+        )
+    )
+
+    assert len(emitted) == 8

@@ -26,14 +26,17 @@
  *   built to counter no longer reproduces — the model outgrew it (same lifecycle as the #956-era
  *   near-postcode suppression, also measured negative in M1). The known-format boosts below remain.
  *
- *   Uses structural typing for the QueryShape input so this module has zero dependencies on
- *   `@mailwoman/query-shape` — consumers compute the shape with that package, pass it in here.
+ *   Uses structural typing for the QueryShape VALUE so a caller may pass any compatible object — the shape
+ *   itself is never imported. The format-NAME convention is imported from its owner rather than restated,
+ *   because a restated convention drops the formats added after it was restated and reports nothing.
  */
 
 /**
  * Minimal subset of `QueryShape` this module consumes. Compatible with `@mailwoman/query-shape`'s exported `QueryShape`
  * type by shape — no import required.
  */
+import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
+
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import { spansOverlap } from "#span/repair"
 
@@ -70,20 +73,20 @@ export interface TokenLike {
 }
 
 /**
- * Mapping from `KnownFormat` strings to the BIO label that should be boosted. Multiple formats may map to the same
- * label (all postcode flavors → `B-postcode`).
+ * The BIO label a non-postcode `KnownFormat` biases. Postcode formats are NOT listed here: they are decided by name
+ * through {@linkcode isPostcodeFormat}, so a format added to the detector's table reaches this prior on the day it is
+ * named and no second list has to be kept in step.
  */
-const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([
-	["us_zip", "B-postcode"],
-	["us_zip4", "B-postcode"],
-	["fr_postcode", "B-postcode"],
-	["de_postcode", "B-postcode"],
-	["uk_postcode", "B-postcode"],
-	["ca_postcode", "B-postcode"],
-	["jp_postcode", "B-postcode"],
-	["nl_postcode", "B-postcode"],
-	["po_box", "B-po_box"],
-])
+const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_box"]])
+
+/**
+ * The BIO label {@linkcode buildEmissionPriors} biases for one format hit, or `undefined` when the format names no
+ * label. A hit whose format the detector produces but nothing here maps contributes ZERO bias and raises nothing, so
+ * `formatCoverage` in the unit suite asserts every detector format resolves.
+ */
+function formatLabel(format: string): string | undefined {
+	return isPostcodeFormat(format) ? "B-postcode" : FORMAT_TO_LABEL.get(format)
+}
 
 export interface BuildPriorsOpts {
 	/**
@@ -124,7 +127,7 @@ export function buildEmissionPriors(
 	}
 
 	for (const hit of shape.knownFormats) {
-		const targetLabel = FORMAT_TO_LABEL.get(hit.format)
+		const targetLabel = formatLabel(hit.format)
 
 		if (!targetLabel) continue
 		const col = labelToCol.get(targetLabel)

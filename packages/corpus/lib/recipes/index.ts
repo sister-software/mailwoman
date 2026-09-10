@@ -10,6 +10,7 @@
 
 import { anchorAbsorptionRecipe } from "#recipes/anchor-absorption"
 import { bareCountryRecipe } from "#recipes/bare-country"
+import { barePostcodeRecipe } from "#recipes/bare-postcode"
 import { boundaryStressRecipe } from "#recipes/boundary-stress"
 import { cnOrganizationalUnitsRecipe } from "#recipes/cn-organizational-units"
 import { countryBalancedRecipe } from "#recipes/country-balanced"
@@ -73,6 +74,7 @@ const RECIPES: readonly CorpusRecipe[] = [
 	frLieuditRecipe,
 	czPcFirstPrepositionRecipe,
 	nlPostcodeRecipe,
+	barePostcodeRecipe,
 	noStreetLedRecipe,
 	noFragmentRecipe,
 	siBareVillageRecipe,
