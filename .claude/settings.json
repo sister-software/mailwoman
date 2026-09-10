@@ -53,7 +53,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale-response-check.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/response-check.ts\"",
 						"timeout": 30,
 						"statusMessage": "Vale prose check"
 					}

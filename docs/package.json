@@ -34,9 +34,9 @@
 			"default": "./plugins/runtime-assets/workspace-aliases.ts"
 		},
 		"./scripts/docs-frontmatter-contract": {
-			"types": "./scripts/docs-frontmatter-contract.ts",
-			"node": "./scripts/docs-frontmatter-contract.ts",
-			"default": "./scripts/docs-frontmatter-contract.ts"
+			"types": "./scripts/docs/frontmatter-contract.ts",
+			"node": "./scripts/docs/frontmatter-contract.ts",
+			"default": "./scripts/docs/frontmatter-contract.ts"
 		},
 		"./scripts/generate-cli-reference": {
 			"types": "./scripts/generate-cli-reference.ts",

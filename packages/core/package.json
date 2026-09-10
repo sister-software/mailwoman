@@ -387,19 +387,19 @@
 			"default": "./out/tokenization/Span.js"
 		},
 		"./decoder/serialize-json": {
-			"types": "./out/decoder/serialize-json.d.ts",
-			"node": "./lib/decoder/serialize-json.ts",
-			"default": "./out/decoder/serialize-json.js"
+			"types": "./out/decoder/serialize/json.d.ts",
+			"node": "./lib/decoder/serialize/json.ts",
+			"default": "./out/decoder/serialize/json.js"
 		},
 		"./decoder/serialize-tuples": {
-			"types": "./out/decoder/serialize-tuples.d.ts",
-			"node": "./lib/decoder/serialize-tuples.ts",
-			"default": "./out/decoder/serialize-tuples.js"
+			"types": "./out/decoder/serialize/tuples.d.ts",
+			"node": "./lib/decoder/serialize/tuples.ts",
+			"default": "./out/decoder/serialize/tuples.js"
 		},
 		"./decoder/serialize-xml": {
-			"types": "./out/decoder/serialize-xml.d.ts",
-			"node": "./lib/decoder/serialize-xml.ts",
-			"default": "./out/decoder/serialize-xml.js"
+			"types": "./out/decoder/serialize/xml.d.ts",
+			"node": "./lib/decoder/serialize/xml.ts",
+			"default": "./out/decoder/serialize/xml.js"
 		},
 		"./decoder/resolve-proposal-overlaps": {
 			"types": "./out/decoder/resolve-proposal-overlaps.d.ts",

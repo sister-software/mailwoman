@@ -38,6 +38,34 @@ export interface SpecifierRewrite {
 	end: number
 }
 
+export interface ManifestRewrite {
+	/**
+	 * The manifest holding the target, repo-relative.
+	 */
+	file: string
+	target: string
+	replacement: string
+	/**
+	 * Offsets of the quoted target in the manifest text, quotes included.
+	 */
+	start: number
+	end: number
+}
+
+export interface PathLiteralRewrite {
+	/**
+	 * The file holding the path, repo-relative and at its post-move location.
+	 */
+	file: string
+	path: string
+	replacement: string
+	/**
+	 * Offsets of the path itself, with no quotes: it can sit inside a glob, a shell command, or a sentence.
+	 */
+	start: number
+	end: number
+}
+
 export interface UnresolvedSpecifier {
 	file: string
 	specifier: string
@@ -51,6 +79,16 @@ export interface UnresolvedSpecifier {
 export interface ModuleMovePlan {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
+	/**
+	 * `exports`/`imports` targets the moves invalidate. A subpath KEY never changes: it is the package's contract, and a
+	 * file moving underneath it is not a consumer's business.
+	 */
+	manifestRewrites: ManifestRewrite[]
+	/**
+	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:` line — that the moves invalidate.
+	 * Nothing checks these, which is why the operation that breaks them is the one that reports them.
+	 */
+	pathLiterals: PathLiteralRewrite[]
 	unresolved: UnresolvedSpecifier[]
 	/**
 	 * Files read to find the rewrites, against the tracked-source total they were drawn from. The pre-filter in `plan.ts`

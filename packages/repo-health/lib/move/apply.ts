@@ -14,14 +14,15 @@
  *   deletion beside an addition.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { dirname, resolvePath } from "path-ts"
 
 import type { RepoContext } from "#check"
 import { createMoveResolver } from "#move/resolution"
-import type { ModuleMove, ModuleMovePlan, SpecifierRewrite } from "#move/types"
+import { spliceText, type TextEdit } from "#move/splice"
+import type { ManifestRewrite, ModuleMove, ModuleMovePlan, PathLiteralRewrite, SpecifierRewrite } from "#move/types"
 
 export interface ModuleMoveApplyOptions {
 	/**
@@ -33,6 +34,8 @@ export interface ModuleMoveApplyOptions {
 export interface ModuleMoveResult {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
+	manifestRewrites: ManifestRewrite[]
+	pathLiterals: PathLiteralRewrite[]
 	/**
 	 * Rewritten specifiers re-resolved to their target against the moved tree. Equal to `rewrites.length` on success; a
 	 * shortfall throws rather than returning.
@@ -42,24 +45,60 @@ export interface ModuleMoveResult {
 }
 
 /**
- * Apply the specifier edits for one file, splicing from the end so no offset shifts under a later edit.
+ * Every edit the plan makes to a file's text, by file: a module specifier in a source file, a subpath target in a
+ * manifest.
  */
-async function rewriteFile(repoRoot: string, file: string, edits: readonly SpecifierRewrite[]): Promise<void> {
-	const path = resolvePath(repoRoot, file)
-	let text = await readLocalTextFile(path)
+function editsByFile(plan: ModuleMovePlan): Map<string, TextEdit[]> {
+	const byFile = new Map<string, TextEdit[]>()
 
-	for (const edit of [...edits].toSorted((a, b) => b.start - a.start)) {
-		const literal = text.slice(edit.start, edit.end)
-		const quote = literal[0] ?? '"'
-
-		if (!literal.includes(edit.specifier)) {
-			throw new Error(`${file}: ${JSON.stringify(edit.specifier)} is not at ${edit.start}–${edit.end} (${literal})`)
-		}
-
-		text = `${text.slice(0, edit.start)}${quote}${edit.replacement}${quote}${text.slice(edit.end)}`
+	const record = (file: string, edit: TextEdit): void => {
+		byFile.set(file, [...(byFile.get(file) ?? []), edit])
 	}
 
-	await writeLocalTextFile(text, path)
+	for (const rewrite of plan.rewrites) {
+		record(rewrite.file, { ...rewrite, expected: rewrite.specifier, quoted: true })
+	}
+
+	for (const rewrite of plan.manifestRewrites) {
+		record(rewrite.file, { ...rewrite, expected: rewrite.target, quoted: true })
+	}
+
+	for (const rewrite of plan.pathLiterals) {
+		record(rewrite.file, { ...rewrite, expected: rewrite.path, quoted: false })
+	}
+
+	return byFile
+}
+
+/**
+ * Remove each source directory the moves emptied, and each parent that empties with it.
+ *
+ * `git mv` moves files and leaves the directory standing, so a checkout keeps an empty `sub-venue/` next to the new
+ * `sub/venue/`. Git does not track it, which is worse than harmless: it makes the old layout look like it survived, and
+ * it is what an existence check reads when asking whether a path still means anything.
+ */
+async function removeEmptiedDirectories(repoRoot: string, directories: readonly string[]): Promise<void> {
+	for (const directory of new Set(directories)) {
+		let current = directory
+
+		while (current.includes("/")) {
+			const path = resolvePath(repoRoot, current)
+
+			if (!(await pathExists(path))) break
+
+			if ((await readDirectory(path)).length) break
+
+			await removePath(path)
+			current = String(dirname(current))
+		}
+	}
+}
+
+async function rewriteFile(repoRoot: string, file: string, edits: readonly TextEdit[]): Promise<void> {
+	const path = resolvePath(repoRoot, file)
+	const text = await readLocalTextFile(path)
+
+	await writeLocalTextFile(spliceText(file, text, edits), path)
 }
 
 /**
@@ -80,7 +119,14 @@ export async function applyModuleMoves(
 	}
 
 	if (options.dryRun) {
-		return { moves: plan.moves, rewrites: plan.rewrites, verified: 0, dryRun: true }
+		return {
+			moves: plan.moves,
+			rewrites: plan.rewrites,
+			manifestRewrites: plan.manifestRewrites,
+			pathLiterals: plan.pathLiterals,
+			verified: 0,
+			dryRun: true,
+		}
 	}
 
 	for (const move of plan.moves) {
@@ -88,13 +134,12 @@ export async function applyModuleMoves(
 		await runFile("git", ["mv", move.from, move.to], { cwd: context.repoRoot, encoding: "utf8" })
 	}
 
-	const byFile = new Map<string, SpecifierRewrite[]>()
+	await removeEmptiedDirectories(
+		context.repoRoot,
+		plan.moves.map((move) => String(dirname(move.from)))
+	)
 
-	for (const rewrite of plan.rewrites) {
-		byFile.set(rewrite.file, [...(byFile.get(rewrite.file) ?? []), rewrite])
-	}
-
-	for (const [file, edits] of byFile) {
+	for (const [file, edits] of editsByFile(plan)) {
 		await rewriteFile(context.repoRoot, file, edits)
 	}
 
@@ -112,5 +157,32 @@ export async function applyModuleMoves(
 		)
 	}
 
-	return { moves: plan.moves, rewrites: plan.rewrites, verified: plan.rewrites.length, dryRun: false }
+	const missing: string[] = []
+
+	for (const rewrite of plan.manifestRewrites) {
+		const directory = rewrite.file.slice(0, rewrite.file.lastIndexOf("/"))
+		const target = `${directory}/${rewrite.replacement.slice(2)}`
+
+		// An `out/` target names a file `tsc` has not emitted yet, so only a source target can be checked here.
+		if (target.includes("/out/")) continue
+
+		if (!(await pathExists(resolvePath(context.repoRoot, target)))) {
+			missing.push(`${rewrite.file}: ${target}`)
+		}
+	}
+
+	if (missing.length) {
+		throw new Error(
+			`Moved, but ${missing.length} rewritten manifest target(s) name a file that is not there.\n  ${missing.join("\n  ")}`
+		)
+	}
+
+	return {
+		moves: plan.moves,
+		rewrites: plan.rewrites,
+		manifestRewrites: plan.manifestRewrites,
+		pathLiterals: plan.pathLiterals,
+		verified: plan.rewrites.length,
+		dryRun: false,
+	}
 }

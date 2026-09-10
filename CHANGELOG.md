@@ -18,6 +18,27 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Changed — a command's name is what it declares, not where its file sits
+
+`listCommandNames` in the native CLI router read a command's name off its filename, so the layout was a user-facing
+contract: moving `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
+`mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder` provenance —
+stopped existing. The router now resolves a typed name against the literal path first and then against its
+prefix-directory readings, and the docs generator's tree takes each command's declared `spec.name`. A PREFIX
+DIRECTORY is transparent to the command path; a namespace like `gazetteer/inspect/` is not, and only the declared
+names tell them apart. Reading the compiled file's text rather than importing it keeps group help side-effect free.
+
+### Changed — the prefix-directory rule covers the whole tree, files and directories alike
+
+`recipe-prefix-directories` is now `prefix-directories`: three or more siblings sharing a hyphen-delimited prefix, in
+any directory, counting a subdirectory as a sibling beside a `.ts` file. Measured over the tracked tree: 163 groups
+at a threshold of two, 43 at three. Two kinds of name are excluded because they are contracts rather than layout, and
+both are derived rather than listed — a workspace directory is an npm package name, and a directory holding no
+tracked TypeScript belongs to whoever it mirrors (`hf-publish/mailwoman-cjk/` is a Hugging Face repository,
+`fixtures/…/whosonfirst-data-admin-fr/` an upstream one). Applying it renamed 186 files: 43 groups in the first
+reading, plus three the moves created — shortening `build-outlier-oa.ts` to `build/outlier-oa.ts` leaves `outlier-`
+repeated — which is why the fix re-takes its plan until the check is quiet.
+
 ### Added — `mwops health fix`, a module move that proves every specifier it rewrites
 
 `@mailwoman/repo-health` gains a second, much shorter registry beside the checks: a fix, for a check whose repair is

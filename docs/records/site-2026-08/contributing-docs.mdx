@@ -91,7 +91,7 @@ Contracts belong in Reference; a duplicated explanation is a future contradictio
 
 `check-docs-structure.ts` fails a PR on: an unknown `role:`/`status:` value or a missing required
 field, an exact duplicate `title:` across the published site, and a page reachable by URL but absent
-from every sidebar. Deliberate exceptions live in `docs/scripts/docs-structure-allowlist.ts`, each
+from every sidebar. Deliberate exceptions live in `docs/scripts/docs/structure-allowlist.ts`, each
 with a reason. A quarterly sweep (`.github/workflows/docs-freshness.yml`) files one "Docs freshness
 sweep" issue listing pages whose `review-by:` date has passed — pages without `review-by:` are
 never swept, so archival evidence stays untouched.

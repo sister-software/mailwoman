@@ -11,7 +11,7 @@ import {
 	createWOFAdminAdapter,
 	nameSlotsFor,
 	variantsFor,
-} from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
+} from "@mailwoman/corpus/adapters/wof/admin-json/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { join } from "path-ts"

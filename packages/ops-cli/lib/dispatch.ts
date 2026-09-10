@@ -29,6 +29,11 @@ import {
 	writeBaseline,
 } from "@mailwoman/repo-health"
 
+/**
+ * How many times `health fix` re-takes a plan before giving up. See {@link runFix} for why one pass is not enough.
+ */
+const MAXIMUM_FIX_PASSES = 8
+
 export interface DispatchIO {
 	stdout: (text: string) => void
 	stderr: (text: string) => void
@@ -198,41 +203,66 @@ async function runFix(
 		return 2
 	}
 
-	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
-	const moves = await fix.plan(context)
 	const dryRun = options["dry-run"] === true
+	const passes: Array<{ moves: number; rewrites: number; manifests: number; literals: number; verified: number }> = []
 
-	if (!moves.length) {
-		io.stdout(options.json === true ? "{}\n" : `${fix.id}: nothing to move\n`)
+	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves `outlier-oa.ts` beside two
+	// siblings that now share `outlier-`. So the plan is re-taken until the check has nothing left to say. The bound is
+	// a guard against a rule that never settles, not an expected number of passes — the repository's deepest family
+	// took two.
+	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
+		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+		const moves = await fix.plan(context)
 
-		return 0
+		if (!moves.length) break
+
+		const plan = await planModuleMoves(context, moves)
+		const result = await applyModuleMoves(context, plan, { dryRun })
+
+		passes.push({
+			moves: plan.moves.length,
+			rewrites: plan.rewrites.length,
+			manifests: plan.manifestRewrites.length,
+			literals: plan.pathLiterals.length,
+			verified: result.verified,
+		})
+
+		if (options.json !== true) {
+			io.stdout(
+				`${fix.id} pass ${pass + 1}: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s), ${plan.manifestRewrites.length} manifest target(s), ${plan.pathLiterals.length} path literal(s), across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
+			)
+
+			for (const move of plan.moves) {
+				io.stdout(`    ${move.from} -> ${move.to}\n`)
+			}
+
+			for (const rewrite of plan.rewrites) {
+				io.stdout(`    ${rewrite.file}: ${rewrite.specifier} -> ${rewrite.replacement}\n`)
+			}
+		}
+
+		// A dry run changes nothing, so a second pass would plan the same moves forever.
+		if (dryRun) break
 	}
-
-	const plan = await planModuleMoves(context, moves)
-	const result = await applyModuleMoves(context, plan, { dryRun })
 
 	if (options.json === true) {
-		io.stdout(`${JSON.stringify({ ...result, unresolved: plan.unresolved, scanned: plan.scanned }, null, 2)}\n`)
+		io.stdout(`${JSON.stringify({ id: fix.id, dryRun, passes }, null, 2)}\n`)
 
 		return 0
 	}
 
-	io.stdout(
-		`${fix.id}: ${plan.moves.length} move(s), ${plan.rewrites.length} specifier rewrite(s) across ${plan.scanned.read} of ${plan.scanned.tracked} tracked sources\n`
-	)
+	if (!passes.length) {
+		io.stdout(`${fix.id}: nothing to move\n`)
 
-	for (const move of plan.moves) {
-		io.stdout(`    ${move.from} -> ${move.to}\n`)
+		return 0
 	}
 
-	for (const rewrite of plan.rewrites) {
-		io.stdout(`    ${rewrite.file}: ${rewrite.specifier} -> ${rewrite.replacement}\n`)
-	}
+	const verified = passes.reduce((total, pass) => total + pass.verified, 0)
 
 	io.stdout(
 		dryRun
 			? "Nothing written. Drop --dry-run to apply.\n"
-			: `Verified ${result.verified} rewritten specifier(s) against the moved tree. Next: yarn typecheck:tests\n`
+			: `Verified ${verified} rewritten specifier(s) against the moved tree over ${passes.length} pass(es). Next: yarn typecheck:tests\n`
 	)
 
 	return 0

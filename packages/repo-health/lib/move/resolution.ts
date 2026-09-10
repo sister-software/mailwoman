@@ -44,10 +44,19 @@ export interface MoveResolver {
 }
 
 /**
- * A resolver that answers as though every move in `moves` had already happened. Pass no moves for the resolver that
- * reads the checkout as it stands.
+ * A resolver that answers as though the whole plan had already happened. Pass no moves for the resolver that reads the
+ * checkout as it stands.
+ *
+ * `contents` overrides what a file reads as, keyed by repo-relative path. The manifests belong in it: a subpath KEY
+ * survives a move while its target changes, so `@mailwoman/core/decoder/serialize-json` still names the moved file
+ * afterwards — and a resolver reading the manifest as it stands would report that specifier unrepointable and refuse a
+ * plan that is in fact complete.
  */
-export function createMoveResolver(repoRoot: string, moves: readonly ModuleMove[] = []): MoveResolver {
+export function createMoveResolver(
+	repoRoot: string,
+	moves: readonly ModuleMove[] = [],
+	contents: ReadonlyMap<string, string> = new Map()
+): MoveResolver {
 	const absolute = (path: string): string => String(resolvePath(repoRoot, path))
 	const origins = new Map(moves.map((move) => [absolute(move.to), absolute(move.from)]))
 	const removed = new Set(moves.map((move) => absolute(move.from)))
@@ -61,10 +70,48 @@ export function createMoveResolver(repoRoot: string, moves: readonly ModuleMove[
 		}
 	}
 
-	const fileExists = (path: string): boolean => {
-		if (origins.has(path)) return true
+	const overridden = new Map([...contents].map(([path, text]) => [absolute(path), text]))
+	const canonicalized = new Map<string, string>()
 
-		if (removed.has(path) || BUILD_OUTPUT.test(path)) return false
+	/**
+	 * The real path a probe names, for a probe that goes through a symlink.
+	 *
+	 * A workspace is reached as `node_modules/@mailwoman/x/…`, which is a different string for the same file — and for a
+	 * file the plan has not written yet, `realpath` cannot answer at all, because nothing is there to resolve. So the
+	 * walk trims trailing segments until it reaches something that exists, resolves THAT, and puts the trimmed segments
+	 * back. Every overlay entry is keyed by a real path, and this is what lets a probe find one.
+	 */
+	const canonical = (path: string): string => {
+		if (!path.includes("/node_modules/")) return path
+
+		const cached = canonicalized.get(path)
+
+		if (cached) return cached
+
+		const trimmed: string[] = []
+		let head = path
+
+		while (head.includes("/") && !ts.sys.fileExists(head) && !ts.sys.directoryExists(head)) {
+			const slash = head.lastIndexOf("/")
+
+			trimmed.unshift(head.slice(slash + 1))
+			head = head.slice(0, slash)
+		}
+
+		const real = ts.sys.realpath?.(head) ?? head
+		const answer = trimmed.length ? `${real}/${trimmed.join("/")}` : real
+
+		canonicalized.set(path, answer)
+
+		return answer
+	}
+
+	const fileExists = (path: string): boolean => {
+		const real = canonical(path)
+
+		if (origins.has(real)) return true
+
+		if (removed.has(real) || BUILD_OUTPUT.test(real)) return false
 
 		return ts.sys.fileExists(path)
 	}
@@ -72,10 +119,18 @@ export function createMoveResolver(repoRoot: string, moves: readonly ModuleMove[
 	const host: ts.ModuleResolutionHost = {
 		...ts.sys,
 		fileExists,
-		readFile: (path) => ts.sys.readFile(origins.get(path) ?? path),
+		readFile: (path) => {
+			const real = canonical(path)
+
+			return overridden.get(real) ?? ts.sys.readFile(origins.get(real) ?? path)
+		},
 		directoryExists: (path) =>
-			directories.has(path) || (!BUILD_OUTPUT.test(`${path}/`) && ts.sys.directoryExists(path)),
-		realpath: (path) => (origins.has(path) ? path : (ts.sys.realpath?.(path) ?? path)),
+			directories.has(canonical(path)) || (!BUILD_OUTPUT.test(`${path}/`) && ts.sys.directoryExists(path)),
+		realpath: (path) => {
+			const real = canonical(path)
+
+			return origins.has(real) ? real : (ts.sys.realpath?.(path) ?? path)
+		},
 	}
 
 	const cache = ts.createModuleResolutionCache(repoRoot, (fileName) => fileName, RESOLUTION_OPTIONS)

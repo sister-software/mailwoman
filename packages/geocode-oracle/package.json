@@ -52,19 +52,19 @@
 			"default": "./out/env.js"
 		},
 		"./sdk/census-client": {
-			"types": "./out/sdk/census-client.d.ts",
-			"node": "./lib/sdk/census-client.ts",
-			"default": "./out/sdk/census-client.js"
+			"types": "./out/sdk/census/client.d.ts",
+			"node": "./lib/sdk/census/client.ts",
+			"default": "./out/sdk/census/client.js"
 		},
 		"./sdk/census-parser": {
-			"types": "./out/sdk/census-parser.d.ts",
-			"node": "./lib/sdk/census-parser.ts",
-			"default": "./out/sdk/census-parser.js"
+			"types": "./out/sdk/census/parser.d.ts",
+			"node": "./lib/sdk/census/parser.ts",
+			"default": "./out/sdk/census/parser.js"
 		},
 		"./sdk/census-types": {
-			"types": "./out/sdk/census-types.d.ts",
-			"node": "./lib/sdk/census-types.ts",
-			"default": "./out/sdk/census-types.js"
+			"types": "./out/sdk/census/types.d.ts",
+			"node": "./lib/sdk/census/types.ts",
+			"default": "./out/sdk/census/types.js"
 		},
 		"./sdk/map-link": {
 			"types": "./out/sdk/map-link.d.ts",
@@ -72,19 +72,19 @@
 			"default": "./out/sdk/map-link.js"
 		},
 		"./sdk/google-client": {
-			"types": "./out/sdk/google-client.d.ts",
-			"node": "./lib/sdk/google-client.ts",
-			"default": "./out/sdk/google-client.js"
+			"types": "./out/sdk/google/client.d.ts",
+			"node": "./lib/sdk/google/client.ts",
+			"default": "./out/sdk/google/client.js"
 		},
 		"./sdk/google-parser": {
-			"types": "./out/sdk/google-parser.d.ts",
-			"node": "./lib/sdk/google-parser.ts",
-			"default": "./out/sdk/google-parser.js"
+			"types": "./out/sdk/google/parser.d.ts",
+			"node": "./lib/sdk/google/parser.ts",
+			"default": "./out/sdk/google/parser.js"
 		},
 		"./sdk/google-types": {
-			"types": "./out/sdk/google-types.d.ts",
-			"node": "./lib/sdk/google-types.ts",
-			"default": "./out/sdk/google-types.js"
+			"types": "./out/sdk/google/types.d.ts",
+			"node": "./lib/sdk/google/types.ts",
+			"default": "./out/sdk/google/types.js"
 		}
 	},
 	"scripts": {

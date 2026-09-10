@@ -282,6 +282,11 @@
 			"node": "./lib/api-engine.ts",
 			"default": "./out/api-engine.js"
 		},
+		"./cli-native/command-names": {
+			"types": "./out/cli-native/command-names.d.ts",
+			"node": "./lib/cli-native/command-names.ts",
+			"default": "./out/cli-native/command-names.js"
+		},
 		"./cli-native/spec": {
 			"types": "./out/cli-native/spec.d.ts",
 			"node": "./lib/cli-native/spec.ts",

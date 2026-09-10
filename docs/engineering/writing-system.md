@@ -122,7 +122,7 @@ for the GeoJSON term when the wire format already uses it.
 ## Register by role
 
 The six roles are the ones the frontmatter contract enforces
-(`docs/scripts/docs-frontmatter-contract.ts`). Register is a property of the role, not of the author.
+(`docs/scripts/docs/frontmatter-contract.ts`). Register is a property of the role, not of the author.
 
 | Role          | Person                 | Contractions | Sentence length    | Examples                                    |
 | ------------- | ---------------------- | ------------ | ------------------ | ------------------------------------------- |
@@ -306,6 +306,6 @@ One per role, in [`page-templates/`](./page-templates/): [tutorial](./page-templ
 [how-to](./page-templates/how-to.md), [reference](./page-templates/reference.md),
 [explanation](./page-templates/explanation.md), [landing](./page-templates/landing.md),
 [evidence](./page-templates/evidence.md). Each carries a frontmatter skeleton that satisfies the contract in
-`docs/scripts/docs-frontmatter-contract.ts`, the section order for its role, the opening move, and one
+`docs/scripts/docs/frontmatter-contract.ts`, the section order for its role, the opening move, and one
 exemplar paragraph in this voice. Start a new page by copying the template for its role, not by copying a
 neighboring page.

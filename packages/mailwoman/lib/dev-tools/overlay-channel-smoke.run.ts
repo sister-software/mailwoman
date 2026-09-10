@@ -27,7 +27,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
 // CASE-NORMALIZED text (#690/#829, default-ON in `parse`) — re-implementing that here is the one thing
 // that must not drift, so this repo-local diagnostic imports the module directly (same posture as
-// `packages/mailwoman/lib/dev-tools/probe-gb-anchor-fire.run.ts`).
+// `packages/mailwoman/lib/dev-tools/probe/gb-anchor-fire.run.ts`).
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
 import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
 import { resolveWeights } from "@mailwoman/neural/weights"

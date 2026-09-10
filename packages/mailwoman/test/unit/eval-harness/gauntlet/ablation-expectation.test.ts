@@ -41,7 +41,7 @@ import {
 	rungRadiusKm,
 	UNCONSTRAINED_RUNG,
 	withoutComponent,
-} from "mailwoman/eval-harness/gauntlet/ablation-expectation"
+} from "mailwoman/eval-harness/gauntlet/ablation/expectation"
 import { describe, expect, it } from "vitest"
 
 /**

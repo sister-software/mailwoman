@@ -55,8 +55,8 @@ import {
 	COINCIDENT_PLACE_KM,
 	DECISIVE_MARGIN_LOG10,
 	dominanceMarginLog10,
-} from "#eval-harness/gauntlet/ablation-expectation"
-import { collapseCoincident } from "#eval-harness/gauntlet/ablation-gazetteer"
+} from "#eval-harness/gauntlet/ablation/expectation"
+import { collapseCoincident } from "#eval-harness/gauntlet/ablation/gazetteer"
 
 /**
  * The subset of a resolver `ResolvedPlace` this module reads. Structural on purpose — `AddressNode.alternatives` is

@@ -10,13 +10,13 @@
  *   the code should say.
  */
 
-import { recipePrefixDirectoriesFix } from "#checks/recipe-prefix-directories"
+import { prefixDirectoriesFix } from "#checks/prefix-directories"
 import type { RepoFix } from "#fix"
 
 /**
  * Every check that can plan its own repair. `mwops health fix <check>` looks a fix up here by the check's id.
  */
-export const fixes: ReadonlyArray<RepoFix> = [recipePrefixDirectoriesFix]
+export const fixes: ReadonlyArray<RepoFix> = [prefixDirectoriesFix]
 
 /**
  * The fix for a check id, or nothing when that check has no mechanical repair.

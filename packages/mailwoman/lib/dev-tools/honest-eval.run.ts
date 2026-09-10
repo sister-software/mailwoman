@@ -38,7 +38,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { $ } from "zx"
 
-import { oaResolverEval } from "#eval-harness/oa-resolver-eval"
+import { oaResolverEval } from "#eval-harness/oa/resolver-eval"
 
 /**
  * The PIP-containment metric runs as a child so its own `--json` sidecar contract is exercised unchanged.

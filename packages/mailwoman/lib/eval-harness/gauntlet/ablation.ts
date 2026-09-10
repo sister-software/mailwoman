@@ -78,11 +78,11 @@ import {
 	ladderComponentDisagreement,
 	PASSING_GRADES,
 	UNCONSTRAINED_RUNG,
-} from "#eval-harness/gauntlet/ablation-expectation"
-import { AblationGazetteer } from "#eval-harness/gauntlet/ablation-gazetteer"
+} from "#eval-harness/gauntlet/ablation/expectation"
+import { AblationGazetteer } from "#eval-harness/gauntlet/ablation/gazetteer"
 // The renderer and the data shapes moved out when the expectation model pushed this file past the 750-line cap. Both
 // are re-exported below, from their historical home, so every importer and every test keeps its path.
-import { renderAblationMarkdown } from "#eval-harness/gauntlet/ablation-report"
+import { renderAblationMarkdown } from "#eval-harness/gauntlet/ablation/report"
 import {
 	aggregateAblationComponents,
 	ABLATABLE_COMPONENTS,
@@ -93,7 +93,7 @@ import {
 	type AblationVariant,
 	DEFAULT_ABLATION_TOLERANCE_KM,
 	type SlotOutcome,
-} from "#eval-harness/gauntlet/ablation-types"
+} from "#eval-harness/gauntlet/ablation/types"
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { componentOf } from "#eval-harness/gauntlet/check-case"
 import { assertCorpusStampFresh } from "#eval-harness/gauntlet/corpus-stamp"
@@ -101,13 +101,13 @@ import { buildGauntletDeps, type GauntletResult, runOne } from "#eval-harness/ga
 import { type GauntletLayerOptions, layerDepsOptions } from "#eval-harness/gauntlet/regression"
 import type { GauntletDatabase, ResolutionTier } from "#eval-harness/gauntlet/schema"
 
-export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation-expectation"
+export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation/expectation"
 
 export {
 	formatAblationCell,
 	formatAblationLadderCell,
 	renderAblationMarkdown,
-} from "#eval-harness/gauntlet/ablation-report"
+} from "#eval-harness/gauntlet/ablation/report"
 
 export {
 	ABLATABLE_COMPONENTS,
@@ -118,7 +118,7 @@ export {
 	type AblationSkip,
 	type AblationVariant,
 	type SlotOutcome,
-} from "#eval-harness/gauntlet/ablation-types"
+} from "#eval-harness/gauntlet/ablation/types"
 
 /**
  * How many substitutions the console summary lists before it truncates. Purely a terminal-legibility cap — the full

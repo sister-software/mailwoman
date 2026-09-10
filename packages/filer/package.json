@@ -158,19 +158,19 @@
 			"default": "./out/sdk/sec-client.js"
 		},
 		"./tools/linkage-corpus": {
-			"types": "./out/tools/linkage-corpus.d.ts",
-			"node": "./lib/tools/linkage-corpus.ts",
-			"default": "./out/tools/linkage-corpus.js"
+			"types": "./out/tools/linkage/corpus.d.ts",
+			"node": "./lib/tools/linkage/corpus.ts",
+			"default": "./out/tools/linkage/corpus.js"
 		},
 		"./tools/linkage-eval": {
-			"types": "./out/tools/linkage-eval.d.ts",
-			"node": "./lib/tools/linkage-eval.ts",
-			"default": "./out/tools/linkage-eval.js"
+			"types": "./out/tools/linkage/eval.d.ts",
+			"node": "./lib/tools/linkage/eval.ts",
+			"default": "./out/tools/linkage/eval.js"
 		},
 		"./tools/linkage-metrics": {
-			"types": "./out/tools/linkage-metrics.d.ts",
-			"node": "./lib/tools/linkage-metrics.ts",
-			"default": "./out/tools/linkage-metrics.js"
+			"types": "./out/tools/linkage/metrics.d.ts",
+			"node": "./lib/tools/linkage/metrics.ts",
+			"default": "./out/tools/linkage/metrics.js"
 		},
 		"./sdk/build/edgar-match": {
 			"types": "./out/sdk/build/edgar-match.d.ts",

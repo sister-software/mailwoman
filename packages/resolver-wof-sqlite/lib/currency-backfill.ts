@@ -16,9 +16,9 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import type { loadImportanceIndex } from "#candidate-importance"
-import type { CandidateDatabase } from "#candidate-schema"
+import type { loadImportanceIndex } from "#candidate/importance"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
+import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 

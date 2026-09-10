@@ -200,7 +200,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// `pair-index-resolver` reaches only `core/types` — so neither load pulls the ONNX runtime.
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
-		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair-index")
+		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair/index")
 		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
 		const { extractBoroughPairs } = await import("#gazetteer-pipeline/borough-pairs")
 		const { extractLieuDitPairs } = await import("#gazetteer-pipeline/lieudit-pairs")

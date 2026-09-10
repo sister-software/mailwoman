@@ -92,8 +92,8 @@ import { maskRegressionCheck } from "#eval-harness/mask-regression"
 import { perLocaleF1 } from "#eval-harness/per-locale-f1"
 import { presetCompare } from "#eval-harness/preset-compare"
 import { assemblePromotionVerdict } from "#eval-harness/promotion-eval-verdict"
-import { scoreAffix, type ScoreAffixOptions } from "#eval-harness/score-affix"
-import { scoreCountryHomograph } from "#eval-harness/score-country-homograph"
+import { scoreAffix, type ScoreAffixOptions } from "#eval-harness/score/affix"
+import { scoreCountryHomograph } from "#eval-harness/score/country-homograph"
 import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
 
 /**

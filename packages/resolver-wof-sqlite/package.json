@@ -186,14 +186,14 @@
 			"default": "./out/build-candidate.js"
 		},
 		"./candidate-ancestors-schema": {
-			"types": "./out/candidate-ancestors-schema.d.ts",
-			"node": "./lib/candidate-ancestors-schema.ts",
-			"default": "./out/candidate-ancestors-schema.js"
+			"types": "./out/candidate/ancestors-schema.d.ts",
+			"node": "./lib/candidate/ancestors-schema.ts",
+			"default": "./out/candidate/ancestors-schema.js"
 		},
 		"./candidate-schema": {
-			"types": "./out/candidate-schema.d.ts",
-			"node": "./lib/candidate-schema.ts",
-			"default": "./out/candidate-schema.js"
+			"types": "./out/candidate/schema.d.ts",
+			"node": "./lib/candidate/schema.ts",
+			"default": "./out/candidate/schema.js"
 		},
 		"./weights-overlay-linker": {
 			"types": "./out/weights-overlay-linker.d.ts",
@@ -206,14 +206,14 @@
 			"default": "./out/interpolation.js"
 		},
 		"./candidate-lookup": {
-			"types": "./out/candidate-lookup.d.ts",
-			"node": "./lib/candidate-lookup.ts",
-			"default": "./out/candidate-lookup.js"
+			"types": "./out/candidate/lookup.d.ts",
+			"node": "./lib/candidate/lookup.ts",
+			"default": "./out/candidate/lookup.js"
 		},
 		"./candidate-importance": {
-			"types": "./out/candidate-importance.d.ts",
-			"node": "./lib/candidate-importance.ts",
-			"default": "./out/candidate-importance.js"
+			"types": "./out/candidate/importance.d.ts",
+			"node": "./lib/candidate/importance.ts",
+			"default": "./out/candidate/importance.js"
 		},
 		"./types": {
 			"types": "./out/types.d.ts",

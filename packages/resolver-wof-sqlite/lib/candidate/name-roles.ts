@@ -9,9 +9,9 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
-import type { CandidateDatabase } from "#candidate-schema"
 import { isOwnNameVariant } from "#candidate/own-name"
 import type { PlaceAttrs } from "#candidate/place-attrs"
+import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 

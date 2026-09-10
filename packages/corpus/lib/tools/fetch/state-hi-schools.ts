@@ -23,7 +23,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { join } from "path-ts"
 import { XLSXSpliterator, type XLSXCellValue } from "spliterator"
 
-import { STATE_HI_SCHOOL_REQUIRED_COLUMNS, STATE_HI_SCHOOL_SHEETS } from "#adapters/state-hi-schools/workbook"
+import { STATE_HI_SCHOOL_REQUIRED_COLUMNS, STATE_HI_SCHOOL_SHEETS } from "#adapters/state/hi-schools/workbook"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 

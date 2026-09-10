@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { repoRootPath } from "@mailwoman/core/paths"
 import { dispatch, parseOptions } from "@mailwoman/ops-cli"
 import { describe, expect, it } from "vitest"
 
@@ -57,14 +58,16 @@ describe("mwops dispatch", () => {
 
 		expect(await dispatch(["health", "fix", "nope"], h.io)).toBe(2)
 		expect(h.err.join("")).toContain('no fix for "nope"')
-		expect(h.err.join("")).toContain("recipe-prefix-directories")
+		expect(h.err.join("")).toContain("prefix-directories")
 	})
 
 	it("reports nothing to move when the check already passes", async () => {
 		const h = io()
+		// A real root, because the fix reads the `workspaces` field to know which directory names are package names.
+		// The tracked-file list stays empty, so there is no repeated prefix and the fix plans no move.
+		const withRealRoot = { ...h.io, repoRoot: String(repoRootPath()) }
 
-		// An empty tracked-file list has no repeated recipe prefix in it, so the fix plans no move and writes nothing.
-		expect(await dispatch(["health", "fix", "recipe-prefix-directories"], h.io)).toBe(0)
+		expect(await dispatch(["health", "fix", "prefix-directories"], withRealRoot)).toBe(0)
 		expect(h.out.join("")).toContain("nothing to move")
 	})
 

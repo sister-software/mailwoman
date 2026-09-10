@@ -29,25 +29,25 @@ export {
 	createCandidateIntervalTable,
 	intervalContains,
 	MAX_ANCESTOR_DEPTH,
-} from "#candidate-ancestors-schema"
+} from "#candidate/ancestors-schema"
 
 export type {
 	CandidateAncestorsDatabase,
 	CandidateAncestorTable,
 	CandidateIntervalTable,
 	IntervalLabel,
-} from "#candidate-ancestors-schema"
+} from "#candidate/ancestors-schema"
 
-export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "#candidate-fts"
+export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "#candidate/fts"
 
 export {
 	ImportanceIndex,
 	IMPORTANCE_JOIN_RADIUS_KM,
 	type ImportanceIndexStats,
 	loadImportanceIndex,
-} from "#candidate-importance"
+} from "#candidate/importance"
 
-export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "#candidate-lookup"
+export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "#candidate/lookup"
 
 export {
 	COUNTRY_BBOX_TABLE,
@@ -70,17 +70,17 @@ export {
 	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
 	type WOFPostalCityAliasLookupOpts,
-} from "#postal/city-alias-lookup"
+} from "#postal/city/alias-lookup"
 
-export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city-alias-schema"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city/alias-schema"
 
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
 	POSTAL_CITY_CANDIDATE_TABLE,
 	createPostalCityCandidateTable,
-} from "#postal/city-candidate-schema"
+} from "#postal/city/candidate-schema"
 
-export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal/city-candidate-schema"
+export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal/city/candidate-schema"
 
 export {
 	ADDRESS_CONVENTION_TABLE,

@@ -6,7 +6,7 @@
  *
  *   Fixture test for `docs/styles/Mailwoman/*.yml` (the published-prose rules) and
  *   `docs/styles/MailwomanChat/*.yml` (the agent-reply rules the Stop hook runs through
- *   `.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale-response-check.ts`).
+ *   `.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale/response-check.ts`).
  *
  *   There is no vitest harness for a set of Vale YAML rule files, so this is the test. Each style
  *   has two fixtures. The dirty one is written to trip every rule file at least once, and also

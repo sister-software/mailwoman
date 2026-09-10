@@ -16,7 +16,7 @@
  *   and both behaviors are pinned by their consumers' boards.
  */
 
-import { flatten } from "#decoder/serialize-tuples"
+import { flatten } from "#decoder/serialize/tuples"
 import { walkNodes } from "#decoder/tree-walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import type { ComponentTag } from "#types/component"

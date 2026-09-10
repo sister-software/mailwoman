@@ -21,7 +21,7 @@ import {
 	splitUpperList,
 	useCommandTask,
 } from "#cli-kit"
-import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazetteer-pipeline/admin/fold-staleness"
+import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazetteer-pipeline/admin/fold/staleness"
 import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"
 
 /**

@@ -10,7 +10,7 @@ import {
 	WOF_POSTALCODE_ADAPTER_ID,
 	createWOFPostalcodeAdapter,
 	postcodeVariantsFor,
-} from "@mailwoman/corpus/adapters/wof-postalcode-json/adapter"
+} from "@mailwoman/corpus/adapters/wof/postalcode-json/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { join } from "path-ts"

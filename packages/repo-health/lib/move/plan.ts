@@ -17,11 +17,14 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { basename, dirname, resolvePath } from "path-ts"
 import ts from "typescript"
 
 import type { RepoContext } from "#check"
+import { planPathLiteralRewrites } from "#move/literals"
+import { planManifestRewrites } from "#move/manifests"
 import { createMoveResolver } from "#move/resolution"
 import {
 	hasSourceExtension,
@@ -32,6 +35,7 @@ import {
 	SpecifierFamily,
 	type PackageManifest,
 } from "#move/specifiers"
+import { spliceText } from "#move/splice"
 import type { ModuleMove, ModuleMovePlan, SpecifierRewrite, UnresolvedSpecifier } from "#move/types"
 import { trackedSourcePaths } from "#tracked-sources"
 import { moduleSpecifierLiterals } from "#ts-ast"
@@ -140,8 +144,45 @@ function candidateReplacements(
 export async function planModuleMoves(context: RepoContext, moves: readonly ModuleMove[]): Promise<ModuleMovePlan> {
 	const manifests = await readPackageManifests(context)
 	const destinations = new Map(moves.map((move) => [move.from, move.to]))
+
+	// The manifest edits come first: the overlay the replacements are proven against has to be the tree the WHOLE
+	// plan leaves behind, subpath targets included.
+	const manifestRewrites = await planManifestRewrites(
+		context.repoRoot,
+		manifests.map((manifest) => manifest.dir),
+		moves
+	)
+
+	const rewrittenManifests = new Map<string, string>()
+
+	for (const [file, edits] of Map.groupBy(manifestRewrites, (rewrite) => rewrite.file)) {
+		const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
+
+		rewrittenManifests.set(
+			file,
+			spliceText(
+				file,
+				text,
+				edits.map((edit) => ({ ...edit, expected: edit.target, quoted: true }))
+			)
+		)
+	}
+
+	// Candidates are derived from the maps the plan LEAVES, not the ones it found: a target that has moved would
+	// otherwise offer a replacement naming the old path, or none at all.
+	const planned = manifests.map((manifest) => {
+		const text = rewrittenManifests.get(`${manifest.dir}/package.json`)
+
+		if (!text) return manifest
+
+		// A manifest this operation just spliced must parse. If it does not, the splice was wrong and the plan is void.
+		const parsed = parseJSONStrict<Pick<PackageManifest, "imports" | "exports">>(text)
+
+		return { ...manifest, imports: parsed.imports, exports: parsed.exports }
+	})
+
 	const before = createMoveResolver(context.repoRoot, [])
-	const after = createMoveResolver(context.repoRoot, moves)
+	const after = createMoveResolver(context.repoRoot, moves, rewrittenManifests)
 	const probes = moves.flatMap((move) => referenceProbes(move, manifests))
 
 	const tracked = (await trackedSourcePaths(context, { existingOnly: true })).map((path) =>
@@ -173,7 +214,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 
 			if (after.resolve(specifier, containing) === target) continue
 
-			const candidates = candidateReplacements(specifier, containing, target, manifests)
+			const candidates = candidateReplacements(specifier, containing, target, planned)
 			const replacement = candidates.find((candidate) => after.resolve(candidate, containing) === target)
 
 			if (!replacement) {
@@ -201,5 +242,14 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 		}
 	}
 
-	return { moves: [...moves], rewrites, unresolved, scanned: { read, tracked: tracked.length } }
+	const pathLiterals = await planPathLiteralRewrites(context.repoRoot, context.trackedFiles, moves)
+
+	return {
+		moves: [...moves],
+		rewrites,
+		manifestRewrites,
+		pathLiterals,
+		unresolved,
+		scanned: { read, tracked: tracked.length },
+	}
 }

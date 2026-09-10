@@ -40,9 +40,9 @@
 import { parseArgs } from "node:util"
 
 import sidebars from "../sidebars.ts"
-import { validatePage } from "./docs-frontmatter-contract.ts"
-import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "./docs-frontmatter.ts"
-import { allowedDuplicateTitles, allowedOrphans } from "./docs-structure-allowlist.ts"
+import { validatePage } from "./docs/frontmatter-contract.ts"
+import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "./docs/frontmatter.ts"
+import { allowedDuplicateTitles, allowedOrphans } from "./docs/structure-allowlist.ts"
 
 const { values: flags } = parseArgs({
 	options: {
@@ -339,8 +339,8 @@ for (const allowance of allowedDuplicateTitles) {
 if (failureCount > 0) {
 	console.error(
 		`\nDocs structure check FAILED (${failureCount} finding${failureCount === 1 ? "" : "s"}). ` +
-			`Contract: docs/scripts/docs-frontmatter-contract.ts · voice + section rules: ` +
-			`docs/engineering/writing-system.md · allowlist: docs/scripts/docs-structure-allowlist.ts`
+			`Contract: docs/scripts/docs/frontmatter-contract.ts · voice + section rules: ` +
+			`docs/engineering/writing-system.md · allowlist: docs/scripts/docs/structure-allowlist.ts`
 	)
 
 	process.exit(1)

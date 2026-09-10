@@ -25,8 +25,8 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
 import { enrichAdmin } from "#gazetteer-pipeline/admin/enrich"
-import { foldGeonames, type FoldGeonamesResult } from "#gazetteer-pipeline/admin/fold-geonames"
-import { ingestOvertureDivisions } from "#gazetteer-pipeline/admin/fold-overture"
+import { foldGeonames, type FoldGeonamesResult } from "#gazetteer-pipeline/admin/fold/geonames"
+import { ingestOvertureDivisions } from "#gazetteer-pipeline/admin/fold/overture"
 import { freezeAdmin } from "#gazetteer-pipeline/admin/freeze"
 import { ingestWOF, type IngestWOFResult } from "#gazetteer-pipeline/admin/ingest-wof"
 import { createGeoNamesAnchorLookup } from "#gazetteer-pipeline/admin/label-point-adjudicator"
@@ -279,8 +279,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 // Re-export the step functions so `gazetteer-pipeline/admin` is a complete surface on its own.
 export * from "#gazetteer-pipeline/admin/enrich"
-export * from "#gazetteer-pipeline/admin/fold-geonames"
-export * from "#gazetteer-pipeline/admin/fold-overture"
-export * from "#gazetteer-pipeline/admin/fold-staleness"
+export * from "#gazetteer-pipeline/admin/fold/geonames"
+export * from "#gazetteer-pipeline/admin/fold/overture"
+export * from "#gazetteer-pipeline/admin/fold/staleness"
 export * from "#gazetteer-pipeline/admin/freeze"
 export * from "#gazetteer-pipeline/admin/ingest-wof"

@@ -44,20 +44,20 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { createCandidateFTS } from "#candidate-fts"
-import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate-importance"
+import { explodeAliasBags } from "#candidate/alias-bags"
+import { buildAncestorsSidecar } from "#candidate/ancestors-sidecar"
+import { stageCountryDisplayNames } from "#candidate/country-display-names"
+import { foldExtract } from "#candidate/extract-fold"
+import { createCandidateFTS } from "#candidate/fts"
+import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/importance"
+import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
+import type { PlaceAttrs } from "#candidate/place-attrs"
 import {
 	CANDIDATE_COLUMNS,
 	createCandidateStagingTables,
 	createCandidateTable,
 	type CandidateDatabase,
-} from "#candidate-schema"
-import { explodeAliasBags } from "#candidate/alias-bags"
-import { buildAncestorsSidecar } from "#candidate/ancestors-sidecar"
-import { stageCountryDisplayNames } from "#candidate/country-display-names"
-import { foldExtract } from "#candidate/extract-fold"
-import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
-import type { PlaceAttrs } from "#candidate/place-attrs"
+} from "#candidate/schema"
 import { createCapitalTable } from "#capital-schema"
 import type { CapitalPoint } from "#capitals"
 import { resurrectCurrencyHoles } from "#currency-backfill"

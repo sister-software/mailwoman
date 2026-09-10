@@ -15,9 +15,9 @@ import {
 	createCandidateAncestorTable,
 	createCandidateIntervalTable,
 	MAX_ANCESTOR_DEPTH,
-} from "#candidate-ancestors-schema"
-import type { CandidateDatabase } from "#candidate-schema"
+} from "#candidate/ancestors-schema"
 import type { PlaceAttrs } from "#candidate/place-attrs"
+import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 
 /**

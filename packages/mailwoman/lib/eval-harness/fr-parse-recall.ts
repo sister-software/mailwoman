@@ -17,7 +17,7 @@
  *   and any sibling helper swept in beside it would have vanished. See `demo-cascade-rows.ts` for
  *   what that looks like when it goes wrong.
  *
- *   Run: node packages/mailwoman/lib/dev-tools/fr-parse-recall.run.ts
+ *   Run: node packages/mailwoman/lib/dev-tools/fr/parse-recall.run.ts
  */
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
