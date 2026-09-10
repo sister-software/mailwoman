@@ -25,6 +25,7 @@ import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-prom
 
 import { tryStat } from "#fs/readers"
 import { makeDirectories } from "#fs/writers"
+import { once } from "#utils/events"
 
 type StreamingArchive = Awaited<ReturnType<typeof openArchive>>
 
@@ -34,10 +35,46 @@ type EntryStream = Awaited<ReturnType<Entry["openReadStream"]>>
  * The one place this package touches yauzl's own lifecycle. Every reader below ends an archive by leaving scope, so
  * `close()` is called here and nowhere else.
  */
-async function openStreamingArchive(archivePath: PathBuilderLike): Promise<StreamingArchive & AsyncDisposable> {
-	const archive = await openArchive(String(archivePath))
+async function openStreamingArchive(
+	archivePath: PathBuilderLike,
+	options?: ZipNameOptions
+): Promise<StreamingArchive & AsyncDisposable> {
+	// `decodeStrings: false` hands back the central directory's raw name bytes, which is the only way to read a name the
+	// archive never said the encoding of. See {@link ZipNameOptions}.
+	const archive = await openArchive(String(archivePath), options?.filenameEncoding ? { decodeStrings: false } : {})
 
 	return Object.assign(archive, { [Symbol.asyncDispose]: () => archive.close() })
+}
+
+/**
+ * How to read member names that the archive does not declare an encoding for.
+ *
+ * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly. Without the flag the format says CP437, so a
+ * publisher writing CP949, Shift_JIS or GBK names produces bytes that decode to mojibake and match no selector —
+ * Korea's address portal writes `주소_서울특별시.txt` and the reader sees `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt`.
+ *
+ * Naming an encoding decodes the RAW bytes instead, which is not the same as recoding the mojibake back through CP437:
+ * that round trip needs a 256-entry table and silently mangles any byte CP437 maps to a character it cannot invert.
+ *
+ * @category Files
+ */
+export interface ZipNameOptions {
+	/**
+	 * A `TextDecoder` label — `euc-kr` for CP949, `shift_jis`, `gbk`. Omit when the archive's names are ASCII or properly
+	 * flagged UTF-8, which is every other archive this repository reads.
+	 */
+	filenameEncoding?: string
+}
+
+/**
+ * A member's name, decoded as {@link ZipNameOptions} asks.
+ */
+function entryName(entry: Entry, options?: ZipNameOptions): string {
+	const raw = entry.filename as unknown
+
+	if (typeof raw === "string") return raw
+
+	return new TextDecoder(options?.filenameEncoding ?? "utf8").decode(raw as Uint8Array)
 }
 
 /**
@@ -52,7 +89,20 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 
 	return Object.assign(contents, {
 		[Symbol.asyncDispose]: async () => {
+			// A member read to its end has already released yauzl's read, and its `close` has already been delivered — so
+			// waiting for that event here would wait forever. `readableEnded` is the test that separates the two paths:
+			// true after a full read, false after a `take` or a `break`. `closed` is NOT the test, because Node sets it when
+			// the close event is queued rather than delivered, so a guard on it skips the wait on the path that needs it.
+			if (contents.readableEnded) return
+
+			const closed = once(contents, "close").catch(() => undefined)
+
 			contents.destroy()
+
+			// Wait for the teardown to finish, not merely to start. `destroy()` returns before yauzl has released its read,
+			// and the archive's own disposer runs next: it then raises `Cannot close while reading in progress` on the
+			// early-exit path this reader documents as supported.
+			await closed
 		},
 	})
 }
@@ -133,13 +183,13 @@ function selectorMatches(selector: ZipEntrySelector, name: string): boolean {
  *
  * @category Files
  */
-export async function listZipEntries(archivePath: PathBuilderLike): Promise<ZipEntryInfo[]> {
-	await using archive = await openStreamingArchive(archivePath)
+export async function listZipEntries(archivePath: PathBuilderLike, options?: ZipNameOptions): Promise<ZipEntryInfo[]> {
+	await using archive = await openStreamingArchive(archivePath, options)
 	const entries: ZipEntryInfo[] = []
 
 	for await (const entry of archive) {
 		entries.push({
-			name: entry.filename,
+			name: entryName(entry, options),
 			compressedSize: entry.compressedSize,
 			uncompressedSize: entry.uncompressedSize,
 		})
@@ -160,12 +210,13 @@ export async function listZipEntries(archivePath: PathBuilderLike): Promise<ZipE
  */
 export async function* readZipEntry(
 	archivePath: PathBuilderLike,
-	selector: ZipEntrySelector
+	selector: ZipEntrySelector,
+	options?: ZipNameOptions
 ): AsyncGenerator<Uint8Array> {
-	await using archive = await openStreamingArchive(archivePath)
+	await using archive = await openStreamingArchive(archivePath, options)
 
 	for await (const entry of archive) {
-		if (!selectorMatches(selector, entry.filename)) continue
+		if (!selectorMatches(selector, entryName(entry, options))) continue
 
 		await using contents = await openEntryStream(entry)
 
