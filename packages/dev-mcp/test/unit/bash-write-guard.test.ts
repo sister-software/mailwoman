@@ -141,6 +141,13 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// value that carries `$PWD` or a space is how anyone writes one.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node docs/scripts/check-vale-rules.ts`],
+		// A quote nested inside another kind of quote. The pair must be read as one span; mis-pairing it leaves a stray
+		// delimiter that swallows the rest of the command, and the head then comes from inside someone's `-e` script.
+		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],
+		[
+			"that grep before a multi-line node probe",
+			`grep -rc '"spliterator": "^6.5.0"' package.json\nnode --input-type=module -e "\nconst { smartSnakeCase } = await import('spliterator')\nconsole.log(smartSnakeCase('x'))\n" 2>&1 | tail -6`,
+		],
 		["a redirect after changing directory", `cd /tmp && echo hi > probe.txt`],
 		["a home-relative redirect", `echo x > ~/notes.txt`],
 		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's own NAME as `yarn node …` and

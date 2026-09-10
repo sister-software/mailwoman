@@ -8,7 +8,18 @@ import { camelCase, capitalCase, snakeCase } from "change-case"
 import type { CamelCase, SnakeCase } from "type-fest"
 
 /**
+ * Any character that is not a letter, a digit, or an underscore, in ANY script.
+ *
+ * `\W` cannot serve: it is `[^A-Za-z0-9_]` in JavaScript with or without the `u` flag, so every character of a
+ * non-Latin name is "non-word" and the name is replaced rather than kept.
+ */
+const NON_KEY_CHARACTER = /[^\p{L}\p{N}_]+/gu
+
+/**
  * Converts a name to snake_case, unless the name is already in all caps.
+ *
+ * A caseless script takes the all-caps branch, because `toUpperCase()` is the identity on Korean, Japanese, Chinese,
+ * Hebrew and Arabic. That is the right branch — those names have no case to convert and survive as written.
  */
 export function smartSnakeCase<T extends string>(name: T): T extends Uppercase<T> ? T : SnakeCase<T> {
 	const normalizedName = name
@@ -19,8 +30,8 @@ export function smartSnakeCase<T extends string>(name: T): T extends Uppercase<T
 	if (normalizedName.toUpperCase() === normalizedName) {
 		return (
 			normalizedName
-				// Replace all non-word characters with underscores...
-				.replaceAll(/\W{1,}/g, "_")
+				// Replace everything that cannot be part of a key with underscores...
+				.replaceAll(NON_KEY_CHARACTER, "_")
 				// ...and then replace all sequences of underscores with a single underscore.
 				.replaceAll(/_{2,}/g, "_") as T extends Uppercase<T> ? T : SnakeCase<T>
 		)

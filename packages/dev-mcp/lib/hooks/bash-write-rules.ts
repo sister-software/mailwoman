@@ -249,12 +249,13 @@ function withoutQuotedText(command: string): string {
 	return (
 		command
 			.replaceAll(/<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[\s\S]*?^\t*\2$/gmu, " HEREDOC ")
-			// The placeholder is GLUED to whatever the quote was glued to, and spaced only when the quote stood alone. A
-			// spaced placeholder splits `PATH="$PWD/bin:$PATH" node x.ts` into the words `PATH=` and `QUOTED`, so the
-			// assignment stripper below drops `PATH=` and the head becomes `QUOTED` — a refusal naming a word nobody typed,
-			// for a command that is admitted the moment the same value loses its quotes. This is the rule the braced
-			// expansion in `commandSegments` already follows for `FOO=${HOME}/data`.
-			.replaceAll(/(\S?)(?:'[^']*'|"(?:[^"\\]|\\.)*"|`[^`]*`)/gu, (_match, glued: string) =>
+			// The placeholder keeps the quote's word boundaries: glued where the quote was glued, spaced where it stood
+			// alone. Always spacing it would split `PATH="$PWD/bin" node x.ts` into two words and make the head `QUOTED`.
+			// `commandSegments` follows the same rule for `${…}`.
+			//
+			// The prefix must exclude the quote characters. One that can match a quote consumes an opening delimiter, and
+			// every quote after it pairs with the wrong partner for the rest of the command.
+			.replaceAll(/([^\s'"`]?)(?:'[^']*'|"(?:[^"\\]|\\.)*"|`[^`]*`)/gu, (_match, glued: string) =>
 				glued ? `${glued}QUOTED` : " QUOTED "
 			)
 	)
