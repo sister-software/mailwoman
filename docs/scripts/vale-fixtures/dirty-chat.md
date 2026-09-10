@@ -70,6 +70,10 @@ It is worth saying and worth calling out that the source field settles it.
 That was the right call and tells the whole postcode-anchor story. The next
 failure has the same story.
 
+The reader is worth a second look and the rebuild is worth the wall clock.
+The module does not move alone, and that is the first thing to report, and
+that's the shape of every port after it.
+
 Perfect. Got it! Understood, the fix landed. Excellent, all tests pass.
 
 The null and the cure differ on one lever; the three-leg comparison decides.

@@ -240,9 +240,18 @@ const CONTROL_FLOW_WORDS = new Set(["do", "done", "then", "elif", "else", "fi", 
  * quotes lets the apostrophe in a word like `don't` pair with a later quote and swallow the command between them.
  */
 function withoutQuotedText(command: string): string {
-	return command
-		.replaceAll(/<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[\s\S]*?^\t*\2$/gmu, " HEREDOC ")
-		.replaceAll(/'[^']*'|"(?:[^"\\]|\\.)*"|`[^`]*`/gu, " QUOTED ")
+	return (
+		command
+			.replaceAll(/<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[\s\S]*?^\t*\2$/gmu, " HEREDOC ")
+			// The placeholder is GLUED to whatever the quote was glued to, and spaced only when the quote stood alone. A
+			// spaced placeholder splits `PATH="$PWD/bin:$PATH" node x.ts` into the words `PATH=` and `QUOTED`, so the
+			// assignment stripper below drops `PATH=` and the head becomes `QUOTED` — a refusal naming a word nobody typed,
+			// for a command that is admitted the moment the same value loses its quotes. This is the rule the braced
+			// expansion in `commandSegments` already follows for `FOO=${HOME}/data`.
+			.replaceAll(/(\S?)(?:'[^']*'|"(?:[^"\\]|\\.)*"|`[^`]*`)/gu, (_match, glued: string) =>
+				glued ? `${glued}QUOTED` : " QUOTED "
+			)
+	)
 }
 
 /**

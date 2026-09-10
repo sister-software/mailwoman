@@ -135,6 +135,11 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a release checksum", `sha256sum /tmp/package.tgz`],
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],
 		["an environment assignment", `MAILWOMAN_DATA_ROOT=\${HOME}/data yarn test`],
+		// A quoted value used to split the assignment into two words, so the head became the quote placeholder and the
+		// refusal named `QUOTED` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
+		// value that carries `$PWD` or a space is how anyone writes one.
+		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
+		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node docs/scripts/check-vale-rules.ts`],
 		["a redirect after changing directory", `cd /tmp && echo hi > probe.txt`],
 		["a home-relative redirect", `echo x > ~/notes.txt`],
 	])("admits %s", (_label, command) => {

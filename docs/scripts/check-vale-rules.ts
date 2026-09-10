@@ -139,7 +139,7 @@ const LEGS: StyleLeg[] = [
 		config: ".vale-chat.ini",
 		dirtyFixture: "scripts/vale-fixtures/dirty-chat.md",
 		cleanFixture: "scripts/vale-fixtures/clean-chat.md",
-		minDirtyErrors: 77,
+		minDirtyErrors: 100,
 		ruleChecks: [
 			"Mailwoman.AmbiguousShorthand",
 			"MailwomanChat.AgreementOpeners",
@@ -170,6 +170,16 @@ const $vale = $({ cwd: DOCS_DIR, nothrow: true })
  */
 async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
 	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${fixture}`.quiet()
+
+	// Vale writes a config or rule-file error to STDERR and leaves stdout empty. Parsing that empty string raises
+	// `Expected JSON input, got` and names neither the rule file nor the reason, so a malformed token in a style reads as
+	// a defect in this script — `did not find expected node content` is the message that was being thrown away.
+	if (!result.stdout.trim()) {
+		const detail = result.stderr.trim() || `exit ${result.exitCode ?? 0} with no output`
+
+		failScript(`FAIL: vale produced no report for ${fixture} under ${config} — ${detail}`)
+	}
+
 	const report = parseJSONStrict<ValeReport>(result.stdout)
 
 	return { alerts: Object.values(report).flat(), exitCode: result.exitCode ?? 0 }
