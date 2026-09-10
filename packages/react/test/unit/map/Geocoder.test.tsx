@@ -56,7 +56,10 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 	// ClientOnly mounts asynchronously; wait for the reused QueryForm input.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
-	await userEvent.click(container.querySelector('button[type="submit"]') as HTMLButtonElement)
+	// The pill carries no submit button, the way the reference map apps carry none: a search field submits on Enter,
+	// and the leading magnifier is a mark rather than a control.
+	await userEvent.click(container.querySelector("#mw-pipeline-input") as HTMLInputElement)
+	await userEvent.keyboard("{Enter}")
 
 	// HARD: the result panel is plain DOM in the floating control panel — no WebGL needed.
 	await vi.waitFor(() => expect(container.textContent).toContain("Parsed components"))
@@ -76,7 +79,11 @@ test("mounts the map container + floating control panel", async () => {
 	const { container } = renderComponent(<Geocoder runtime={makeFakeGeocoderRuntime()} defaultAddress="90210" />)
 
 	await vi.waitFor(() => expect(container.querySelector(".mw-geocoder-demo")).toBeTruthy())
-	// The control panel + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas).
-	expect(container.querySelector(".mw-demo-controls")).not.toBeNull()
+	// The chrome + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas). The
+	// chrome is the floating column that replaced the full-height control panel: a search pill, chips beneath it, and
+	// a control capsule down the right edge.
+	expect(container.querySelector(".mw-map-chrome--top")).not.toBeNull()
+	expect(container.querySelector(".mw-map-searchbar")).not.toBeNull()
+	expect(container.querySelector(".mw-map-control-stack")).not.toBeNull()
 	expect(container.querySelector(".mw-geocoder-demo__map .mw-demo-map")).not.toBeNull()
 })

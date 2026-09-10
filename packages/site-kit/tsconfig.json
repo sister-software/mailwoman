@@ -6,7 +6,11 @@
 		"emitDeclarationOnly": false,
 		"noEmit": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		// The vite plugins run under Node, but a `page.evaluate` callback in the playwright helpers is browser code —
+		// it reads `document` and it is compiled here. Without the DOM lib each of those callbacks needs a cast, and a
+		// cast is what hides a genuine type error in the one place the compiler could still catch one.
+		"lib": ["ES2023", "DOM", "DOM.Iterable"]
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*"],

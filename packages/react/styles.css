@@ -1729,14 +1729,10 @@
 	}
 
 	/*
-	 * The native clear button of `input[type="search"]`. WebKit draws it from a fixed dark bitmap, which disappears
-	 * on a dark pill; inverting it is what makes the browser's own control usable here instead of a second one beside
-	 * it. `color-scheme: dark` on the document covers Firefox, which draws its own.
+	 * The native clear button of `input[type="search"]`. Its COLOUR is the user agent's, decided by the document's
+	 * `color-scheme` — nothing here repaints it. Only the two things the scheme does not say are stated: that it is a
+	 * pointer target, and that it sits back until the field is under the pointer or holding focus.
 	 */
-	:root[data-theme="dark"] .mw-map-searchbar input[type="search"]::-webkit-search-cancel-button {
-		filter: invert(1);
-	}
-
 	.mw-map-searchbar input[type="search"]::-webkit-search-cancel-button {
 		cursor: pointer;
 		opacity: 0.55;
@@ -1977,14 +1973,18 @@
 	 * covered the bottom sheet's last rows — the credits are the least important thing on the screen and must never
 	 * take height from the thing a visitor asked for. Long credits scroll instead.
 	 */
+	/*
+	 * THE STRIP ITSELF DOES NOT CLIP. A non-visible overflow on one axis makes the other clip as well, so an
+	 * `overflow-x` here erased the sources popover outright — it is positioned above the strip, entirely outside the
+	 * box that would have been doing the clipping. The scroll belongs to the identity region, which is the part
+	 * carrying text long enough to need one.
+	 */
 	.mw-map-footer {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
 		flex-wrap: nowrap;
-		overflow-x: auto;
-		scrollbar-width: none;
 		white-space: nowrap;
 		box-sizing: content-box;
 		height: var(--map-footer-height);
@@ -2004,7 +2004,12 @@
 		display: flex;
 		align-items: baseline;
 		gap: 0.6rem;
-		overflow: hidden;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.mw-map-footer__identity::-webkit-scrollbar {
+		display: none;
 	}
 
 	.mw-map-footer__status {

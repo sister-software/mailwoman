@@ -16,7 +16,9 @@ test.describe("Mailwoman Earth shell", () => {
 		await expect(page.locator("main[data-route='geocoder']")).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toHaveValue("90210")
 
-		await page.locator("button[type='submit']").click()
+		// The search pill carries no submit button, the way the reference map apps carry none: the field submits on
+		// Enter, and the leading magnifier is a mark rather than a control.
+		await page.locator("#mw-pipeline-input").press("Enter")
 
 		await expect(page.getByText("New York").first()).toBeVisible()
 	})
