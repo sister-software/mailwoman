@@ -11,6 +11,11 @@
  *   an in-place editor never reaches it: the hook that says where a name already lives cannot fire on a tool it does
  *   not match. An agent editing through Bash writes duplicate helpers with that guard absent.
  *
+ *   A SECOND CONCERN LIVES HERE, and it is not about files. A `modal run` is a local client whose death cancels the
+ *   remote container, so a launch this shell owns is a training run any signal can destroy. The rules that refuse those
+ *   spellings carry their own `guidance`, because the file-write advice is useless to a caller whose run just died.
+ *   Adding a rule of a third kind is fine on the same terms: say what to do instead, in the rule.
+ *
  *   WHAT IT CANNOT DO, stated because the first version's docstring claimed otherwise. A list of command words cannot
  *   stop a determined write: `node script.js`, `yarn some-script` and a compiled binary all run code this cannot read,
  *   and an admitted program may write whatever it likes. This RAISES THE COST of editing through Bash and makes the
@@ -139,10 +144,45 @@ const WRAPPERS = new Set(["command", "env", "nohup", "time", "timeout", "xargs"]
 const WRAPPER_ARGUMENT = /^(?:-|\d)/u
 
 /**
- * Spellings of an admitted command that write a file the agent supplies. Each is checked against that command's own
- * segment, never against the whole line.
+ * What to do instead of launching a Modal run from Bash, carried by the two rules that need it rather than by
+ * {@link GUIDANCE}, which talks about the Write and Edit tools and would be the wrong advice here.
  */
-const REFUSED_SPELLINGS: ReadonlyArray<{ head: string; pattern: RegExp; because: string }> = [
+const DETACHED_LAUNCH_GUIDANCE =
+	"Launch it through `node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
+	"which spawns the client in its own session and exits, so no signal aimed at this shell can reach it. Modal's `-d` " +
+	"does not make the client disposable: when the client dies Modal answers `Received a cancellation signal` and stops " +
+	"the container mid-training. Watch the run by polling the volume for its next checkpoint, not by holding the client " +
+	"open. A run that did die continues with `--resume auto` from its last save."
+
+/**
+ * Spellings of an admitted command that this guard refuses. Each is checked against that command's own segment, never
+ * against the whole line. Most write a file the agent supplies and take {@link GUIDANCE}; a rule about something else
+ * supplies its own `guidance`.
+ */
+const REFUSED_SPELLINGS: ReadonlyArray<{
+	head: string
+	pattern: RegExp
+	because: string
+	guidance?: string
+}> = [
+	{
+		head: "modal",
+		// `-d` is the tell that the run is meant to outlive this shell, which is the intent a killable client breaks. A
+		// plain `modal run` of a sync or an audit is short and cheap to lose, so it stays admitted.
+		pattern: /(?:^|\s)run\b[^\n]*(?:\s-d\b|\s--detach\b)/u,
+		because:
+			"`modal run -d` from Bash leaves the client in this shell's process group, and killing the client cancels the remote run",
+		guidance: DETACHED_LAUNCH_GUIDANCE,
+	},
+	{
+		head: "modal",
+		// The 2026-07-15 spelling. `timeout` is a WRAPPER, so it is stripped before the head is read and the head here is
+		// `modal`; the segment still carries the wrapper, which is what this matches. Any timed Modal command is refused,
+		// not only a launch: the expiry kills the client either way, and a timeout is never how you bound a Modal run.
+		pattern: /^\s*timeout\b/u,
+		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
+		guidance: DETACHED_LAUNCH_GUIDANCE,
+	},
 	{ head: "sed", pattern: /(?:^|\s)(?:-[a-zA-Z]*i|--in-place)/u, because: "`sed` in place edits a file" },
 	{ head: "sort", pattern: /(?:^|\s)(?:-[a-zA-Z]*o\b|--output)/u, because: "`sort` with an output flag overwrites" },
 	{ head: "awk", pattern: /(?:^|\s)-i\s+inplace/u, because: "`awk -i inplace` edits a file" },
@@ -302,13 +342,25 @@ function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 }
 
 /**
+ * A refusal: why the command is refused, and what to do instead.
+ *
+ * Most refusals are about writing a file and take {@link GUIDANCE}. A rule about something else — process ownership, say
+ * — carries its own `guidance`, because being told to use the Write tool over a cancelled training run is advice for a
+ * problem the caller does not have.
+ */
+export interface CommandRefusal {
+	reason: string
+	guidance: string
+}
+
+/**
  * Why a command is refused, or `null` when every part of it is admitted.
  *
  * @param command The Bash command as written.
  * @param repoRoot The repository this guards, absolute and without a trailing separator.
  * @param sessionCwd Where a relative path resolves before any `cd` in the command itself.
  */
-export function judgeCommand(command: string, repoRoot: string, sessionCwd: string): string | null {
+export function judgeCommand(command: string, repoRoot: string, sessionCwd: string): CommandRefusal | null {
 	const stripped = withoutQuotedText(command)
 	const cwd = workingDirectory(stripped, sessionCwd)
 	const segments = commandSegments(stripped)
@@ -316,16 +368,18 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 	// An inline script and a heredoc body both live inside the quoting stripped above, so these two read the RAW
 	// command. Requiring an interpreter first is what stops `grep -rn writeFile packages` from refusing itself.
 	if (segments.some(({ head }) => head === "node" || head.startsWith("python"))) {
-		if (INTERPRETER_HEREDOC.test(command)) return "This runs a script from a heredoc, which rewrites a file whole."
+		if (INTERPRETER_HEREDOC.test(command)) {
+			return refuse("This runs a script from a heredoc, which rewrites a file whole.")
+		}
 
-		if (INLINE_WRITE.test(command)) return "This inline script reaches the filesystem."
+		if (INLINE_WRITE.test(command)) return refuse("This inline script reaches the filesystem.")
 	}
 
 	for (const { head, segment } of segments) {
 		if (head === "cd") continue
 
-		for (const { head: refusedHead, pattern, because } of REFUSED_SPELLINGS) {
-			if (head === refusedHead && pattern.test(segment)) return `${because}.`
+		for (const { head: refusedHead, pattern, because, guidance } of REFUSED_SPELLINGS) {
+			if (head === refusedHead && pattern.test(segment)) return refuse(`${because}.`, guidance)
 		}
 
 		const writes = PATH_WRITERS[head]
@@ -339,22 +393,29 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 			const targets = writes === "last" ? operands.slice(-1) : operands
 
 			if (targets.some((target) => insideRepository(target, repoRoot, cwd))) {
-				return `\`${head}\` writes inside the repository.`
+				return refuse(`\`${head}\` writes inside the repository.`)
 			}
 
 			continue
 		}
 
-		if (!ADMITTED.has(head)) return `\`${head}\` is not on the admitted command list.`
+		if (!ADMITTED.has(head)) return refuse(`\`${head}\` is not on the admitted command list.`)
 	}
 
 	for (const match of stripped.matchAll(REDIRECT)) {
 		if (insideRepository(match.groups?.["target"] ?? "", repoRoot, cwd)) {
-			return "This redirects output into a file inside the repository."
+			return refuse("This redirects output into a file inside the repository.")
 		}
 	}
 
 	return null
+}
+
+/**
+ * A refusal carrying {@link GUIDANCE} unless the rule supplied advice of its own.
+ */
+function refuse(reason: string, guidance?: string): CommandRefusal {
+	return { reason, guidance: guidance ?? GUIDANCE }
 }
 
 /**

@@ -20,7 +20,7 @@
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 
-import { GUIDANCE, judgeCommand } from "#hooks/bash-write-rules"
+import { judgeCommand } from "#hooks/bash-write-rules"
 
 async function main(): Promise<void> {
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
@@ -36,16 +36,16 @@ async function main(): Promise<void> {
 	// harness sets: a session started in a subdirectory still guards the same tree.
 	const repoRoot = String(repoRootPath()).replace(/\/$/u, "")
 	const cwd = typeof payload["cwd"] === "string" ? payload["cwd"] : repoRoot
-	const reason = judgeCommand(command, repoRoot, cwd)
+	const refusal = judgeCommand(command, repoRoot, cwd)
 
-	if (!reason) return
+	if (!refusal) return
 
 	process.stdout.write(
 		JSON.stringify({
 			hookSpecificOutput: {
 				hookEventName: "PreToolUse",
 				permissionDecision: "deny",
-				permissionDecisionReason: `${reason} ${GUIDANCE}`,
+				permissionDecisionReason: `${refusal.reason} ${refusal.guidance}`,
 			},
 		})
 	)
