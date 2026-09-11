@@ -209,10 +209,16 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     corpus_dir = Path(cfg.data.corpus_dir)
     resolve_config_doses(cfg, corpus_dir)
 
+    # Raise rather than fall back to a default epoch length: a census counted over a different number
+    # of rows than the audit reports is not comparable with it, and nothing downstream would say so.
+    epoch_rows = draws or getattr(cfg.data, "train_rows_per_epoch", None)
+    if not epoch_rows:
+        raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")
+
     report = census(
         corpus_dir,
         seed=cfg.train.seed + 1,
-        draws=draws or cfg.data.train_rows_per_epoch,
+        draws=int(epoch_rows),
         country_weights=cfg.data.country_weights,
         source_weights=cfg.data.source_weights,
         coarse_filter=cfg.data.coarse_filter,
