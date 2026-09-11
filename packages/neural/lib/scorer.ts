@@ -420,7 +420,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const declared: RequiredChannels =
 		(await readRequiredChannels(opts.modelCardPath)) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
 
-	// --- Capability-manifest delta check (#718/#719) -----------------------------------------------
+	// Check that capability-manifest changes preserve each required tag.
 	// BEFORE wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a tag
 	// this model is CERTIFIED to emit (per the card's `capabilities` block for the loaded tier). This
 	// is a property of the model-card + codex pairing, independent of any per-instance `overrides` —
@@ -428,7 +428,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// check runs unconditionally. Makes the D2/#719 bug-class structurally impossible to ship.
 	await assertConventionsRespectCapabilities(opts.modelCardPath, opts.tier ?? "server", strict)
 
-	// --- Anchor channel ---------------------------------------------------------------------------
+	// Load the postcode-anchor channel and its declared ablation state.
 	// Caller-pinned path wins (explicit `--anchor-lookup`, always JSON); else fall back to the
 	// operator pilot JSON or, failing that, the weights-package soft-feed sibling (PCB1 or JSON, #718).
 	const declaredSpanMode = declaredAnchorSpanMode(declared)
@@ -467,7 +467,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
-	// --- Gazetteer channel ------------------------------------------------------------------------
+	// Load the gazetteer channel and its declared ablation state.
 	const gazetteerLexiconPath =
 		opts.gazetteerLexiconPath ??
 		(await resolveDefaultLexicon(weightsOnce, DEFAULT_GAZETTEER_LEXICON, (weights) => weights.gazetteerLexiconPath))
@@ -498,7 +498,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
-	// --- Country-lexicon channel (#1104) ----------------------------------------------------------
+	// Load the country-lexicon channel and its declared ablation state.
 	const countryLexiconPath =
 		opts.countryLexiconPath ??
 		(await resolveDefaultLexicon(weightsOnce, DEFAULT_COUNTRY_LEXICON, (weights) => weights.countryLexiconPath))
@@ -529,7 +529,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
-	// --- Evidence-bundle channels (Option-A Phase 3) ------------------------------------------------
+	// Load evidence-bundle channels and their declared ablation states.
 	// Same load + fail-closed + declared-ablation pattern as the gazetteer; both lexicons share its
 	// JSON schema and parser. A bundle-trained card declares `street_type` + `locality_surface`.
 	// The repo preference is CARD-SCOPED — see {@link streetTypeRepoCandidate}. The locality-surface
@@ -598,7 +598,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
-	// --- Conventions mode -------------------------------------------------------------------------
+	// Resolve the conventions mode required by the model card.
 	const conventionsRequired = declared.conventions?.required ?? false
 	const declaredConventionsMode = declared.conventions?.mode ?? "auto"
 	let addressSystemConventions: "auto" | string | undefined
@@ -632,7 +632,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
-	// --- Bridge + near-postcode choreography ------------------------------------------------------
+	// Resolve bridge and near-postcode choreography from overrides and declarations.
 	const bridgePunctuationGaps = overrides.bridge ?? declared.bridge?.required ?? false
 
 	const suppressGazetteerNearPostcode =
