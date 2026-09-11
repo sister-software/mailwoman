@@ -34,8 +34,8 @@
  *   | `province`                                 | `region`, unless it repeats the locality                   |
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { formatAddressRow } from "@mailwoman/formatter"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { TextSpliterator } from "spliterator"
 

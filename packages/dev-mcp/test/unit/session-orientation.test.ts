@@ -41,7 +41,7 @@ describe("orientationListing", () => {
 	})
 
 	it("carries the subpaths a consumer may import, and no wildcard patterns", () => {
-		expect(listing).toContain("@mailwoman/formatter: . ./format ./key")
+		expect(listing).toContain("@mailwoman/record: . ./address ./name ./organization")
 		expect(listing).not.toContain("./*")
 	})
 

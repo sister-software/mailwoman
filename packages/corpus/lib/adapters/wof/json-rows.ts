@@ -5,9 +5,9 @@
  * @file Deterministic canonical-row emission shared by WOF GeoJSON adapters.
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/address-layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { formatAddressRow } from "@mailwoman/formatter"
 
 import type { AdapterOptions, CanonicalRow } from "#types"
 import { normalizeNameKey, type WOFRecord } from "#utils"

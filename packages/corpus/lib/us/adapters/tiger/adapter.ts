@@ -34,7 +34,7 @@
  *   needed — every row in TIGER is the same license.
  */
 
-import { formatAddressRow } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 

@@ -23,7 +23,7 @@
  *        `"CC-BY-4.0"` per row (attribute "GeoNames").
  */
 
-import { componentsPresentIn } from "@mailwoman/formatter"
+import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { TSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"

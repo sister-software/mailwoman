@@ -281,7 +281,7 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 	if (format === "jsonld") {
 		const [{ toSchemaOrg }, { formatAddress }] = await Promise.all([
 			import("@mailwoman/annotations"),
-			import("@mailwoman/formatter"),
+			import("@mailwoman/codex/address-format"),
 		])
 
 		const streetAddress = formatAddress(

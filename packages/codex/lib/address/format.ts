@@ -18,13 +18,11 @@
  *   never writes a connector around an absent one.
  */
 
-import { layoutForCountry, lineJoinForCountry } from "@mailwoman/codex/address-layouts"
-import type { ComponentTag } from "@mailwoman/codex/component"
-import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
+import { layoutForCountry, lineJoinForCountry } from "#address/layouts/index"
+import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
+import type { ComponentTag } from "#component"
 
-import { joinRendering, renderAddress, type ComponentDict } from "#render"
-
-export type { ComponentDict } from "#render"
+export type { ComponentDict } from "#address/render"
 
 /**
  * Options accepted by {@linkcode formatAddress} and {@linkcode formatAddressRow}.
@@ -143,62 +141,4 @@ export function componentsPresentIn(components: ComponentDict, raw: string): Com
 	}
 
 	return out
-}
-
-/**
- * Map of legacy rule-classifier {@linkcode VisibleClassification} labels to the canonical `ComponentTag` schema. The
- * two vocabularies are kept independent on purpose (rule classifiers emit one, the neural classifier the other); this
- * adapter is the bridge so a `ClassificationMap` can use the same layouts. `level` / `unit_designator` /
- * `level_designator` are folded into `unit`.
- */
-const CLASSIFICATION_TO_TAG: Partial<Record<VisibleClassification, keyof ComponentDict>> = {
-	country: "country",
-	region: "region",
-	locality: "locality",
-	dependency: "dependent_locality",
-	postcode: "postcode",
-	house_number: "house_number",
-	street: "street",
-	venue: "venue",
-}
-
-/**
- * Format a legacy {@linkcode ClassificationMap} (`Map<VisibleClassification, string[]>`, as emitted by the rule-based
- * pipeline) into an idiomatic address string. Multi-span values are space-joined; unit-like labels are merged.
- */
-export function formatFromClassificationMap(
-	map: ClassificationMap,
-	country: string,
-	opts: FormatAddressOptions = {}
-): string {
-	const components: ComponentDict = {}
-	const unitParts: string[] = []
-
-	for (const [classification, values] of map) {
-		const value = values
-			.filter((entry) => entry.length > 0)
-			.join(" ")
-			.replaceAll(/\s+/g, " ")
-			.trim()
-
-		if (!value) continue
-
-		if (classification === "unit" || classification === "level") {
-			unitParts.push(value)
-
-			continue
-		}
-
-		const tag = CLASSIFICATION_TO_TAG[classification]
-
-		if (tag) {
-			components[tag] = value
-		}
-	}
-
-	if (unitParts.length) {
-		components.unit = unitParts.join(" ")
-	}
-
-	return formatAddress(components, country, opts)
 }

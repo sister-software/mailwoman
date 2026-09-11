@@ -9,7 +9,7 @@ source-of-truth: package.json across the published workspaces, release.config.js
 
 ## Scope
 
-This page is curated rather than exhaustive. Mailwoman is 52 workspaces and 48 of them are on npm, but
+This page is curated rather than exhaustive. Mailwoman is 75 workspaces and 60 of them are on npm, but
 most arrive as a dependency of something else and are never named in an install command. Listed here
 are the packages a consumer installs on purpose.
 
@@ -20,13 +20,14 @@ the sizes of everything here, see [Footprints](./footprints.mdx).
 
 Every published package releases in lockstep on one version number, the model bundles included, so a
 weights package version tracks the release rather than the model's own lineage. All packages are ESM
-only. Eight of the 49 publishable manifests declare a Node floor of 24.18: the `mailwoman` entry
-package and seven data-pipeline packages, `@mailwoman/spatial` among them. The rest declare no
-`engines` field, so nothing stops npm installing them under an older Node — the floor is real for
-all of them, and only eight state it.
+only. 17 of the 60 publishable manifests declare a Node floor of 24.18: the `mailwoman` entry package
+and 16 data-pipeline and layer packages, `@mailwoman/spatial` and `@mailwoman/sqlite` among them. The
+rest declare no `engines` field, so nothing stops npm installing them under an older Node — the floor
+is real for all of them, and only 17 state it.
 
-Every package declares `AGPL-3.0-only OR LicenseRef-Commercial` except two:
-`@mailwoman/neural-weights-es-es` and `@mailwoman/neural-weights-it-it` declare `AGPL-3.0`, both in
+Every package declares `AGPL-3.0-only OR LicenseRef-Commercial` except four:
+`@mailwoman/neural-weights-es-es`, `@mailwoman/neural-weights-it-it`,
+`@mailwoman/neural-weights-ja-jp` and `@mailwoman/neural-weights-zh-cn` declare `AGPL-3.0`, both in
 the repository and in what the registry serves. Verify any package's declaration with
 `npm view <package> license` rather than assuming the project-wide string.
 
@@ -107,26 +108,25 @@ a library, and `mailwoman serve` is its command. The endpoint tables are on
 
 ## Record work
 
-| Package                 | What it is                                                                  | Install it when                                    |
-| ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
-| `@mailwoman/registry`   | The record-matching application: resolve messy records to geocoded entities | You are deduplicating a customer or vendor list    |
-| `@mailwoman/match`      | The matcher itself: blocking, scoring, clustering                           | You are building your own matching pipeline        |
-| `@mailwoman/record`     | The record schema and its per-field normalizers                             | You are feeding `@mailwoman/match` directly        |
-| `@mailwoman/formatter`  | The inverse of the parser: components to a string and a canonical match key | You render addresses, or you need a comparison key |
-| `@mailwoman/address-id` | A stable address primary key                                                | You need exact-match joins rather than fuzzy ones  |
+| Package                 | What it is                                                                  | Install it when                                   |
+| ----------------------- | --------------------------------------------------------------------------- | ------------------------------------------------- |
+| `@mailwoman/registry`   | The record-matching application: resolve messy records to geocoded entities | You are deduplicating a customer or vendor list   |
+| `@mailwoman/match`      | The matcher itself: blocking, scoring, clustering                           | You are building your own matching pipeline       |
+| `@mailwoman/record`     | The record schema and its per-field normalizers                             | You are feeding `@mailwoman/match` directly       |
+| `@mailwoman/address-id` | A stable address primary key                                                | You need exact-match joins rather than fuzzy ones |
 
 [Match messy records](../how-to/match-messy-records.mdx) is the worked example.
 
 ## Data and annotations
 
-| Package                       | What it is                                                                  | Install it when                                    |
-| ----------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
-| `@mailwoman/annotations`      | The annotation contract, with a native shape and an OpenCage-compatible one | You want timezone, currency, or code annotations   |
-| `@mailwoman/codex`            | Per-address-system postal reference data and branded types                  | You validate postcodes or street suffixes yourself |
-| `@mailwoman/spatial`          | Distance, bounding box, projection, point-in-polygon                        | You do spatial math beside a geocode               |
-| `@mailwoman/timezone-lookup`  | Server-side IANA timezone lookup by point                                   | You need a timezone and are not using annotations  |
-| `@mailwoman/nuts-lookup`      | EU NUTS region lookup by point                                              | You report against EU statistical regions          |
-| `@mailwoman/un-locode-lookup` | Nearest UN/LOCODE                                                           | You work with trade or logistics codes             |
+| Package                       | What it is                                                                                                                                | Install it when                                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `@mailwoman/annotations`      | The annotation contract, with a native shape and an OpenCage-compatible one                                                               | You want timezone, currency, or code annotations                                                |
+| `@mailwoman/codex`            | The address FORMATTER (components → a per-country string, plus a canonical match key) and the per-address-system reference data behind it | You render addresses, need a comparison key, or validate postcodes and street suffixes yourself |
+| `@mailwoman/spatial`          | Distance, bounding box, projection, point-in-polygon                                                                                      | You do spatial math beside a geocode                                                            |
+| `@mailwoman/timezone-lookup`  | Server-side IANA timezone lookup by point                                                                                                 | You need a timezone and are not using annotations                                               |
+| `@mailwoman/nuts-lookup`      | EU NUTS region lookup by point                                                                                                            | You report against EU statistical regions                                                       |
+| `@mailwoman/un-locode-lookup` | Nearest UN/LOCODE                                                                                                                         | You work with trade or logistics codes                                                          |
 
 The three lookup packages read databases built like the gazetteer, so each needs its data file as
 well as its package. `@mailwoman/annotations` is the contract the drop-in servers already use, so a

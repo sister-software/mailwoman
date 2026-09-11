@@ -39,7 +39,7 @@ Name the surface and state what it is in one declarative sentence. No welcome, n
 > validator-enforced. The package takes an engine object in which every method is optional, and an absent
 > method answers a status rather than an exception: `/v1/parse` answers `501`, and `/v1/geocode`,
 > `/v1/batch`, `/v1/resolve`, and `/v1/reload` answer `503`. `/v1/format` is the exception. It is wired
-> in-package from `@mailwoman/formatter` and is available with no engine method at all.
+> in-package from `@mailwoman/codex/address-format` and is available with no engine method at all.
 
 Errors take one closed table. Each row carries a stable code a caller can match on, one line of meaning, and
 the next step. An entry that restates its own name is not documentation.

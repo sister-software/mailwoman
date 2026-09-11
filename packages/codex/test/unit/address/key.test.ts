@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { canonicalKey, normalizeAddressToken } from "@mailwoman/formatter/key"
+import { canonicalKey, normalizeAddressToken } from "@mailwoman/codex/address-key"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeAddressToken", () => {

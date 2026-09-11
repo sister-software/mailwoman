@@ -59,7 +59,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/formatter": "workspace:*"
+		"@mailwoman/codex": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1"

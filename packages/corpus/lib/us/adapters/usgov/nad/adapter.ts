@@ -30,10 +30,10 @@
  *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { formatAddressRow } from "@mailwoman/formatter"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

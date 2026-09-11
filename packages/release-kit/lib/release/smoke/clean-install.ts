@@ -98,7 +98,6 @@ const WORKSPACES: Record<string, string> = {
 	// mailwoman's OTHER optional peer (besides resolver-wof-sqlite above) — optional or not, npm
 	// still resolves its version spec, so an unpacked workspace dep ETARGETs on a release branch.
 	"@mailwoman/tiger": "packages/tiger",
-	"@mailwoman/formatter": "packages/formatter",
 	"@mailwoman/record": "packages/record",
 	"@mailwoman/match": "packages/match",
 	"@mailwoman/registry": "packages/registry",

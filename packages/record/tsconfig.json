@@ -9,5 +9,5 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../formatter" }]
+	"references": [{ "path": "../codex" }]
 }

@@ -21,8 +21,8 @@
  *   License: stamped `"Public Domain"` per CMS's federal government distribution terms.
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { isPresent } from "@mailwoman/core/objects"
-import { formatAddressRow } from "@mailwoman/formatter"
 import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
