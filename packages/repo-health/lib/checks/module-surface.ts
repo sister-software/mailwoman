@@ -16,9 +16,10 @@ import { trackedSourcePaths } from "#tracked-sources"
  * Per-module declaration and divider limits that trigger a structural review warning.
  */
 export const MODULE_SURFACE_THRESHOLDS = {
-	interfaces: 18,
-	constants: 31,
-	functions: 35,
+	interfaces: 15,
+	constants: 30,
+	functions: 20,
+	lines: 500,
 	sectionDividers: 6,
 } as const
 
@@ -26,6 +27,7 @@ export interface ModuleSurface {
 	interfaces: number
 	constants: number
 	functions: number
+	lines: number
 	sectionDividers: number
 }
 
@@ -42,6 +44,7 @@ const METRIC_LABEL: Record<keyof ModuleSurface, string> = {
 	interfaces: "interfaces",
 	constants: "const declarations",
 	functions: "functions",
+	lines: "lines",
 	sectionDividers: "section-divider comments",
 }
 
@@ -50,7 +53,7 @@ const METRIC_LABEL: Record<keyof ModuleSurface, string> = {
  * namespace do not add to the module's public reading surface.
  */
 export function moduleSurface(sourceFile: ts.SourceFile): ModuleSurface {
-	const surface: ModuleSurface = { interfaces: 0, constants: 0, functions: 0, sectionDividers: 0 }
+	const surface: ModuleSurface = { interfaces: 0, constants: 0, functions: 0, lines: 0, sectionDividers: 0 }
 
 	for (const statement of sourceFile.statements) {
 		if (ts.isInterfaceDeclaration(statement)) {
@@ -67,6 +70,7 @@ export function moduleSurface(sourceFile: ts.SourceFile): ModuleSurface {
 	}
 
 	surface.sectionDividers = [...sourceFile.text.matchAll(SECTION_DIVIDER)].length
+	surface.lines = sourceFile.getLineAndCharacterOfPosition(sourceFile.end).line + 1
 
 	return surface
 }
@@ -76,6 +80,11 @@ function surfaceHits(sourceFile: ts.SourceFile, surface: ModuleSurface): Surface
 	let interfaces = 0
 	let constants = 0
 	let functions = 0
+	const lines = sourceFile.getLineAndCharacterOfPosition(sourceFile.end).line + 1
+
+	if (lines >= MODULE_SURFACE_THRESHOLDS.lines) {
+		firstLine.lines = MODULE_SURFACE_THRESHOLDS.lines
+	}
 
 	for (const statement of sourceFile.statements) {
 		const line = sourceFile.getLineAndCharacterOfPosition(statement.getStart(sourceFile)).line + 1
