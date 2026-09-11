@@ -79,10 +79,14 @@ function skeletonOf(atoms: readonly AddressAtom[]): string[] {
  * The skeleton a `fmt` string prints, as field names per line.
  */
 function skeletonOfFormat(fmt: string): string[][] {
-	return fmt
-		.split("%n")
-		.map((line) => [...line.matchAll(/%([A-Z])/g)].map(([, code]) => FIELD[code!] ?? `%${code}`).filter(Boolean))
-		.filter((line) => line.length > 0)
+	return (
+		fmt
+			.split("%n")
+			// An unmodeled placeholder is kept in its `%X` spelling rather than dropped: a skeleton that silently loses a
+			// field compares equal to one that never had it.
+			.map((line) => [...line.matchAll(/%([A-Z])/g)].map(([, code]) => FIELD[code!] ?? `%${code}`))
+			.filter((line) => line.length > 0)
+	)
 }
 
 describe("ADDRESS_LAYOUTS", () => {

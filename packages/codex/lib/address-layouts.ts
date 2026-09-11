@@ -26,44 +26,10 @@
  *   convention departs from the skeleton says so in place, with its source.
  */
 
-import { addr, either, SLOTS, type AddressLayout } from "#address-layout"
+import { addr, numberFirstStreet, numberLastStreet, SLOTS, type AddressLayout } from "#address-layout"
+import { GENERATED_ADDRESS_LAYOUTS } from "#address-layouts-generated"
 
-const {
-	attention,
-	venue,
-	house_number,
-	street_prefix,
-	street_prefix_particle,
-	street,
-	street_suffix,
-	unit,
-	intersection_a,
-	intersection_b,
-	dependent_locality,
-	locality,
-	subregion,
-	region,
-	postcode,
-} = SLOTS
-
-/**
- * The street line where the number leads: the anglophone order, and France's.
- *
- * An intersection is the first alternative because it is a different way of saying where, not a second thing to print —
- * the shape `composeRoad` drew in its own docstring and then hand-compiled into a chain of `if` statements.
- */
-export const numberFirstStreet = either(
-	addr`${intersection_a} & ${intersection_b}`,
-	addr`${house_number} ${street_prefix} ${street_prefix_particle} ${street} ${street_suffix} ${unit}`
-)
-
-/**
- * The street line where the number follows the name: German-order systems, and Spain and Italy.
- */
-export const numberLastStreet = either(
-	addr`${intersection_a} & ${intersection_b}`,
-	addr`${street_prefix} ${street_prefix_particle} ${street} ${street_suffix} ${house_number} ${unit}`
-)
+const { attention, venue, house_number, street, dependent_locality, locality, subregion, region, postcode } = SLOTS
 
 /**
  * The admin run below the prefecture in Japan, printed without separators. Japan's `fmt` carries no `%C` or `%D`, so
@@ -172,4 +138,28 @@ ${region}${locality}${dependent_locality}
 ${chineseStreet}
 ${venue}
 ${attention}`,
+}
+
+/**
+ * The layout for `country`, or null when neither table names it.
+ *
+ * The hand-authored entries win: those are checked against real addresses on a board, where a generated skeleton is a
+ * transcription of a dataset. Null is a real answer — 55 of the 252 shipped country records carry no usable `fmt`, and
+ * a caller that renders nothing for one of those is reporting absence rather than inventing an order.
+ */
+export function layoutForCountry(country: string | null | undefined): AddressLayout | null {
+	if (!country) return null
+
+	const code = country.trim().toUpperCase()
+
+	return ADDRESS_LAYOUTS[code] ?? GENERATED_ADDRESS_LAYOUTS[code] ?? null
+}
+
+/**
+ * How `country` joins its lines for single-line output.
+ */
+export function lineJoinForCountry(country: string | null | undefined): string {
+	if (!country) return ", "
+
+	return LINE_JOINS[country.trim().toUpperCase()] ?? ", "
 }

@@ -98,6 +98,25 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
 }
 
 /**
+ * The street line where the number leads: the anglophone order, and France's.
+ *
+ * An intersection is the first alternative because it is a different way of saying where, not a second thing to print —
+ * the shape the old `composeRoad` drew in its own docstring before hand-compiling it into a chain of `if` statements.
+ */
+export const numberFirstStreet: AddressAlternation = either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.house_number} ${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix} ${SLOTS.unit}`
+)
+
+/**
+ * The street line where the number follows the name: the German-order systems, and Spain and Italy.
+ */
+export const numberLastStreet: AddressAlternation = either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix} ${SLOTS.house_number} ${SLOTS.unit}`
+)
+
+/**
  * Build a layout from a tagged template. A newline in the literal text starts a line; other literal text is a
  * connector; an interpolation is a slot, an alternation, or another layout.
  */

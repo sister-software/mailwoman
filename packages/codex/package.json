@@ -95,6 +95,11 @@
 			"node": "./lib/address-layouts.ts",
 			"default": "./out/address-layouts.js"
 		},
+		"./address-layouts-generated": {
+			"types": "./out/address-layouts-generated.d.ts",
+			"node": "./lib/address-layouts-generated.ts",
+			"default": "./out/address-layouts-generated.js"
+		},
 		"./component": {
 			"types": "./out/component.d.ts",
 			"node": "./lib/component.ts",
