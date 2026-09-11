@@ -157,7 +157,7 @@ export async function loadClassifierFromWeights(
 		}),
 	])
 
-	// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
+	// Feed the channels the shipped model was trained against.
 	// The anchor-trained en-us model goes OOD when scored anchor-OFF (the #566/#685 crater: country
 	// ~0, region 71, locality 57 vs the server-tier 68/90/77). The browser loader already feeds the
 	// channels from URLs; this is the Node-side mirror so EVERY consumer (ResolveRouter,

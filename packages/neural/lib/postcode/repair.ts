@@ -74,11 +74,11 @@ export interface PostcodeMatch extends SpanMatch {
  * ordinary lowercase prose.
  */
 export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric" | "designated"; re: RegExp }> = [
-	// --- Designated by a postal marker (may overwrite any label) ---
+	// Postal-marker matches may overwrite any existing label.
 	// JP: the digits behind 〒, optionally spaced (〒506-0025, 〒 100-0001). The character path keeps the mark in the
 	// text (`NormalizeOpts.postalMark`), and on a venue-led line the model has read the digits as a house number.
 	{ label: "JP-marked", kind: "designated", re: /(?<=〒\s?)\d{3}-\d{4}\b/gu },
-	// --- Alphanumeric (eligible to ADD) ---
+	// Alphanumeric matches are eligible to add.
 	// GB: outward + space + inward, e.g. SW1A 1AA, EH8 9YL, W1J 9PN, IP13 6SU, B12 8QX
 	{ label: "GB", kind: "alnum", re: /\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b/g },
 	// CA: A1A 1A1 (space optional), e.g. M5V 2T6, H2X 2T6, H3B 1A3
@@ -94,7 +94,7 @@ export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"
 	// NL: 1234 AB / 1234AB — space optional (glued is common). The US "2737 CA" (ZIP+4 tail +
 	// state) collision is resolved by longest-match-wins below, which lets the ZIP+4 claim it.
 	{ label: "NL", kind: "alnum", re: /\b\d{4}\s?[A-Z]{2}\b/g },
-	// --- Numeric (SNAP-only) ---
+	// Numeric matches are eligible only for snapping.
 	{ label: "ZIP4", kind: "numeric", re: /\b\d{5}-\d{4}\b/g }, // US ZIP+4
 	// BR CEP: NNNNN-NNN (70390-100, 95090-020). Without it the generic NUM5 below matched the five-digit
 	// head of a CEP, snapped the span to it, and the trailing-smear clip DISCARDED the sector suffix — so
