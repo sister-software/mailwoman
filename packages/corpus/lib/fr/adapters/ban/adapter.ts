@@ -31,8 +31,7 @@
  *   country !== FR).
  */
 
-import { isPresent } from "@mailwoman/core/objects"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
@@ -69,32 +68,6 @@ function composeHouseNumber(numero: string, rep: string): string {
 	if (!n) return ""
 
 	return r ? `${n} ${r}` : n
-}
-
-/**
- * Compose the raw FR-style address line. Two common BAN-derived shapes:
- *
- * "10 bis Avenue des Champs-Élysées, 75008 Paris" "45 Cours Lafayette, 69003 Lyon"
- *
- * FR convention puts postcode on the same line as the locality, comma-separated from the street. The adapter renders
- * that directly rather than relying on OpenCage's template — BAN already gives us the canonical FR strings; the
- * template would round-trip identically.
- */
-function composeRaw(house: string, street: string, postcode: string, locality: string): string {
-	const parts: string[] = []
-	const streetPart = [house, street].filter(isPresent).join(" ").trim()
-
-	if (streetPart) {
-		parts.push(streetPart)
-	}
-
-	const cityPart = [postcode, locality].filter(isPresent).join(" ").trim()
-
-	if (cityPart) {
-		parts.push(cityPart)
-	}
-
-	return parts.join(", ").replaceAll(/\s+/g, " ").trim()
 }
 
 export function createBanAdapter(): CorpusAdapter {
@@ -153,13 +126,11 @@ export function createBanAdapter(): CorpusAdapter {
 					components.locality = locality
 				}
 
-				const raw = composeRaw(house, street, postcode, locality)
+				const rendered = formatAddressRow(components, "FR", { singleLine: true })
 
-				if (!raw) continue
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
-
-				if (!Object.keys(aligned).length) continue
+				const { raw, components: aligned } = rendered
 
 				const sourceID = record.id?.trim()
 					? `${BAN_ADAPTER_ID}-${record.id.trim()}`

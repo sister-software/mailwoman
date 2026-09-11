@@ -22,10 +22,10 @@
  */
 
 import { isPresent } from "@mailwoman/core/objects"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
-import { composeRaw, splitStreetLine, stableSourceID } from "#adapters/utils"
+import { splitStreetLine, stableSourceID } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
@@ -109,18 +109,11 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					postcode,
 				}
 
-				const raw = composeRaw({
-					venue,
-					houseNumber: split.house_number,
-					street: split.street,
-					locality: city,
-					region: state.abbreviation,
-					postcode,
-				})
+				const rendered = formatAddressRow(components, "US", { singleLine: true })
 
-				if (!raw) continue
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
+				const { raw, components: aligned } = rendered
 
 				if (Object.keys(aligned).length <= 2) continue
 

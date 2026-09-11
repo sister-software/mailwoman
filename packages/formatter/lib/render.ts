@@ -98,10 +98,30 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
 	return null
 }
 
+/**
+ * Which of a run of surviving connectors to print.
+ *
+ * A run forms when the slots between two connectors all render nothing, so what is left is several separators with no
+ * values between them. The STRONGEST wins: a connector carrying punctuation is a harder boundary than a space, and
+ * printing the space would join two values the layout meant to separate. `Calle Mayor, 12` keeps its comma when the
+ * street suffix is absent, and `New York, 10118` keeps its comma when the region is; the space forms of both would read
+ * as one value.
+ */
+function strongestConnector(run: readonly string[]): string {
+	return run.find((text) => /\S/u.test(text)) ?? run[0]!
+}
+
 function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict): readonly AddressPiece[] {
 	const results = atoms.map((atom) => (isConnector(atom) ? null : evaluateAtom(atom, components)))
 	const out: AddressPiece[] = []
-	let previousWasConnector = false
+	let pending: string[] = []
+
+	const flush = (): void => {
+		if (!pending.length) return
+
+		out.push({ tag: null, text: strongestConnector(pending) })
+		pending = []
+	}
 
 	for (const [index, atom] of atoms.entries()) {
 		if (isConnector(atom)) {
@@ -115,10 +135,9 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 					? rendered(results[index - 1] ?? null)
 					: left.some(rendered) && right.some(rendered)
 
-			if (!survives || previousWasConnector) continue
-
-			out.push({ tag: null, text: atom.connector })
-			previousWasConnector = true
+			if (survives) {
+				pending.push(atom.connector)
+			}
 
 			continue
 		}
@@ -127,10 +146,11 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 
 		if (!pieces) continue
 
+		flush()
 		out.push(...pieces)
-		previousWasConnector = false
 	}
 
+	// Anything still pending trails the last value with nothing after it, so it separates nothing.
 	return out.some((piece) => piece.tag !== null) ? out : []
 }
 

@@ -86,19 +86,19 @@
 			"default": "./out/nz/index.js"
 		},
 		"./address-layout": {
-			"types": "./out/address-layout.d.ts",
-			"node": "./lib/address-layout.ts",
-			"default": "./out/address-layout.js"
+			"types": "./out/address/layout.d.ts",
+			"node": "./lib/address/layout.ts",
+			"default": "./out/address/layout.js"
 		},
 		"./address-layouts": {
-			"types": "./out/address-layouts.d.ts",
-			"node": "./lib/address-layouts.ts",
-			"default": "./out/address-layouts.js"
+			"types": "./out/address/layouts/index.d.ts",
+			"node": "./lib/address/layouts/index.ts",
+			"default": "./out/address/layouts/index.js"
 		},
 		"./address-layouts-generated": {
-			"types": "./out/address-layouts-generated.d.ts",
-			"node": "./lib/address-layouts-generated.ts",
-			"default": "./out/address-layouts-generated.js"
+			"types": "./out/address/layouts/generated.d.ts",
+			"node": "./lib/address/layouts/generated.ts",
+			"default": "./out/address/layouts/generated.js"
 		},
 		"./component": {
 			"types": "./out/component.d.ts",
@@ -126,9 +126,9 @@
 			"default": "./out/it/index.js"
 		},
 		"./address-system-conventions": {
-			"types": "./out/address-system-conventions.d.ts",
-			"node": "./lib/address-system-conventions.ts",
-			"default": "./out/address-system-conventions.js"
+			"types": "./out/address/system-conventions.d.ts",
+			"node": "./lib/address/system-conventions.ts",
+			"default": "./out/address/system-conventions.js"
 		},
 		"./level-semantics": {
 			"types": "./out/level-semantics.d.ts",

@@ -29,7 +29,7 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { componentsPresentIn } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
@@ -122,7 +122,10 @@ export function createGNAFAdapter(): CorpusAdapter {
 					components.region = t.region
 				}
 
-				const aligned = reconcileComponents(components, raw)
+				// `raw` here is one of three DELIBERATE word orders, two of which no layout prints — the postcode-leading
+				// forms this adapter exists to teach. So the question is containment against a string this adapter built,
+				// not what a layout would have printed.
+				const aligned = componentsPresentIn(components, raw)
 
 				if (!Object.keys(aligned).length) continue
 

@@ -98,23 +98,57 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
 }
 
 /**
- * The street line where the number leads: the anglophone order, and France's.
+ * A post-office box takes a line of its own directly above the street line, and coexists with one: a record may carry
+ * both a box and a street address, and printing the box alone would lose the half a courier needs.
  *
- * An intersection is the first alternative because it is a different way of saying where, not a second thing to print —
- * the shape the old `composeRoad` drew in its own docstring before hand-compiling it into a chain of `if` statements.
+ * That placement is measured, not assumed. The engine this table replaces rendered `P.O. Box 5` + `100 Main St` +
+ * `Portland, OR 97214` as three lines in that order, and the same shape for Germany, Australia and Great Britain.
+ * libaddressinput models no box at all, which is why the slot is authored here rather than transcribed.
  */
-export const numberFirstStreet: AddressAlternation = either(
-	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
-	addr`${SLOTS.house_number} ${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix} ${SLOTS.unit}`
-)
+const poBoxLine = SLOTS.po_box
 
 /**
- * The street line where the number follows the name: the German-order systems, and Spain and Italy.
+ * The street line where the number leads: the anglophone order, and France's.
+ *
+ * An intersection is an ALTERNATIVE to the street name because it is a different way of saying where, not a second
+ * thing to print — the shape the old `composeRoad` drew in its own docstring before hand-compiling it into a chain of
+ * `if` statements. The box is not an alternative, so it sits outside the choice.
  */
-export const numberLastStreet: AddressAlternation = either(
+export const numberFirstStreet: AddressLayout = addr`${poBoxLine}
+${either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.house_number} ${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix} ${SLOTS.unit}`
+)}`
+
+/**
+ * The number-first line where a comma separates the number from the name — India's order.
+ */
+export const numberFirstCommaStreet: AddressLayout = addr`${poBoxLine}
+${either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.house_number}, ${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix} ${SLOTS.unit}`
+)}`
+
+/**
+ * The street line where the number follows the name: the German-order systems, and Italy.
+ */
+export const numberLastStreet: AddressLayout = addr`${poBoxLine}
+${either(
 	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
 	addr`${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix} ${SLOTS.house_number} ${SLOTS.unit}`
-)
+)}`
+
+/**
+ * The number-last line where a comma separates the name from the number — `Calle Mayor, 12`, and Brazil's order.
+ *
+ * The separator is not cosmetic. Spain's corpus recipe renders both this form and the space form on purpose, because
+ * both occur in what a person types; collapsing one into the other would remove half the signal.
+ */
+export const numberLastCommaStreet: AddressLayout = addr`${poBoxLine}
+${either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix}, ${SLOTS.house_number} ${SLOTS.unit}`
+)}`
 
 /**
  * Build a layout from a tagged template. A newline in the literal text starts a line; other literal text is a

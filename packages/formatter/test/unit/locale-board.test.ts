@@ -63,7 +63,8 @@ const BOARD: readonly BoardRow[] = [
 	{
 		country: "ES",
 		components: { house_number: "3", street: "Calle de Alcalá", locality: "Madrid", postcode: "28014" },
-		expected: "Calle de Alcalá 3, 28014 Madrid",
+		// Spain separates the street name from the number with a comma.
+		expected: "Calle de Alcalá, 3, 28014 Madrid",
 	},
 	{
 		country: "IT",
@@ -79,7 +80,8 @@ const BOARD: readonly BoardRow[] = [
 			region: "Delhi",
 			postcode: "110001",
 		},
-		expected: "12 Barakhamba Road, New Delhi 110001, Delhi",
+		// India writes the number, then a comma, then the street.
+		expected: "12, Barakhamba Road, New Delhi 110001, Delhi",
 	},
 	{
 		country: "NZ",

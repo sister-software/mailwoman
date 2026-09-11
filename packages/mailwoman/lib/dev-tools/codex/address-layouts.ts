@@ -11,13 +11,14 @@
  *   1. **libaddressinput** (`core/data/chromium-i18n/ssl-address/<CC>.json`, Apache-2.0, already shipped and already
  *      refreshable through `mailwoman dev download ssl-address`) supplies the line SKELETON in its `fmt` field — which
  *      fields print, in what order, with the line breaks between them.
- *   2. **The OpenCage templates** supply the street ORDER, because libaddressinput models the street address as one
- *      opaque `%A` field and says nothing about whether the house number leads or follows. That is read ONCE, here, and
- *      committed as data; the dependency is then removed, which is the point of generating rather than calling.
+ *   2. **`street-orders.ts`**, beside this file, supplies the street ORDER, because libaddressinput models the street
+ *      address as one opaque `%A` field and says nothing about whether the house number leads or follows. That table
+ *      was read once from the OpenCage `address-formatting` templates and committed as data, so this generator needs no
+ *      third-party package; its own header says how to refresh it.
  *
- *   The hand-authored layouts in `codex/lib/address-layouts.ts` take precedence for the locales this project publishes
- *   weights for: those are checked against real addresses on a board, and a generated skeleton is a starting point
- *   rather than a verdict.
+ *   The hand-authored layouts in `codex/lib/address/layouts/index.ts` take precedence for the locales this project
+ *   publishes weights for: those are checked against real addresses on a board, and a generated skeleton is a starting
+ *   point rather than a verdict.
  *
  *   Usage: `node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts`
  */
@@ -27,18 +28,15 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
 
+import { COMMA_JOINED_STREET_COUNTRIES, STREET_ORDERS, type StreetOrder } from "#dev-tools/codex/street-orders"
+import { NO_SUB_LOCALITY_LINE_COUNTRIES } from "#dev-tools/codex/sub-locality-line"
+
 /**
  * Libaddressinput's per-country record, narrowed to the field a layout reads.
  */
 interface AddressMetadata {
 	readonly fmt?: string
 }
-
-/**
- * Where the house number sits relative to the street name. Two orders cover 183 of the 211 countries whose OpenCage
- * template names both slots; the rest differ only in the separator, which the skeleton already carries.
- */
-type StreetOrder = "number-first" | "number-last"
 
 /**
  * Libaddressinput placeholder → the slot a layout names. `%A` is the street line, which each system expands into this
@@ -63,39 +61,9 @@ const FIELD: Readonly<Record<string, string>> = {
 const HAND_AUTHORED = new Set(["US", "FR", "GB", "DE", "ES", "IT", "IN", "NZ", "AU", "JP", "CN"])
 
 /**
- * Read the street order per country from the OpenCage templates, once.
- *
- * This is the half libaddressinput does not carry. Reading it at generation time and committing the result is what lets
- * the dependency go: the templates are never consulted at runtime.
+ * Address systems that print largest unit first. The country line leads in these and trails everywhere else.
  */
-async function readStreetOrders(): Promise<Map<string, StreetOrder>> {
-	const templatesPath = resolvePackagePath("@fragaria/address-formatter", "src", "templates", "templates.json")
-	const templates = await readLocalJSONFile<Record<string, { address_template?: string }>>(templatesPath)
-	const orders = new Map<string, StreetOrder>()
-
-	for (const [code, definition] of Object.entries(templates)) {
-		if (!/^[A-Z]{2}$/.test(code)) continue
-
-		const template = definition.address_template
-
-		if (!template) continue
-
-		// A `{{#first}}` alternation names `road` as a FALLBACK for a place name, which is not the street line. Collapse
-		// each alternation to the road it may contain so the position read below is the real one.
-		const stripped = template.replaceAll(/\{\{#first\}\}[\s\S]*?\{\{\/first\}\}/g, (block) =>
-			block.includes("{{{road}}}") ? "{{{road}}}" : ""
-		)
-
-		const road = stripped.indexOf("{{{road}}}")
-		const number = stripped.indexOf("{{{house_number}}}")
-
-		if (road === -1 || number === -1) continue
-
-		orders.set(code, number < road ? "number-first" : "number-last")
-	}
-
-	return orders
-}
+const LARGEST_FIRST_SYSTEMS = new Set(["JP", "CN", "TW", "KR"])
 
 /**
  * Render one `fmt` into the template source a layout is written as, or null when it names no field this project models.
@@ -103,8 +71,11 @@ async function readStreetOrders(): Promise<Map<string, StreetOrder>> {
  * Every slot the source names is added to `slots`, so the emitted file destructures exactly what it uses — a
  * destructured slot no layout reaches is an unused binding, which the linter reports against a file nobody edits.
  */
-function layoutSource(fmt: string, order: StreetOrder, slots: Set<string>): string | null {
-	const streetNode = order === "number-first" ? "numberFirstStreet" : "numberLastStreet"
+function layoutSource(fmt: string, code: string, order: StreetOrder, slots: Set<string>): string | null {
+	const comma = COMMA_JOINED_STREET_COUNTRIES.has(code) ? "Comma" : ""
+	const streetNode = order === "number-first" ? `numberFirst${comma}Street` : `numberLast${comma}Street`
+
+	streetNodes.add(streetNode)
 	const lines: string[] = []
 	const named = new Set<string>()
 
@@ -140,6 +111,31 @@ function layoutSource(fmt: string, order: StreetOrder, slots: Set<string>): stri
 
 	if (!lines.length) return null
 
+	// The sub-locality line is AUTHORED wherever `%D` is absent, because the formatter this table replaces printed one
+	// for 202 of its 213 countries. It goes directly above the locality, which is where every template that has one
+	// puts it; `NO_SUB_LOCALITY_LINE_COUNTRIES` names the eleven that print none.
+	if (!NO_SUB_LOCALITY_LINE_COUNTRIES.has(code) && !named.has("dependent_locality")) {
+		const localityLine = lines.findIndex((line) => line.includes("${locality}"))
+
+		if (localityLine !== -1) {
+			named.add("dependent_locality")
+			lines.splice(localityLine, 0, "${dependent_locality}")
+		}
+	}
+
+	// The country line is AUTHORED, not transcribed: libaddressinput leaves `%R` out of nearly every `fmt` because its
+	// consumers add the destination country themselves. It closes a small-first address and opens a large-first one,
+	// and it renders only when a caller supplies the name — an intra-country row carries none and prints none.
+	if (!named.has("country")) {
+		named.add("country")
+
+		if (LARGEST_FIRST_SYSTEMS.has(code)) {
+			lines.unshift("${country}")
+		} else {
+			lines.push("${country}")
+		}
+	}
+
 	for (const slot of named) {
 		slots.add(slot)
 	}
@@ -148,9 +144,9 @@ function layoutSource(fmt: string, order: StreetOrder, slots: Set<string>): stri
 }
 
 const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i18n", "ssl-address")
-const orders = await readStreetOrders()
 const entries: string[] = []
 const usedSlots = new Set<string>()
+const streetNodes = new Set<string>()
 let withoutFormat = 0
 
 for (const file of (await readDirectory(specsDirectory)).toSorted()) {
@@ -168,7 +164,7 @@ for (const file of (await readDirectory(specsDirectory)).toSorted()) {
 		continue
 	}
 
-	const source = layoutSource(metadata.fmt, orders.get(code) ?? "number-first", usedSlots)
+	const source = layoutSource(metadata.fmt, code, STREET_ORDERS[code] ?? "number-first", usedSlots)
 
 	if (!source) {
 		withoutFormat++
@@ -183,6 +179,7 @@ const emitted = `/**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @generated
  *
  *   GENERATED — run \`node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts\` to refresh. Do not edit by hand.
  *
@@ -190,13 +187,13 @@ const emitted = `/**
  *   street order read once from the OpenCage templates (which slot leads). The \`fmt\` each was derived from is quoted
  *   above it, so a reader can compare the two without opening the dataset.
  *
- *   The locales this project publishes weights for are NOT here: those are hand-authored in \`address-layouts.ts\` and
+ *   The locales this project publishes weights for are NOT here: those are hand-authored in the sibling \`index.ts\` and
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
  */
 
 // oxlint-disable max-lines -- one entry per country, each a template that reads in the order it prints
 
-import { addr, numberFirstStreet, numberLastStreet, SLOTS, type AddressLayout } from "#address-layout"
+import { addr, ${[...streetNodes].toSorted().join(", ")}, SLOTS, type AddressLayout } from "#address/layout"
 
 const { ${[...usedSlots].toSorted().join(", ")} } = SLOTS
 
@@ -208,7 +205,7 @@ ${entries.join("\n\n")}
 }
 `
 
-const outPath = resolvePackagePath("@mailwoman/codex", "lib", "address-layouts-generated.ts")
+const outPath = resolvePackagePath("@mailwoman/codex", "lib", "address", "layouts", "generated.ts")
 
 await writeLocalTextFile(emitted, outPath)
 

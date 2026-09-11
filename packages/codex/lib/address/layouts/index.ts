@@ -22,14 +22,29 @@
  *   2. **The line-join policy.** `%n` is a line break. Rendering it as `", "`, `" "` or `""` for single-line output is
  *      per-system, and it is the whole difference between a correct Japanese address and a reversed one.
  *
- *   Adding a country is therefore: transcribe its `fmt` skeleton, and pick a street node. A country whose real
- *   convention departs from the skeleton says so in place, with its source.
+ *   3. **The country line.** `%R` is absent from nearly every `fmt`, because libaddressinput's consumers add the
+ *      destination country themselves. It closes a small-first address and opens a large-first one, and it prints only
+ *      when a caller supplies the name — an intra-country row carries none and prints none.
+ *   4. **The post-office box.** The dataset models no box at all; the street node carries it, on its own line directly
+ *      above the street.
+ *
+ *   Adding a country is therefore: transcribe its `fmt` skeleton, pick a street node, and close with the country line.
+ *   A country whose real convention departs from the skeleton says so in place, with its source.
  */
 
-import { addr, numberFirstStreet, numberLastStreet, SLOTS, type AddressLayout } from "#address-layout"
-import { GENERATED_ADDRESS_LAYOUTS } from "#address-layouts-generated"
+import {
+	addr,
+	numberFirstCommaStreet,
+	numberFirstStreet,
+	numberLastCommaStreet,
+	numberLastStreet,
+	SLOTS,
+	type AddressLayout,
+} from "#address/layout"
+import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 
-const { attention, venue, house_number, street, dependent_locality, locality, subregion, region, postcode } = SLOTS
+const { attention, venue, house_number, street, dependent_locality, locality, subregion, region, postcode, country } =
+	SLOTS
 
 /**
  * The admin run below the prefecture in Japan, printed without separators. Japan's `fmt` carries no `%C` or `%D`, so
@@ -56,6 +71,23 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 }
 
 /**
+ * Address systems that print the largest unit first.
+ *
+ * It is a property of the system, not of the layout table, so a caller composing its own order — a gazetteer hierarchy
+ * string, say, which is a query rather than an address — reads it here instead of re-deriving it.
+ */
+export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(["JP", "CN", "TW", "KR"])
+
+/**
+ * Whether the country named by `countryCode` prints the largest unit first.
+ */
+export function isLargestFirstSystem(countryCode: string | null | undefined): boolean {
+	if (!countryCode) return false
+
+	return LARGEST_FIRST_SYSTEMS.has(countryCode.trim().toUpperCase())
+}
+
+/**
  * Per-country layouts for the locales this project publishes weights for.
  *
  * Each is the country's libaddressinput `fmt` skeleton with `%A` expanded. The `fmt` is quoted beside it so the two can
@@ -66,14 +98,16 @@ export const ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	US: addr`${attention}
 ${venue}
 ${numberFirstStreet}
-${locality}, ${region} ${postcode}`,
+${locality}, ${region} ${postcode}
+${country}`,
 
 	// %O%n%N%n%A%n%Z %C
 	FR: addr`${venue}
 ${attention}
 ${numberFirstStreet}
 ${dependent_locality}
-${postcode} ${locality}`,
+${postcode} ${locality}
+${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
 	GB: addr`${attention}
@@ -81,45 +115,57 @@ ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
 ${locality}
-${postcode}`,
+${postcode}
+${country}`,
 
 	// %N%n%O%n%A%n%Z %C
 	DE: addr`${attention}
 ${venue}
 ${numberLastStreet}
-${postcode} ${locality}`,
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
 
-	// %N%n%O%n%A%n%Z %C %S
+	// %N%n%O%n%A%n%Z %C %S — Spain writes the number after a comma: `Calle Mayor, 12`.
 	ES: addr`${attention}
 ${venue}
-${numberLastStreet}
-${postcode} ${locality} ${region}`,
+${numberLastCommaStreet}
+${dependent_locality}
+${postcode} ${locality} ${region}
+${country}`,
 
 	// %N%n%O%n%A%n%Z %C %S
 	IT: addr`${attention}
 ${venue}
 ${numberLastStreet}
-${postcode} ${locality} ${region}`,
+${dependent_locality}
+${postcode} ${locality} ${region}
+${country}`,
 
-	// %N%n%O%n%A%n%C %Z%n%S
+	// %N%n%O%n%A%n%C %Z%n%S — India writes the number before a comma: `12, MG Road`.
 	IN: addr`${attention}
 ${venue}
-${numberFirstStreet}
+${numberFirstCommaStreet}
+${dependent_locality}
 ${locality} ${postcode}
-${region}`,
+${region}
+${country}`,
 
 	// %N%n%O%n%A%n%D%n%C %Z
 	NZ: addr`${attention}
 ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
-${locality} ${postcode}`,
+${locality} ${postcode}
+${country}`,
 
 	// %O%n%N%n%A%n%C %S %Z
 	AU: addr`${venue}
 ${attention}
 ${numberFirstStreet}
-${locality} ${region} ${postcode}`,
+${dependent_locality}
+${locality} ${region} ${postcode}
+${country}`,
 
 	// 〒%Z%n%S%n%A%n%O%n%N, with the prefecture joined to the run below it.
 	//
@@ -127,13 +173,15 @@ ${locality} ${region} ${postcode}`,
 	// line — which is what a geocoder query and a corpus row are — the whole admin run is unseparated and only the
 	// postal code takes a space: `〒100-0005 東京都千代田区丸の内1-9-1`. Keeping the dataset's break would put a space
 	// after the prefecture, which no Japanese address carries.
-	JP: addr`〒${postcode}
+	JP: addr`${country}
+〒${postcode}
 ${region}${japaneseSubPrefecture}
 ${venue}
 ${attention}`,
 
 	// %Z%n%S%C%D%n%A%n%O%n%N — the admin run prints unseparated, which is what `LINE_JOINS.CN` carries.
-	CN: addr`${postcode}
+	CN: addr`${country}
+${postcode}
 ${region}${locality}${dependent_locality}
 ${chineseStreet}
 ${venue}
@@ -147,19 +195,19 @@ ${attention}`,
  * transcription of a dataset. Null is a real answer — 55 of the 252 shipped country records carry no usable `fmt`, and
  * a caller that renders nothing for one of those is reporting absence rather than inventing an order.
  */
-export function layoutForCountry(country: string | null | undefined): AddressLayout | null {
-	if (!country) return null
+export function layoutForCountry(countryCode: string | null | undefined): AddressLayout | null {
+	if (!countryCode) return null
 
-	const code = country.trim().toUpperCase()
+	const code = countryCode.trim().toUpperCase()
 
 	return ADDRESS_LAYOUTS[code] ?? GENERATED_ADDRESS_LAYOUTS[code] ?? null
 }
 
 /**
- * How `country` joins its lines for single-line output.
+ * How the country named by `countryCode` joins its lines for single-line output.
  */
-export function lineJoinForCountry(country: string | null | undefined): string {
-	if (!country) return ", "
+export function lineJoinForCountry(countryCode: string | null | undefined): string {
+	if (!countryCode) return ", "
 
-	return LINE_JOINS[country.trim().toUpperCase()] ?? ", "
+	return LINE_JOINS[countryCode.trim().toUpperCase()] ?? ", "
 }

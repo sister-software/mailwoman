@@ -44,9 +44,25 @@ const FIELD: Readonly<Record<string, string>> = {
 
 /**
  * The skeleton a layout prints: field names per line, street line collapsed to one marker.
+ *
+ * Two single-slot lines drop out. Both are AUTHORED rather than transcribed, so comparing them against the source would
+ * report every country carrying one as a departure and say nothing:
+ *
+ * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's consumers add the destination country
+ *   themselves.
+ * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14 of the 197 shipped `fmt`
+ *   strings, and a country that really has the line still needs it.
  */
-function skeletonOfLayout(layout: AddressLayout): string[][] {
-	return layout.lines.map((line) => line.flatMap(nameOf))
+const AUTHORED_LINES = new Set(["country", "dependent_locality"])
+
+function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
+	// A line counts as authored only when the SOURCE does not name its slot. The 14 `fmt` strings that carry `%D` are
+	// compared like any other line, so a transcription error there still fails.
+	const inSource = new Set(source.flat())
+
+	return layout.lines
+		.map((line) => line.flatMap(nameOf))
+		.filter((line) => !(line.length === 1 && AUTHORED_LINES.has(line[0]!) && !inSource.has(line[0]!)))
 }
 
 function nameOf(atom: AddressAtom): string[] {
@@ -104,8 +120,9 @@ describe("the generated layout table matches libaddressinput", () => {
 				continue
 			}
 
-			const expected = JSON.stringify(skeletonOfFormat(fmt))
-			const actual = JSON.stringify(skeletonOfLayout(layout))
+			const source = skeletonOfFormat(fmt)
+			const expected = JSON.stringify(source)
+			const actual = JSON.stringify(skeletonOfLayout(layout, source))
 
 			if (expected !== actual) {
 				mismatches.push(`${country}: fmt ${JSON.stringify(fmt)} reads ${expected}, layout prints ${actual}`)

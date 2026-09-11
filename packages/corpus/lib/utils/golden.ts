@@ -12,7 +12,7 @@
  *   - Defines `GoldenEntry` (schema check).
  *   - Loads `.jsonl` files (one entry per line).
  *   - Validates every entry: schema shape, ComponentTag membership, reachability of each component in
- *       `raw` via the same `reconcileComponents` helper alignment uses.
+ *       `raw` via `componentsPresentIn`.
  *   - Returns a structured report of per-entry errors so the CLI / CI surface can act on it.
  *
  *   The 1000-entry target (500 US + 500 FR) is a human task. This module catches the regressions that
@@ -22,7 +22,7 @@
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { componentsPresentIn } from "@mailwoman/formatter"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -111,14 +111,18 @@ export function parseGoldenLine(line: string): GoldenEntry {
 }
 
 /**
- * Check that every component in `entry` appears in `entry.raw` (reconciliation-equivalent).
+ * Check that every component in `entry` appears in `entry.raw`.
+ *
+ * A golden entry's `raw` is hand-written ground truth, not a render, so the question here really is containment: does
+ * this labeled span occur in the string a person typed. That is the weaker of the two reconciliations, and the right
+ * one for a string no layout produced.
  */
 export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
-	const reconciled = reconcileComponents(entry.components, entry.raw)
+	const present = componentsPresentIn(entry.components, entry.raw)
 	const missing: ComponentTag[] = []
 
 	for (const tag of Object.keys(entry.components) as ComponentTag[]) {
-		if (!(tag in reconciled)) {
+		if (!(tag in present)) {
 			missing.push(tag)
 		}
 	}

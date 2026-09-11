@@ -19,11 +19,10 @@
  *   federal).
  */
 
-import { isPresent } from "@mailwoman/core/objects"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
-import { composeRaw, splitStreetLine, stableSourceID } from "#adapters/utils"
+import { splitStreetLine, stableSourceID } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
@@ -103,9 +102,6 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 
 				if (!split) continue
 
-				const streetPart =
-					"po_box" in split ? split.po_box : [split.house_number, split.street].filter(isPresent).join(" ")
-
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
 					...("po_box" in split
@@ -116,11 +112,11 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 					postcode,
 				}
 
-				const raw = composeRaw({ venue, streetLine: streetPart, locality: city, region: state, postcode })
+				const rendered = formatAddressRow(components, "US", { singleLine: true })
 
-				if (!raw) continue
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
+				const { raw, components: aligned } = rendered
 
 				if (Object.keys(aligned).length <= 2) continue
 

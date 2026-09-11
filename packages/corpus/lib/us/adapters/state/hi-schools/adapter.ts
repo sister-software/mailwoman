@@ -28,8 +28,7 @@
  *   License: stamped `"Public Domain"` per Hawaii state government open-data terms.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -124,17 +123,11 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					postcode: zip,
 				}
 
-				const streetPart = [split.house_number, split.street].filter(isPresent).join(" ").trim()
+				const rendered = formatAddressRow(components, "US", { singleLine: true })
 
-				const raw = [
-					name,
-					streetPart,
-					[city, [HI_STATE_ABBR, zip].filter(isPresent).join(" ")].filter(isPresent).join(", "),
-				]
-					.filter(isPresent)
-					.join(", ")
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
+				const { raw, components: aligned } = rendered
 
 				if (Object.keys(aligned).length <= 2) continue
 

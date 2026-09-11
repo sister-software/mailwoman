@@ -166,7 +166,7 @@ for the resolver-side checker).
 | C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                      |
 | C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                        |
 | C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector buildable today** — the grouper computes the units and does not bind the decode                                                           |
-| C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address-system-conventions.ts` is the natural home; templates not yet stated as machine-readable sequences |
+| C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address/system-conventions.ts` is the natural home; templates not yet stated as machine-readable sequences |
 | C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector buildable today** — walk the FST for covering entries over every decoded boundary                                                         |
 
 The proposed instrument is a constraint-violation census over the board — an extension of
@@ -213,7 +213,7 @@ violates, and the taxonomy is thereafter read from evaluation rather than argued
 | candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists; output does not bind the decode     |
 | `HEAD/REL` tree                 | `AddressTree` + `PARENT_OF` (`build-tree.ts`, `containment.ts`)                  | built post-decode, unscored                 |
 | POI-under-POI (`located_at`)    | none — `venue` parents are `["street", "locality"]`                              | schema decision open                        |
-| `G_c` segment templates         | `packages/codex/lib/address-system-conventions.ts`                               | home exists; templates not machine-readable |
+| `G_c` segment templates         | `packages/codex/lib/address/system-conventions.ts`                               | home exists; templates not machine-readable |
 | `G_name` toponym grammar        | street domain only (street-type lexicon, morphology FST, affix tags)             | toponym modifier/generic inventories absent |
 | registry evidence               | FST prior, country-surface clues, anchor channel                                 | present — token-granular, hence the §4 leak |
 
