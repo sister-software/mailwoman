@@ -23,6 +23,7 @@
 
 import { isPresent } from "@mailwoman/core/objects"
 import { formatAddressRow } from "@mailwoman/formatter"
+import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -98,7 +99,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (!split) continue
 
-				const venue = orgName || [firstName, lastName].filter(isPresent).join(" ") || undefined
+				const venue = orgName || formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),

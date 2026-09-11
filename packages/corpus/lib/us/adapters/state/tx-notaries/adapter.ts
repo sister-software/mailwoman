@@ -15,8 +15,8 @@
  *   License: stamped `"Public Domain"` per Texas state government open-data terms.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
 import { formatAddressRow } from "@mailwoman/formatter"
+import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -103,7 +103,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 				if (!split) continue
 
-				const venue = [firstName, lastName].filter(isPresent).join(" ") || undefined
+				const venue = formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),

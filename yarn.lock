@@ -5844,6 +5844,7 @@ __metadata:
     "@mailwoman/formatter": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    "@mailwoman/record": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@mailwoman/tiger": "workspace:*"

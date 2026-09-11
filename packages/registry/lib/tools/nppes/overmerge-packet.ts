@@ -7,7 +7,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
+import { formatPersonName } from "@mailwoman/record/name"
 
 import type { ResolvedEntity, SourceRecord } from "#index"
 import type { MessyRow } from "#tools/nppes/sample"
@@ -80,7 +80,7 @@ export async function writeOvermergePacket(path: string, input: OvermergePacketI
 				const src = rowByID.get(rec.id)
 
 				out.push(
-					`  - npi=${rec.id} · name="${[rec.name?.given, rec.name?.family].filter(isPresent).join(" ")}" · org="${rec.organization?.canonical ?? ""}" · addr="${rec.address?.raw ?? ""}" · auth="${src?.auth ?? ""}" · taxonomy="${src?.taxonomy ?? ""}"`
+					`  - npi=${rec.id} · name="${formatPersonName(rec.name, "short")}" · org="${rec.organization?.canonical ?? ""}" · addr="${rec.address?.raw ?? ""}" · auth="${src?.auth ?? ""}" · taxonomy="${src?.taxonomy ?? ""}"`
 				)
 			}
 		}
