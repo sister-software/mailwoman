@@ -33,20 +33,19 @@
  *     "Republic of Georgia" is preserved.
  *
  *   Source of truth: `@mailwoman/codex` (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME) — the SAME data the
- *   corpus-python bridge `country-surfaces.json` is generated from (export-country-surfaces.ts), so
+ *   corpus-python bridge `country-surfaces.json` is generated from (codex-export-country-surfaces.ts), so
  *   the channel and the corpus extract synthesizer cannot diverge on what a country surface IS.
  *
  *   Output: data/gazetteer/country-surface-lexicon-v1.json (small, committed, provenance-tracked).
- *   Regenerate: `node codex/tools/build-country-surface-lexicon.ts`
+ *   Regenerate: `node packages/mailwoman/lib/dev-tools/codex/country/surface-lexicon.ts`
  */
 
+import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
+import { wordNorm, wordNormLower } from "@mailwoman/codex/normalize"
+import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us/state"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { dirname } from "path-ts"
-
-import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "#country/country"
-import { wordNorm, wordNormLower } from "#normalize"
-import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "#us/state"
 
 /**
  * Ambiguous entries printed before the list is truncated.
@@ -62,8 +61,7 @@ const BIT = { country_surface: 1, country_ambiguous: 2 }
 const SLOTS = ["country_surface", "country_ambiguous"]
 
 /**
- * Committed output path (a codex-derived artifact, like export-country-surfaces.ts — no argv, so the no-process-globals
- * lint policy holds; codex stays zero-runtime-dep).
+ * Committed output path. No argv, so the no-process-globals lint policy holds.
  */
 const OUTPUT = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
@@ -147,7 +145,7 @@ const ambiguousEntries = [...entries, ...codeEntries].filter(([, b]) => b & BIT.
 const lexicon = {
 	version: 1,
 	generated_by:
-		"codex/tools/build-country-surface-lexicon.ts (source: @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME)",
+		"packages/mailwoman/lib/dev-tools/codex/country/surface-lexicon.ts (source: @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME)",
 	feature_dim: SLOTS.length,
 	slots: SLOTS,
 	bits: BIT,

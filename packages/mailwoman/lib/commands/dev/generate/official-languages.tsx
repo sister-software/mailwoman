@@ -44,7 +44,7 @@ interface Options {
 
 const DevGenerateOfficialLanguages: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { generateOfficialLanguages } = await import("@mailwoman/codex/tools")
+		const { generateOfficialLanguages } = await import("#dev-tools/codex/official-languages")
 
 		return generateOfficialLanguages({ cldrDir: options.cldrDir, cldrVersion: options.cldrVersion }, reportToStderr)
 	})

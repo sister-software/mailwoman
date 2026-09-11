@@ -85,11 +85,6 @@
 			"node": "./lib/nz/index.ts",
 			"default": "./out/nz/index.js"
 		},
-		"./tools": {
-			"types": "./out/tools/index.d.ts",
-			"node": "./lib/tools/index.ts",
-			"default": "./out/tools/index.js"
-		},
 		"./normalize": {
 			"types": "./out/normalize.d.ts",
 			"node": "./lib/normalize.ts",
@@ -153,8 +148,6 @@
 		"type-fest": "^5.9.0"
 	},
 	"devDependencies": {
-		"@mailwoman/annotations": "workspace:*",
-		"@mailwoman/core": "workspace:*",
-		"path-ts": "^2.3.0"
+		"@mailwoman/annotations": "workspace:*"
 	}
 }

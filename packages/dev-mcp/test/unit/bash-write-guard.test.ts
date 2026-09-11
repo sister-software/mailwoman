@@ -135,6 +135,10 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["switching branch", `git checkout -b feature/x`],
 		["a conditional", `if test -f AGENTS.md; then head -1 AGENTS.md; fi`],
 		["a scratch directory", `mkdir -p /tmp/scratch && rm -rf /tmp/scratch`],
+		// A directory carries no content for the symbol precheck to read, and git tracks no empty one, so a path inside
+		// the tree is admitted where every other path writer's is refused.
+		["a directory inside the tree", `mkdir -p packages/mailwoman/lib/dev-tools/codex`],
+		["the state directory a linked session writes", `mkdir -p .claude/state`],
 		["clearing a workspace's build output", `rm -rf packages/repo-health/out`],
 		[
 			"removing a declaration map the compiler orphaned",

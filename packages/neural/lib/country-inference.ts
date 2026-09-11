@@ -15,7 +15,8 @@
  *   The matcher DELIBERATELY REUSES the gazetteer's phrase-scan (`gazetteerCharPaint`) — one tested
  *   longest-first n-gram algorithm (case-insensitive `entries` + uppercase-exact `code_entries`,
  *   char→piece projection by the first non-whitespace char), two vocabularies. Only the vocabulary
- *   (`country-surface-lexicon-v1.json`, built by `codex/tools/build-country-surface-lexicon.ts`) and
+ *   (`country-surface-lexicon-v1.json`, built by
+ *   `packages/mailwoman/lib/dev-tools/codex/country/surface-lexicon.ts`) and
  *   the emitted 2-dim feature differ. This is the same "the JSON is the single source both consumers
  *   load, so the two implementations cannot drift" discipline as the gazetteer; `country_lexicon.py`
  *   is the Python training-side mirror and `country-inference.test.ts` pins the two together.
