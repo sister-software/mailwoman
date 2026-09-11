@@ -74,7 +74,7 @@ a `components` entry whose value is an array collapses to its first element.
 
 Four behaviors decide how a client reads a response, and none of them is visible in the table.
 
-- `/v1/format` needs no engine method at all. It is wired in-package from `@mailwoman/formatter`.
+- `/v1/format` needs no engine method at all. It is wired in-package from `@mailwoman/codex/address-format`.
 - `/health` answers `200` with no engine wired, so it reports process liveness rather than readiness.
   When `mailwoman serve` wires the real engine it also reports the loaded model and the data root:
   `model.name`, `model.version`, `model.labels`, `data.data_root`, `data.wof_dbs`,

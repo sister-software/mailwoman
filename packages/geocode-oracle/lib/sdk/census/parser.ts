@@ -16,7 +16,7 @@
  */
 
 import { createPostalAddressID } from "@mailwoman/address-id"
-import type { ComponentDict } from "@mailwoman/formatter"
+import type { ComponentDict } from "@mailwoman/codex/address-format"
 import { type AddressGeocode, type ResolutionTier, toPostalAddress, withGeocode } from "@mailwoman/record"
 
 import { OracleProvider, type OracleGeocodeResult, regionPrefix } from "#result"

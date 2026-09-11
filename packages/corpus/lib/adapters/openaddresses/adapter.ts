@@ -36,8 +36,8 @@
  *   for non-US locales where district names DO appear on the envelope.
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { formatAddressRow } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"

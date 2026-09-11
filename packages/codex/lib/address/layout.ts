@@ -25,8 +25,9 @@
  *   treating every separator as a connector makes each line flat, and the four outcomes of a partially-filled tail
  *   (`New York, NY 10118` / `New York, NY` / `New York, 10118` / `NY 10118`) fall out of the one rule.
  *
- *   The RENDERER is not here. This module builds the data; `@mailwoman/formatter` evaluates it, so codex keeps its
- *   zero-runtime-dependency posture and a consumer that only wants the table does not load an engine.
+ *   The RENDERER is the sibling `render.ts`, and the public surface over it is `format.ts`. They are separate modules
+ *   rather than one so a consumer that only wants the table — a conformance check, a documentation build — imports
+ *   `#address/layouts` and loads no evaluator.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "#component"

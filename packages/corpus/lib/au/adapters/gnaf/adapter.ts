@@ -28,8 +28,8 @@
  *   line). Open G-NAF licence — attribute "Geoscape Australia".
  */
 
+import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { componentsPresentIn } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"

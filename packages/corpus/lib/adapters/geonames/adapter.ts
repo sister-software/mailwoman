@@ -28,8 +28,8 @@
  *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
  */
 
+import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { componentsPresentIn } from "@mailwoman/formatter"
 import { dirname, join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 

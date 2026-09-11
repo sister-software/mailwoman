@@ -28,7 +28,7 @@
  *   License: stamped `"Public Domain"` per Hawaii state government open-data terms.
  */
 
-import { formatAddressRow } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"

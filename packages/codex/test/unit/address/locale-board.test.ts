@@ -19,7 +19,7 @@
  */
 
 import { ADDRESS_LAYOUTS, LINE_JOINS } from "@mailwoman/codex/address-layouts"
-import { joinRendering, renderAddress, type ComponentDict } from "@mailwoman/formatter/render"
+import { joinRendering, renderAddress, type ComponentDict } from "@mailwoman/codex/address-render"
 import { describe, expect, it } from "vitest"
 
 interface BoardRow {

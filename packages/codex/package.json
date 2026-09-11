@@ -100,6 +100,21 @@
 			"node": "./lib/address/layouts/generated.ts",
 			"default": "./out/address/layouts/generated.js"
 		},
+		"./address-render": {
+			"types": "./out/address/render.d.ts",
+			"node": "./lib/address/render.ts",
+			"default": "./out/address/render.js"
+		},
+		"./address-format": {
+			"types": "./out/address/format.d.ts",
+			"node": "./lib/address/format.ts",
+			"default": "./out/address/format.js"
+		},
+		"./address-key": {
+			"types": "./out/address/key.d.ts",
+			"node": "./lib/address/key.ts",
+			"default": "./out/address/key.js"
+		},
 		"./component": {
 			"types": "./out/component.d.ts",
 			"node": "./lib/component.ts",

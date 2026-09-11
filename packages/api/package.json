@@ -55,7 +55,6 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
-		"@mailwoman/formatter": "workspace:*",
 		"hono": "^4.13.7",
 		"zod": "^4.5.4"
 	}

@@ -10,7 +10,9 @@
  *   file catches it. So the comparison is mechanical — re-derive each skeleton from the dataset and require the
  *   committed layout to print the same fields in the same order with the same line breaks.
  *
- *   It lives in `@mailwoman/formatter` rather than in `@mailwoman/codex` because the dataset ships inside
+ *   It reads the dataset through `@mailwoman/core`, which is legal for a TEST and not for `lib/`: `@mailwoman/core`
+ *   imports `@mailwoman/codex`, so a source file here reaching back would close that loop. This file lives under
+ *   `test/`, which nothing imports, and codex's own manifest stays free of core. The former home was
  *   `@mailwoman/core`, and `@mailwoman/core` imports `@mailwoman/codex`. A codex test reading the dataset would close
  *   that loop; this package already depends on both.
  *

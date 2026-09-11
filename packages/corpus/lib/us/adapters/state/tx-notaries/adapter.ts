@@ -15,7 +15,7 @@
  *   License: stamped `"Public Domain"` per Texas state government open-data terms.
  */
 
-import { formatAddressRow } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 

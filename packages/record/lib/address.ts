@@ -17,7 +17,8 @@
  *   at all (the NAACCR precedent, see the geocode-first record-matching concept doc).
  */
 
-import { type ComponentDict, type FormatAddressOptions, canonicalKey, formatAddress } from "@mailwoman/formatter"
+import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"
+import { canonicalKey } from "@mailwoman/codex/address-key"
 
 /**
  * A geographic coordinate (WGS84 decimal degrees).

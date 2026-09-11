@@ -301,7 +301,6 @@
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/record": "workspace:*",

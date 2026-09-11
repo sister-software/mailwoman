@@ -12,14 +12,12 @@
  *   one. What survives here is the BEHAVIOUR those mechanisms were reaching for, asserted on output.
  */
 
-import type { ClassificationMap } from "@mailwoman/core/types"
 import {
 	componentsPresentIn,
 	formatAddress,
 	formatAddressRow,
-	formatFromClassificationMap,
 	type ComponentDict,
-} from "@mailwoman/formatter"
+} from "@mailwoman/codex/address-format"
 import { describe, expect, it } from "vitest"
 
 const US_ADDRESS: ComponentDict = {
@@ -271,34 +269,5 @@ describe("componentsPresentIn", () => {
 		expect(componentsPresentIn({ locality: "San  Francisco" }, "san francisco ca")).toEqual({
 			locality: "San  Francisco",
 		})
-	})
-})
-
-describe("formatFromClassificationMap", () => {
-	it("bridges the legacy rule-classifier vocabulary through the same layouts", () => {
-		const map: ClassificationMap = new Map([
-			["house_number", ["123"]],
-			["street", ["Main St"]],
-			["locality", ["Portland"]],
-			["region", ["OR"]],
-			["postcode", ["97201"]],
-		])
-
-		expect(formatFromClassificationMap(map, "US", { separator: ", " })).toBe("123 Main St, Portland, OR 97201")
-	})
-
-	it("merges unit and level labels onto the street line", () => {
-		const map: ClassificationMap = new Map([
-			["house_number", ["1"]],
-			["street", ["Elm"]],
-			["unit", ["Apt 4"]],
-			["level", ["Floor 2"]],
-			["locality", ["Ames"]],
-		])
-
-		const formatted = formatFromClassificationMap(map, "US", { separator: ", " })
-
-		expect(formatted).toContain("Apt 4")
-		expect(formatted).toContain("Floor 2")
 	})
 })

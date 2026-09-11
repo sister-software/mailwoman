@@ -94,7 +94,6 @@
 		"@mailwoman/address-id": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/tiger": "workspace:*",

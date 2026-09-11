@@ -28,10 +28,11 @@ import {
 	withEngineStamp,
 	APIErrorSchema,
 } from "@mailwoman/api-kit"
+import { type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/codex/address-format"
+import { canonicalKey } from "@mailwoman/codex/address-key"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { EngineStamp } from "@mailwoman/core/license"
-import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/formatter"
 
 import type { MailwomanAPIEngine } from "#engine"
 import {

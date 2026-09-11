@@ -25,12 +25,12 @@
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
+import { formatAddress } from "@mailwoman/codex/address-format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import { formatAddress } from "@mailwoman/formatter"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"

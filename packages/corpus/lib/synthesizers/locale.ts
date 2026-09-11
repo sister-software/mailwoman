@@ -23,7 +23,7 @@
  *   `raw` so alignment lands. Its locale-neutral API now also serves the international recipe.
  */
 
-import { formatAddress } from "@mailwoman/formatter"
+import { formatAddress } from "@mailwoman/codex/address-format"
 
 import type { CanonicalRow } from "#types"
 

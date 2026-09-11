@@ -38,7 +38,7 @@
  *   epic).
  */
 
-import { foldForKey } from "@mailwoman/formatter"
+import { foldForKey } from "@mailwoman/codex/address-key"
 
 /**
  * A canonicalized organization name.

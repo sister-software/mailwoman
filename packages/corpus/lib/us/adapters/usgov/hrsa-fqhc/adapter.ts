@@ -29,7 +29,7 @@
  *   terms.
  */
 
-import { formatAddressRow } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"

@@ -19,9 +19,8 @@
  *   so the key is stable and explainable; expansion is an additive refinement, not a rewrite.
  */
 
-import type { ComponentTag } from "@mailwoman/codex/component"
-
-import type { ComponentDict } from "#format"
+import type { ComponentDict } from "#address/format"
+import type { ComponentTag } from "#component"
 
 /**
  * The address-identifying components, in canonical key order. Venue / attention are intentionally excluded — those

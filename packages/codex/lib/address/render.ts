@@ -21,15 +21,8 @@
  *   separator wins — an absent region gives `New York, 10118`, which is what the engine this replaces produced.
  */
 
-import {
-	isAlternation,
-	isConnector,
-	isLayout,
-	isSlot,
-	type AddressAtom,
-	type AddressLayout,
-} from "@mailwoman/codex/address-layout"
-import type { ComponentTag } from "@mailwoman/codex/component"
+import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"
+import type { ComponentTag } from "#component"
 
 /**
  * A partial map of `ComponentTag` → string value — the canonical render input.
