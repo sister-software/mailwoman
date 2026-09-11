@@ -1,0 +1,441 @@
+# v5.6.0 — v5.5.0's mixture plus the bare-postcode slice, the shape the corpus never carried
+#
+# Control: v5.5.0-restored-generations-60k.yaml at seed 42. This config differs from it in the corpus
+# version, ONE `source_doses` line and ONE receipt, so every difference between the two arms is the
+# added slice. FROM SCRATCH: no `init_from`, launched with `--resume none`.
+#
+# WHAT IS BEING FIXED. `100 00` is a real Prague postcode. v5.3.0 read it as one; v5.4.0 and v5.5.0 read
+# `100` as a house number and `00` as a street, so the resolver is handed no postcode and returns
+# nothing. Held out, 32 CZ/SK codes of the `NNN NN` shape: 31/32 under v5.0.0, v5.2.0 and v5.3.0, then
+# 0/32 under v5.4.0 and v5.5.0. The v5.0.0/v5.2.0 pair share a corpus and differ only in seed, so their
+# agreement at 31/32 is what makes the collapse attributable to the corpus rather than to seed noise.
+#
+# WHY IT COLLAPSED. Across all 685,187,151 rows of the v0.29.0 mixture the bare two-token `NNN NN` shape
+# appears ZERO times, and `NNNN LL` appears once. The correct reading was always generalization off
+# longer addresses. v5.4.0's added OpenStreetMap PK/BD/VN rows raise the evidence for "a leading digit
+# group is a house number" at that opening from 393.2 to 443.7 rows per pass, and an unsupported
+# generalization gives way. Nothing in v5.5.0 addressed that: restoring the two dropped generations put
+# 12,759 IN-CONTEXT `NNN NN` rows back, and they do not transfer to the bare input — 0/32 confirms it.
+#
+# WHAT IS ADDED. `synth-bare-postcode`: 20,460 rows of REAL codes read from the OpenAddresses extracts,
+# no synthesis, each emitting a postcode and nothing else. CZ 5,290 / SK 2,112 / SE 3,058 / NL 10,000,
+# half spaced and half compact per country. Every surface is checked through `computeQueryShape` at build
+# time, so a surface the detector will not read as a postcode cannot ship.
+#
+# HELD-OUT INTEGRITY. All 56 evaluation strings (32 CZ/SK, 24 NL) are excluded from the recipe GLOBALLY
+# by normalized form, so a Czech case cannot re-enter training as the identical Swedish input. Verified
+# against the built parquet, not its source jsonl: 0 of 56 present.
+#
+# THE GAUNTLET BARE-POSTCODE ROWS ARE NOT HELD OUT, and two of the nine are now memorization checks.
+# Checked each of the nine against the built parquet: `cz/bare-postcode.jsonl`'s `100 00` and `110 00`
+# are real OpenAddresses Czech codes and are IN training — they were never on the 56-string reserve,
+# which is the designed held-out set. Read those two rows as "the source drew", never as the capability.
+# The other seven are clean: `Praha 100 00, Czechia` is an in-context surface this source never emits,
+# GB is absent from the recipe by design (`SW1A 1AA` opens with letters and was never in doubt), US is
+# not a recipe country, and `1012 LG` and `811 01` did not draw.
+#
+# EXPOSURE IS NOT SETTLED BY THIS FILE. `synth-bare-postcode: 1.0` below is an exposure the operator has
+# to choose, and the epoch audit against these exact bytes has now measured what it delivers. Realized,
+# over 1,000,000 sampled rows at seed 43:
+#
+#   draw level      2,652 rows, 0.2652% of the epoch, 0.130 passes per row of the source
+#   emitted level   2,049 rows, 0.2049% — what the trainer actually reads
+#   CZ receipt        668 rows observed against a floor of 250
+#
+# The draw level matches the intent exactly: 0.130 per epoch x 7.68 epochs in a 60,000-step run is 1.0
+# pass per row, and it lands beside `synth-sg-register` (0.132) and `synth-pk-register` (0.130), well
+# under the audit's outlier threshold of 8 x a 0.2 median.
+#
+# THE EMITTED LEVEL IS 23% LOWER, AND THAT IS THE NUMBER TO REASON WITH. Augmentation expands long
+# addresses into more rows, so a short-row source keeps a smaller part of a fixed emitted budget: at
+# 0.2049% this source delivers about 15,736 rows over the run, or 0.77 passes per row, not 1.0. That is
+# not the `augment_exclude_sources` entry below — `synth-no-fragment` (0.7696) and `synth-fr-fragment`
+# (0.7708) are not excluded and carry the same ratio, and `synth-sg-register` sits at 0.8247.
+#
+# WHAT THAT LEAVES FOR THE FAILING SHAPE. Half of each country's rows are compact `NNNNN`, measured
+# exactly, so the two-token `NNN NN` form CZ/SK/SE write is 5,230 of the 20,460 rows: about 678 rows per
+# epoch drawn and about 524 emitted. The evidence it argues against is the 443.7 rows per epoch teaching
+# a leading digit group as a house number. WHICH LEVEL THAT 443.7 WAS COUNTED AT IS NOT RECORDED, so the
+# margin is somewhere between 1.18:1 and 1.53:1 and the arm is thinner than the pre-audit arithmetic
+# read. Settle the level, or raise the exposure, before treating 1.0 as sufficient.
+#
+# PRE-REGISTERED WATCH. Grade these in order, before any target metric:
+#
+#   1. The held-out spaced-postcode sweep — `eval bare-postcode`, 32 CZ/SK `NNN NN` and 24 NL `NNNN LL`,
+#      none of them on the board. v5.5.0 reads 0/32 and 19/24. This arm must recover CZ/SK WITHOUT
+#      losing NL; a partial recovery is a partial result, not a pass.
+#   2. `fr.bare_street_intact` in the promotion battery, which v5.5.0 raised 95 -> 100. FR is tier 1, so
+#      a drop here disqualifies the arm outright.
+#   3. The target-family boards v5.4.0 won and v5.5.0 held, which must not give any of it back:
+#      `sg/register.jsonl` 118/240, `us/family-po-box.jsonl` 6/6, `ve/family-locality-postcode.jsonl` 5/5.
+#
+# The new receipt below fails the run if the added slice does not actually draw — the check that would
+# have caught the silent generation drop five model versions earlier.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.30.0-bare-postcode/corpus-v0.30.0-bare-postcode
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights:
+    AD: 1.0
+    AE: 1.0
+    AF: 1.0
+    AG: 1.0
+    AI: 1.0
+    AL: 1.0
+    AO: 1.0
+    AR: 1.0
+    AS: 1.0
+    AT: 1.0
+    AU: 1.0
+    AW: 1.0
+    BA: 1.0
+    BB: 1.0
+    BD: 1.0
+    BE: 1.0
+    BF: 1.0
+    BI: 1.0
+    BJ: 1.0
+    BM: 1.0
+    BN: 1.0
+    BQ: 1.0
+    BR: 1.0
+    BS: 1.0
+    BT: 1.0
+    BW: 1.0
+    BY: 1.0
+    BZ: 1.0
+    CA: 1.0
+    CD: 1.0
+    CF: 1.0
+    CG: 1.0
+    CH: 1.0
+    CK: 1.0
+    CN: 1.0
+    CO: 1.0
+    CR: 1.0
+    CV: 1.0
+    CW: 1.0
+    CY: 1.0
+    CZ: 1.0
+    DE: 1.0
+    DJ: 1.0
+    DK: 1.0
+    DM: 1.0
+    DO: 1.0
+    EG: 1.0
+    ER: 1.0
+    ES: 1.0
+    FI: 1.0
+    FK: 1.0
+    FM: 1.0
+    FO: 1.0
+    FR: 1.0
+    GB: 1.0
+    GD: 1.0
+    GE: 1.0
+    GH: 1.0
+    GM: 1.0
+    GT: 1.0
+    GW: 1.0
+    HK: 1.0
+    HR: 1.0
+    HU: 1.0
+    ID: 1.0
+    IE: 1.0
+    IL: 1.0
+    IM: 1.0
+    IN: 1.0
+    IO: 1.0
+    IS: 1.0
+    IT: 1.0
+    JO: 1.0
+    JP: 1.0
+    KH: 1.0
+    KR: 1.0
+    KW: 1.0
+    KY: 1.0
+    LB: 1.0
+    MA: 1.0
+    ML: 1.0
+    MN: 1.0
+    MP: 1.0
+    MS: 1.0
+    MU: 1.0
+    MW: 1.0
+    MX: 1.0
+    MY: 1.0
+    NA: 1.0
+    NE: 1.0
+    NG: 1.0
+    NI: 1.0
+    NL: 1.0
+    "NO": 1.0
+    NZ: 1.0
+    OM: 1.0
+    PE: 1.0
+    PG: 1.0
+    PH: 1.0
+    PK: 1.0
+    PL: 1.0
+    PM: 1.0
+    PR: 1.0
+    PT: 1.0
+    RU: 1.0
+    RW: 1.0
+    SA: 1.0
+    SB: 1.0
+    SC: 1.0
+    SE: 1.0
+    SG: 1.0
+    SH: 1.0
+    SI: 1.0
+    SK: 1.0
+    SM: 1.0
+    SO: 1.0
+    SR: 1.0
+    ST: 1.0
+    SV: 1.0
+    SX: 1.0
+    TH: 1.0
+    TK: 1.0
+    TM: 1.0
+    TO: 1.0
+    TR: 1.0
+    TT: 1.0
+    TW: 1.0
+    UA: 1.0
+    US: 1.0
+    VE: 1.0
+    VG: 1.0
+    VI: 1.0
+    VN: 1.0
+    VU: 1.0
+    ZA: 1.0
+  source_weights:
+    synth-house-venue: 2.0
+    synth-reviewed-postcode-tail: 0.05
+    overture-latam: 6.0
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-nad: 1.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 0.0 # v0.9.4 vintage, SUPERSEDED by -v22
+    synth-fr-bare-street-v22: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED by -v21
+    synth-cz-pcfirst-preposition-v21: 12.0
+    synth-nl-postcode: 6.0
+    synth-fragment: 6.0
+    synth-fr-fragment: 12.0
+    synth-no-fragment: 12.0
+    synth-gb: 6.0
+    synth-sub-venue: 12.0
+    synth-suffix-boundary: 2.5
+  # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the seven
+  # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
+  # 1.0*20460 = 437,799 draws, 5.7% of the run. The big register slices take one pass each because they
+  # carry their diversity in the rows; the four-to-five-thousand-row slices take eight, which is the
+  # exposure `synth-suffix-boundary` already draws at weight 2.5.
+  #
+  # `synth-bare-postcode` takes ONE pass, the same as the two register slices, because its 20,460 rows
+  # are distinct real codes rather than templated variations. That line is the arm's only exposure
+  # decision and the epoch audit is what confirms it — see the header.
+  source_doses:
+    synth-sg-register: 1.0
+    synth-pk-register: 1.0
+    synth-bd-register: 8.0
+    synth-trailing-region-es-v28: 8.0
+    synth-po-box-military: 8.0
+    osm: 0.5
+    synth-bare-postcode: 1.0
+  required_corpus_receipts:
+    # The added source. A receipt is what turns "the weights name it" into "the sampler drew it": the
+    # generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is why nothing
+    # failed for five model versions.
+    #
+    # The floor is COUNTED, not chosen by symmetry with the entries below. A 1.0 dose is exactly
+    # rows/samples of the run (`derive_source_weights`), so 20,460 rows over 7,680,000 samples draw about
+    # 2,664 per 1,000,000-row epoch, and the measured CZ share of the parquet — 5,290 of 20,460 — puts
+    # about 689 of those under `country: CZ`. 250 is the floor a real draw clears three times over and a
+    # silent drop cannot; 1,000 would have failed this run on a healthy corpus.
+    - name: bare-postcode-czech
+      min_draws: 250
+      source: synth-bare-postcode
+      country: CZ
+    # The two restored generations. Carried forward from v5.5.0 unchanged.
+    - name: cz-postcode-first-current-generation
+      min_draws: 1000
+      source: synth-cz-pcfirst-preposition-v21
+      country: CZ
+    - name: fr-bare-street-current-generation
+      min_draws: 1000
+      source: synth-fr-bare-street-v22
+      country: FR
+    - name: ve-locality-postcode-region
+      min_draws: 250
+      source: synth-reviewed-postcode-tail
+      country: VE
+      component_sequence:
+        - locality
+        - postcode
+        - region
+    - name: sg-registers
+      min_draws: 1000
+      source: synth-sg-register
+      country: SG
+    - name: pk-house-line
+      min_draws: 1000
+      source: synth-pk-register
+      country: PK
+    - name: bd-trailing-postcode
+      min_draws: 500
+      source: synth-bd-register
+      country: BD
+    - name: es-trailing-region-local-surfaces
+      min_draws: 500
+      source: synth-trailing-region-es-v28
+      country: ES
+    - name: us-military-po-box
+      min_draws: 500
+      source: synth-po-box-military
+      country: US
+    - name: osm-south-asia-formats
+      min_draws: 1000
+      source: osm
+  augment_exclude_sources:
+    - synth-suffix-boundary
+    # A bare postcode has nothing to augment: a directional, a region or a glue token appended to
+    # `119 00` produces a row whose label sequence no longer matches its surface, and the shape this
+    # slice exists to teach is the two-token input with nothing else in it.
+    - synth-bare-postcode
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model:
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v560-bare-postcode-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 60000
+  eval_every_steps: 2000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v560-bare-postcode-60k-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.3
+  val_jsonl: ""

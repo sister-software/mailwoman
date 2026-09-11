@@ -4809,6 +4809,70 @@ def sync_v540_target_families():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v560_bare_postcode():
+    """Stage the v5.6.0 bare-postcode corpus and configs through R2, and verify mounted visibility.
+
+    v0.30.0 is a pure overlay ADD of ONE parquet onto v0.29.0's 719 slices, so two files travel: that
+    parquet and the manifest. Every other directory the manifest names is already on the volume, which is
+    why this function cannot verify itself by counting its own transfer.
+
+    The verify block reaches a slice in each tier the manifest spans — the new overlay, v0.29.0's own
+    overlay parquet, and v0.5.0, which carries 690 of the 720 entries and whose absence would be the whole
+    corpus missing. An overlay manifest that resolves its own slice and none of its base is the 2026-09-01
+    defect: the loader answered ONE file of 706 declared and the run would have trained on it.
+    """
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.30.0-bare-postcode/corpus-v0.30.0-bare-postcode"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.30.0-bare-postcode/ {corpus}/ {retry}",
+    ]
+    for command in commands:
+        print(f"$ {command}")
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+
+    checks = {
+        "v5.6 run config": os.path.isfile(f"{package}/configs/v5.6.0-bare-postcode-60k.yaml"),
+        "v5.5 control config": os.path.isfile(f"{package}/configs/v5.5.0-restored-generations-60k.yaml"),
+        "dose module": os.path.isfile(f"{package}/dose.py"),
+        "overlay manifest": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "bare-postcode slice": os.path.isfile(f"{corpus}/train/synth-bare-postcode-00000.parquet"),
+        "v0.29.0 overlay slice": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.29.0-target-families/"
+            f"corpus-v0.29.0-target-families/train/synth-sg-register-00000.parquet"
+        ),
+        "v0.5.0 base slice": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0000.parquet"
+        ),
+        "v0.5.0 val slice": os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/val/part-0000.parquet"),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v5.6 sync verification failed: {', '.join(missing)}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=3600,
 )
 def sync_v8cjk_kana():
