@@ -72,7 +72,7 @@ test("provider: FR-only, keys with the FR street locale, throws otherwise", () =
 	expect(() => streetLocaleForBANCountry("de")).toThrow(/Add it to BAN_COUNTRY_TO_STREET_LOCALE/)
 })
 
-// --- nom_ld (lieu-dit) — survey: .superpowers/sdd/deploc-world-survey.md, FR section ---
+// These cases cover nom_ld (lieu-dit) records from the French survey.
 
 test("cleanLieuDit: passes through a clean, distinct lieu-dit name", () => {
 	expect(cleanLieuDit("Le Bourg", "Altier")).toBe("Le Bourg")

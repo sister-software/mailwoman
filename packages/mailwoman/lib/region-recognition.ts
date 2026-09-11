@@ -123,7 +123,7 @@ function makeRegionNode(value: string, start: number, end: number, confidence: n
  * producing `region → locality` nesting. Returns the rewritten sibling list.
  */
 function correctSiblings(siblings: AddressNode[]): AddressNode[] {
-	// --- Pass 1: split a merged "City, ST" locality into region(ST) → locality(City). ---
+	// First split a merged "City, ST" locality into region(ST) then locality(City).
 	const afterSplit: AddressNode[] = []
 
 	for (const node of siblings) {
