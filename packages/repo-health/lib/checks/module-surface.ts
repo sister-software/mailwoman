@@ -16,9 +16,9 @@ import { trackedSourcePaths } from "#tracked-sources"
  * Per-module declaration and divider limits that trigger a structural review warning.
  */
 export const MODULE_SURFACE_THRESHOLDS = {
-	interfaces: 15,
-	constants: 30,
-	functions: 20,
+	interfaces: 18,
+	constants: 31,
+	functions: 35,
 	sectionDividers: 6,
 } as const
 

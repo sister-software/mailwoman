@@ -24,9 +24,9 @@ async function plant(path: string, text: string): Promise<{ repoRoot: string; tr
 
 describe("module-surface", () => {
 	it("reports top-level declaration and divider thresholds, but ignores nested declarations and tests", async () => {
-		const interfaces = Array.from({ length: 15 }, (_, i) => `interface Shape${i} { value: string }`).join("\n")
-		const constants = Array.from({ length: 30 }, (_, i) => `const value${i} = ${i}`).join("\n")
-		const functions = Array.from({ length: 20 }, (_, i) => `function step${i}(): void {}`).join("\n")
+		const interfaces = Array.from({ length: 18 }, (_, i) => `interface Shape${i} { value: string }`).join("\n")
+		const constants = Array.from({ length: 31 }, (_, i) => `const value${i} = ${i}`).join("\n")
+		const functions = Array.from({ length: 35 }, (_, i) => `function step${i}(): void {}`).join("\n")
 		const dividers = Array.from({ length: 6 }, (_, i) => `// --- section ${i} ---`).join("\n")
 
 		const context = await plant(
@@ -37,9 +37,9 @@ describe("module-surface", () => {
 		const diagnostics = await moduleSurfaceCheck.run(context)
 
 		expect(diagnostics.map((diagnostic) => diagnostic.message)).toEqual([
-			expect.stringContaining("15 top-level interfaces"),
-			expect.stringContaining("30 top-level const declarations"),
-			expect.stringContaining("21 top-level functions"),
+			expect.stringContaining("18 top-level interfaces"),
+			expect.stringContaining("31 top-level const declarations"),
+			expect.stringContaining("36 top-level functions"),
 			expect.stringContaining("6 top-level section-divider comments"),
 		])
 	})
