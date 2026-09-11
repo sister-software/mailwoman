@@ -48,6 +48,11 @@
 			"types": "./out/key.d.ts",
 			"node": "./lib/key.ts",
 			"default": "./out/key.js"
+		},
+		"./render": {
+			"types": "./out/render.d.ts",
+			"node": "./lib/render.ts",
+			"default": "./out/render.js"
 		}
 	},
 	"publishConfig": {

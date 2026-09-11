@@ -85,6 +85,16 @@
 			"node": "./lib/nz/index.ts",
 			"default": "./out/nz/index.js"
 		},
+		"./address-layout": {
+			"types": "./out/address-layout.d.ts",
+			"node": "./lib/address-layout.ts",
+			"default": "./out/address-layout.js"
+		},
+		"./address-layouts": {
+			"types": "./out/address-layouts.d.ts",
+			"node": "./lib/address-layouts.ts",
+			"default": "./out/address-layouts.js"
+		},
 		"./component": {
 			"types": "./out/component.d.ts",
 			"node": "./lib/component.ts",
