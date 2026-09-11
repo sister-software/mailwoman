@@ -108,9 +108,9 @@
 			"default": "./out/sdk/cik-corroboration.js"
 		},
 		"./sdk/edgar-filings": {
-			"types": "./out/sdk/edgar/filings.d.ts",
-			"node": "./lib/sdk/edgar/filings.ts",
-			"default": "./out/sdk/edgar/filings.js"
+			"types": "./out/sdk/edgar/filings/index.d.ts",
+			"node": "./lib/sdk/edgar/filings/index.ts",
+			"default": "./out/sdk/edgar/filings/index.js"
 		},
 		"./sdk/cluster-filers": {
 			"types": "./out/sdk/cluster-filers.d.ts",

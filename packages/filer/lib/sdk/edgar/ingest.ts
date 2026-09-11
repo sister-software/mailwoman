@@ -44,7 +44,7 @@ import {
 	type CIK,
 	type CompanyTickerEntry,
 	type TenKFiling,
-} from "#sdk/edgar/filings"
+} from "#sdk/edgar/filings/index"
 import { parseExhibit21 } from "#sdk/exhibit21/index"
 
 /**

@@ -38,7 +38,7 @@
  *   not record them as negative facts.
  */
 
-import type { CIK } from "#sdk/edgar/filings"
+import type { CIK } from "#sdk/edgar/filings/index"
 
 /**
  * SIC codes this check accepts as corroborating a telecom identity — SEC's Office of Telecommunications range,

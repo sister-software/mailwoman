@@ -12,7 +12,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 
-import { parseCIKLookupData, type CompanyTickerEntry } from "#sdk/edgar/filings"
+import { parseCIKLookupData, type CompanyTickerEntry } from "#sdk/edgar/filings/index"
 import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "#sdk/edgar/ingest"
 import { createSECClient } from "#sdk/sec-client"
 
