@@ -263,7 +263,7 @@
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"path-ts": "^2.3.0",
-		"spliterator": "^7.3.0",
+		"spliterator": "^7.4.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
