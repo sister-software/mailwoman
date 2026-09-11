@@ -41,10 +41,10 @@ from itertools import islice
 from pathlib import Path
 from typing import Any
 
-from .augment import augment_row
 from .config import load_config
 from .data_loader import _raw_row_stream
 from .dose import resolve_config_doses
+from .emit import EmitPolicy, emit_row
 
 
 def _digits(token: str) -> bool:
@@ -115,10 +115,10 @@ def census(
 ) -> dict[str, Any]:
     """Count every opening over ``draws`` rows, at the draw level and again at the emitted level.
 
-    ``augment_exclude_sources`` is honoured here because the TRAINER honours it (`data_loader._emit`):
-    a listed source bypasses augmentation entirely, so it emits exactly what it drew while its
-    neighbours expand. `audit_epoch_mixture` does not apply it, which is why an excluded source's
-    emitted count differs between that report and this one — this one is the trainer's behaviour.
+    ``augment_exclude_sources`` is honoured because both passes run `emit.emit_row`, the same function
+    the trainer runs: a listed source bypasses augmentation entirely, so it emits exactly what it drew
+    while its neighbours expand. `audit_epoch_mixture` reimplemented that step and omitted the
+    exclusion until #2243; all three now share one function.
     """
 
     def stream(rng: random.Random) -> Iterator[dict[str, Any]]:
@@ -143,31 +143,23 @@ def census(
             per[name] += 1
 
     rng2 = random.Random(seed)
-    do_augment = any(p > 0 for p in augment.values())
-    excluded = frozenset(augment_exclude_sources)
+    policy = EmitPolicy(
+        directional_prob=augment["directional"],
+        region_prob=augment["region"],
+        glue_prob=augment["glue"],
+        case_prob=augment["case"],
+        punct_drop_prob=augment["punct_drop"],
+        upper_case_prob=augment["upper_case"],
+        ordinal_prob=augment["ordinal"],
+        excluded_sources=frozenset(augment_exclude_sources),
+    )
     emitted_counts = dict.fromkeys(NAMES, 0)
     emitted_by_source: dict[str, dict[str, int]] = {}
     emitted = 0
     for row in stream(rng2):
         if emitted >= draws:
             break
-        outs = (
-            list(
-                augment_row(
-                    row,
-                    rng2,
-                    directional_prob=augment["directional"],
-                    region_prob=augment["region"],
-                    glue_prob=augment["glue"],
-                    case_prob=augment["case"],
-                    punct_drop_prob=augment["punct_drop"],
-                    upper_case_prob=augment["upper_case"],
-                    ordinal_prob=augment["ordinal"],
-                )
-            )
-            if do_augment and row["source"] not in excluded
-            else [row]
-        )
+        outs = list(emit_row(row, rng2, policy))
         for out in outs:
             if emitted >= draws:
                 break
@@ -217,10 +209,16 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     corpus_dir = Path(cfg.data.corpus_dir)
     resolve_config_doses(cfg, corpus_dir)
 
+    # Raise rather than fall back to a default epoch length: a census counted over a different number
+    # of rows than the audit reports is not comparable with it, and nothing downstream would say so.
+    epoch_rows = draws or getattr(cfg.data, "train_rows_per_epoch", None)
+    if not epoch_rows:
+        raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")
+
     report = census(
         corpus_dir,
         seed=cfg.train.seed + 1,
-        draws=draws or cfg.data.train_rows_per_epoch,
+        draws=int(epoch_rows),
         country_weights=cfg.data.country_weights,
         source_weights=cfg.data.source_weights,
         coarse_filter=cfg.data.coarse_filter,
