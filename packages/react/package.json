@@ -330,7 +330,6 @@
 		"@styleframe/transpiler": "^3.4.2",
 		"@types/react": "^19.2.18",
 		"@types/react-dom": "^19.2.7",
-		"@typescript/native": "npm:typescript@^7.0.2",
 		"@vitejs/plugin-react": "^6.1.1",
 		"@vitest/browser-playwright": "4.1.11",
 		"maplibre-gl": "^6.7.0",
