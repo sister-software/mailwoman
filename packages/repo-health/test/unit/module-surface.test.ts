@@ -45,6 +45,22 @@ describe("module-surface", () => {
 		])
 	})
 
+	it("counts box-drawing dividers and skips an unclosed one", async () => {
+		const closed = Array.from({ length: 6 }, (_, i) => `// ${"─".repeat(2)} section ${i} ${"─".repeat(20)}`)
+		const unclosed = "// ── a divider whose text runs onto the next line"
+
+		const context = await plant(
+			"packages/fixture/lib/box.ts",
+			`${closed.join("\n")}\n${unclosed}\nexport const value = 1\n`
+		)
+
+		const diagnostics = await moduleSurfaceCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => diagnostic.message)).toEqual([
+			expect.stringContaining("6 top-level section-divider comments"),
+		])
+	})
+
 	it("does not inspect co-located test files", async () => {
 		const context = await plant("packages/fixture/lib/large.test.ts", "const onlyTest = true\n")
 
