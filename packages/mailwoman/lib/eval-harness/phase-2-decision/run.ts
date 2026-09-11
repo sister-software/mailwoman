@@ -48,7 +48,7 @@ import {
 	phase2DefinitionHash,
 	instrumentFor,
 } from "#eval-harness/phase-2-decision/decision"
-import { createPOIBoardPipeline, type POIBoardOptions, runPOIBoard } from "#eval-harness/poi-board"
+import { createPOIBoardPipeline, type POIBoardOptions, runPOIBoard } from "#eval-harness/poi/board"
 import { runSemanticUtilityProbe } from "#eval-harness/semantic-utility/run"
 import { buildSHA } from "#gazetteer-pipeline/stamp-manifest"
 import { createSemanticObservationRoute, semanticObservationMarkers } from "#observations/index"

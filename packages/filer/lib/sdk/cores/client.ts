@@ -116,9 +116,9 @@ function assertCORESHost(url: URL): void {
 	})
 }
 
-export { parseCORESRegistration, recaseUniform, type CORESRegistration } from "#sdk/cores-registration"
+export { parseCORESRegistration, recaseUniform, type CORESRegistration } from "#sdk/cores/registration"
 
-export { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from "#sdk/cores-document"
+export { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from "#sdk/cores/document"
 
 /**
  * Options for {@linkcode createCORESClient}.

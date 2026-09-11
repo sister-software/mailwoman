@@ -7,7 +7,7 @@
 import { ResourceError } from "@mailwoman/core/errors"
 
 import { isFRN, type FRN } from "#frn"
-import { parseCORESRegistration, type CORESRegistration } from "#sdk/cores-registration"
+import { parseCORESRegistration, type CORESRegistration } from "#sdk/cores/registration"
 
 const CORES_BASE_URL = "https://apps.fcc.gov"
 

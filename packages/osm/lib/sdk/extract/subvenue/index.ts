@@ -69,7 +69,7 @@ import {
 	type SubVenueTier,
 	SUBVENUE_LAYERS,
 	SUBVENUE_TAG_RULES,
-} from "#sdk/extract/subvenue-rules"
+} from "#sdk/extract/subvenue/rules"
 import { representativePoint } from "#sdk/representative-point"
 import { tagAlias } from "#sdk/tag-columns"
 
@@ -80,7 +80,7 @@ export {
 	type SubVenueTagRule,
 	SubVenueTier,
 	SUBVENUE_TAG_RULES,
-} from "#sdk/extract/subvenue-rules"
+} from "#sdk/extract/subvenue/rules"
 
 /**
  * Parse GDAL's `other_tags` hstore rendering into a plain dict.

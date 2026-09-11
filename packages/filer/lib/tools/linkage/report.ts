@@ -88,6 +88,7 @@ function isPopulated(value: unknown): boolean {
  * opposite of the impression a reader takes from that column — and those are the same channels the caveats name as the
  * way forward.
  */
+// repo-health-ignore private-name-shadows-export -- a name collision, not a copy: this counts populated corpus rows for one field and answers a markdown cell, where `@mailwoman/observations/layer-record`'s takes an ObservationCoverageRecord and describes an H3 cell. Importing it would point a layer provider at the top-level app.
 function describeCoverage<Row>(rows: readonly Row[], field: keyof Row, heldOut: boolean): string {
 	if (heldOut) return "**withheld**"
 
@@ -247,6 +248,7 @@ interface RenderLinkageEvalReportInput {
 	truthGroupOf: ReadonlyMap<FRN, string>
 }
 
+// repo-health-ignore private-name-shadows-export -- a name collision, not a copy: this writes the corporate-family linkage paragraph, where `@mailwoman/dev-mcp`'s grades ValeAlert[] into a ProseVerdict. The two share no argument and no return.
 function renderVerdict(withheld: LinkageEvalRun, control: LinkageEvalRun): string {
 	return (
 		"**Corporate-family membership resolves correctly when the filer discloses its parent, and not at all when it " +

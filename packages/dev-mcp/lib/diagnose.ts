@@ -72,7 +72,7 @@ import { resolveInputSet, type InputSetRef, type ResolvedInput } from "#input-se
 import { describeObservedRate } from "#power"
 import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
-export { expectationCase } from "#diagnose/expectation"
+export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
 
 /**
  * The confidence at which a known-format hit is treated as a structural assertion worth contradicting.

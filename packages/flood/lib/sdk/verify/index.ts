@@ -35,10 +35,10 @@
 import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
 
 import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "#index"
-import type { ServiceFeatureReader } from "#sdk/verify-service"
+import type { ServiceFeatureReader } from "#sdk/verify/service"
 
-export { createEAServiceReader, type ServiceFeature, type ServiceFeatureReader } from "#sdk/verify-service"
-export { sampleAgreementPoints } from "#sdk/verify-sample"
+export { createEAServiceReader, type ServiceFeature, type ServiceFeatureReader } from "#sdk/verify/service"
+export { sampleAgreementPoints } from "#sdk/verify/sample"
 
 const BOUNDARY_TOLERANCE_METRES = 0.5
 

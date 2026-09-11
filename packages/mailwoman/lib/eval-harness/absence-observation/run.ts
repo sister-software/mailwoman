@@ -40,7 +40,7 @@ import {
 	decideAbsenceProbe,
 	loadAbsenceProbeDefinition,
 } from "#eval-harness/absence-observation/probe"
-import { createPOIBoardPipeline, type POIBoardOptions } from "#eval-harness/poi-board"
+import { createPOIBoardPipeline, type POIBoardOptions } from "#eval-harness/poi/board"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#eval-harness/preregistration"
 import { buildSHA } from "#gazetteer-pipeline/stamp-manifest"
 import {

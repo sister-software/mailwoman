@@ -3,11 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Structural render baseline for the geocoder page. Unlike the cold-load spec (which waits for the ~25
- *   MB model to finish loading before the submit button enables), this asserts the _static shell_
- *   paints correctly — header, intro copy, map container, the "About this geocoder" box, the address
- *   form, and the example chips — which all render immediately on hydration, before any heavy asset
- *   lands. A fast, deterministic "the page renders correctly" guard.
+ *   Structural render baseline for the geocoder page: the map container is sized, the address field and its example
+ *   chips are present, and the About control opens a sheet carrying the in-browser claim. A deterministic "the page
+ *   renders correctly" guard, distinct from the cold-load spec, which asserts what the page does once the model lands.
+ *
+ *   The About copy is asserted through its control rather than on load: the chrome restructure moved that explainer
+ *   into a sheet, so it mounts when the sheet opens rather than with the shell.
  */
 
 import { expect, test } from "../e2e/index.ts"
@@ -16,27 +17,28 @@ test.describe("Demo — structural render", () => {
 	test("paints the page shell, map, about box, and form on load", async ({ demo, page }) => {
 		await demo.goto()
 
-		// Intro copy. (The React port dropped the page-title heading — the navbar carries the identity;
-		// the in-browser claim marks the demo shell, and it lives INSIDE the collapsed About box now,
-		// so it is asserted attached here and visible after the expand below.)
-		await expect(page.getByText(/runs entirely in your browser/i)).toBeAttached()
-
 		// The full-viewport map container is present and sized.
 		const mapBox = await page.locator(".maplibregl-map").boundingBox()
 		expect(mapBox?.width ?? 0).toBeGreaterThan(0)
 		expect(mapBox?.height ?? 0).toBeGreaterThan(0)
 
-		// Collapsible "About this geocoder" explainer.
-		await expect(page.getByText("About this geocoder")).toBeVisible()
-
-		// Address form: label, input, submit.
-		await expect(page.getByLabel("Address")).toBeVisible()
+		// Address form: label and field. The pill carries no submit control — a `type="search"` field submits on Enter.
+		// `exact` is required: `getByLabel` matches by substring, and the chrome names the search wrapper "Search
+		// addresses" and the chip row "Example addresses", so a bare "Address" resolves to three elements.
+		await expect(page.getByLabel("Address", { exact: true })).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toBeVisible()
-		await expect(page.locator("button[type='submit']")).toBeVisible()
 
-		// Example chips row.
-		await expect(page.getByText("Try:")).toBeVisible()
+		// Example chips row. `MapChipRow` renders no caption — the row carries its name as `aria-label` where the
+		// pre-chrome `PresetChips` wrote a visible "Try:" span, so the row is read by role and name.
+		await expect(page.getByRole("group", { name: "Example addresses" })).toBeVisible()
 		await expect(page.getByRole("button", { name: "Space Needle" })).toBeVisible()
+
+		// The About explainer is a control in the map chrome, and its copy renders in the sheet that control opens —
+		// `MapControlButton` carries its name as `aria-label` on an icon button, so the name is a label and not text.
+		// Asserted LAST: the sheet it opens overlays the chrome the assertions above read.
+		await expect(page.getByLabel("About this geocoder")).toBeVisible()
+		await page.getByLabel("About this geocoder").click()
+		await expect(page.getByText(/runs entirely in your browser/i)).toBeVisible()
 
 		demo.console.assertNoFailEvents()
 	})

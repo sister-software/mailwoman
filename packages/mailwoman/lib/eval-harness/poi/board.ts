@@ -62,7 +62,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import type { POIBoardExpect } from "#eval-harness/poi-board/expectations"
+import type { POIBoardExpect } from "#eval-harness/poi/board/expectations"
 import { createRuntimePipeline } from "#index"
 import { createResolverBackend } from "#resolver-backend"
 
@@ -71,7 +71,7 @@ export {
 	type POIBoardAddressExpect,
 	type POIBoardExpect,
 	type POIBoardResultsExpect,
-} from "#eval-harness/poi-board/expectations"
+} from "#eval-harness/poi/board/expectations"
 
 /**
  * Fixture set backing the POI query board.

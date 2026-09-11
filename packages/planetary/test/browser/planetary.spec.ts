@@ -36,11 +36,15 @@ test("the globe loads for the built body, search finds a known feature, selectio
 		.first()
 		.click()
 
+	// `FeaturePanel` rides `MapSheet` rather than carrying its own panel, so the selected feature is an `<aside>` the
+	// sheet names for the feature — `aria-label={title}` with `title={feature.name}` — where it used to be an
+	// `<article>` holding that name as text. Reading it by role and name asserts the panel is FOR this feature, which
+	// the text match only implied.
 	await expect(page).toHaveURL(/\/feature\/\d+$/u)
-	await expect(page.getByRole("article")).toContainText(known.name)
+	await expect(page.getByRole("complementary", { name: known.name })).toBeVisible()
 
 	await page.reload()
-	await expect(page.getByRole("article")).toContainText(known.name, { timeout: 60_000 })
+	await expect(page.getByRole("complementary", { name: known.name })).toBeVisible({ timeout: 60_000 })
 })
 
 test("an unknown path is the not-found view, not the globe", async ({ page }) => {

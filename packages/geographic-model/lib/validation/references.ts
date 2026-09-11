@@ -15,7 +15,7 @@ import type {
 	ReferenceTables,
 	RelationView,
 } from "#validate"
-import { add, listVocabulary, type ValidationIssue, ValidationIssueCode } from "#validation-issues"
+import { add, listVocabulary, type ValidationIssue, ValidationIssueCode } from "#validation/issues"
 
 /**
  * Index a table by identifier, reporting every record after the first that claims an identifier already taken.
