@@ -4,6 +4,7 @@
  * @file Filesystem metadata readers.
  */
 
+import { AssertionError } from "node:assert"
 import type { Dirent, Mode, Stats } from "node:fs"
 import {
 	open as openNative,
@@ -82,6 +83,21 @@ export function tryStatLink(path: PathBuilderLike | URL): Promise<Stats | null> 
  */
 export function pathExists(path: PathBuilderLike | URL): Promise<boolean> {
 	return tryStat(path).then((stats) => stats !== null)
+}
+
+/**
+ * Assert that a path exists, throwing an error if it does not.
+ */
+export function assertPathExists(path: PathBuilderLike | URL, message?: string): Promise<void> {
+	return pathExists(path).then((exists) => {
+		if (exists) return void 0
+
+		throw new AssertionError({
+			message: message ?? `Expected path to exist`,
+			expected: path.toString(),
+			actual: "not found",
+		})
+	})
 }
 
 /**
