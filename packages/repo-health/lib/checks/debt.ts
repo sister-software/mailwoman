@@ -380,6 +380,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/corpus/lib/tools/overture-subvenue.ts", "sub-venue extraction names the physical gate"],
 	["packages/corpus/lib/tools/fetch/", "sub-venue source fetchers name the physical gate"],
 	["packages/osm/lib/sdk/extract/subvenue.ts", "sub-venue extraction names the physical gate"],
+	["packages/osm/lib/sdk/extract/subvenue-rules.ts", "the sub-venue tag rules name the physical gate"],
 	["packages/osm/test/unit/sdk/extract/subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
 	["packages/neural/lib/venue-structure.ts", "venue structure names the physical gate"],
 	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
