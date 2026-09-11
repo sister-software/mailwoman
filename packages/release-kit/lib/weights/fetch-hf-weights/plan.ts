@@ -22,13 +22,9 @@
  *   the browser demo loads. Nothing here writes to Hugging Face, npm, git, or R2.
  */
 
-import { APIClient } from "@mailwoman/core/api"
-import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { trackedFiles } from "@mailwoman/core/git"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
-import { md5Hex } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { $private } from "#env/index"
@@ -109,24 +105,6 @@ export interface HFMaterializationReport {
 }
 
 /**
- * The bucket client.
- *
- * The house rule routes API REQUESTS through `APIClient` and exempts multi-gigabyte file transfers, where a buffered
- * body is untenable and response caching is nonsense. These objects sit on the API side of that line: the largest is
- * `model.onnx` at 39,419,629 bytes and the whole set is under ~70 MB (measured 2026-08-25 against the v9.1.0
- * directory), each one is md5-checked after arrival, and each is fetched exactly once per run — so a buffered body
- * costs one artifact's worth of memory and a stream would buy nothing. What `APIClient` does buy is the reason the YAML
- * this replaces passed `--retry 6 --retry-all-errors` to every curl: Hugging Face throttles the public bucket from CI,
- * and a 429 read as a missing artifact is the one answer that would have a release believe its weights were never
- * staged.
- *
- * No pacer, deliberately. One run is a score of concurrent HEADs and then sequential whole-object GETs against a public
- * CDN the browser demo already reads at higher concurrency; retry is the only rate control this path has ever needed,
- * and an invented interval would be a number no measurement supports.
- */
-const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: true })
-
-/**
  * Read a workspace's `package.json`.
  */
 async function readWorkspaceManifest(repoRoot: string, workspace: string): Promise<{ files?: unknown }> {
@@ -192,7 +170,7 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 /**
  * The locale whose package ships the model itself — the BASE, and the directory every artifact is staged under.
  */
-async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): Promise<string> {
+export async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): Promise<string> {
 	const carriers: string[] = []
 
 	for (const locale of locales) {
@@ -240,7 +218,7 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
  * absence. HEAD-probed with the rest so a half-staged release is refused before it publishes. BOTH halves are probed:
  * the YAML this replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
  */
-async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
+export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 
 	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: unknown; sidecar?: unknown } }>(cardPath)
@@ -415,239 +393,4 @@ export async function planCharFamilyArtifacts(
 			...(expectedMD5 ? { expectedMD5 } : {}),
 		}
 	})
-}
-
-/**
- * HEAD-probe one bucket object. Returns the failure's message rather than a bare boolean: a throttled or unroutable
- * probe is indistinguishable from an unstaged artifact at the call site, and "MISSING" is the answer that would send an
- * operator to re-run a staging step that already succeeded.
- */
-async function probeRemote(url: string): Promise<string | null> {
-	try {
-		await bucketClient.fetch({ url, method: "head" })
-
-		return null
-	} catch (error) {
-		return error instanceof Error ? error.message : String(error)
-	}
-}
-
-/**
- * Download one bucket object whole. Axios's node adapter answers `arraybuffer` with a `Buffer`; its fetch adapter
- * answers with an `ArrayBuffer`, so both shapes are accepted.
- */
-async function downloadRemote(url: string): Promise<Buffer> {
-	const response = await bucketClient.fetch<ArrayBuffer | Buffer>({ url, responseType: "arraybuffer" })
-	const body = response.data
-
-	return Buffer.isBuffer(body) ? body : Buffer.from(body)
-}
-
-/**
- * Write `bytes` to a workspace file.
- *
- * Unlink first. `writeFileSync` FOLLOWS a symlink at the destination and writes THROUGH it, leaving the symlink in
- * place — and the registry refuses a tarball containing one (HTTP 415, YN0035). A dev checkout's weights workspaces are
- * full of symlinks, and the staging tree can inherit one, so the discipline applies to both destinations. Same rule as
- * `copy-weights.ts`; see AGENTS.md "symlinks in the publish tarball".
- */
-async function writeArtifact(destination: string, bytes: Buffer): Promise<void> {
-	await makeDirectories(resolvePath(destination, ".."))
-	await removePathIfPresent(destination)
-	await writeLocalFile(bytes, destination)
-}
-
-/**
- * Verify `bytes` against a plan's declared md5, refusing with the artifact named on a mismatch.
- */
-function verifyChecksum(plan: WeightsArtifactPlan, bytes: Buffer, source: string): void {
-	if (!plan.expectedMD5) return
-
-	const actual = md5Hex(bytes)
-
-	if (actual !== plan.expectedMD5) {
-		throw new Error(
-			`fetch-hf-weights: ${plan.filename} does not match the md5 the model cards declare — expected ` +
-				`${plan.expectedMD5}, got ${actual} (${source}). A staged object left over from an earlier release is ` +
-				"present, non-empty and wrong; re-stage it with `mailwoman release hf` before publishing."
-		)
-	}
-}
-
-export interface FetchHFWeightsOptions {
-	/**
-	 * The checkout the recipe is READ from — manifests, model cards, committed lexicons. Never written to unless it is
-	 * also the destination.
-	 */
-	repoRoot?: string
-	/**
-	 * The model-card version naming the bucket directory. Defaults to the base package's card, which is what CI read.
-	 */
-	version?: string
-	/**
-	 * Where progress lines go. Defaults to stderr.
-	 */
-	log?: (line: string) => void
-}
-
-function writeStderr(line: string): void {
-	process.stderr.write(`${line}\n`)
-}
-
-/**
- * Materialize every planned artifact under `destRoot`.
- *
- * Fetches each distinct bucket object ONCE and writes it to every workspace that declares it — the `cp` fan-out the
- * YAML spelled out by hand. HEAD-probes the whole remote set first so an unstaged version fails in one pass with every
- * missing object named, rather than after the first 39 MB download dies on a 404.
- */
-export async function fetchHFWeights(
-	destRoot: string,
-	{ repoRoot = String(repoRootPath()), version, log = writeStderr }: FetchHFWeightsOptions = {}
-): Promise<HFMaterializationReport> {
-	const config = await readReleaseConfig(repoRoot)
-	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
-	const resolvedVersion = version ?? (await readBaseModelVersion(repoRoot))
-	const base = await hfVersionBase(repoRoot, resolvedVersion)
-	const plans = await planWeightsMaterialization(repoRoot, { version: resolvedVersion })
-	// Distinct bucket objects by URL: several packages share one Latin object, and a family's object shares only a
-	// basename with it.
-	const objects = new Map<string, { base: string; remoteName: string }>()
-
-	for (const plan of plans) {
-		if (plan.origin.kind === "hf") {
-			objects.set(`${plan.origin.base}/${plan.origin.remoteName}`, plan.origin)
-		}
-	}
-
-	const probeOnly = (await distributionOnlyRemoteNames(repoRoot, baseLocale)).map((name) => `${base}/${name}`)
-	const familyBases = [...new Set([...objects.values()].map((object) => object.base))].filter((b) => b !== base)
-
-	log(`hf weights: v${resolvedVersion} → ${base}${familyBases.length ? ` (+ ${familyBases.join(", ")})` : ""}`)
-
-	log(
-		`hf weights: ${plans.length} declared artifacts, ${objects.size} distinct bucket objects, ` +
-			`${probeOnly.length} distribution-only (probed, never fetched)`
-	)
-
-	const probes = await Promise.all(
-		[...objects.keys(), ...probeOnly].map(async (url) => {
-			const failure = await probeRemote(url)
-
-			return { url, failure }
-		})
-	)
-
-	const unreachable = probes.filter((probe) => probe.failure)
-
-	if (unreachable.length) {
-		const lines = unreachable.map((probe) => `  ✗ ${probe.url}: ${probe.failure}`)
-
-		const probed = objects.size + probeOnly.length
-
-		throw new Error(
-			`fetch-hf-weights: ${unreachable.length} of ${probed} artifacts are not readable for v${resolvedVersion}. ` +
-				`Stage them from the operator's host with \`mailwoman release hf v${resolvedVersion} …\` (RELEASING.md §3), ` +
-				"then re-run. Every object below is staged flat by its basename, through the flag family that carries it — " +
-				"--model / --tokenizer, --postcodes, --pair-indexes, --fsts, --gazetteer-lexicon, --country-lexicon, " +
-				"--street-type-lexicon, --locality-surface-lexicon, --fisher (`mailwoman release hf --help`):\n" +
-				lines.join("\n")
-		)
-	}
-
-	const report: HFMaterializationReport = {
-		version: resolvedVersion,
-		base,
-		downloaded: 0,
-		written: 0,
-		bytes: 0,
-		checksumVerified: 0,
-		checksumUndeclared: [],
-	}
-
-	const undeclared = new Set<string>()
-
-	for (const [url, object] of objects) {
-		const bytes = await downloadRemote(url)
-
-		report.downloaded += 1
-		report.bytes += bytes.byteLength
-
-		for (const plan of plans) {
-			if (
-				plan.origin.kind !== "hf" ||
-				plan.origin.remoteName !== object.remoteName ||
-				plan.origin.base !== object.base
-			) {
-				continue
-			}
-
-			verifyChecksum(plan, bytes, url)
-
-			if (plan.expectedMD5) {
-				report.checksumVerified += 1
-			} else {
-				undeclared.add(plan.filename)
-			}
-
-			await writeArtifact(resolvePath(destRoot, plan.workspace, plan.filename), bytes)
-			report.written += 1
-		}
-
-		const shown =
-			object.base === base ? object.remoteName : `${object.base.split("/").slice(-2).join("/")}/${object.remoteName}`
-
-		log(`  ✓ ${shown} (${bytes.byteLength.toLocaleString("en-US")} bytes)`)
-	}
-
-	for (const plan of plans) {
-		if (plan.origin.kind !== "repo") continue
-
-		if (!(await pathExists(plan.origin.sourcePath))) {
-			throw new Error(
-				`fetch-hf-weights: ${plan.workspace} declares ${plan.filename}, which release.config.json sources from the ` +
-					`checkout at ${plan.origin.sourcePath} — and it is not there.`
-			)
-		}
-
-		const bytes = await readLocalBuffer(plan.origin.sourcePath)
-
-		verifyChecksum(plan, bytes, plan.origin.sourcePath)
-
-		if (plan.expectedMD5) {
-			report.checksumVerified += 1
-		} else {
-			undeclared.add(plan.filename)
-		}
-
-		await writeArtifact(resolvePath(destRoot, plan.workspace, plan.filename), bytes)
-		report.written += 1
-		report.bytes += bytes.byteLength
-	}
-
-	report.checksumUndeclared = [...undeclared].toSorted()
-
-	return report
-}
-
-/**
- * Print a materialization receipt.
- */
-export function reportHFMaterialization(
-	report: HFMaterializationReport,
-	log: (line: string) => void = writeStderr
-): void {
-	const megabytes = (report.bytes / 1_000_000).toFixed(1)
-
-	log(
-		`hf weights: wrote ${report.written} artifacts (${report.downloaded} downloads, ${megabytes} MB), ` +
-			`${report.checksumVerified} md5-verified`
-	)
-
-	if (report.checksumUndeclared.length) {
-		log(
-			`hf weights: no model card declares an md5 for ${report.checksumUndeclared.join(", ")} — those bytes are ` +
-				"staged, not verified"
-		)
-	}
 }

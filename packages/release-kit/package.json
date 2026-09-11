@@ -70,9 +70,9 @@
 			"default": "./out/pack/verify-tarball.js"
 		},
 		"./weights/fetch-hf-weights": {
-			"types": "./out/weights/fetch-hf-weights.d.ts",
-			"node": "./lib/weights/fetch-hf-weights.ts",
-			"default": "./out/weights/fetch-hf-weights.js"
+			"types": "./out/weights/fetch-hf-weights/index.d.ts",
+			"node": "./lib/weights/fetch-hf-weights/index.ts",
+			"default": "./out/weights/fetch-hf-weights/index.js"
 		},
 		"./weights/derived-weights-key": {
 			"types": "./out/weights/derived-weights-key.d.ts",
