@@ -66,6 +66,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { EarthConfig } from "#config"
 import { loadPolygonDB, type PlaceGeometry, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
+import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
 /**
  * Per-region interp-radius conformal factor (#374); default for unmeasured regions. Mirrors `_app.tsx`.
@@ -93,20 +94,6 @@ interface CandidateExtras {
 	bbox?: ResolvedPlaceView["bbox"]
 	tier?: "address_point" | "interpolated"
 	uncertaintyM?: number
-}
-
-/**
- * Device-location proximity-bias control (the "📍 Use my location" button state + toggle).
- */
-interface GeoBiasControl {
-	/**
-	 * Whether a device location is currently applied as a soft bias.
-	 */
-	active: boolean
-	/**
-	 * Toggle the device-location bias on/off (prompts for geolocation when turning on).
-	 */
-	toggle: () => void
 }
 
 export interface GeocoderRuntimeHandle {
@@ -181,7 +168,6 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		}
 	}, [rt.selectedVersion])
 
-	// ── Composed basemap style: MapLibre reads the TileJSON itself when a vector source names its URL. ──────
 	const mapStyle = useMemo<MapCanvasStyle>(
 		() =>
 			new StyleSpecificationComposer({
@@ -190,7 +176,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[config.basemapTileJSONURL]
 	)
 
-	// ── Mutable refs the stable parse/enrich callbacks read (avoids stale closures without churning identity) ──
+	// Stable parse and enrich callbacks read these refs without taking stale closures.
 	const assetsRef = useRef<ReleaseAssets | null>(rt.assets)
 	const releaseRef = useRef<ReleaseInfo | null>(rt.selectedRelease)
 	const versionRef = useRef<string | null>(rt.selectedVersion)
@@ -201,31 +187,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		versionRef.current = rt.selectedVersion
 	}, [rt.assets, rt.selectedRelease, rt.selectedVersion])
 
-	// ── Device-location bias (#938): the "Use my location" button's soft proximity hint. A ref (not state) so
-	// granting it mid-session doesn't re-create the parse callback; `geoBiasActive` drives only the button's pressed
-	// state. `runParseWithBias` reads the ref and joins it as a weaker second hint (weight 0.6) below the map-center one.
-	const geoBiasRef = useRef<{ lat: number; lon: number } | null>(null)
-	const [geoBiasActive, setGeoBiasActive] = useState(false)
-
-	const toggleGeoBias = useCallback(() => {
-		if (geoBiasRef.current) {
-			geoBiasRef.current = null
-			setGeoBiasActive(false)
-
-			return
-		}
-
-		if (typeof navigator === "undefined" || !navigator.geolocation) return
-
-		navigator.geolocation.getCurrentPosition(
-			(pos) => {
-				geoBiasRef.current = { lat: pos.coords.latitude, lon: pos.coords.longitude }
-				setGeoBiasActive(true)
-			},
-			() => setGeoBiasActive(false),
-			{ maximumAge: 600_000, timeout: 8000 }
-		)
-	}, [])
+	const geoBias = useGeoBias()
 
 	// Per-candidate map-render extras, keyed by the candidate object `useParsePipeline` hands back verbatim.
 	const extrasRef = useRef<WeakMap<ResolvedPlaceView, CandidateExtras>>(new WeakMap())
@@ -404,8 +366,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				resolveBias.push({ lat: bias.center[1], lon: bias.center[0], weight: 1 })
 			}
 
-			if (geoBiasRef.current) {
-				resolveBias.push({ ...geoBiasRef.current, weight: 0.6 })
+			if (geoBias.locationRef.current) {
+				resolveBias.push({ ...geoBias.locationRef.current, weight: 0.6 })
 			}
 
 			const tBeforeResolve = performance.now()
@@ -476,7 +438,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
-		[ensureStreetLookups, sqljsBaseURL]
+		[ensureStreetLookups, geoBias.locationRef, sqljsBaseURL]
 	)
 
 	const runParse = useCallback(
@@ -662,7 +624,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		runtime,
 		releases: rt.manifest?.releases ?? [],
 		forceWASM: rt.forceWASM,
-		geoBias: { active: geoBiasActive, toggle: toggleGeoBias },
+		geoBias: { active: geoBias.active, toggle: geoBias.toggle },
 		calibrator,
 		traceParse,
 		supportsTrace: rt.assets?.classifier?.traceParse != null,
