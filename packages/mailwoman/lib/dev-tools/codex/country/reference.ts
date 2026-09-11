@@ -21,10 +21,9 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 
 /**
- * The committed output path, resolved relative to this module (codex/tools/ → codex/country/). The codegen is
- * repo-only, and in the repo `@mailwoman/codex/tools` always loads from source via the `node` exports condition, so
- * `import.meta.url` points at the source tree. (`@mailwoman/core`'s `repoRootPath` would also work, but codex is
- * zero-runtime-dep and `core` already references `codex` — importing core here would cycle the project graph.)
+ * The committed output path, anchored at the `@mailwoman/codex` package root rather than at this module, so it names
+ * the same file from the source tree, `out/`, and a published tarball. The codegen is repo-only: it rewrites codex's
+ * checked-in source, which is why the target is a `lib/` path.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "reference-data.ts")
 

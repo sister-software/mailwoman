@@ -9,13 +9,13 @@
  *   (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME, salvaged from isp-nexus spatial/countries); this writes a
  *   snapshot the language boundary can't import directly.
  *
- *   Regenerate: `node codex/tools/export-country-surfaces.ts` (writes the corpus-python data file).
+ *   Regenerate: `node packages/mailwoman/lib/dev-tools/codex/export-country-surfaces.ts` (writes the corpus-python
+ *   data file).
  */
 
+import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
-
-import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "#country/country"
 
 // Merge: rich surface forms where the codex curates them, else the canonical English name for every
 // ISO 3166-1 alpha-2. Canonical-name-first (the codex's own ordering) so the common form leads.
@@ -36,7 +36,8 @@ const out = repoRootPath("corpus-python", "src", "mailwoman_train", "data", "cou
 await writeLocalTextFile(
 	JSON.stringify(
 		{
-			_generated: "codex/tools/export-country-surfaces.ts from @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME",
+			_generated:
+				"packages/mailwoman/lib/dev-tools/codex/export-country-surfaces.ts from @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME",
 			surfaces,
 		},
 		null,

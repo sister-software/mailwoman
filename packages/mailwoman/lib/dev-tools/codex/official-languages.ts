@@ -25,9 +25,8 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
 /**
- * The committed output path, resolved relative to this module (codex/tools/ → codex/country/). The codegen is
- * repo-only, and in the repo `@mailwoman/codex/tools` always loads from source via the `node` exports condition, so
- * `import.meta.url` points at the source tree.
+ * The committed output path, anchored at the `@mailwoman/codex` package root rather than at this module, so it names
+ * the same file from the source tree, `out/`, and a published tarball.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "official-languages.ts")
 

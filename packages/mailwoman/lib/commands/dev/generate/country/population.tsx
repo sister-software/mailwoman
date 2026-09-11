@@ -22,7 +22,7 @@ export const spec = {
 
 const DevGenerateCountryPopulation = () => {
 	const state = useCommandTask(async () => {
-		const { generateCountryPopulation } = await import("@mailwoman/codex/tools")
+		const { generateCountryPopulation } = await import("#dev-tools/codex/country/population")
 
 		return generateCountryPopulation({}, reportToStderr)
 	})

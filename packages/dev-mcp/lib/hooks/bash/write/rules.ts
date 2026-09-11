@@ -84,6 +84,11 @@ const ADMITTED = new Set([
 	// Version control and the forge.
 	"gh",
 	"git",
+	// A directory has no content to take from the agent, so the symbol precheck has nothing to check: `mkdir` cannot
+	// write a helper. It cannot overwrite a file either — `mkdir` on an existing path raises EEXIST and `-p` is a no-op
+	// — and git tracks no empty directory, so nothing reaches a commit through it. Held out of the tree it refused
+	// `git mv` into a new directory, and refused the `mkdir -p .claude/state` the `task-intake` skill documents.
+	"mkdir",
 	// Toolchain and this repository's own commands.
 	"docker",
 	"duckdb",
@@ -124,7 +129,6 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 	cp: "last",
 	install: "last",
 	ln: "last",
-	mkdir: "all",
 	mv: "last",
 	rm: "all",
 	tee: "all",

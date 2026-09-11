@@ -27,9 +27,8 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
 
 /**
- * The committed output path, resolved relative to this module (codex/tools/ → codex/country/). See
- * `generate-country-reference.ts` for why this is `import.meta.url` rather than a `core` path helper (codex is
- * zero-runtime-dep and `core` already references `codex` — importing core here would cycle the project graph).
+ * The committed output path, anchored at the `@mailwoman/codex` package root rather than at this module, so it names
+ * the same file from the source tree, `out/`, and a published tarball.
  */
 const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "population.ts")
 

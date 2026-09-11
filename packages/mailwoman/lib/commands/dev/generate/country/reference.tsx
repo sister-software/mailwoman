@@ -22,7 +22,7 @@ export const spec = {
 
 const DevGenerateCountryReference = () => {
 	const state = useCommandTask(async () => {
-		const { generateCountryReference } = await import("@mailwoman/codex/tools")
+		const { generateCountryReference } = await import("#dev-tools/codex/country/reference")
 
 		return generateCountryReference({}, reportToStderr)
 	})
