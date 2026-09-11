@@ -101,6 +101,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	const fails: string[] = [] // status=pass that failed → BLOCK
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
+	// Tracked cases that now pass in a locale this run graded base-only. Held back from `newlyPassing` and printed
+	// separately, because the pass is not attributable to the production path (#2223).
+	const withheld: string[] = []
 	let counted = 0
 	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row;
 	// otherwise it means "never reached", and the two are indistinguishable without this count.
@@ -140,6 +143,13 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			}
 		} else if (issues.length) {
 			tracked.push(`  ~ ${c.id} [${c.status}${ref}]: ${issues.join("; ")}`)
+		} else if (deps.gradedBaseOnly(overlayCountry)) {
+			// #2223: the overlay this row routes to did not load, so the row graded without its pair index and
+			// dependent-locality prior. That is not the production path, and a pass on it is not evidence the
+			// production path passes — promoting it would write a base-only result into the board as a regression
+			// guard. Reported rather than dropped: an invisible withholding is indistinguishable from a row that
+			// simply kept failing.
+			withheld.push(`  · ${c.id} [${c.status}${ref}] passes, but ${overlayCountry} graded BASE-ONLY — not promotable`)
 		} else {
 			newlyPassing.push(`  + ${c.id} [${c.status}${ref}] now PASSES — promote to status=pass`)
 		}
@@ -179,6 +189,17 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 
 		for (const p of newlyPassing) {
 			console.log(p)
+		}
+	}
+
+	if (withheld.length) {
+		console.log(
+			`\n⚠ ${withheld.length} tracked case(s) pass but are NOT promotable — their locale graded base-only:` +
+				`\n  Stage a weights cache carrying every routed overlay, re-run, and read the suggestion from that run.`
+		)
+
+		for (const w of withheld) {
+			console.log(w)
 		}
 	}
 
