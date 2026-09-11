@@ -9,18 +9,19 @@ levels:
 - **draw level** — ``_raw_row_stream``'s own output (pre-augmentation), counted per fixed
   window of draws. This is the direct stationarity receipt for the cycling-sampler repair:
   every window of the epoch must hold every source at its requested share.
-- **emitted level** — the same stream expanded through ``augment_row`` under the config's
-  augmentation policy, counting what fills the trainer's ``row_limit`` budget. Augmented
-  copies compete with originals for that budget, and augmentability is source-specific, so
+- **emitted level** — the same stream through ``emit.emit_row`` under the config's augmentation
+  policy, counting what fills the trainer's ``row_limit`` budget. Augmented copies compete with
+  originals for that budget, and augmentability is source-specific, so
   ``distortion_vs_draw_share`` quantifies the realized-weight distortion per source for
-  quota design. The affix relabel pass mutates labels, never row counts, so it is
-  deliberately absent here.
+  quota design. The affix relabel pass mutates labels, never row counts, so its lexicon is
+  deliberately left out of the policy here.
 
-The emitted pass mirrors ``iter_rows``' emission policy (original always first, independent
-per-augmentation fires, one shared rng) without its shuffle buffer — the buffer reorders
-rows but cannot change counts, and skipping it keeps the pass cheap. With every probability
-at zero the two passes consume the rng identically and their counts are byte-equal (pinned
-by the test).
+The emitted pass runs the SAME function the trainer runs (``emit.emit_row``), which is what
+makes its counts comparable with a training run's. It reimplemented that step until #2243, and
+the copy omitted ``augment_exclude_sources`` — so an excluded source was reported with the
+count it would have had if augmented. It still skips ``iter_rows``' shuffle buffer, which
+reorders rows and cannot change counts. With every probability at zero the two passes consume
+the rng identically and their counts are byte-equal (pinned by the test).
 
 Typical volume-side run (see ``train_remote.py::audit_epoch_mixture``)::
 
@@ -36,14 +37,14 @@ import hashlib
 import json
 import random
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from itertools import islice
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .augment import augment_row
 from .data_loader import _raw_row_stream, source_row_counts
 from .dose import format_derivation, resolve_config_doses
+from .emit import EmitPolicy, emit_row
 
 if TYPE_CHECKING:
     from .config import CorpusReceiptConfig
@@ -118,9 +119,14 @@ def audit_mixture(
     source_weights: dict[str, float] | None,
     coarse_filter: bool,
     augment: dict[str, float] | None = None,
+    augment_exclude_sources: Sequence[str] = (),
     required_receipts: list[CorpusReceiptConfig] | None = None,
 ) -> dict[str, Any]:
-    """Run both passes over one epoch of ``draws`` rows and return the report dict."""
+    """Run both passes over one epoch of ``draws`` rows and return the report dict.
+
+    ``augment_exclude_sources`` reaches the emitted pass because the TRAINER applies it. Omitting it
+    reported an excluded source with the emitted count it would have had if augmented (#2243).
+    """
     augment = dict.fromkeys(_AUGMENT_KEYS, 0.0) | (augment or {})
     unknown = set(augment) - set(_AUGMENT_KEYS)
     if unknown:
@@ -198,7 +204,19 @@ def audit_mixture(
     # Pass 2 — emitted level: the same stream expanded through the augmentation policy,
     # counting what fills the trainer's row_limit budget.
     rng2 = random.Random(seed)
-    do_augment = any(p > 0 for p in augment.values())
+    # The SAME emit step the trainer runs, exclusion included (#2243). The relabel lexicon stays absent
+    # here: this pass counts rows per source and per country, and relabel rewrites labels within a row
+    # without adding or removing one, so it cannot move either count.
+    policy = EmitPolicy(
+        directional_prob=augment["directional"],
+        region_prob=augment["region"],
+        glue_prob=augment["glue"],
+        case_prob=augment["case"],
+        punct_drop_prob=augment["punct_drop"],
+        upper_case_prob=augment["upper_case"],
+        ordinal_prob=augment["ordinal"],
+        excluded_sources=frozenset(augment_exclude_sources),
+    )
     emitted_totals: Counter[str] = Counter()
     emitted_countries: Counter[str] = Counter()
     augmented_rows = 0
@@ -206,23 +224,7 @@ def audit_mixture(
     for row in _stream(rng2):
         if emitted >= draws:
             break
-        outs = (
-            list(
-                augment_row(
-                    row,
-                    rng2,
-                    directional_prob=augment["directional"],
-                    region_prob=augment["region"],
-                    glue_prob=augment["glue"],
-                    case_prob=augment["case"],
-                    punct_drop_prob=augment["punct_drop"],
-                    upper_case_prob=augment["upper_case"],
-                    ordinal_prob=augment["ordinal"],
-                )
-            )
-            if do_augment
-            else [row]
-        )
+        outs = list(emit_row(row, rng2, policy))
         for j, out in enumerate(outs):
             if emitted >= draws:
                 break
@@ -357,6 +359,7 @@ def run(
                 "upper_case": getattr(d, "augment_upper_case_prob", 0.0),
                 "ordinal": getattr(d, "augment_ordinal_prob", 0.0),
             },
+            augment_exclude_sources=getattr(d, "augment_exclude_sources", ()) or (),
             required_receipts=d.required_corpus_receipts,
         )
     except CorpusReceiptError as exc:

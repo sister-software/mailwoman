@@ -43,11 +43,12 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from .augment import SPAN_KEYS, augment_row
+from .augment import SPAN_KEYS
 from .char_tokenizer import encode_row_units, load_char_vocab
 from .config import Config, DataConfig
+from .emit import EmitPolicy, emit_row
 from .labels import IGNORE_INDEX, active_components_present, locale_id, resolve_label_set
-from .relabel import AffixRelabelLexicon, relabel_row
+from .relabel import AffixRelabelLexicon
 from .tokenizer import Tokenizer, char_label_array_from_spans, encode_row, whitespace_spans
 
 logger = logging.getLogger(__name__)
@@ -719,47 +720,23 @@ def iter_rows(
             buf.append(next(upstream))
     except StopIteration:
         pass
-    do_augment = (
-        augment_directional_prob > 0
-        or augment_region_prob > 0
-        or augment_glue_prob > 0
-        or augment_case_prob > 0
-        or augment_punct_drop_prob > 0
-        or augment_upper_case_prob > 0
-        or augment_ordinal_prob > 0
+    # The augmentation and relabel policies live in `emit.py` so this loader and every audit apply the
+    # identical step. They did not once: the epoch audit reimplemented it without the per-source
+    # exclusion and reported an excluded source with the count it would have had if augmented (#2243).
+    policy = EmitPolicy(
+        directional_prob=augment_directional_prob,
+        region_prob=augment_region_prob,
+        glue_prob=augment_glue_prob,
+        case_prob=augment_case_prob,
+        punct_drop_prob=augment_punct_drop_prob,
+        upper_case_prob=augment_upper_case_prob,
+        ordinal_prob=augment_ordinal_prob,
+        excluded_sources=frozenset(augment_exclude_sources),
+        relabel_lexicon=affix_relabel_lexicon,
     )
 
-    augment_excluded = frozenset(augment_exclude_sources)
-
     def _emit(row: dict[str, Any]) -> Iterator[dict[str, Any]]:
-        # Relabel runs AFTER augmentation so label-inheriting directional expansions are caught
-        # (#511 — see relabel.py). augment_row yields fresh dicts but shares the labels list with
-        # the source row on the no-op path, so relabel copies before mutating.
-        # Augmentation-pool exclusion (2026-08-10): listed sources bypass augmentation entirely —
-        # copies of an oversampled slice compound its repetition dose without adding diversity.
-        # The relabel still applies below; the two policies are independent.
-        if do_augment and row["source"] not in augment_excluded:
-            for augmented in augment_row(
-                row,
-                rng,
-                augment_directional_prob,
-                augment_region_prob,
-                augment_glue_prob,
-                augment_case_prob,
-                augment_punct_drop_prob,
-                augment_upper_case_prob,
-                augment_ordinal_prob,
-            ):
-                if affix_relabel_lexicon is not None:
-                    augmented = {**augmented, "labels": list(augmented["labels"])}
-                    relabel_row(augmented, affix_relabel_lexicon)
-                yield augmented
-        elif affix_relabel_lexicon is not None:
-            row = {**row, "labels": list(row["labels"])}
-            relabel_row(row, affix_relabel_lexicon)
-            yield row
-        else:
-            yield row
+        return emit_row(row, rng, policy)
 
     # Stream out: every time we yield, pull the next from upstream into the freed slot.
     for row in upstream:
