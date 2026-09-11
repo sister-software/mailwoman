@@ -15,8 +15,8 @@
  *   License: stamped `"Public Domain"` per Texas state government open-data terms.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
+import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -103,7 +103,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 				if (!split) continue
 
-				const venue = [firstName, lastName].filter(isPresent).join(" ") || undefined
+				const venue = formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
@@ -114,17 +114,11 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					...(zip ? { postcode: zip } : {}),
 				}
 
-				const streetPart = [split.house_number, split.street].filter(isPresent).join(" ").trim()
+				const rendered = formatAddressRow(components, "US", { singleLine: true })
 
-				const raw = [
-					venue,
-					streetPart,
-					[city, [stateAbbr, zip].filter(isPresent).join(" ")].filter(isPresent).join(", "),
-				]
-					.filter(isPresent)
-					.join(", ")
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
+				const { raw, components: aligned } = rendered
 
 				if (Object.keys(aligned).length <= 2) continue
 

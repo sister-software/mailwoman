@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { parsePersonName } from "@mailwoman/record/name"
+import { formatPersonName, parsePersonName } from "@mailwoman/record/name"
 import { describe, expect, it } from "vitest"
 
 describe("parsePersonName", () => {
@@ -70,5 +70,35 @@ describe("parsePersonName", () => {
 	it("does not treat a trailing particle-looking token as a particle", () => {
 		// "Di" with nothing after it is a surname, not a particle.
 		expect(parsePersonName("Robert Di")).toEqual({ given: "Robert", family: "Di" })
+	})
+})
+
+describe("formatPersonName", () => {
+	it("round-trips a name the parser did not have to reorder", () => {
+		for (const input of ["Robert Di", "Johan van der Berg", "Dr Jane Q. Xavier de la Vega III"]) {
+			expect(formatPersonName(parsePersonName(input))).toBe(input)
+		}
+	})
+
+	it("prints an inverted name in reading order", () => {
+		expect(formatPersonName(parsePersonName("van der Berg, Johan"))).toBe("Johan van der Berg")
+	})
+
+	it("keeps the particle with the surname in both styles", () => {
+		const name = parsePersonName("Dr Jane Q. Xavier de la Vega III")
+
+		// The parser stores the particle separately so the matcher can compare `Vega` on its own; printing them apart
+		// would produce a name nobody wrote.
+		expect(formatPersonName(name, "short")).toBe("Jane de la Vega")
+	})
+
+	it("omits the nickname, which is an alternative to the given name rather than an addition", () => {
+		expect(formatPersonName(parsePersonName(`George "Gob" Bluth`))).toBe("George Bluth")
+	})
+
+	it("answers an empty string for nothing to print", () => {
+		expect(formatPersonName(null)).toBe("")
+		expect(formatPersonName({})).toBe("")
+		expect(formatPersonName({ given: "   " })).toBe("")
 	})
 })

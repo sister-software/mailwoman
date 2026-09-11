@@ -48,16 +48,19 @@
 			"types": "./out/key.d.ts",
 			"node": "./lib/key.ts",
 			"default": "./out/key.js"
+		},
+		"./render": {
+			"types": "./out/render.d.ts",
+			"node": "./lib/render.ts",
+			"default": "./out/render.js"
 		}
 	},
 	"publishConfig": {
 		"access": "public"
 	},
 	"dependencies": {
-		"@fragaria/address-formatter": "^7.0.0",
 		"@mailwoman/codex": "workspace:*",
-		"@mailwoman/core": "workspace:*",
-		"spliterator": "^7.3.0"
+		"@mailwoman/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1"

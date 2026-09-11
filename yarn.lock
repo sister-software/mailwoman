@@ -4670,15 +4670,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fragaria/address-formatter@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "@fragaria/address-formatter@npm:7.0.0"
-  dependencies:
-    mustache: "npm:^4.0.0"
-  checksum: 10/2f2db5fc3fec5056dabe69d066b1e20c9fc2d03b500208f663a90278ae697901f0396efd3f2d13c991c8c8e5da2a724f4a03038028107d0f405db7bb23619f15
-  languageName: node
-  linkType: hard
-
 "@googlemaps/google-maps-services-js@npm:^3.4.2":
   version: 3.4.2
   resolution: "@googlemaps/google-maps-services-js@npm:3.4.2"
@@ -5853,6 +5844,7 @@ __metadata:
     "@mailwoman/formatter": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    "@mailwoman/record": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
@@ -6037,11 +6029,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/formatter@workspace:packages/formatter"
   dependencies:
-    "@fragaria/address-formatter": "npm:^7.0.0"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@types/node": "npm:^26.4.1"
-    spliterator: "npm:^7.3.0"
   languageName: unknown
   linkType: soft
 
@@ -20851,15 +20841,6 @@ __metadata:
   version: 1.0.0
   resolution: "murmurhash-js@npm:1.0.0"
   checksum: 10/875a24e0dd7870e51a7f73906e158fb06de50478669629746a35955cb0a00b6bb797f6b5a2884ee4ec4feefb9c5c27b74190f561eb72530ffc1c5d7c5429f49a
-  languageName: node
-  linkType: hard
-
-"mustache@npm:^4.0.0":
-  version: 4.2.0
-  resolution: "mustache@npm:4.2.0"
-  bin:
-    mustache: bin/mustache
-  checksum: 10/6e668bd5803255ab0779c3983b9412b5c4f4f90e822230e0e8f414f5449ed7a137eed29430e835aa689886f663385cfe05f808eb34b16e1f3a95525889b05cd3
   languageName: node
   linkType: hard
 

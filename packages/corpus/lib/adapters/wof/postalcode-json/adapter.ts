@@ -48,7 +48,27 @@ import {
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { US_STATE_BY_ABBREVIATION } from "#us/fips-state"
 import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
+
+/**
+ * US state name → USPS alpha-2, the surface form a US postal address carries.
+ *
+ * WOF names the region in full (`Oregon`); the layout renders whatever it is given, because a layout is an ORDER and
+ * not a vocabulary. Choosing the surface form is therefore this adapter's decision, and the postal one is the code.
+ */
+const US_STATE_ABBREVIATION_BY_NAME: ReadonlyMap<string, string> = new Map(
+	Object.values(US_STATE_BY_ABBREVIATION).map((state) => [state.name.toLowerCase(), state.abbreviation])
+)
+
+/**
+ * The region surface form to print for `country`, given the name WOF carries.
+ */
+function regionSurface(country: string, name: string): string {
+	if (country !== "US") return name
+
+	return US_STATE_ABBREVIATION_BY_NAME.get(name.trim().toLowerCase()) ?? name
+}
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
@@ -108,7 +128,7 @@ export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfN
 			components: {
 				postcode: selfName,
 				locality: locality.name,
-				region: region.name,
+				region: regionSurface(row.country, region.name),
 				country: countryDisplay,
 			},
 		})

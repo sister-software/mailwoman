@@ -35,7 +35,7 @@
  */
 
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
-import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { splitStreetLine } from "#adapters/utils"
@@ -141,12 +141,11 @@ export function createFccBdcAdapter(): CorpusAdapter {
 						postcode,
 					}
 
-					const raw = formatAddress(components, "US", { separator: ", " })
+					const rendered = formatAddressRow(components, "US", { singleLine: true })
 
-					if (!raw) continue
-					const aligned = reconcileComponents(components, raw)
+					if (!rendered) continue
 
-					if (!Object.keys(aligned).length) continue
+					const { raw, components: aligned } = rendered
 
 					yield {
 						raw,

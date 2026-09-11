@@ -31,7 +31,7 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
@@ -149,13 +149,11 @@ export function createOvertureAdapter(): CorpusAdapter {
 					components.locality = locality
 				}
 
-				const raw = formatAddress(components, country, { separator: ", " })
+				const rendered = formatAddressRow(components, country, { singleLine: true })
 
-				if (!raw) continue
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
-
-				if (!Object.keys(aligned).length) continue
+				const { raw, components: aligned } = rendered
 
 				yield {
 					raw,

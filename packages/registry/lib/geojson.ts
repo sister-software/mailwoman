@@ -10,7 +10,7 @@
  *   a coordinate are omitted (a Point feature needs one).
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { formatPersonName } from "@mailwoman/record/name"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import type { EntityGeoData, ResolvedEntity, SourceRecord } from "#types"
@@ -19,16 +19,7 @@ import type { EntityGeoData, ResolvedEntity, SourceRecord } from "#types"
  * Assemble a display name from a record's parsed person name, if any.
  */
 function displayName(record: SourceRecord): string | null {
-	const name = record.name
-
-	if (!name) return null
-
-	const joined = [name.prefix, name.given, name.middle, name.familyParticle, name.family, name.suffix]
-		.filter(isPresent)
-		.join(" ")
-		.trim()
-
-	return joined || null
+	return formatPersonName(record.name) || null
 }
 
 /**

@@ -22,14 +22,14 @@
  *   balance so the model sees both domestic and international order) —
  *
  *   1. `{ locality, region }` → "City, Region"
- *   2. `{ locality, region, country }` → "City, Region, Country" `reconcileComponents` drops any
+ *   2. `{ locality, region, country }` → "City, Region, Country" `componentsPresentIn` drops any
  *        component that didn't survive into the rendered `raw`.
  *
  *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { componentsPresentIn } from "@mailwoman/formatter"
 import { dirname, join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
@@ -168,7 +168,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 
 				for (const v of variants) {
 					if (opts.limit !== undefined && emitted >= opts.limit) break
-					const aligned = reconcileComponents(v.comp, v.raw)
+					const aligned = componentsPresentIn(v.comp, v.raw)
 
 					if (!Object.keys(aligned).length) continue
 

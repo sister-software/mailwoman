@@ -34,7 +34,7 @@
  *   needed — every row in TIGER is the same license.
  */
 
-import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 
@@ -191,12 +191,11 @@ export function createTigerAdapter(): CorpusAdapter {
 
 					for (const variant of streetVariants(row)) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return
-						const raw = formatAddress(variant.components, "US", { separator: ", " })
+						const rendered = formatAddressRow(variant.components, "US", { singleLine: true })
 
-						if (!raw) continue
-						const aligned = reconcileComponents(variant.components, raw)
+						if (!rendered) continue
 
-						if (!Object.keys(aligned).length) continue
+						const { raw, components: aligned } = rendered
 
 						yield {
 							raw,
@@ -218,12 +217,11 @@ export function createTigerAdapter(): CorpusAdapter {
 
 					for (const variant of placeVariants(row)) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return
-						const raw = formatAddress(variant.components, "US", { separator: ", " })
+						const rendered = formatAddressRow(variant.components, "US", { singleLine: true })
 
-						if (!raw) continue
-						const aligned = reconcileComponents(variant.components, raw)
+						if (!rendered) continue
 
-						if (!Object.keys(aligned).length) continue
+						const { raw, components: aligned } = rendered
 
 						yield {
 							raw,

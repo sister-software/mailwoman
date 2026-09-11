@@ -17,7 +17,7 @@
  */
 
 import { isPresent } from "@mailwoman/core/objects"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
@@ -99,17 +99,11 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					postcode: zip,
 				}
 
-				const streetPart = [split.house_number, split.street].filter(isPresent).join(" ").trim()
+				const rendered = formatAddressRow(components, "US", { singleLine: true })
 
-				const raw = [
-					venue,
-					streetPart,
-					[city, [stateAbbr, zip].filter(isPresent).join(" ")].filter(isPresent).join(", "),
-				]
-					.filter(isPresent)
-					.join(", ")
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
+				const { raw, components: aligned } = rendered
 
 				if (Object.keys(aligned).length <= 2) continue
 

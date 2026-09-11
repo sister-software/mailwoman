@@ -33,11 +33,10 @@
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { composeRaw } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
@@ -290,19 +289,11 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 						postcode,
 					}
 
-					const raw = composeRaw({
-						venue,
-						houseNumber,
-						street: decomposed?.full,
-						unit,
-						locality,
-						region: state,
-						postcode,
-					})
+					const rendered = formatAddressRow(components, "US", { singleLine: true })
 
-					if (!raw) continue
+					if (!rendered) continue
 
-					const aligned = reconcileComponents(components, raw)
+					const { raw, components: aligned } = rendered
 
 					if (Object.keys(aligned).length <= 2) continue
 

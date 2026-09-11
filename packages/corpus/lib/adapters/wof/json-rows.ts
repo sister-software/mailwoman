@@ -5,11 +5,51 @@
  * @file Deterministic canonical-row emission shared by WOF GeoJSON adapters.
  */
 
+import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/address-layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+import { formatAddressRow } from "@mailwoman/formatter"
 
 import type { AdapterOptions, CanonicalRow } from "#types"
 import { normalizeNameKey, type WOFRecord } from "#utils"
+
+/**
+ * The order an admin hierarchy is written in, smallest unit first. A country that writes largest-first reverses it.
+ */
+const HIERARCHY_ORDER: readonly ComponentTag[] = [
+	"postcode",
+	"dependent_locality",
+	"locality",
+	"subregion",
+	"region",
+	"country",
+]
+
+/**
+ * Render an admin-hierarchy variant: the components it carries, in hierarchy order, joined the way the country joins a
+ * line. This is a gazetteer QUERY rather than a postal address, which is why it does not go through a layout — a
+ * country whose postal layout drops the region would collapse `Paris, Île-de-France` back into `Paris`.
+ */
+function renderHierarchy(
+	components: Partial<Record<ComponentTag, string>>,
+	country: string
+): { raw: string; components: Partial<Record<ComponentTag, string>> } | null {
+	const order = isLargestFirstSystem(country) ? [...HIERARCHY_ORDER].toReversed() : HIERARCHY_ORDER
+	const present: Partial<Record<ComponentTag, string>> = {}
+	const parts: string[] = []
+
+	for (const tag of order) {
+		const value = components[tag]?.trim()
+
+		if (!value) continue
+
+		present[tag] = value
+		parts.push(value)
+	}
+
+	if (!parts.length) return null
+
+	return { raw: parts.join(lineJoinForCountry(country)), components: present }
+}
 
 /**
  * Display name for the country, keyed by ISO 3166-1 alpha-2.
@@ -37,6 +77,17 @@ export const LOCALE_BY_COUNTRY: Record<string, string> = {
 export interface WOFVariantSpec {
 	suffix: string
 	components: Partial<Record<ComponentTag, string>>
+	/**
+	 * Render this variant as an ADMIN HIERARCHY rather than as a postal address.
+	 *
+	 * A hierarchy variant is a query — `Paris`, then `Paris, Île-de-France`, then `Paris, Île-de-France, France` — and
+	 * several of its steps are not addresses at all. France's postal layout carries no region, so rendering `{ locality,
+	 * region }` through it prints `Paris` and the whole variant collapses into the one below it.
+	 *
+	 * So the hierarchy is joined in its own order: smallest unit first, or largest first for the systems that write that
+	 * way, with the country's own separator.
+	 */
+	hierarchy?: boolean
 }
 
 export interface NameSlotOptions {
@@ -104,12 +155,13 @@ export function* emitWOFJSONRows(options: EmitWOFJSONRowsOptions): Generator<Can
 			for (const variant of variantsFor(record, ancestry.get(id) ?? [], slot.value)) {
 				if (adapterOptions.limit !== undefined && emitted >= adapterOptions.limit) return
 
-				const raw = formatAddress(variant.components, record.country, { separator: ", " })
+				const rendered = variant.hierarchy
+					? renderHierarchy(variant.components, record.country)
+					: formatAddressRow(variant.components, record.country, { singleLine: true })
 
-				if (!raw) continue
-				const components = reconcileComponents(variant.components, raw)
+				if (!rendered) continue
 
-				if (!Object.keys(components).length) continue
+				const { raw, components } = rendered
 
 				yield {
 					raw,

@@ -27,7 +27,7 @@
  *   which the map auto-detects and colors categorically.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { formatPersonName } from "@mailwoman/record/name"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import { toFeature } from "#geojson"
@@ -130,7 +130,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
  */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
-	const person = [rep.name?.given, rep.name?.family].filter(isPresent).join(" ")
+	const person = formatPersonName(rep.name, "short")
 
 	return rep.organization?.canonical ?? (person || rep.id)
 }

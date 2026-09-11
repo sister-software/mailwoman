@@ -5,237 +5,153 @@
  *
  *   Render a `ComponentTag`-keyed dict into a country-localized string — the inverse of the parser.
  *
- *   This is the canonical home for Mailwoman's address formatting, consolidated from two earlier
- *   half-implementations: the `core/formatter` stub (which wrapped OpenCage but hardcoded `US`) and
- *   the corpus synthesis formatter (`corpus/src/format.ts`, the fuller one this is ported from).
+ *   The order lives in `@mailwoman/codex/address-layouts`, as data. This module is the public surface over
+ *   {@linkcode renderAddress}: {@linkcode formatAddress} is the join, and {@linkcode formatAddressRow} is the join plus
+ *   the tags the layout printed, which is what every corpus adapter actually wants.
  *
- *   It bridges Mailwoman's `ComponentTag` schema to OpenCage's `address-formatting` templates
- *   (vendored via `@fragaria/address-formatter`, MIT) so callers get idiomatic per-country output
- *   without reinventing template logic. Owning our own templates — so we can express the slots
- *   OpenCage can't (`unit`, `intersection`, `cedex`, the JP tags) — is a deliberate follow-up; this
- *   first version keeps Fragaria as the engine and concentrates the mapping in one place.
- *
- *   Known limitations inherited from the OpenCage vocabulary (documented, not blockers):
- *
- *   - `unit`: no slot, so units ride the road line (`"Pennsylvania Ave NW Apt 4B"`).
- *   - `intersection_a` / `intersection_b`: joined as `"<a> & <b>"` into the road field.
- *   - `cedex` (FR): folded into `postcode` (`"75008 CEDEX 08"`) so the FR template slots it right.
- *   - JP-specific tags (`prefecture`, `municipality`, …): no mapping yet.
+ *   IT USED TO WRAP A THIRD-PARTY ENGINE, and 229 of this file's 438 lines existed to work around templates written
+ *   against OpenStreetMap's tag vocabulary rather than this project's: a pass that parsed 295 mustache templates at
+ *   module load to discover which of them could render a sub-locality, a second that spliced a missing line back in
+ *   afterwards, a third that removed a connector the template wrote between two slots when one was empty, and a
+ *   translation layer between the two vocabularies. Owning the layouts deletes all four — a layout that declares a
+ *   `dependent_locality` slot needs no interrogation about whether it has one, and a line assembled from present values
+ *   never writes a connector around an absent one.
  */
 
-import addressFormatter from "@fragaria/address-formatter"
-import fragariaTemplates from "@fragaria/address-formatter/src/templates/templates.json" with { type: "json" }
+import { layoutForCountry, lineJoinForCountry } from "@mailwoman/codex/address-layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
-import { TextSpliterator } from "spliterator"
+
+import { joinRendering, renderAddress, type ComponentDict } from "#render"
+
+export type { ComponentDict } from "#render"
 
 /**
- * Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace.
- */
-function slotPattern(slot: string): RegExp {
-	return new RegExp(`\\{\\{\\{\\s*${slot}\\s*\\}\\}\\}`)
-}
-
-/**
- * `true` if `template` references `{{{slot}}}` OUTSIDE of any `{{#first}}...{{/first}}` block. A slot named inside a
- * `{{#first}}` alternation (Fragaria's Mustache lambda that renders every alternative then keeps only the first
- * non-empty one, joined by `||`) is not an independently-renderable line — it only surfaces when every alternative
- * ahead of it in the chain is empty. Several "neither slot" templates reference `quarter`/`suburb`-adjacent tags
- * (`village`, `hamlet`, `place`) purely as fallback alternatives for `city` or `road`, which are always populated by
- * this formatter — so those references never actually render and are unsafe to target.
- */
-function hasStandaloneSlot(template: string, slot: string): boolean {
-	if (!slotPattern(slot).test(template)) return false
-
-	const firstBlockPattern = /\{\{#first\}\}([\s\S]*?)\{\{\/first\}\}/g
-	let strippedTemplate = template
-	let match: RegExpExecArray | null
-
-	while ((match = firstBlockPattern.exec(template))) {
-		strippedTemplate = strippedTemplate.replace(match[0], "")
-	}
-
-	return slotPattern(slot).test(strippedTemplate)
-}
-
-/**
- * Derived, at module load, from the vendored template data (`@fragaria/address-formatter/src/templates/templates.json`)
- * — never a hardcoded country list. Classifies every real 2-letter country code's primary `address_template` by how (if
- * at all) it can render a sub-locality/`dependent_locality` value:
- *
- * - `quarterOnly` — renders `{{{quarter}}}` but not `{{{suburb}}}` (GB and friends — see
- *   `.superpowers/sdd/task-4-report.md` / `task-4a-report.md`). `dependent_locality` is mirrored onto `quarter`.
- * - `placeOnly` — references NEITHER `{{{suburb}}}` NOR `{{{quarter}}}`, but DOES carry a standalone `{{{place}}}` line
- *   (not buried inside a `{{#first}}` alternation with `road`/`city`, where it would never render — see
- *   `hasStandaloneSlot`). FR's lieu-dit is the confirmed case: `{{{place}}}` sits on its own line, exactly where French
- *   postal convention (La Poste's line 5, "Lieu-dit") puts it — directly above the postcode+town line.
- *   `dependent_locality` is mirrored onto `place`.
- * - `postRender` — references NEITHER slot AND has no standalone `place` line either (ES's pedanía is the confirmed case
- *   — its template's only `place`/`village`/`hamlet` references are folded into the `{{#first}}` alternation for
- *   `city`, which `city` itself always wins). These countries get `formatAddress`'s post-render line-injection fallback
- *   (see `injectDependentLocalityLine`) — there is no template-native slot to target.
- *
- * `dependent_locality` is mapped to `suburb` unconditionally in `toOpenCageComponents` regardless of this
- * classification (that's what NZ and the ~66 other "suburb-only" templates read directly); `BR` references BOTH
- * `suburb` and `quarter` for two distinct concepts and is excluded from all three sets by construction (its template
- * already renders `dependent_locality` via the unconditional `suburb` mapping — mirroring onto `quarter` too would
- * double-render the same value on two lines).
- */
-const DEPENDENT_LOCALITY_SLOTS: {
-	quarterOnly: ReadonlySet<string>
-	placeOnly: ReadonlySet<string>
-	postRender: ReadonlySet<string>
-} = (() => {
-	const quarterOnly = new Set<string>()
-	const placeOnly = new Set<string>()
-	const postRender = new Set<string>()
-	const templates = fragariaTemplates as Record<string, { address_template?: string }>
-
-	for (const [code, def] of Object.entries(templates)) {
-		// Restrict to real 2-letter country codes — the template data also carries language-variant
-		// pseudo-keys (`CA_en`, `CA_fr`, `JP_ja`, …) that aren't selected by country_code lookup.
-		if (!/^[A-Z]{2}$/.test(code)) continue
-
-		const template = def.address_template
-
-		if (!template) continue
-
-		const hasQuarter = slotPattern("quarter").test(template)
-		const hasSuburb = slotPattern("suburb").test(template)
-
-		if (hasQuarter && !hasSuburb) {
-			quarterOnly.add(code)
-		} else if (!hasQuarter && !hasSuburb) {
-			if (hasStandaloneSlot(template, "place")) {
-				placeOnly.add(code)
-			} else {
-				postRender.add(code)
-			}
-		}
-	}
-
-	return { quarterOnly, placeOnly, postRender }
-})()
-
-/**
- * A partial map of `ComponentTag` → string value — the canonical formatter input.
- */
-export type ComponentDict = Partial<Record<ComponentTag, string>>
-
-/**
- * Options accepted by `formatAddress`.
+ * Options accepted by {@linkcode formatAddress} and {@linkcode formatAddressRow}.
  */
 export interface FormatAddressOptions {
 	/**
-	 * Append the country name as a final line (`"USA"`, `"France"`). Default `false`: most rows are intra-country and the
-	 * country line is redundant noise.
-	 */
-	appendCountry?: boolean
-
-	/**
-	 * Apply OpenCage's per-country abbreviation rules (`"Avenue"` → `"Ave"`). Default `false` — callers that want
-	 * abbreviation usually run it as their own augmentation pass.
-	 */
-	abbreviate?: boolean
-
-	/**
-	 * Replace the template's newlines with this separator. Default `undefined` (keep newlines). Use `", "` for
-	 * single-line output, or `" "` to strip internal punctuation.
+	 * Replace the layout's line breaks with this separator. Default `"\n"`: the envelope form.
 	 */
 	separator?: string
+
+	/**
+	 * Join the lines the way the COUNTRY does, for the single-line form a query or a corpus row takes — `", "` for most,
+	 * `" "` for Japan and Korea, and nothing at all for the Chinese-script systems, whose admin run is unseparated.
+	 *
+	 * It is an option rather than each caller's literal because the literal is wrong outside the anglophone systems:
+	 * joining Japan's lines with a comma gives `1-9-1, 丸の内, 千代田区, 東京都 100-0005`, which is the romanized convention
+	 * printed backwards. `separator` wins when both are given.
+	 */
+	singleLine?: boolean
+}
+
+function separatorFor(country: string, opts: FormatAddressOptions): string {
+	if (opts.separator !== undefined) return opts.separator
+
+	return opts.singleLine ? lineJoinForCountry(country) : "\n"
 }
 
 /**
  * Render a component dict into an idiomatic per-country address string.
  *
- * Returns an empty string if `components` is empty after translation. Throws nothing — bad inputs degrade to the
- * longest meaningful prefix.
+ * Returns an empty string when the dict is empty, and when no layout names `country` — 55 of the 252 shipped country
+ * records carry no usable skeleton, and answering nothing for one of those reports absence rather than inventing an
+ * order. Throws nothing; a partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
-	const ocComponents = toOpenCageComponents(components, country)
-
-	if (!Object.keys(ocComponents).length) return ""
-
-	let raw = addressFormatter.format(ocComponents, {
-		abbreviate: opts.abbreviate ?? false,
-		appendCountry: opts.appendCountry ?? false,
-	})
-
-	// Last-resort path (see DEPENDENT_LOCALITY_SLOTS.postRender): ES's pedanía and its siblings have no
-	// template-native slot at all — the primary template never surfaces `suburb`/`quarter`/`place`. Splice the
-	// value in as its own line, positioned the way OpenCage's own fallback templates already do it for these
-	// same countries (a dedicated sub-locality line directly above the postcode+city line).
-	if (components.dependent_locality && DEPENDENT_LOCALITY_SLOTS.postRender.has(country.trim().toUpperCase())) {
-		raw = injectDependentLocalityLine(raw, components.locality, components.dependent_locality)
-	}
-
-	const trimmed = stripDanglingConnectors(raw).replaceAll(/\s+$/g, "")
-
-	return opts.separator !== undefined ? trimmed.replaceAll(/\n+/g, opts.separator) : trimmed
+	return formatAddressRow(components, country, opts)?.raw ?? ""
 }
 
 /**
- * Drop a connector a template wrote between two slots when one of them was empty. Bangladesh's template joins the city
- * and the postcode with a spaced hyphen, so a row with no postcode came out as `Dhaka -`; the engine's own cleanup
- * removes doubled commas and blank lines but leaves a literal hyphen or slash standing at a line's edge. Exported for
- * testing.
+ * A rendered address and the components that survived the render.
  */
-export function stripDanglingConnectors(raw: string): string {
-	return [...TextSpliterator.from(raw)]
-		.map((line) => line.replace(/^[\s\-–/]+/u, "").replace(/[\s\-–/]+$/u, ""))
-		.filter((line) => line.length > 0)
-		.join("\n")
+export interface AddressRow {
+	/**
+	 * The rendered string.
+	 */
+	readonly raw: string
+	/**
+	 * The subset of the input dict the layout PRINTED, with the caller's original values. This is the half a corpus row
+	 * needs: a label whose text is not in `raw` cannot be aligned against it.
+	 */
+	readonly components: ComponentDict
+	/**
+	 * Tags the dict carried a value for that the layout has no slot for, NAMED rather than silently dropped. France
+	 * absorbing a region into its postcode line is the common case.
+	 */
+	readonly unplaced: readonly ComponentTag[]
 }
 
 /**
- * Splice `dependentLocality` in as its own line immediately above the line carrying `locality` (a case-insensitive
- * substring match against that line only — not the whole rendered string, which would misfire on incidental substring
- * collisions elsewhere in the address). Used by `formatAddress` for the `DEPENDENT_LOCALITY_SLOTS.postRender` fallback,
- * where no template slot exists to target directly.
+ * Render `components` for `country` and report what the layout printed, in one pass.
  *
- * Idempotent: if `raw` already carries a line that IS `dependentLocality` verbatim (case/whitespace-insensitive), no
- * second line is inserted. If `locality` is missing or doesn't appear on any line of `raw`, there's no safe anchor to
- * splice against, so `raw` is returned unchanged (matches the pre-fix behavior of silently dropping the value, rather
- * than guessing a position).
- *
- * Exported for testing.
+ * Returns null when nothing rendered — an empty dict, a country with no layout, or a dict whose every value falls in a
+ * slot this country omits. Every corpus adapter asked both questions and paid for two renders to get them, then
+ * recovered the alignment by searching the output string for each value; that search cannot tell a component the layout
+ * dropped from one whose value happens to sit inside another — `Paris` inside `Rue de Paris`. The render knows, so the
+ * answer is read rather than inferred.
  */
-export function injectDependentLocalityLine(
-	raw: string,
-	locality: string | undefined,
-	dependentLocality: string
-): string {
-	const lines = [...TextSpliterator.from(raw)]
-	const normalizedDepLoc = dependentLocality.trim().toLowerCase()
+export function formatAddressRow(
+	components: ComponentDict,
+	country: string,
+	opts: FormatAddressOptions = {}
+): AddressRow | null {
+	const layout = layoutForCountry(country)
 
-	if (lines.some((line) => line.trim().toLowerCase() === normalizedDepLoc)) {
-		return raw
+	if (!layout) return null
+
+	const rendering = renderAddress(layout, components)
+
+	if (!rendering.placed.length) return null
+
+	const raw = joinRendering(rendering, separatorFor(country, opts))
+
+	if (!raw) return null
+
+	const placed: ComponentDict = {}
+
+	for (const tag of rendering.placed) {
+		const value = components[tag]
+
+		if (value) {
+			placed[tag] = value
+		}
 	}
 
-	if (!locality) return raw
+	return { raw, components: placed, unplaced: rendering.unplaced }
+}
 
-	const normalizedLocality = locality.trim().toLowerCase()
-	// LAST match, not first: a street line can legitimately embed the locality name too (the "Avenida de
-	// <municipio>" class — a street literally named after the town it's in). Anchoring on the first hit
-	// then splices the dependent-locality line above the STREET line instead of above the actual
-	// locality/postcode line further down. The last match is always the real locality line — nothing
-	// renders after it that would also carry the name.
-	const anchorIndex = lines.findLastIndex((line) => line.toLowerCase().includes(normalizedLocality))
+/**
+ * Which of `components` occur verbatim in `raw`, case- and whitespace-insensitively.
+ *
+ * This is a question about a string somebody else built — a committed golden fixture, a source's own address line — and
+ * it is the WEAKER of the two reconciliations: a substring test cannot tell a component the renderer dropped from one
+ * whose value happens to sit inside another. Anything rendered through a layout should read
+ * {@linkcode formatAddressRow}'s `components` instead, which the render knows rather than infers.
+ */
+export function componentsPresentIn(components: ComponentDict, raw: string): ComponentDict {
+	const haystack = raw.toLowerCase().replaceAll(/\s+/g, " ")
+	const out: ComponentDict = {}
 
-	if (anchorIndex === -1) return raw
+	for (const [tag, value] of Object.entries(components)) {
+		if (!value) continue
 
-	lines.splice(anchorIndex, 0, dependentLocality)
+		if (haystack.includes(value.toLowerCase().replaceAll(/\s+/g, " "))) {
+			out[tag as ComponentTag] = value
+		}
+	}
 
-	return lines.join("\n")
+	return out
 }
 
 /**
  * Map of legacy rule-classifier {@linkcode VisibleClassification} labels to the canonical `ComponentTag` schema. The
  * two vocabularies are kept independent on purpose (rule classifiers emit one, the neural classifier the other); this
- * adapter is the bridge so a `ClassificationMap` can use the same formatter. `level` / `unit_designator` /
+ * adapter is the bridge so a `ClassificationMap` can use the same layouts. `level` / `unit_designator` /
  * `level_designator` are folded into `unit`.
  */
-const CLASSIFICATION_TO_TAG: Partial<Record<VisibleClassification, ComponentTag>> = {
+const CLASSIFICATION_TO_TAG: Partial<Record<VisibleClassification, keyof ComponentDict>> = {
 	country: "country",
 	region: "region",
 	locality: "locality",
@@ -248,8 +164,7 @@ const CLASSIFICATION_TO_TAG: Partial<Record<VisibleClassification, ComponentTag>
 
 /**
  * Format a legacy {@linkcode ClassificationMap} (`Map<VisibleClassification, string[]>`, as emitted by the rule-based
- * pipeline) into an idiomatic address string. Subsumes the former `core/formatter` stub. Multi-span values are
- * space-joined; unit-like labels are merged.
+ * pipeline) into an idiomatic address string. Multi-span values are space-joined; unit-like labels are merged.
  */
 export function formatFromClassificationMap(
 	map: ClassificationMap,
@@ -286,153 +201,4 @@ export function formatFromClassificationMap(
 	}
 
 	return formatAddress(components, country, opts)
-}
-
-/**
- * Drop any component whose value isn't actually present in the formatted `raw`. OpenCage's per-country templates
- * legitimately omit some inputs (FR regions absorbed by the postcode; US state names abbreviated), and downstream
- * alignment requires `components[tag]` to occur in `raw`. Comparison is case- and whitespace-insensitive; the retained
- * value is the original input.
- */
-export function reconcileComponents(components: ComponentDict, raw: string): ComponentDict {
-	const haystack = raw.toLowerCase().replaceAll(/\s+/g, " ")
-	const out: ComponentDict = {}
-
-	for (const [k, v] of Object.entries(components)) {
-		if (!v) continue
-		const needle = v.toLowerCase().replaceAll(/\s+/g, " ")
-
-		if (haystack.includes(needle)) {
-			out[k as ComponentTag] = v
-		}
-	}
-
-	return out
-}
-
-/**
- * Translate a `ComponentTag` dict to the OpenCage vocabulary `@fragaria/address-formatter` expects. Exported for
- * testing and for callers that pre-build the dict for batch formatting.
- */
-export function toOpenCageComponents(components: ComponentDict, country: string): Record<string, string> {
-	const out: Record<string, string> = {}
-
-	const road = composeRoad(components)
-
-	if (road) {
-		out.road = road
-	}
-
-	if (components.house_number) {
-		out.house_number = components.house_number
-	}
-
-	if (components.venue) {
-		out.house = components.venue
-	}
-
-	if (components.locality) {
-		out.city = components.locality
-	}
-
-	if (components.dependent_locality) {
-		out.suburb = components.dependent_locality
-
-		// See DEPENDENT_LOCALITY_SLOTS: some templates (GB among them) name this slot `quarter`
-		// instead of `suburb`. Mirroring the value there is additive — `suburb` stays set for every
-		// other country's template (NZ included) that reads it directly.
-		const depLocCountryCode = country.trim().toUpperCase()
-
-		if (DEPENDENT_LOCALITY_SLOTS.quarterOnly.has(depLocCountryCode)) {
-			out.quarter = components.dependent_locality
-		} else if (DEPENDENT_LOCALITY_SLOTS.placeOnly.has(depLocCountryCode)) {
-			// FR and friends: neither `suburb` nor `quarter` renders, but a standalone `place` line does.
-			out.place = components.dependent_locality
-		}
-	}
-
-	if (components.subregion) {
-		out.county = components.subregion
-	}
-
-	if (components.region) {
-		out.state = components.region
-	}
-
-	const postcode = composePostcode(components)
-
-	if (postcode) {
-		out.postcode = postcode
-	}
-
-	if (components.po_box) {
-		out.po_box = components.po_box
-	}
-
-	if (components.attention) {
-		out.attention = components.attention
-	}
-
-	if (components.country) {
-		out.country = components.country
-	}
-
-	// country_code drives template selection, not output. Only emit it alongside another component —
-	// otherwise the template renders the bare code ("US") as a fallback line, which no caller wants.
-	const cc = country.trim().toLowerCase()
-
-	if (cc && Object.keys(out).length) {
-		out.country_code = cc
-	}
-
-	return out
-}
-
-/**
- * Build the `road` line from prefix / particle / street / suffix / unit / intersection components:
- *
- *     ;[intersection_a & intersection_b]
- *     OR[street_prefix][street_prefix_particle][street][street_suffix][unit]
- */
-function composeRoad(components: ComponentDict): string {
-	if (components.intersection_a && components.intersection_b) {
-		return `${components.intersection_a} & ${components.intersection_b}`
-	}
-
-	const parts: string[] = []
-
-	if (components.street_prefix) {
-		parts.push(components.street_prefix)
-	}
-
-	if (components.street_prefix_particle) {
-		parts.push(components.street_prefix_particle)
-	}
-
-	if (components.street) {
-		parts.push(components.street)
-	}
-
-	if (components.street_suffix) {
-		parts.push(components.street_suffix)
-	}
-
-	if (components.unit) {
-		parts.push(components.unit)
-	}
-
-	return parts.join(" ").replaceAll(/\s+/g, " ").trim()
-}
-
-/**
- * Fold CEDEX into postcode for FR-style output: `"75008"` + `"CEDEX 08"` → `"75008 CEDEX 08"`. If only one is present,
- * return it; if neither, return empty.
- */
-function composePostcode(components: ComponentDict): string {
-	const base = components.postcode?.trim() ?? ""
-	const cedex = components.cedex?.trim() ?? ""
-
-	if (base && cedex) return `${base} ${cedex}`.replaceAll(/\s+/g, " ")
-
-	return base || cedex
 }

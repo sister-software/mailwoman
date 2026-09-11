@@ -23,7 +23,7 @@
  *        `"CC-BY-4.0"` per row (attribute "GeoNames").
  */
 
-import { reconcileComponents } from "@mailwoman/formatter"
+import { componentsPresentIn } from "@mailwoman/formatter"
 import { TSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
@@ -95,7 +95,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 
 				for (const v of variants) {
 					if (opts.limit !== undefined && emitted >= opts.limit) break
-					const aligned = reconcileComponents(v.comp, v.raw)
+					const aligned = componentsPresentIn(v.comp, v.raw)
 
 					if (Object.keys(aligned).length < 2) continue
 

@@ -97,6 +97,10 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 
 	if (!selfTag) return []
 
+	// Every variant here is a gazetteer hierarchy — `Paris`, `Paris, Île-de-France`, `Paris, Île-de-France, France` —
+	// and several steps are not addresses at all. See `WOFVariantSpec.hierarchy`.
+	const hierarchy = true
+
 	const region = ancestry.find((a) => placetypeToTag(a.placetype) === "region")
 	const country = ancestry.find((a) => placetypeToTag(a.placetype) === "country")
 	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country?.name ?? row.country
@@ -106,10 +110,11 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 	switch (selfTag) {
 		case "locality":
 		case "dependent_locality": {
-			variants.push({ suffix: "self", components: { [selfTag]: selfName } })
+			variants.push({ hierarchy, suffix: "self", components: { [selfTag]: selfName } })
 
 			if (region) {
 				variants.push({
+					hierarchy,
 					suffix: "with-region",
 					components: { [selfTag]: selfName, region: region.name },
 				})
@@ -117,11 +122,13 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 
 			if (region && country) {
 				variants.push({
+					hierarchy,
 					suffix: "with-region-country",
 					components: { [selfTag]: selfName, region: region.name, country: countryDisplay },
 				})
 			} else if (!region && country) {
 				variants.push({
+					hierarchy,
 					suffix: "with-country",
 					components: { [selfTag]: selfName, country: countryDisplay },
 				})
@@ -131,10 +138,11 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 		}
 
 		case "region": {
-			variants.push({ suffix: "self", components: { region: selfName } })
+			variants.push({ hierarchy, suffix: "self", components: { region: selfName } })
 
 			if (country) {
 				variants.push({
+					hierarchy,
 					suffix: "with-country",
 					components: { region: selfName, country: countryDisplay },
 				})
@@ -144,13 +152,13 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 		}
 
 		case "country": {
-			variants.push({ suffix: "self", components: { country: selfName } })
+			variants.push({ hierarchy, suffix: "self", components: { country: selfName } })
 
 			return variants
 		}
 
 		case "subregion": {
-			variants.push({ suffix: "self", components: { subregion: selfName } })
+			variants.push({ hierarchy, suffix: "self", components: { subregion: selfName } })
 
 			return variants
 		}

@@ -25,7 +25,7 @@ export {
 	ADDRESS_SYSTEM_CONVENTIONS,
 	conventionsForSystem,
 	type AddressSystemConventions,
-} from "#address-system-conventions"
+} from "#address/system-conventions"
 
 export * from "#component"
 export * from "#normalize"
