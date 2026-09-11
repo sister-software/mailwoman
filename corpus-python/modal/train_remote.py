@@ -4342,6 +4342,41 @@ def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml
     timeout=7200,
     memory=16384,
 )
+def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0):
+    """Count what a row's OPENING token teaches, at the draw level and again at the emitted level.
+
+    CPU-only. Settles the ratio the bare-postcode arm rests on: how much of the mixture teaches "a
+    leading digit group is a house number" against how much teaches "it is a postcode". The 443.7 figure
+    carried through the handoff has neither its definition nor its sampling level recorded, so this
+    counts six nested definitions at both levels and lets the comparison be made on stated terms.
+
+    Unlike `audit_epoch_mixture`, the emitted pass honours `augment_exclude_sources`, because the trainer
+    does. JSON lands at /data/audits/opening-token-<config-stem>.json.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = Path(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}")
+    if not config_path.is_file():
+        raise RuntimeError(f"Config not found: {config_path}")
+
+    from mailwoman_train.census_opening_token import run
+
+    json_path = Path(f"{VOL_MOUNT}/audits/opening-token-{config_path.stem}.json")
+    run(config_path, json_path=json_path, draws=draws or None)
+    vol.commit()
+    print(f"\nCensus committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
 def audit_suffix_feed(
     config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml",
     relabel_lexicon: str = "/data/gazetteer/affix-relabel-lexicon-v2.json",

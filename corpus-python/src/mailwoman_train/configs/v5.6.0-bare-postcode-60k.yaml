@@ -52,12 +52,26 @@
 # not the `augment_exclude_sources` entry below — `synth-no-fragment` (0.7696) and `synth-fr-fragment`
 # (0.7708) are not excluded and carry the same ratio, and `synth-sg-register` sits at 0.8247.
 #
-# WHAT THAT LEAVES FOR THE FAILING SHAPE. Half of each country's rows are compact `NNNNN`, measured
-# exactly, so the two-token `NNN NN` form CZ/SK/SE write is 5,230 of the 20,460 rows: about 678 rows per
-# epoch drawn and about 524 emitted. The evidence it argues against is the 443.7 rows per epoch teaching
-# a leading digit group as a house number. WHICH LEVEL THAT 443.7 WAS COUNTED AT IS NOT RECORDED, so the
-# margin is somewhere between 1.18:1 and 1.53:1 and the arm is thinner than the pre-audit arithmetic
-# read. Settle the level, or raise the exposure, before treating 1.0 as sufficient.
+# THERE IS NO RATIO TO BEAT AT THIS SHAPE, and the 443.7 comparison this file used to carry was the
+# wrong instrument. `census_opening_token` counted the openings over the same 1,000,000 sampled rows:
+#
+#   opening                      as house_number   as postcode
+#   any digit group                    249,934         93,665     2.67:1 toward house_number
+#   exactly three digits                53,451         18,140     2.95:1 toward house_number
+#   three then two digits                  273         18,140       66:1 toward POSTCODE
+#   the same, as a COMPLETE row              0            508     no contrary evidence at all
+#
+# At the exact failing opening the mixture ALREADY favours postcode 66 to 1, and v5.5.0 still reads
+# `100 00` as a house number 0 times out of 32. So no exposure justified by an opening-level ratio can
+# be right: 17,632 of those 18,140 rows come from `synth-cz-pcfirst-preposition-v21` and are in-context
+# surfaces like `100 00 Praha, Czechia`, which the 0/32 result already showed do not transfer.
+#
+# What separates `100 00` from `100 00 Praha, Czechia` is that the row ENDS after two tokens. Counted as
+# a complete row, the mixture carries 508 per 1,000,000 emitted — 3,901 over the run, every one from
+# this source — against ZERO labelled house_number at either level, and against zero of any kind before
+# v0.30.0. The quantity is a shape going from absent to present, not a margin over rival evidence, so
+# the only open question is whether about 3,900 instances teach it. A census cannot answer that; the run
+# can.
 #
 # PRE-REGISTERED WATCH. Grade these in order, before any target metric:
 #
