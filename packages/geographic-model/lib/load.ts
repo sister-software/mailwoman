@@ -40,7 +40,7 @@ import {
 	readString,
 	type ValidationIssue,
 	ValidationIssueCode,
-} from "#validation-issues"
+} from "#validation/issues"
 /**
  * The manifest every model directory carries: the document's `version`, and nothing else.
  */

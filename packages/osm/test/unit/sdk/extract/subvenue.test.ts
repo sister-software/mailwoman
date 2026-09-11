@@ -28,7 +28,7 @@ import {
 	SubVenueTier,
 	toSubVenueSourceRow,
 	distinctSubVenueTagKeys,
-} from "@mailwoman/osm/sdk/extract/subvenue"
+} from "@mailwoman/osm/sdk/extract/subvenue/index"
 import { expect, test } from "vitest"
 
 const TAG_KEYS = distinctSubVenueTagKeys(SUBVENUE_TAG_RULES)

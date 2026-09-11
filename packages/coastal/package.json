@@ -118,9 +118,9 @@
 			"default": "./out/sdk/measure-resolutions.js"
 		},
 		"./sdk/verify": {
-			"types": "./out/sdk/verify.d.ts",
-			"node": "./lib/sdk/verify.ts",
-			"default": "./out/sdk/verify.js"
+			"types": "./out/sdk/verify/index.d.ts",
+			"node": "./lib/sdk/verify/index.ts",
+			"default": "./out/sdk/verify/index.js"
 		}
 	},
 	"publishConfig": {

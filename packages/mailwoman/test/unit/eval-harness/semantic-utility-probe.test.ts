@@ -14,7 +14,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { POIIntent, POIResult } from "@mailwoman/core/pipeline"
-import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardOutcome } from "mailwoman/eval-harness/poi-board"
+import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardOutcome } from "mailwoman/eval-harness/poi/board"
 import {
 	auditProbeDefinition,
 	canonicalJSON,

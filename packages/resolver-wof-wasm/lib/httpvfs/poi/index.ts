@@ -24,7 +24,7 @@ import { gridDisk, latLngToCell } from "h3-js"
 import { loadHTTPVFSDatabase } from "#httpvfs/resolver"
 import { rowsFromExec } from "#httpvfs/rows"
 
-export { resolveAnchorCenter, type AnchorCenter } from "#httpvfs/poi-anchor"
+export { resolveAnchorCenter, type AnchorCenter } from "#httpvfs/poi/anchor"
 
 /**
  * Resolution the published `poi.db`'s `h3_cell` column is keyed at — MUST match the builder (poi-lookup.ts's

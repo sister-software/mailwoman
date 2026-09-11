@@ -49,10 +49,10 @@ import {
 	readVocabularyValue,
 	type ValidationIssue,
 	ValidationIssueCode,
-} from "#validation-issues"
-import { checkReferences } from "#validation-references"
+} from "#validation/issues"
+import { checkReferences } from "#validation/references"
 
-export { type ValidationIssue, ValidationIssueCode } from "#validation-issues"
+export { type ValidationIssue, ValidationIssueCode } from "#validation/issues"
 
 /**
  * The whole document, or every reason it is not one.

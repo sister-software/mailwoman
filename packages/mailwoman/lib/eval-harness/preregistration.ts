@@ -19,7 +19,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"
-import type { POIBoardResolverBackend } from "#eval-harness/poi-board"
+import type { POIBoardResolverBackend } from "#eval-harness/poi/board"
 
 /**
  * A committed pre-registration file, named from the package root because `tsc` emits no `.json` into `out/`.

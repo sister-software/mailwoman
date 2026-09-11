@@ -33,10 +33,10 @@
 import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "#index"
-import type { ServiceFeatureReader } from "#sdk/verify-service"
+import type { ServiceFeatureReader } from "#sdk/verify/service"
 
-export { createEAServiceReader, type ServiceFeature, type ServiceFeatureReader } from "#sdk/verify-service"
-export { sampleAgreementPoints } from "#sdk/verify-sample"
+export { createEAServiceReader, type ServiceFeature, type ServiceFeatureReader } from "#sdk/verify/service"
+export { sampleAgreementPoints } from "#sdk/verify/sample"
 
 /**
  * How close to a service-polygon edge a disagreement is attributed to the channels' differing coordinate precision.

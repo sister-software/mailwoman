@@ -21,7 +21,7 @@ import {
 	POI_BOARD_FLOORS,
 	type POIBoardFixture,
 	type POIBoardOutcome,
-} from "mailwoman/eval-harness/poi-board"
+} from "mailwoman/eval-harness/poi/board"
 import { canonicalJSON, loadProbeDefinition } from "mailwoman/eval-harness/semantic-utility/probe"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"

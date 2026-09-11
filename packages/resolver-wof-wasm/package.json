@@ -71,9 +71,9 @@
 			"default": "./out/httpvfs/street.js"
 		},
 		"./httpvfs/poi": {
-			"types": "./out/httpvfs/poi.d.ts",
-			"node": "./lib/httpvfs/poi.ts",
-			"default": "./out/httpvfs/poi.js"
+			"types": "./out/httpvfs/poi/index.d.ts",
+			"node": "./lib/httpvfs/poi/index.ts",
+			"default": "./out/httpvfs/poi/index.js"
 		},
 		"./httpvfs/rows": {
 			"types": "./out/httpvfs/rows.d.ts",

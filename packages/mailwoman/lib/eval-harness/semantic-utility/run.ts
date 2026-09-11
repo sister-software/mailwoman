@@ -34,7 +34,7 @@ import {
 	type POIBoardFixture,
 	type POIBoardOptions,
 	type POIBoardOutcome,
-} from "#eval-harness/poi-board"
+} from "#eval-harness/poi/board"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#eval-harness/preregistration"
 import {
 	computeProbeCounts,

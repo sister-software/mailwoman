@@ -118,9 +118,9 @@
 			"default": "./out/sdk/cluster-filers.js"
 		},
 		"./sdk/cores-client": {
-			"types": "./out/sdk/cores-client.d.ts",
-			"node": "./lib/sdk/cores-client.ts",
-			"default": "./out/sdk/cores-client.js"
+			"types": "./out/sdk/cores/client.d.ts",
+			"node": "./lib/sdk/cores/client.ts",
+			"default": "./out/sdk/cores/client.js"
 		},
 		"./sdk/exhibit21": {
 			"types": "./out/sdk/exhibit21/index.d.ts",
