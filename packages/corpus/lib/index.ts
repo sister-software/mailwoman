@@ -5,7 +5,7 @@
  */
 
 export * from "#adapters/utils/index"
-export * from "#adapters/gnaf/assemble"
+export * from "#au/adapters/gnaf/assemble"
 export * from "#adapters/index"
 export * from "#build"
 export * from "#runner"

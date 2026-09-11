@@ -1,0 +1,139 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `state-ny-notaries`: New York Commissioned Notaries CSV consumer.
+ *
+ *   The New York Department of State publishes a registry of commissioned notaries public. Each row
+ *   optionally carries a business name and business address (~1-5% fill rate).
+ *
+ *   The adapter consumes the CSV the operator pre-downloads via `fetch-state-sources.ts`. Column
+ *   names match the data.ny.gov export header (note: some columns have leading spaces).
+ *
+ *   License: stamped `"Public Domain"` per New York state government open-data terms.
+ */
+
+import { isPresent } from "@mailwoman/core/objects"
+import { reconcileComponents } from "@mailwoman/formatter"
+import { CSVSpliterator } from "spliterator"
+
+import { splitStreetLine, stableSourceID } from "#adapters/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { lookupStateAbbreviation } from "#us/fips-state"
+
+/**
+ * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
+ * it came from.
+ */
+export const STATE_NY_NOTARIES_ADAPTER_ID = "state-ny-notaries"
+/**
+ * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
+ * than having to look them up.
+ */
+export const STATE_NY_NOTARIES_DEFAULT_LICENSE = "Public Domain"
+
+export function createStateNyNotariesAdapter(): CorpusAdapter {
+	return {
+		id: STATE_NY_NOTARIES_ADAPTER_ID,
+		defaultLicense: STATE_NY_NOTARIES_DEFAULT_LICENSE,
+		description: "New York Commissioned Notaries — name + optional business address (public-domain).",
+
+		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			if (opts.country && opts.country !== "US") {
+				throw new Error(`state-ny-notaries adapter: only US supported, got country=${opts.country}`)
+			}
+
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				normalizeKeys: false,
+			})
+
+			let emitted = 0
+
+			for await (const rawRecord of rows as AsyncIterable<Record<string, string>>) {
+				if (opts.signal?.aborted) break
+
+				if (opts.limit !== undefined && emitted >= opts.limit) break
+
+				// NY CSV has columns with leading spaces, so we normalize by trimming keys.
+				const record: Record<string, string> = {}
+
+				for (const key of Object.keys(rawRecord)) {
+					record[key.trim()] = rawRecord[key] ?? ""
+				}
+
+				const holderName = (record["Commission Holder Name"] ?? "").trim()
+				const businessName = (record["Business Name (if available)"] ?? "").trim()
+				const address1 = (record["Business Address 1 (if available)"] ?? "").trim()
+				const address2 = (record["Business Address 2 (if available)"] ?? "").trim()
+				const city = (record["Business City (if available)"] ?? "").trim()
+				const stateAbbr = (record["Business State (if available)"] ?? "").trim()
+				const zip = (record["Business Zip (if available)"] ?? "").trim()
+				const county = (record["Commissioned County"] ?? "").trim()
+
+				if (!city || !stateAbbr || !zip) continue
+
+				if (!address1 && !address2) continue
+
+				const state = lookupStateAbbreviation(stateAbbr)
+
+				if (!state) continue
+
+				const fullAddress = [address1, address2].filter(isPresent).join(" ")
+				const split = splitStreetLine(fullAddress)
+
+				if (!split) continue
+
+				const venue = businessName || holderName || undefined
+
+				const components: CanonicalRow["components"] = {
+					...(venue ? { venue } : {}),
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode: zip,
+					...(county ? { subregion: county } : {}),
+				}
+
+				const streetPart = [split.house_number, split.street].filter(isPresent).join(" ").trim()
+
+				const raw = [
+					venue,
+					streetPart,
+					[city, [stateAbbr, zip].filter(isPresent).join(" ")].filter(isPresent).join(", "),
+				]
+					.filter(isPresent)
+					.join(", ")
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				const commNum = (record["Commission Number (UID)"] ?? "").trim()
+
+				const sourceID = commNum
+					? `${STATE_NY_NOTARIES_ADAPTER_ID}-${commNum}`
+					: stableSourceID(STATE_NY_NOTARIES_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: STATE_NY_NOTARIES_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: STATE_NY_NOTARIES_DEFAULT_LICENSE,
+				}
+
+				emitted++
+			}
+		},
+	}
+}
+
+/**
+ * The configured adapter instance registered with the corpus builder.
+ */
+export const stateNyNotariesAdapter = createStateNyNotariesAdapter()

@@ -82,6 +82,86 @@
 			"default": "./out/types.js"
 		},
 		"./data/*": "./data/*",
+		"./au/*": {
+			"types": "./out/au/*.d.ts",
+			"node": "./lib/au/*.ts",
+			"default": "./out/au/*.js"
+		},
+		"./cn/*": {
+			"types": "./out/cn/*.d.ts",
+			"node": "./lib/cn/*.ts",
+			"default": "./out/cn/*.js"
+		},
+		"./cz/*": {
+			"types": "./out/cz/*.d.ts",
+			"node": "./lib/cz/*.ts",
+			"default": "./out/cz/*.js"
+		},
+		"./de/*": {
+			"types": "./out/de/*.d.ts",
+			"node": "./lib/de/*.ts",
+			"default": "./out/de/*.js"
+		},
+		"./fr/*": {
+			"types": "./out/fr/*.d.ts",
+			"node": "./lib/fr/*.ts",
+			"default": "./out/fr/*.js"
+		},
+		"./international/*": {
+			"types": "./out/international/*.d.ts",
+			"node": "./lib/international/*.ts",
+			"default": "./out/international/*.js"
+		},
+		"./jp/*": {
+			"types": "./out/jp/*.d.ts",
+			"node": "./lib/jp/*.ts",
+			"default": "./out/jp/*.js"
+		},
+		"./kr/*": {
+			"types": "./out/kr/*.d.ts",
+			"node": "./lib/kr/*.ts",
+			"default": "./out/kr/*.js"
+		},
+		"./nl/*": {
+			"types": "./out/nl/*.d.ts",
+			"node": "./lib/nl/*.ts",
+			"default": "./out/nl/*.js"
+		},
+		"./no/*": {
+			"types": "./out/no/*.d.ts",
+			"node": "./lib/no/*.ts",
+			"default": "./out/no/*.js"
+		},
+		"./sg/*": {
+			"types": "./out/sg/*.d.ts",
+			"node": "./lib/sg/*.ts",
+			"default": "./out/sg/*.js"
+		},
+		"./si/*": {
+			"types": "./out/si/*.d.ts",
+			"node": "./lib/si/*.ts",
+			"default": "./out/si/*.js"
+		},
+		"./south-asia/*": {
+			"types": "./out/south-asia/*.d.ts",
+			"node": "./lib/south-asia/*.ts",
+			"default": "./out/south-asia/*.js"
+		},
+		"./tw/*": {
+			"types": "./out/tw/*.d.ts",
+			"node": "./lib/tw/*.ts",
+			"default": "./out/tw/*.js"
+		},
+		"./us/*": {
+			"types": "./out/us/*.d.ts",
+			"node": "./lib/us/*.ts",
+			"default": "./out/us/*.js"
+		},
+		"./ve/*": {
+			"types": "./out/ve/*.d.ts",
+			"node": "./lib/ve/*.ts",
+			"default": "./out/ve/*.js"
+		},
 		"./utils": {
 			"types": "./out/utils/index.d.ts",
 			"node": "./lib/utils/index.ts",

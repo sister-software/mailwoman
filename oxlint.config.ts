@@ -217,7 +217,14 @@ export default {
 		{
 			// A test file imports the package under test through its public exports and a helper by relative path; the
 			// `#` map is the package's private naming and stays inside `lib/`.
-			files: ["packages/*/test/**/*.ts", "packages/*/test/**/*.tsx", "docs/test/**/*.ts", "docs/test/**/*.tsx"],
+			files: [
+				"packages/*/test/**/*.ts",
+				"packages/*/test/**/*.tsx",
+				"packages/corpus/lib/**/*.test.ts",
+				"packages/corpus/lib/**/*.test.tsx",
+				"docs/test/**/*.ts",
+				"docs/test/**/*.tsx",
+			],
 			rules: {
 				"mailwoman/no-private-import-in-test": "error",
 			},
@@ -254,14 +261,18 @@ export default {
 			},
 		},
 		{
+			// Corpus tests are co-located with the modules they cover. Test-only HTTP/TCP servers need Node builtins, while
+			// production corpus modules continue to use the package-wide builtin homes.
+			files: ["packages/corpus/lib/**/*.test.ts", "packages/corpus/lib/**/*.test.tsx"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
 			// Builtins with no idiom to wrap yet, each reached directly by the one file that needs it: a line reader over
 			// a fixed-width feed, a worker's `workerData`, the cluster primary, a test-local HTTP server and the two
 			// `https.get` downloads that predate `APIClient`.
 			files: [
-				"packages/corpus/test/unit/tools/fetch/download.test.ts",
-				"packages/corpus/test/unit/tools/fetch/geonames/dump.test.ts",
-				"packages/corpus/test/unit/tools/fetch/geonames/postal.test.ts",
-				"packages/corpus/test/unit/tools/fetch/state-hi-schools.test.ts",
 				"packages/filer/lib/sdk/form499/index.ts",
 				"packages/filer/lib/sdk/provider-list.ts",
 				"packages/mailwoman/lib/cli/native/commands/geocode.ts",

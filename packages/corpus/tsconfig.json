@@ -8,7 +8,7 @@
 		"erasableSyntaxOnly": true
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*"],
 	"references": [
 		{ "path": "../bdc" },
 		{ "path": "../sqlite" },

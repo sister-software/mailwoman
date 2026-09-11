@@ -87,7 +87,7 @@ import {
 	type StreetNegatives,
 	titleCase,
 } from "#recipes/sub/venue/sources"
-import type { LocaleBaseTuple } from "#synthesizers/german"
+import type { LocaleBaseTuple } from "#synthesizers/locale"
 import { pick } from "#synthesizers/utils"
 import type { SubVenueLexiconTable } from "#tools"
 import { alignRow } from "#utils"
@@ -398,7 +398,7 @@ export function renderGroups(
  * The street + tail groups for a country, in that country's own order.
  *
  * DE/ES/FR put the postcode before the locality and DE/ES put the house number after the street; GB and US keep the
- * anglophone order and US carries a region. These are the same orders `synthesizers/german.ts` renders, restated here
+ * anglophone order and US carries a region. These are the same orders `synthesizers/locale.ts` renders, restated here
  * because this recipe assembles its groups piece-by-piece (it has to, to place a sub-venue group in front of them).
  */
 export function addressGroups(country: string, tuple: LocaleBaseTuple, withStreet: boolean): Group[] {

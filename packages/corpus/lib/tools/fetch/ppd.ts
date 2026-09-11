@@ -90,7 +90,7 @@ export async function extractPPDTuples(
  */
 async function runPPDExtract(inputPath: string, outputPath: string): Promise<PPDExtractStats> {
 	// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself (see readTuples in
-	// recipes/locale.ts). `header: false` yields every row as data — PPD ships no header row.
+	// recipes/international/locale.ts). `header: false` yields every row as data — PPD ships no header row.
 	const rows = CSVSpliterator.fromAsync<string[]>(openReadStream(inputPath), {
 		header: false,
 	})

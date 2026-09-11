@@ -33,9 +33,9 @@ import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import { readTuples as readLocaleTuples, type LocalePart } from "#recipes/locale"
+import { readTuples as readLocaleTuples, type LocalePart } from "#international/recipes/locale"
 import { readTuples as readSliceTuples } from "#recipes/scaffold"
-import type { LocaleBaseTuple } from "#synthesizers/german"
+import type { LocaleBaseTuple } from "#synthesizers/locale"
 import { pick, weightedPick } from "#synthesizers/utils"
 import {
 	classifyIdentifier,

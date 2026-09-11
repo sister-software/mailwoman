@@ -21,9 +21,9 @@
 
 import { isPresent } from "@mailwoman/core/objects"
 
-import { decomposeStreet } from "#adapters/tiger/street-decompose"
 import { pick, tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
+import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 
 // Hand-curated US street name pool. Real frequency-weighted street names — sampled
 // from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the
