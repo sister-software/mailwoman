@@ -28,8 +28,9 @@ test.describe("Demo — structural render", () => {
 		await expect(page.getByLabel("Address", { exact: true })).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toBeVisible()
 
-		// Example chips row.
-		await expect(page.getByText("Try:")).toBeVisible()
+		// Example chips row. `MapChipRow` renders no caption — the row carries its name as `aria-label` where the
+		// pre-chrome `PresetChips` wrote a visible "Try:" span, so the row is read by role and name.
+		await expect(page.getByRole("group", { name: "Example addresses" })).toBeVisible()
 		await expect(page.getByRole("button", { name: "Space Needle" })).toBeVisible()
 
 		// The About explainer is a control in the map chrome, and its copy renders in the sheet that control opens —
