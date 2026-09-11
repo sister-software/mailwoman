@@ -190,7 +190,7 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	})
 })
 
-// --- env-restricted integration against the real artifacts (see file header for paths) ---------------
+// These cases require the real artifacts named in the file header.
 
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB

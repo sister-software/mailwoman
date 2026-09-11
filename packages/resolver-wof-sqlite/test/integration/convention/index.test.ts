@@ -76,7 +76,7 @@ describe("convention engine — merge + resolve", () => {
 	})
 })
 
-// --- Live dispatch: an injected convention reroutes findPlace -------------------------------------
+// An injected convention reroutes findPlace through live dispatch.
 
 function buildDB(): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()

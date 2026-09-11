@@ -64,7 +64,7 @@ interface BuildOpts {
 function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array {
 	const version = opts.version ?? 2
 
-	// --- Intern strings (edge tokens, then place names), first-seen order. ---
+	// Intern edge tokens and place names in first-seen order.
 	const stringMap = new Map<string, number>()
 	const strings: string[] = []
 
@@ -116,7 +116,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	const view = new DataView(bytes.buffer)
 	let pos: number
 
-	// --- Header ---
+	// Write the binary header.
 	bytes.set(MAGIC, 0)
 	pos = 4
 	view.setUint16(pos, version, true)
@@ -136,7 +136,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	view.setUint32(pos, provJson ? binarySize : 0, true) // provenance offset at byte 28
 	pos += 4
 
-	// --- String table: offsets[stringCount + 1], then concatenated UTF-8 ---
+	// Write string offsets followed by concatenated UTF-8 bytes.
 	let strOffset = 0
 
 	for (const encoded of encodedStrings) {
@@ -153,7 +153,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 		pos += encoded.length
 	}
 
-	// --- State / edge / place tables ---
+	// Write state, edge, and place tables.
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateTableSize
 	const placeTableStart = edgeTableStart + edgeTableSize

@@ -532,7 +532,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	console.log(`built ${ARTIFACT}`)
 }
 
-// --- the manifest form ----------------------------------------------------------------------------------------------
+// The manifest form records the overlay's source and artifact identity.
 
 /**
  * A soft-feed sibling an overlay links: where it comes from, the name it takes in the overlay, and the consequence line

@@ -172,7 +172,7 @@ export function foldExtract(ctx: {
 
 	out.exec("COMMIT")
 
-	// --- pass 4b: postcode ALIAS names (#1495) ---
+	// Fold postcode aliases into the staged candidate names.
 	//
 	// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
 	// the extract's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything

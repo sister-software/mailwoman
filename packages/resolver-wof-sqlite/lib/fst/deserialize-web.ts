@@ -67,7 +67,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 	let pos = HEADER_SIZE
 
-	// --- String table ---
+	// Decode the interned string table.
 	const strOffsets = new Uint32Array(stringCount + 1)
 
 	for (let i = 0; i <= stringCount; i++) {
@@ -86,7 +86,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 	pos += stringBytes
 
-	// --- State table ---
+	// Decode the state table and its transitions.
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
 	// v5 grew the place entry by the encyclopedic float; v4-and-below files are read at the old stride.
 	const placeEntrySize = isSplit ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE

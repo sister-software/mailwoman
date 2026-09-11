@@ -15,7 +15,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/fst"
 import { beforeAll, describe, expect, it } from "vitest"
 
-// --- Unit tests with a synthetic trie ---
+// Synthetic-trie cases exercise the binary format without external artifacts.
 
 function buildSyntheticFST(): FSTMatcher {
 	const nodes: FSTNode[] = [
@@ -128,7 +128,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 	})
 })
 
-// --- Integration tests with real WOF data ---
+// Real-WOF cases exercise the format against production-scale source data.
 
 const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = await pathExists(WOF_DB)
