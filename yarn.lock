@@ -5893,7 +5893,7 @@ __metadata:
     typescript: "npm:^6.0.3"
     zod: "npm:^4.5.4"
   bin:
-    mwdev-mcp: ./lib/cli.ts
+    mwdev-mcp: ./lib/cli/index.ts
   languageName: unknown
   linkType: soft
 
@@ -6147,7 +6147,7 @@ __metadata:
     pbf: "npm:^5.1.2"
     pmtiles: "npm:^4.5.0"
   bin:
-    map-tui: ./out/cli.js
+    map-tui: ./out/cli/index.js
   languageName: unknown
   linkType: soft
 
@@ -19590,8 +19590,8 @@ __metadata:
     react:
       optional: true
   bin:
-    mailwoman: ./out/cli.js
-    mw: ./out/cli.js
+    mailwoman: ./out/cli/index.js
+    mw: ./out/cli/index.js
   languageName: unknown
   linkType: soft
 
