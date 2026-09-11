@@ -27,7 +27,7 @@ describe("module-surface", () => {
 		const interfaces = Array.from({ length: 18 }, (_, i) => `interface Shape${i} { value: string }`).join("\n")
 		const constants = Array.from({ length: 31 }, (_, i) => `const value${i} = ${i}`).join("\n")
 		const functions = Array.from({ length: 35 }, (_, i) => `function step${i}(): void {}`).join("\n")
-		const dividers = Array.from({ length: 6 }, (_, i) => `// --- section ${i} ---`).join("\n")
+		const dividers = Array.from({ length: 6 }, (_, i) => `// ${"-".repeat(3)} section ${i} ${"-".repeat(3)}`).join("\n")
 
 		const context = await plant(
 			"packages/fixture/lib/large.ts",

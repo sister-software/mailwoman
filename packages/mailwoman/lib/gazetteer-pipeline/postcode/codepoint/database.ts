@@ -150,7 +150,7 @@ export async function buildPostcodeCodePoint(
 	const sourceDir = options.sourceDir ?? String(dataRootPath("codepoint", stamp))
 	const out = options.out ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`))
 
-	// --- Acquire.
+	// Acquire the Code-Point source archive.
 	//
 	// An OFFLINE build must not silently produce an artifact with blank provenance. `downloadCodePointOpen`
 	// leaves an `acquisition.json` sidecar next to the archive precisely so a later offline rebuild can
@@ -252,7 +252,7 @@ export async function buildPostcodeCodePoint(
 		db.exec("COMMIT")
 		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
 
-		// --- Check on the archive's own manifest. See `codepoint/extract.ts` for why this oracle exists.
+		// Check the archive's own manifest; codepoint/extract.ts explains this oracle.
 
 		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the SELF row per place
 		// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with

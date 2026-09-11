@@ -610,7 +610,7 @@ export async function trainCrossSourceModel(
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
 	const { rows, joined, addressFrequency, sources, precisionBar, out, report } = options
 
-	// --- Phase C: geocode + ingest (record.id = the join-key label; `source` rides the record). The
+	// Geocode and ingest records, carrying the join-key label in record.id and source on the record.
 	// heavy geocoder is injected (see ./eval-geocoder.ts). ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()

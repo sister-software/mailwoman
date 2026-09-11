@@ -302,7 +302,7 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
 export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): GeodeticLatLon {
 	const { tx, ty, tz, scalePPM, rx, ry, rz } = OSGB36_TO_WGS84_HELMERT
 
-	// --- Airy 1830 geodetic → geocentric cartesian.
+	// Convert Airy 1830 geodetic coordinates to geocentric Cartesian coordinates.
 	const phi = (latitude * Math.PI) / 180
 	const lambda = (longitude * Math.PI) / 180
 	const sinPhi = Math.sin(phi)
@@ -314,7 +314,7 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
 	const y1 = nuAiry * cosPhi * Math.sin(lambda)
 	const z1 = (1 - e2Airy) * nuAiry * sinPhi
 
-	// --- Helmert: rotate, scale, translate.
+	// Apply Helmert rotation, scale, and translation.
 	const s = 1 + scalePPM * PPM
 	const rxRad = rx * ARCSEC_TO_RAD
 	const ryRad = ry * ARCSEC_TO_RAD
@@ -324,7 +324,7 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
 	const y2 = ty + rzRad * x1 + s * y1 - rxRad * z1
 	const z2 = tz - ryRad * x1 + rxRad * y1 + s * z1
 
-	// --- GRS80 geocentric cartesian → geodetic, by the standard iteration on latitude.
+	// Convert GRS80 geocentric Cartesian coordinates to geodetic coordinates by latitude iteration.
 	const e2GRS = (GRS80_A * GRS80_A - GRS80_B * GRS80_B) / (GRS80_A * GRS80_A)
 	const p = Math.sqrt(x2 * x2 + y2 * y2)
 

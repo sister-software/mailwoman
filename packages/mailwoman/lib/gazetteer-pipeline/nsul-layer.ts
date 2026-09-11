@@ -685,7 +685,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const uprnDatabasePath = options.uprnDatabasePath ?? String(dataRootPath("uprn", "uprn.db"))
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? NSUL_MINIMUM_PLAUSIBLE_ROWS
 
-	// --- Acquire. The archive is verified against its sidecar; a missing sidecar is recorded in words.
+	// Acquire and verify the archive against its sidecar, recording a missing sidecar explicitly.
 	let archiveMD5 = UNKNOWN_PROVENANCE
 	let archiveName = UNKNOWN_PROVENANCE
 	let vintage: NSULVintage
@@ -730,7 +730,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 
 	const { UPRN_H3_RESOLUTION } = await import("@mailwoman/resolver-wof-sqlite/uprn")
 
-	// --- The coordinate source. Read-only; its manifest version goes into the meta so a reader can tell which
+	// Read the coordinate source and record its manifest version in metadata.
 	// Open UPRN release each coordinate is from.
 	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnDatabasePath, { readOnly: true })
 	const uprnLayerVersion = (await readLayerManifest(uprnDB)).version

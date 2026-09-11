@@ -266,7 +266,7 @@ export async function crossSourceThresholdSweep(
 		resolveEntities(records, { trainEM: true, collapseSpatial: true, addressFrequency, learnedScorer: false }).entities
 	)
 
-	// --- Arm 2: the bundled GBT at a fine threshold sweep (down well below the dedup 2.71, since
+	// Evaluate the bundled GBT over a fine threshold sweep.
 	// cross-source pairs sit at strongly NEGATIVE logits). ---
 	const SWEEP = [-8, -6, -5, -4, -3, -2, -1, 0, 1, 2, DEDUP_GBT_META.recommendedThreshold]
 	const gbtArms: ArmMetrics[] = []
@@ -284,7 +284,7 @@ export async function crossSourceThresholdSweep(
 		gbtArms.push(await measure(`GBT @ ${t.toFixed(2)}`, t, entities))
 	}
 
-	// --- Verdict. The threshold fix WORKS only if some GBT arm dominates FS — more (or equal)
+	// The threshold fix passes only when a GBT arm dominates FS.
 	// cross-source links at ≥ FS phone-corroboration WITHOUT over-merging (entity count must not
 	// collapse below ~90% of FS, else the "links" are giant-blob artifacts). Otherwise FS is on the
 	// frontier and threshold alone is insufficient. ---

@@ -114,7 +114,7 @@ export async function scorerClusteringEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// --- Data-gen: the same NPI-keyed records as the dedup benchmark + the pairwise probe (the SHARED
+	// Build the NPI-keyed benchmark sample and pairwise probe.
 	// sample builder). ---
 	const {
 		rows,
@@ -145,7 +145,7 @@ export async function scorerClusteringEval(
 
 	geocoder[Symbol.dispose]()
 
-	// --- The feature basis: address-frequency + collapsed-spatial model (the baseline). The agreement
+	// Use address frequency and the collapsed-spatial model as the baseline feature basis.
 	// pattern is EM-independent, so the same featurize() is consistent at train and inference time. ---
 	// The featurizer is the SHARED production one (createMatchFeaturizer) — train ≡ eval ≡ inference, one
 	// definition. Feed the collapsed-spatial + address-frequency comparison set (the benchmark baseline).

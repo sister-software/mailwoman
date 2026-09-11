@@ -370,7 +370,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 			.get() as Record<string, number>
 
-		// --- Provenance summary --- always emitted so the operator can audit which licenses a database carries.
+		// Always emit provenance so operators can audit database licenses.
 		const lines: string[] = [
 			`${kept} points → ${finalOut}`,
 			`${totalReturned} ${SCOPE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,

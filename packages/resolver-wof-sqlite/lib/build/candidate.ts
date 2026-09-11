@@ -231,7 +231,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	await createCandidateStagingTables(kdb)
 
-	// --- compact code maps (country/placetype → small int, shrinks the clustered key). The ids are
+	// Build compact country and placetype code maps for clustered keys.
 	// assigned here; the rows are bulk-inserted via kdb once the passes have discovered every code. ---
 	const ccodes = new Map<string, number>()
 	const ptcodes = new Map<string, number>()
@@ -260,7 +260,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		return id
 	}
 
-	// --- importance source (#28): loaded BEFORE pass 1, which is the only pass that sees a place's
+	// Load the importance source before the only pass that sees each place.
 	// name/country/placetype/centroid together. Absent → every row's `importance` stays NULL. ---
 	let importance: ReturnType<typeof loadImportanceIndex> | undefined
 
@@ -438,7 +438,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		}).toLocaleString()} country surfaces`
 	)
 
-	// --- pass 1c: cross-source currency backfill (#1737 — resurrectCurrencyHoles owns the checks). Runs BEFORE
+	// Backfill cross-source currency before later candidate passes.
 	// the alias pass so a resurrected place's alt names explode like any primary's. ---
 	if (opts.currencyBackfill) {
 		const nBackfill = await resurrectCurrencyHoles({

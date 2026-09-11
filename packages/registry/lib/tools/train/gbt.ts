@@ -102,14 +102,14 @@ export async function trainDedupGBT(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// --- Phases A + B: the variation-rich sample + the corpus-wide address-frequency table (the SHARED
+	// Build the variation-rich sample and corpus-wide address-frequency table.
 	// sample builder — the same records the dedup benchmark and the learned-scorer evals see). ---
 	const { rows, keptNpis, addressFrequency } = await buildNPPESSample(
 		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
 		report
 	)
 
-	// --- Phase C: geocode + ingest (NPI rides on record.id as the label). The heavy geocoder is
+	// Geocode and ingest records, carrying the NPI in record.id as the label.
 	// injected (see ./eval-geocoder.ts) — the registry package never imports the runtime. ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
@@ -146,7 +146,7 @@ export async function trainDedupGBT(
 		report?.(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 	}
 
-	// --- Phase E: calibrate the default link threshold. The GBT logit is NOT in FS-weight units — it's
+	// Calibrate the default link threshold; the GBT logit is not in FS-weight units.
 	// trained with class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base
 	// rate and over-merges. Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the
 	// CLUSTERING threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
@@ -201,7 +201,7 @@ export async function trainDedupGBT(
 	const model = trainGBT(X, Y, W, hyperparams)
 	report?.(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)
 
-	// --- Emit the model as a committed TS module. The literal is single-line + prettier-ignored so a
+	// Emit the model as a committed TypeScript module with a prettier-stable literal.
 	// retrain produces a clean one-line diff, not a thousand reformatted lines. ---
 	const meta = {
 		version: "1.0.0",

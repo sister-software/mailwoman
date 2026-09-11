@@ -121,7 +121,7 @@ export async function trainCrossSourceGBT(
 
 	report?.(`    ${opByNPI.size} OP ${STATE} practitioners`)
 
-	// --- Phase B: the SAME NPIs from NPPES (practice address + legal name) + the corpus-wide
+	// Join the same NPPES NPIs with practice address, legal name, and corpus-wide
 	// address-frequency table (one full registry pass, identical to train-gbt). ---
 	report?.("[B] full registry pass: address-frequency table + the NPI-joined NPPES rows…")
 	const rows: CrossSourceRow[] = []
@@ -170,7 +170,7 @@ export async function trainCrossSourceGBT(
 
 	report?.(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
 
-	// --- Phases C–F: the SHARED cross-source trainer (geocode → cross-source pairs → #655 calibration
+	// Run the shared cross-source trainer: geocode, form pairs, calibrate, and train.
 	// → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,

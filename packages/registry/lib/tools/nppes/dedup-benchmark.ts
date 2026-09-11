@@ -150,7 +150,7 @@ export async function nppesDedupBenchmark(
 		report
 	)
 
-	// --- Phase C: geocode + ingest (the NPI rides on record.id as the held-out label). The heavy
+	// Geocode and ingest records, carrying the held-out NPI in record.id.
 	// geocoder is injected (see ./eval-geocoder.ts); model-swap for a multi-version curve rides the
 	// command's factory config (--model/--tokenizer/--model-card; modelCardPath is MANDATORY when
 	// modelPath is set — without it a STAGE3 model silently mis-decodes into empty parses). ---
@@ -237,7 +237,7 @@ export async function nppesDedupBenchmark(
 	const H3_RES = options.h3Res ?? 11 // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
 	const orgNameH3Label = buildOrgNameH3Grain(npiPrimary, npiCoord, H3_RES)
 
-	// --- Phase D: the comparison-model setting progression — toggle each setting ON in turn at the default
+	// Progressively enable comparison-model settings at the default threshold.
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
 	report?.(`[D] resolving the setting progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
@@ -292,7 +292,7 @@ export async function nppesDedupBenchmark(
 		`    default F1 ${(100 * base.score.f1).toFixed(1)}% → best F1 ${(100 * best.score.f1).toFixed(1)}% @ threshold ${best.t}`
 	)
 
-	// --- Phase F: NPI-level vs ENTITY-level truth. Score the SAME clusters against both yardsticks to
+	// Score the same clusters against NPI-level and entity-level truth.
 	// reveal how much of the apparent over-merge is NPI over-segmentation (one org / many subpart-NPIs,
 	// where merging is CORRECT) rather than model error. Two production configs: the FS full setting stack
 	// and the shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---

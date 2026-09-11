@@ -146,7 +146,7 @@ export async function scorerPairwiseEval(
 
 	geocoder[Symbol.dispose]()
 
-	// --- Block + feature extraction. The model (collapsed spatial + address-frequency) defines the
+	// Block records and extract the collapsed-spatial and address-frequency features.
 	// comparisons; EM-fit it for the FS baseline. ---
 	report?.("[D] blocking + features…")
 	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })

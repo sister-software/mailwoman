@@ -140,7 +140,7 @@ export async function dedupCeiling(
 		}
 	}
 
-	// --- Derive the precision ceiling. An address-aware matcher must, on co-located distinct-NPI
+	// Derive the precision ceiling from co-located distinct-NPI records.
 	// pairs, either merge (wrong) or hold them apart using name/org. It CAN separate the `separable`
 	// (and most `mid`) pairs but NOT the `collide` ones. So the irreducible false-merge rate among
 	// co-located distinct pairs is collide/pairs; an oracle's precision on the co-located decision is

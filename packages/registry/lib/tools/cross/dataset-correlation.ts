@@ -152,7 +152,7 @@ export async function crossDatasetCorrelation(
 	const CORPUS_FREQ = options.corpusFrequency ?? true
 	const SPECS = [...buildSpecs(`${SOURCES}`, STATE), commitmentsSpec(`${SOURCES}`, STATE)]
 
-	// --- Phase A: stream each source, TX-filter, explode → keep the first CAP rows for geocoding AND
+	// Stream each source, filter Texas rows, and retain the first capped rows for geocoding.
 	// (when --corpus-frequency, the default) count EVERY in-state address into a corpus-wide table. The
 	// sample is the matched set; the frequency table reflects the full TX population, so the proven
 	// inverse-frequency change down-weights a genuinely-crowded shared campus even when it appears once in
@@ -253,7 +253,7 @@ export async function crossDatasetCorrelation(
 	geocoder[Symbol.dispose]()
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
-	// --- Phase D: resolve to canonical entities. The proven changes are default-on (#86): collapsed
+	// Resolve records to canonical entities using the default-on proven changes.
 	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one; otherwise
 	// resolveEntities auto-computes the input-scoped default. ---
 	report?.("[D] resolving across sources…")
@@ -405,7 +405,7 @@ export async function crossDatasetCorrelation(
 		report?.(`\n[written] ${OUT_MD}`)
 	}
 
-	// --- The reconciliation artifact: a GeoJSON FeatureCollection of every resolved entity. Each feature
+	// Emit a GeoJSON FeatureCollection for every resolved entity.
 	// carries `sources` + `sourceIDs` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
 	// and the geocode tier. QGIS-ready; this is the operator-verifiable output of the matcher. ---
 	if (OUT_GEOJSON) {

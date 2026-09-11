@@ -155,7 +155,7 @@ export async function coverageReconciliation(
 	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS baseline for this cross-dataset join.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
-	// --- Reconcile across sources via the shared @mailwoman/registry library — the SAME code path as
+	// Reconcile sources through the shared @mailwoman/registry code path.
 	// `mailwoman registry --reconcile`, so the script and the CLI can't drift. ---
 	const config: ReconcileConfig = { eligibilitySources: [...ELIGIBILITY], fundingSources: [...FUNDING] }
 	const result = reconcileCoverage(entities, config)

@@ -141,7 +141,7 @@ export async function trainOrgCrossSourceGBT(
 
 	report?.(`    ${joined.size} CCN-joined facilities → ${rows.length} records`)
 
-	// --- Phases C–F: the SHARED cross-source trainer (geocode → cross-source pairs → #655 calibration
+	// Run the shared cross-source trainer: geocode, form pairs, calibrate, and train.
 	// → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,

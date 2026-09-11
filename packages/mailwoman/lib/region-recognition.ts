@@ -131,7 +131,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		afterSplit.push(split ?? node)
 	}
 
-	// --- Pass 2: a locality whose WHOLE value is a state becomes a region; sibling city localities
+	// Second, turn a locality whose whole value is a state into a region; sibling city localities
 	// nest under it. Only fires when there's exactly one state-name locality in the container (the
 	// unambiguous "City, State" shape) — avoids reparenting in a multi-locality list we don't model. ---
 	const stateIdxs = afterSplit

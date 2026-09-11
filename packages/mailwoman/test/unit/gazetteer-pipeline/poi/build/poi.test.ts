@@ -126,7 +126,7 @@ describe("buildPOIDatabase", () => {
 		expect(codes.every((c) => c.id > 0)).toBe(true)
 		const cafeID = codes.find((c) => c.category === "cafe")!.id
 
-		// --- clustered order on disk: the (h3_cell, category_id) group's FIRST physical row (no
+		// Clustered disk order makes the first (h3_cell, category_id) row authoritative; no
 		// ORDER BY — relying on the WITHOUT ROWID clustered-key order) is the best-confidence one. ---
 		const group = await kdb
 			.selectFrom("poi")

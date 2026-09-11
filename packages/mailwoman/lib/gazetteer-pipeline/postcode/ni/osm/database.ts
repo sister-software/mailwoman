@@ -180,7 +180,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const out = options.out ?? String(dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`))
 	const responsePath = String(join(sourceDir, "response.json"))
 
-	// --- Acquire. Offline is the normal path; see the option's docstring.
+	// Acquire the source; offline operation is the normal path described by the option.
 	if (!options.offline) {
 		await acquireNIPostcodes({ destDir: sourceDir, now, onPhase: phase })
 	}
