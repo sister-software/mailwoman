@@ -37,7 +37,7 @@ interface SurfaceHit {
 
 const TEST_FILE = /\.(?:test|spec)\.(?:ts|tsx)$/u
 /**
- * A closed divider comment in either rule character, ASCII or box-drawing: `// -- label ---` and `// ── label ───`.
+ * A closed section-divider comment in either rule character, ASCII or box-drawing has a label between its two rules.
  * Both runs are two characters or longer, and a comment whose text continues on the next line carries no trailing run
  * and is not a divider.
  */
