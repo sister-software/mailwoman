@@ -26,6 +26,7 @@
  *   effect is measured; see the note there.
  */
 
+import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
@@ -36,7 +37,6 @@ import {
 import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 } from "@mailwoman/core/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
-import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"

@@ -37,8 +37,8 @@
  *   License: CC0.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
-import type { ComponentTag } from "@mailwoman/core/types"
 
 import {
 	COUNTRY_DISPLAY_NAME,

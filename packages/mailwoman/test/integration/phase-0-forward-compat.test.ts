@@ -11,9 +11,9 @@
  *   If this test ever breaks, the abstraction is wrong — fix it now, not in Phase 6.
  */
 
+import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { enUS, frFR, InMemoryLocaleRegistry, jaJP, type LocaleProfile } from "@mailwoman/core/locale"
 import { InMemoryPolicyRegistry } from "@mailwoman/core/policy"
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
 describe("Phase 0 §8 — JP forward-compat", () => {

@@ -24,11 +24,11 @@
  *       pure, and other side-effecting code goes in `./runner.ts`.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex, createHash, type Hash } from "@mailwoman/core/hash"
 import { isPresent } from "@mailwoman/core/objects"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { TextSpliterator } from "spliterator"
 
 import type { CanonicalRow, CorpusAdapter } from "#types"

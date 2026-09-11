@@ -1,3 +1,4 @@
+import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -7,7 +8,6 @@
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/failure/census.run.ts`
  */
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
-import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"

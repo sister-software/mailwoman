@@ -19,9 +19,9 @@
  *   two artifacts (`foldVersion`) is part of what's under test.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import type { PairEdge, PairIndexLike } from "@mailwoman/neural/pair"

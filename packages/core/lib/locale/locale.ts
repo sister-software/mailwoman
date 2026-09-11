@@ -13,8 +13,9 @@
  *   task-3 follow-up in DECISIONS.md).
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
+
 import type { ClassifierPolicy } from "#policy/policy"
-import type { ComponentTag } from "#types"
 
 export interface LocaleProfile {
 	/**

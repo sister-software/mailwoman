@@ -7,10 +7,10 @@
  *   is probed first, and when the register has it, `22` is the number the result names.
  */
 
+import type { BIOLabel } from "@mailwoman/codex/component"
 import { buildAddressTree, collectNodes } from "@mailwoman/core/decoder"
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import type { AddressPointLookup } from "@mailwoman/core/resolver"
-import type { BIOLabel } from "@mailwoman/core/types/component"
 import { applyAddressPoint, streetNumberPairs } from "@mailwoman/resolver/street"
 import { describe, expect, test } from "vitest"
 

@@ -28,11 +28,11 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
  */
 
+import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 

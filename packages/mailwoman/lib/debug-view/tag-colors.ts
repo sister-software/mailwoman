@@ -10,7 +10,7 @@
  *   directly, so no named-color lookup table is needed downstream.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
 
 const TAG_COLORS: Partial<Record<ComponentTag, string>> = {
 	// Admin hierarchy — ambers (locality-ish) and purples (country/unit)

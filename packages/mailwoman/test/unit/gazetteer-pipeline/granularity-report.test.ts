@@ -7,7 +7,7 @@
  *   the committed artifact's shape is asserted without touching a DB or a clock.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity/index"
 import { LADDER } from "mailwoman/gazetteer-pipeline/granularity/index"
 import { renderGranularityReport } from "mailwoman/gazetteer-pipeline/granularity/report"

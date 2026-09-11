@@ -7,7 +7,7 @@
  *   that tells a widened match from an exact one.
  */
 
-import type { ComponentTag } from "#decoder/types"
+import type { ComponentTag } from "#component"
 
 /**
  * Mapping from mailwoman's address-component tags to the resolver's placetype taxonomy.

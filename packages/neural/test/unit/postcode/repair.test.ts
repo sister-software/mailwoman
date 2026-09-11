@@ -9,7 +9,8 @@
  *   (longest-match-wins, SNAP-only for numeric shapes, no-add-over-structural, local smear-clip).
  */
 
-import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
+import type { BIOLabel } from "@mailwoman/codex/component"
+import type { DecoderToken } from "@mailwoman/core/decoder"
 import { repairPostcodeLabels } from "@mailwoman/neural/postcode"
 import { describe, expect, it } from "vitest"
 

@@ -7,13 +7,13 @@
  *   Split from `resolve.ts`, which owns `WOFResolver` — the walk itself over what this module provides.
  */
 
+import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
 import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
 	type CoincidentLocality,
 	compareReferential,
 	type ResolveCandidateTrace,
 	type ResolveNodeTrace,
-	type PlacetypeMap,
 	type PostcodePrefixIndexLike,
 	referentialFromPopulation,
 	type ResolvedPlace,

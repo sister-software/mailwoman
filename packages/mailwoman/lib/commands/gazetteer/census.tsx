@@ -22,9 +22,9 @@
  *   node's dependent-locality share and lift rather than trusting the write.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { Box, Text } from "ink"
 import { join } from "path-ts"

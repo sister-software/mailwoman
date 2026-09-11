@@ -12,19 +12,13 @@
  *   not the MA one.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
-import {
-	collectNodes,
-	type AddressNode,
-	type AddressTree,
-	type ComponentTag,
-	type Interpretation,
-} from "@mailwoman/core/decoder"
+import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/placetype-map"
+import { collectNodes, type AddressNode, type AddressTree, type Interpretation } from "@mailwoman/core/decoder"
 import {
 	type BackendCapabilityGap,
 	type ResolveNodeTrace,
-	DEFAULT_PLACETYPE_MAP,
-	isPlacetypeFallback,
 	type ResolvedPlace,
 	type ResolveOpts,
 	type Resolver,

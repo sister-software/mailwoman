@@ -37,7 +37,7 @@
  *   uses — `foldVersion` in the header records which), so one query-time fold serves both artifacts.
  */
 
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 
 import { readFramedHeader, writeFramedHeader } from "#binary-frame"
 

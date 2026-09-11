@@ -8,7 +8,7 @@
  *   are asserted on data small enough to read.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity/index"

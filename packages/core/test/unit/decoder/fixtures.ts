@@ -7,8 +7,8 @@
  *   lookup, and the White House address the serializer tests walk.
  */
 
+import type { BIOLabel } from "@mailwoman/codex/component"
 import type { AddressNode, DecoderToken } from "@mailwoman/core/decoder/types"
-import type { BIOLabel } from "@mailwoman/core/types/component"
 
 /**
  * Construct a DecoderToken — confidence defaults to 1.0 for fixture brevity.

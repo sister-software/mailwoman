@@ -16,8 +16,9 @@
  *   schema natively distinguishes them.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
+
 import type { Classification } from "#types/Classification"
-import type { ComponentTag } from "#types/component"
 
 /**
  * Static mapping table. Tags not in this table map to `null` (treated as "not a component" — internal classifier

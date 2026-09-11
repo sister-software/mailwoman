@@ -16,7 +16,7 @@
  *   per-invocation knob set (input path, optional country filter, row cap, abort signal).
  */
 
-import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
+import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 
 /**
  * Provenance + augmentation metadata that travels with every corpus row.

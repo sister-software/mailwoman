@@ -23,6 +23,7 @@
  */
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
+import { placetypeMapForCountry } from "@mailwoman/codex/placetype-map"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import {
@@ -43,11 +44,7 @@ import type {
 	ResolveOpts,
 	Resolver,
 } from "@mailwoman/core/resolver"
-import {
-	countriesFromPostcodeFormat,
-	countryFromPostcodeFormat,
-	placetypeMapForCountry,
-} from "@mailwoman/core/resolver"
+import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 

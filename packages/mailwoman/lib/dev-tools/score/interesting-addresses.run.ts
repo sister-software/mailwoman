@@ -8,9 +8,10 @@
  * candidate
  */
 
-import { type ComponentTag, groupTuplesByTag } from "@mailwoman/core"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
+import { groupTuplesByTag } from "@mailwoman/core"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 

@@ -10,7 +10,8 @@
  *   match on "United"/"Box"/bare prose).
  */
 
-import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
+import type { BIOLabel } from "@mailwoman/codex/component"
+import type { DecoderToken } from "@mailwoman/core/decoder"
 import { repairUnitLabels } from "@mailwoman/neural/unit-repair"
 import { describe, expect, it } from "vitest"
 

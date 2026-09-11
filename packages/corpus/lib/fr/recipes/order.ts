@@ -30,9 +30,9 @@
  *   inlined the variant logic and never called it).
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isPresent } from "@mailwoman/core/objects"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"

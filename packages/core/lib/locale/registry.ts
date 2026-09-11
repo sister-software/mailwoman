@@ -9,8 +9,9 @@
  *   §LocaleProfile validation rule).
  */
 
+import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
+
 import type { LocaleProfile, LocaleRegistry } from "#locale/locale"
-import { COMPONENT_TAGS, type ComponentTag } from "#types"
 
 const COMPONENT_TAG_SET = new Set<ComponentTag>(COMPONENT_TAGS)
 

@@ -30,9 +30,9 @@
  *   scar is positional, not universal).
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import { tempRootPath } from "@mailwoman/core/data-root"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 

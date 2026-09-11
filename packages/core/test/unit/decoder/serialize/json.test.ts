@@ -1,6 +1,6 @@
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { decodeAsJSON } from "@mailwoman/core/decoder/serialize-json"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
-import type { ComponentTag } from "@mailwoman/core/types/component"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0

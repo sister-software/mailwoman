@@ -12,8 +12,8 @@
  *   coverage against the real DB lives in `packages/mailwoman/lib/dev-tools/demo-cascade-smoke.run.ts`.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
-import type { ComponentTag } from "@mailwoman/core/types/component"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { describe, expect, test, vi } from "vitest"

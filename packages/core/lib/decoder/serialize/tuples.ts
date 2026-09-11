@@ -10,9 +10,10 @@
  *   use `decodeAsXML` when containment matters.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
+
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { unknownSpans } from "#decoder/unknown-spans"
-import type { ComponentTag } from "#types/component"
 
 /**
  * Options for {@link decodeAsTuples}.

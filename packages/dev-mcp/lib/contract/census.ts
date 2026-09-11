@@ -21,8 +21,8 @@
  *   produced a `cedex`. So the report carries tag PRESENCE beside every stranding count, and the two are never summed.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { STRICT_DEPENDENTS, validateTree, type AddressTree, type TreeViolation } from "@mailwoman/core/decoder"
-import type { ComponentTag } from "@mailwoman/core/types"
 
 /**
  * The tag this violation is about, and the class it belongs to — the key a tally groups on.

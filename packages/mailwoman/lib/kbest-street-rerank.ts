@@ -38,8 +38,9 @@
  *   today, US TIGER / NO Kartverket next, each behind the same interface with no code change here.
  */
 
-import { type BIOLabel, buildAddressTree, type DecoderToken, type AddressTree } from "@mailwoman/core/decoder"
-import { BIO_LABELS } from "@mailwoman/core/types"
+import type { BIOLabel } from "@mailwoman/codex/component"
+import { BIO_LABELS } from "@mailwoman/codex/component"
+import { buildAddressTree, type DecoderToken, type AddressTree } from "@mailwoman/core/decoder"
 import {
 	decodeSegmentationsKBest,
 	type NeuralAddressClassifier,

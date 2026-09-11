@@ -9,7 +9,9 @@
  *   neural-backed modes happen one component at a time, conditioned on golden-set metrics.
  */
 
-import type { ClassificationProposal, ComponentTag } from "#types"
+import type { ComponentTag } from "@mailwoman/codex/component"
+
+import type { ClassificationProposal } from "#types"
 
 /**
  * How a component is sourced.

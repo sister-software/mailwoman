@@ -18,16 +18,17 @@
  *   by the caller) — an undetected system parses exactly as before.
  */
 
+import type { ComponentTag } from "#component"
 import { CODE_POSTAL_PATTERN } from "#fr/code-postal"
 import { UK_POSTCODE_PATTERN } from "#gb/postcode/index"
 import type { SystemCode } from "#postcode-systems"
 
 export interface AddressSystemConventions {
 	/**
-	 * Component tags that are NOT grammatical in this address system (names from the core `ComponentTag` union; codex
-	 * stays dependency-free so they are plain strings here).
+	 * Component tags that are NOT grammatical in this address system. Typed against the union itself, so a tag that no
+	 * longer exists is a compile error here rather than a rule that silently forbids nothing.
 	 */
-	readonly forbiddenTags?: readonly string[]
+	readonly forbiddenTags?: readonly ComponentTag[]
 	/**
 	 * The system's canonical postcode shape. A decoded postcode span that is a strict sub-match of a pattern-valid string
 	 * in the raw text is shape-INVALID for this system and eligible for the snap-only repair (extend/clip to the valid

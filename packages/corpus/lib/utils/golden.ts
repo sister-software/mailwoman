@@ -19,9 +19,9 @@
  *   creep in over time as new entries land.
  */
 
+import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"

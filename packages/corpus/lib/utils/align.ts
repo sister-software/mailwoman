@@ -33,7 +33,7 @@
  *       — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
  */
 
-import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
+import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"

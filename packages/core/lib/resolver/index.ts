@@ -44,14 +44,7 @@ export {
 	type FixtureAuthoritativeRule,
 } from "#resolver/fixture-authoritative-provider"
 
-export {
-	DEFAULT_PLACETYPE_MAP,
-	PLACETYPE_FILTER_GROUPS,
-	expandPlacetypeFilter,
-	hardCountrySafelistFromCoverage,
-	isPlacetypeFallback,
-	placetypeMapForCountry,
-} from "#resolver/types"
+export { hardCountrySafelistFromCoverage } from "#resolver/types"
 
 export type {
 	AddressPointHit,
@@ -64,7 +57,6 @@ export type {
 	GazetteerArtifactCoverage,
 	InterpolatedPointHit,
 	InterpolationLookup,
-	PlacetypeMap,
 	PostcodePrefixAncestor,
 	PostcodePrefixIndexLike,
 	PostcodePrefixNode,

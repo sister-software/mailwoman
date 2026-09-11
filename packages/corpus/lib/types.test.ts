@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/core/types"
+import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/codex/component"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow, QuarantinedRow } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
 

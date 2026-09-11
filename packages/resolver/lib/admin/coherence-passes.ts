@@ -10,8 +10,9 @@
  */
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
+import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { PLACETYPE_FILTER_GROUPS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
+import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
 
