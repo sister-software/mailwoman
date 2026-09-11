@@ -4,10 +4,8 @@
  * @file Invariance fixture loading.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { assertPathExists } from "@mailwoman/core/fs/readers/stat"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { TextSpliterator } from "spliterator"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Suite the invariance runner loads when no path is given. TODO: Resolve this via core's `resolvePackageSpecifier`
@@ -32,19 +30,7 @@ export interface InvarianceRow {
 export async function loadSuite(path: string = DEFAULT_SUITE_PATH): Promise<InvarianceRow[]> {
 	await assertPathExists(path, "Invariance suite should exist")
 
-	const rows: InvarianceRow[] = []
-
-	// The suite is JSONL with a `//` comment header, so the rows are parsed here rather than by
-	// `JSONSpliterator`, which would throw on the first comment.
-	for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
-		const trimmed = line.trim()
-
-		if (!trimmed || trimmed.startsWith("//")) continue
-
-		rows.push(parseJSONStrict<InvarianceRow>(trimmed))
-	}
-
-	return rows
+	return JSONSpliterator.from<InvarianceRow>(path, { comment: "//" }).toArray()
 }
 
 //#endregion
