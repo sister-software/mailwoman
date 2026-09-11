@@ -68,10 +68,9 @@ the ORDINARY one (a source with no quotes at all paid a full scan per row). Meas
 extract: 8 MB took 27,405 ms on 4.0.0 and 175 ms on 5.0.0. Streaming callers never saw it because
 they were chunk-bounded; only a whole-buffer `.from()` exposed it.
 
-5.0.0 also aligned `normalizeKeys`' default between `from` (was `undefined`) and `fromAsync` (was
-`mode !== "array"`) — the same options object previously produced different keys per entry point.
-Note that `normalizeKeys` does NOT lowercase: `smartSnakeCase` leaves ALL CAPS alone, and OA ships
-`LON,LAT,NUMBER,STREET`. That is why `readCSVRecords` owns the lower-casing itself.
+`normalizeKeys` follows the row mode in both entry points. The default object mode normalizes headers to lower-case
+keys. A reader that indexes publisher spelling — for example OpenAddresses' `LON,LAT,NUMBER,STREET` — must set
+`normalizeKeys: false`; `readCSVRecords` intentionally uses the normalized default.
 
 ## Before claiming a built slice needs rebuilding
 

@@ -38,23 +38,17 @@ export type TabularRow = ReadonlyArray<string>
 /**
  * Read one pipe-delimited export file into rows.
  *
- * `enableQuoteHandling` is what makes the embedded newlines above survive; `header: false` is what keeps the first
- * record from being eaten, since these files carry none.
+ * Quote-aware parsing preserves embedded newlines; `header: false` keeps the first record because these files carry no
+ * header.
  */
 async function readPipeDelimited(path: PathBuilderLike): Promise<TabularRow[]> {
 	const rows: TabularRow[] = []
 
 	for (const row of CSVSpliterator.from(await readLocalBuffer(path), {
-		mode: "array",
 		header: false,
 		columnDelimiter: "|",
-		enableQuoteHandling: true,
 	})) {
-		// `String` ON A DECLARED STRING IS NOT REDUNDANT HERE. The emitter's array mode is TYPED `string[]` and coerces
-		// numeric-looking columns at RUNTIME — measured: `mukey` comes back as the number 412818, not `"412818"` — so a row
-		// passed through untouched stops joining against the shapefile's own `MUKEY`. An empty column arrives as `""`
-		// rather than as null, which is why nothing here has to decide what a missing value means.
-		rows.push(row.map((value) => String(value)))
+		rows.push(row)
 	}
 
 	return rows

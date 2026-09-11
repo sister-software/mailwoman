@@ -59,6 +59,6 @@
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"spliterator": "^7.0.0"
+		"spliterator": "^7.3.0"
 	}
 }

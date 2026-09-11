@@ -138,11 +138,9 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	// file descriptor.
 	const rows = (): AsyncIterable<string[]> =>
 		CSVSpliterator.fromAsync<string[]>(opts.inputPath, {
-			mode: "array",
 			header: false,
 			columnDelimiter: opts.separator,
 			drop: opts.skipLines,
-			enableQuoteHandling: true,
 		})
 
 	// --- Pass 1: read header + sample rows for type inference ---

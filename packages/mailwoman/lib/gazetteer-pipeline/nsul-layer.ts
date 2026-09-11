@@ -232,12 +232,11 @@ export function classifyNSULLine(line: string): NSULLineClass {
 }
 
 /**
- * Strip the header line's BOM (U+FEFF, by char code so no invisible character hides in this source file) and CRLF, and
- * compare it to {@link NSUL_HEADER}. Returns the header as found when it drifts, `null` when it matches.
+ * Strip the header line's CRLF terminator and compare it to {@link NSUL_HEADER}. Returns the header as found when it
+ * drifts, `null` when it matches.
  */
 export function nsulHeaderDrift(rawLine: string): string | null {
-	const withoutBOM = rawLine.charCodeAt(0) === 0xfe_ff ? rawLine.slice(1) : rawLine
-	const header = withoutBOM.endsWith("\r") ? withoutBOM.slice(0, -1) : withoutBOM
+	const header = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine
 
 	return header === NSUL_HEADER ? null : header
 }

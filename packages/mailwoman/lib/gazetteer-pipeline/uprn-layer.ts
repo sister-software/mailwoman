@@ -633,10 +633,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	for await (const rawLine of TextSpliterator.fromAsync(extracted.csvPath)) {
 		if (!headerSeen) {
-			// The header is BOM-prefixed (U+FEFF) and CRLF-terminated in the wild; strip both before the
-			// exact match. The BOM check is by char code so no invisible character hides in this source file.
-			const withoutBOM = rawLine.charCodeAt(0) === 0xfe_ff ? rawLine.slice(1) : rawLine
-			const header = withoutBOM.endsWith("\r") ? withoutBOM.slice(0, -1) : withoutBOM
+			const header = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine
 
 			if (header !== OPEN_UPRN_HEADER) {
 				kdb.exec("ROLLBACK")

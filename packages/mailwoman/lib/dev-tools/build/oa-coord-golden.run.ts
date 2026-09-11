@@ -46,50 +46,23 @@ import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
  * Approximates Python's default `csv.DictReader` dialect.
  *
  * `normalizeKeys: false` keeps the source's own header spelling, which is what the row reader indexes by —
- * OpenAddresses ships ALL-CAPS headers. Quote handling is ON because OA street and city fields wrap embedded commas,
- * and the spliterator leaves it off by default.
+ * OpenAddresses ships ALL-CAPS headers.
  */
 const CSV_OPTIONS = {
-	mode: "object",
 	normalizeKeys: false,
-	enableQuoteHandling: true,
 } satisfies CSVSpliteratorInit
 
 type CSVRecord = Record<string, string | undefined>
 
 /**
- * Drop a leading UTF-8 BOM.
- *
- * The spliterator has no BOM option, and a BOM survives into the FIRST HEADER NAME — `\uFEFFLON` rather than `LON` — so
- * every row reads that one column as absent while the rest parse cleanly.
- */
-async function* withoutBOM(source: AsyncIterable<Uint8Array | string>): AsyncIterable<Uint8Array> {
-	let first = true
-
-	for await (const chunk of source) {
-		let bytes = typeof chunk === "string" ? new TextEncoder().encode(chunk) : chunk
-
-		if (first) {
-			first = false
-
-			if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
-				bytes = bytes.subarray(3)
-			}
-		}
-
-		yield bytes
-	}
-}
-
-/**
  * Stream header-keyed records from one member of an archive.
  */
 async function* csvRecordsFromZip(zipPath: string, entry: string): AsyncGenerator<CSVRecord> {
-	yield* CSVSpliterator.fromAsync<CSVRecord>(withoutBOM(readZipEntry(zipPath, entry)), CSV_OPTIONS)
+	yield* CSVSpliterator.fromAsync<CSVRecord>(readZipEntry(zipPath, entry), CSV_OPTIONS)
 }
 
 async function* csvRecordsFromFile(path: string): AsyncGenerator<CSVRecord> {
-	yield* CSVSpliterator.fromAsync<CSVRecord>(withoutBOM(openReadStream(path)), CSV_OPTIONS)
+	yield* CSVSpliterator.fromAsync<CSVRecord>(openReadStream(path), CSV_OPTIONS)
 }
 
 //#endregion

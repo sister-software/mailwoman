@@ -79,9 +79,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 			}
 
 			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
-				mode: "object",
 				normalizeKeys: false,
-				enableQuoteHandling: true,
 			})
 
 			let emitted = 0

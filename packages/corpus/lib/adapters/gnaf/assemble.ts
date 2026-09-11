@@ -10,8 +10,8 @@
  *   PIDs) → STREET_LOCALITY (street name + type) → LOCALITY (suburb). State is the per-file prefix
  *   (ACT/NSW/…).
  *
- *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated; `mode: "object"`
- *   keys each row by its header) — NOT raw `read_csv` SQL, which a flat-file join doesn't need and
+ *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated; header names key each row) — NOT
+ *   raw `read_csv` SQL, which a flat-file join doesn't need and
  *   which the #183–190 cleanup retired. The two lookup tables (STREET_LOCALITY ~765k rows, LOCALITY
  *   ~16k) fit as Maps; ADDRESS_DETAIL is streamed once and reservoir-sampled, so memory stays
  *   bounded (the OOM lesson from the Overture ingest).
@@ -82,7 +82,7 @@ export function gnafHoldoutKey(street: string, locality: string, postcode: strin
 type Row = Record<string, string | number | undefined>
 
 async function* psvObjects(path: string): AsyncIterable<Row> {
-	yield* PSVSpliterator.fromAsync(path, { mode: "object", header: true }) as AsyncIterable<Row>
+	yield* PSVSpliterator.fromAsync(path) as AsyncIterable<Row>
 }
 
 /**

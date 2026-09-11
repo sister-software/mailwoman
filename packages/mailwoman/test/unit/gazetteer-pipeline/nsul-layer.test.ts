@@ -114,13 +114,13 @@ describe("classifyNSULLine", () => {
 })
 
 describe("nsulHeaderDrift", () => {
-	it("accepts the wild header under its BOM and CRLF", () => {
-		expect(nsulHeaderDrift(`${BOM}${NSUL_HEADER}\r`)).toBeNull()
+	it("accepts the header with its CRLF terminator", () => {
+		expect(nsulHeaderDrift(`${NSUL_HEADER}\r`)).toBeNull()
 		expect(nsulHeaderDrift(NSUL_HEADER)).toBeNull()
 	})
 
 	it("reports a drifted header as found", () => {
-		expect(nsulHeaderDrift(`${BOM}UPRN,PCDS\r`)).toBe("UPRN,PCDS")
+		expect(nsulHeaderDrift("UPRN,PCDS\r")).toBe("UPRN,PCDS")
 	})
 })
 

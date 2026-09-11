@@ -252,9 +252,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 		// (spliterator ≥ 3.2.0); `header: false` yields the header row too, so the column index is built
 		// from that first row rather than from a header option.
 		for await (const cells of CSVSpliterator.fromAsync<string[]>(input, {
-			mode: "array",
 			header: false,
-			enableQuoteHandling: true,
 		})) {
 			if (header === null) {
 				header = cells.map((h) => h.trim().toLowerCase())

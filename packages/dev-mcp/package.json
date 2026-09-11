@@ -57,7 +57,7 @@
 		"@modelcontextprotocol/sdk": "^1.30.0",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
-		"spliterator": "^7.0.0",
+		"spliterator": "^7.3.0",
 		"typescript": "^6.0.3",
 		"zod": "^4.5.4"
 	},

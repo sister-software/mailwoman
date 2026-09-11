@@ -26,7 +26,7 @@
  *   Measured on that same file: 421,555 rows carry one embedded comma inside a quoted `brand_name` and 327
  *   carry two ("FiberFirst, LLC", "Valor Telecommunications of Texas, LP"). A delimiter scan blind to quotes
  *   shifts every column right of `brand_name` on 4% of rows — measured exactly, a quote-blind
- *   `String.split(",")` mismatches 81,095 of 2,000,000 real rows. `enableQuoteHandling` also keeps an
+ *   `String.split(",")` mismatches 81,095 of 2,000,000 real rows. Quote-aware parsing also keeps an
  *   embedded NEWLINE inside its row — no row in that file needs it (the 12/13/14-field line counts sum
  *   exactly to `wc -l`, so no record is split across lines), but the guarantee is what makes the reader safe
  *   on a file nobody has measured yet.
@@ -119,11 +119,11 @@ function projectRow(columns: readonly string[], providerID: ProviderID): BDCAvai
 }
 
 /**
- * Shared reader options. `header: true` consumes the first row as the header even in `array` mode;
- * `enableQuoteHandling` is what makes the 421,882 quoted-brand rows keep their column alignment. `crlf` already
- * defaults to `true` for CSV (RFC 4180), so a CRLF file does not leak `\r` into the last column.
+ * Shared reader options. `header: true` consumes the first row as the header even in `array` mode. Quote-aware parsing
+ * keeps the 421,882 quoted-brand rows aligned. `crlf` already defaults to `true` for CSV (RFC 4180), so a CRLF file
+ * does not leak `\r` into the last column.
  */
-const READER_OPTIONS = { mode: "array", enableQuoteHandling: true } as const
+const READER_OPTIONS = { mode: "array" } as const
 
 /**
  * Stream an FCC BDC availability CSV, yielding every data row. The header row is consumed, never emitted.

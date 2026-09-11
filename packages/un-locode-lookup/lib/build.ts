@@ -27,12 +27,9 @@ interface CSVRow {
  */
 export async function buildUNLocodeDB(csvPath: string, dbPath: string): Promise<{ rows: number; withCoords: number }> {
 	// `normalizeKeys: false` keeps the UNECE header casing the row shape above is written against
-	// (`NameWoDiacritics`, not `name_wo_diacritics`). Location names carry commas, so quote handling
-	// is on — it is off by default.
+	// (`NameWoDiacritics`, not `name_wo_diacritics`).
 	const records = CSVSpliterator.fromAsync<CSVRow>(csvPath, {
-		mode: "object",
 		normalizeKeys: false,
-		enableQuoteHandling: true,
 	})
 
 	using db = new DatabaseClient<UNLocodeDatabase>(dbPath)

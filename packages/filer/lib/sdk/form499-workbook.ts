@@ -316,7 +316,7 @@ export async function* parseForm499Workbook(
 
 	assertWorkbookHeader(normalizeColumnNames((rawHeader as XLSXCellValue[]).map((value) => String(value ?? ""))))
 
-	for await (const row of XLSXSpliterator.fromAsync(workbookPath, { sheet, mode: "object" })) {
+	for await (const row of XLSXSpliterator.fromAsync(workbookPath, { sheet })) {
 		yield toForm499Row(row as WorkbookRow)
 	}
 }

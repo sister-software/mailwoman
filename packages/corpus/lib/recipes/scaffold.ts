@@ -99,9 +99,9 @@ export type CSVRecord = Record<string, string | undefined>
  * built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at all.
  * `scaffold.test.ts` pins both halves.
  *
- * This is what a CSV reader here still owns. Quote handling, object rows and lower-case keys are `CSVSpliterator`'s
- * defaults as of 7.0.0, so a recipe reads a source with `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and
- * needs nothing else.
+ * This is what a CSV reader here still owns. Quote handling, object rows, and lower-case keys are `CSVSpliterator`'s
+ * defaults, so a recipe reads a source with `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and needs nothing
+ * else.
  *
  * @category CSV
  */

@@ -91,8 +91,8 @@ export interface CuratedOverlay {
 }
 
 /**
- * Parse the Overture categories CSV. Strips a leading BOM, skips the header row, and splits each `code; [a,b,c]` line.
- * A handful of Overture rows (4 as of the v1.17.0 snapshot — `aircraft_repair`, `ev_charging_station`,
+ * Parse the Overture categories CSV. Accepts its leading BOM, skips the header row, and splits each `code; [a,b,c]`
+ * line. A handful of Overture rows (4 as of the v1.17.0 snapshot — `aircraft_repair`, `ev_charging_station`,
  * `custom_t_shirt_store`, `community_services_non_profits`) carry a display path whose LEAF label differs from the
  * category code the db actually stores; for those the code is APPENDED as the true leaf so the invariant `lookup.ts`'s
  * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
@@ -104,7 +104,7 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	// The header is row 1; the first emitted record is row 2.
 	let rowNumber = 1
 
-	for (const fields of CSVSpliterator.from<string[]>(csvText.replace(/^\uFEFF/, ""), {
+	for (const fields of CSVSpliterator.from<string[]>(csvText, {
 		mode: "array",
 		columnDelimiter: ";",
 	})) {

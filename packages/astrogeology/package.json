@@ -86,7 +86,7 @@
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
 		"react": "^19.2.8",
-		"spliterator": "^7.0.0",
+		"spliterator": "^7.3.0",
 		"wrangler": "^4.129.0",
 		"zod": "^4.5.4"
 	},

@@ -151,12 +151,7 @@ export function postcodeArea(postcode: string): string {
  * @deprecated Use `CSVSpliterator` directly.
  */
 export function splitCSVLine(line: string): string[] {
-	return (
-		CSVSpliterator.from<string[]>(line, {
-			header: false,
-			enableQuoteHandling: true,
-		}).next().value ?? []
-	)
+	return CSVSpliterator.from<string[]>(line, { header: false }).next().value ?? []
 }
 
 /**
@@ -170,7 +165,6 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
 	// `Doc/Code-Point_Open_Column_Headers.csv`.
 	for await (const row of CSVSpliterator.fromAsync<string[]>(csvPath, {
 		header: false,
-		enableQuoteHandling: true,
 	})) {
 		stats.read++
 

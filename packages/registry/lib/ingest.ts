@@ -70,10 +70,7 @@ export function streamRows(
 	opts: { delimiter?: Delimiter } = {}
 ): AsyncSequence<Record<string, string>> {
 	return CSVSpliterator.fromAsync<Record<string, string>>(source, {
-		mode: "object",
 		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(source)],
-		normalizeKeys: false,
-		enableQuoteHandling: true,
 	})
 }
 

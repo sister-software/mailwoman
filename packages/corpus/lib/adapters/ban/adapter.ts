@@ -109,10 +109,8 @@ export function createBanAdapter(): CorpusAdapter {
 			}
 
 			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
-				mode: "object",
 				normalizeKeys: false,
 				columnDelimiter: ";",
-				enableQuoteHandling: true,
 			})
 
 			let emitted = 0

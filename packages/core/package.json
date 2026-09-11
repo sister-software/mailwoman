@@ -624,7 +624,7 @@
 		"path-ts": "^2.3.0",
 		"pino": "^10.3.1",
 		"regenerate": "^1.4.2",
-		"spliterator": "^7.0.0",
+		"spliterator": "^7.3.0",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.9.0",
 		"yauzl-promise": "^4.0.0",

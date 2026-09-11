@@ -99,10 +99,7 @@ export async function* readPermitFile(
 	const category = basename(String(path), extname(String(path)))
 	const bytes = openReadStream(path)
 
-	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(decodeByteStream(bytes, ENCODING), {
-		mode: "object",
-		enableQuoteHandling: true,
-	})) {
+	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(decodeByteStream(bytes, ENCODING))) {
 		const status = firstColumn(row, "영업상태명")
 
 		if (wanted.size && !wanted.has(status)) continue

@@ -162,11 +162,7 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 	let checkedHeader = false
 
 	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(await openCSV(csvPath), {
-		mode: "object",
 		columnDelimiter: ";",
-		// Opt-in end-to-end quoting: wrapping quotes strip, doubled quotes unescape, quoted `;` does
-		// not split — the #1044 fix proper.
-		enableQuoteHandling: true,
 	})) {
 		if (!checkedHeader) {
 			assertRequiredColumns(row)

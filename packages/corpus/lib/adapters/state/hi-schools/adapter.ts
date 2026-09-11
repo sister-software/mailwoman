@@ -68,7 +68,6 @@ async function* readSchoolRows(inputPath: string): AsyncGenerator<HiSchoolRow> {
 		for (const sheet of STATE_HI_SCHOOL_SHEETS) {
 			yield* XLSXSpliterator.fromAsync<HiSchoolRow>(inputPath, {
 				sheet,
-				mode: "object",
 				normalizeKeys: false,
 			})
 		}
@@ -77,9 +76,7 @@ async function* readSchoolRows(inputPath: string): AsyncGenerator<HiSchoolRow> {
 	}
 
 	yield* CSVSpliterator.fromAsync<HiSchoolRow>(inputPath, {
-		mode: "object",
 		normalizeKeys: false,
-		enableQuoteHandling: true,
 	})
 }
 

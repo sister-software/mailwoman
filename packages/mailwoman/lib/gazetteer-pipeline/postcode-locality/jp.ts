@@ -42,7 +42,7 @@ import { pyRound } from "@mailwoman/core/numeric"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { TextSpliterator } from "spliterator"
+import { CSVSpliterator } from "spliterator"
 
 import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
 import { ProximityGrid } from "#gazetteer-pipeline/postcode-locality/base"
@@ -105,12 +105,8 @@ async function loadKenall(path: string): Promise<Map<string, string>> {
 	// value today. It is here because the file is reissued monthly and the next edition is not measured.
 	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 
-	// KEN_ALL is Shift-JIS and the spliterator's text path decodes UTF-8, so streaming it means dropping
-	// to raw byte ranges and decoding per row — for an 11 MB file whose size Japan Post fixes.
-	for (const raw of TextSpliterator.from(text)) {
-		const line = raw.replace(/[\r\n]+$/, "")
-		const f = line.split(",").map((c) => c.replace(/^"+/, "").replace(/"+$/, ""))
-
+	// Decode CP932 once, then let the CSV reader handle quoted fields and CRLF. KEN_ALL has no header row.
+	for (const f of CSVSpliterator.from<string[]>(text, { header: false })) {
 		if (f.length >= MIN_KEN_ALL_COLUMNS && f[0]!.length === JIS_CODE_LENGTH && /^[0-9]+$/.test(f[0]!)) {
 			out.set(`${f[0]!.slice(0, 3)}-${f[0]!.slice(3)}`, f[5]!)
 		}

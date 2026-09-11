@@ -274,12 +274,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 	const proc = spawnOGR2OGR(args, "zoning ingest")
 
 	try {
-		for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(proc.stdout, {
-			mode: "object",
-			// Opt-in end-to-end quoting: the WKT column carries commas and spaces on every row, so a reader without it
-			// mis-splits every feature into hundreds of columns.
-			enableQuoteHandling: true,
-		})) {
+		for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(proc.stdout)) {
 			const areaID = row.objectid ?? ""
 
 			if (!areaID) {
