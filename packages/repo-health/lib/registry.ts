@@ -16,6 +16,7 @@ import { exportNameAffixCheck } from "#checks/export-name-affix"
 import { exportsCheck } from "#checks/exports"
 import { licenseRegisterCheck } from "#checks/license-register"
 import { manifestTargetsCheck } from "#checks/manifest-targets"
+import { moduleCohesionCheck } from "#checks/module-cohesion"
 import { moduleSurfaceCheck } from "#checks/module-surface"
 import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
@@ -40,6 +41,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	noRootScriptsCheck,
 	manifestTargetsCheck,
 	moduleSurfaceCheck,
+	moduleCohesionCheck,
 	privateNameShadowsCheck,
 	prefixDirectoriesCheck,
 	exportNameAffixCheck,
