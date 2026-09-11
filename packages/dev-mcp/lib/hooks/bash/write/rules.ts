@@ -133,6 +133,19 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 }
 
 /**
+ * Repository paths that hold DERIVED files only — compiler output and the dependency install. Measured against the
+ * index: no tracked path matches, so removing one deletes nothing a commit holds, and `tsc -b` or `yarn install`
+ * restores it. `.yarn/` is NOT here — it carries the pinned yarn binary, which is tracked.
+ *
+ * The exemption is granted to {@link REMOVER} alone, and the asymmetry is the point: removing derived output restores
+ * the derived state, while writing one by hand fabricates it. A hand-written `out/<subpath>.d.ts` answers for a source
+ * file that does not exist, because every subpath map lists `types` first.
+ */
+const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules)(?:\/|$)|\.tsbuildinfo$/u
+
+const REMOVER = "rm"
+
+/**
  * Commands that run another command. The words after one are re-judged as a command of their own, so a writer cannot
  * hide behind a wrapper.
  */
@@ -153,6 +166,16 @@ const DETACHED_LAUNCH_GUIDANCE =
 	"does not make the client disposable: when the client dies Modal answers `Received a cancellation signal` and stops " +
 	"the container mid-training. Watch the run by polling the volume for its next checkpoint, not by holding the client " +
 	"open. A run that did die continues with `--resume auto` from its last save."
+
+/**
+ * What to do instead of removing a repository path, carried by the {@link REMOVER} refusal. {@link GUIDANCE} names the
+ * Write and Edit tools, and neither of them deletes anything.
+ */
+const REMOVAL_GUIDANCE =
+	"Removing DERIVED output is admitted: a path under `out/`, `dist/` or `node_modules/`, or a `*.tsbuildinfo`, read " +
+	"after any `..` is resolved. Anything else inside the repository is tracked or is someone's scratch file — remove a " +
+	"tracked path with `git rm`, so the index and the worktree agree. A target this hook cannot read, such as one behind " +
+	"a variable, is never derived; name the path in full."
 
 /**
  * Spellings of an admitted command that this guard refuses. Each is checked against that command's own segment, never
@@ -342,19 +365,39 @@ function expandHome(path: string): string {
 }
 
 /**
- * True when a path lands inside the repository. A path this cannot read — one carrying a variable, or a quoted span
- * already stripped — counts as inside: an unknown target is the case a guard must not wave through.
+ * Where a target resolves, or null when this cannot read it: a stripped quote and a variable are both opaque. Every
+ * caller takes its own refusing branch on null, so no reader of a target has to re-derive the resolution — and
+ * `resolvePath` normalizes `..`, which is what stops `out/../lib` from reading as derived output.
+ */
+function resolveTarget(raw: string, cwd: string): string | null {
+	if (!raw || raw === "QUOTED" || raw === "HEREDOC" || raw.includes("$")) return null
+
+	const expanded = expandHome(raw)
+
+	return isAbsolute(expanded) ? expanded : String(resolvePath(cwd, expanded))
+}
+
+/**
+ * True when a path lands inside the repository. A path this cannot read counts as inside: an unknown target is the case
+ * a guard must not wave through.
  */
 function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 	if (!raw || raw.startsWith("/dev/")) return false
 
-	// A stripped quote and a variable are both unreadable here, and an unreadable target counts as inside.
-	if (raw === "QUOTED" || raw === "HEREDOC" || raw.includes("$")) return true
+	const resolved = resolveTarget(raw, cwd)
 
-	const expanded = expandHome(raw)
-	const resolved = isAbsolute(expanded) ? expanded : String(resolvePath(cwd, expanded))
+	if (resolved === null) return true
 
 	return resolved === repoRoot || resolved.startsWith(`${repoRoot}/`)
+}
+
+/**
+ * True when a path names {@link DERIVED_PATH}. An unreadable target is NOT derived, so it stays guarded.
+ */
+function isDerivedPath(raw: string, cwd: string): boolean {
+	const resolved = resolveTarget(raw, cwd)
+
+	return resolved !== null && DERIVED_PATH.test(resolved)
 }
 
 /**
@@ -407,9 +450,12 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 				.filter((word) => word.length > 0 && !word.startsWith("-"))
 
 			const targets = writes === "last" ? operands.slice(-1) : operands
+			const guarded = head === REMOVER ? targets.filter((target) => !isDerivedPath(target, cwd)) : targets
 
-			if (targets.some((target) => insideRepository(target, repoRoot, cwd))) {
-				return refuse(`\`${head}\` writes inside the repository.`)
+			if (guarded.some((target) => insideRepository(target, repoRoot, cwd))) {
+				return head === REMOVER
+					? refuse("`rm` removes a repository path that is not derived output.", REMOVAL_GUIDANCE)
+					: refuse(`\`${head}\` writes inside the repository.`)
 			}
 
 			continue

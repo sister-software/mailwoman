@@ -62,6 +62,11 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		["vitest rewriting snapshots", `yarn vitest run -u packages/core`],
 		["a copy into the repository", `cp /tmp/x AGENTS.md`],
 		["a removal inside the repository", `rm -rf packages/core/lib`],
+		["a removal escaping derived output through a parent", `rm -rf packages/core/out/../lib`],
+		["a removal whose target this hook cannot read", `rm -rf "$TARGET"`],
+		["a removal of the pinned yarn binary", `rm .yarn/releases/yarn-4.18.0.cjs`],
+		["a removal naming one derived path and one tracked path", `rm -rf packages/core/out packages/core/lib`],
+		["a copy into derived output", `cp /tmp/x packages/core/out/index.js`],
 		["tee into the repository", `yarn compile | tee packages/core/build.log`],
 	])("refuses %s", (_label, command) => {
 		expect(refusalFor(command)).not.toBeNull()
@@ -96,6 +101,13 @@ describe("bash-write-guard: a Modal launch this shell could kill", () => {
 	it("still points a file-write refusal at the Write tool", () => {
 		expect(guidanceFor(`sed -i 's/a/b/' AGENTS.md`)).toContain("Edit tool")
 	})
+
+	it("explains removal rather than the Write tool", () => {
+		const guidance = guidanceFor(`rm -rf packages/core/lib`)
+
+		expect(guidance).toContain("git rm")
+		expect(guidance).not.toContain("Edit tool")
+	})
 })
 
 describe("bash-write-guard: the work a session actually does", () => {
@@ -123,6 +135,14 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["switching branch", `git checkout -b feature/x`],
 		["a conditional", `if test -f AGENTS.md; then head -1 AGENTS.md; fi`],
 		["a scratch directory", `mkdir -p /tmp/scratch && rm -rf /tmp/scratch`],
+		["clearing a workspace's build output", `rm -rf packages/repo-health/out`],
+		[
+			"removing a declaration map the compiler orphaned",
+			`rm -f packages/repo-health/out/checks/module-surface.d.ts.map`,
+		],
+		["removing a build cache", `rm packages/core/tsconfig.tsbuildinfo`],
+		["removing a dependency install before a clean install", `rm -rf node_modules && yarn install`],
+		["clearing build output by absolute path", `rm -rf ${REPO_ROOT}/packages/core/out`],
 		["a copy out of the repository", `cp AGENTS.md /tmp/`],
 		["a log captured through tee outside the tree", `yarn compile 2>&1 | tee /tmp/compile.log`],
 		["a timeout around a test run", `timeout 600 yarn test`],
