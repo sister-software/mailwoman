@@ -295,7 +295,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 async function bulkMode(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	if (!options.nadURL) {
 		throw new Error(
-			`bulk mode requires --nad-url. The DOT page is Akamai-gated; ` +
+			`bulk mode requires --nad-url. Akamai protects the DOT page; ` +
 				`visit https://www.transportation.gov/gis/national-address-database in a browser, ` +
 				`accept the disclaimer, and re-run with the pre-signed S3 URL.`
 		)
