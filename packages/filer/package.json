@@ -78,19 +78,19 @@
 			"default": "./out/schema.js"
 		},
 		"./sdk/build-filer": {
-			"types": "./out/sdk/build-filer.d.ts",
-			"node": "./lib/sdk/build-filer.ts",
-			"default": "./out/sdk/build-filer.js"
+			"types": "./out/sdk/build/filer.d.ts",
+			"node": "./lib/sdk/build/filer.ts",
+			"default": "./out/sdk/build/filer.js"
 		},
 		"./sdk/form499-notes": {
-			"types": "./out/sdk/form499-notes.d.ts",
-			"node": "./lib/sdk/form499-notes.ts",
-			"default": "./out/sdk/form499-notes.js"
+			"types": "./out/sdk/form499/notes.d.ts",
+			"node": "./lib/sdk/form499/notes.ts",
+			"default": "./out/sdk/form499/notes.js"
 		},
 		"./sdk/form499": {
-			"types": "./out/sdk/form499.d.ts",
-			"node": "./lib/sdk/form499.ts",
-			"default": "./out/sdk/form499.js"
+			"types": "./out/sdk/form499/index.d.ts",
+			"node": "./lib/sdk/form499/index.ts",
+			"default": "./out/sdk/form499/index.js"
 		},
 		"./frn": {
 			"types": "./out/frn.d.ts",
@@ -108,9 +108,9 @@
 			"default": "./out/sdk/cik-corroboration.js"
 		},
 		"./sdk/edgar-filings": {
-			"types": "./out/sdk/edgar-filings.d.ts",
-			"node": "./lib/sdk/edgar-filings.ts",
-			"default": "./out/sdk/edgar-filings.js"
+			"types": "./out/sdk/edgar/filings.d.ts",
+			"node": "./lib/sdk/edgar/filings.ts",
+			"default": "./out/sdk/edgar/filings.js"
 		},
 		"./sdk/cluster-filers": {
 			"types": "./out/sdk/cluster-filers.d.ts",
@@ -123,14 +123,14 @@
 			"default": "./out/sdk/cores-client.js"
 		},
 		"./sdk/exhibit21": {
-			"types": "./out/sdk/exhibit21.d.ts",
-			"node": "./lib/sdk/exhibit21.ts",
-			"default": "./out/sdk/exhibit21.js"
+			"types": "./out/sdk/exhibit21/index.d.ts",
+			"node": "./lib/sdk/exhibit21/index.ts",
+			"default": "./out/sdk/exhibit21/index.js"
 		},
 		"./sdk/edgar-ingest": {
-			"types": "./out/sdk/edgar-ingest.d.ts",
-			"node": "./lib/sdk/edgar-ingest.ts",
-			"default": "./out/sdk/edgar-ingest.js"
+			"types": "./out/sdk/edgar/ingest.d.ts",
+			"node": "./lib/sdk/edgar/ingest.ts",
+			"default": "./out/sdk/edgar/ingest.js"
 		},
 		"./sdk/family-id": {
 			"types": "./out/sdk/family-id.d.ts",
@@ -148,9 +148,9 @@
 			"default": "./out/filer-lookup.js"
 		},
 		"./sdk/form499-workbook": {
-			"types": "./out/sdk/form499-workbook.d.ts",
-			"node": "./lib/sdk/form499-workbook.ts",
-			"default": "./out/sdk/form499-workbook.js"
+			"types": "./out/sdk/form499/workbook.d.ts",
+			"node": "./lib/sdk/form499/workbook.ts",
+			"default": "./out/sdk/form499/workbook.js"
 		},
 		"./sdk/sec-client": {
 			"types": "./out/sdk/sec-client.d.ts",
@@ -173,9 +173,9 @@
 			"default": "./out/tools/linkage/metrics.js"
 		},
 		"./sdk/build/edgar-match": {
-			"types": "./out/sdk/build/edgar-match.d.ts",
-			"node": "./lib/sdk/build/edgar-match.ts",
-			"default": "./out/sdk/build/edgar-match.js"
+			"types": "./out/sdk/build/edgar/match.d.ts",
+			"node": "./lib/sdk/build/edgar/match.ts",
+			"default": "./out/sdk/build/edgar/match.js"
 		},
 		"./sdk/build/form499-rows": {
 			"types": "./out/sdk/build/form499-rows.d.ts",

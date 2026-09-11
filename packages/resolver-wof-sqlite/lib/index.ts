@@ -29,14 +29,14 @@ export {
 	createCandidateIntervalTable,
 	intervalContains,
 	MAX_ANCESTOR_DEPTH,
-} from "#candidate/ancestors-schema"
+} from "#candidate/ancestors/schema"
 
 export type {
 	CandidateAncestorsDatabase,
 	CandidateAncestorTable,
 	CandidateIntervalTable,
 	IntervalLabel,
-} from "#candidate/ancestors-schema"
+} from "#candidate/ancestors/schema"
 
 export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "#candidate/fts"
 
@@ -63,16 +63,16 @@ export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street
 
 export { type GeonamesIngestProgress, ingestGeonamesAliases, purgeGeonamesAliasRange } from "#geonames/aliases"
 
-export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address/point-schema"
-export type { AddressPointDatabase, AddressPointTable } from "#address/point-schema"
+export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address/point/schema"
+export type { AddressPointDatabase, AddressPointTable } from "#address/point/schema"
 
 export {
 	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
 	type WOFPostalCityAliasLookupOpts,
-} from "#postal/city/alias-lookup"
+} from "#postal/city/alias/lookup"
 
-export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city/alias-schema"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city/alias/schema"
 
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
@@ -96,7 +96,7 @@ export {
 	type Strategy,
 } from "#convention/index"
 
-export { SqliteConventionSource } from "#sqlite-convention-source"
+export { SqliteConventionSource } from "#sqlite/convention-source"
 
 export { WOFPostcodeLookup, type PostcodePlace } from "#postcode-point-lookup"
 
@@ -120,17 +120,17 @@ export {
 	type WOFReverseGeocoderOpts,
 } from "#reverse"
 
-export { AddressPointInterpolator } from "#address/point-interpolation"
-export { AddressPointSqliteLookup } from "#address/point"
+export { AddressPointInterpolator } from "#address/point/interpolation"
+export { AddressPointSqliteLookup } from "#address/point/index"
 
 export {
 	STREET_CENTROID_COLUMNS,
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
-} from "#street/centroid-schema"
+} from "#street/centroid/schema"
 
-export type { StreetCentroidDatabase, StreetCentroidTable } from "#street/centroid-schema"
-export { StreetCentroidSqliteLookup } from "#street/centroid"
+export type { StreetCentroidDatabase, StreetCentroidTable } from "#street/centroid/schema"
+export { StreetCentroidSqliteLookup } from "#street/centroid/index"
 
 export {
 	StreetInterpolator,

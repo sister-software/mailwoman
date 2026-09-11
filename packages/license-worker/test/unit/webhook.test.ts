@@ -9,8 +9,8 @@ import { ACCEPTED_EVENT_TYPES, verifyStripeEvent } from "@mailwoman/license-work
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { invoicePaidEvent } from "../support/stripe-fixtures.ts"
-import { signedWebhook } from "../support/stripe-mock.ts"
+import { invoicePaidEvent } from "../support/stripe/fixtures.ts"
+import { signedWebhook } from "../support/stripe/mock.ts"
 
 const worker = readEnv(env)
 

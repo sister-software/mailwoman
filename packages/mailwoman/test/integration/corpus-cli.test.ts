@@ -8,9 +8,9 @@
  *   there is to assert is the empty-registry messaging.
  */
 
-import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as runSpec } from "mailwoman/commands/corpus/run"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
@@ -39,7 +39,7 @@ const CLI_TEST_TIMEOUT_MS = 90_000
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 describe("corpus run option validation", () => {
 	test("rejects non-alpha-2 country", () => {

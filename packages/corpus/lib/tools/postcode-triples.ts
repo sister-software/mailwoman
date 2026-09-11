@@ -50,7 +50,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames-postal/adapter"
+import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"
 import type { PostcodePlacement } from "#recipes/scaffold"
 import { escapeSQLString } from "#utils/parquet"
 

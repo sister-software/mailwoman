@@ -35,7 +35,7 @@ import { Box, Text } from "ink"
 import { dirname, join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode-prefix"
+import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode/prefix"
 
 /**
  * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database. A prefix index
@@ -137,7 +137,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [DatabaseNam
 
 		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } = await import("@mailwoman/neural/postcode")
 
-		const { buildPostcodePrefixIndex } = await import("#gazetteer-pipeline/postcode-prefix")
+		const { buildPostcodePrefixIndex } = await import("#gazetteer-pipeline/postcode/prefix")
 
 		const database = args[0] as DatabaseName
 		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]

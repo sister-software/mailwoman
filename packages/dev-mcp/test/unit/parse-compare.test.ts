@@ -10,7 +10,7 @@
  *   an agreement that is really two different tags landing on one label.
  */
 
-import { diffSpans, SpanVerdict, type LabelledSpan } from "@mailwoman/dev-mcp/parse-compare"
+import { diffSpans, SpanVerdict, type LabelledSpan } from "@mailwoman/dev-mcp/parse/compare/index"
 import { describe, expect, it } from "vitest"
 
 function span(label: string, value: string, tag?: string): LabelledSpan {

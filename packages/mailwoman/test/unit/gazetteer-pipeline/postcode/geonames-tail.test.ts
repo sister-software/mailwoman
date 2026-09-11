@@ -17,7 +17,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
-import { buildPostcodeGeonamesTail } from "mailwoman/gazetteer-pipeline/postcode/geonames-tail"
+import { buildPostcodeGeonamesTail } from "mailwoman/gazetteer-pipeline/postcode/geonames/tail"
 import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 

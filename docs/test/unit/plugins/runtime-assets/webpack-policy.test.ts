@@ -110,7 +110,7 @@ describe("docs webpack policy", () => {
 
 		const aliases = config.resolve?.alias as Record<string, string>
 
-		expect(aliases["#onnx-runner"]).toMatch(/onnx-runner-browser[.]ts$/)
+		expect(aliases["#onnx-runner"]).toMatch(/onnx\/runner\/browser[.]ts$/)
 		expect(aliases["@mailwoman/neural/onnx-runner"]).toBe(aliases["#onnx-runner"])
 	})
 })

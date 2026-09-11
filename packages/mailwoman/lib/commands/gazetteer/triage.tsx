@@ -19,7 +19,7 @@ import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
-import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof-triage"
+import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof/triage"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -47,7 +47,7 @@ interface Options {
 const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
-		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof-triage")
+		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof/triage")
 
 		const adminDB = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
 		const geonamesDir = options.geonames ?? String(dataRootPath("geonames"))

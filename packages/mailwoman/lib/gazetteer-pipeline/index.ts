@@ -594,6 +594,6 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 export * from "#gazetteer-pipeline/coverage-manifest"
 export * from "#gazetteer-pipeline/defaults"
 export * from "#gazetteer-pipeline/fts"
-export * from "#gazetteer-pipeline/verify"
+export * from "#gazetteer-pipeline/verify/index"
 export * from "#gazetteer-pipeline/admin/index"
 export * from "#gazetteer-pipeline/postcode/index"

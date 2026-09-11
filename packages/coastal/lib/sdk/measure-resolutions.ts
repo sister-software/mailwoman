@@ -26,7 +26,7 @@ import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
 import { classifyFeatureCells } from "@mailwoman/spatial"
 
 import { CoastalCellIndex, type CellIndexMeasurement } from "#sdk/cells"
-import { readCoastalScenarioFeatures, readCoastalSourceIdentity, type CoastalIngestOptions } from "#sdk/ingest"
+import { readCoastalScenarioFeatures, readCoastalSourceIdentity, type CoastalIngestOptions } from "#sdk/ingest/index"
 import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 
 export interface MeasureResolutionsOptions extends CoastalIngestOptions, ResolutionMeasurementOptions {

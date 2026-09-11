@@ -10,7 +10,7 @@
  *   so the two hooks cannot drift apart the way parallel copies do.
  *
  *   The rule set is `docs/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
- *   additions, fixture-tested by `docs/scripts/check-vale-rules.ts`. The config path resolves
+ *   additions, fixture-tested by `docs/scripts/check/vale-rules.ts`. The config path resolves
  *   relative to THIS module, so a worktree checkout lints with its own rules.
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is

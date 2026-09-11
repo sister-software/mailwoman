@@ -42,9 +42,9 @@
 			"default": "./out/classifier/index.js"
 		},
 		"#pair": {
-			"types": "./out/pair/index.d.ts",
-			"node": "./lib/pair/index.ts",
-			"default": "./out/pair/index.js"
+			"types": "./out/pair/index/index.d.ts",
+			"node": "./lib/pair/index/index.ts",
+			"default": "./out/pair/index/index.js"
 		},
 		"#placetype": {
 			"types": "./out/placetype/index.d.ts",
@@ -52,21 +52,21 @@
 			"default": "./out/placetype/index.js"
 		},
 		"#onnx-runner": {
-			"types": "./out/onnx-runner.d.ts",
-			"browser": "./out/onnx-runner-browser.js",
-			"node": "./lib/onnx-runner.ts",
-			"default": "./out/onnx-runner.js"
+			"types": "./out/onnx/runner/index.d.ts",
+			"browser": "./out/onnx/runner/browser.js",
+			"node": "./lib/onnx/runner/index.ts",
+			"default": "./out/onnx/runner/index.js"
 		},
 		"#classifier/loader": {
-			"types": "./out/classifier/loader.d.ts",
-			"browser": "./out/classifier/loader-browser.js",
-			"node": "./lib/classifier/loader.ts",
-			"default": "./out/classifier/loader.js"
+			"types": "./out/classifier/loader/index.d.ts",
+			"browser": "./out/classifier/loader/browser.js",
+			"node": "./lib/classifier/loader/index.ts",
+			"default": "./out/classifier/loader/index.js"
 		},
 		"#weights": {
-			"types": "./out/weights.d.ts",
-			"node": "./lib/weights.ts",
-			"default": "./out/weights.js"
+			"types": "./out/weights/index.d.ts",
+			"node": "./lib/weights/index.ts",
+			"default": "./out/weights/index.js"
 		},
 		"#*": {
 			"types": "./out/*.d.ts",
@@ -122,25 +122,25 @@
 			"default": "./out/char-encoder.js"
 		},
 		"./onnx-runner": {
-			"types": "./out/onnx-runner.d.ts",
-			"browser": "./out/onnx-runner-browser.js",
-			"node": "./lib/onnx-runner.ts",
-			"default": "./out/onnx-runner.js"
+			"types": "./out/onnx/runner/index.d.ts",
+			"browser": "./out/onnx/runner/browser.js",
+			"node": "./lib/onnx/runner/index.ts",
+			"default": "./out/onnx/runner/index.js"
 		},
 		"./web-onnx-runner": {
-			"types": "./out/web-onnx-runner.d.ts",
-			"node": "./lib/web-onnx-runner.ts",
-			"default": "./out/web-onnx-runner.js"
+			"types": "./out/web/onnx-runner.d.ts",
+			"node": "./lib/web/onnx-runner.ts",
+			"default": "./out/web/onnx-runner.js"
 		},
 		"./web-loader": {
-			"types": "./out/web-loader.d.ts",
-			"node": "./lib/web-loader.ts",
-			"default": "./out/web-loader.js"
+			"types": "./out/web/loader.d.ts",
+			"node": "./lib/web/loader.ts",
+			"default": "./out/web/loader.js"
 		},
 		"./weights": {
-			"types": "./out/weights.d.ts",
-			"node": "./lib/weights.ts",
-			"default": "./out/weights.js"
+			"types": "./out/weights/index.d.ts",
+			"node": "./lib/weights/index.ts",
+			"default": "./out/weights/index.js"
 		},
 		"./browser": {
 			"types": "./out/browser.d.ts",
@@ -218,14 +218,14 @@
 			"default": "./out/word-consistency.js"
 		},
 		"./weights-channels": {
-			"types": "./out/weights-channels.d.ts",
-			"node": "./lib/weights-channels.ts",
-			"default": "./out/weights-channels.js"
+			"types": "./out/weights/channels.d.ts",
+			"node": "./lib/weights/channels.ts",
+			"default": "./out/weights/channels.js"
 		},
 		"./weights-lexicon": {
-			"types": "./out/weights-lexicon.d.ts",
-			"node": "./lib/weights-lexicon.ts",
-			"default": "./out/weights-lexicon.js"
+			"types": "./out/weights/lexicon.d.ts",
+			"node": "./lib/weights/lexicon.ts",
+			"default": "./out/weights/lexicon.js"
 		},
 		"./postcode": {
 			"types": "./out/postcode/index.d.ts",
@@ -243,9 +243,9 @@
 			"default": "./out/classifier/index.js"
 		},
 		"./pair": {
-			"types": "./out/pair/index.d.ts",
-			"node": "./lib/pair/index.ts",
-			"default": "./out/pair/index.js"
+			"types": "./out/pair/index/index.d.ts",
+			"node": "./lib/pair/index/index.ts",
+			"default": "./out/pair/index/index.js"
 		},
 		"./placetype": {
 			"types": "./out/placetype/index.d.ts",

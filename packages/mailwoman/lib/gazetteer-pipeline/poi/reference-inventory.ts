@@ -17,7 +17,7 @@ import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import type { BBox } from "#gazetteer-pipeline/poi/build-poi"
+import type { BBox } from "#gazetteer-pipeline/poi/build/poi"
 
 export interface ReferenceInventoryQuery {
 	/**

@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "#address/point"
-export * from "#address/point-interpolation"
-export * from "#address/point-schema"
+export * from "#address/point/index"
+export * from "#address/point/interpolation"
+export * from "#address/point/schema"

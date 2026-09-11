@@ -17,7 +17,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { Resolved } from "#eval-harness/oa/resolver/tree-hits"
-import { normalizeComponent } from "#eval-harness/per-tag-f1"
+import { normalizeComponent } from "#eval-harness/per/tag-f1"
 
 /**
  * Shortest token distinctive enough to carry matching weight; shorter ones are articles and directionals.

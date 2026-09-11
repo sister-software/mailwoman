@@ -19,7 +19,7 @@ import {
 	chooseCountryExpression,
 	hasBrandColumn,
 	type DescribeColumn,
-} from "mailwoman/gazetteer-pipeline/poi/build-poi"
+} from "mailwoman/gazetteer-pipeline/poi/build/poi"
 import { describe, expect, it } from "vitest"
 
 const OLDER_RELEASE_COLUMNS: DescribeColumn[] = [

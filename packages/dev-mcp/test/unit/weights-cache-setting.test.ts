@@ -21,7 +21,7 @@ import {
 	engineID,
 	EngineRegistry,
 	resolveConfig,
-} from "@mailwoman/dev-mcp/engine-registry"
+} from "@mailwoman/dev-mcp/engine/registry"
 import { ENGINE_CONFIG_SCHEMA } from "@mailwoman/dev-mcp/tool-kit"
 import { computeTreeFingerprint } from "@mailwoman/dev-mcp/tree-fingerprint"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"

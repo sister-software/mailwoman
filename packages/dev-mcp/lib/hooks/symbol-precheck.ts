@@ -28,7 +28,7 @@ import {
 	formatFindings,
 	readWriteIntent,
 	selectReportable,
-} from "#symbol-index"
+} from "#symbol/index"
 
 async function main(): Promise<void> {
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)

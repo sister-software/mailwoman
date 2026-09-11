@@ -152,7 +152,7 @@ describe("derivedWeightsKey", () => {
 		// The whole point of the rewrite. If someone trims this list back to config+data, the
 		// currency-filter class of stale artifact comes straight back.
 		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/lib/commands/gazetteer/pair-index.tsx")
-		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/lib/commands/gazetteer/postcode-binary.tsx")
+		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/lib/commands/gazetteer/postcode/binary.tsx")
 	})
 })
 

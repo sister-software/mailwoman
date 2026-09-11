@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology } from "@mailwoman/dev-mcp/lookup"
+import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology } from "@mailwoman/dev-mcp/lookup/index"
 import { describe, expect, it } from "vitest"
 
 /**

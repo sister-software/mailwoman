@@ -111,7 +111,7 @@ proprietary build drops them from the mixture; the config header says so.
 
 `Camden, London`, `Barcelona 6001, Venezuela`, `St Mary's, Oxford` and `GPO Box 1234, Sydney NSW 2001` each named a
 failure class on an issue and had no board row to hold it. Sixty-seven rows now do, under `gauntlet/cases/<cc>/family-*.jsonl`,
-written by `packages/mailwoman/lib/dev-tools/family-board.run.ts` over a curated list: every point is a gazetteer
+written by `packages/mailwoman/lib/dev-tools/family/board.run.ts` over a curated list: every point is a gazetteer
 record the builder resolves by name and refuses when absent or tied, and every status is what the shipped pipeline did
 when the file was written. The read moves two of the four issues. District plus city (#1914) parses on 20 of 21 rows,
 with the district as `dependent_locality`, and fails on the coordinate alone, 2.7–8.7 km off at the parent city's

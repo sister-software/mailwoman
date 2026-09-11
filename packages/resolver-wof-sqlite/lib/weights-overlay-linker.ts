@@ -319,7 +319,7 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
 	const warning = await fstFreshnessWarning({
 		fstPath,
 		sourceDBPath: String(dataRootPath("wof", "admin-global-priority.db")),
-		rebuildCommand: `node packages/mailwoman/out/cli.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
+		rebuildCommand: `node packages/mailwoman/out/cli/index.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
 	})
 
 	if (warning) {
@@ -457,7 +457,7 @@ async function pairIndexIsFresh(
  */
 export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<void> {
 	const { packageDir, country, delta, transitionBeta, parentDelta } = overlay
-	const CLI = String(workspacePath("mailwoman", "out", "cli.js"))
+	const CLI = String(workspacePath("mailwoman", "out", "cli", "index.js"))
 	const ARTIFACT = `pair-index-${country}.bin`
 	// Built into the data-root OVERLAY, not into the tracked package. The locale is recovered from the
 	// workspace name (`neural-weights-en-gb` → `en-gb`) so callers keep passing the one identifier they
@@ -823,7 +823,7 @@ async function buildPostcodeBinary(
  */
 export async function materializeDevOverlay(manifest: DevOverlayManifest): Promise<DevOverlay> {
 	const destDir = String(weightsOverlayPath(manifest.locale))
-	const cli = String(workspacePath("mailwoman", "out", "cli.js"))
+	const cli = String(workspacePath("mailwoman", "out", "cli", "index.js"))
 	const card = await readWeightsCard(`neural-weights-${manifest.locale}`)
 
 	await makeDirectories(destDir)

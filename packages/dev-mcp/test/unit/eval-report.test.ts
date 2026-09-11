@@ -85,7 +85,7 @@ describe("readEvalReport", () => {
 	it("surfaces the ledger command and refuses to imply it was run", async () => {
 		const log =
 			"ledger (#885): on promote, append this run —\n" +
-			"  node packages/mailwoman/out/cli.js eval ledger-append \\\n" +
+			"  node packages/mailwoman/out/cli/index.js eval ledger-append \\\n" +
 			"    --out-dir /tmp/x --model-version <npm-semver>\n"
 
 		const report = await readEvalReport(await outDir(PASSING), log, "")

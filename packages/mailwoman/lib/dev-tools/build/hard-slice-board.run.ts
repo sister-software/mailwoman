@@ -33,8 +33,8 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { JSONSpliterator } from "spliterator"
 
-import { FRAGMENT_ROWS } from "#dev-tools/hard/slice/rows"
-import { TOPONYM_ROWS } from "#dev-tools/hard/slice/rows-toponym"
+import { FRAGMENT_ROWS } from "#dev-tools/hard/slice/rows/index"
+import { TOPONYM_ROWS } from "#dev-tools/hard/slice/rows/toponym"
 import { SWEEP_ROWS } from "#dev-tools/hard/slice/sweep-rows"
 import { canonicalizeHardSliceCase, type HardSliceCase, HARD_SLICE_BOARD_PATH } from "#eval-harness/hard-slice-board"
 

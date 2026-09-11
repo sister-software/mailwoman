@@ -50,7 +50,7 @@ interface Options {
 
 const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint-database")
+		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint/database")
 
 		const result = await buildPostcodeCodePoint({
 			sourceDir: options.sourceDir,

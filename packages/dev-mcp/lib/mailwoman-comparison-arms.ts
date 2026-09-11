@@ -8,7 +8,7 @@ import {
 	resolveConfig,
 	type EngineConfig,
 	type EngineRegistryLike,
-} from "#engine-registry"
+} from "#engine/registry"
 import type { ResolvedInput, ResolvedInputSet } from "#input-sets"
 import { buildRoutedMailwomanArm } from "#routed-mailwoman-arm"
 import { inputSetProvenance, provenanceFor } from "#tool-kit"

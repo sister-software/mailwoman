@@ -12,7 +12,7 @@ import { z } from "zod"
 
 import { defineOperation, OperationEffect } from "#operation"
 import { flag, text } from "#operations/inputs"
-import { publishWorkspace, releaseItWorkspaceEnvironment } from "#pack/publish-workspace"
+import { publishWorkspace, releaseItWorkspaceEnvironment } from "#pack/publish/workspace"
 import { assertPlanHolds } from "#release/plan"
 
 /**

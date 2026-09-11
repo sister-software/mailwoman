@@ -14,12 +14,13 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { describe, expect, test } from "vitest"
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 /**
  * Current whole-process module count for `mailwoman --version`. The license notice the launcher prints after every

@@ -26,7 +26,7 @@ import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
-import type { RepoSyncPlan } from "#gazetteer-pipeline/repos-sync"
+import type { RepoSyncPlan } from "#gazetteer-pipeline/repos/sync"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -65,9 +65,9 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { join } = await import("path-ts")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
-		const { auditReposRoot } = await import("#gazetteer-pipeline/repos-audit")
-		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos-sync")
-		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof-repo-origin")
+		const { auditReposRoot } = await import("#gazetteer-pipeline/repos/audit")
+		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos/sync")
+		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof/repo-origin")
 
 		const root = options.root ?? String(dataRootPath("wof", "repos"))
 

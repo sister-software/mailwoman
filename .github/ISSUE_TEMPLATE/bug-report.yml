@@ -100,7 +100,7 @@ body:
       label: Reproduction
       description: The exact command or steps. Long literal output goes in a code block.
       placeholder: |
-        node packages/mailwoman/out/cli.js parse "07691 Portopetro, Illes Balears, Spain"
+        node packages/mailwoman/out/cli/index.js parse "07691 Portopetro, Illes Balears, Spain"
     validations:
       required: true
   - type: textarea

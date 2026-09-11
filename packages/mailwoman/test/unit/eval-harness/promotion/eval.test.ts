@@ -16,7 +16,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { listEvalSpecs, resolveThresholdSpecPath, runPromotionEval } from "mailwoman/eval-harness/promotion-eval"
+import { listEvalSpecs, resolveThresholdSpecPath, runPromotionEval } from "mailwoman/eval-harness/promotion/eval/index"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

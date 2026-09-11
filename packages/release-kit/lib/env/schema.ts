@@ -22,7 +22,7 @@ export const PublicReleaseEnvSchema = z.object({
 		title: "Skip weights copy",
 		description: "Compatibility toggle that skips copying neural weights during development or release preparation.",
 	}),
-	// Release-it publish flow (`packages/release-kit/lib/pack/publish-workspace.ts`). The OTP is a secret — see `$private`.
+	// Release-it publish flow (`packages/release-kit/lib/pack/publish/workspace.ts`). The OTP is a secret — see `$private`.
 	MAILWOMAN_SKIP_WEIGHTS: z.string().optional().meta({
 		title: "Skip release weights",
 		description: "Release-flow toggle that omits neural weights from package publication.",

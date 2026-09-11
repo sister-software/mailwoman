@@ -13,15 +13,15 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { $public } from "mailwoman/env"
 import { describe, expect, test } from "vitest"
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH

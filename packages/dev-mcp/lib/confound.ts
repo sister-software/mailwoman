@@ -24,7 +24,7 @@
 
 import { runFileSync } from "@mailwoman/core/process"
 
-import { effectiveKeyFor } from "#engine-registry"
+import { effectiveKeyFor } from "#engine/registry"
 
 /**
  * Whether the comparison's SETUP was clean — did exactly the declared keys differ between the two resolved configs.

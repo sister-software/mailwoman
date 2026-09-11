@@ -23,7 +23,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { buildPostcodeNIOSM, NI_LIVE_POSTCODES } from "mailwoman/gazetteer-pipeline/postcode/ni-osm-database"
+import { buildPostcodeNIOSM, NI_LIVE_POSTCODES } from "mailwoman/gazetteer-pipeline/postcode/ni/osm/database"
 import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 

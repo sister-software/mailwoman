@@ -26,8 +26,8 @@
  *   them unattributable, and says which control failed. That refusal is the feature.
  */
 
-import { runCompare } from "#compare"
-import type { EngineRegistryLike } from "#engine-registry"
+import { runCompare } from "#compare/index"
+import type { EngineRegistryLike } from "#engine/registry"
 import type { ComparedRow } from "#tool-kit"
 
 /**

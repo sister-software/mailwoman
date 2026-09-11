@@ -10,7 +10,7 @@
 
 import { z } from "zod"
 
-import type { EngineConfig } from "#engine-registry"
+import type { EngineConfig } from "#engine/registry"
 import { evidenceCensus } from "#evidence"
 import { resolveInputSet } from "#input-sets"
 import type { DevTool, DevToolDeps } from "#tool-kit"

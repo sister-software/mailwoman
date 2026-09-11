@@ -6,7 +6,7 @@
  *   The contract half of `mwdev_symbol`: a search that answers with denominators and states what it did not read.
  */
 
-import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
 import type { JobRegistry } from "@mailwoman/dev-mcp/jobs"
 import { buildToolTable } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"

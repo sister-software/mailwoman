@@ -13,8 +13,8 @@ import { INGEST_CHUNK_FLAGS, runIngestChunkScript } from "@mailwoman/core/script
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { ZoningDatabase } from "#schema"
-import { createExportFeatureSource } from "#sdk/ingest"
-import { ingestZoningChunk } from "#sdk/ingest-chunk"
+import { ingestZoningChunk } from "#sdk/ingest/chunk"
+import { createExportFeatureSource } from "#sdk/ingest/index"
 
 await runIngestChunkScript({
 	context: "zoning ingest-chunk",

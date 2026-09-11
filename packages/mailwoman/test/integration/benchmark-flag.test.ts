@@ -13,14 +13,14 @@
  *   the flag that skips the encoder, and the benchmark path now honours it.
  */
 
-import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 describe("--benchmark option", () => {
 	test("accepts integer in [1, 10000]", () => {

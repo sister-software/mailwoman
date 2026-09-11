@@ -8,7 +8,7 @@
  *
  *   Label-F1 on non-US is confounded by labeling convention — where a Spanish "Calle Mayor" street
  *   boundary falls is a judgement, not a fact — so these rows carry the truth lat/lon and are graded
- *   on the ASSEMBLED COORDINATE by `packages/mailwoman/lib/dev-tools/fr/admin-split-eval.run.ts --default-country <CC>`.
+ *   on the ASSEMBLED COORDINATE by `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *
  *   Expects a countrywide CSV with `LON,LAT,NUMBER,STREET,CITY,POSTCODE[,REGION]` (IT/FR/most OA
  *   collections). The Spanish dump uses a cadastral schema and is not handled here.

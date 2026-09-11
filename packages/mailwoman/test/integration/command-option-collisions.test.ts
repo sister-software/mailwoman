@@ -13,7 +13,7 @@ const RESERVED_ALIASES = new Set(["v", "h"])
 
 const COMMAND_ROOTS = [
 	workspacePath("mailwoman", "lib", "commands"),
-	workspacePath("mailwoman", "lib", "cli-native", "commands"),
+	workspacePath("mailwoman", "lib", "cli", "native", "commands"),
 ]
 
 async function listCommandModules(): Promise<string[]> {

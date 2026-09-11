@@ -23,7 +23,7 @@
 // product's geometry, and a second copy of it is a second place for a hole to stop being one.
 import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
-import type { FloodFeatureSource, FloodSourceFeature } from "#sdk/ingest"
+import type { FloodFeatureSource, FloodSourceFeature } from "#sdk/ingest/index"
 import { EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 
 /**

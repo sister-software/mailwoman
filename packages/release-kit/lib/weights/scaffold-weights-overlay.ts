@@ -42,7 +42,7 @@ import { resolvePath } from "path-ts"
 /**
  * Where the clean-install smoke's pack set lives, relative to the repo root — the register this operation edits.
  */
-const SMOKE_PACK_SET_PATH = "packages/release-kit/lib/release/smoke-clean-install.ts"
+const SMOKE_PACK_SET_PATH = "packages/release-kit/lib/release/smoke/clean-install.ts"
 
 export interface ScaffoldWeightsOverlayOptions {
 	repoRoot: string

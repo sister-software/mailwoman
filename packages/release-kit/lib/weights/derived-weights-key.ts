@@ -46,11 +46,11 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"packages/mailwoman/lib/gazetteer-pipeline/borough-pairs.ts",
 	"packages/mailwoman/lib/gazetteer-pipeline/lieudit-pairs.ts",
 	"packages/mailwoman/lib/commands/gazetteer/pair-index.tsx",
-	"packages/mailwoman/lib/commands/gazetteer/postcode-binary.tsx",
+	"packages/mailwoman/lib/commands/gazetteer/postcode/binary.tsx",
 	"packages/mailwoman/out/gazetteer-pipeline/borough-pairs.js",
 	"packages/mailwoman/out/gazetteer-pipeline/lieudit-pairs.js",
 	"packages/mailwoman/out/commands/gazetteer/pair-index.js",
-	"packages/mailwoman/out/commands/gazetteer/postcode-binary.js",
+	"packages/mailwoman/out/commands/gazetteer/postcode/binary.js",
 ]
 
 /**

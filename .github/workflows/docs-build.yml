@@ -8,7 +8,7 @@
 # On pull_request: the build job runs on EVERY PR (so it can be a required status check), but the
 # structure check + build steps execute only when a path the site reads changed — otherwise the job
 # reports green in seconds. Catches broken links, MDX parse errors, and — before any install —
-# frontmatter/duplicate-title/orphan regressions via docs/scripts/check-docs-structure.ts.
+# frontmatter/duplicate-title/orphan regressions via docs/scripts/check/docs-structure.ts.
 # On push to main: same steps (path-filtered at the trigger), then deploy to GitHub Pages.
 #
 # Binary assets (model.onnx, tokenizer.model, fst-en-US.bin, wof-hot.db) are
@@ -137,7 +137,7 @@ jobs:
       # after the full Docusaurus build.
       #
       # --strict since the docs-reorg Task 5 skeleton cutover: the flag selects the six-role
-      # frontmatter contract (docs/scripts/docs/frontmatter-contract.ts) and enforces `role:` on
+      # frontmatter contract (docs/scripts/docs/frontmatter/contract.ts) and enforces `role:` on
       # EVERY published page, rather than the legacy seven-role vocabulary that only required one
       # on a manifest of entry pages. It was held off until the old tree left docs/articles/,
       # because that corpus predated the contract and failed the check wholesale. Voice and
@@ -146,7 +146,7 @@ jobs:
       # type:module without breaking the Docusaurus SSR bundle; see docs/scripts/package.json.)
       - name: Docs structure checks
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
-        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check-docs-structure.ts --strict
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check/docs-structure.ts --strict
 
       - name: Enable Corepack (yarn 4)
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
@@ -159,10 +159,10 @@ jobs:
       # Fixture regression test for docs/styles/Mailwoman/*.yml (the Vale prose-lint rules): a rule
       # that stops firing, or a TokenIgnores/BlockIgnores change that starts leaking banned words
       # out of a code fence/import/JSX/`<details>` block, fails loudly here instead of silently
-      # drifting. See docs/scripts/check-vale-rules.ts for what it checks.
+      # drifting. See docs/scripts/check/vale-rules.ts for what it checks.
       - name: Vale rule fixtures
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
-        run: node docs/scripts/check-vale-rules.ts
+        run: node docs/scripts/check/vale-rules.ts
 
       # Whole-corpus run — every page under docs/articles plus the writing system + templates under
       # docs/engineering (see lint:prose's targets in docs/package.json). Measured at head: 85 files

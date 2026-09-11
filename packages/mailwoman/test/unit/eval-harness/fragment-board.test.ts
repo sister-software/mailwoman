@@ -11,7 +11,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "mailwoman/eval-harness/fragment-board"
+import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "mailwoman/eval-harness/fragment/board"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 

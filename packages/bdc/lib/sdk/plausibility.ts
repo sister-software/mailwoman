@@ -129,7 +129,7 @@ import {
 	res9ShortCellToRes6Parent,
 	speedBucketForDownloadSpeed,
 	type ProviderFilingSummary,
-} from "#sdk/filing-landscape"
+} from "#sdk/filing/landscape"
 import { nearestInfrastructure, type InfrastructureHit } from "#sdk/nearest-infrastructure"
 import {
 	BroadbandTechnologyCategory,

@@ -14,7 +14,7 @@
 import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
 import { COUNTRY_FEATURE_DIM } from "#country-inference"
 import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
-import type { RequiredChannels } from "#weights-channels"
+import type { RequiredChannels } from "#weights/channels"
 
 /**
  * One soft-feed channel as a caller supplies it to `infer`: per-piece feature rows + per-piece confidence.

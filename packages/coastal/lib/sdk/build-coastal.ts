@@ -55,9 +55,9 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 
 import { createCoastalTables, type CoastalDatabase } from "#schema"
-import type { CoastalFeatureSource } from "#sdk/ingest"
-import type { CoastalChunkResult } from "#sdk/ingest-chunk"
-import { ingestCoastalChunk } from "#sdk/ingest-chunk"
+import type { CoastalChunkResult } from "#sdk/ingest/chunk"
+import { ingestCoastalChunk } from "#sdk/ingest/chunk"
+import type { CoastalFeatureSource } from "#sdk/ingest/index"
 import {
 	NCERM_ATTRIBUTION,
 	NCERM_COVERAGE_LIMIT,

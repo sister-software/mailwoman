@@ -18,7 +18,7 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { dirname, resolvePath } from "path-ts"
 
-import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "#pack/publish-exports"
+import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "#pack/publish/exports"
 
 /**
  * Replace any symlinked `files` entries with real copies of their targets. `yarn pack` stores symlinks AS symlinks in

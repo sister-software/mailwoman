@@ -15,11 +15,12 @@
  */
 
 import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { makeDirectories, removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePath, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { dirname, resolvePath } from "path-ts"
 
 import type { RepoContext } from "#check"
+import { emittedMoves } from "#move/literals"
 import { createMoveResolver } from "#move/resolution"
 import { spliceText, type TextEdit } from "#move/splice"
 import type { ManifestRewrite, ModuleMove, ModuleMovePlan, PathLiteralRewrite, SpecifierRewrite } from "#move/types"
@@ -94,6 +95,22 @@ async function removeEmptiedDirectories(repoRoot: string, directories: readonly 
 	}
 }
 
+/**
+ * Delete what each moved source used to emit.
+ *
+ * `tsc -b --clean` does not: nothing claims the output of a source that is no longer there, so it survives every
+ * rebuild. A stale `out/cli.js` then ANSWERS — it is a complete, loadable module compiled from the old tree — and the
+ * first thing it does is import a path that moved. Removing it here is what makes the next build's absence mean
+ * absence.
+ */
+async function removeOrphanedOutput(repoRoot: string, moves: readonly ModuleMove[]): Promise<void> {
+	for (const move of emittedMoves(moves)) {
+		if (move.from === move.to) continue
+
+		await removePathIfPresent(resolvePath(repoRoot, move.from))
+	}
+}
+
 async function rewriteFile(repoRoot: string, file: string, edits: readonly TextEdit[]): Promise<void> {
 	const path = resolvePath(repoRoot, file)
 	const text = await readLocalTextFile(path)
@@ -138,6 +155,8 @@ export async function applyModuleMoves(
 		context.repoRoot,
 		plan.moves.map((move) => String(dirname(move.from)))
 	)
+
+	await removeOrphanedOutput(context.repoRoot, plan.moves)
 
 	for (const [file, edits] of editsByFile(plan)) {
 		await rewriteFile(context.repoRoot, file, edits)

@@ -19,7 +19,7 @@ import {
 	UnassertedPolicy,
 	type EngineLike,
 	type GeocodeRunLike,
-} from "@mailwoman/dev-mcp/reliability-surfaces"
+} from "@mailwoman/dev-mcp/reliability/surfaces"
 import { describe, expect, it } from "vitest"
 
 function token(label: string, confidence: number): DecoderToken {

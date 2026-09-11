@@ -10,12 +10,12 @@
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { judgeCommand } from "@mailwoman/dev-mcp/hooks/bash-write-rules"
+import { judgeCommand } from "@mailwoman/dev-mcp/hooks/bash/write/rules"
 import { describe, expect, it } from "vitest"
 
 import { runHook } from "../hook-harness.ts"
 
-const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "bash-write-guard.ts")
+const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "bash", "write", "guard.ts")
 const REPO_ROOT = String(repoRootPath()).replace(/\/$/u, "")
 
 function refusalFor(command: string): string | null {
@@ -140,7 +140,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// refusal named `QUOTED` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
 		// value that carries `$PWD` or a space is how anyone writes one.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
-		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node docs/scripts/check-vale-rules.ts`],
+		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node docs/scripts/check/vale-rules.ts`],
 		// A quote nested inside another kind of quote. The pair must be read as one span; mis-pairing it leaves a stray
 		// delimiter that swallows the rest of the command, and the head then comes from inside someone's `-e` script.
 		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],

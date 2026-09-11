@@ -15,7 +15,7 @@
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { demoCascadeSmoke } from "#eval-harness/demo-cascade-smoke"
+import { demoCascadeSmoke } from "#eval-harness/demo/cascade/smoke"
 
 async function main(): Promise<void> {
 	// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.

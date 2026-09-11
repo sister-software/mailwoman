@@ -11,7 +11,7 @@
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity"
+import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity/index"
 import {
 	DEFAULT_COVERAGE_FLOOR,
 	LADDER,
@@ -19,7 +19,7 @@ import {
 	bottomsOutAt,
 	buildGranularityLadder,
 	placetypesForRung,
-} from "mailwoman/gazetteer-pipeline/granularity"
+} from "mailwoman/gazetteer-pipeline/granularity/index"
 import { describe, expect, it } from "vitest"
 
 describe("LADDER", () => {

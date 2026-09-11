@@ -9,7 +9,7 @@
 
 import { z } from "zod"
 
-import type { EngineConfig } from "#engine-registry"
+import type { EngineConfig } from "#engine/registry"
 import { runMinimalPairs, type Ladder } from "#minimal-pairs"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA } from "#tool-kit"

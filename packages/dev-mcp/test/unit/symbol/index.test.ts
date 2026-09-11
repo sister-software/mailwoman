@@ -14,7 +14,7 @@ import {
 	searchDeclarations,
 	selectReportable,
 	type DeclarationSite,
-} from "@mailwoman/dev-mcp/symbol-index"
+} from "@mailwoman/dev-mcp/symbol/index"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

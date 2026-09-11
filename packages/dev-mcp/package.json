@@ -10,7 +10,7 @@
 		"directory": "packages/dev-mcp"
 	},
 	"bin": {
-		"mwdev-mcp": "./lib/cli.ts"
+		"mwdev-mcp": "./lib/cli/index.ts"
 	},
 	"type": "module",
 	"imports": {

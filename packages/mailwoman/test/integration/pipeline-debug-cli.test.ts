@@ -13,12 +13,12 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { describe, expect, test } from "vitest"
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 /**
  * Strip ANSI escapes + ink spinner frames; isolate the JSON payload.

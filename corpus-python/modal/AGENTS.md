@@ -97,7 +97,7 @@ node packages/mailwoman/lib/dev-tools/boundary-stress-eval.run.ts \
 
 # 4b. The per-locale FLOORS check (guardrail non-regression). score-affix.ts hardcodes the repo card +
 #     tokenizer — both already correct for v1.6.0 (labels identical, same v0.6.0-a0 tokenizer).
-node packages/mailwoman/out/cli.js eval check \
+node packages/mailwoman/out/cli/index.js eval check \
   --model ./out/v160/model.onnx --int8 ./out/v160/model.onnx \
   --spec mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json \
   --tokenizer "$TOK" --card neural-weights-en-us/model-card.json \

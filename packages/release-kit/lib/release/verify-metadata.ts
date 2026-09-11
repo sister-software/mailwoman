@@ -144,7 +144,7 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 		message:
 			`evals/scores-by-version.json has NO run with model_version === "${version}".\n` +
 			`      Append it (the promotion-eval PASS prints this line pre-filled — fill --out-dir/--run-id from that run):\n` +
-			`        node packages/mailwoman/out/cli.js eval ledger-append \\\n` +
+			`        node packages/mailwoman/out/cli/index.js eval ledger-append \\\n` +
 			`          --out-dir <eval-out-dir> --model-version ${version} \\\n` +
 			`          --run-id <label>-<yyyymmdd> \\\n` +
 			`          --model-path "@mailwoman/neural-weights-en-us@${version}" --card packages/neural-weights-en-us/model-card.json`,

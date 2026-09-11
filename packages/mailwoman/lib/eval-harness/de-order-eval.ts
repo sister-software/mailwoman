@@ -34,7 +34,7 @@ import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { oaResolverEval } from "#eval-harness/oa/resolver-eval"
+import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 
 /**
  * Options for {@linkcode deOrderEval} — one field per flag the check used to serialize into argv.

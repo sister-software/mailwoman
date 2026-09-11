@@ -40,7 +40,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { basename } from "path-ts"
 
-import { runProcessOrFail, splitList } from "#cli-kit/shared"
+import { runProcessOrFail, splitList } from "#cli/kit/shared"
 
 /**
  * The parseArgs option names of the required per-release artifacts.

@@ -6,10 +6,10 @@
  *   GeoJSON Bounding Boxes
  */
 
-import { toRad } from "#coordinate-formats"
+import { toRad } from "#coordinate/formats"
 import type { PolygonLiteral, SolidPolygonPath } from "#geometries/polygon"
 import { clampLatitude, wrapLongitude } from "#position"
-import { CoordinateProjection } from "#projection"
+import { CoordinateProjection } from "#projection/index"
 
 /**
  * Kilometres per degree of latitude, which is very nearly constant on a sphere.

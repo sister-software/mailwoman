@@ -17,7 +17,7 @@
 
 import { sql, type Kysely } from "kysely"
 
-import type { CandidateAncestorsDatabase } from "#candidate/ancestors-schema"
+import type { CandidateAncestorsDatabase } from "#candidate/ancestors/schema"
 import type { CapitalTable } from "#capital-schema"
 import type { NameKey } from "#street/normalize"
 

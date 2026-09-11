@@ -41,8 +41,8 @@ import {
 	readLabelsFromModelCard,
 	readRequiredChannels,
 	type RequiredChannels,
-} from "#weights-channels"
-import { EVIDENCE_LEXICON_FAMILIES } from "#weights-lexicon"
+} from "#weights/channels"
+import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 
 /**
  * Delta threshold for the capability-manifest check (#718/#719): a conventions row may forbid a tag only if the mask

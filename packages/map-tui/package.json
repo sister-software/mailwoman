@@ -14,7 +14,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "packages/map-tui"
 	},
-	"bin": "./out/cli.js",
+	"bin": "./out/cli/index.js",
 	"files": [
 		"out/",
 		"*.ts",
@@ -41,9 +41,9 @@
 			"default": "./out/index.js"
 		},
 		"./cli-args": {
-			"types": "./out/cli-args.d.ts",
-			"node": "./lib/cli-args.ts",
-			"default": "./out/cli-args.js"
+			"types": "./out/cli/args.d.ts",
+			"node": "./lib/cli/args.ts",
+			"default": "./out/cli/args.js"
 		},
 		"./frame": {
 			"types": "./out/frame.d.ts",

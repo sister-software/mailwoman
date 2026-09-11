@@ -88,9 +88,9 @@
 			"default": "./out/sdk/parsing.js"
 		},
 		"./sdk/filing-dates": {
-			"types": "./out/sdk/filing-dates.d.ts",
-			"node": "./lib/sdk/filing-dates.ts",
-			"default": "./out/sdk/filing-dates.js"
+			"types": "./out/sdk/filing/dates.d.ts",
+			"node": "./lib/sdk/filing/dates.ts",
+			"default": "./out/sdk/filing/dates.js"
 		},
 		"./sdk/client": {
 			"types": "./out/sdk/client.d.ts",
@@ -108,9 +108,9 @@
 			"default": "./out/sdk/list-files.js"
 		},
 		"./sdk/filing-landscape": {
-			"types": "./out/sdk/filing-landscape.d.ts",
-			"node": "./lib/sdk/filing-landscape.ts",
-			"default": "./out/sdk/filing-landscape.js"
+			"types": "./out/sdk/filing/landscape.d.ts",
+			"node": "./lib/sdk/filing/landscape.ts",
+			"default": "./out/sdk/filing/landscape.js"
 		},
 		"./sdk/nearest-infrastructure": {
 			"types": "./out/sdk/nearest-infrastructure.d.ts",

@@ -8,7 +8,7 @@
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
-import { CANDIDATE_ANCESTOR_COLUMNS, CANDIDATE_ANCESTOR_TABLE } from "#candidate/ancestors-schema"
+import { CANDIDATE_ANCESTOR_COLUMNS, CANDIDATE_ANCESTOR_TABLE } from "#candidate/ancestors/schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"

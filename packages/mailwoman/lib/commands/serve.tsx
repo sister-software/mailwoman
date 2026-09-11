@@ -18,7 +18,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
-import { printLicenseNotice, resolveEngineStamp } from "#cli-kit/engine-stamp"
+import { printLicenseNotice, resolveEngineStamp } from "#cli/kit/engine-stamp"
 
 interface ServerConfig {
 	port: number

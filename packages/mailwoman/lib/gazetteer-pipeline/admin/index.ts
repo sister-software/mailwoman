@@ -41,7 +41,12 @@ import {
 import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
 import { checkOvertureRelease } from "#gazetteer-pipeline/overture-release"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
-import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "#gazetteer-pipeline/verify"
+import {
+	loadDefaultBaseline,
+	verifyAdmin,
+	verifyReversePanel,
+	type VerifyResult,
+} from "#gazetteer-pipeline/verify/index"
 
 export interface BuildAdminOptions {
 	/**

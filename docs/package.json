@@ -29,14 +29,14 @@
 			"default": "./plugins/runtime-assets/webpack-policy.ts"
 		},
 		"./plugins/runtime-assets/workspace-aliases": {
-			"types": "./plugins/runtime-assets/workspace-aliases.ts",
-			"node": "./plugins/runtime-assets/workspace-aliases.ts",
-			"default": "./plugins/runtime-assets/workspace-aliases.ts"
+			"types": "./plugins/runtime-assets/workspace/aliases.ts",
+			"node": "./plugins/runtime-assets/workspace/aliases.ts",
+			"default": "./plugins/runtime-assets/workspace/aliases.ts"
 		},
 		"./scripts/docs-frontmatter-contract": {
-			"types": "./scripts/docs/frontmatter-contract.ts",
-			"node": "./scripts/docs/frontmatter-contract.ts",
-			"default": "./scripts/docs/frontmatter-contract.ts"
+			"types": "./scripts/docs/frontmatter/contract.ts",
+			"node": "./scripts/docs/frontmatter/contract.ts",
+			"default": "./scripts/docs/frontmatter/contract.ts"
 		},
 		"./scripts/generate-cli-reference": {
 			"types": "./scripts/generate-cli-reference.ts",
@@ -54,7 +54,7 @@
 		"lint:prose:fixtures": "node scripts/check-vale-rules.ts",
 		"lint:prose:vocab": "vale --config .vale-vocab.ini ../AGENTS.md ../README.md ../RELEASING.md ../CONTRIBUTING.md ../REPRODUCIBILITY.md ../.claude/output-styles/mailwoman-development.md ../.agents/skills engineering/*.md engineering/*.mdx engineering/reference superpowers research records && vale --config .vale-vocab.ini --glob='*README.md' ../packages",
 		"lint:structure": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-docs-structure.ts --strict",
-		"prebuild": "node ../packages/mailwoman/out/cli.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.ts",
+		"prebuild": "node ../packages/mailwoman/out/cli/index.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.ts",
 		"serve": "docusaurus serve --host 0.0.0.0 --port 7770",
 		"start": "docusaurus start --host 0.0.0.0 --port 7770 --no-open",
 		"storybook": "storybook dev -p 6006 --no-open",

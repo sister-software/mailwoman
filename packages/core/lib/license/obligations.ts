@@ -8,7 +8,7 @@
  *   known to carry, and it says `recognized: false` for an identifier it does not know rather than guessing.
  */
 
-import type { LicenseKeyVerification } from "#license/key"
+import type { LicenseKeyVerification } from "#license/key/index"
 import type { LicenseKeyPublication } from "#license/publication"
 
 /**

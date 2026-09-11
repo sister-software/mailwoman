@@ -11,7 +11,7 @@
  *   is a defect in a verdict rather than in a number, so no measurement fails either.
  */
 
-import { EFFECTIVE_KEY_FOR, effectiveKeyFor, resolveConfig } from "@mailwoman/dev-mcp/engine-registry"
+import { EFFECTIVE_KEY_FOR, effectiveKeyFor, resolveConfig } from "@mailwoman/dev-mcp/engine/registry"
 import { ENGINE_CONFIG_SCHEMA } from "@mailwoman/dev-mcp/tool-kit"
 import { describe, expect, it } from "vitest"
 

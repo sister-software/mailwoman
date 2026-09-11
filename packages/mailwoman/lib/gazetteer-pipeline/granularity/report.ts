@@ -1,0 +1,158 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Markdown renderer for the gazetteer depth scorecard — the committed artifact under
+ *   `docs/records/evals/coverage/`, following the `fill-rates.md` precedent.
+ *
+ *   The report declares its own limits inline rather than deferring them to a design doc. These
+ *   numbers will outlive the conversation that produced them, and a reader six months out must be
+ *   told IN THE FILE that counts are not quality and that the locality rung is self-comparison for
+ *   the Overture-backfilled countries.
+ *
+ *   Pure: rows in, markdown out, `buildDate` injected by the caller so the output is deterministic
+ *   under test.
+ */
+
+import { formatPercent } from "@mailwoman/core/stats"
+import type { ComponentTag } from "@mailwoman/core/types"
+
+import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "#gazetteer-pipeline/defaults"
+import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeline/granularity/index"
+
+/**
+ * Which build path supplied a country's rows — the single most important column in this report.
+ *
+ * A country whose rows are Overture- or GeoNames-sourced had NO WOF GeoJSON repo ingested, so its empty sub-locality
+ * rung says nothing whatsoever about WOF's depth there. Only a dozen of the 260 admin repos WOF publishes are in the
+ * recipe; the rest of the world arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames alias
+ * fold. Without this column a reader would take "233 countries bottom out at locality" as a finding about WOF rather
+ * than about the recipe.
+ *
+ * Derived from the ARTIFACT (synthetic id ranges on the locality rung), not from the recipe constants. A recipe-derived
+ * column silently goes wrong the moment a country is added to `DEFAULT_WOF_PRIORITY_COUNTRIES` and the gazetteer has
+ * not been rebuilt yet — it would claim `wof-repo` over rows that are still 100% Overture. Instead the recipe is used
+ * only as a CROSS-CHECK: a mismatch renders as `rebuild pending`, which is the honest description of that window.
+ */
+function sourceClass(country: CountryGranularity): string {
+	const locality = country.rungs.locality
+	const recipeSaysWOF = (DEFAULT_WOF_PRIORITY_COUNTRIES as readonly string[]).includes(country.country)
+
+	if (!locality?.nodes) return recipeSaysWOF ? "wof-repo (no rows)" : "(no rows)"
+
+	const synthetic = locality.overtureBackfilled + locality.geonamesBackfilled
+
+	const observed =
+		synthetic === 0 ? "wof-repo" : locality.geonamesBackfilled > locality.overtureBackfilled ? "geonames" : "overture"
+
+	// The recipe promises WOF rows the artifact does not yet carry: a rebuild has not run since the recipe changed.
+	if (recipeSaysWOF && observed !== "wof-repo") return `${observed} (rebuild pending)`
+
+	return observed
+}
+
+export interface GranularityReportMeta {
+	/**
+	 * Display path of the measured DB. Use the `$MAILWOMAN_DATA_ROOT`-relative form, never the resolved lab path.
+	 */
+	sourcePath: string
+	sourceMD5: string
+	/**
+	 * ISO timestamp, injected rather than read from the clock so the renderer stays deterministic.
+	 */
+	buildDate: string
+	floor: number
+}
+
+/**
+ * One row's cell for a rung: node count, plus the Overture-backfilled share when any of it is backfilled.
+ */
+function rungCell(country: CountryGranularity, rung: ComponentTag): string {
+	const measurement = country.rungs[rung]
+
+	// Absent measurement = never measured. Distinct from a measured zero, which renders as "0".
+	if (!measurement) return "—"
+
+	if (!measurement.nodes) return "0"
+
+	const synthetic = measurement.overtureBackfilled + measurement.geonamesBackfilled
+
+	if (!synthetic) return measurement.nodes.toLocaleString()
+
+	// Label by whichever synthetic source dominates. A single `id >= OVERTURE_ID_BASE` test would call GeoNames rows
+	// Overture, which mislabelled every GeoNames-only country in the first run of this report.
+	const label = measurement.geonamesBackfilled > measurement.overtureBackfilled ? "gn" : "ovt"
+
+	return `${measurement.nodes.toLocaleString()} (${formatPercent(synthetic / measurement.nodes, 1)} ${label})`
+}
+
+/**
+ * Render the scorecard.
+ */
+export function renderGranularityReport(rows: CountryGranularity[], meta: GranularityReportMeta): string {
+	const header = LADDER.join(" | ")
+	const alignment = LADDER.map(() => "--:").join(" | ")
+
+	const body = rows.map((country) => {
+		const bottom = bottomsOutAt(country, meta.floor)
+		const cells = LADDER.map((rung) => rungCell(country, rung)).join(" | ")
+
+		return `| ${country.country} | ${sourceClass(country)} | ${bottom ?? "(none)"} | ${country.localityParents.toLocaleString()} | ${cells} |`
+	})
+
+	const reached = rows.filter((country) => bottomsOutAt(country, meta.floor) === "dependent_locality").length
+	const fromWOFRepo = rows.filter((country) => sourceClass(country) === "wof-repo").length
+
+	return `# Gazetteer depth scorecard
+
+Generated by \`mailwoman gazetteer granularity\`. Per-country measurement of where the admin
+gazetteer bottoms out — node counts per containment rung, and for the sub-locality rungs the
+parent-coverage share (the fraction of the country's locality-class nodes carrying at least one
+child projecting onto that rung).
+
+- **Source:** \`${meta.sourcePath}\` (md5 \`${meta.sourceMD5}\`)
+- **Built:** ${meta.buildDate}
+- **Parent-coverage floor:** ${formatPercent(meta.floor, 1)} — a sub-locality rung counts as reached only above this.
+- **Countries measured:** ${rows.length.toLocaleString()}
+- **Countries built from a cloned WOF repo:** ${fromWOFRepo.toLocaleString()} — the rest came from Overture divisions or the GeoNames alias fold.
+- **Countries reaching \`dependent_locality\`:** ${reached.toLocaleString()}
+
+## Read the \`source\` column first
+
+**This report measures the shipped artifact, not Who's on First.** WOF publishes 260 per-country
+admin repos; \`DEFAULT_WOF_PRIORITY_COUNTRIES\` names ${DEFAULT_WOF_PRIORITY_COUNTRIES.length} of
+them. Every other country's rows come from Overture divisions — whose \`OVERTURE_DIVISION_SUBTYPES\`
+is \`country\`/\`locality\`/\`region\`/\`county\`/\`localadmin\`, with no hood-level subtype — or from
+the GeoNames alias fold.
+
+So a \`source\` of \`overture\` or \`geonames\` with an empty \`dependent_locality\` rung is **not a
+finding about WOF's depth in that country**. It is a country we never asked. The sub-locality tier
+appears in exactly the countries whose repo is ingested, and that correspondence is the recipe, not a
+property of the data.
+
+The column is read off the **artifact** (synthetic id ranges), not the recipe. \`rebuild pending\`
+means the recipe now names a country the shipped gazetteer has not been rebuilt for — its rows are
+still Overture or GeoNames, and its rungs say nothing about WOF yet.
+
+## What this report does not tell you
+
+- **Counts are not quality.** A node count establishes where to look, never that the rows are good.
+- **There is no demand-side grounding below the locality line.** Nothing here proves a sub-locality
+  surface appears in real addresses. Overture's \`address_levels\` — the obvious instrument — bottoms
+  out at municipality in every country measured, so it cannot see this tier.
+- **The locality rung and above are partly self-comparison.** For the Overture-backfilled country
+  set those rows came from Overture, not WOF; the \`ovt\` share in each cell is how much.
+- **An empty rung is coverage, not fact.** Two independent filters produce zeroes here: the country
+  recipe above, and \`ADMIN_PLACETYPES\` in \`admin/ingest-wof.ts\`, which allowlists 9 of WOF's 34
+  placetypes — so even for a cloned country the build never asked for the other 25. Per the
+  **meaning-of-zero** rule a measured-and-empty rung renders as \`0\` and a never-measured rung as
+  \`—\`; they are not the same claim.
+
+## Ladder
+
+| country | source | bottoms out at | locality parents | ${header} |
+| --- | --- | --- | --: | ${alignment} |
+${body.join("\n")}
+`
+}

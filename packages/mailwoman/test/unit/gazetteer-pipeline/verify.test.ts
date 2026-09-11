@@ -7,7 +7,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { enrichAdmin } from "mailwoman/gazetteer-pipeline/admin/enrich"
 import { buildFTS } from "mailwoman/gazetteer-pipeline/fts"
-import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "mailwoman/gazetteer-pipeline/verify"
+import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "mailwoman/gazetteer-pipeline/verify/index"
 import { expect, test } from "vitest"
 
 const TINY_BASELINE: VerifyBaseline = {

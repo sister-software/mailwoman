@@ -15,9 +15,9 @@
 
 export { classifyKind, classifyKindSync, createKindClassifier } from "#classify"
 export type { KindClassifierOpts } from "#classify"
-export { deriveIntentMarkers } from "#intent-markers"
-export type { IntentMarkerContext } from "#intent-markers"
-export { nearMeSubject, scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent-rules"
+export { deriveIntentMarkers } from "#intent/markers"
+export type { IntentMarkerContext } from "#intent/markers"
+export { nearMeSubject, scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent/rules"
 export { matchPOICategory, matchPOISubject } from "#poi"
 export type { POIPhraseMatch, POIPhraseLookup, POIQuerySpan, POISpatialRelation, POISubjectMatch } from "#poi"
 

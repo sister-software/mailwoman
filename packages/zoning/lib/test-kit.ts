@@ -33,7 +33,7 @@ import {
 } from "@mailwoman/spatial"
 
 import { resolveRingRoles } from "#rings"
-import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest"
+import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest/index"
 import { GZT_SOURCE_EPSG, GZT_UNZONED_LOCAL_CODE } from "#vocabulary"
 
 /**

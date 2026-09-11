@@ -22,7 +22,7 @@
 import type { SurveyAreaInput } from "#sdk/build-soil"
 import type { SoilDataAccessClient, SurveyAreaCatalogEntry } from "#sdk/client"
 import { downloadSurveyArea, type SurveyAreaArchive } from "#sdk/download"
-import { mapUnitShapefile, readSoilSourceIdentity, surveyAreaShapefile } from "#sdk/ingest"
+import { mapUnitShapefile, readSoilSourceIdentity, surveyAreaShapefile } from "#sdk/ingest/index"
 import { readSurveyAreaAttributes, readSurveyAreaOutline } from "#sdk/survey-area"
 
 export interface AcquireRegionOptions {

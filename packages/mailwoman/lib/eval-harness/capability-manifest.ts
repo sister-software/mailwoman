@@ -51,7 +51,7 @@ import {
 	rowsHaveTag,
 	scoreConventionsMaskOffOn,
 	UNFOLDED_ADDRESS_TAGS,
-} from "#eval-harness/per-tag-f1"
+} from "#eval-harness/per/tag-f1"
 
 /**
  * Options for {@linkcode generateCapabilityManifest}.

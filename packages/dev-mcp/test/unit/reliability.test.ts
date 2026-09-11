@@ -11,7 +11,7 @@
  *   constructed to have a known answer.
  */
 
-import { errorClasses, reliabilityCurve, thresholdTable, type Observation } from "@mailwoman/dev-mcp/reliability"
+import { errorClasses, reliabilityCurve, thresholdTable, type Observation } from "@mailwoman/dev-mcp/reliability/index"
 import { describe, expect, it } from "vitest"
 
 /**

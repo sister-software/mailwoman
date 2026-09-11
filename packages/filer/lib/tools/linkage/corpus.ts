@@ -17,7 +17,7 @@ import { createUnionFind } from "@mailwoman/core/utils"
 import { toFRN, type FRN } from "#frn"
 import { FilerIdentifierType } from "#schema"
 import { mintFamilyID } from "#sdk/family-id"
-import type { Form499Row } from "#sdk/form499"
+import type { Form499Row } from "#sdk/form499/index"
 import type { ProviderListRow } from "#sdk/provider-list"
 
 /**

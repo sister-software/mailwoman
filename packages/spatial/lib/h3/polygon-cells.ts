@@ -56,7 +56,7 @@
  *   BOUNDING THE CALL VOLUME IS THE CALLER'S JOB AND IT IS NOT OPTIONAL. The shortcuts here make a build
  *   faster; they are not what makes it reproducible. A builder runs the classification in child processes
  *   over ranges of the source's own stable ids, so each gets a heap that starts empty — see
- *   `packages/flood/lib/sdk/ingest-chunk.ts` and `packages/soil/lib/sdk/ingest-chunk.ts`.
+ *   `packages/flood/lib/sdk/ingest/chunk.ts` and `packages/soil/lib/sdk/ingest/chunk.ts`.
  */
 
 import {

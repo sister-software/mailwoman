@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { checkCLIAllowlist } from "@mailwoman/dev-mcp/cli-allowlist"
+import { checkCLIAllowlist } from "@mailwoman/dev-mcp/cli/allowlist"
 import { describe, expect, it } from "vitest"
 
 describe("checkCLIAllowlist", () => {

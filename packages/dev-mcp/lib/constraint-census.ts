@@ -27,9 +27,9 @@
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
-import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
-import { openSealedArtifact } from "#lookup"
+import { openSealedArtifact } from "#lookup/index"
 import { provenanceFor, type Provenance } from "#tool-kit"
 
 /**

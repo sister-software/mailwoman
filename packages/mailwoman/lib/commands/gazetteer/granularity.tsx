@@ -48,8 +48,8 @@ interface Options {
 const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
-		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity")
-		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity-report")
+		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity/index")
+		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity/report")
 
 		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
 		const rows = buildGranularityLadder(sourcePath)

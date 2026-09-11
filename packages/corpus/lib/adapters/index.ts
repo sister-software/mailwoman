@@ -21,8 +21,8 @@
 
 import { banAdapter } from "#adapters/ban/adapter"
 import { fccBdcAdapter } from "#adapters/fcc-bdc/adapter"
-import { geonamesPostalAdapter } from "#adapters/geonames-postal/adapter"
 import { geonamesAdapter } from "#adapters/geonames/adapter"
+import { geonamesPostalAdapter } from "#adapters/geonames/postal/adapter"
 import { gnafAdapter } from "#adapters/gnaf/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
 import { osmAdapter } from "#adapters/osm/adapter"
@@ -38,7 +38,7 @@ import { USGovIRSBMFAdapter } from "#adapters/usgov/irs-bmf/adapter"
 import { usgovNADAdapter } from "#adapters/usgov/nad/adapter"
 import { usgovNPPESAdapter } from "#adapters/usgov/nppes/adapter"
 import { defaultAdapterRegistry } from "#adapters/utils"
-import { wofAdminAdapter } from "#adapters/wof/admin-json/adapter"
+import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
 import type { CorpusAdapter } from "#types"
 
@@ -88,7 +88,7 @@ export {
 	GEONAMES_POSTAL_ADAPTER_ID,
 	GEONAMES_POSTAL_DEFAULT_LICENSE,
 	geonamesPostalAdapter,
-} from "#adapters/geonames-postal/adapter"
+} from "#adapters/geonames/postal/adapter"
 
 export { GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE, geonamesAdapter } from "#adapters/geonames/adapter"
 
@@ -151,5 +151,5 @@ export {
 	usgovSamhsaTreatmentLocatorAdapter,
 } from "#adapters/usgov/samhsa-treatment-locator/adapter"
 
-export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "#adapters/wof/admin-json/adapter"
+export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 export { WOF_POSTALCODE_ADAPTER_ID, wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"

@@ -10,7 +10,7 @@
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
 
-import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
 import { describe, expect, it } from "vitest"
 
 import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"

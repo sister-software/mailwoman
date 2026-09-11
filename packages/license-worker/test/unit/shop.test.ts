@@ -16,7 +16,7 @@ import { STRIPE_API_VERSION, stripeClient } from "@mailwoman/license-worker/stri
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { recordingStripeFetch, type StripeRoute } from "../support/stripe-mock.ts"
+import { recordingStripeFetch, type StripeRoute } from "../support/stripe/mock.ts"
 
 const worker = readEnv(env)
 const SITE = "https://mailwoman.ai"

@@ -12,14 +12,15 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { planCountryMove, servingSources } from "mailwoman/gazetteer-pipeline/country-plan"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { planCountryMove, servingSources } from "mailwoman/gazetteer-pipeline/country/plan"
 import {
 	ACCEPTED_TWO_SOURCE_COUNTRIES,
 	AdminSource,
 	countrySourceMap,
 	sourceConflicts,
 	sourceSentence,
-} from "mailwoman/gazetteer-pipeline/country-sources"
+} from "mailwoman/gazetteer-pipeline/country/sources"
 import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
@@ -125,7 +126,10 @@ describe("the id-band literals in country-plan.ts", () => {
 		// `censusForCountry` spells the boundaries as SQL literals because a query cannot import a constant.
 		// This is what stops that duplication from drifting: a fold that moves its base moves this test.
 		const { GEONAMES_ID_BASE, OVERTURE_ID_BASE } = await import("@mailwoman/core/resolver/synthetic-id-ranges")
-		const source = await readLocalTextFile(new URL("../../../lib/gazetteer-pipeline/country-plan.ts", import.meta.url))
+
+		const source = await readLocalTextFile(
+			resolvePackagePath("mailwoman", "lib", "gazetteer-pipeline", "country", "plan.ts")
+		)
 
 		expect(source).toContain(
 			`const OVERTURE_BAND_START = ${OVERTURE_ID_BASE.toLocaleString("en-US").replaceAll(",", "_")}`

@@ -14,7 +14,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build-regression-db"
+import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build/regression-db"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh, readCorpusStamp } from "mailwoman/eval-harness/gauntlet/corpus-stamp"
 import { createGauntletTable, type GauntletDatabase } from "mailwoman/eval-harness/gauntlet/schema"

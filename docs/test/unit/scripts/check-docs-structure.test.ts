@@ -82,7 +82,7 @@ describe("validatePage", () => {
 
 	it("accepts a fully valid reference page", () => {
 		const failures = validatePage(
-			{ role: "reference", "source-of-truth": "docs/scripts/check-docs-structure.ts" },
+			{ role: "reference", "source-of-truth": "docs/scripts/check/docs-structure.ts" },
 			"reference/schema.mdx"
 		)
 

@@ -51,14 +51,33 @@ describe("findPrefixGroups", () => {
 		])
 	})
 
-	test("a name with no hyphen has no prefix to repeat", () => {
-		expect(
-			findPrefixGroups([
-				`${ADAPTERS}/geonames/adapter.ts`,
-				`${ADAPTERS}/geonames-postal/adapter.ts`,
-				`${ADAPTERS}/gnaf/adapter.ts`,
-			])
-		).toEqual([])
+	test("a name with no hyphen heads a family when one shares it, and stands alone otherwise", () => {
+		const groups = findPrefixGroups([
+			`${ADAPTERS}/geonames/adapter.ts`,
+			`${ADAPTERS}/geonames-postal/adapter.ts`,
+			`${ADAPTERS}/gnaf/adapter.ts`,
+		])
+
+		// `geonames/` heads the family `geonames-postal/` belongs to; `gnaf/` repeats nothing and is untouched.
+		expect(groups).toHaveLength(1)
+		expect(groups[0]?.members.map((member) => member.name)).toEqual(["geonames", "geonames-postal"])
+	})
+
+	test("a head directory stays put while its siblings move into it", () => {
+		const tracked = [`${ADAPTERS}/geonames/adapter.ts`, `${ADAPTERS}/geonames-postal/adapter.ts`]
+
+		expect(planPrefixMoves(findPrefixGroups(tracked), tracked)).toEqual([
+			{ from: `${ADAPTERS}/geonames-postal/adapter.ts`, to: `${ADAPTERS}/geonames/postal/adapter.ts` },
+		])
+	})
+
+	test("a head file becomes the directory's index", () => {
+		const tracked = ["a/b/reliability.ts", "a/b/reliability-report.ts"]
+
+		expect(planPrefixMoves(findPrefixGroups(tracked), tracked)).toEqual([
+			{ from: "a/b/reliability-report.ts", to: "a/b/reliability/report.ts" },
+			{ from: "a/b/reliability.ts", to: "a/b/reliability/index.ts" },
+		])
 	})
 
 	test("never groups workspace directories — the name is the npm package name", () => {

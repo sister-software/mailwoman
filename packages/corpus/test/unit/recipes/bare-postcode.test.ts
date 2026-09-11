@@ -8,13 +8,13 @@
  *   reaches the rendering and the agreement without it.
  */
 
+import { BARE_POSTCODE_EVAL_CASES, isReservedBarePostcode } from "@mailwoman/corpus/recipes/bare/postcode/eval"
 import {
 	detectedAsPostcode,
 	findMissingPostcodeSources,
 	renderBarePostcode,
 	selectPostcodes,
-} from "@mailwoman/corpus/recipes/bare/postcode"
-import { BARE_POSTCODE_EVAL_CASES, isReservedBarePostcode } from "@mailwoman/corpus/recipes/bare/postcode-eval"
+} from "@mailwoman/corpus/recipes/bare/postcode/index"
 import { describe, expect, it } from "vitest"
 
 describe("renderBarePostcode", () => {

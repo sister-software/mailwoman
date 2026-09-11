@@ -29,7 +29,7 @@
 // product's geometry, and a second copy of it is a second place for a hole to stop being one.
 import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
-import type { CoastalFeatureSource, CoastalInstabilityFeature, CoastalSourceFeature } from "#sdk/ingest"
+import type { CoastalFeatureSource, CoastalInstabilityFeature, CoastalSourceFeature } from "#sdk/ingest/index"
 import { NCERM_SCENARIOS_BY_KEY, NCERM_SOURCE_EPSG, type CoastalScenario } from "#vocabulary"
 
 /**

@@ -57,9 +57,9 @@ import { cellToLatLng } from "h3-js"
 
 import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "#schema"
 import { reduceCells, resolveCells } from "#sdk/cell-tiers"
-import type { SoilFeatureSource } from "#sdk/ingest"
-import type { SoilChunkResult } from "#sdk/ingest-chunk"
-import { ingestSoilChunk } from "#sdk/ingest-chunk"
+import type { SoilChunkResult } from "#sdk/ingest/chunk"
+import { ingestSoilChunk } from "#sdk/ingest/chunk"
+import type { SoilFeatureSource } from "#sdk/ingest/index"
 import { WEIGHT_LATTICE_DEPTH } from "#sdk/reduce"
 import type { SurveyAreaAttributes } from "#sdk/survey-area"
 import {

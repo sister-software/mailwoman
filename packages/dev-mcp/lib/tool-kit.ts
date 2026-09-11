@@ -12,7 +12,7 @@ import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mai
 import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
 
-import type { EngineRegistryLike } from "#engine-registry"
+import type { EngineRegistryLike } from "#engine/registry"
 import type { EvalReport } from "#eval-report"
 import { summarizeEvalReport } from "#eval-report"
 import { summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"

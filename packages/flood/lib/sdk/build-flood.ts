@@ -57,8 +57,8 @@ import { compactCells, getResolution } from "h3-js"
 
 import { createFloodTables, FloodCellContainment, type FloodDatabase } from "#schema"
 import type { FloodMapExtent } from "#sdk/extent"
-import type { FloodFeatureSource } from "#sdk/ingest"
-import { ingestFloodChunk, type FloodChunkResult } from "#sdk/ingest-chunk"
+import { ingestFloodChunk, type FloodChunkResult } from "#sdk/ingest/chunk"
+import type { FloodFeatureSource } from "#sdk/ingest/index"
 import {
 	EA_FLOOD_ATTRIBUTION,
 	EA_FLOOD_DATASET_ID,

@@ -9,7 +9,7 @@
 
 import { z } from "zod"
 
-import { runParseCompare } from "#parse-compare-report"
+import { runParseCompare } from "#parse/compare/report"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 

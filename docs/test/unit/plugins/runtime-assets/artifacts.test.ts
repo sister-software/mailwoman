@@ -7,7 +7,7 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { relativeImportSpecifiers, stageMapLibreWorker } from "@mailwoman/docs/plugins/runtime-assets/artifacts"
-import { MAPLIBRE_WORKER_URL } from "@mailwoman/docs/shared/maplibre-worker-url"
+import { MAPLIBRE_WORKER_URL } from "@mailwoman/docs/shared/maplibre/worker/url"
 import { basename } from "path-ts"
 import { describe, expect, test } from "vitest"
 

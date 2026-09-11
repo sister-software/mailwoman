@@ -20,10 +20,11 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { BUNDLES } from "mailwoman/data"
 import { afterAll, describe, expect, test } from "vitest"
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 /**
  * A directory that exists but holds nothing — so `data --list` reports destinations under it without any bundle
@@ -79,6 +80,6 @@ describe("the published bin names", () => {
 	test("`mailwoman` and `mw` both point at the compiled CLI", async () => {
 		const manifest = await readPackageJSON(workspacePath("mailwoman", "package.json"))
 
-		expect(manifest.bin).toEqual({ mailwoman: "./out/cli.js", mw: "./out/cli.js" })
+		expect(manifest.bin).toEqual({ mailwoman: "./out/cli/index.js", mw: "./out/cli/index.js" })
 	})
 })

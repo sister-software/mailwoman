@@ -9,8 +9,8 @@
 
 import { z } from "zod"
 
-import { ReliabilitySurface, runReliability } from "#reliability-report"
-import { ComponentAggregate, UnassertedPolicy } from "#reliability-surfaces"
+import { ReliabilitySurface, runReliability } from "#reliability/report"
+import { ComponentAggregate, UnassertedPolicy } from "#reliability/surfaces"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 

@@ -42,7 +42,7 @@ import {
 	intervalContains,
 	type CandidateAncestorTable,
 	type IntervalLabel,
-} from "#candidate/ancestors-schema"
+} from "#candidate/ancestors/schema"
 import { CANDIDATE_FTS_TABLE } from "#candidate/fts"
 import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "#candidate/schema"
 import { readGazetteerCoverageManifest } from "#coverage-manifest-schema"

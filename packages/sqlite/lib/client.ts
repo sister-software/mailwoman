@@ -17,8 +17,8 @@ import { Kysely, type KyselyConfig } from "kysely"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { Database } from "#database-schema"
-import { SqliteDialect } from "#dialect"
-import type { SqliteDialectConfig } from "#dialect-config"
+import type { SqliteDialectConfig } from "#dialect/config"
+import { SqliteDialect } from "#dialect/index"
 
 /**
  * A SQLite client for one database file: a Kysely query builder over `node:sqlite`, plus the two raw statements Kysely

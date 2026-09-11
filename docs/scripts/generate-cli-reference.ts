@@ -291,7 +291,7 @@ export const COMMANDS_DIRECTORY = join(packagePath, "out", "commands")
 /**
  * Compiled direct-command directory merged with the filesystem command tree.
  */
-export const NATIVE_COMMANDS_DIRECTORY = join(packagePath, "out", "cli-native", "commands")
+export const NATIVE_COMMANDS_DIRECTORY = join(packagePath, "out", "cli", "native", "commands")
 
 /**
  * Read the compiled command tree and partition it by {@link DOCUMENTED_GROUPS}.
@@ -490,7 +490,7 @@ export function renderCLIReference(surface: CLISurface): string {
 	sections.push(
 		"## Exit codes",
 		"",
-		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/lib/cli-kit`.",
+		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/lib/cli/kit`.",
 		"",
 		renderTable(
 			["Code", "Meaning", "Next step"],

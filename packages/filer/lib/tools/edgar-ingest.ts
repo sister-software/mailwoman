@@ -12,11 +12,11 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 
-import { parseCIKLookupData, type CompanyTickerEntry } from "#sdk/edgar-filings"
-import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "#sdk/edgar-ingest"
+import { parseCIKLookupData, type CompanyTickerEntry } from "#sdk/edgar/filings"
+import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "#sdk/edgar/ingest"
 import { createSECClient } from "#sdk/sec-client"
 
-export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar-ingest"
+export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
 
 export interface FilerEdgarIngestOptions {
 	/**

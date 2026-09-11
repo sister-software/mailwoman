@@ -47,11 +47,11 @@ import {
 import { normalizePlacetypes, sanitizeFTSQuery } from "#fts/query"
 import { cfNormalize, softNameScore } from "#name-score"
 import { encyclopedicClauses } from "#place-importance-schema"
-import type { WOFPostalCityAliasLookup } from "#postal/city/alias-lookup"
+import type { WOFPostalCityAliasLookup } from "#postal/city/alias/lookup"
 import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking-weights"
 import type { WOFDatabase } from "#schema"
 import { fetchSearchRows, type RawSearchRow } from "#search-fetch"
-import { SqliteConventionSource } from "#sqlite-convention-source"
+import { SqliteConventionSource } from "#sqlite/convention-source"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 export interface WOFSQLitePlaceLookupOpts {

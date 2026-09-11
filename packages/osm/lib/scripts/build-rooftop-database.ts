@@ -47,8 +47,8 @@ import {
 	type OSMAddressPointDatabase,
 } from "#sdk/address-point-schema"
 import { extractAddrPoints } from "#sdk/extract"
-import { streetLocaleForCountry } from "#sdk/street-locale"
-import { buildStreetRecoveryIndex } from "#sdk/street-recovery"
+import { streetLocaleForCountry } from "#sdk/street/locale"
+import { buildStreetRecoveryIndex } from "#sdk/street/recovery"
 
 interface BuildArgs {
 	country: string

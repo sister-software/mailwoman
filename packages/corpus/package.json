@@ -163,14 +163,14 @@
 			"default": "./out/tools/overture-subvenue.js"
 		},
 		"./tools/sub-venue-lexicon": {
-			"types": "./out/tools/sub/venue-lexicon.d.ts",
-			"node": "./lib/tools/sub/venue-lexicon.ts",
-			"default": "./out/tools/sub/venue-lexicon.js"
+			"types": "./out/tools/sub/venue/lexicon.d.ts",
+			"node": "./lib/tools/sub/venue/lexicon.ts",
+			"default": "./out/tools/sub/venue/lexicon.js"
 		},
 		"./tools/sub-venue-promotions": {
-			"types": "./out/tools/sub/venue-promotions.d.ts",
-			"node": "./lib/tools/sub/venue-promotions.ts",
-			"default": "./out/tools/sub/venue-promotions.js"
+			"types": "./out/tools/sub/venue/promotions.d.ts",
+			"node": "./lib/tools/sub/venue/promotions.ts",
+			"default": "./out/tools/sub/venue/promotions.js"
 		},
 		"./tools/fetch/download": {
 			"types": "./out/tools/fetch/download.d.ts",

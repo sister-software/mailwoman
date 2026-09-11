@@ -36,15 +36,15 @@ import {
 	CHECKOUT_SIZE_RATIO,
 	planCountryMove,
 	servingSources,
-} from "#gazetteer-pipeline/country-plan"
-import { AdminSource, countrySourceMap, sourceConflicts, sourceSentence } from "#gazetteer-pipeline/country-sources"
+} from "#gazetteer-pipeline/country/plan"
+import { AdminSource, countrySourceMap, sourceConflicts, sourceSentence } from "#gazetteer-pipeline/country/sources"
 import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
 } from "#gazetteer-pipeline/defaults"
 import { addCountry, removeCountry } from "#gazetteer-pipeline/recipe-edit"
-import { auditReposRoot, clonedCountries, reposSentence } from "#gazetteer-pipeline/repos-audit"
+import { auditReposRoot, clonedCountries, reposSentence } from "#gazetteer-pipeline/repos/audit"
 
 export const description =
 	"Report which source serves a country's admin coverage today, and every edit moving it would require. " +

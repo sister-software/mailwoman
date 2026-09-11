@@ -14,8 +14,8 @@ import type { StatementSync } from "@mailwoman/sqlite/client"
 import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "#schema"
 import { insertFamilyMembership } from "#sdk/build/family-membership"
 import { mintFRNNodeID, mintHoldingCompanyNodeID, mintManagementCompanyNodeID } from "#sdk/build/node-ids"
-import type { Form499Row } from "#sdk/form499"
-import type { Form499Lifecycle } from "#sdk/form499-notes"
+import type { Form499Row } from "#sdk/form499/index"
+import type { Form499Lifecycle } from "#sdk/form499/notes"
 
 /**
  * The cessation date to close a relationship window at, or `null` when closing it would assert something incoherent.

@@ -8,7 +8,7 @@
  *   folding (and the Paris acceptance key) so a future tweak can't silently desync the two sides.
  */
 
-import { streetLocaleForCountry, supportedOSMCountries } from "@mailwoman/osm/sdk/street-locale"
+import { streetLocaleForCountry, supportedOSMCountries } from "@mailwoman/osm/sdk/street/locale"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { expect, test } from "vitest"
 

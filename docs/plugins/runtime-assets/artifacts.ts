@@ -43,7 +43,7 @@ export function relativeImportSpecifiers(source: string): string[] {
  * `http(s):` URL. The docs client bundle is classic-script output, so webpack inlines `import.meta.url` as the `file:`
  * path of `maplibre-gl.mjs` on the build host; the empty URL then spawns the PAGE ITSELF as the worker, which dies at
  * its first byte of HTML. No error reaches the console, `map.loaded()` stays false, and no tile is ever requested. The
- * site sets `setWorkerUrl` to the staged copy (`docs/src/shared/maplibre-worker.ts`), which is same-origin and
+ * site sets `setWorkerUrl` to the staged copy (`docs/src/shared/maplibre/worker/index.ts`), which is same-origin and
  * therefore loads as a module worker.
  *
  * Staging from the installed package, at build time, is what keeps the worker at the same version as the bundled main

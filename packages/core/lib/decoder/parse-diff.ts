@@ -27,7 +27,7 @@
  *   its answer but lost 0.3 of confidence on the deciding span is a row about to flip, and an aggregate cannot say so.
  */
 
-import { flattenTreeNodes } from "#decoder/tree-shape"
+import { flattenTreeNodes } from "#decoder/tree/shape"
 import type { AddressTree } from "#decoder/types"
 
 /**

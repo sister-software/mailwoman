@@ -17,7 +17,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/bash-write-guard.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/bash/write/guard.ts\"",
 						"timeout": 10,
 						"statusMessage": "Bash write guard"
 					}
@@ -53,7 +53,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/response-check.ts\"",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/response/check/index.ts\"",
 						"timeout": 30,
 						"statusMessage": "Vale prose check"
 					}

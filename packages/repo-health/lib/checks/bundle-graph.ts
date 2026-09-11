@@ -111,7 +111,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 		entry: "@mailwoman/core/license/key",
 		platform: "neutral",
 		conditions: WORKER_CONDITIONS,
-		mustInclude: [/license\/key\.js$/u],
+		mustInclude: [/license\/key\/index\.js$/u],
 	},
 	{
 		entry: "@mailwoman/core/license/register",
@@ -141,7 +141,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 	browserRow("@mailwoman/neural/classifier", {
 		followDynamicImports: true,
 		allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS,
-		mustInclude: [/neural\/out\/classifier\/loader-browser\.js$/u],
+		mustInclude: [/neural\/out\/classifier\/loader\/browser\.js$/u],
 		mustExclude: [/neural\/out\/classifier\/loader\.js$/u],
 	}),
 ]

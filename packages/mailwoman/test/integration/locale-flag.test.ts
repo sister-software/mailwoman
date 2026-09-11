@@ -7,13 +7,13 @@
  *   and rejects bad input, and that a model-independent fast-path input runs through the compiled CLI.
  */
 
-import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 describe("--locale validation", () => {
 	test("parse command accepts en-US, fr-FR, en (any BCP-47 tag with optional region)", () => {

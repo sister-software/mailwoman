@@ -9,7 +9,11 @@
  *   read path — CSVSpliterator itself is exercised elsewhere (`locale.test.ts`).
  */
 
-import { PairIndexBuilder, applyPairIndexHoldout, nearestRankPercentile } from "mailwoman/gazetteer-pipeline/pair/index"
+import {
+	PairIndexBuilder,
+	applyPairIndexHoldout,
+	nearestRankPercentile,
+} from "mailwoman/gazetteer-pipeline/pair/index/index"
 import { describe, expect, it } from "vitest"
 
 describe("PairIndexBuilder", () => {

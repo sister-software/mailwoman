@@ -9,12 +9,13 @@
  *   and worker is precisely the failure this file must catch.
  */
 
-import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-const CLI_PATH = resolveModulePath("@mailwoman/dev-mcp/cli")
+// The package declares no `./cli` export, so this reads the bin the manifest actually publishes.
+const CLI_PATH = String(resolvePackagePath("@mailwoman/dev-mcp", "lib", "cli", "index.ts"))
 
 /**
  * Worker boot imports the whole mailwoman graph; under vitest concurrency that is seconds, not milliseconds.

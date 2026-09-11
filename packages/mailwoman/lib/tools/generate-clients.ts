@@ -45,8 +45,8 @@ import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { join } from "path-ts"
 
 import type { Check } from "#cli-kit"
-import { readMailwomanVersion } from "#cli-kit/metadata"
-import { runProcessOrFail } from "#cli-kit/shared"
+import { readMailwomanVersion } from "#cli/kit/metadata"
+import { runProcessOrFail } from "#cli/kit/shared"
 
 /**
  * The four surfaces every emitter + generated client covers. Order matches the salvaged README's table, mailwoman last

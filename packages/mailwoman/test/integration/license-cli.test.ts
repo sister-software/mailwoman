@@ -21,13 +21,13 @@ import {
 	licenseKeyID,
 	publishedLicenseKeys,
 } from "@mailwoman/core/license"
-import { workspacePath } from "@mailwoman/core/paths"
 import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { resolvePath } from "path-ts"
 import { describe, expect, test } from "vitest"
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 
 interface CLIRun extends ProcessOutput {
 	exitCode: number

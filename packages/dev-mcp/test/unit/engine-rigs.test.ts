@@ -9,7 +9,7 @@
  *   ask a rig anything is to learn WHICH dataset answered.
  */
 
-import { ENGINE_RIGS, normalizeRigResults } from "@mailwoman/dev-mcp/engine-rigs"
+import { ENGINE_RIGS, normalizeRigResults } from "@mailwoman/dev-mcp/engine/rigs"
 import { describe, expect, it } from "vitest"
 
 describe("ENGINE_RIGS", () => {

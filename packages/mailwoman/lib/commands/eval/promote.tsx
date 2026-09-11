@@ -50,7 +50,7 @@ interface Options {
 const EvalPromote: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runPromotionEval } = await import("#eval-harness/promotion-eval")
+			const { runPromotionEval } = await import("#eval-harness/promotion/eval/index")
 
 			return await runPromotionEval(options)
 		},

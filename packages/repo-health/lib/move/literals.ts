@@ -64,6 +64,35 @@ export function directoryMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 	return [...pairs].map(([from, to]) => ({ from, to }))
 }
 
+const SOURCE_ROOT = /\/(lib|src)\//u
+const SOURCE_EXTENSION = /\.tsx?$/u
+
+/**
+ * The EMITTED paths a set of source moves implies, as a move of its own.
+ *
+ * A test spawns `packages/mailwoman/out/cli/index.js`, a workflow runs one, a docstring names one. None of those is the
+ * source path, so a sweep over source paths alone leaves them naming an output `tsc` no longer produces — and `tsc -b`
+ * does not delete the file it used to produce, so the stale one answers instead of failing.
+ */
+export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {
+	const emitted: ModuleMove[] = []
+
+	for (const move of moves) {
+		if (!SOURCE_ROOT.test(move.from) || !SOURCE_ROOT.test(move.to)) continue
+
+		if (!SOURCE_EXTENSION.test(move.from)) continue
+
+		for (const extension of [".js", ".d.ts", ".js.map"]) {
+			emitted.push({
+				from: move.from.replace(SOURCE_ROOT, "/out/").replace(SOURCE_EXTENSION, extension),
+				to: move.to.replace(SOURCE_ROOT, "/out/").replace(SOURCE_EXTENSION, extension),
+			})
+		}
+	}
+
+	return emitted
+}
+
 /**
  * Every occurrence of a moved path in one file's text.
  *
@@ -103,7 +132,7 @@ export async function planPathLiteralRewrites(
 	exempt: readonly string[] = DATED_RECORDS
 ): Promise<PathLiteralRewrite[]> {
 	const destinations = new Map(moves.map((move) => [move.from, move.to]))
-	const needles = [...moves, ...directoryMoves(moves)]
+	const needles = [...moves, ...emittedMoves(moves), ...directoryMoves(moves)]
 	const rewrites: PathLiteralRewrite[] = []
 
 	for (const file of trackedFiles) {

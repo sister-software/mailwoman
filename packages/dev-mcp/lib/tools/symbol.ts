@@ -18,8 +18,8 @@
 import { repoRootPath } from "@mailwoman/core/paths"
 import { z } from "zod"
 
-import { searchDeclarations } from "#symbol-index"
-import { loadPurposeIndex, searchPurpose } from "#symbol-purpose"
+import { searchDeclarations } from "#symbol/index"
+import { loadPurposeIndex, searchPurpose } from "#symbol/purpose"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**

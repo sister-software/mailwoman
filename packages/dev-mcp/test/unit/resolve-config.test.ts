@@ -12,7 +12,7 @@
  *   this test exists to fail if anyone re-introduces a literal.
  */
 
-import { resolveConfig } from "@mailwoman/dev-mcp/engine-registry"
+import { resolveConfig } from "@mailwoman/dev-mcp/engine/registry"
 import { createGeocodeCommandOptions } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 

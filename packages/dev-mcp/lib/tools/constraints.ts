@@ -10,7 +10,7 @@
 import { z } from "zod"
 
 import { runConstraintCensus } from "#constraint-census"
-import type { EngineConfig } from "#engine-registry"
+import type { EngineConfig } from "#engine/registry"
 import type { InputSetRef } from "#input-sets"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"

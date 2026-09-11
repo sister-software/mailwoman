@@ -12,7 +12,7 @@
  *   It mutates nothing and changes no serializer — wiring `unknown` into the JSON/XML/tuple contracts + the
  *   demo is the focused follow-up (#493). Byte-stable by construction, so it ships ahead of that work.
  */
-import { walkNodes } from "#decoder/tree-walk"
+import { walkNodes } from "#decoder/tree/walk"
 import type { AddressTree } from "#decoder/types"
 
 export interface UnknownSpan {

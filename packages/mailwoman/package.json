@@ -30,8 +30,8 @@
 	},
 	"man": "./man/mailwoman.1",
 	"bin": {
-		"mailwoman": "./out/cli.js",
-		"mw": "./out/cli.js"
+		"mailwoman": "./out/cli/index.js",
+		"mw": "./out/cli/index.js"
 	},
 	"files": [
 		"!out/test/**/*",
@@ -110,9 +110,9 @@
 			"default": "./out/gazetteer-pipeline/*.js"
 		},
 		"#cli-kit": {
-			"types": "./out/cli-kit/index.d.ts",
-			"node": "./lib/cli-kit/index.ts",
-			"default": "./out/cli-kit/index.js"
+			"types": "./out/cli/kit/index.d.ts",
+			"node": "./lib/cli/kit/index.ts",
+			"default": "./out/cli/kit/index.js"
 		},
 		"#gazetteer-pipeline": {
 			"types": "./out/gazetteer-pipeline/index.d.ts",
@@ -125,9 +125,9 @@
 			"default": "./out/index.js"
 		},
 		"#cli-kit/weights-guard": {
-			"types": "./out/cli-kit/weights-guard.d.ts",
-			"node": "./out/cli-kit/weights-guard.js",
-			"default": "./out/cli-kit/weights-guard.js"
+			"types": "./out/cli/kit/weights-guard.d.ts",
+			"node": "./out/cli/kit/weights-guard.js",
+			"default": "./out/cli/kit/weights-guard.js"
 		},
 		"#autocomplete-core": {
 			"types": "./out/autocomplete-core.d.ts",
@@ -248,29 +248,29 @@
 			"default": "./out/gazetteer-pipeline/*.js"
 		},
 		"./cli-kit": {
-			"types": "./out/cli-kit/index.d.ts",
-			"node": "./lib/cli-kit/index.ts",
-			"default": "./out/cli-kit/index.js"
+			"types": "./out/cli/kit/index.d.ts",
+			"node": "./lib/cli/kit/index.ts",
+			"default": "./out/cli/kit/index.js"
 		},
 		"./cli-kit/metadata": {
-			"types": "./out/cli-kit/metadata.d.ts",
-			"node": "./lib/cli-kit/metadata.ts",
-			"default": "./out/cli-kit/metadata.js"
+			"types": "./out/cli/kit/metadata.d.ts",
+			"node": "./lib/cli/kit/metadata.ts",
+			"default": "./out/cli/kit/metadata.js"
 		},
 		"./cli-kit/engine-stamp": {
-			"types": "./out/cli-kit/engine-stamp.d.ts",
-			"node": "./lib/cli-kit/engine-stamp.ts",
-			"default": "./out/cli-kit/engine-stamp.js"
+			"types": "./out/cli/kit/engine-stamp.d.ts",
+			"node": "./lib/cli/kit/engine-stamp.ts",
+			"default": "./out/cli/kit/engine-stamp.js"
 		},
 		"./cli-kit/dropin": {
-			"types": "./out/cli-kit/dropin.d.ts",
-			"node": "./lib/cli-kit/dropin.ts",
-			"default": "./out/cli-kit/dropin.js"
+			"types": "./out/cli/kit/dropin.d.ts",
+			"node": "./lib/cli/kit/dropin.ts",
+			"default": "./out/cli/kit/dropin.js"
 		},
 		"./cli-kit/weights-guard": {
-			"types": "./out/cli-kit/weights-guard.d.ts",
-			"node": "./out/cli-kit/weights-guard.js",
-			"default": "./out/cli-kit/weights-guard.js"
+			"types": "./out/cli/kit/weights-guard.d.ts",
+			"node": "./out/cli/kit/weights-guard.js",
+			"default": "./out/cli/kit/weights-guard.js"
 		},
 		"./test-kit": {
 			"types": "./out/test-kit/index.d.ts",
@@ -283,14 +283,14 @@
 			"default": "./out/api-engine.js"
 		},
 		"./cli-native/command-names": {
-			"types": "./out/cli-native/command-names.d.ts",
-			"node": "./lib/cli-native/command-names.ts",
-			"default": "./out/cli-native/command-names.js"
+			"types": "./out/cli/native/command/names.d.ts",
+			"node": "./lib/cli/native/command/names.ts",
+			"default": "./out/cli/native/command/names.js"
 		},
 		"./cli-native/spec": {
-			"types": "./out/cli-native/spec.d.ts",
-			"node": "./lib/cli-native/spec.ts",
-			"default": "./out/cli-native/spec.js"
+			"types": "./out/cli/native/spec.d.ts",
+			"node": "./lib/cli/native/spec.ts",
+			"default": "./out/cli/native/spec.js"
 		},
 		"./commands/parse": {
 			"types": "./out/commands/parse.d.ts",
@@ -378,9 +378,9 @@
 			"default": "./out/stranded-affix-repair.js"
 		},
 		"./cli-native/command-router": {
-			"types": "./out/cli-native/command-router.d.ts",
-			"node": "./lib/cli-native/command-router.ts",
-			"default": "./out/cli-native/command-router.js"
+			"types": "./out/cli/native/command/router.d.ts",
+			"node": "./lib/cli/native/command/router.ts",
+			"default": "./out/cli/native/command/router.js"
 		},
 		"./autocomplete-core": {
 			"types": "./out/autocomplete-core.d.ts",
@@ -388,9 +388,9 @@
 			"default": "./out/autocomplete-core.js"
 		},
 		"./commands/gazetteer/inspect/sync-plan": {
-			"types": "./out/commands/gazetteer/inspect/sync-plan.d.ts",
-			"node": "./lib/commands/gazetteer/inspect/sync-plan.ts",
-			"default": "./out/commands/gazetteer/inspect/sync-plan.js"
+			"types": "./out/commands/gazetteer/inspect/sync/plan.d.ts",
+			"node": "./lib/commands/gazetteer/inspect/sync/plan.ts",
+			"default": "./out/commands/gazetteer/inspect/sync/plan.js"
 		},
 		"./doctor": {
 			"types": "./out/doctor/index.d.ts",

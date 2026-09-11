@@ -18,7 +18,7 @@ import { FailureDiagnostic } from "@mailwoman/react/pipeline/FailureDiagnostic"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
 import { useMemo, useState } from "react"
 
-import type { GeocoderRuntimeHandle } from "#runtime/use-geocoder-runtime"
+import type { GeocoderRuntimeHandle } from "#runtime/use/geocoder-runtime"
 
 import { Compare } from "./Compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./Controls.tsx"

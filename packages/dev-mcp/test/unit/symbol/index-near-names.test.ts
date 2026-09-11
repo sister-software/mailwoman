@@ -10,7 +10,7 @@
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { containedNameCandidates, formatFindings } from "@mailwoman/dev-mcp/symbol-index"
+import { containedNameCandidates, formatFindings } from "@mailwoman/dev-mcp/symbol/index"
 import { describe, expect, it } from "vitest"
 
 import { runHook } from "../../hook-harness.ts"

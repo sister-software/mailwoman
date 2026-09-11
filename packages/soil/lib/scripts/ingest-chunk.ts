@@ -13,8 +13,8 @@ import { INGEST_CHUNK_FLAGS, runIngestChunkScript } from "@mailwoman/core/script
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { SoilDatabase } from "#schema"
-import { createShapefileFeatureSource } from "#sdk/ingest"
-import { ingestSoilChunk } from "#sdk/ingest-chunk"
+import { ingestSoilChunk } from "#sdk/ingest/chunk"
+import { createShapefileFeatureSource } from "#sdk/ingest/index"
 
 await runIngestChunkScript({
 	context: "soil ingest-chunk",

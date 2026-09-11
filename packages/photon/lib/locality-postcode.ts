@@ -16,7 +16,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode-locality/schema"
+import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode/locality/schema"
 
 /**
  * The per-country artifacts, probed in caller-country order with `intl` as the shared fallback.

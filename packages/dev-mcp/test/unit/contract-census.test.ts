@@ -11,7 +11,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { censusTrees, type ContractRow } from "@mailwoman/dev-mcp/contract-census"
+import { censusTrees, type ContractRow } from "@mailwoman/dev-mcp/contract/census"
 import { describe, expect, it } from "vitest"
 
 function node(tag: string, value: string, children: AddressNode[] = []): AddressNode {

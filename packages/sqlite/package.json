@@ -51,24 +51,24 @@
 			"default": "./out/introspection.js"
 		},
 		"./dialect": {
-			"types": "./out/dialect.d.ts",
-			"node": "./lib/dialect.ts",
-			"default": "./out/dialect.js"
+			"types": "./out/dialect/index.d.ts",
+			"node": "./lib/dialect/index.ts",
+			"default": "./out/dialect/index.js"
 		},
 		"./dialect-config": {
-			"types": "./out/dialect-config.d.ts",
-			"node": "./lib/dialect-config.ts",
-			"default": "./out/dialect-config.js"
+			"types": "./out/dialect/config.d.ts",
+			"node": "./lib/dialect/config.ts",
+			"default": "./out/dialect/config.js"
 		},
 		"./sealed": {
-			"types": "./out/sealed.d.ts",
-			"node": "./lib/sealed.ts",
-			"default": "./out/sealed.js"
+			"types": "./out/sealed/index.d.ts",
+			"node": "./lib/sealed/index.ts",
+			"default": "./out/sealed/index.js"
 		},
 		"./sealed-db": {
-			"types": "./out/sealed-db.d.ts",
-			"node": "./lib/sealed-db.ts",
-			"default": "./out/sealed-db.js"
+			"types": "./out/sealed/db.d.ts",
+			"node": "./lib/sealed/db.ts",
+			"default": "./out/sealed/db.js"
 		},
 		"./database-schema": {
 			"types": "./out/database-schema.d.ts",
@@ -86,9 +86,9 @@
 			"default": "./out/schema-columns.js"
 		},
 		"./sealed-build": {
-			"types": "./out/sealed-build.d.ts",
-			"node": "./lib/sealed-build.ts",
-			"default": "./out/sealed-build.js"
+			"types": "./out/sealed/build.d.ts",
+			"node": "./lib/sealed/build.ts",
+			"default": "./out/sealed/build.js"
 		}
 	},
 	"publishConfig": {

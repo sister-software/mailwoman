@@ -6,10 +6,10 @@
  *   Public surface of the maintainer-only development MCP server.
  */
 
-export { EngineRegistry, resolveConfig, engineID, type EngineConfig, type Engine } from "#engine-registry"
+export { EngineRegistry, resolveConfig, engineID, type EngineConfig, type Engine } from "#engine/registry"
 export { assembleBench, summarizeLatency, CONCURRENCY_NOTE, type BenchReading, type LatencyReading } from "#bench"
 
-export { checkCLIAllowlist, type AllowlistVerdict } from "#cli-allowlist"
+export { checkCLIAllowlist, type AllowlistVerdict } from "#cli/allowlist"
 
 export { assertCompiledFresh, checkCompiledFreshness, type CompiledFreshness } from "#compiled-tree"
 
@@ -20,7 +20,7 @@ export {
 	loadFSTArtifact,
 	LookupSource,
 	type LookupRow,
-} from "#lookup"
+} from "#lookup/index"
 
 export { readEvalReport, summarizeEvalReport, LEDGER_NOTE, type EvalReport, type FloorReading } from "#eval-report"
 export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"

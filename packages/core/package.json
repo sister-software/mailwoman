@@ -127,9 +127,9 @@
 			"default": "./out/license/index.js"
 		},
 		"./license/key": {
-			"types": "./out/license/key.d.ts",
-			"node": "./lib/license/key.ts",
-			"default": "./out/license/key.js"
+			"types": "./out/license/key/index.d.ts",
+			"node": "./lib/license/key/index.ts",
+			"default": "./out/license/key/index.js"
 		},
 		"./license/register": {
 			"types": "./out/license/register.d.ts",
@@ -272,14 +272,14 @@
 			"default": "./out/api/paced-client.js"
 		},
 		"./api/test-clocks": {
-			"types": "./out/api/test-clocks.d.ts",
-			"node": "./lib/api/test-clocks.ts",
-			"default": "./out/api/test-clocks.js"
+			"types": "./out/api/test/clocks.d.ts",
+			"node": "./lib/api/test/clocks.ts",
+			"default": "./out/api/test/clocks.js"
 		},
 		"./api/test-transport": {
-			"types": "./out/api/test-transport.d.ts",
-			"node": "./lib/api/test-transport.ts",
-			"default": "./out/api/test-transport.js"
+			"types": "./out/api/test/transport.d.ts",
+			"node": "./lib/api/test/transport.ts",
+			"default": "./out/api/test/transport.js"
 		},
 		"./logging": {
 			"types": "./out/logging/index.d.ts",

@@ -10,9 +10,9 @@
 
 import { z } from "zod"
 
-import type { EngineConfig } from "#engine-registry"
-import { LookupSource } from "#lookup"
-import { runLookup } from "#lookup-tool"
+import type { EngineConfig } from "#engine/registry"
+import { LookupSource } from "#lookup/index"
+import { runLookup } from "#lookup/tool"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA } from "#tool-kit"
 

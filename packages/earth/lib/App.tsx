@@ -21,8 +21,8 @@ import { useMemo } from "react"
 
 import { PRODUCTION_CONFIG } from "#config"
 import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch, searchWithQuery } from "#routes"
-import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use-browser-geolocation"
-import { useGeocoderRuntime } from "#runtime/use-geocoder-runtime"
+import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geolocation"
+import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
 
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
 import { useGeocoderPanels } from "./panels/GeocoderPanels.tsx"

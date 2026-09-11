@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "#brands"
-export * from "#lookup"
+export * from "#brands/index"
+export * from "#lookup/index"
 export * from "#types"

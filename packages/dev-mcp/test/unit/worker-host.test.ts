@@ -11,7 +11,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { WorkerHost } from "@mailwoman/dev-mcp/worker-host"
+import { WorkerHost } from "@mailwoman/dev-mcp/worker/host"
 import { afterAll, describe, expect, it } from "vitest"
 
 const STUB_DIR = await temporaryDirectory("mwdev-stub-worker-")

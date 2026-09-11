@@ -45,9 +45,9 @@
 			"default": "./out/classify.js"
 		},
 		"./intent-rules": {
-			"types": "./out/intent-rules.d.ts",
-			"node": "./lib/intent-rules.ts",
-			"default": "./out/intent-rules.js"
+			"types": "./out/intent/rules.d.ts",
+			"node": "./lib/intent/rules.ts",
+			"default": "./out/intent/rules.js"
 		},
 		"./rules": {
 			"types": "./out/rules.d.ts",

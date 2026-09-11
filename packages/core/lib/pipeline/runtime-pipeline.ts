@@ -12,7 +12,7 @@
  *   Implementation contract per `docs/engineering/reference/STAGES.md`.
  */
 
-import { isBareTreeOf } from "#decoder/tree-shape"
+import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { errorMessage } from "#errors/schema"
 import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "#pipeline/types"

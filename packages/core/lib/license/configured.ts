@@ -10,8 +10,8 @@
  *   every invocation.
  */
 
-import { verifyLicenseKey, type LicenseKeyVerification } from "#license/key"
-import { readConfiguredLicenseToken } from "#license/key-file"
+import { readConfiguredLicenseToken } from "#license/key/file"
+import { verifyLicenseKey, type LicenseKeyVerification } from "#license/key/index"
 import { trustedLicenseSigningKeys } from "#license/register"
 
 /**

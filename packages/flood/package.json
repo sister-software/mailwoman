@@ -62,9 +62,9 @@
 			"default": "./out/scripts/*.js"
 		},
 		"./sdk/ingest-chunk": {
-			"types": "./out/sdk/ingest-chunk.d.ts",
-			"node": "./lib/sdk/ingest-chunk.ts",
-			"default": "./out/sdk/ingest-chunk.js"
+			"types": "./out/sdk/ingest/chunk.d.ts",
+			"node": "./lib/sdk/ingest/chunk.ts",
+			"default": "./out/sdk/ingest/chunk.js"
 		},
 		"./schema": {
 			"types": "./out/schema.d.ts",
@@ -117,9 +117,9 @@
 			"default": "./out/sdk/measure-resolutions.js"
 		},
 		"./sdk/ingest": {
-			"types": "./out/sdk/ingest.d.ts",
-			"node": "./lib/sdk/ingest.ts",
-			"default": "./out/sdk/ingest.js"
+			"types": "./out/sdk/ingest/index.d.ts",
+			"node": "./lib/sdk/ingest/index.ts",
+			"default": "./out/sdk/ingest/index.js"
 		},
 		"./sdk/verify": {
 			"types": "./out/sdk/verify.d.ts",

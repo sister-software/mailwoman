@@ -23,7 +23,7 @@
 import { rectangleRing } from "@mailwoman/spatial"
 
 import type { SoilComponentTable, SoilMapUnitTable } from "#schema"
-import type { SoilDelineation, SoilFeatureSource } from "#sdk/ingest"
+import type { SoilDelineation, SoilFeatureSource } from "#sdk/ingest/index"
 import type { SurveyAreaAttributes } from "#sdk/survey-area"
 
 /**

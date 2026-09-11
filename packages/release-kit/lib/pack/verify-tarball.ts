@@ -32,7 +32,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 
-import { collectExportTargets } from "#pack/publish-exports"
+import { collectExportTargets } from "#pack/publish/exports"
 
 /**
  * Glob metacharacters. An entry carrying any of these is a pattern, and a pattern matching nothing is legal — only

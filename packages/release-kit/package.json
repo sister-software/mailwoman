@@ -50,9 +50,9 @@
 			"default": "./out/release/stage.js"
 		},
 		"./release/smoke-get-started": {
-			"types": "./out/release/smoke-get-started.d.ts",
-			"node": "./lib/release/smoke-get-started.ts",
-			"default": "./out/release/smoke-get-started.js"
+			"types": "./out/release/smoke/get-started.d.ts",
+			"node": "./lib/release/smoke/get-started.ts",
+			"default": "./out/release/smoke/get-started.js"
 		},
 		"./deploy/targets": {
 			"types": "./out/deploy/targets.d.ts",
@@ -80,9 +80,9 @@
 			"default": "./out/weights/derived-weights-key.js"
 		},
 		"./pack/publish-exports": {
-			"types": "./out/pack/publish-exports.d.ts",
-			"node": "./lib/pack/publish-exports.ts",
-			"default": "./out/pack/publish-exports.js"
+			"types": "./out/pack/publish/exports.d.ts",
+			"node": "./lib/pack/publish/exports.ts",
+			"default": "./out/pack/publish/exports.js"
 		},
 		"./release/config-version": {
 			"types": "./out/release/config-version.d.ts",

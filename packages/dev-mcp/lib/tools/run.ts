@@ -11,7 +11,7 @@
 import { haversineKm } from "@mailwoman/spatial"
 import { z } from "zod"
 
-import type { EngineConfig } from "#engine-registry"
+import type { EngineConfig } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
 import { describeObservedRate } from "#power"
 import { tallyPaths } from "#tally"

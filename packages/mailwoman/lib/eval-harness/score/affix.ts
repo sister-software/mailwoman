@@ -25,7 +25,7 @@ import {
 	type PerTagEvalRow,
 	perTagRates,
 	scorePerTagCounts,
-} from "#eval-harness/per-tag-f1"
+} from "#eval-harness/per/tag-f1"
 
 /**
  * Options for {@linkcode scoreAffix} — one field per flag the check used to serialize into argv.

@@ -110,7 +110,7 @@ const EvalOAResolver: ParsedCommandComponent<Options> = ({ options }) => {
 	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
 
 	const state = useCommandTask(async () => {
-		const { oaResolverEval } = await import("#eval-harness/oa/resolver-eval")
+		const { oaResolverEval } = await import("#eval-harness/oa/resolver/eval")
 
 		return await oaResolverEval({
 			...rest,

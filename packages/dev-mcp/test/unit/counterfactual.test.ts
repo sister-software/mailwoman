@@ -16,7 +16,7 @@ import {
 	measureMove,
 	type CounterfactualSetting,
 } from "@mailwoman/dev-mcp/counterfactual"
-import { resolveConfig } from "@mailwoman/dev-mcp/engine-registry"
+import { resolveConfig } from "@mailwoman/dev-mcp/engine/registry"
 import { describe, expect, it } from "vitest"
 
 async function flipFor(setting: CounterfactualSetting, locale: string, country: string | undefined) {

@@ -7,6 +7,6 @@
  *   argv, no `process.exit`: commands own parsing, rendering, and exit codes.
  */
 
-export * from "#tools/generate/country-population"
-export * from "#tools/generate/country-reference"
+export * from "#tools/generate/country/population"
+export * from "#tools/generate/country/reference"
 export * from "#tools/generate/official-languages"

@@ -14,7 +14,7 @@
  *   Weightless (#582) — pure string parsing, runs in CI.
  */
 
-import { parseSmokeRows } from "mailwoman/eval-harness/demo-cascade-rows"
+import { parseSmokeRows } from "mailwoman/eval-harness/demo/cascade/rows"
 import { describe, expect, test } from "vitest"
 
 const VALID = '{"input":"90210","expect":{"id":85688531,"name":"Beverly Hills","placetype":"locality"}}'

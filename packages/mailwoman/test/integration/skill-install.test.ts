@@ -14,8 +14,8 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { join } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
@@ -24,7 +24,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
+const CLI_PATH = await mailwomanCLIPath()
 const hasCLICompiled = await pathExists(CLI_PATH)
 
 /**

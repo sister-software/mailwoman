@@ -23,7 +23,7 @@ export * from "#labels"
 // Resolution, not curation: the `browser` condition on this subpath serves a counterpart whose every
 // entry point throws, so the value exports below are safe to name from a bundle.
 export * from "#onnx-runner"
-export * from "#pair/index-resolver"
+export * from "#pair/index/resolver"
 export * from "#postcode/binary-resolver"
 export * from "#soft-features"
 export * from "#tokenizer"

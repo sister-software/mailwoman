@@ -33,7 +33,7 @@ const REPO_ROOT = repoRootPath()
  * that runs it. The graph reachable from each by relative import inherits the same constraint.
  */
 const PRE_INSTALL_ENTRY_POINTS: Record<string, string> = {
-	"docs/scripts/check-docs-structure.ts":
+	"docs/scripts/check/docs-structure.ts":
 		".github/workflows/docs-build.yml — 'Docs structure checks', which runs before the 'Install dependencies' step",
 	"docs/scripts/list-stale-docs.ts":
 		".github/workflows/docs-freshness.yml — 'List pages past review-by'; that workflow has no install step at all",

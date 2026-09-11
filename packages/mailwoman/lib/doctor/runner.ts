@@ -23,7 +23,7 @@ import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/li
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { readMailwomanManifest } from "#cli-kit/metadata"
+import { readMailwomanManifest } from "#cli/kit/metadata"
 import {
 	assembleReport,
 	checkPOI,

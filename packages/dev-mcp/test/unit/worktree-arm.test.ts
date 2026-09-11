@@ -15,7 +15,7 @@ import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runFileSync } from "@mailwoman/core/process"
-import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree-arm"
+import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree/arm"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

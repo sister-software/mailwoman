@@ -57,14 +57,14 @@
 		},
 		"./data/*.json": "./data/*.json",
 		"./brands": {
-			"types": "./out/brands.d.ts",
-			"node": "./lib/brands.ts",
-			"default": "./out/brands.js"
+			"types": "./out/brands/index.d.ts",
+			"node": "./lib/brands/index.ts",
+			"default": "./out/brands/index.js"
 		},
 		"./lookup": {
-			"types": "./out/lookup.d.ts",
-			"node": "./lib/lookup.ts",
-			"default": "./out/lookup.js"
+			"types": "./out/lookup/index.d.ts",
+			"node": "./lib/lookup/index.ts",
+			"default": "./out/lookup/index.js"
 		},
 		"./scripts/generate-taxonomy": {
 			"types": "./out/scripts/generate-taxonomy.d.ts",

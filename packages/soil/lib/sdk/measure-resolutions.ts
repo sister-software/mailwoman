@@ -20,7 +20,7 @@
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
 
 import { classifyDelineationCells, SoilCellIndex, type SoilCellIndexMeasurement } from "#sdk/cells"
-import { readSoilDelineations, readSoilSourceIdentity, type SoilIngestOptions } from "#sdk/ingest"
+import { readSoilDelineations, readSoilSourceIdentity, type SoilIngestOptions } from "#sdk/ingest/index"
 
 export interface MeasureSoilResolutionsOptions extends SoilIngestOptions, ResolutionMeasurementOptions {}
 

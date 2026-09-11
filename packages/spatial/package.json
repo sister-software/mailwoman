@@ -43,9 +43,9 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./coordinate-bounds": {
-			"types": "./out/coordinate-bounds.d.ts",
-			"node": "./lib/coordinate-bounds.ts",
-			"default": "./out/coordinate-bounds.js"
+			"types": "./out/coordinate/bounds.d.ts",
+			"node": "./lib/coordinate/bounds.ts",
+			"default": "./out/coordinate/bounds.js"
 		},
 		".": {
 			"types": "./out/index.d.ts",
@@ -53,9 +53,9 @@
 			"default": "./out/index.js"
 		},
 		"./coordinate-formats": {
-			"types": "./out/coordinate-formats.d.ts",
-			"node": "./lib/coordinate-formats.ts",
-			"default": "./out/coordinate-formats.js"
+			"types": "./out/coordinate/formats.d.ts",
+			"node": "./lib/coordinate/formats.ts",
+			"default": "./out/coordinate/formats.js"
 		},
 		"./open-location-code": {
 			"types": "./out/open-location-code.d.ts",
@@ -83,9 +83,9 @@
 			"default": "./out/geometries/ring-blob.js"
 		},
 		"./projection-transform": {
-			"types": "./out/projection-transform.d.ts",
-			"node": "./lib/projection-transform.ts",
-			"default": "./out/projection-transform.js"
+			"types": "./out/projection/transform.d.ts",
+			"node": "./lib/projection/transform.ts",
+			"default": "./out/projection/transform.js"
 		},
 		"./well-known-text": {
 			"types": "./out/well-known-text.d.ts",
@@ -93,9 +93,9 @@
 			"default": "./out/well-known-text.js"
 		},
 		"./tools/ogr": {
-			"types": "./out/tools/ogr.d.ts",
-			"node": "./lib/tools/ogr.ts",
-			"default": "./out/tools/ogr.js"
+			"types": "./out/tools/ogr/index.d.ts",
+			"node": "./lib/tools/ogr/index.ts",
+			"default": "./out/tools/ogr/index.js"
 		},
 		"./h3/coverage": {
 			"types": "./out/h3/coverage.d.ts",
@@ -103,9 +103,9 @@
 			"default": "./out/h3/coverage.js"
 		},
 		"./tools/ogr-stream": {
-			"types": "./out/tools/ogr-stream.d.ts",
-			"node": "./lib/tools/ogr-stream.ts",
-			"default": "./out/tools/ogr-stream.js"
+			"types": "./out/tools/ogr/stream.d.ts",
+			"node": "./lib/tools/ogr/stream.ts",
+			"default": "./out/tools/ogr/stream.js"
 		}
 	},
 	"publishConfig": {

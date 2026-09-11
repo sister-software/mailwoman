@@ -303,7 +303,7 @@
 import type { ComponentTag } from "@mailwoman/core/types"
 
 import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
-import type { PairEdge, PairIndexLike } from "#pair/index-resolver"
+import type { PairEdge, PairIndexLike } from "#pair/index/resolver"
 import {
 	ANCHORED_CHILD_MAX_WORDS,
 	segmentParentPostcodeShape,

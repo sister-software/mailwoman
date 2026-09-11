@@ -98,9 +98,9 @@
 			"default": "./out/candidate/place-attrs.js"
 		},
 		"#sqlite-utils": {
-			"types": "./out/sqlite-utils.d.ts",
-			"node": "./lib/sqlite-utils.ts",
-			"default": "./out/sqlite-utils.js"
+			"types": "./out/sqlite/utils.d.ts",
+			"node": "./lib/sqlite/utils.ts",
+			"default": "./out/sqlite/utils.js"
 		},
 		"#*": {
 			"types": "./out/*.d.ts",
@@ -151,9 +151,9 @@
 			"default": "./out/proximity-rerank.js"
 		},
 		"./build-slim": {
-			"types": "./out/build-slim.d.ts",
-			"node": "./lib/build-slim.ts",
-			"default": "./out/build-slim.js"
+			"types": "./out/build/slim.d.ts",
+			"node": "./lib/build/slim.ts",
+			"default": "./out/build/slim.js"
 		},
 		"./place-importance-schema": {
 			"types": "./out/place-importance-schema.d.ts",
@@ -181,14 +181,14 @@
 			"default": "./out/currency-backfill.js"
 		},
 		"./build-candidate": {
-			"types": "./out/build-candidate.d.ts",
-			"node": "./lib/build-candidate.ts",
-			"default": "./out/build-candidate.js"
+			"types": "./out/build/candidate.d.ts",
+			"node": "./lib/build/candidate.ts",
+			"default": "./out/build/candidate.js"
 		},
 		"./candidate-ancestors-schema": {
-			"types": "./out/candidate/ancestors-schema.d.ts",
-			"node": "./lib/candidate/ancestors-schema.ts",
-			"default": "./out/candidate/ancestors-schema.js"
+			"types": "./out/candidate/ancestors/schema.d.ts",
+			"node": "./lib/candidate/ancestors/schema.ts",
+			"default": "./out/candidate/ancestors/schema.js"
 		},
 		"./candidate-schema": {
 			"types": "./out/candidate/schema.d.ts",
@@ -241,9 +241,9 @@
 			"default": "./out/extracts.js"
 		},
 		"./sqlite-convention-source": {
-			"types": "./out/sqlite-convention-source.d.ts",
-			"node": "./lib/sqlite-convention-source.ts",
-			"default": "./out/sqlite-convention-source.js"
+			"types": "./out/sqlite/convention-source.d.ts",
+			"node": "./lib/sqlite/convention-source.ts",
+			"default": "./out/sqlite/convention-source.js"
 		},
 		"./polygon-schema": {
 			"types": "./out/polygon-schema.d.ts",
@@ -351,9 +351,9 @@
 			"default": "./out/fts/query.js"
 		},
 		"./sqlite-utils": {
-			"types": "./out/sqlite-utils.d.ts",
-			"node": "./lib/sqlite-utils.ts",
-			"default": "./out/sqlite-utils.js"
+			"types": "./out/sqlite/utils.d.ts",
+			"node": "./lib/sqlite/utils.ts",
+			"default": "./out/sqlite/utils.js"
 		},
 		"./candidate/alias-bags": {
 			"types": "./out/candidate/alias-bags.d.ts",

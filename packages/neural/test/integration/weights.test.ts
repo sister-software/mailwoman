@@ -109,7 +109,7 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 // There is deliberately NO `haveGBWofDB` guard any more (2026-08-05): en-gb stopped building
 // postcode-gb.bin, so the GB WOF postcode extract is no longer a precondition for any test here — and
 // a guard that names a file nothing reads skips tests for a reason that no longer exists.
-const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
+const CLI_PATH = workspacePath("mailwoman", "out", "cli", "index.js")
 const haveCLI = await pathExists(CLI_PATH)
 
 // The en-gb smoke's link-dev-weights run ALSO shells out to `gazetteer pair-index` to build

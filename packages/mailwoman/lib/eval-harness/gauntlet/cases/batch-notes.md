@@ -22,7 +22,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 `cases/{gb,us,ca}/family-possessive-qualifier.jsonl`, `cases/{au,nz,gb,us}/family-po-box.jsonl`
 
 > The four target families of #1931 that had no board rows, each authored from the set its issue attests and
-> written by `packages/mailwoman/lib/dev-tools/family-board.run.ts` over `family-board-rows.ts`. Every point
+> written by `packages/mailwoman/lib/dev-tools/family/board.run.ts` over `family-board-rows.ts`. Every point
 > is a gazetteer record named in the row's note (`Point: Camden (borough 1158857277)`); every status is what
 > the shipped model and resolver did on the day the file was written.
 >

@@ -122,7 +122,7 @@ for the GeoJSON term when the wire format already uses it.
 ## Register by role
 
 The six roles are the ones the frontmatter contract enforces
-(`docs/scripts/docs/frontmatter-contract.ts`). Register is a property of the role, not of the author.
+(`docs/scripts/docs/frontmatter/contract.ts`). Register is a property of the role, not of the author.
 
 | Role          | Person                 | Contractions | Sentence length    | Examples                                    |
 | ------------- | ---------------------- | ------------ | ------------------ | ------------------------------------------- |
@@ -254,7 +254,7 @@ rhythm and no information should go.
 ## How Vale enforces the mechanical subset
 
 Vale checks the token-level subset of these rules. Everything structural — role, section order, example
-discipline, the audit above — is enforced by review and by `docs/scripts/check-docs-structure.ts`, not by
+discipline, the audit above — is enforced by review and by `docs/scripts/check/docs-structure.ts`, not by
 Vale.
 
 | Rule file                        | Enforces                                                                    | Severity |
@@ -294,7 +294,7 @@ backticks — which is how the canonical terms table above states the spellings 
 stripped before linting, so a `source-of-truth:` key is not read as prose.
 
 Adding a rule means adding a fixture. `docs/scripts/vale-fixtures/dirty.md` carries one hit per token and
-`clean.md` must stay at zero alerts; `docs/scripts/check-vale-rules.ts` asserts both, plus a minimum error
+`clean.md` must stay at zero alerts; `docs/scripts/check/vale-rules.ts` asserts both, plus a minimum error
 count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
 negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is
 guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-eval.ts` or
@@ -306,6 +306,6 @@ One per role, in [`page-templates/`](./page-templates/): [tutorial](./page-templ
 [how-to](./page-templates/how-to.md), [reference](./page-templates/reference.md),
 [explanation](./page-templates/explanation.md), [landing](./page-templates/landing.md),
 [evidence](./page-templates/evidence.md). Each carries a frontmatter skeleton that satisfies the contract in
-`docs/scripts/docs/frontmatter-contract.ts`, the section order for its role, the opening move, and one
+`docs/scripts/docs/frontmatter/contract.ts`, the section order for its role, the opening move, and one
 exemplar paragraph in this voice. Start a new page by copying the template for its role, not by copying a
 neighboring page.

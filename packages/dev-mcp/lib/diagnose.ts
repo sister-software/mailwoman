@@ -68,7 +68,7 @@ import {
 	type CounterfactualTarget,
 	type RowCounterfactuals,
 } from "#counterfactual"
-import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "#evidence"
 import { caseCarriesTruth, seedToCaseTable } from "#grade"
 import { resolveInputSet, type InputSetRef, type ResolvedInput } from "#input-sets"

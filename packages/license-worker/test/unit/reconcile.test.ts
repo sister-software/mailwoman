@@ -29,8 +29,8 @@ import {
 	invoiceObject,
 	invoicePaymentList,
 	subscriptionObject,
-} from "../support/stripe-fixtures.ts"
-import { type RecordedStripeCall, recordingStripeFetch } from "../support/stripe-mock.ts"
+} from "../support/stripe/fixtures.ts"
+import { type RecordedStripeCall, recordingStripeFetch } from "../support/stripe/mock.ts"
 
 const OCT_1 = Date.UTC(2026, 9, 1) / 1000
 const NOV_1 = Date.UTC(2026, 10, 1) / 1000

@@ -58,9 +58,9 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 
 import { createZoningTables, type ZoningDatabase } from "#schema"
-import type { ZoningFeatureSource } from "#sdk/ingest"
-import type { CrosswalkPair, ObservedTerm, ZoningChunkResult } from "#sdk/ingest-chunk"
-import { ingestZoningChunk } from "#sdk/ingest-chunk"
+import type { CrosswalkPair, ObservedTerm, ZoningChunkResult } from "#sdk/ingest/chunk"
+import { ingestZoningChunk } from "#sdk/ingest/chunk"
+import type { ZoningFeatureSource } from "#sdk/ingest/index"
 import {
 	assertTierMatchesLicense,
 	GZT_ATTRIBUTION,

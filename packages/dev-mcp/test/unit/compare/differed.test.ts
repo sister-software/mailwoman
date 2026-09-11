@@ -9,7 +9,7 @@
  *   were hits at 1 km, so the protocol thresholds alone read the pair as identical.
  */
 
-import { armsDiffered, tierDiffered } from "@mailwoman/dev-mcp/compare-helpers"
+import { armsDiffered, tierDiffered } from "@mailwoman/dev-mcp/compare/helpers"
 import type { ExternalAnswer } from "@mailwoman/dev-mcp/external-arm"
 import { describe, expect, it } from "vitest"
 

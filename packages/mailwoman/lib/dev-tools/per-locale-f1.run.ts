@@ -9,7 +9,7 @@
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { perLocaleF1 } from "#eval-harness/per-locale-f1"
+import { perLocaleF1 } from "#eval-harness/per/locale-f1"
 
 async function main(): Promise<void> {
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)

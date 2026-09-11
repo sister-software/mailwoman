@@ -13,8 +13,8 @@ import { INGEST_CHUNK_FLAGS, runIngestChunkScript } from "@mailwoman/core/script
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { FloodDatabase } from "#schema"
-import { createGeodatabaseFeatureSource } from "#sdk/ingest"
-import { ingestFloodChunk } from "#sdk/ingest-chunk"
+import { ingestFloodChunk } from "#sdk/ingest/chunk"
+import { createGeodatabaseFeatureSource } from "#sdk/ingest/index"
 
 await runIngestChunkScript({
 	context: "flood ingest-chunk",

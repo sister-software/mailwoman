@@ -30,7 +30,7 @@ export const MAN_PAGE_PATH = resolvePackagePath("mailwoman", "man", "mailwoman.1
 /**
  * The compiled CLI the page derives from — the same binary consumers run.
  */
-export const CLI_PATH = resolvePackagePath("mailwoman", "out", "cli.js")
+export const CLI_PATH = resolvePackagePath("mailwoman", "out", "cli", "index.js")
 
 /**
  * The user-facing commands a man reader cares about. `dev`, `clients`, and the model-work groups (`corpus`, `eval`,

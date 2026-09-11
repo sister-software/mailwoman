@@ -131,9 +131,9 @@
 			"default": "./out/us/state.js"
 		},
 		"./us/street-suffix": {
-			"types": "./out/us/street-suffix.d.ts",
-			"node": "./lib/us/street-suffix.ts",
-			"default": "./out/us/street-suffix.js"
+			"types": "./out/us/street/suffix.d.ts",
+			"node": "./lib/us/street/suffix.ts",
+			"default": "./out/us/street/suffix.js"
 		},
 		"./us/unit-designator": {
 			"types": "./out/us/unit-designator.d.ts",

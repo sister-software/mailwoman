@@ -8,9 +8,9 @@
  *   belong under `usgov/`. Keeping that boundary as a directory lets imports, a file listing, and an editor's tree
  *   state the same hierarchy.
  *
- *   A group is THREE or more children sharing their first hyphen-delimited segment. Two is a coincidence often enough
- *   that policing it would rename pairs nobody reads as a family; three is where the convention has been chosen.
- *   Measured over the tracked tree: 163 groups at two, 43 at three.
+ *   A group is two or more children sharing their first hyphen-delimited segment, and the sibling named for the prefix
+ *   itself joins them: `reliability.ts` beside `reliability-report.ts` is the family's own module, not a bystander.
+ *   A file in that position becomes the directory's `index`; a directory in it is already the destination and stays.
  *
  *   Two conditions decide what counts as a child, and both exist because a NAME is sometimes a contract rather than a
  *   layout. A workspace directory is an npm package name — `packages/neural-weights-en-gb` is published under that
@@ -29,9 +29,9 @@ import type { ModuleMove } from "#move/types"
 const CHECK_ID = "prefix-directories"
 
 /**
- * How many children must share a prefix before it is a family. See the file docstring for the reading behind it.
+ * How many children must share a prefix before it is a family.
  */
-const GROUP_THRESHOLD = 3
+const GROUP_THRESHOLD = 2
 
 const PREFIXED = /^(?<prefix>[a-z0-9]+)-.+$/u
 const SOURCE_FILE = /\.tsx?$/u
@@ -125,13 +125,28 @@ export function findPrefixGroups(
 	for (const [directory, members] of directoryChildren(trackedFiles, workspaces)) {
 		const byPrefix = new Map<string, PrefixMember[]>()
 
+		const stems = new Map<string, PrefixMember>()
+
 		for (const member of members) {
 			const stem = member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
+
+			stems.set(stem, member)
+
 			const prefix = PREFIXED.exec(stem)?.groups?.prefix
 
 			if (!prefix) continue
 
 			byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), member])
+		}
+
+		// A sibling named for the prefix itself belongs to the family it heads: `reliability.ts` beside
+		// `reliability-report.ts` is the family's own module, and leaving it out splits the family across two levels.
+		for (const [prefix, grouped] of byPrefix) {
+			const head = stems.get(prefix)
+
+			if (head) {
+				grouped.unshift(head)
+			}
 		}
 
 		for (const [prefix, grouped] of byPrefix) {
@@ -157,9 +172,29 @@ export function findPrefixGroups(
 export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: readonly string[]): ModuleMove[] {
 	const moves: ModuleMove[] = []
 
+	// A directory that is itself moving carries its contents with it, so a group INSIDE one would claim the same file
+	// twice with two destinations — `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
+	// and a `command-` member in its own right. The outer move wins this pass and the check re-reads afterwards; that
+	// is what the fix's repeated passes are for.
+	const movingDirectories = groups.flatMap((group) =>
+		group.members.filter((member) => member.kind === "directory" && member.name !== group.prefix).map((m) => m.path)
+	)
+
 	for (const group of groups) {
+		if (movingDirectories.some((moving) => group.directory.startsWith(`${moving}/`) || group.directory === moving)) {
+			continue
+		}
+
 		for (const member of group.members) {
-			const rest = member.name.slice(group.prefix.length + 1)
+			const stem = member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
+			// The member named for the prefix heads the family rather than sitting beside it. A directory already IS
+			// the destination and stays put; a file becomes the directory's index, which is the one name that reads as
+			// "the family itself" from inside it.
+			const head = stem === group.prefix
+
+			if (head && member.kind === "directory") continue
+
+			const rest = head ? `index${member.name.slice(stem.length)}` : member.name.slice(group.prefix.length + 1)
 			const destination = `${group.directory}/${group.prefix}/${rest}`
 
 			if (member.kind === "file") {

@@ -29,7 +29,7 @@
 
 import { TRACE_PRIOR_KINDS, type NeuralParseTrace, type TracePriorKind } from "@mailwoman/neural"
 
-import type { EngineRegistryLike } from "#engine-registry"
+import type { EngineRegistryLike } from "#engine/registry"
 import { evidenceCensus, priorSignals, type ChannelReading } from "#evidence"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
 import { describeObservedRate } from "#power"

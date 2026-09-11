@@ -45,6 +45,7 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"
 import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { join } from "path-ts"
@@ -59,7 +60,7 @@ afterAll(() => fixtures.disposeAsync())
 const PHOTON_CLI = workspacePath("photon", "out", "cli.js")
 const NOMINATIM_CLI = workspacePath("nominatim", "out", "cli.js")
 const LIBPOSTAL_CLI = workspacePath("libpostal", "out", "cli.js")
-const MAILWOMAN_CLI = workspacePath("mailwoman", "out", "cli.js")
+const MAILWOMAN_CLI = await mailwomanCLIPath()
 const MCP_CLI = workspacePath("mcp", "out", "cli.js")
 const MCP_PACKAGE_JSON = workspacePath("mcp", "package.json")
 

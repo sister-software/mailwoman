@@ -51,31 +51,31 @@ const PATH_BUILDERS = new Set(["join", "resolve", "resolvePath", "resolvePathBui
 const ALLOWED: Record<string, string> = {
 	// The ORACLE for that layout. A fixture built with the implementation's own helper cannot fail when the
 	// implementation is wrong, so this file spells the path out independently and ties the helper back to it.
-	"packages/neural/test/integration/weights-cache.test.ts":
+	"packages/neural/test/integration/weights/cache.test.ts":
 		"pins the cache layout independently of the helper that builds it",
 	// Probes a FOREIGN scratch project it just created with `npm install`. The whole point is to read the install
 	// layout from outside; `import.meta.resolve` would answer from the monorepo's graph — the exact thing the clean-
 	// install smoke exists to NOT consult.
-	"packages/release-kit/lib/release/smoke-clean-install.ts":
+	"packages/release-kit/lib/release/smoke/clean-install.ts":
 		"inspects a scratch project's install layout from outside, by design",
-	"packages/release-kit/lib/release/smoke-get-started.ts":
+	"packages/release-kit/lib/release/smoke/get-started.ts":
 		"inspects a scratch project's install layout from outside, by design — the get-started pages' cold trial",
 	// BUILDS a node_modules tree rather than reading one — the symlink farm a worktree arm needs, because a git
 	// worktree has none and symlinking the main checkout's directory across resolves every workspace back into the
 	// main checkout (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's REAL path).
 	// There is nothing to resolve: the directory does not exist until this code creates it.
-	"packages/dev-mcp/lib/worktree-arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
+	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
 	// The ORACLE for that farm, on the same principle as the weights-cache pair above: a fixture built with the
 	// implementation's own helper cannot fail when the implementation is wrong.
 	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
 	// BUILDS a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves the way yarn makes
 	// it resolve. The move planner under test rewrites package-subpath specifiers, and a fixture with no install layout
 	// cannot exercise that family at all.
-	"packages/repo-health/test/unit/move-plan.test.ts":
+	"packages/repo-health/test/unit/move/plan.test.ts":
 		"builds the scratch workspace's install link; nothing exists to resolve yet",
 	// Writes a FIXTURE cache in the npm-prefix layout `weightsCachePackageDir` reads. Spelling it out here is what
 	// makes the cache rung's test independent of the helper it is exercising.
-	"packages/neural/test/integration/weights-overlay.test.ts":
+	"packages/neural/test/integration/weights/overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
 	// LINKS the checkout's node_modules into the staging tree rather than reading a package's layout — `yarn pack`
 	// needs the project context there, and the link target is the checkout root's own directory, not another
@@ -86,7 +86,7 @@ const ALLOWED: Record<string, string> = {
 	// does not exist yet when the layout is needed (`npm install --prefix <cacheRoot>` is about to create it, or
 	// `stage-weights-cache.ts` is about to write a candidate bundle into it), so there is nothing to resolve. Every
 	// other site in the tree now calls this.
-	"packages/neural/lib/weights.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
+	"packages/neural/lib/weights/index.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 }
 
 /**

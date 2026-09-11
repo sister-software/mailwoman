@@ -387,9 +387,9 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 
 	await removePathIfPresent(binDest)
 	// `.release-it.json` runs `yarn compile` before invoking `gazetteer postcode-binary`,
-	// so packages/mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
+	// so packages/mailwoman/out/cli/index.js exists. --out is the workspace dir, so the command writes
 	// postcode-<cc>.bin directly where the `files` array expects it.
-	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli.js")
+	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/index.js")
 
 	const r = spawnProcessSync(
 		process.execPath,
@@ -461,8 +461,8 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 
 	await removePathIfPresent(binDest)
 	// `.release-it.json` runs `yarn compile` before invoking `gazetteer pair-index`, so
-	// packages/mailwoman/out/cli.js exists (same precondition as postcode-binary above).
-	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli.js")
+	// packages/mailwoman/out/cli/index.js exists (same precondition as postcode-binary above).
+	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/index.js")
 
 	const r = spawnProcessSync(
 		process.execPath,

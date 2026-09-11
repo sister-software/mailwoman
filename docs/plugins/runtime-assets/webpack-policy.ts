@@ -13,8 +13,8 @@
 import { md5Hex } from "@mailwoman/core/hash"
 import type { Configuration } from "webpack"
 
-import { buildWorkspaceAliases } from "./workspace-aliases.ts"
-import { resolvePackageFile } from "./workspace-resolution.ts"
+import { buildWorkspaceAliases } from "./workspace/aliases.ts"
+import { resolvePackageFile } from "./workspace/resolution.ts"
 
 function hashAliases(alias: Record<string, string>): string {
 	const entries = Object.keys(alias)
@@ -31,7 +31,7 @@ export async function bundleAliases(isServer: boolean): Promise<Record<string, s
 		// The SSR bundle resolves the `node` condition, under which `@mailwoman/neural/onnx-runner` is the
 		// `onnxruntime-node` half, which webpack cannot bundle. The page is browser-only; the server bundle only has to
 		// build, so it takes the browser runner.
-		const browserRunner = await resolvePackageFile("@mailwoman/neural", "onnx-runner-browser")
+		const browserRunner = await resolvePackageFile("@mailwoman/neural", "onnx/runner/browser")
 
 		if (browserRunner) {
 			alias["@mailwoman/neural/onnx-runner"] = browserRunner

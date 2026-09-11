@@ -162,8 +162,8 @@ import cycle.
 After `yarn compile`:
 
 ```bash
-node packages/mailwoman/out/cli.js parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
-node packages/mailwoman/out/cli.js --help
+node packages/mailwoman/out/cli/index.js parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
+node packages/mailwoman/out/cli/index.js --help
 ```
 
 ## Commits and pull requests

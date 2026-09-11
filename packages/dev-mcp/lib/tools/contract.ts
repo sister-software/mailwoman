@@ -9,7 +9,7 @@
 
 import { z } from "zod"
 
-import { runContractCensus } from "#contract-report"
+import { runContractCensus } from "#contract/report"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 

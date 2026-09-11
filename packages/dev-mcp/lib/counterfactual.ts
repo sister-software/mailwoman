@@ -25,7 +25,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import type { GeocodeSessionOptions } from "mailwoman/geocode"
 
-import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { DISTANCE_THRESHOLDS_KM } from "#geo-grade"
 
 /**

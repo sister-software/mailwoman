@@ -19,7 +19,7 @@ import {
 import { overlayLocale } from "mailwoman/eval-harness/gauntlet/routing"
 import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
 
-import type { EngineConfig } from "#engine-registry"
+import type { EngineConfig } from "#engine/registry"
 import type { ResolvedInput } from "#input-sets"
 
 const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
