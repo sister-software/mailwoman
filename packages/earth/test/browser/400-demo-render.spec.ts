@@ -29,10 +29,9 @@ test.describe("Demo — structural render", () => {
 		// Collapsible "About this geocoder" explainer.
 		await expect(page.getByText("About this geocoder")).toBeVisible()
 
-		// Address form: label, input, submit.
+		// Address form: label and field. The pill carries no submit control — a `type="search"` field submits on Enter.
 		await expect(page.getByLabel("Address")).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toBeVisible()
-		await expect(page.locator("button[type='submit']")).toBeVisible()
 
 		// Example chips row.
 		await expect(page.getByText("Try:")).toBeVisible()
