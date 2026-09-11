@@ -17,22 +17,12 @@
  */
 
 import { z } from "@hono/zod-openapi"
-import type { AddressNode } from "@mailwoman/core/decoder"
 import type { DerivationProjection, Evidence } from "@mailwoman/evidence"
 
-/**
- * `POST /v1/parse` request body.
- */
-/**
- * One node of the decoded address tree. The decoder's `AddressNode` is a recursive union the OpenAPI generator cannot
- * derive a schema for on its own, so it is registered as an open object; the shape is documented by the type.
- */
-export const AddressNodeSchema = z.custom<AddressNode>().openapi("AddressNode", {
-	type: "object",
-	additionalProperties: true,
-	description:
-		"A decoded address-tree node: a tag, its span, and its children. See `AddressNode` in `@mailwoman/core/decoder`.",
-})
+import { AddressNodeSchema } from "#address-node-schema"
+import { MAX_ADDRESS_LENGTH } from "#input-limits"
+
+export { AddressNodeSchema } from "#address-node-schema"
 
 /**
  * The input register (Decision A / GTM B10): `fragmented` = the map-search register (evidence-bundle channels feed);
@@ -41,20 +31,7 @@ export const AddressNodeSchema = z.custom<AddressNode>().openapi("AddressNode", 
  */
 export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
 
-/**
- * Longest accepted `address`, in characters.
- *
- * Sized against what the model can actually read, not against a guess at abuse. The classifier's window is 128
- * SentencePiece pieces — roughly 330 characters of address text — and everything past it is truncated before inference,
- * so input beyond this bound cannot influence a result. The margin over that window leaves room for scripts that
- * tokenize denser than Latin, and for the department-and-division prefixes web forms concatenate.
- *
- * The bound exists because preprocessing is linear but not free: a 1 MB body costs ~1.7 s across normalize, query-shape
- * and the phrase grouper, and Node runs them on the one thread every other request is waiting on. A cap here is cheaper
- * than fairness plumbing, and rejecting is more honest than accepting a body whose tail the parser will silently
- * discard.
- */
-export const MAX_ADDRESS_LENGTH = 1024
+export { MAX_ADDRESS_LENGTH } from "#input-limits"
 
 /**
  * `POST /v1/parse` request body.
