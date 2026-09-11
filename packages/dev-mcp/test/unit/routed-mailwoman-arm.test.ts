@@ -55,6 +55,9 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 		geocodeTraced: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.geocodeTraced")
 		}),
+		// Every overlay loaded, which is what a stub with no weights cache should claim: the arm under test makes no
+		// promote suggestion, so a truthful `false` keeps the stub from implying a degraded instrument.
+		gradedBaseOnly: vi.fn(() => false),
 		diagnoseParse: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.diagnoseParse")
 		}),

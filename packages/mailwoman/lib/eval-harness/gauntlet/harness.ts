@@ -24,7 +24,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { AdminCoherenceReport } from "#admin-coherence"
-import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
+import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { RegionDatabaseProvider } from "#geocode/regions"
 import type { GeocodeResult } from "#geocode/result"
@@ -54,6 +54,18 @@ export interface GauntletDeps extends Disposable {
 	 * performs no resolution and does not alter the check's geocode path.
 	 */
 	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
+	/**
+	 * Whether a row routed to `caseCountry` graded WITHOUT that country's weights overlay.
+	 *
+	 * A base-only pass is not evidence that the production path passes — the overlay supplies the pair index and the
+	 * dependent-locality prior, so it changes the parse. A caller that turns a passing row into a durable claim, such as
+	 * the regression layer's promote suggestion, must ask this first and withhold the claim when it answers true;
+	 * otherwise a cache missing one package writes a base-only result into the board as a regression guard (#2223).
+	 *
+	 * Answers for the state AT CALL TIME. Overlays load lazily on the first row of their country, so ask after grading
+	 * that row, which is what the per-row suggestion path does.
+	 */
+	gradedBaseOnly(caseCountry?: string): boolean
 }
 
 /**
@@ -401,6 +413,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const overlayClassifiers = new Map<string, typeof classifier>()
 	const warnedOverlays = new Set<string>()
+	// The overlay locales that failed to load. Keyed by LOCALE rather than by country because the fallback is memoized
+	// per locale: a second country routing to the same overlay takes the cached base classifier and never reaches the
+	// catch, so counting countries at the catch would under-report it.
+	const baseOnlyLocales = new Set<string>()
 
 	async function classifierFor(caseCountry?: string): Promise<typeof classifier> {
 		const overlayLocale = caseCountry ? OVERLAY_LOCALE_BY_COUNTRY[caseCountry] : undefined
@@ -422,6 +438,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 			return overlay
 		} catch (error) {
+			baseOnlyLocales.add(overlayLocale)
+
 			if (!warnedOverlays.has(overlayLocale)) {
 				warnedOverlays.add(overlayLocale)
 
@@ -622,6 +640,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
 			}
 		},
+		gradedBaseOnly: (caseCountry?: string) => gradedBaseOnly(caseCountry, baseOnlyLocales),
 		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts, {}),
 		geocodeTraced: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const resolverTrace: ResolveNodeTrace[] = []
