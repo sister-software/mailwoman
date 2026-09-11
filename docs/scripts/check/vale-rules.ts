@@ -152,6 +152,7 @@ const LEGS: StyleLeg[] = [
 			"MailwomanChat.JudgmentJargon",
 			"MailwomanChat.MintedMetaphor",
 			"MailwomanChat.OpaqueID",
+			"MailwomanChat.OverlaySense",
 			"MailwomanChat.PresentationPreamble",
 			"MailwomanChat.ProjectShorthand",
 			"MailwomanChat.UnsupportedAttribution",
