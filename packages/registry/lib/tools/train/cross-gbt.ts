@@ -94,7 +94,7 @@ export async function trainCrossSourceGBT(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OP_PROFILE = `${SOURCES}/openpayments_covered-recipient-profile_20260603.csv`
 
-	// --- Phase A: Open Payments TX practitioners (NPI + profile name + profile address). ---
+	// Build Open Payments practitioner records with NPI, profile name, and profile address.
 	report?.(`[A] streaming the OP profile supplement (${STATE})…`)
 	const opByNPI = new Map<string, CrossSourceRow>()
 

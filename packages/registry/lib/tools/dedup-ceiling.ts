@@ -82,12 +82,12 @@ export async function dedupCeiling(
 	const OUT_MD = options.outMd || ""
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
-	// --- Stream TX type-2 (org) providers; one primary record per NPI at its practice address. ---
+	// Stream Texas organization providers, retaining one primary practice-address record per NPI.
 	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
 	const { byAddr, kept, scanned } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
 
-	// --- Over co-located distinct-NPI pairs: the org-similarity distribution + collision rate. ---
+	// Measure organization similarity and collision rate for co-located distinct-NPI pairs.
 	let sharedAddresses = 0
 	let providersAtSharedAddr = 0
 	let pairs = 0

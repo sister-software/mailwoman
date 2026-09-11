@@ -139,7 +139,7 @@ export async function nppesDedupBenchmark(
 	const PARALLEL_GEOCODE = options.parallelGeocode ?? false
 	const GEO_CONC = options.geoConcurrency ?? 2
 
-	// --- Phases A + B: the variation-rich sample plus the corpus-wide address-frequency table. ---
+	// Build the variation-rich sample and corpus-wide address-frequency table.
 	const { rows, keptNpis, npiPrimary, addressFrequency } = await buildNPPESSample(
 		{
 			registryPath: `${SOURCES}/nppes_npi-registry_20260607.tsv`,
@@ -217,7 +217,7 @@ export async function nppesDedupBenchmark(
 
 	report?.(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)
 
-	// --- Phase E: score recovered clusters against each truth grain (record.id = the held-out NPI). ---
+	// Score recovered clusters against each truth grain using the held-out NPI.
 	const N = records.length
 
 	// Every grain scores against the SAME record population, so the ARI expectation is fixed for the run.

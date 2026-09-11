@@ -96,7 +96,7 @@ export async function coverageReconciliation(
 	const OUT_GEOJSON = options.outGeojson || ""
 	const SPECS = buildSpecs(`${SOURCES}`, STATE)
 
-	// --- Ingest each source into one combined record set (geo-first resolve). ---
+	// Ingest every source into one combined, geo-resolved record set.
 	const rawBySource = new Map<string, Record<string, string>[]>()
 
 	for (const spec of SPECS) {

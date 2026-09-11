@@ -198,7 +198,7 @@ export async function crossSourceThresholdSweep(
 	const CANDIDATE = options.candidate || ""
 	const SPECS = buildSpecs(`${SOURCES}`, STATE)
 
-	// --- Ingest + geocode each source ONCE. ---
+	// Ingest and geocode each source once before sweeping thresholds.
 	const rawBySource = new Map<string, Record<string, string>[]>()
 
 	for (const spec of SPECS) {
@@ -237,7 +237,7 @@ export async function crossSourceThresholdSweep(
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records; geocoded ${geocoded}`)
 
-	// --- The bundled GBT scorer over the input-scoped address-frequency basis (eval convention). ---
+	// Score with the bundled GBT over the input-scoped address-frequency basis.
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 
@@ -257,7 +257,7 @@ export async function crossSourceThresholdSweep(
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const gbtScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
-	// --- Arm 1: the FS baseline (the recall-correct baseline cross-source flows currently pin). ---
+	// Evaluate the FS recall-correct baseline.
 	report?.("[D] resolving — FS baseline baseline…")
 
 	const fs = await measure(
@@ -289,7 +289,7 @@ export async function crossSourceThresholdSweep(
 	// collapse below ~90% of FS, else the "links" are giant-blob artifacts). Otherwise FS is on the
 	// frontier and threshold alone is insufficient. ---
 	const pct = (n: number, d: number) => formatPercent(n, d, 0)
-	// --- Arm 3 (#655 option 2): the cross-source-trained GBT at its own recommended threshold. ---
+	// Evaluate the cross-source-trained GBT at its recommended threshold.
 	const candidateArms: ArmMetrics[] = []
 
 	if (CANDIDATE) {

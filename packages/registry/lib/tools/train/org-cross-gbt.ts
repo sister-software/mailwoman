@@ -86,7 +86,7 @@ export async function trainOrgCrossSourceGBT(
 	const POS = `${SOURCES}/cms-pos_hospital-other_2026q1.csv`
 	const CARE_COMPARE = `${SOURCES}/cms-carecompare_hospital-general_20260706.csv`
 
-	// --- Phase A: Care Compare (Facility ID + name + address). ---
+	// Build Care Compare facility records with facility ID, name, and address.
 	report?.("[A] streaming Care Compare…")
 	const ccByID = new Map<string, CrossSourceRow>()
 
@@ -102,7 +102,7 @@ export async function trainOrgCrossSourceGBT(
 
 	report?.(`    ${ccByID.size} Care Compare facilities`)
 
-	// --- Phase B: the SAME CCNs from the POS file + the corpus-wide address-frequency table. ---
+	// Join the same CCNs from POS with the corpus-wide address-frequency table.
 	report?.("[B] streaming POS + building the frequency table…")
 	const rows: CrossSourceRow[] = []
 	const joined = new Set<string>()

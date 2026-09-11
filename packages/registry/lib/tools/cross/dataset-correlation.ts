@@ -207,7 +207,7 @@ export async function crossDatasetCorrelation(
 		report?.(`    address-frequency table: ${addrCounts.size} distinct over ${addrTotal} ${STATE} addresses`)
 	}
 
-	// --- Phase B: geocoder (injected — see ./eval-geocoder.ts). ---
+	// Construct the injected geocoder used by this evaluation.
 	report?.("[B] building the geocoder…")
 	const geocoder = await options.createGeocoder()
 
@@ -227,7 +227,7 @@ export async function crossDatasetCorrelation(
 		return g
 	}
 
-	// --- Phase C: ingest each source (its own mapping + source label) into one combined record set. ---
+	// Ingest each mapped source into one combined labeled record set.
 	report?.("[C] geocoding + ingesting all sources…")
 	const records: SourceRecord[] = []
 
@@ -270,7 +270,7 @@ export async function crossDatasetCorrelation(
 		...(addressFrequency ? { addressFrequency } : {}),
 	})
 
-	// --- Phase E: find the cross-source entities — members spanning ≥2 distinct sources. ---
+	// Find entities whose members span at least two distinct sources.
 	const sourceOf = (r: SourceRecord) => r.source ?? "?"
 
 	const crossSource = entities
@@ -292,7 +292,7 @@ export async function crossDatasetCorrelation(
 		}
 	}
 
-	// --- Report. ---
+	// Report the resulting cross-source correlations.
 	const lines: string[] = [
 		`# Cross-dataset correlation (#618 / #87 real-data run)`,
 		"",

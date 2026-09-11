@@ -96,7 +96,7 @@ export async function buildNPPESStateSamples(
 ): Promise<{ byState: Map<string, NPPESStateSample>; addressFrequency: TermFrequencyTable }> {
 	const { registryPath, otherNamesPath, states, maxNpisPerState } = options
 
-	// --- Phase A: the variation set — NPIs that carry ≥1 alternate organization name. ---
+	// Select NPIs with at least one alternate organization name.
 	report?.("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
 

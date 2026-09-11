@@ -131,7 +131,7 @@ export async function trainDedupGBT(
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records, ${geocoded} geocoded`)
 
-	// --- Phase D: block → features (the SHARED featurizer) → labels. ---
+	// Block records, generate shared features, then assign labels.
 	report?.("[D] blocking + featurizing…")
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
@@ -196,7 +196,7 @@ export async function trainDedupGBT(
 		`    recommended link threshold ${recommendedThreshold.toFixed(3)} (held-out clustering F1 ${(100 * bestF1).toFixed(1)}%)`
 	)
 
-	// --- Phase F: train the SHIPPED model on ALL pairs. ---
+	// Train the shipped model on every available pair.
 	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, hyperparams)
 	report?.(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)

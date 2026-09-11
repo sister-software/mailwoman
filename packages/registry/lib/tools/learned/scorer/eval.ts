@@ -120,7 +120,7 @@ export async function scorerPairwiseEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// --- Data-gen: the same NPI-keyed records as the dedup benchmark (the SHARED sample builder). ---
+	// Build the same NPI-keyed sample used by the dedup benchmark.
 	const { rows, keptNpis, addressFrequency } = await buildNPPESSample(
 		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
 		report
@@ -239,7 +239,7 @@ export async function scorerPairwiseEval(
 		}
 	}
 
-	// --- Eval on the held-out test pairs: ROC-AUC + best-threshold F1, for LR vs FS. ---
+	// Evaluate LR and FS on held-out pairs with ROC-AUC and best-threshold F1.
 	function auc(scored: Array<{ s: number; y: number }>): number {
 		const pos = scored.filter((d) => d.y === 1)
 		const neg = scored.filter((d) => d.y === 0)

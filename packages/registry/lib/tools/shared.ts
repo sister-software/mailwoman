@@ -640,7 +640,7 @@ export async function trainCrossSourceModel(
 	geocoder[Symbol.dispose]()
 	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
 
-	// --- Phase D: block over the UNION; keep only CROSS-source pairs; featurize; label by join key. ---
+	// Block the union, retain cross-source pairs, generate features, and label by join key.
 	report?.("[D] blocking + featurizing (cross-source pairs only)…")
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
@@ -655,7 +655,7 @@ export async function trainCrossSourceModel(
 		`    ${allPairs.length} blocked pairs → ${pairs.length} cross-source (${(100 * posRate).toFixed(1)}% positive)`
 	)
 
-	// --- Phase E: held-out calibration — the #655 threshold rule. ---
+	// Calibrate the threshold against held-out pairs.
 	report?.("[E] held-out calibration…")
 	const rnd = makeLcg(655)
 	const split = new Map<string, "fit" | "holdout">()
@@ -725,7 +725,7 @@ export async function trainCrossSourceModel(
 		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${precisionBar} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
 	)
 
-	// --- Phase F: train the SHIPPED model on ALL cross-source pairs; emit the committed module. ---
+	// Train the shipped model on all cross-source pairs and emit its committed module.
 	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, CROSS_SOURCE_HYPERPARAMS)
 
