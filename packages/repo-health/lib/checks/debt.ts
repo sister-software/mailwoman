@@ -449,7 +449,7 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 
 		// Package tests intentionally import their own package name: that is the contract this repository's
 		// test layout verifies. Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
-		const countSelfPackageImports = !path.includes("/test/")
+		const countSelfPackageImports = !path.includes("/test/") && !/[.]test[.]tsx?$/.test(path)
 
 		visit(source, counters, workspacePackage?.name, countSelfPackageImports)
 
