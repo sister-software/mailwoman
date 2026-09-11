@@ -30,14 +30,18 @@
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
  */
 
-import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
-import { geometryContains, nearestRingEdgeMetres, strideSampleInteriorPoints } from "@mailwoman/spatial"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "#index"
-import type { CoastalDatabase } from "#schema"
-import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "#sdk/client"
-import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
+import type { ServiceFeatureReader } from "#sdk/verify-service"
+
+export { createEAServiceReader, type ServiceFeature, type ServiceFeatureReader } from "#sdk/verify-service"
+export { sampleAgreementPoints } from "#sdk/verify-sample"
+
+/**
+ * How close to a service-polygon edge a disagreement is attributed to the channels' differing coordinate precision.
+ */
+const BOUNDARY_TOLERANCE_METRES = 0.5
 
 /**
  * One point, both verdicts, and whether they agree.
@@ -109,75 +113,6 @@ export const OUTSIDE_MAPPING_POINTS: ReadonlyArray<{ label: string; latitude: nu
 	{ label: "St Andrews, Scotland", latitude: 56.3398, longitude: -2.7967 },
 	{ label: "Portobello Beach, Scotland", latitude: 55.9552, longitude: -3.1128 },
 ]
-
-/**
- * Half-width of the bbox the service is asked for, in degrees. About 11 m at this latitude — wide enough that a polygon
- * containing the point is certainly returned, narrow enough that the response stays small.
- */
-const PROBE_HALF_WIDTH_DEGREES = 0.0001
-
-/**
- * How close to a service-polygon edge a disagreement is attributed to the channels' differing coordinate precision
- * rather than to the conversion.
- *
- * The service publishes six decimals — about 11 cm of latitude, 7 cm of longitude at this latitude — while the
- * geodatabase publishes nine, so two renderings of the SAME edge can sit up to roughly 16 cm apart and a point between
- * them lands on opposite sides. Half a metre is threefold headroom over that and far below any real erosion band.
- */
-const BOUNDARY_TOLERANCE_METRES = 0.5
-
-/**
- * Features per service request. The probe bbox is metres wide, so this is a ceiling rather than a page size.
- */
-const SERVICE_FEATURE_LIMIT = 200
-
-/**
- * One feature as the service publishes it — the only shape the comparison reads.
- */
-export interface ServiceFeature {
-	properties?: Record<string, unknown>
-	geometry?: { type: string; coordinates: unknown }
-}
-
-/**
- * The ONE call the verification makes against the service: the features it publishes near a point, in one scenario's
- * collection.
- *
- * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
- * that it decides which of three outcomes a point gets; expressed against an HTTP client it could only ever be watched
- * on a live run, and a scripted reader lets those decisions be pinned. {@link createEAServiceReader} builds the real
- * one.
- */
-export type ServiceFeatureReader = (
-	latitude: number,
-	longitude: number,
-	scenarioKey: string
-) => Promise<ServiceFeature[]>
-
-/**
- * The reader the live check uses: an OGC API Features bbox query against the EA's own service, in the collection named
- * by the scenario asked about.
- *
- * The service answers a BBOX, not a point, so this returns what it published nearby and the containment decision is
- * made in {@link readServiceContainment} against those rings — comparing the artifact's verdict against a bare "the
- * service returned something here" would pass on any polygon within eleven metres.
- */
-export function createEAServiceReader(client: Pick<EANCERMClient, "fetch">): ServiceFeatureReader {
-	return async (latitude, longitude, scenarioKey) => {
-		const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)
-
-		if (!scenario) {
-			throw new Error(`coastal verify: ${JSON.stringify(scenarioKey)} is not one of the twelve published scenarios`)
-		}
-
-		return createOGCFeaturesBBoxReader<ServiceFeature>({
-			client,
-			collectionURL: `${EA_NCERM_SPATIAL_BASE_URL}/ogc/features/v1/collections/${scenario.layer}`,
-			halfWidthDegrees: PROBE_HALF_WIDTH_DEGREES,
-			limit: SERVICE_FEATURE_LIMIT,
-		})(latitude, longitude)
-	}
-}
 
 export interface VerifyCoastalOptions {
 	databasePath: string
@@ -287,48 +222,4 @@ async function readServiceContainment(
 	}
 
 	return Number.isFinite(nearest) ? { inside, nearestEdgeMetres: nearest } : { inside }
-}
-
-/**
- * Draw a reproducible sample of points from the artifact — interior points of stored polygons, across scenarios.
- *
- * SPREAD ACROSS SCENARIOS RATHER THAN DRAWN FROM ONE, because the twelve scenarios are twelve claims and a sample from
- * one would verify one twelfth of the artifact while reporting on all of it. The stride discipline — keys chosen before
- * any geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.
- */
-export function sampleAgreementPoints(
-	databasePath: string,
-	options: { count?: number } = {}
-): Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> {
-	const count = options.count ?? 48
-	using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
-
-	const areaIDs = (
-		database.prepare("SELECT area_id FROM coastal_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
-	).map((row) => row.area_id)
-
-	const selectArea = database.prepare(
-		"SELECT area_id, scenario_key, min_lat, min_lon, max_lat, max_lon, rings FROM coastal_zone_area WHERE area_id = ?"
-	)
-
-	return strideSampleInteriorPoints(areaIDs, count, {
-		fetch: (key) =>
-			selectArea.get(key) as
-				| {
-						area_id: string
-						scenario_key: string
-						min_lat: number
-						min_lon: number
-						max_lat: number
-						max_lon: number
-						rings: Uint8Array
-				  }
-				| undefined,
-		gridSteps: 17,
-		toPoint: (area, interior) => ({
-			label: `${area.scenario_key} polygon ${area.area_id}`,
-			scenarioKey: area.scenario_key,
-			...interior,
-		}),
-	})
 }
