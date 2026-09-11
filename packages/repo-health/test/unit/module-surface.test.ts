@@ -6,7 +6,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { moduleSurfaceCheck } from "@mailwoman/repo-health/checks/module-surface"
+import { moduleSurfaceCheck } from "@mailwoman/repo-health/checks/module/surface"
 import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

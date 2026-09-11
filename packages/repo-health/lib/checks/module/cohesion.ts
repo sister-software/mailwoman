@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Reports modules whose top-level declarations fall into communities that share no imported dependency.
  *
- *   The companion to {@link ../checks/module-surface.ts}, which counts declarations. A count answers "is this module
+ *   The companion to {@link ./surface.ts}, which counts declarations. A count answers "is this module
  *   large"; this one answers "is this module two modules", which is a property of the reference graph and not of any
  *   total. A module that reads one table and returns a value stays one community however long it grows; a module whose
  *   pure transform and whose filesystem walker never call each other is two, at any size.

@@ -6,7 +6,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { MODULE_COHESION_THRESHOLDS, moduleCohesionCheck } from "@mailwoman/repo-health/checks/module-cohesion"
+import { MODULE_COHESION_THRESHOLDS, moduleCohesionCheck } from "@mailwoman/repo-health/checks/module/cohesion"
 import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
