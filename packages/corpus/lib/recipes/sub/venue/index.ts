@@ -67,13 +67,12 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"
 import {
 	buildIdentifierModel,
-	buildStreetNegatives,
 	defaultLexiconPath,
 	EMPTY_NAME_POOLS,
 	type IdentifierModel,
-	loadContextTuples,
 	type LegPools,
 	mergeNamePools,
 	type PoolQuery,
@@ -84,7 +83,6 @@ import {
 	readSubVenueLexicon,
 	rejectedPhrasesFor,
 	sampleIdentifier,
-	type StreetNegatives,
 	titleCase,
 } from "#recipes/sub/venue/sources"
 import type { LocaleBaseTuple } from "#synthesizers/locale"
@@ -93,6 +91,7 @@ import type { SubVenueLexiconTable } from "#tools"
 import { alignRow } from "#utils"
 
 export * from "#recipes/sub/venue/sources"
+export * from "#recipes/sub/venue/context"
 
 //#region Plan
 

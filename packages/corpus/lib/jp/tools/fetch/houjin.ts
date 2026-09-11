@@ -23,8 +23,14 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download"
-import { attachmentFilename, cookieHeader, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download/index"
+import {
+	attachmentFilename,
+	cookieHeader,
+	streamBodyToFile,
+	withRetries,
+	writeManifest,
+} from "#tools/fetch/download/index"
 
 const SLUG = "houjin-jp"
 const PAGE_URL = "https://www.houjin-bangou.nta.go.jp/download/zenken/"

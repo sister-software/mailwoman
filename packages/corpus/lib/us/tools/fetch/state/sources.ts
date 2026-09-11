@@ -22,8 +22,8 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
-import { downloadToFile, writeManifest } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
+import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather

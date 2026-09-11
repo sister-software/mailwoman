@@ -27,8 +27,19 @@ import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
-import { cookieHeader, loadCollectionFiles, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
+import type {
+	BaseFetchOptions,
+	FetchSummary,
+	SourceCollectionManifest,
+	SourceManifest,
+} from "#tools/fetch/download/index"
+import {
+	cookieHeader,
+	loadCollectionFiles,
+	streamBodyToFile,
+	withRetries,
+	writeManifest,
+} from "#tools/fetch/download/index"
 
 const SLUG = "localdata-kr"
 const PORTAL = "https://file.localdata.go.kr"

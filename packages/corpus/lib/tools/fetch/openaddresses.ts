@@ -63,8 +63,8 @@ import { isoSeconds } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 import { $private } from "#env"
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
-import { streamDownload, writeManifest } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
+import { streamDownload, writeManifest } from "#tools/fetch/download/index"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather

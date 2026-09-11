@@ -52,8 +52,8 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
-import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
+import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download/index"
 
 /**
  * The one status that means "the source does not publish this country" rather than "the transfer failed".
