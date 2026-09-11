@@ -29,8 +29,8 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readDirectory } from "@mailwoman/core/fs/readers"
-import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { formatAddress } from "@mailwoman/formatter"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
@@ -138,35 +138,6 @@ function composeHouseNumber(numero: string, rep: string | null): string {
 }
 
 /**
- * Render the raw address string: house+street line, the lieu-dit ALONE on its own line, postcode+commune line — the
- * exact shape `formatAddress` produces for FR's `place`-slot mapping (verified via a smoke call before this recipe was
- * written; see the module docstring).
- */
-function composeRaw(
-	house: string,
-	street: string,
-	dependentLocality: string,
-	postcode: string | null,
-	locality: string
-): string {
-	const lines: string[] = []
-	const streetLine = `${house} ${street}`.trim()
-
-	if (streetLine) {
-		lines.push(streetLine)
-	}
-
-	lines.push(dependentLocality)
-	const cityLine = [postcode, locality].filter(isPresent).join(" ").trim()
-
-	if (cityLine) {
-		lines.push(cityLine)
-	}
-
-	return lines.join("\n")
-}
-
-/**
  * Fisher-Yates shuffle, in place, with the recipe's seeded PRNG — reproducible sampling without replacement.
  */
 function shuffleInPlace<T>(arr: T[], random: () => number): void {
@@ -240,7 +211,9 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			let raw = composeRaw(house, t.street, t.dependentLocality, t.postcode, t.locality)
+			// The envelope form: house+street line, the lieu-dit ALONE on its own line, postcode+commune line. That is
+			// La Poste's line 5, and it is what `FR`'s layout prints — this recipe used to restate it.
+			let raw = formatAddress(components, "FR")
 
 			if (!raw) {
 				skipped++
