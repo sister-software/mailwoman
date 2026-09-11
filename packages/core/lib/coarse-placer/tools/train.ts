@@ -199,7 +199,7 @@ export async function trainCoarsePlacer(
 		)
 	}
 
-	// --- Temperature calibration: minimize val NLL over T by coarse-then-fine 1-D search. ---
+	// Calibrate temperature by minimizing validation NLL through coarse and fine one-dimensional search.
 	function valNLL(T: number): number {
 		let nll = 0
 

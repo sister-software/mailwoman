@@ -113,14 +113,14 @@ describe("buildPOIDatabase", () => {
 		// non-finite-coordinate rows (both nominally "US") are NOT counted, per the Map's contract.
 		expect(Object.fromEntries(result.countries)).toEqual({ US: 15, FR: 15 })
 
-		// --- sealed: no write bits ---
+		// The completed artifact has no write bits.
 		expect((await statPath(out)).mode & 0o222).toBe(0)
 
 		// `kdb`'s dispose closes the underlying connection — don't ALSO `using` `raw`, or both dispose
 		// paths race to close() the same DatabaseSync and one throws "database is not open".
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
-		// --- dictionary round-trip: insert-on-first-sight, 0 reserved for uncategorized ---
+		// Category codes round-trip by first sight; zero remains uncategorized.
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
 		expect(codes.map((c) => c.category).toSorted()).toEqual(["cafe", "museum", "restaurant"])
 		expect(codes.every((c) => c.id > 0)).toBe(true)
@@ -151,7 +151,7 @@ describe("buildPOIDatabase", () => {
 		const maxConfidence = Math.max(...group.map((r) => r.confidence))
 		expect(firstPhysicalRow.confidence).toBeCloseTo(maxConfidence, 10)
 
-		// --- manifest reads back valid ---
+		// The persisted manifest reads back as valid.
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest).toMatchObject({
@@ -168,7 +168,7 @@ describe("buildPOIDatabase", () => {
 			createdAt: "2026-07-18T00:00:00Z",
 		})
 
-		// --- coverage rows exist at res 6 ---
+		// Resolution-six coverage rows were persisted.
 		expect(result.coverageCells).toBeGreaterThan(0)
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 		expect(coverageRows).toHaveLength(result.coverageCells)
@@ -178,7 +178,7 @@ describe("buildPOIDatabase", () => {
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN, never present with completeness 0.
 		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
 
-		// --- end-to-end via the POILookup reader ---
+		// POILookup reads the completed artifact end to end.
 		using lookup = new POILookup({ databasePath: out })
 		const cafeHits = lookup.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 5 })
 		expect(cafeHits.length).toBeGreaterThan(0)
@@ -323,7 +323,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 
 		expect(manifest.attribution).toMatch(/OpenStreetMap/)
 
-		// --- Check-relevant: the zero-observed-rows cell must round-trip, never read back as undefined ---
+		// A zero-observed-rows cell round-trips as zero rather than undefined.
 		const zeroCell = coverageCellsOverride.find((c) => c.observedRows === 0)!
 		const readBack = await readLayerCoverage(kdb, zeroCell.h3Cell)
 

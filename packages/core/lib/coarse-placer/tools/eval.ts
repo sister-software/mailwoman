@@ -85,7 +85,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
 	const placer = await CoarsePlacer.fromArtifactDir(resolvePath(modelDir), { abstainBelow: abstain })
 
-	// --- In-distribution test: accuracy + per-class + ECE ---
+	// Measure in-distribution accuracy, per-class results, and ECE.
 	let testN = 0
 	let correct = 0
 	const perClass: Record<string, { n: number; ok: number }> = {} // country → {n, ok}
@@ -160,7 +160,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		console.log(confLines.toSorted().join("\n"))
 	}
 
-	// --- Abstention on the multi-script set (off-map scripts should abstain) ---
+	// Measure abstention for multi-script inputs outside the map.
 	const msPath = repoRootPath("data", "eval", "multi-script", "v0.5.0-a0.jsonl")
 
 	try {
