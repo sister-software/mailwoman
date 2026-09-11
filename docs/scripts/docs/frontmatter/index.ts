@@ -25,10 +25,10 @@ import { fileURLToPath } from "node:url"
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * The docs package root, found by cutting this module's path at its `scripts/` segment rather than by counting `..`
- * upward. A count encodes how deep under `scripts/` this file happens to sit, and a move down one level then resolves
- * to a directory that does not exist — which is the shape of the failure this replaces, where the content root read as
- * `docs/scripts/docs/articles`. Cutting at the segment holds at any depth.
+ * The docs package root, taken as the part of this module's path before its `scripts/` segment rather than by counting
+ * `..` upward. A count encodes how deep under `scripts/` this file happens to sit, so moving it down one level resolves
+ * to a directory that does not exist — the failure this replaces, where the content root read as
+ * `docs/scripts/docs/articles`. Truncating at the segment holds at any depth.
  */
 const DOCS_ROOT = SCRIPT_DIR.slice(0, SCRIPT_DIR.lastIndexOf(`${path.sep}scripts${path.sep}`))
 
