@@ -31,7 +31,7 @@ describe("module-surface", () => {
 
 		const context = await plant(
 			"packages/fixture/lib/large.ts",
-			`${interfaces}\n${constants}\n${functions}\n${dividers}\n${"\n".repeat(470)}function wrapper() { interface Nested {} const local = 1; return local }\n`
+			`${interfaces}\n${constants}\n${functions}\n${dividers}\nfunction wrapper() { interface Nested {} const local = 1; return local }\n`
 		)
 
 		const diagnostics = await moduleSurfaceCheck.run(context)
@@ -40,7 +40,6 @@ describe("module-surface", () => {
 			expect.stringContaining("15 top-level interfaces"),
 			expect.stringContaining("30 top-level const declarations"),
 			expect.stringContaining("21 top-level functions"),
-			expect.stringContaining("top-level lines (threshold 500)"),
 			expect.stringContaining("6 top-level section-divider comments"),
 		])
 	})

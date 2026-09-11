@@ -6,7 +6,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { MODULE_COHESION_THRESHOLDS, moduleCohesionCheck } from "@mailwoman/repo-health/checks/module/cohesion"
+import { moduleCohesionCheck } from "@mailwoman/repo-health/checks/module/cohesion"
 import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -48,13 +48,9 @@ const ONE_SPECIFIER_EACH = [
 	`export function writeTail(): number { return writeHead() + gamma(6) }`,
 ].join("\n")
 
-function padded(body: string, lines = MODULE_COHESION_THRESHOLDS.lines): string {
-	return `${body}\n${"\n".repeat(lines)}`
-}
-
 describe("module-cohesion", () => {
 	it("reports two communities that share no imported dependency", async () => {
-		const context = await plant("packages/fixture/lib/two.ts", padded(TWO_RESPONSIBILITIES))
+		const context = await plant("packages/fixture/lib/two.ts", TWO_RESPONSIBILITIES)
 
 		const diagnostics = await moduleCohesionCheck.run(context)
 
@@ -65,19 +61,13 @@ describe("module-cohesion", () => {
 	})
 
 	it("leaves a facade alone when each community reads a single specifier", async () => {
-		const context = await plant("packages/fixture/lib/facade.ts", padded(ONE_SPECIFIER_EACH))
-
-		expect(await moduleCohesionCheck.run(context)).toEqual([])
-	})
-
-	it("does not inspect a module below the line threshold", async () => {
-		const context = await plant("packages/fixture/lib/small.ts", TWO_RESPONSIBILITIES)
+		const context = await plant("packages/fixture/lib/facade.ts", ONE_SPECIFIER_EACH)
 
 		expect(await moduleCohesionCheck.run(context)).toEqual([])
 	})
 
 	it("does not inspect co-located test files", async () => {
-		const context = await plant("packages/fixture/lib/two.test.ts", padded(TWO_RESPONSIBILITIES))
+		const context = await plant("packages/fixture/lib/two.test.ts", TWO_RESPONSIBILITIES)
 
 		expect(await moduleCohesionCheck.run(context)).toEqual([])
 	})

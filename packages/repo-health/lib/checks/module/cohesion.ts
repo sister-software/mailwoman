@@ -22,11 +22,6 @@ import { trackedSourcePaths } from "#tracked-sources"
  */
 export const MODULE_COHESION_THRESHOLDS = {
 	/**
-	 * Under this many lines a module is readable whole, and which declarations group with which changes nothing a reader
-	 * would do about it.
-	 */
-	lines: 400,
-	/**
 	 * Newman's modularity of the best partition found. A module whose helpers all feed one entry point scores near zero
 	 * however many helpers there are.
 	 */
@@ -314,7 +309,7 @@ function describe(community: DeclarationCommunity): string {
 export const moduleCohesionCheck: RepoCheck = {
 	id: "module-cohesion",
 	description:
-		"Warn when a large module's top-level declarations partition into communities that share no imported dependency.",
+		"Warn when a module's top-level declarations partition into communities that share no imported dependency.",
 	async run(context: RepoContext): Promise<Diagnostic[]> {
 		const diagnostics: Diagnostic[] = []
 
@@ -325,8 +320,6 @@ export const moduleCohesionCheck: RepoCheck = {
 
 			const text = await readLocalTextFile(filePath)
 			const source = ts.createSourceFile(filePath, text, ts.ScriptTarget.Latest, true)
-
-			if (source.getLineAndCharacterOfPosition(source.end).line + 1 < MODULE_COHESION_THRESHOLDS.lines) continue
 
 			const cohesion = moduleCohesion(source)
 
