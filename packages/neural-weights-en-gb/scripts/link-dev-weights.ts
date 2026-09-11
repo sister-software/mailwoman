@@ -86,7 +86,7 @@ const overlay = await materializeDevOverlay({
 	streetMorphologyFST: true,
 })
 
-// --- postcode-gb.bin: CARD-CONDITIONAL, not unconditional -------------------------------------
+// Build postcode-gb.bin only when the model card declares a compatible anchor channel.
 //
 // The GB anchor binary is the one artifact whose correctness depends on WHICH MODEL is loaded, so it
 // is built only when the card says the model can use it.
