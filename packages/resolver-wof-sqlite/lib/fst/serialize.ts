@@ -77,7 +77,7 @@ for (let i = 0; i < PLACETYPE_ORDER.length; i++) {
 export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): Buffer {
 	const nodes = matcher.toNodes() as FSTNode[]
 
-	// --- String interning ---
+	// Intern state-edge strings before serializing their table.
 	const stringMap = new Map<string, number>()
 	const strings: string[] = []
 
@@ -106,7 +106,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const encodedStrings = strings.map((s) => Buffer.from(s, "utf8"))
 	const stringBytes = encodedStrings.reduce((sum, b) => sum + b.length, 0)
 
-	// --- Counts ---
+	// Count each serialized record class.
 	let totalEdges = 0
 	let totalPlaces = 0
 
@@ -115,7 +115,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 		totalPlaces += node.places.length
 	}
 
-	// --- Allocate ---
+	// Allocate the complete binary buffer.
 	const stringTableSize = (strings.length + 1) * 4 + stringBytes
 	const stateTableSize = nodes.length * WIDE_STATE_ENTRY_SIZE
 	const edgeTableSize = totalEdges * EDGE_ENTRY_SIZE
@@ -127,7 +127,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const buf = Buffer.alloc(totalSize)
 	let pos = 0
 
-	// --- Header ---
+	// Read the versioned binary header.
 	// flags bit0 (survey #4, 2026-07-27): place rows carry surface-ambiguity data in the former _pad
 	// byte (pp+6 = crossCountryBranches u8, pp+7 reserved). Presence-signaled here so VERSION stays
 	// put: pre-ambiguity artifacts read flags=0 → readers expose `undefined`, never a fake 0.
@@ -151,7 +151,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	buf.writeUInt32LE(provenanceJson ? binarySize : 0, pos)
 	pos += 4
 
-	// --- String table ---
+	// Read the interned string table.
 	let strOffset = 0
 
 	for (const encoded of encodedStrings) {
@@ -170,7 +170,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 		pos += encoded.length
 	}
 
-	// --- State, edge, and place tables ---
+	// Read state, edge, and place tables.
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateTableSize
 	const placeTableStart = edgeTableStart + edgeTableSize
@@ -234,7 +234,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 }
 
 export function deserializeFST(buf: Buffer): FSTMatcher {
-	// --- Header ---
+	// Verify the versioned binary header.
 	if (buf.length < HEADER_SIZE) throw new Error("FST buffer too small for header")
 
 	if (!buf.subarray(0, 4).equals(MAGIC)) throw new Error("FST magic mismatch")
@@ -257,7 +257,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	let pos = HEADER_SIZE
 
-	// --- String table ---
+	// Verify string-table offsets and contents.
 	const strOffsets = new Uint32Array(stringCount + 1)
 
 	for (let i = 0; i <= stringCount; i++) {
@@ -276,7 +276,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	pos += stringBytes
 
-	// --- State table ---
+	// Verify state-table offsets and transitions.
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
 	// v5 grew the place entry by the encyclopedic float; v4-and-below files are read at the old stride.
 	const placeEntrySize = version >= VERSION_TWO_SCORE_SPLIT ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE

@@ -279,7 +279,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		progress("importance", "no score source given — `importance` will be NULL on every row")
 	}
 
-	// --- region_id per place (its region-tier ancestor) for same-name disambiguation ---
+	// Derive each place's region ancestor for same-name disambiguation.
 	progress("region", "loading region ancestry")
 	const regionOf = new Map<number, number>()
 	let multiRegion = 0
@@ -315,7 +315,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// the column COUNT can't drift; the positional run() args below MUST stay in CANDIDATE_COLUMNS order.
 	const insStage = kdb.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
 
-	// --- pass 1: primaries (and the per-place attrs the alias/abbrev passes reuse) ---
+	// Stage primary names and attributes reused by later alias passes.
 	progress("primaries", "indexing place names")
 	const attrs = new Map<number, PlaceAttrs>()
 	let nPrim = 0
@@ -424,7 +424,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		)
 	}
 
-	// --- pass 1b: country surfaces across scripts (#1678 thread 1) — see stageCountryDisplayNames ---
+	// Stage country display names across scripts.
 	// Never a silent zero: a runtime whose ICU lacks these locales degrades to fewer surfaces, and the count is how a
 	// reader tells that apart from the pass not having run.
 	progress(
@@ -463,7 +463,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		progress("currency-backfill", "not configured — deprecated-no-successor holes stay dead (#1737)")
 	}
 
-	// --- pass 2: distinct normalized aliases from place_search.alt_names (explodeAliasBags owns the loop) ---
+	// Stage distinct normalized aliases from alternate names.
 	progress("aliases", "exploding alias bags")
 
 	const { nAlias, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
@@ -479,7 +479,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 				: "")
 	)
 
-	// --- pass 3: region abbreviations (place_abbr) ---
+	// Stage region abbreviations.
 	let nAbbr = 0
 	kdb.exec("BEGIN")
 
@@ -498,7 +498,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	kdb.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
-	// --- pass 3b: name roles (#1730 prototype — stampNameRoles owns the detectors) ---
+	// Stamp each name's semantic role.
 	// Independent of the sidecar below: this writes `cand_stage.name_role`, that writes the ancestor and
 	// interval tables, and neither reads the other's output. Ordered by label only.
 	const roles = stampNameRoles({
@@ -512,10 +512,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		progress,
 	})
 
-	// --- pass 3c: the ancestors sidecar (candidate-ancestors-schema.ts owns the encoding decision) ---
+	// Stage the encoded ancestors sidecar.
 	const sidecar = await buildAncestorsSidecar({ src, out: kdb, attrs, ptID, progress })
 
-	// --- pass 4 + 4b: postcode and locality extracts (foldExtract owns the per-extract loop) ---
+	// Fold postcode and locality extracts into candidate records.
 	let nPostcode = 0
 	let nPostcodeAlias = 0
 
@@ -569,7 +569,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		)
 	}
 
-	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
+	// Insert the small typed code dictionaries through Kysely.
 	if (ccodes.size) {
 		await kdb
 			.insertInto("country_codes")
@@ -584,7 +584,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			.execute()
 	}
 
-	// --- capital-status reference (#1880's distribution home) — cold, small (~3.7k rows), typed ---
+	// Insert the small typed capital-status reference table.
 	if (opts.capitals?.length) {
 		await createCapitalTable<CandidateDatabase>(kdb)
 
@@ -604,7 +604,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		progress("capitals", `${opts.capitals.length.toLocaleString()} capital-reference rows carried in-artifact`)
 	}
 
-	// --- materialize the clustered WITHOUT ROWID table (sorted insert → contiguous leaves) ---
+	// Materialize the clustered WITHOUT ROWID table in sorted order.
 	progress("cluster", "building clustered candidate table + VACUUM")
 	// Column list + clustered-key order are sourced from CANDIDATE_COLUMNS (the first 6 ARE the PRIMARY
 	// KEY) so the SELECT, the ORDER BY, and the table can't drift. The table comes from the shared
