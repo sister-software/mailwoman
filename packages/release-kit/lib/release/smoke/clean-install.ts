@@ -458,7 +458,22 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], proj)
 
-		const cli = join(proj, "node_modules", "mailwoman", "out", "cli.js")
+		// Read the entry from the INSTALLED manifest's `bin` rather than spelling the compiled path here. Spelling it
+		// encodes a layout the published package is free to change: the entry moved from `out/cli.js` to
+		// `out/cli/index.js` and this probe kept invoking a file that no longer ships, so the smoke reported a missing
+		// module instead of a working CLI. The manifest is the consumer's own contract, which is what this probe exists
+		// to exercise, and reading it consults the installed tree rather than the monorepo's graph.
+		const installedRoot = join(proj, "node_modules", "mailwoman")
+
+		const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
+			join(installedRoot, "package.json")
+		)
+
+		const binEntry = typeof bin === "string" ? bin : bin?.mailwoman
+
+		if (!binEntry) throw new Error("[smoke] the installed mailwoman manifest declares no `mailwoman` bin")
+
+		const cli = join(installedRoot, binEntry)
 
 		log("[smoke] mailwoman --help (loads every command module)…")
 
