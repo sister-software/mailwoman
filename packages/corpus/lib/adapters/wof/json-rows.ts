@@ -5,7 +5,7 @@
  * @file Deterministic canonical-row emission shared by WOF GeoJSON adapters.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
 
 import type { AdapterOptions, CanonicalRow } from "#types"

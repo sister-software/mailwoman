@@ -7,9 +7,9 @@
  *   neural parse into the arbitration layer's proposal currency.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { proposalsToTree, treeToProposals } from "@mailwoman/core/decoder/proposals-to-tree"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
 
 describe("treeToProposals", () => {

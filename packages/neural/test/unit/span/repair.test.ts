@@ -9,7 +9,8 @@
  *   pass-specific change. The ZIP+4-vs-NL case is the one the longest-first rule exists for.
  */
 
-import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
+import type { BIOLabel } from "@mailwoman/codex/component"
+import type { DecoderToken } from "@mailwoman/core/decoder"
 import { selectNonOverlappingMatches, tagOf, tokenIndicesOverlapping } from "@mailwoman/neural/span"
 import { describe, expect, it } from "vitest"
 

@@ -14,9 +14,11 @@
  *   pipeline.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
+
 import type { AddressNode, AddressTree } from "#decoder/types"
 import type { Span } from "#tokenization/index"
-import type { ClassificationProposal, ClassificationProposalSource, ComponentTag } from "#types/index"
+import type { ClassificationProposal, ClassificationProposalSource } from "#types/index"
 
 export function proposalsToTree(raw: string, proposals: readonly ClassificationProposal[]): AddressTree {
 	const roots: AddressNode[] = proposals.map((p) => ({

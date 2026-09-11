@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { buildDefaultPolicies, defaultPolicyFor } from "@mailwoman/core/policy/defaults"
-import { COMPONENT_TAGS } from "@mailwoman/core/types"
 import { expect, test } from "vitest"
 
 test("buildDefaultPolicies: one entry per ComponentTag, all rule_only by default", () => {

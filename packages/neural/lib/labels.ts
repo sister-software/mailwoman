@@ -18,7 +18,7 @@
  *   `labels` field as "you are loading a pre-v0.4.0 bundle" rather than "unknown stage".
  */
 
-import type { BIOLabel } from "@mailwoman/core/decoder"
+import type { BIOLabel } from "@mailwoman/codex/component"
 
 /**
  * Coarse component tags trained in Phase 2 Stage 1 (v0.1.0 / v0.2.0).

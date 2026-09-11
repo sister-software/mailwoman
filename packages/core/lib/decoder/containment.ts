@@ -28,8 +28,9 @@
  *   call-site churn. See `AddressSystem` in `./types.ts`.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
+
 import type { AddressSystem } from "#decoder/types"
-import type { ComponentTag } from "#types/component"
 
 /**
  * Preferred-parent ordering for each tag. Empty / missing = always root.

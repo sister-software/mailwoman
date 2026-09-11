@@ -28,7 +28,8 @@
  *   [--falsehoods data/eval/falsehoods] # extra JSONL row files to include
  */
 
-import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import { decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import { readDirectory, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"

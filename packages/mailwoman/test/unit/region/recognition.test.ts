@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { recognizeUSRegions, usStateSlug } from "mailwoman/region-recognition"
 import { describe, expect, it } from "vitest"
 

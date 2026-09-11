@@ -9,8 +9,8 @@
  *   empty entries).
  */
 
+import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { COMPONENT_TAGS } from "@mailwoman/core/types"
 import {
 	PairIndexResolver,
 	peekPairIndexHeader,

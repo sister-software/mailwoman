@@ -28,8 +28,8 @@
  *   evidence for that window, not a guess).
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { SeededRandom } from "@mailwoman/core/random"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair"
 

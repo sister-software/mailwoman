@@ -11,20 +11,11 @@
 import {
 	DEFAULT_PLACETYPE_MAP,
 	expandPlacetypeFilter,
-	hardCountrySafelistFromCoverage,
 	isPlacetypeFallback,
 	PLACETYPE_FILTER_GROUPS,
 	placetypeMapForCountry,
-	type CountryCoverageFact,
-} from "@mailwoman/core/resolver"
+} from "@mailwoman/codex/placetype-map"
 import { describe, expect, it } from "vitest"
-
-const FACT = (country: string, hardFilterSafe: boolean): CountryCoverageFact => ({
-	country,
-	hardFilterSafe,
-	measuredAt: "2026-01-01",
-	source: "unit fixture",
-})
 
 describe("DEFAULT_PLACETYPE_MAP", () => {
 	it("routes the JP tiers the candidate gazetteer keys, and leaves the street tiers to the extracts", () => {
@@ -101,24 +92,6 @@ describe("isPlacetypeFallback", () => {
 
 	it("is false for a macro placetype outside the request's group", () => {
 		expect(isPlacetypeFallback("locality", "macroregion")).toBe(false)
-	})
-})
-
-describe("hardCountrySafelistFromCoverage", () => {
-	it("admits only countries whose fact says the filter is safe", () => {
-		const safelist = hardCountrySafelistFromCoverage([FACT("US", true), FACT("FI", false)])
-
-		expect(safelist.has("US")).toBe(true)
-		// Measured and FAILED is a first-class record, and it must not read as safe.
-		expect(safelist.has("FI")).toBe(false)
-	})
-
-	it("treats an absent country as never measured rather than as safe", () => {
-		expect(hardCountrySafelistFromCoverage([FACT("US", true)]).has("DE")).toBe(false)
-	})
-
-	it("normalizes the country to upper case, so a lower-case fact still matches a probe", () => {
-		expect(hardCountrySafelistFromCoverage([FACT("gb", true)]).has("GB")).toBe(true)
 	})
 })
 

@@ -31,10 +31,10 @@
  *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { Box, Text } from "ink"
 import { join } from "path-ts"

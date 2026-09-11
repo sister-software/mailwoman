@@ -11,7 +11,7 @@
  *   expectation columns that no branch here ever read) survived every review of the layer that calls it.
  */
 
-import { COMPONENT_TAGS } from "@mailwoman/core"
+import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { haversineKm } from "@mailwoman/spatial"
 

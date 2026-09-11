@@ -23,12 +23,8 @@
  *   `bbox` field on {@link FindPlaceQuery}).
  */
 
-import {
-	expandPlacetypeFilter,
-	type Ancestor,
-	type GazetteerArtifactCoverage,
-	referentialFromPopulation,
-} from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { type Ancestor, type GazetteerArtifactCoverage, referentialFromPopulation } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import { partitionByContainment } from "@mailwoman/resolver"

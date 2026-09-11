@@ -16,6 +16,8 @@
  *   groups that moved to siblings are re-exported here rather than requiring every importer to move with them.
  */
 
+import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
+
 import type { AddressTree } from "#decoder/types"
 import type { GazetteerArtifactCoverage } from "#resolver/coverage-facts"
 import type {
@@ -24,7 +26,6 @@ import type {
 	PostcodePrefixIndexLike,
 	StreetCentroidLookup,
 } from "#resolver/lookup-types"
-import type { PlacetypeMap } from "#resolver/placetype-map"
 
 export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "#resolver/coverage-facts"
 export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
@@ -40,15 +41,6 @@ export type {
 	StreetCentroidHit,
 	StreetCentroidLookup,
 } from "#resolver/lookup-types"
-
-export {
-	DEFAULT_PLACETYPE_MAP,
-	expandPlacetypeFilter,
-	isPlacetypeFallback,
-	PLACETYPE_FILTER_GROUPS,
-	placetypeMapForCountry,
-	type PlacetypeMap,
-} from "#resolver/placetype-map"
 
 /**
  * One candidate place returned by a resolver. Mirrors the shape used by `@mailwoman/core/resolver-wof-sqlite`'s

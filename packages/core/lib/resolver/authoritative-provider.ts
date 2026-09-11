@@ -22,7 +22,7 @@
  *     package; these shapes are what every adapter maps INTO.
  */
 
-import type { ComponentTag } from "#types/component"
+import type { ComponentTag } from "@mailwoman/codex/component"
 
 /**
  * One parsed component as the provider receives it: the tag, the surface text, and where in the normalized query it

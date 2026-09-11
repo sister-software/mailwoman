@@ -21,9 +21,9 @@
  *   framework LCG) is consumed in the exact call order the legacy script used.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 

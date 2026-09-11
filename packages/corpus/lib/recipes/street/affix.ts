@@ -27,6 +27,7 @@
  *   FR/DE postcode (the v0.9.8 blemish).
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import {
 	DirectionalAbbreviation,
 	lookupDirectional,
@@ -38,7 +39,6 @@ import {
 	NAME_PRONE_US_SUFFIXES,
 } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import type { ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 

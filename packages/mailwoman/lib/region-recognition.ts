@@ -23,7 +23,8 @@
  *   recognizing the region; this closes the gap for the bare-`City, State` class today.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 
 /**

@@ -10,9 +10,11 @@
  *   holds the walk and this one holds the race policy.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { loneValueBearingNode } from "@mailwoman/core/decoder"
-import type { PlacetypeMap, ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
 /**
  * The tree's single value-bearing node when it is locality-tagged, else null — the bare-toponym shape whose

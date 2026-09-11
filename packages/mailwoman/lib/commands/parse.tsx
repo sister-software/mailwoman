@@ -5,6 +5,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -13,7 +14,7 @@ import type { PolicyMode } from "@mailwoman/core/policy"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
-import type { ComponentTag, Section } from "@mailwoman/core/types"
+import type { Section } from "@mailwoman/core/types"
 import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"

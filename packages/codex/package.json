@@ -85,6 +85,16 @@
 			"node": "./lib/nz/index.ts",
 			"default": "./out/nz/index.js"
 		},
+		"./component": {
+			"types": "./out/component.d.ts",
+			"node": "./lib/component.ts",
+			"default": "./out/component.js"
+		},
+		"./placetype-map": {
+			"types": "./out/placetype-map.d.ts",
+			"node": "./lib/placetype-map.ts",
+			"default": "./out/placetype-map.js"
+		},
 		"./normalize": {
 			"types": "./out/normalize.d.ts",
 			"node": "./lib/normalize.ts",

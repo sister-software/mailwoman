@@ -22,8 +22,8 @@
  *   columns rather than rejected, so filtering them is the reader's job and this reader was not doing it.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { isOfficialLanguage } from "@mailwoman/codex/country"
-import type { ComponentTag } from "@mailwoman/core/types"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

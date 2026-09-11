@@ -16,13 +16,13 @@
  *   measurement-boundary lie this repository keeps finding.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type {
 	AuthoritativeMatch,
 	AuthoritativeProvider,
 	AuthoritativeQuery,
 	AuthoritativeQueryComponent,
 } from "@mailwoman/core/resolver"
-import type { ComponentTag } from "@mailwoman/core/types"
 
 /**
  * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch}, field for field. Absent

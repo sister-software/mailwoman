@@ -30,7 +30,7 @@
  *   Row-disjoint leaks the surface across the boundary and measures memorization.
  */
 
-import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
+import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 
 import {

@@ -7,8 +7,8 @@
  */
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
+import type { BIOLabel } from "@mailwoman/codex/component"
 import { buildAddressTree, type DecoderToken } from "@mailwoman/core/decoder"
-import type { BIOLabel } from "@mailwoman/core/types/component"
 import { applyPlusCodeOverride } from "mailwoman/plus-code-override"
 import { describe, expect, it } from "vitest"
 

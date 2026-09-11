@@ -16,10 +16,11 @@
  *   and both behaviors are pinned by their consumers' boards.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
+
 import { flatten } from "#decoder/serialize/tuples"
 import { walkNodes } from "#decoder/tree/walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
-import type { ComponentTag } from "#types/component"
 
 /**
  * True when every node in the tree either carries `tag` or bears no value — i.e. the only EVIDENCE in the parse is

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { BIO_LABELS, type ComponentTag } from "@mailwoman/core/types"
+import { BIO_LABELS, type ComponentTag } from "@mailwoman/codex/component"
 import {
 	AUGMENTATIONS,
 	accentStrip,

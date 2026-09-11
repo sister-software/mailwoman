@@ -1,6 +1,6 @@
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import { isLossless, losslessSegments, unknownSpans } from "@mailwoman/core/decoder/unknown-spans"
-import type { ComponentTag } from "@mailwoman/core/types/component"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0

@@ -7,8 +7,9 @@
  *   flat AddressTree so the existing JSON/tuple/XML decoders can format policy-filtered output.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { decodeAsJSON, decodeAsTuples, proposalsToTree } from "@mailwoman/core/decoder"
-import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
+import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
 function makeProposal(component: ComponentTag, body: string, start: number, confidence = 0.9): ClassificationProposal {

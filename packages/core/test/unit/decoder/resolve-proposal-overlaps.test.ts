@@ -9,9 +9,10 @@
  *   decomposition.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { resolveProposalOverlaps } from "@mailwoman/core/decoder/resolve-proposal-overlaps"
 import { Span } from "@mailwoman/core/tokenization"
-import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
+import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
 /**

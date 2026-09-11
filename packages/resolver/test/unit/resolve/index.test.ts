@@ -7,7 +7,9 @@
  *   walk + decoration semantics without depending on any concrete WOF data.
  */
 
-import type { AddressNode, Interpretation, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import type { AddressNode, Interpretation, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsXML, walkNodes } from "@mailwoman/core/decoder"
 import type {
 	Ancestor,
@@ -18,7 +20,6 @@ import type {
 	ResolverBackend,
 	StreetCentroidLookup,
 } from "@mailwoman/core/resolver"
-import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, test, vi } from "vitest"
 

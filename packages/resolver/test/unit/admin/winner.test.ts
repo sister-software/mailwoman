@@ -11,8 +11,8 @@
  */
 
 import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/codex"
+import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/core/resolver"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 import {
 	ADMIN_LADDER_LOCALITY_FIRST,

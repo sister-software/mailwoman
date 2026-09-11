@@ -6,8 +6,8 @@
  * Usage: node packages/mailwoman/lib/dev-tools/score/street-name-boundaries.run.ts
  */
 
+import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core"
-import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 

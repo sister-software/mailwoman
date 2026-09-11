@@ -6,7 +6,8 @@
  *   resolved to, and the region predicate that decides whether it counts.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { regionMatches } from "mailwoman/eval-harness/oa/resolver/admin-match"
 import {
 	collectResolved,

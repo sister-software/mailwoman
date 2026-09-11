@@ -9,7 +9,8 @@
  *   saw — a split `해:B 운:B` and a truncated `해운대` — both close on `해운대구`, and a compound city extends to its ward.
  */
 
-import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
+import type { BIOLabel } from "@mailwoman/codex/component"
+import type { DecoderToken } from "@mailwoman/core/decoder"
 import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "@mailwoman/neural/register-boundary-repair"
 import { describe, expect, it } from "vitest"
 

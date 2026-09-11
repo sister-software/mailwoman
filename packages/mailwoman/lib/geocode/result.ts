@@ -7,7 +7,7 @@
  */
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
-import type { ComponentTag } from "@mailwoman/core"
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree, type DroppedSpan } from "@mailwoman/core/decoder"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import type { DerivationProjection, EpistemicStatus } from "@mailwoman/evidence"

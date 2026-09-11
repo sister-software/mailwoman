@@ -19,7 +19,7 @@
  *   so the key is stable and explainable; expansion is an additive refinement, not a rewrite.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
 
 import type { ComponentDict } from "#format"
 

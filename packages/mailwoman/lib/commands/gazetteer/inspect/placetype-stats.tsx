@@ -83,7 +83,7 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 
 const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { COMPONENT_TAGS } = await import("@mailwoman/core")
+		const { COMPONENT_TAGS } = await import("@mailwoman/codex/component")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const dbPath = options.db ?? dataRootPath("wof", "admin-global-priority.db").toString()

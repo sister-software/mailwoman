@@ -10,7 +10,8 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"

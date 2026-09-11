@@ -24,8 +24,8 @@
  *   Read-only against the admin DB: no network, no model, no writes.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import type { ComponentTag } from "@mailwoman/core/types"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

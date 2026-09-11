@@ -27,7 +27,9 @@ export {
 	type AddressSystemConventions,
 } from "#address-system-conventions"
 
+export * from "#component"
 export * from "#normalize"
+export * from "#placetype-map"
 export * as au from "#au/index"
 export * as ca from "#ca/index"
 export * as de from "#de/index"

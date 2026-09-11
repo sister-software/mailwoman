@@ -51,7 +51,7 @@
  *   or first-write-wins at serialize time would hide a extract-build bug.
  */
 
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 
 import { type ByteCursor, readFramedHeader, writeFramedHeader } from "#binary-frame"
 

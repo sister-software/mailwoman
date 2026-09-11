@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { BIOLabel, ComponentTag } from "@mailwoman/core/types/component"
-import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/core/types/component"
+import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
+import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { describe, expect, test } from "vitest"
 
 describe("COMPONENT_TAGS", () => {

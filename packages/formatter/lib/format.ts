@@ -25,7 +25,8 @@
 
 import addressFormatter from "@fragaria/address-formatter"
 import fragariaTemplates from "@fragaria/address-formatter/src/templates/templates.json" with { type: "json" }
-import type { ClassificationMap, VisibleClassification, ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { ClassificationMap, VisibleClassification } from "@mailwoman/core/types"
 import { TextSpliterator } from "spliterator"
 
 /**

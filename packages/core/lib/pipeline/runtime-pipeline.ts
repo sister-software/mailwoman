@@ -12,6 +12,8 @@
  *   Implementation contract per `docs/engineering/reference/STAGES.md`.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
+
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { errorMessage } from "#errors/schema"
@@ -32,7 +34,6 @@ import type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "#pipeline/types"
-import type { ComponentTag } from "#types/component"
 
 /**
  * Kind confidence required to skip the full pipeline. Set high deliberately: a short-circuit that fires on a wrong kind
