@@ -47,7 +47,9 @@ class TinySpanClassifierModel(torch.nn.Module):
         self.classifier = torch.nn.Linear(4, 33)
 
 
-# --- Config field -----------------------------------------------------------------------------
+# endregion
+
+# region Config field
 
 
 def test_trainable_only_prefixes_defaults_empty():
@@ -82,7 +84,9 @@ def test_v3120_crt_probe_config_freeze_flags_stay_off():
     assert cfg.train.freeze_token_embeddings is False
 
 
-# --- build_optimizer: empty-base-group skip ---------------------------------------------------
+# endregion
+
+# region build_optimizer: empty-base-group skip
 
 
 def test_all_carved_out_yields_a_clean_one_group_optimizer():
@@ -136,7 +140,9 @@ def test_three_group_shape_unaffected_by_the_empty_group_skip():
     assert sum(p.numel() for p in base_group["params"]) == 4 * 4 + 4  # encoder only
 
 
-# --- Raw torch: empty param-group safety (the "prove it's safe" evidence) ---------------------
+# endregion
+
+# region Raw torch: empty param-group safety (the "prove it's safe" evidence)
 
 
 def test_raw_adamw_tolerates_an_empty_param_group():
@@ -180,7 +186,9 @@ def test_raw_lambdalr_tolerates_an_empty_param_group():
     assert optim.param_groups[1]["lr"] == pytest.approx(1e-3)
 
 
-# --- Every shipped config: trainable_only_prefixes vs freeze_* mutual exclusivity -------------
+# endregion
+
+# region Every shipped config: trainable_only_prefixes vs freeze_* mutual exclusivity
 
 
 @pytest.mark.parametrize("config_path", sorted(CONFIG_DIR.glob("*.yaml")), ids=lambda p: p.name)

@@ -1118,7 +1118,7 @@ class MailwomanCoarseEncoder(nn.Module):
         )
         return self.crf.top_k_decode(out.logits, attention_mask.to(out.logits.dtype), k=k)
 
-    # ---- HuggingFace-compatible save/load helpers ----
+    # ---- HuggingFace-compatible save/load helpers
 
     def forward_mlm(
         self,

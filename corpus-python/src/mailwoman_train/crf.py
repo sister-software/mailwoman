@@ -140,7 +140,7 @@ class LinearChainCRF(nn.Module):
     def masked_start_transitions(self) -> torch.Tensor:
         return self.start_transitions + self.start_mask
 
-    # --- training: negative log-likelihood ------------------------------------------
+    # region training: negative log-likelihood
 
     def forward(
         self,
@@ -247,7 +247,9 @@ class LinearChainCRF(nn.Module):
         lengths = lengths.clamp(min=0, max=seq_len - 1)
         return tags.gather(1, lengths.unsqueeze(1)).squeeze(1)
 
-    # --- inference: Viterbi ----------------------------------------------------------
+    # endregion
+
+    # region inference: Viterbi
 
     @torch.no_grad()
     def viterbi_decode(

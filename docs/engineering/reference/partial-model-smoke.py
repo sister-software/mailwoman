@@ -26,12 +26,11 @@ import sys
 from pathlib import Path
 
 import torch
-
 from mailwoman_train.config import Config
+from mailwoman_train.eval import decode_components
 from mailwoman_train.labels import STAGE1_BIO_LABELS, STAGE1_COARSE_TAGS
 from mailwoman_train.model import MailwomanCoarseEncoder
 from mailwoman_train.tokenizer import Tokenizer
-from mailwoman_train.eval import decode_components
 
 # Ten hand-crafted addresses spanning the bitter-lesson kryptonite cases
 # (Buffalo Buffalo, Saint Petersburg, NY-NY-Steakhouse) plus the easy ones.

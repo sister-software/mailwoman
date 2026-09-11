@@ -30,7 +30,8 @@ from __future__ import annotations
 
 from typing import Final
 
-# --- Historical: v0.1.0 + v0.2.0 (coarse-only) ---------------------------------------
+# region Historical: v0.1.0 + v0.2.0 (coarse-only)
+
 
 STAGE1_COARSE_TAGS: Final[tuple[str, ...]] = (
     "country",
@@ -47,7 +48,10 @@ STAGE1_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE1_COARSE_TAGS for prefix in ("B-", "I-")),
 )
 
-# --- v0.3.0: coarse + fine (venue, street, house_number) -----------------------------
+# endregion
+
+# region v0.3.0: coarse + fine (venue, street, house_number)
+
 
 # Fine tags added in Stage 2. Order is stable across runs so label IDs are reproducible
 # within a stage. NEVER reorder within a stage; ALWAYS append for a new stage.
@@ -64,7 +68,10 @@ STAGE2_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE2_TAGS for prefix in ("B-", "I-")),
 )
 
-# --- v0.6.0: Stage 3 — street decomposition + PO box + intersection -----------------
+# endregion
+
+# region v0.6.0: Stage 3 — street decomposition + PO box + intersection
+
 
 # Fine tags added in Stage 3. Extends Stage 2 by decomposing the monolithic `street` tag
 # into prefix/suffix and adding unit/po_box/intersection. The golden eval set already has
@@ -86,7 +93,10 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE3_TAGS for prefix in ("B-", "I-")),
 )
 
-# --- Stage 4: secondary-address family (#1100 / #456) — DEFINED, NOT YET ACTIVE ------
+# endregion
+
+# region Stage 4: secondary-address family (#1100 / #456) — DEFINED, NOT YET ACTIVE
+
 #
 # The secondary-address vertical axis: designator/id pairs for units, levels (floors), and buildings,
 # plus the EU entrance/staircase forms (USPS Pub-28 C2 + the codex level-semantics table already ship
@@ -126,7 +136,10 @@ STAGE4_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE4_TAGS for prefix in ("B-", "I-")),
 )
 
-# --- JP fine tags (v8 CJK Phase 2 — schema activation) --------------------------------
+# endregion
+
+# region JP fine tags (v8 CJK Phase 2 — schema activation)
+
 #
 # The seven JP-specific tags SCHEMA.mdx declares (mirrored in core/types/component.ts, where they
 # have sat as forward-compat declarations since Phase 0): the admin ladder (prefecture 都道府県,
@@ -154,7 +167,10 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE3_JP_TAGS for prefix in ("B-", "I-")),
 )
 
-# --- CN fine tags (#2034 — the organizational ladder) ---------------------------------
+# endregion
+
+# region CN fine tags (#2034 — the organizational ladder)
+
 #
 # ONE tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
 # carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team; the XPCC
@@ -173,7 +189,10 @@ STAGE3_CN_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE3_CN_TAGS for prefix in ("B-", "I-")),
 )
 
-# --- CJK union (#2034 — one head for the JP and CN character models) ---------------------
+# endregion
+
+# region CJK union (#2034 — one head for the JP and CN character models)
+
 #
 # The JP seven and the CN one behind ONE classifier, so a single from-scratch character model can
 # train on the 2M-row JP slice and the CN organizational-unit slice together. STAGE3 keeps its ids,
@@ -188,7 +207,10 @@ STAGE3_CJK_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE3_CJK_TAGS for prefix in ("B-", "I-")),
 )
 
-# --- Active set (points at the most-recent stage) ------------------------------------
+# endregion
+
+# region Active set (points at the most-recent stage)
+
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
 # existing v0.5.x models keep working. STAGE4 is DEFINED above but NOT active — its
 # activation is coupled to a retrain + the JS union bump (see the Stage 4 block).
@@ -200,7 +222,11 @@ LABEL_TO_ID: Final[dict[str, int]] = {label: i for i, label in enumerate(ACTIVE_
 ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items()}
 
 
-# --- Per-config label sets (v8 CJK Phase 2) -------------------------------------------
+# endregion
+
+# region Per-config label sets (v8 CJK Phase 2)
+
+
 #
 # The label vocabulary became per-MODEL when the JP sibling model activated (the JP head is 47
 # labels while the Latin head stays 33). ``resolve_label_set`` is the single lookup; the module
@@ -247,7 +273,10 @@ def resolve_label_set(name: str = "stage3") -> LabelSet:
 # Labels that mean "ignore" in cross-entropy. The HF Trainer treats ``-100`` as the sentinel.
 IGNORE_INDEX: Final[int] = -100
 
-# --- Locale conditioning (PR3 / self-conditioning) -----------------------------------
+# endregion
+
+# region Locale conditioning (PR3 / self-conditioning)
+
 # Country (ISO 3166-1 alpha-2) → locale class id for the auxiliary self-conditioning head.
 # The head predicts which country an address belongs to from the POOLED sequence; that
 # posterior conditions the per-token labeling (model.py FiLM) and is the LocalePosterior the

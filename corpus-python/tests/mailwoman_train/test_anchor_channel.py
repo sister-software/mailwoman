@@ -88,7 +88,9 @@ def test_save_load_round_trips_the_channel():
     assert torch.allclose(got, expected, atol=1e-5)
 
 
-# --- Dual-injection (#327, v0.9.4): the SAME anchor also at position 0 -------------------------------
+# endregion
+
+# region Dual-injection (#327, v0.9.4): the SAME anchor also at position 0
 
 
 def _dual_fixture():

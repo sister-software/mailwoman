@@ -22,9 +22,7 @@ import subprocess
 
 import modal
 
-# ---------------------------------------------------------------------------
-# App + Volume + Image
-# ---------------------------------------------------------------------------
+# region App + Volume + Image
 
 app = modal.App("mailwoman-training")
 
@@ -39,7 +37,7 @@ training_image = (
         "curl -sSL https://rclone.org/install.sh | bash",
     )
     .pip_install(
-        # --- PINNED export/quant toolchain (2026-06-09) ---------------------------------
+        # --- PINNED export/quant toolchain (2026-06-09)
         # These five drive the ONNX graph that ships to browsers. They were UNPINNED (`>=`)
         # and drifted between v0.9.3 (Jun-6) and v0.9.7 (Jun-8): transformers→5.x and
         # onnx→1.21 started rejecting a dynamo-emitted value_info during int8 quant (see
@@ -63,7 +61,7 @@ training_image = (
         "onnx==1.22.0",
         "onnxruntime==1.26.0",
         "onnxscript==0.7.0",
-        # --- non-graph deps -------------------------------------------------------------
+        # --- non-graph deps
         # sentencepiece is PINNED, not floored (2026-08-01). It was `>=0.2.0` under a comment saying
         # unpinned floors are fine here — that assumption was false, because SP decides the token IDS
         # the model trains on. Measured: 0.2.1 and 0.2.2 disagree on a Viterbi tie-break for repeated
@@ -201,9 +199,9 @@ def _required_train_seconds(max_steps: int) -> int:
     return int(max_steps / MEASURED_STEPS_PER_SECOND * TIMEOUT_HEADROOM) + STARTUP_SHUTDOWN_OVERHEAD_SECONDS
 
 
-# ---------------------------------------------------------------------------
-# Sync corpus from R2 into the volume
-# ---------------------------------------------------------------------------
+# endregion
+
+# region Sync corpus from R2 into the volume
 
 
 @app.function(
@@ -2113,9 +2111,9 @@ def push_artifact_r2(volume_path: str, r2_subpath: str):
     print(f"pushed OK. Pull locally with: rclone copyto :s3:{BUCKET}/{r2_subpath} ./<local>")
 
 
-# ---------------------------------------------------------------------------
-# Training function
-# ---------------------------------------------------------------------------
+# endregion
+
+# region Training function
 
 
 @app.function(
@@ -2346,9 +2344,9 @@ def diagnose_suffix_plasticity(
     print("Diagnostic complete; artifact is NOT promotion-eligible.")
 
 
-# ---------------------------------------------------------------------------
-# Local entrypoint
-# ---------------------------------------------------------------------------
+# endregion
+
+# region Local entrypoint
 
 
 @app.local_entrypoint()

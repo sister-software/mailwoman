@@ -115,7 +115,9 @@ def _stub_phrase_features(bsz: int, seq_len: int) -> torch.Tensor:
     return feats
 
 
-# --- Forward-pass: phrase-prior conditioning -----------------------------------------
+# endregion
+
+# region Forward-pass: phrase-prior conditioning
 
 
 def test_phrase_kind_taxonomy_matches_ts_contract():
@@ -198,7 +200,9 @@ def test_forward_rejects_wrong_phrase_feature_shape():
         )
 
 
-# --- Top-k inference path --------------------------------------------------------------
+# endregion
+
+# region Top-k inference path
 
 
 def test_predict_top_k_shapes_and_ordering():
@@ -253,7 +257,9 @@ def test_predict_top_k_requires_crf():
         )
 
 
-# --- Back-compat: use_phrase_priors=False (v0.4.0 path) -------------------------------
+# endregion
+
+# region Back-compat: use_phrase_priors=False (v0.4.0 path)
 
 
 def test_v0_4_0_back_compat_forward_unchanged():
@@ -301,7 +307,9 @@ def test_predict_top_k_with_back_compat_encoder_still_works():
         assert len(path.sequence) == 6
 
 
-# --- save_pretrained / from_pretrained round-trip ------------------------------------
+# endregion
+
+# region save_pretrained / from_pretrained round-trip
 
 
 def test_save_load_roundtrip_preserves_phrase_prior_config(tmp_path):
@@ -342,7 +350,9 @@ def test_load_v0_4_0_card_back_compat(tmp_path):
     assert loaded.phrase_input_projection is None
 
 
-# --- Config: v0_5_0-classifier-smoke.yaml loads cleanly --------------------------------
+# endregion
+
+# region Config: v0_5_0-classifier-smoke.yaml loads cleanly
 
 
 def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():

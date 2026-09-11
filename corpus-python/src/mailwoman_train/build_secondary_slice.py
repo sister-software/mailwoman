@@ -39,7 +39,10 @@ import pyarrow.parquet as pq
 
 SEED = 20260714
 
-# --- Designator lexicons (curated from Pub-28 C2 + codex level-semantics) ------------------------
+# endregion
+
+# region Designator lexicons (curated from Pub-28 C2 + codex level-semantics)
+
 # US secondary unit designators that take a following id (Pub-28 C2, the range-taking subset).
 US_UNIT_DESIGNATORS: tuple[str, ...] = ("APT", "STE", "UNIT", "RM", "DEPT", "OFC", "TRLR", "LOT", "SPC", "SLIP", "PIER")
 # US level (floor) designators + the bare-ordinal id forms.
@@ -54,7 +57,10 @@ LEVEL_IDS: tuple[str, ...] = ("1", "2", "3", "4", "5", "10", "12", "3F", "B1")
 UNIT_IDS: tuple[str, ...] = ("100", "200", "4B", "12", "711", "305", "A", "17", "2C")
 BUILDING_IDS: tuple[str, ...] = ("A", "B", "C", "1", "2", "North", "West")
 
-# --- Realistic base addresses (street, number, city, region, postcode, country) ------------------
+# endregion
+
+# region Realistic base addresses (street, number, city, region, postcode, country)
+
 # Curated so the slice is self-contained + deterministic; a spread of US + EU orders.
 US_BASES: tuple[tuple[str, str, str, str, str], ...] = (
     ("Main St", "123", "Portland", "OR", "97214"),

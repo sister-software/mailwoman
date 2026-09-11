@@ -153,7 +153,9 @@ MAX_FIELD_CHARS = 64
 # field budget stopped bounding the rendered length, which is a code defect, not tail data.
 MAX_RENDERED_CHARS = 96
 
-# --- Normalization: the corpus-side subset of the Phase-3 steal list -----------------------------
+# endregion
+
+# region Normalization: the corpus-side subset of the Phase-3 steal list
 
 # Hyphen-equivalence class. Applied to the NUMBER field only (see the module docstring): U+30FC and
 # U+FF70 are prolonged-sound marks that belong inside katakana names, and folding them there would
@@ -268,7 +270,7 @@ def split_street(street: str) -> tuple[str, int | None]:
     return match.group(1), value
 
 
-# --- Row rendering -------------------------------------------------------------------------------
+# region Row rendering
 
 # The registers. Weights are renormalized over whatever is AVAILABLE for a row (a street with no
 # chōme cannot render `arabic_chome` or `compact_folded`), and the build report prints the counts
@@ -431,7 +433,9 @@ def choose_register(rng: random.Random, options: Sequence[str]) -> str:
     return rng.choices(options, weights=weights, k=1)[0]
 
 
-# --- Source reading ------------------------------------------------------------------------------
+# endregion
+
+# region Source reading
 
 
 def norm_key(text: str) -> str:
@@ -605,7 +609,9 @@ def water_fill(counts: dict[str, int], target: int) -> int:
     return low
 
 
-# --- Verification --------------------------------------------------------------------------------
+# endregion
+
+# region Verification
 
 
 def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
@@ -676,7 +682,9 @@ def coverage_stats(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-# --- Build ---------------------------------------------------------------------------------------
+# endregion
+
+# region Build
 
 
 def build(args: argparse.Namespace) -> dict[str, Any]:
@@ -685,7 +693,9 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     kenall = load_kenall_postcodes(Path(args.kenall))
     parquet = Path(args.parquet)
 
-    # --- Pass 1: exact eligible counts per prefecture + board pool (no rows retained). -----------
+    # endregion
+
+    # region Pass 1: exact eligible counts per prefecture + board pool (no rows retained).
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
     board_count = 0
@@ -724,7 +734,9 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 break
     print(f"pass 1: per-prefecture cap {cap:,}; quota total {sum(quotas.values()):,} of target {target:,}")
 
-    # --- Pass 2: exact selection, streamed. ------------------------------------------------------
+    # endregion
+
+    # region Pass 2: exact selection, streamed.
     selectors = {p: select_exact(pool_counts[p], quotas[p], rng) for p in pool_counts}
     board_selector = select_exact(board_count, args.board_rows, rng)
     selected: list[tuple[str, str, str, str, float, float]] = []
@@ -821,7 +833,9 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             f"BIO char coverage {splits[split]['coverage']['bio_char_coverage_significant']:.4f}"
         )
 
-    # --- Held-out board (same municipality rule as the probe; rendered across registers). --------
+    # endregion
+
+    # region Held-out board (same municipality rule as the probe; rendered across registers).
     board_path = out_dir / "jp-board.jsonl"
     board_records: list[dict[str, Any]] = []
     with board_path.open("w", encoding="utf-8") as handle:
@@ -867,7 +881,9 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 + "\n"
             )
 
-    # --- Sanity checks. Violations RAISE; a slice that fails one is not a slice. -------------------
+    # endregion
+
+    # region Sanity checks. Violations RAISE; a slice that fails one is not a slice.
     train_prefectures = {row[0] for row in train_source}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")
@@ -877,7 +893,9 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     if overlap:
         raise RuntimeError(f"board municipalities leak into train/val: {sorted(overlap)[:5]}")
 
-    # --- Char vocab (D2): sealed, rebuilt from the TRAIN split only, min_count=2. -----------------
+    # endregion
+
+    # region Char vocab (D2): sealed, rebuilt from the TRAIN split only, min_count=2.
     def train_raws() -> Iterator[str]:
         for path in sorted((out_dir / "train").glob("*.parquet")):
             table = pq.read_table(path, columns=["raw"])

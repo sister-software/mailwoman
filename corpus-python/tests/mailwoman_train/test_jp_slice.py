@@ -39,7 +39,7 @@ def spans_of(record: dict) -> list[tuple[str, str]]:
     ]
 
 
-# --- Normalization -------------------------------------------------------------------------------
+# region Normalizatio
 
 
 def test_halfwidth_kana_fold_composes_dakuten_and_shortens_the_string() -> None:
@@ -71,7 +71,7 @@ def test_name_normalization_leaves_itaiji_alone() -> None:
     assert normalize_name("渡辺") == "渡辺"
 
 
-# --- Numerals ------------------------------------------------------------------------------------
+# region Numerals
 
 
 @pytest.mark.parametrize(
@@ -96,7 +96,7 @@ def test_non_numeral_is_rejected_rather_than_guessed() -> None:
     assert kanji_to_int("崎枝") is None
 
 
-# --- Street split --------------------------------------------------------------------------------
+# region Street split
 
 
 def test_chome_splits_off_the_district() -> None:
@@ -117,7 +117,7 @@ def test_non_trailing_chome_is_left_whole() -> None:
     assert split_street("一丁目北") == ("一丁目北", None)
 
 
-# --- Rendering: the four registers, all from the same source row ---------------------------------
+# region Rendering: the four registers, all from the same source row
 
 URBAN = {"prefecture": "香川県", "municipality": "高松市", "district": "八島町", "chome": 2, "number": "3-16"}
 RURAL = {"prefecture": "沖縄県", "municipality": "石垣市", "district": "字崎枝", "chome": None, "number": "556-16"}
@@ -181,7 +181,7 @@ def test_rural_row_has_no_block_in_any_register() -> None:
     assert designator["raw"] == "沖縄県石垣市字崎枝556番16号"
 
 
-# --- Rendering: the modifiers --------------------------------------------------------------------
+# region Rendering: the modifiers
 
 
 def test_the_postal_mark_stays_outside_the_postcode_span() -> None:
@@ -209,7 +209,7 @@ def test_variant_hyphen_survives_into_the_rendered_number() -> None:
     assert spans_of(record)[-1] == ("house_number", "3ー16")
 
 
-# --- Register availability -----------------------------------------------------------------------
+# region Register availability
 
 
 def test_a_row_with_a_chome_and_a_clean_number_offers_every_register() -> None:
@@ -228,7 +228,7 @@ def test_a_number_we_cannot_reparse_stays_in_its_own_surface() -> None:
     assert available_registers(2, "362B-2") == ("native",)
 
 
-# --- Verification + coverage ---------------------------------------------------------------------
+# region Verification + coverage
 
 
 def test_verify_accepts_every_register() -> None:
@@ -304,7 +304,7 @@ def test_every_significant_character_carries_a_label() -> None:
     assert stats["per_label_chars"]["B-prefecture"] == len(records)
 
 
-# --- The KEN_ALL 〒 join --------------------------------------------------------------------------
+# region The KEN_ALL 〒 join
 
 KENALL_FIXTURE = "\n".join(
     [
@@ -346,7 +346,7 @@ def test_the_catch_all_literal_never_becomes_a_town(tmp_path) -> None:
     assert index.lookup("北海道", "札幌市中央区", "以下に掲載がない場合") == ("0600000", "municipality")
 
 
-# --- Sampling ------------------------------------------------------------------------------------
+# region Sampling
 
 
 def test_exact_selection_yields_exactly_the_quota() -> None:
@@ -364,7 +364,7 @@ def test_water_fill_caps_the_dominant_bucket() -> None:
     assert sum(min(cap + 1, n) for n in counts.values()) > 300_000  # and it is the LARGEST such cap
 
 
-# --- The kana municipality register (#2165) ------------------------------------------------------
+# region The kana municipality register (#2165)
 
 
 def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic() -> None:

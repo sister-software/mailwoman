@@ -120,7 +120,9 @@ def test_augment_row_region_only_expands_region_labeled():
     assert "District" in augmented["tokens"]
 
 
-# --- Region+postcode glue (#513) ---------------------------------------------------------------
+# endregion
+
+# region Region+postcode glue (#513)
 
 
 def _glue_row() -> dict:
@@ -238,7 +240,10 @@ def test_glued_raw_projects_split_labels_onto_pieces():
     assert bio == ["B-locality", "B-region", "B-postcode", "I-postcode"]
 
 
-# --- Char-offset span re-target (#519) ----------------------------------------------------------
+# endregion
+
+# region Char-offset span re-target (#519)
+
 # Every augmented COPY must carry spans consistent with ITS raw — the mutation-upstream hazard
 # this slice exists to close.
 
@@ -342,7 +347,9 @@ def test_row_span_triple_nonparallel_raises():
         row_span_triple({"raw": "x", "span_starts": [0], "span_ends": [1, 2], "span_tags": ["street"]})
 
 
-# --- Punct-drop augmentation (#1101, delimiter-free / whitespace-only) ---------------------------
+# endregion
+
+# region Punct-drop augmentation (#1101, delimiter-free / whitespace-only)
 
 
 def _punct_row() -> dict:
@@ -467,7 +474,10 @@ def test_punct_drop_fires_via_augment_row():
     assert any(r["raw"] == "123 Main St Portland OR 97214" for r in results[1:])
 
 
-# --- Raw splicing for expansions (PR #534 open question 3) ---------------------------------------
+# endregion
+
+# region Raw splicing for expansions (PR #534 open question 3)
+
 # The expansions must never rebuild raw via " ".join(tokens): the join destroys whitespace
 # geometry (newlines, double spaces) and re-quantizing spans to token boundaries absorbs
 # punctuation the v0.5.0 spans deliberately exclude. The canonical probe is a dotted P.O. Box

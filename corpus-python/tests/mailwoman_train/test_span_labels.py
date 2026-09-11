@@ -57,7 +57,10 @@ class FakeTokenizer:
         return list(self._pieces)
 
 
-# --- Fixtures: rows WITHOUT intra-span punctuation, in both label representations -----------
+# endregion
+
+# region Fixtures: rows WITHOUT intra-span punctuation, in both label representations
+
 # Each: (name, raw, tokens, labels, span_starts, span_ends, span_tags, piece_chunks).
 # Piece chunks deliberately split inside words (Pennsylv|ania, Républi|que, Ber|lin) to exercise
 # the B→I flip, and give separator commas their own piece to pin the "comma outside both spans"
@@ -131,7 +134,9 @@ def _fixture_sanity(raw, tokens, labels, span_starts, span_ends, span_tags):
         assert 0 <= start < end <= len(raw)
 
 
-# --- Check (a): label-stream bit-identity on punctuation-free rows ---------------------------
+# endregion
+
+# region Check (a): label-stream bit-identity on punctuation-free rows
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
@@ -152,7 +157,9 @@ def test_check_a_encode_row_bit_identical(name, raw, tokens, labels, starts, end
     assert via_spans == via_tokens, f"{name}: encode_row outputs diverged"
 
 
-# --- Check (b): anchor + gazetteer channel invariance ----------------------------------------
+# endregion
+
+# region Check (b): anchor + gazetteer channel invariance
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
@@ -186,7 +193,10 @@ def test_check_b_gazetteer_painting_fires_on_fixtures():
     assert feats[confs.index(1.0)] == [0.0, 1.0]  # locality_homograph bit
 
 
-# --- Check (c): the punctuation-covering stream the token path cannot produce ----------------
+# endregion
+
+# region Check (c): the punctuation-covering stream the token path cannot produce
+
 
 # "P.O. Box 19" — one po_box span over chars [0, 11) (the whole surface). Pieces give each
 # period its own piece: the token path's per-char array has O on the periods (the corpus
@@ -226,7 +236,9 @@ def test_check_c_through_encode_row():
     assert via_spans["input_ids"] == via_tokens["input_ids"]  # only the labels differ
 
 
-# --- Loud invariant enforcement --------------------------------------------------------------
+# endregion
+
+# region Loud invariant enforcement
 
 
 def test_span_arrays_length_mismatch_raises():

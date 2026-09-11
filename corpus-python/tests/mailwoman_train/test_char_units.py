@@ -29,7 +29,7 @@ from mailwoman_train.data_loader import iter_encoded
 from mailwoman_train.labels import IGNORE_INDEX, LABEL_TO_ID
 from mailwoman_train.tokenizer import char_label_array_from_spans, whitespace_spans
 
-# ---------------------------------------------------------------------------- encode_row_units
+# region encode_row_units
 
 
 def _vocab(text: str) -> dict[str, int]:
@@ -162,7 +162,9 @@ def test_unit_truncation_at_max_units() -> None:
     assert enc["attention_mask"] == [1, 1]
 
 
-# ---------------------------------------------------------------------------- loader char branch
+# endregion
+
+# region loader char branch
 
 SCHEMA = pa.schema(
     [

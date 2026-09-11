@@ -285,7 +285,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 f"{directory} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
             )
 
-    # --- Pass 1 over the register: eligible counts per region, the board pool, the key index. ---------------------
+    # --- Pass 1 over the register: eligible counts per region, the board pool, the key index.
     index = empty_key_index()
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
@@ -325,7 +325,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 break
     print(f"pass 1: per-region cap {cap:,}; quota total {sum(quotas.values()):,} of target {target:,}")
 
-    # --- Pass 2 over the permits: the alignment census, the centroid sums, the registry pool. ----------------------
+    # --- Pass 2 over the permits: the alignment census, the centroid sums, the registry pool.
     census_form: Counter[str] = Counter()
     census_category: dict[str, Counter[str]] = {}
     centroid_sums: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0])
@@ -374,7 +374,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         f"pass 2: permits aligned — {dict(census_form)} · registry pool {registry_pool:,} · held-out {registry_board_pool:,} · unaligned {unaligned_pool:,} · centroids {len(centroids)}"
     )
 
-    # --- Pass 3 over the register: exact selection, streamed. ----------------------------------------------------
+    # --- Pass 3 over the register: exact selection, streamed.
     selectors = {region: select_exact(pool_counts[region], quotas[region], rng) for region in pool_counts}
     board_selector = select_exact(board_count, args.board_rows, rng)
     selected: list[LabelRow] = []
@@ -420,7 +420,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         splits[split] = {"rows": written, "parts": part, "coverage": coverage_stats(stats_input)}
         print(f"{split}: {written:,} rows in {part} parts")
 
-    # --- The LABEL board: held-out 시군구, the coordinate half from the permit centroids. --------------------------
+    # --- The LABEL board: held-out 시군구, the coordinate half from the permit centroids.
     board_records: list[dict[str, Any]] = []
     board_without_centroid = 0
     with (out_dir / "kr-board.jsonl").open("w", encoding="utf-8") as handle:
@@ -464,7 +464,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     if overlap:
         raise RuntimeError(f"board 시군구 leak into train/val: {sorted(overlap)[:5]}")
 
-    # --- Pass 4 over the permits: exact selection of the registry rows, the registry board. ------------------------
+    # --- Pass 4 over the permits: exact selection of the registry rows, the registry board.
     registry_selector = select_exact(registry_pool, args.registry_rows, rng)
     registry_board_selector = select_exact(registry_board_pool + unaligned_pool, args.registry_board_rows, rng)
     registry_rows: list[dict[str, Any]] = []
@@ -539,7 +539,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             entry.pop("xy", None)
             handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    # --- Vocabularies: one per corpus, both sealed from their own train split. -----------------------------------
+    # --- Vocabularies: one per corpus, both sealed from their own train split.
     def raws(directory: Path) -> Iterator[str]:
         for path in sorted((directory / "train").glob("*.parquet")):
             yield from pq.read_table(path, columns=["raw"])["raw"].to_pylist()

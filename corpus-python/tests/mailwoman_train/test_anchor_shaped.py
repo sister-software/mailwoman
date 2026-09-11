@@ -23,7 +23,7 @@ def _piece(text: str, begin: int, end: int) -> PieceSpan:
     return PieceSpan(piece=text, piece_id=0, char_begin=begin, char_end=end)
 
 
-# ---- collect_matches: the shape detector (mirror of neural/postcode-repair.ts) ----
+# ---- collect_matches: the shape detector (mirror of neural/postcode-repair.ts)
 
 
 def test_collect_matches_detects_num5():
@@ -48,7 +48,7 @@ def test_collect_matches_house_number_shape():
     assert [(m.start, m.end) for m in ms] == [(0, 5)]
 
 
-# ---- the contrast that IS the fix: gold vs shaped on a house-number-that-looks-like-a-ZIP ----
+# ---- the contrast that IS the fix: gold vs shaped on a house-number-that-looks-like-a-ZIP
 
 RAW_H = "12345 Main St"
 TOKENS_H = ["12345", "Main", "St"]
@@ -81,7 +81,7 @@ def test_shaped_path_misses_non_lookup_shape():
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
 
 
-# ---- the GB key contract + the outward fallback (2026-08-05) ----
+# ---- the GB key contract + the outward fallback (2026-08-05)
 
 RAW_GB = "Buckingham Palace, London SW1A 2AA"
 # Pieces that split the unit across the space, the geometry a wrong paint extent shows up in.

@@ -196,7 +196,9 @@ def test_viterbi_respects_mask_length():
     assert len(decoded[1]) == 5
 
 
-# --- v0.5.0 thread C: top-k decode ------------------------------------------------------
+# endregion
+
+# region v0.5.0 thread C: top-k decode
 
 
 def test_top_k_decode_returns_argmax_as_first_path():

@@ -179,7 +179,10 @@ def main() -> None:
     kenall = load_kenall_postcodes(Path(args.kenall))
     print(f"KEN_ALL municipalities: {len(kenall):,}")
 
-    # --- Pass 1: per-prefecture reservoirs (train/val pool) + board reservoir. -----------------
+    # endregion
+
+    # region Pass 1: per-prefecture reservoirs (train/val pool) + board reservoir.
+
     per_pref_cap = 3 * ((args.train_rows + args.val_rows) // 47)
     pool: dict[str, list[dict]] = {}
     pool_seen: Counter[str] = Counter()
@@ -227,7 +230,10 @@ def main() -> None:
     print(f"prefectures in pool: {len(pool)}; board reservoir: {len(board_res):,} of {board_seen:,} seen")
     print(f"dropped: {dict(dropped)}")
 
-    # --- Round-robin draw to target, then split train/val (val = tail of the shuffled draw). ---
+    # endregion
+
+    # region Round-robin draw to target, then split train/val (val = tail of the shuffled draw).
+
     for res in pool.values():
         rng.shuffle(res)
     order = sorted(pool)
@@ -246,7 +252,10 @@ def main() -> None:
     rng.shuffle(draw)
     train_rows, val_rows = draw[: args.train_rows], draw[args.train_rows : target]
 
-    # --- Render + write. -----------------------------------------------------------------------
+    # endregion
+
+    # region Render + write.
+
     out_dir = Path(args.out_dir)
     kenall_hit = kenall_miss = 0
 
@@ -311,7 +320,10 @@ def main() -> None:
                 + "\n"
             )
 
-    # --- Char vocab (D2): sealed, from the TRAIN split only, min_count=2. ----------------------
+    # endregion
+
+    # region Char vocab (D2): sealed, from the TRAIN split only, min_count=2.
+
     train_table = pq.read_table(out_dir / "train" / "part-0000.parquet", columns=["raw"])
     vocab = build_char_vocab((r for r in train_table["raw"].to_pylist()), min_count=2)
     vocab_path = out_dir / "char-vocab-jp-v1.json"

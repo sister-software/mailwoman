@@ -254,7 +254,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     tag_set = frozenset(resolve_label_set(LABEL_SET_NAME).tags)
     parquet = Path(args.parquet)
 
-    # --- Pass 1: exact eligible counts per 縣市 + board pool + per-district centroid sums + the agency list. --------
+    # --- Pass 1: exact eligible counts per 縣市 + board pool + per-district centroid sums + the agency list.
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
     agencies: Counter[str] = Counter()
@@ -293,7 +293,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 break
     print(f"pass 1: per-region cap {cap:,}; quota total {sum(quotas.values()):,} of target {target:,}")
 
-    # --- Pass 2: exact selection, streamed. ------------------------------------------------------
+    # --- Pass 2: exact selection, streamed.
     selectors = {region: select_exact(pool_counts[region], quotas[region], rng) for region in pool_counts}
     board_selector = select_exact(board_count, args.board_rows, rng)
     selected: list[SourceRow] = []
@@ -348,7 +348,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         splits[split] = {"rows": written, "parts": part, "coverage": coverage_stats(stats_input)}
         print(f"{split}: {written:,} rows in {part} parts")
 
-    # --- Held-out board: every row carries its coordinate and its routing fields. -----------------
+    # --- Held-out board: every row carries its coordinate and its routing fields.
     board_records: list[dict[str, Any]] = []
     with (out_dir / "tw-board.jsonl").open("w", encoding="utf-8") as handle:
         for row in board:
@@ -377,7 +377,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 + "\n"
             )
 
-    # --- Sanity checks. Violations RAISE; a slice that fails one is not a slice. -------------------
+    # --- Sanity checks. Violations RAISE; a slice that fails one is not a slice.
     pool_units = {norm_key(f"{row[0]}|{row[1]}") for row in train_source} | {
         norm_key(f"{row[0]}|{row[1]}") for row in val_source
     }

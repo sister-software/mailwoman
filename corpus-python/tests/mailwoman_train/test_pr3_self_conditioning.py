@@ -70,7 +70,9 @@ def _stub_batch(bsz: int = 2, seq_len: int = 8) -> dict[str, torch.Tensor]:
     return {"input_ids": input_ids, "attention_mask": attention_mask}
 
 
-# --- labels: locale id map ------------------------------------------------------------
+# endregion
+
+# region labels: locale id map
 
 
 def test_locale_id_map():
@@ -83,7 +85,9 @@ def test_locale_id_map():
     assert LOCALE_TO_ID["US"] == 0 and LOCALE_TO_ID["FR"] == 1 and LOCALE_TO_ID["DE"] == 2
 
 
-# --- forward: shapes + finiteness -----------------------------------------------------
+# endregion
+
+# region forward: shapes + finiteness
 
 
 def test_forward_emits_locale_logits_and_bio_logits():
@@ -141,7 +145,9 @@ def test_all_ignored_locale_batch_does_not_nan():
     assert out.loss is not None and torch.isfinite(out.loss)
 
 
-# --- back-compat: conditioning OFF ----------------------------------------------------
+# endregion
+
+# region back-compat: conditioning OFF
 
 
 def test_conditioning_off_emits_no_locale_logits_and_ignores_locale_ids():
@@ -159,7 +165,9 @@ def test_conditioning_off_emits_no_locale_logits_and_ignores_locale_ids():
     assert out.logits.shape == (2, 8, NUM_LABELS)
 
 
-# --- save / load round-trip -----------------------------------------------------------
+# endregion
+
+# region save / load round-trip
 
 
 def test_save_load_roundtrip_preserves_locale_config(tmp_path):
@@ -191,7 +199,9 @@ def test_load_pre_pr3_card_back_compat(tmp_path):
     assert loaded.locale_head is None
 
 
-# --- the cross-pollution regression check metric ----------------------------------------------
+# endregion
+
+# region the cross-pollution regression check metric
 
 
 def test_cross_pollution_counts_city_start_as_postcode():
@@ -217,7 +227,9 @@ def test_cross_pollution_empty_when_no_city_tokens():
     assert _cross_pollution(preds, labels, None) == {}
 
 
-# --- pilot config loads with the expected scope ---------------------------------------
+# endregion
+
+# region pilot config loads with the expected scope
 
 
 def test_pilot_config_loads_and_matches_scope():
