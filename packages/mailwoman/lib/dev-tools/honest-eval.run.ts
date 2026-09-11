@@ -111,7 +111,7 @@ async function main() {
 	const US_HELD_REGIONS = ["VT", "WY", "ND"] // corpus defaultHoldouts() for US
 	const TRUST_FLOOR = 1000
 
-	// --- build the US held-out slice (leakage-free: never in training) ---
+	// Build the leakage-free US held-out slice.
 	const US_SLICE = `${TMP}/us-heldout.jsonl`
 	await writeLocalTextFile("", US_SLICE)
 

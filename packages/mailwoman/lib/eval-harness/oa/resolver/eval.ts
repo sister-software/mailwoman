@@ -274,7 +274,7 @@ export async function oaResolverEval(
 
 			recordInto(neuralInterpAgg, row.state, { ...ns, err: ipErr })
 
-			// --- coverage diagnostic (MAILWOMAN_DIAG_INTERP=1): split the miss cause. ---
+			// In diagnostic mode, separate interpolation misses by cause.
 			// The interp tier only runs in resolveTree when the exact tier did NOT stamp. So:
 			//   precond met (street+house_number+postcode parsed) + exact miss + interp null
 			//   ⟹ a genuine StreetInterpolator.find() miss (database/normalization gap, NOT parse, NOT check).

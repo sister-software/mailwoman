@@ -257,7 +257,7 @@ const summary = {
 	beyondReachCount: beyondReach.length,
 }
 
-// --- MDX report (folds into the Docusaurus evals tree; #1104-adjacent) -------
+// Render the MDX report that Docusaurus includes in the evaluation tree.
 // MDX-safe: every dynamic cell is backtick-wrapped (angle brackets / braces stay literal in a code
 // span) with pipes + backticks escaped, so an address like "U12/345 <x>" can't break the table or trip
 // the MDX angle-lint. Trades are marked in markdown (**N (+Δ)**), not color.

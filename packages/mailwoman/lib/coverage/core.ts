@@ -345,7 +345,7 @@ export async function buildCoverageTiles(
 		`${domainCells.toLocaleString()} cells · ${withPoints.toLocaleString()} with points · ${streetOnly.toLocaleString()} street-only`
 	)
 
-	// --- Stream features to NDJSON ---
+	// Stream coverage features to NDJSON.
 	await makeDirectories(dirname(opts.out))
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
 	const sink = openWriteStream(ndjsonPath)
@@ -397,7 +397,7 @@ export async function buildCoverageTiles(
 		)
 	}
 
-	// --- Global "where do we need data" holes layer (civilization − coverage) ---
+	// Build the global civilization-minus-coverage holes layer.
 	// The map's job worldwide: make it obvious where human civilization is AND whether we cover it. A
 	// SALIENT place we don't cover is a gray hole = work to do. We model it as fog = salience·(1−cov):
 	//   • salience ∈ [0,1] — WOF settlement places weighted by population/importance (a 1-ring halo), so
@@ -485,7 +485,7 @@ export async function buildCoverageTiles(
 		sink.end((err?: Error | null) => (err ? reject(err) : resolve()))
 	})
 
-	// --- tippecanoe → PMTiles ---
+	// Convert the feature stream from Tippecanoe output to PMTiles.
 	onProgress("tile", `tiling ${featureCount.toLocaleString()} features → pmtiles…`)
 
 	const tipArgs = [

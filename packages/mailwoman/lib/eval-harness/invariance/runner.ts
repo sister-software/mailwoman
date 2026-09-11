@@ -433,7 +433,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		}
 	}
 
-	// --- summary + report -------------------------------------------------------------------------
+	// Summarize and report the invariance outcomes.
 	const counts = { invariant: 0, degraded: 0, lost: 0, gained: 0 }
 	const newCounts = { degraded: 0, lost: 0, gained: 0 }
 

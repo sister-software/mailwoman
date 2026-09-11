@@ -294,7 +294,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
 
-	// --- Phase 1: verify all local files exist ---
+	// Verify every required local artifact before uploading.
 	await verifyRequiredFiles(args)
 
 	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
@@ -345,7 +345,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// the model card declares fisher_artifact). Versioned basenames, staged flat like the postcode bins.
 	const fisherArtifacts = await stageBinaryList(args.fisher, "Fisher artifact")
 
-	// --- Phase 2: upload to bucket ---
+	// Upload the verified artifacts to the bucket.
 	const remoteBase = `${args.locale}/${args.version}`
 
 	for (const f of requiredFilesFor(args)) {
@@ -420,7 +420,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	uploadFlatByBasename(fisherArtifacts, remoteBase)
 
-	// --- Phase 3: verify each artifact is reachable via the resolve URL ---
+	// Verify every uploaded artifact through its resolve URL.
 	const required = requiredFilesFor(args)
 
 	console.error(`Verifying ${required.length} artifacts via HTTPS...`)
@@ -454,7 +454,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// Fisher artifacts (#1354) — must be reachable so publish.yml's card-derived preflight passes.
 	await verifyFlatByBasename(fisherArtifacts, remoteBase)
 
-	// --- Phase 4: update releases.json ---
+	// Update releases.json with the published artifact set.
 	if (args.charVocab) {
 		console.error(`\n✓ ${args.version} (${args.locale}) staged as a character-path family — no releases.json entry.`)
 

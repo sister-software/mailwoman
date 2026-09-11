@@ -74,7 +74,7 @@ const DB = resolvePath(values["db"] || dataRootPath("wof", "admin-global-priorit
  */
 const N = Number(values["n"] || "200")
 
-// --- sample FR communes (collision + unique strata) ----------------------------------------------
+// Sample French communes from collision and unique strata.
 using db = new DatabaseClient<WOFDatabase>(DB, { readOnly: true })
 
 interface Commune {
@@ -109,7 +109,7 @@ const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - (
 const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
 const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 
-// --- resolver (production path) ------------------------------------------------------------------
+// Construct the resolver through its production path.
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 using backend = new WOFSQLitePlaceLookup({ databasePath: DB })
 const resolver = createWOFResolver(backend)
@@ -148,7 +148,7 @@ async function resolveState(c: Commune, state: State): Promise<{ km: number; res
 		: { km: haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, c.lat, c.lon), resolved: false }
 }
 
-// --- run -----------------------------------------------------------------------------------------
+// Run the self-validation sample through the resolver.
 interface StratumAgg {
 	dropped: number[]
 	merged: number[]
@@ -207,7 +207,7 @@ console.error(`[fr-split] collision=${collision.length} unique=${unique.length} 
 const collAgg = await runStratum("collision", collision)
 const uniqAgg = await runStratum("unique", unique)
 
-// --- report --------------------------------------------------------------------------------------
+// Report the sampled resolver outcomes.
 const row = (label: string, a: StratumAgg): string => {
 	const dM = mean(a.dropped) ?? Number.NaN
 	const mM = mean(a.merged) ?? Number.NaN
