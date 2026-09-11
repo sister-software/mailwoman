@@ -267,7 +267,7 @@ async function main(): Promise<void> {
 	const alpha = Number(values["alpha"] || "0.9") // target coverage level
 	const seed = Number(values["seed"] || "20260614")
 
-	// --- load holdout ---
+	// Load the held-out rows before running the calibration cascade.
 	const rows: HoldoutRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath))
 
 	console.error(`[conformal-calibrate] ${rows.length} holdout rows from ${holdoutPath}`)
@@ -283,7 +283,7 @@ async function main(): Promise<void> {
 		interpolationDB,
 	})
 
-	// --- run the cascade ---
+	// Run the resolver cascade over every held-out row.
 	interface Row {
 		errorM: number
 		claimedRadiusM: number
@@ -338,22 +338,22 @@ async function main(): Promise<void> {
 		process.exit(1)
 	}
 
-	// --- split into calibration / test (deterministic) ---
+	// Deterministically split resolved rows into calibration and test sets.
 	const shuffled = seededShuffle(resolved, seed)
 	const nCal = Math.floor(shuffled.length * calFrac)
 	const calRows = shuffled.slice(0, nCal)
 	const testRows = shuffled.slice(nCal)
 
-	// --- nonconformity scores on calibration split ---
+	// Compute calibration nonconformity scores.
 	const calScores = calRows.map((r) => r.errorM / r.claimedRadiusM)
 	const Q = conformalThreshold(calScores, alpha)
 
-	// --- empirical coverage on test split ---
+	// Measure empirical coverage on the held-out test set.
 	const testScores = testRows.map((r) => r.errorM / r.claimedRadiusM)
 	const covered = testScores.filter((s) => s <= Q).length
 	const coverage = covered / Math.max(1, testScores.length)
 
-	// --- per-tier breakdown ---
+	// Break the report down by resolution tier.
 	type Tier = "address_point" | "interpolated"
 	const tiers: Tier[] = ["address_point", "interpolated"]
 	const byTier: Record<Tier, Row[]> = { address_point: [], interpolated: [] }
@@ -388,7 +388,7 @@ async function main(): Promise<void> {
 	const uncalCovered = resolved.filter((r) => r.errorM <= r.claimedRadiusM).length
 	const uncalCoverage = uncalCovered / Math.max(1, resolved.length)
 
-	// --- per-tier conformal thresholds ---
+	// Compute conformal thresholds for each resolution tier.
 	// Split each tier's rows independently: shuffled order is fixed, just filter by tier.
 	// "Too few rows" warning fires when rank > n_cal (conformal_threshold returns ∞).
 	const tierConformal = tiers.map((t) => {
@@ -420,7 +420,7 @@ async function main(): Promise<void> {
 		}
 	})
 
-	// --- print report ---
+	// Print the complete calibration report.
 	const hr = "─".repeat(72)
 
 	console.log("")
@@ -480,7 +480,7 @@ async function main(): Promise<void> {
 	console.log("")
 	console.log(hr)
 
-	// --- 3-line calibration summary ---
+	// Print the concise three-line calibration summary.
 	// Characterise the dominant tier (address_point here; interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
