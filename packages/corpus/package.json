@@ -228,9 +228,9 @@
 			"default": "./out/tools/gb-title-case.js"
 		},
 		"./tools/golden-relabel-street": {
-			"types": "./out/tools/golden/relabel-street.d.ts",
-			"node": "./lib/tools/golden/relabel-street.ts",
-			"default": "./out/tools/golden/relabel-street.js"
+			"types": "./out/tools/golden/relabel-street/index.d.ts",
+			"node": "./lib/tools/golden/relabel-street/index.ts",
+			"default": "./out/tools/golden/relabel-street/index.js"
 		},
 		"./tools/overture-subvenue": {
 			"types": "./out/tools/overture-subvenue.d.ts",
