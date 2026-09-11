@@ -22,20 +22,22 @@ test.describe("Demo — structural render", () => {
 		expect(mapBox?.width ?? 0).toBeGreaterThan(0)
 		expect(mapBox?.height ?? 0).toBeGreaterThan(0)
 
-		// The About explainer is a control in the map chrome, and its copy renders in the sheet that control opens —
-		// `MapControlButton` carries its name as `aria-label` on an icon button, so the name is a label and not text.
-		// The in-browser claim marks the demo shell, and it is what the sheet has to carry.
-		await expect(page.getByLabel("About this geocoder")).toBeVisible()
-		await page.getByLabel("About this geocoder").click()
-		await expect(page.getByText(/runs entirely in your browser/i)).toBeVisible()
-
 		// Address form: label and field. The pill carries no submit control — a `type="search"` field submits on Enter.
-		await expect(page.getByLabel("Address")).toBeVisible()
+		// `exact` is required: `getByLabel` matches by substring, and the chrome names the search wrapper "Search
+		// addresses" and the chip row "Example addresses", so a bare "Address" resolves to three elements.
+		await expect(page.getByLabel("Address", { exact: true })).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toBeVisible()
 
 		// Example chips row.
 		await expect(page.getByText("Try:")).toBeVisible()
 		await expect(page.getByRole("button", { name: "Space Needle" })).toBeVisible()
+
+		// The About explainer is a control in the map chrome, and its copy renders in the sheet that control opens —
+		// `MapControlButton` carries its name as `aria-label` on an icon button, so the name is a label and not text.
+		// Asserted LAST: the sheet it opens overlays the chrome the assertions above read.
+		await expect(page.getByLabel("About this geocoder")).toBeVisible()
+		await page.getByLabel("About this geocoder").click()
+		await expect(page.getByText(/runs entirely in your browser/i)).toBeVisible()
 
 		demo.console.assertNoFailEvents()
 	})
