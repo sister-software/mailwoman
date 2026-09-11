@@ -8,7 +8,7 @@
  *   code makes a blocking filesystem call, and the `debt` check in `packages/repo-health` counts any that appears.
  */
 
-import type { Dirent, Stats } from "node:fs"
+import type { Dirent } from "node:fs"
 import { readFile, readdir } from "node:fs/promises"
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
