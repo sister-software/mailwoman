@@ -55,10 +55,11 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",
+		"@typescript/native": "npm:typescript@^7.0.2",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
 		"spliterator": "^7.3.0",
-		"typescript": "^6.0.3",
+		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
