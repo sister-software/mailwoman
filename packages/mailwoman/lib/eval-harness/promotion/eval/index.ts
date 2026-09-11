@@ -239,7 +239,7 @@ async function runLoreGuards(env: {
 	card: ModelCard
 }): Promise<number | null> {
 	const { WC, WC_MODEL, WC8_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
-	// --- lore guard: tokenizer comparability -----------------------------------
+	// Verify that the candidate and reference tokenizer versions are comparable.
 	const CARD_TOK = card.training.tokenizer_version
 
 	// Skipped for --weights-cache: loadFromWeights pairs the package's own tokenizer + card internally,
@@ -252,7 +252,7 @@ async function runLoreGuards(env: {
 		return 2
 	}
 
-	// --- lore guard: recompile-before-eval --------------------------------------
+	// Refuse to evaluate artifacts older than their source inputs.
 	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. Same shape in-process: the
 	// same two directory levels, the same `.ts` filter, the same reference mtime (`packages/core/out` itself),
 	// and the same short-circuit on the FIRST hit — the `-quit` mattered, since `packages/core/` is large.
@@ -287,7 +287,7 @@ async function runLoreGuards(env: {
 		}
 	}
 
-	// --- lore guard: artifact provenance ----------------------------------------
+	// Record the exact artifact provenance used for this evaluation.
 	// A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first eval run
 	// false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
 	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
@@ -844,7 +844,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		console.log(`✓ fr.bare_street_intact PASS (floor ${bareStreetFloor}%)`)
 	}
 
-	// --- mask-regression check (#718) — the "second lock" ------------------------
+	// Run the mask-regression check that forms the second promotion lock.
 	// Re-runs the SHIP artifact mask-off vs the declared conventions mode and FAILS if any tag's UNFOLDED
 	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta check (it catches
 	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
@@ -891,7 +891,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		console.log("⚠ mask-regression check SKIPPED — spec declares no requires_conventions (no mask in the ship config)")
 	}
 
-	// --- collect + verify --------------------------------------------------------
+	// Collect verdicts and verify both promotion locks.
 	// Folds BOTH locks: the floor verdict AND the mask-regression check above. Either miss fails the eval.
 	let VERDICT_STATUS: number
 
@@ -918,7 +918,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		return 1
 	}
 
-	// --- ledger (#885) — the update is automatic, not discipline ------------------
+	// Update the evaluation ledger automatically after a passing verdict.
 	// The ledger froze at v4.4.0 because appending relied on a human remembering. On a PASS, print
 	// the exact ledger-append command with everything pre-filled; the release-prep flow runs it with
 	// the real npm version. (Not auto-executed here: the runner runs on candidates that may never
