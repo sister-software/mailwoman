@@ -25,7 +25,7 @@
  *   - **Locality-level** (`tiger_places`): up to three variants per place: locality-only,
  *       locality-with-region, locality-with-region-country (mirrors `wof-admin`'s fan-out for
  *       consistency).
- *   - `packages/corpus/lib/codex/us-fips-state.ts` — the FIPS → `{abbreviation, name}` lookup table
+ *   - `packages/corpus/lib/us/fips-state.ts` — the FIPS → `{abbreviation, name}` lookup table
  *       (originally `tiger/state.ts`, AGPL-3.0 → AGPL-3.0). The full isp-nexus TIGER module ships a
  *       TypeORM-backed service layer; mailwoman only needs the lookup data so we don't carry the
  *       service layer over.

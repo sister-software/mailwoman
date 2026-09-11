@@ -207,11 +207,6 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
-		"./codex/*": {
-			"types": "./out/codex/*.d.ts",
-			"node": "./lib/codex/*.ts",
-			"default": "./out/codex/*.js"
-		},
 		"./utils/parquet": {
 			"types": "./out/utils/parquet.d.ts",
 			"node": "./lib/utils/parquet.ts",

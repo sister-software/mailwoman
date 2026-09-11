@@ -35,6 +35,7 @@ const GROUP_THRESHOLD = 2
 
 const PREFIXED = /^(?<prefix>[a-z0-9]+)-.+$/u
 const SOURCE_FILE = /\.tsx?$/u
+const TEST_FILE = /\.(?:test|spec)\.tsx?$/u
 
 export interface PrefixMember {
 	/**
@@ -58,7 +59,7 @@ export interface PrefixGroup {
 }
 
 function isSource(file: string): boolean {
-	return SOURCE_FILE.test(file) && !file.endsWith(".d.ts") && !file.includes("/out/")
+	return SOURCE_FILE.test(file) && !TEST_FILE.test(file) && !file.endsWith(".d.ts") && !file.includes("/out/")
 }
 
 /**

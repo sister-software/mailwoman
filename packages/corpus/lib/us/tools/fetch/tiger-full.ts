@@ -188,7 +188,7 @@ export async function fetchTigerFull(
 	for (const stateFips of sortedStates) {
 		const countyFiles = stateFiles.get(stateFips) ?? []
 
-		// --- Skip entire state if requested ------------------------------------------
+		// Respect an explicit request to skip this state before scheduling its counties.
 		if (skipStateFips.includes(stateFips)) {
 			report?.(`--- State ${stateFips} — SKIPPED (in --skip-state-fips, ${countyFiles.length} counties)`)
 			totalSkippedState += countyFiles.length
@@ -237,7 +237,7 @@ export async function fetchTigerFull(
 
 		if (!pending.length) continue
 
-		// --- Download pending files with bounded parallelism + rate-limit spacing ---
+		// Download pending counties with bounded parallelism and rate-limit spacing.
 		const results: CountyResult[] = Array.from({ length: pending.length })
 		let cursor = 0
 

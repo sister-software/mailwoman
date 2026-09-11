@@ -83,7 +83,7 @@ test("normalizeNameKey: both ':' and '_' become '-' for source_id safety", () =>
 	expect(normalizeNameKey("plain")).toBe("plain")
 })
 
-// --- buildAncestryIndex: pure Map<id, WOFRecord> → Map<id, ancestors[]> ---
+// These cases cover buildAncestryIndex's pure record-to-ancestor-map transform.
 
 function rec(id: number, parent_id: number | null, name = `n${id}`): WOFRecord {
 	return { id, parent_id, name, placetype: "locality", country: "US", nameVariants: new Map() }

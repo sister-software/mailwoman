@@ -143,7 +143,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 			drop: opts.skipLines,
 		})
 
-	// --- Pass 1: read header + sample rows for type inference ---
+	// Read the header and sample rows before inferring the SQLite schema.
 	process.stderr.write(`Reading ${opts.inputPath} for schema inference...\n`)
 
 	let headerRow: string[] | null = null
@@ -167,7 +167,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		throw new Error("No header line found in CSV")
 	}
 
-	// --- Determine column names ---
+	// Normalize and deduplicate the input column names.
 	let rawHeaders: string[]
 
 	if (opts.hasHeader && headerRow) {
@@ -180,7 +180,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	const colNames = dedupColumns(rawHeaders.map(normalizeColumnName))
 
-	// --- Infer column types ---
+	// Infer each column's SQLite type from its sample values.
 	const columns: ColumnInfo[] = colNames.map((name, i) => {
 		const samples = sampleRows.map((row) => {
 			const raw = row[i] ?? ""
@@ -194,7 +194,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		return info
 	})
 
-	// --- Generate SQL ---
+	// Generate the table definition and insert statement from the inferred schema.
 	const colDefs = columns.map((c) => `"${c.name}" ${c.type}`).join(",\n  ")
 	// Raw DDL by design: the column set + types are INFERRED from the CSV at runtime (colDefs above),
 	// so a Kysely builder loop would just wrap the same dynamic strings with ceremony and no type safety.
@@ -211,7 +211,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		return
 	}
 
-	// --- Create database + import ---
+	// Create the database, then import every input row.
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await makeDirectories(dirname(opts.outputPath))
 
