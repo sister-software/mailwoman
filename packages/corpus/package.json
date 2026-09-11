@@ -248,9 +248,9 @@
 			"default": "./out/tools/sub/venue/promotions.js"
 		},
 		"./tools/fetch/download": {
-			"types": "./out/tools/fetch/download.d.ts",
-			"node": "./lib/tools/fetch/download.ts",
-			"default": "./out/tools/fetch/download.js"
+			"types": "./out/tools/fetch/download/index.d.ts",
+			"node": "./lib/tools/fetch/download/index.ts",
+			"default": "./out/tools/fetch/download/index.js"
 		},
 		"./tools/fetch/ppd": {
 			"types": "./out/tools/fetch/ppd.d.ts",
