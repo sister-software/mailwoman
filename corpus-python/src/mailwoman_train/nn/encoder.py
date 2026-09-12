@@ -970,7 +970,7 @@ class MailwomanCoarseEncoder(nn.Module):
     ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
         """The supervised loss, its auxiliary terms, and the span scores.
 
-        Four terms can contribute, each gated independently: token CE (with the optional CRF NLL
+        Four terms can contribute, each switched on by its own config flag: token CE (with the optional CRF NLL
         beside it), the affix head's own CE, the locale auxiliary CE, the span-boundary BCE, and the
         semi-Markov span NLL. Every one of them is summed into the same scalar and none of them is
         visible in `logits`, so a term that stops firing changes what the model learns and nothing
@@ -1069,7 +1069,7 @@ class MailwomanCoarseEncoder(nn.Module):
         locale_ids: torch.Tensor | None,
         locale_logits: torch.Tensor | None,
     ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
-        """The three auxiliary terms, each gated on its own flag and weight.
+        """The three auxiliary terms, each switched on by its own flag and scaled by its own weight.
 
         Each shapes the shared encoder without appearing in the inference graph: the locale CE
         supervises the pooled representation the FiLM conditioning reads, the span-boundary BCE

@@ -22,7 +22,7 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-const AUTHORED = repoRootPath("packages", "codex", "lib", "postcode-shapes.json")
+const AUTHORED = repoRootPath("packages", "codex", "lib", "postcode", "shapes.json")
 const VENDORED = repoRootPath("corpus-python", "src", "mailwoman_train", "features", "postcode-shapes.json")
 
 describe("the postcode shape record", () => {

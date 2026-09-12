@@ -117,7 +117,7 @@ def verify_staged(version: str) -> None:
     secrets=[r2_secret],
     timeout=3600,
 )
-def sync(version: str = ""):
+def sync(version: str = "") -> None:
     """Stage one named version from `launch/corpora.py` and verify what it promised to leave behind."""
     entry = CORPUS_VERSIONS.get(version)
     if entry is None:
@@ -151,7 +151,7 @@ def sync_assets(
     tokenizer: str = "",
     code: bool = True,
     extras: str = "",
-):
+) -> None:
     """Pull named corpus versions, a tokenizer, the training code and arbitrary extra files from R2.
 
     Layout contract, matching what `mailwoman corpus upload` writes:

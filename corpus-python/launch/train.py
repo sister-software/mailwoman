@@ -84,7 +84,7 @@ def _train_gpu(
     trackio: bool = False,
     trackio_space: str = "",
     corpus_receipt_token: str = "",
-):
+) -> None:
     """Run the CE-only classifier training on an A100.
 
     Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
@@ -217,7 +217,7 @@ def main(
     resume: str = "auto",
     trackio: bool = False,
     trackio_space: str = "",
-):
+) -> None:
     """
     Run the mailwoman training pipeline on Modal.
 

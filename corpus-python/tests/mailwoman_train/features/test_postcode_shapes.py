@@ -7,7 +7,7 @@ the trainer painted one fewer shape than inference with nothing failing. A textu
 added after the first drift and found the second, which is better than a comment and still after
 the fact.
 
-Now `@mailwoman/codex/postcode-shapes.json` is the authored record and the copy beside
+Now `packages/codex/lib/postcode/shapes.json` is the authored record and the copy beside
 `postcode_shapes.py` is byte-identical to it. There are still two files, because a Modal container
 receives only `corpus-python/src` and cannot read the repository's packages — but only one of them
 is written by hand, and the check below is `==` on bytes rather than a regex over source text.
@@ -34,7 +34,7 @@ from mailwoman_train.features.postcode_shapes import (
 )
 from tests import paths
 
-CODEX_RECORD = paths.REPO_ROOT / "packages" / "codex" / "lib" / "postcode-shapes.json"
+CODEX_RECORD = paths.REPO_ROOT / "packages" / "codex" / "lib" / "postcode" / "shapes.json"
 
 
 def test_the_vendored_record_is_byte_identical_to_the_authored_one() -> None:

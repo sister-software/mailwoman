@@ -21,7 +21,7 @@
 import type { ComponentTag } from "#component"
 import { CODE_POSTAL_PATTERN } from "#fr/code-postal"
 import { UK_POSTCODE_PATTERN } from "#gb/postcode/index"
-import type { SystemCode } from "#postcode-systems"
+import type { SystemCode } from "#postcode/systems"
 
 export interface AddressSystemConventions {
 	/**

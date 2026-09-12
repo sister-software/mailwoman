@@ -1,6 +1,6 @@
 """Task #25 (SP vocab-pruning probe) — the artifact surgery pair.
 
-Given the fired-count measurement (measure_vocab_utilization.py) plus the eval-surface fired set,
+Given the fired-count measurement (`utilization.py` beside this file) plus the eval-surface fired set,
 build the pruned tokenizer.model + pruned int8 model.onnx per the pre-registered keep rule
 (docs/superpowers/plans/2026-07-31-sp-vocab-pruning-preregistration.md):
 
@@ -16,7 +16,7 @@ by the old→new id map with scale/zero-point untouched — kept rows stay byte-
 what makes bar B2 (logit bit-parity) provable rather than approximate. Never prune-then-requantize.
 
 Usage:
-    python -m mailwoman_train.tokenizer.vocab_prune \
+    python -m mailwoman_train.tokenizer.vocab.prune \
         --tokenizer neural-weights-en-us/tokenizer.model \
         --onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v401-base-step-060000-int8.onnx \
         --train-counts $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/utilization-v0150-venue.npz \

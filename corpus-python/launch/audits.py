@@ -13,14 +13,19 @@ Pull a receipt with `modal volume get mailwoman-training /audits/<name>.json <lo
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .app import VOL_MOUNT, app, training_image, vol
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 #: Where a committed receipt lands. Named once: a caller quoting a different directory writes a
 #: receipt the next `modal volume get` cannot find.
 AUDITS = f"{VOL_MOUNT}/audits"
 
 
-def _config_path(config_name: str):
+def _config_path(config_name: str) -> Path:
     """The volume's copy of a recipe, or a raise naming the path that is not there."""
     from pathlib import Path
 
@@ -36,7 +41,7 @@ def _config_path(config_name: str):
     timeout=7200,
     memory=16384,
 )
-def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml", window: int = 100000):
+def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml", window: int = 100000) -> None:
     """Full-epoch source/country mixture audit against the volume corpus.
 
     Runs the loader over one row-limited epoch exactly as the trainer would sample it (seed =
@@ -69,7 +74,7 @@ def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml
     timeout=7200,
     memory=16384,
 )
-def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0):
+def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0) -> None:
     """Count what a row's OPENING token teaches, at the draw level and again at the emitted level.
 
     Settles the ratio a bare-postcode arm rests on: how much of the mixture teaches "a leading digit
@@ -107,7 +112,7 @@ def audit_suffix_feed(
     relabel_lexicon: str = "/data/gazetteer/affix-relabel-lexicon-v2.json",
     rows: int = 250000,
     seed: int = 1569,
-):
+) -> None:
     """Terminal-only carrier audit over the volume feed.
 
     Classification always uses the v2 lexicon (it defines the name-prone classes); the RELABEL

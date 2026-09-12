@@ -18,7 +18,7 @@ from .splices import SPLICES, TOKENIZERS
     volumes={VOL_MOUNT: vol},
     timeout=1200,
 )
-def mean_init(splice: str = ""):
+def mean_init(splice: str = "") -> None:
     """Expand one named splice's checkpoint onto its wider tokenizer, and commit the result.
 
     Mean-init is FVT: each new piece's embedding row starts as the mean of the rows its old-tokenizer

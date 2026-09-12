@@ -27,7 +27,7 @@ def export_onnx(
     step: str = "",
     tokenizer_path: str = "",
     model_dir: str = "",
-):
+) -> None:
     """Export a checkpoint to ONNX.
 
     Env-var fallbacks (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP /
@@ -99,7 +99,7 @@ def export_onnx(
 def quantize_onnx(
     fp32_path: str = "",
     int8_path: str = "",
-):
+) -> None:
     """Int8-quantize an fp32 ONNX on the volume, in the training image."""
     import hashlib
     import sys
@@ -140,7 +140,7 @@ def quantize_onnx(
     secrets=[r2_secret],
     timeout=1800,
 )
-def push_artifact_r2(volume_path: str, r2_subpath: str):
+def push_artifact_r2(volume_path: str, r2_subpath: str) -> None:
     """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
 
     This copies `<volume_path>` to `:s3:mailwoman-assets/<r2_subpath>`; pull it down locally with

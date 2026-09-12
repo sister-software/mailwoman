@@ -12,6 +12,8 @@ without a second GPU spend.
 
 from __future__ import annotations
 
+from typing import Any
+
 from .app import BUCKET, VOL_MOUNT, app, r2_secret, training_image, vol
 
 
@@ -26,7 +28,7 @@ def diagnose_suffix_plasticity(
     learning_rate: float = 1.0e-5,
     max_steps: int = 2000,
     name: str = "ewc-off-lr1e5-2k",
-):
+) -> None:
     """Non-candidate #1569 plasticity probe: v4.3.1 with EWC disabled.
 
     This is diagnostic evidence only, never a third promotion attempt. It holds the corrected corpus,
@@ -80,7 +82,7 @@ def eval_de(
     val_path: str = "/data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet",
     tokenizer_path: str = "/data/models/tokenizer/v0.6.0-a0/tokenizer.model",
     max_rows: int = 4000,
-):
+) -> None:
     """DE-locality readout for the anchor pilot (#239/#240): per-tag PARSER F1 on the German val for
     one checkpoint. The German collapse shows as a low locality/postcode F1 (with street/house# up);
     the anchor fix as a recovered locality. ``anchor_lookup`` set → feed the real anchor;
@@ -137,7 +139,7 @@ def eval_de(
     labels = torch.cat(all_labels)
     m = token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
 
-    def g(t):
+    def g(t: str) -> float:
         return m.get(f"f1_tag.{t}", float("nan"))
 
     mode = "anchor-OFF" if (anchor_off or not lookup) else "anchor-ON "
@@ -154,7 +156,7 @@ def eval_de(
     secrets=[r2_secret],
     timeout=1800,
 )
-def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: bool = False, case: str = "asis"):
+def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: bool = False, case: str = "asis") -> None:
     """P-A VERDICT (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A). The street_type feature ON/OFF contrast on
     the SAME retrained checkpoint — the clean, fully-controlled read of "does street-type INPUT evidence
     improve street<->locality discrimination." For each ban-fragments-fr row we build the FULL feature
@@ -203,7 +205,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     def norm(s: str) -> str:
         return " ".join(s.lower().split())
 
-    def predicted_street(raw: str, feats: dict, zero_street: bool) -> str:
+    def predicted_street(raw: str, feats: dict[str, Any], zero_street: bool) -> str:
         pieces = tok.encode_with_spans(raw)
         n = len(pieces)
         kw = dict(
@@ -255,7 +257,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
         return norm(" ".join(out))
 
     rows = [json.loads(ln) for ln in open(fixture, encoding="utf-8") if ln.strip()]
-    by = {}  # klass -> [on_correct, off_correct, n]
+    by: dict[str, list[int]] = {}  # klass -> [on_correct, off_correct, n]
     for r in rows:
         raw = r["input"]
         gs = r.get("expect", {}).get("street")
@@ -315,7 +317,7 @@ def grade_evidence_bundle(
     case: str = "asis",
     heal: bool = False,
     fixture: str = "ban-fragments-fr.jsonl",
-):
+) -> None:
     """v3.16.0 VERDICT — the bundle ON/OFF contrast on the SAME checkpoint. ON = all channels as
     computed (anchor/gazetteer/country/street_type/locality_surface); OFF = the two BUNDLE channels
     zeroed (the ablation column — pre-registered leg 3 compares it to v385's P0 fixture numbers).
@@ -371,7 +373,7 @@ def grade_evidence_bundle(
     def norm(s: str) -> str:
         return " ".join(s.lower().split())
 
-    def predicted_street(raw: str, feats: dict, zero_bundle: bool) -> str:
+    def predicted_street(raw: str, feats: dict[str, Any], zero_bundle: bool) -> str:
         pieces = tok.encode_with_spans(raw)
         n = len(pieces)
         kw = dict(
@@ -432,7 +434,7 @@ def grade_evidence_bundle(
         return norm(" ".join(out))
 
     rows = [json.loads(ln) for ln in open(fixture, encoding="utf-8") if ln.strip()]
-    by = {}
+    by: dict[str, list[int]] = {}
     for r in rows:
         raw = r["input"]
         # Case variant (`case`): lower = production passthrough for uncapitalized users; upper = raw

@@ -22,6 +22,7 @@ import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
 import { prefixDirectoriesCheck } from "#checks/prefix-directories"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
+import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
 import { stylesheetContractCheck } from "#checks/stylesheet-contract"
 import { testContractCheck } from "#checks/test-contract"
@@ -44,6 +45,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	moduleCohesionCheck,
 	privateNameShadowsCheck,
 	prefixDirectoriesCheck,
+	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
 	stylesheetContractCheck,

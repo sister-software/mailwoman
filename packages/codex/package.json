@@ -23,8 +23,8 @@
 		"!**/*.test.tsx",
 		"lib/us/street-suffix.json",
 		"out/us/street-suffix.json",
-		"lib/postcode-shapes.json",
-		"out/postcode-shapes.json",
+		"lib/postcode/shapes.json",
+		"out/postcode/shapes.json",
 		"!test/**"
 	],
 	"type": "module",
@@ -153,14 +153,14 @@
 			"default": "./out/level-semantics.js"
 		},
 		"./postcode-shapes": {
-			"types": "./out/postcode-shapes.d.ts",
-			"node": "./lib/postcode-shapes.ts",
-			"default": "./out/postcode-shapes.js"
+			"types": "./out/postcode/shapes.d.ts",
+			"node": "./lib/postcode/shapes.ts",
+			"default": "./out/postcode/shapes.js"
 		},
 		"./postcode-systems": {
-			"types": "./out/postcode-systems.d.ts",
-			"node": "./lib/postcode-systems.ts",
-			"default": "./out/postcode-systems.js"
+			"types": "./out/postcode/systems.d.ts",
+			"node": "./lib/postcode/systems.ts",
+			"default": "./out/postcode/systems.js"
 		},
 		"./us/floor-designator": {
 			"types": "./out/us/floor-designator.d.ts",

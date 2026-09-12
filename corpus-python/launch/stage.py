@@ -44,7 +44,7 @@ if _LOCAL_DATA_ROOT:
     volumes={VOL_MOUNT: vol},
     timeout=3600,
 )
-def stage_v8cjk_regs():
+def stage_v8cjk_regs() -> None:
     """Copy the mounted local corpora and training code into the volume and commit; verify like the sync would."""
     import shutil
 

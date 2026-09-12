@@ -32,7 +32,7 @@ def diagnose_corpus(
     corpus_dir: str = "/data/corpus/versioned/v0.4.0/corpus-v0.4.0",
     verify_country: str = "",
     verify_source: str = "",
-):
+) -> None:
     """Check which corpus slices the data loader actually sees on the Modal volume.
 
     Pass ``--corpus-dir`` to point at an overlay. Pass ``--verify-country DE --verify-source
@@ -49,10 +49,10 @@ def diagnose_corpus(
     vol.reload()  # see slices committed after this container started
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
-    corpus_dir = Path(corpus_dir)
-    manifest = corpus_dir / "MANIFEST.json"
+    corpus_root = Path(corpus_dir)
+    manifest = corpus_root / "MANIFEST.json"
 
-    print(f"Corpus dir: {corpus_dir}")
+    print(f"Corpus dir: {corpus_root}")
     print(f"Manifest exists: {manifest.exists()}")
 
     if manifest.exists():
@@ -71,7 +71,7 @@ def diagnose_corpus(
 
     from mailwoman_train.data.loader import _slice_first_source, _slice_paths
 
-    paths = _slice_paths(corpus_dir, "train")
+    paths = _slice_paths(corpus_root, "train")
     print(f"\n_slice_paths returned {len(paths)} train slices")
 
     by_source: Counter[str] = Counter()
@@ -101,7 +101,7 @@ def diagnose_corpus(
         sw = {verify_source: 1.0} if verify_source else None
         rows = list(
             iter_rows(
-                corpus_dir,
+                corpus_root,
                 "train",
                 rng=random.Random(0),
                 country_weights=cw,
@@ -125,7 +125,7 @@ def diagnose_corpus(
 def country_census_raw(
     corpus_dir: str = "/data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment",
     rows: int = 300000,
-):
+) -> None:
     """Which countries the corpus CONTAINS, before any filter touches it.
 
     Reads the country column out of the raw parquet rather than going through `iter_rows`, because
@@ -151,8 +151,8 @@ def country_census_raw(
     slices = _slice_paths(Path(corpus_dir), "train")
     print(f"train slices: {len(slices)}")
 
-    counts = Counter()
-    by_source = {}
+    counts: Counter[str] = Counter()
+    by_source: dict[str, Counter[str]] = {}
     seen = 0
     for sh in slices:
         pf = pq.ParquetFile(sh)
@@ -218,7 +218,7 @@ def digit_prior(
     config_name: str = "v3.1.0-fr-fragment.yaml",
     rows: int = 400000,
     seed: int = 42,
-):
+) -> None:
     """Which tag owns a bare digit-bearing token, as the SAMPLER draws it?
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
@@ -280,11 +280,11 @@ def digit_prior(
         re.IGNORECASE,
     )
 
-    by_tag = Counter()
-    by_shape = defaultdict(Counter)
-    by_context = {"with_designator": Counter(), "no_designator": Counter()}
-    by_source = defaultdict(Counter)
-    by_country_shape = defaultdict(Counter)
+    by_tag: Counter[str] = Counter()
+    by_shape: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    by_context: dict[str, Counter[str]] = {"with_designator": Counter(), "no_designator": Counter()}
+    by_source: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    by_country_shape: defaultdict[tuple[str, str], Counter[str]] = defaultdict(Counter)
     n_rows = 0
     n_bare_tokens = 0
 
@@ -334,7 +334,7 @@ def digit_prior(
         if n_rows % 50000 == 0:
             print(f"  ... {n_rows:,} rows, {n_bare_tokens:,} bare digit tokens")
 
-    def table(counter: Counter, title: str, indent: str = "  "):
+    def table(counter: Counter[str], title: str, indent: str = "  ") -> None:
         total = sum(counter.values())
         if not total:
             print(f"{indent}{title}: (none)")
@@ -363,12 +363,12 @@ def digit_prior(
     # failures are OOD, not mis-taught. The census prints BEFORE the conditional table so a missing
     # row reads as "no data" rather than "zero probability".
     print("\n--- COUNTRY CENSUS: rows drawn per country (absence != a prior of zero) ---")
-    cc_rows = Counter()
+    cc_rows: Counter[str] = Counter()
     for (cc, _sh), c in by_country_shape.items():
         cc_rows[cc] += sum(c.values())
     tot_cc = sum(cc_rows.values())
-    for cc, c in cc_rows.most_common(14):
-        print(f"    {cc:>8s}  {c:>9,}  {c / tot_cc:.4f}")
+    for cc, drawn in cc_rows.most_common(14):
+        print(f"    {cc:>8s}  {drawn:>9,}  {drawn / tot_cc:.4f}")
     for probe in ("no", "nz", "pl", "NO", "NZ", "PL"):
         print(f"    [probe] {probe:>3s}: {cc_rows.get(probe, 0):,} bare digit tokens")
 
@@ -376,13 +376,16 @@ def digit_prior(
     print(f"    {'country':>8s} {'shape':>10s} {'n':>8s}   {'P(house_number)':>16s} {'P(postcode)':>12s}")
     for cc in ("no", "pl", "nz", "nl", "de", "us", "fr"):
         for sh in ("2d", "3d", "2d+alpha", "4d", "5d"):
-            c = by_country_shape.get((cc, sh)) or by_country_shape.get((cc.upper(), sh))
-            if not c:
+            tags = by_country_shape.get((cc, sh)) or by_country_shape.get((cc.upper(), sh))
+            if not tags:
                 continue
-            tot = sum(c.values())
+            tot = sum(tags.values())
             if tot < 30:
                 continue
-            print(f"    {cc:>8s} {sh:>10s} {tot:>8,}   {c['house_number'] / tot:>16.4f} {c['postcode'] / tot:>12.4f}")
+            print(
+                f"    {cc:>8s} {sh:>10s} {tot:>8,}   "
+                f"{tags['house_number'] / tot:>16.4f} {tags['postcode'] / tot:>12.4f}"
+            )
 
 
 @app.function(
@@ -394,7 +397,7 @@ def piece_prior(
     config_name: str = "v3.1.0-fr-fragment.yaml",
     rows: int = 200000,
     seed: int = 42,
-):
+) -> None:
     """The digit prior at the unit the MODEL actually sees — the SentencePiece piece.
 
     `digit_prior` counted P(tag | token) and found P(postcode | a 2- or 3-digit token) = 0.0000 in
@@ -446,11 +449,11 @@ def piece_prior(
     IGNORE = -100
     DIGIT = re.compile(r"\d")
 
-    start_tags = Counter()
-    cont_tags = Counter()
-    by_runlen_start = defaultdict(Counter)
-    by_runlen_cont = defaultdict(Counter)
-    fertility = defaultdict(Counter)
+    start_tags: Counter[str] = Counter()
+    cont_tags: Counter[str] = Counter()
+    by_runlen_start: defaultdict[int, Counter[str]] = defaultdict(Counter)
+    by_runlen_cont: defaultdict[int, Counter[str]] = defaultdict(Counter)
+    fertility: defaultdict[int, Counter[int]] = defaultdict(Counter)
     n_rows = 0
 
     stream = iter_encoded(data_cfg, tok, split="train", rng=random.Random(seed), row_limit=rows)
@@ -476,7 +479,7 @@ def piece_prior(
             ndigits = sum(len(DIGIT.findall(p)) for p in run)
             fertility[ndigits][len(run)] += 1
 
-            def bare(lab):
+            def bare(lab: str) -> str:
                 return lab.split("-", 1)[1] if "-" in lab else lab
 
             start_tags[bare(runlabels[0])] += 1
@@ -489,7 +492,7 @@ def piece_prior(
         if n_rows % 25000 == 0:
             print(f"  ... {n_rows:,} rows")
 
-    def table(c, title, indent="  "):
+    def table(c: Counter[str], title: str, indent: str = "  ") -> None:
         t = sum(c.values())
         if not t:
             print(f"{indent}{title}: (none)")

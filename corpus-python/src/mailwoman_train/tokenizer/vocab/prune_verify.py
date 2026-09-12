@@ -10,7 +10,7 @@ BITWISE equal. Channel inputs are fed zeros: parity must hold for any channel va
 surgery is sound, and the full-battery bar (B3) covers realistic feeds end-to-end.
 
 Usage:
-    python -m mailwoman_train.tokenizer.vocab_prune_verify \
+    python -m mailwoman_train.tokenizer.vocab.prune_verify \
         --orig-tokenizer neural-weights-en-us/tokenizer.model \
         --orig-onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v401-base-step-060000-int8.onnx \
         --pruned-dir $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/pruned-v1 \
@@ -28,7 +28,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ..paths import data_root_path
+from ...paths import data_root_path
 
 
 def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, seed: int) -> list[str]:

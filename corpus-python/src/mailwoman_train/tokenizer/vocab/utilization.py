@@ -9,7 +9,7 @@ fired-set would defeat the probe's own point.
 Output: an .npz with `counts` (int64[vocab]) + a JSON sidecar with the run parameters.
 
 Usage:
-    python -m mailwoman_train.tokenizer.vocab_utilization \
+    python -m mailwoman_train.tokenizer.vocab.utilization \
         --manifest $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue/MANIFEST.json \
         --tokenizer neural-weights-en-us/tokenizer.model \
         --out $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/utilization-v0150-venue.npz \
@@ -27,7 +27,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ..paths import data_root_path
+from ...paths import data_root_path
 
 _SP = None
 _TOKENIZER_PATH: str | None = None

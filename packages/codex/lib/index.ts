@@ -47,6 +47,6 @@ export {
 	SYSTEM_CODES,
 	type SystemCode,
 	UNIT_GRADE_POSTCODE,
-} from "#postcode-systems"
+} from "#postcode/systems"
 
 export * as us from "#us/index"

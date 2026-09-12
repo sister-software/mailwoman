@@ -7,7 +7,7 @@ postcodes and NEVER on a house-number-that-looks-like-a-ZIP ("12345 Main St") â€
 faceplants on at inference. This module reads the same table the inference side reads, so
 ``anchor_paint_mode="shaped"`` paints at TRAIN on the SAME spans, congruent by construction.
 
-THE TABLE IS DATA, NOT CODE. It lives in ``@mailwoman/codex``'s ``postcode-shapes.json``, and
+THE TABLE IS DATA, NOT CODE. It lives at ``packages/codex/lib/postcode/shapes.json``, and
 ``postcode-shapes.json`` beside this file is a byte-identical copy of it. Two copies, because a Modal
 container receives only ``corpus-python/src`` and cannot read the repository's packages; one AUTHORED
 copy, because ``test_postcode_shapes`` fails on any byte of difference.

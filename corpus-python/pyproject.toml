@@ -71,6 +71,12 @@ where = ["src"]
 [tool.setuptools.package-dir]
 "" = "src"
 
+# Files the package SHIPS beside its modules. `py.typed` makes the annotations visible to a consumer
+# that imports this package; `postcode-shapes.json` is the record `features/postcode_shapes.py`
+# reads, and a wheel without it raises at import rather than at first use.
+[tool.setuptools.package-data]
+mailwoman_train = ["py.typed", "features/postcode-shapes.json", "configs/*.yaml"]
+
 # Ruff — the Python analog of the repo's oxlint + oxfmt setup (lint + format in one fast tool).
 [tool.ruff]
 # Mirror the JS house style: 120-column width (double quotes are Ruff's default).
@@ -95,7 +101,7 @@ docstring-code-format = true
 # file the pre-commit hook runs under a bare python3. Tests are out of scope for now.
 [tool.mypy]
 python_version = "3.12"
-files = ["src"]
+files = ["src", "launch"]
 strict = true
 show_error_codes = true
 pretty = true
@@ -113,6 +119,20 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["sentencepiece.sentencepiece_model_pb2"]
 follow_imports = "skip"
+
+# The Modal SDK is installed wherever `modal run` runs, never here — see the `launch/` note below.
+# With it absent, `modal` resolves to nothing and `app` is Any, which makes every `@app.function`
+# an untyped decorator and every function it wraps untyped in turn. That cascade was 34 of the 85
+# errors the launcher first reported; the other 51 were real missing annotations and are fixed.
+# Relaxing the decorator rule for this package keeps the remaining 51 checked rather than trading
+# the whole package out of mypy to silence a cascade that says nothing about the code.
+[[tool.mypy.overrides]]
+module = ["modal"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["launch.*"]
+disallow_untyped_decorators = false
 
 # bandit — security/static analysis over src. Tests are excluded by bandit's own defaults.
 [tool.bandit]

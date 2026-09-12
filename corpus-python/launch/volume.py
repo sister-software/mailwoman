@@ -18,7 +18,7 @@ from .app import VOL_MOUNT, app, training_image, vol
 
 
 @app.function(volumes={VOL_MOUNT: vol}, image=training_image, timeout=600)
-def run_tests(pattern: str = ""):
+def run_tests(pattern: str = "") -> None:
     """Run the corpus-python pytest suite INSIDE the training image, against the volume's code.
 
     Verify a loss-path change here BEFORE spending GPU on a probe.
@@ -39,7 +39,7 @@ def run_tests(pattern: str = ""):
 
 
 @app.function(volumes={VOL_MOUNT: vol}, image=training_image, timeout=120)
-def debug_volume(config_name: str = "v1.4.0-charoffset.yaml"):
+def debug_volume(config_name: str = "v1.4.0-charoffset.yaml") -> None:
     """What a container actually sees on the volume, before and after `vol.reload()`.
 
     The two snapshots are the point: a file the CLI reports as present can be absent from a mount
@@ -50,7 +50,7 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml"):
     cpath = f"{cfgdir}/{config_name}"
     ctrain = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train"
 
-    def snapshot(label):
+    def snapshot(label: str) -> None:
         print(f"\n[{label}]")
         print("  configs dir exists:", os.path.isdir(cfgdir))
         if os.path.isdir(cfgdir):
@@ -81,7 +81,7 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml"):
 
 
 @app.function(image=training_image, timeout=120)
-def versions():
+def versions() -> None:
     """Print the export/quant toolchain versions baked into ``training_image``.
 
     The pins in `launch/app.py` are what SHOULD be installed; this is what IS. They can differ when
