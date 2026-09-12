@@ -33,10 +33,11 @@ import pyarrow.parquet as pq
 from . import jp_registry, tw_registry
 from .build_cjk_overlay import verify_cn_record
 from .build_jp_slice import BOARD_BUCKET_MIN as JP_BOARD_BUCKET_MIN
-from .build_jp_slice import SCHEMA, coverage_stats, muni_bucket, norm_key, select_exact
 from .build_tw_slice import BOARD_BUCKET_MIN as TW_BOARD_BUCKET_MIN
 from .char_tokenizer import build_char_vocab, save_char_vocab
+from .corpora.builder import SCHEMA, coverage_stats, muni_bucket, select_exact
 from .labels import resolve_label_set
+from .text.normalize import normalize_text
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 SOURCES = Path(DATA_ROOT) / "corpus" / "sources"
@@ -57,7 +58,7 @@ def tw_candidates(index: tw_registry.TWKeyIndex) -> Iterator[tuple[Candidate | N
             if aligned is None:
                 yield None, text
             else:
-                yield (tw_registry.to_record(aligned), norm_key(f"{aligned.region}|{aligned.district}")), text
+                yield (tw_registry.to_record(aligned), normalize_text(f"{aligned.region}|{aligned.district}")), text
 
 
 def jp_candidates(

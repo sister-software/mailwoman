@@ -47,7 +47,6 @@ import os
 import random
 import re
 import sys
-import unicodedata
 from collections import Counter, defaultdict
 from collections.abc import Iterator, Sequence
 from pathlib import Path
@@ -56,19 +55,19 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from .build_jp_slice import (
+from .char_tokenizer import build_char_vocab, save_char_vocab
+from .corpora.builder import (
     MAX_FIELD_CHARS,
     SCHEMA,
     RowRenderer,
     coverage_stats,
     muni_bucket,
-    norm_key,
     select_exact,
-    verify_record,
     water_fill,
 )
-from .char_tokenizer import build_char_vocab, save_char_vocab
+from .corpora.builder import verify_record as _verify_record
 from .labels import resolve_label_set
+from .text.normalize import ascii_digits, fullwidth_digits, normalize_text
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 DEFAULT_PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-tw.parquet"
@@ -86,8 +85,6 @@ REGISTER_WEIGHTS: dict[str, float] = {
     "with_unit": 0.15,
 }
 
-_FULLWIDTH_DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
-_ASCII_TO_FULLWIDTH = str.maketrans("0123456789", "０１２３４５６７８９")
 # The sub-number the source keeps in ``unit``: 之N, 之N附N, with or without the 號 designator, then the rest (a floor).
 _SUB_NUMBER = re.compile(r"^(之[0-9０-９]+(?:附[0-9０-９]+)?號?)(.*)$")
 
@@ -95,17 +92,9 @@ SourceRow = tuple[str, str, str, str, str, str, float, float]
 """(region, district, village, street, house_number, unit, lon, lat) — house_number already carries the sub-number."""
 
 
-def normalize_text(text: str) -> str:
-    """NFC, every whitespace removed (no Taiwanese address component carries an interior space)."""
-    return "".join(unicodedata.normalize("NFC", text).split())
-
-
-def ascii_digits(text: str) -> str:
-    return text.translate(_FULLWIDTH_DIGITS)
-
-
-def fullwidth_digits(text: str) -> str:
-    return text.translate(_ASCII_TO_FULLWIDTH)
+def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
+    """The shared verifier bound to this corpus's label set."""
+    _verify_record(record, tag_set, label_set_name=LABEL_SET_NAME)
 
 
 def split_number_unit(number: str, unit: str) -> tuple[str, str]:
@@ -264,7 +253,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         parquet, args.max_row_groups, args.max_field_chars, dropped, agencies
     ):
         scanned += 1
-        sums = centroid_sums[norm_key(f"{region}|{district}")]
+        sums = centroid_sums[normalize_text(f"{region}|{district}")]
         sums[0] += lon
         sums[1] += lat
         sums[2] += 1
@@ -378,10 +367,10 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             )
 
     # --- Sanity checks. Violations RAISE; a slice that fails one is not a slice.
-    pool_units = {norm_key(f"{row[0]}|{row[1]}") for row in train_source} | {
-        norm_key(f"{row[0]}|{row[1]}") for row in val_source
+    pool_units = {normalize_text(f"{row[0]}|{row[1]}") for row in train_source} | {
+        normalize_text(f"{row[0]}|{row[1]}") for row in val_source
     }
-    board_units = {norm_key(f"{row[0]}|{row[1]}") for row in board}
+    board_units = {normalize_text(f"{row[0]}|{row[1]}") for row in board}
     overlap = pool_units & board_units
     if overlap:
         raise RuntimeError(f"board 鄉鎮市區 leak into train/val: {sorted(overlap)[:5]}")

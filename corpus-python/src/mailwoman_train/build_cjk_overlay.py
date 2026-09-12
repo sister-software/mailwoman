@@ -43,10 +43,10 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from .build_jp_slice import MAX_RENDERED_CHARS, SCHEMA
 from .char_tokenizer import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
+from .corpora.builder import SCHEMA
+from .corpora.builder import verify_record as _verify_record
 from .labels import resolve_label_set
-from .tokenizer import char_label_array_from_spans
 
 LABEL_SET_NAME = "stage3-cjk"
 CN_SOURCE = "coarse-placer-cn-units"
@@ -64,18 +64,8 @@ def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
 
 
 def verify_cn_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
-    """The JP verifier's checks minus the whitespace rule (see the module docstring for why)."""
-    raw = record["raw"]
-    if not record["span_tags"]:
-        raise RuntimeError(f"all-O row: {raw!r}")
-    if len(raw) > MAX_RENDERED_CHARS:
-        raise RuntimeError(f"row of {len(raw)} chars exceeds S={MAX_RENDERED_CHARS} and would truncate: {raw!r}")
-    for start, end, tag in zip(record["span_starts"], record["span_ends"], record["span_tags"], strict=True):
-        if tag not in tag_set:
-            raise RuntimeError(f"tag {tag!r} is outside {LABEL_SET_NAME} — it would collapse to O at load")
-        if not raw[start:end]:
-            raise RuntimeError(f"empty span {tag}@[{start},{end}) in {raw!r}")
-    char_label_array_from_spans(raw, record["span_starts"], record["span_ends"], record["span_tags"])
+    """The shared verifier minus the whitespace rule (see the module docstring for why)."""
+    _verify_record(record, tag_set, label_set_name=LABEL_SET_NAME, forbid_whitespace=False)
 
 
 def to_cn_record(row: dict[str, Any]) -> dict[str, Any]:

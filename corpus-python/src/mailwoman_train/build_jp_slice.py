@@ -79,7 +79,6 @@ Usage::
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import random
@@ -87,7 +86,7 @@ import re
 import sys
 import unicodedata
 from collections import Counter
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -95,9 +94,20 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from .char_tokenizer import build_char_vocab, save_char_vocab
+from .corpora.builder import (
+    MAX_FIELD_CHARS,
+    SCHEMA,
+    RowRenderer,
+    coverage_stats,
+    muni_bucket,
+    select_exact,
+    water_fill,
+)
+from .corpora.builder import verify_record as _verify_record
 from .jp_kana import municipality_kana_from_admin_db, municipality_kana_lookup
 from .labels import resolve_label_set
-from .tokenizer import char_label_array_from_spans
+from .text.kana import fold_halfwidth_kana, int_to_kanji, kanji_to_int
+from .text.normalize import normalize_text
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 DEFAULT_PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-jp.parquet"
@@ -105,23 +115,6 @@ DEFAULT_KENALL = Path(DATA_ROOT) / "KEN_ALL_ROME" / "KEN_ALL_ROME.CSV"
 DEFAULT_ADMIN_DB = Path(DATA_ROOT) / "wof" / "admin-global-priority.db"
 
 LABEL_SET_NAME = "stage3-jp"
-
-# The slice schema. ``register`` is an addition over the probe's eight columns: the loader reads an
-# explicit column list, so an extra column is inert at train time and lets the Phase-4 board report
-# per-register acceptability instead of one blended number.
-SCHEMA = pa.schema(
-    [
-        ("raw", pa.string()),
-        ("tokens", pa.list_(pa.string())),
-        ("labels", pa.list_(pa.string())),
-        ("span_starts", pa.list_(pa.int32())),
-        ("span_ends", pa.list_(pa.int32())),
-        ("span_tags", pa.list_(pa.string())),
-        ("country", pa.string()),
-        ("source", pa.string()),
-        ("register", pa.string()),
-    ]
-)
 
 # Same source string as the probe slice. An unlisted source is DROPPED by ``source_weights``, so a
 # new name would silently empty the feed of any config that names the probe's — the corpus_dir
@@ -142,17 +135,6 @@ JP_PREFECTURES = frozenset(
 # stay held out here — a Phase-4 model can be graded on the Leg-1 board without leakage.
 BOARD_BUCKET_MIN = 97
 
-# Budget for one row's field values (prefecture + municipality + street + number). The char model
-# runs at S=96 units and ``encode_row_units`` truncates past that SILENTLY, so the slice must not
-# contain a row that cannot fit. 64 leaves 32 characters of headroom for everything rendering adds:
-# 〒NNN-NNNN + space (10), 日本 (2), three separator spaces, and the designator register's kanji.
-# Measured distribution: median rendered row is 18 characters, so this truncates far out in the tail.
-MAX_FIELD_CHARS = 64
-
-# The hard invariant the guard above exists to produce. Violation RAISES — reaching it means the
-# field budget stopped bounding the rendered length, which is a code defect, not tail data.
-MAX_RENDERED_CHARS = 96
-
 # endregion
 
 # region Normalization: the corpus-side subset of the Phase-3 steal list
@@ -167,26 +149,9 @@ _HYPHEN_TABLE = str.maketrans({c: "-" for c in _HYPHEN_CLASS})
 # Japanese IME produces when the user hits the key next to 0 in kana mode.
 VARIANT_HYPHENS = ("ー", "−", "－")
 
-_KANJI_DIGITS = {"〇": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
-_ARABIC_DIGITS = "〇一二三四五六七八九"
-
 _CHOME_TAIL = re.compile(r"^(.*?)([0-9０-９〇一二三四五六七八九十百]+)丁目$")
 _COMPACT = re.compile(r"^[0-9]+(?:-[0-9]+)*$")
 _SOURCE_DESIGNATOR = re.compile(r"^([0-9]+)番地?([0-9]+)号$")
-
-
-def fold_halfwidth_kana(text: str) -> str:
-    """Fold half-width katakana (U+FF61–FF9F) to full width, composing the dakuten.
-
-    Targeted, not blanket NFKC: NFKC would also fold full-width digits to ASCII, and the two-register
-    chōme convention needs those registers kept apart. The fold is LENGTH-CHANGING (ﾃﾞ → デ, 2 chars
-    → 1), which is safe here only because it runs on field values BEFORE they are concatenated and
-    their spans recorded. 14,739 ``number`` values in the source need it.
-    """
-    if not any(0xFF61 <= ord(c) <= 0xFF9F for c in text):
-        return text
-    folded = "".join(unicodedata.normalize("NFKC", c) if 0xFF61 <= ord(c) <= 0xFF9F else c for c in text)
-    return unicodedata.normalize("NFC", folded)
 
 
 def normalize_name(text: str) -> str:
@@ -207,51 +172,6 @@ def normalize_name(text: str) -> str:
 def normalize_number(text: str) -> str:
     """Normalize a NUMBER field: NFC + half-width kana fold + the hyphen-equivalence class."""
     return fold_halfwidth_kana(unicodedata.normalize("NFC", text)).translate(_HYPHEN_TABLE).strip()
-
-
-def kanji_to_int(text: str) -> int | None:
-    """Parse a JP numeral (either register) to an int. Returns None if it is not one.
-
-    Handles the forms a chōme actually takes: bare digits (ASCII or full-width), the digit-string
-    kanji register (〇一二…), and the positional kanji register up to 百 (一丁目 … 二十三丁目).
-    """
-    if not text:
-        return None
-    ascii_form = unicodedata.normalize("NFKC", text)
-    if ascii_form.isdigit():
-        return int(ascii_form)
-    if all(c in _KANJI_DIGITS for c in text):
-        return int("".join(str(_KANJI_DIGITS[c]) for c in text))
-    total = 0
-    current = 0
-    for char in text:
-        if char == "十":
-            current = (current or 1) * 10
-            total += current
-            current = 0
-        elif char == "百":
-            current = (current or 1) * 100
-            total += current
-            current = 0
-        elif char in _KANJI_DIGITS:
-            current = _KANJI_DIGITS[char]
-        else:
-            return None
-    return total + current
-
-
-def int_to_kanji(value: int) -> str:
-    """Render an int in the positional kanji register (the register the source's 丁目 uses)."""
-    if value < 0:
-        raise ValueError(f"negative chōme: {value}")
-    if value < 10:
-        return _ARABIC_DIGITS[value]
-    if value < 100:
-        tens, ones = divmod(value, 10)
-        return ("" if tens == 1 else _ARABIC_DIGITS[tens]) + "十" + (_ARABIC_DIGITS[ones] if ones else "")
-    hundreds, rest = divmod(value, 100)
-    head = ("" if hundreds == 1 else _ARABIC_DIGITS[hundreds]) + "百"
-    return head + (int_to_kanji(rest) if rest else "")
 
 
 def split_street(street: str) -> tuple[str, int | None]:
@@ -290,28 +210,6 @@ REGISTER_WEIGHTS: dict[str, float] = {
     # Available only where the admin DB reads the municipality (jp_kana.py).
     "kana_municipality": 0.05,
 }
-
-
-class RowRenderer:
-    """Concatenate normalized field values large-to-small, recording each span as it lands."""
-
-    def __init__(self) -> None:
-        self.raw = ""
-        self.starts: list[int] = []
-        self.ends: list[int] = []
-        self.tags: list[str] = []
-
-    def put(self, tag: str, text: str) -> None:
-        if not text:
-            return
-        self.starts.append(len(self.raw))
-        self.raw += text
-        self.ends.append(len(self.raw))
-        self.tags.append(tag)
-
-    def glue(self, text: str) -> None:
-        """Append unlabeled text (the 〒 mark, a separating space) — it stays outside every span."""
-        self.raw += text
 
 
 def render_row(
@@ -438,16 +336,6 @@ def choose_register(rng: random.Random, options: Sequence[str]) -> str:
 # region Source reading
 
 
-def norm_key(text: str) -> str:
-    """KEN_ALL join key: NFC + ideographic/ASCII spaces stripped (the probe's key, unchanged)."""
-    return "".join(unicodedata.normalize("NFC", text).split()).replace("　", "")
-
-
-def muni_bucket(municipality: str) -> int:
-    # md5 is a stable bucketing hash here, never a security digest (bandit B324).
-    return int(hashlib.md5(norm_key(municipality).encode("utf-8"), usedforsecurity=False).hexdigest(), 16) % 100
-
-
 _KENALL_PAREN = re.compile(r"[（(].*?[）)]")
 _KENALL_CATCH_ALL = "以下に掲載がない場合"
 _AZA_PREFIX = re.compile(r"^(大字|字)")
@@ -473,14 +361,14 @@ class KenAllIndex:
 
     def lookup(self, prefecture: str, municipality: str, district: str) -> tuple[str | None, str]:
         """Return ``(postcode, tier)`` where tier ∈ town | town_aza_stripped | municipality | miss."""
-        head = norm_key(prefecture + municipality)
+        head = normalize_text(prefecture + municipality)
         if district:
-            hit = self.town.get(head + norm_key(district))
+            hit = self.town.get(head + normalize_text(district))
             if hit:
                 return hit, "town"
             stripped = _AZA_PREFIX.sub("", district)
             if stripped != district:
-                hit = self.town.get(head + norm_key(stripped))
+                hit = self.town.get(head + normalize_text(stripped))
                 if hit:
                     return hit, "town_aza_stripped"
         hit = self.municipality.get(head)
@@ -500,12 +388,12 @@ def load_kenall_postcodes(path: Path) -> KenAllIndex:
         cells = [cell.strip('"') for cell in line.rstrip("\r\n").split(",")]
         if len(cells) < 6 or len(cells[0]) != 7 or not cells[0].isdigit():
             continue
-        head = norm_key(cells[1] + cells[2])
+        head = normalize_text(cells[1] + cells[2])
         municipality.setdefault(head, cells[0])
         name = _KENALL_PAREN.sub("", cells[3]).strip()
         if not name or name == _KENALL_CATCH_ALL:
             continue
-        town.setdefault(head + norm_key(name), cells[0])
+        town.setdefault(head + normalize_text(name), cells[0])
     return KenAllIndex(town, municipality)
 
 
@@ -583,103 +471,14 @@ def iter_source_rows(
             )
 
 
-def select_exact(count: int, quota: int, rng: random.Random) -> Iterator[bool]:
-    """Stream an exact ``quota``-of-``count`` selection mask (O(1) memory, seeded, no reservoir)."""
-    remaining_quota = min(quota, count)
-    remaining = count
-    for _ in range(count):
-        take = remaining_quota > 0 and rng.random() < remaining_quota / remaining
-        if take:
-            remaining_quota -= 1
-        remaining -= 1
-        yield take
-
-
-def water_fill(counts: dict[str, int], target: int) -> int:
-    """Largest per-prefecture cap whose total is <= target (so Tokyo cannot drown Tottori)."""
-    if not counts:
-        return 0
-    low, high = 0, max(counts.values())
-    while low < high:
-        mid = (low + high + 1) // 2
-        if sum(min(mid, n) for n in counts.values()) <= target:
-            low = mid
-        else:
-            high = mid - 1
-    return low
-
-
 # endregion
 
 # region Verification
 
 
 def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
-    """Re-validate one rendered record through the TRAINING consumer, not through its own author.
-
-    Five independent checks, each of which has a scar behind it: the row fits S=96 so the loader
-    never truncates it silently, no span holds whitespace (an interior U+3000 in a source name field
-    put one inside a ``district``), every span slices its own text (the build_secondary_slice
-    self-check), every tag is in the active label set (a tag outside it collapses to ``O`` at load —
-    silent, #1349), and the triple survives ``char_label_array_from_spans``, the function the char
-    path actually calls.
-    """
-    raw = record["raw"]
-    if not record["span_tags"]:
-        raise RuntimeError(f"all-O row: {raw!r}")
-    if len(raw) > MAX_RENDERED_CHARS:
-        raise RuntimeError(f"row of {len(raw)} chars exceeds S={MAX_RENDERED_CHARS} and would truncate: {raw!r}")
-    for start, end, tag in zip(record["span_starts"], record["span_ends"], record["span_tags"], strict=True):
-        if tag not in tag_set:
-            raise RuntimeError(f"tag {tag!r} is outside {LABEL_SET_NAME} — it would collapse to O at load")
-        if not raw[start:end]:
-            raise RuntimeError(f"empty span {tag}@[{start},{end}) in {raw!r}")
-        if any(character.isspace() for character in raw[start:end]):
-            raise RuntimeError(f"whitespace inside span {tag}@[{start},{end}): {raw[start:end]!r}")
-    char_label_array_from_spans(raw, record["span_starts"], record["span_ends"], record["span_tags"])
-
-
-def coverage_stats(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
-    """The BIO coverage the eval protocol asks for — counted on the LABEL ARRAY, not on the JSON.
-
-    ``JSON hides gaps``: a span triple can look complete while the array the model reads is mostly
-    ``O``. So this walks ``char_label_array_from_spans`` output, the same array the loader builds.
-    """
-    per_tag_rows: Counter[str] = Counter()
-    per_tag_spans: Counter[str] = Counter()
-    per_tag_chars: Counter[str] = Counter()
-    per_label: Counter[str] = Counter()
-    registers: Counter[str] = Counter()
-    labeled = total = total_significant = rows = 0
-    lengths: list[int] = []
-    for record in records:
-        rows += 1
-        registers[record["register"]] += 1
-        raw = record["raw"]
-        lengths.append(len(raw))
-        array = char_label_array_from_spans(raw, record["span_starts"], record["span_ends"], record["span_tags"])
-        for label in array:
-            per_label[label] += 1
-        total += len(raw)
-        total_significant += sum(1 for c in raw if not c.isspace() and c != "〒")
-        labeled += sum(1 for label in array if label != "O")
-        for tag in set(record["span_tags"]):
-            per_tag_rows[tag] += 1
-        for start, end, tag in zip(record["span_starts"], record["span_ends"], record["span_tags"], strict=True):
-            per_tag_spans[tag] += 1
-            per_tag_chars[tag] += end - start
-    lengths.sort()
-    return {
-        "rows": rows,
-        "bio_char_coverage_all": round(labeled / total, 6) if total else 0.0,
-        "bio_char_coverage_significant": round(labeled / total_significant, 6) if total_significant else 0.0,
-        "raw_len_min_median_max": [lengths[0], lengths[len(lengths) // 2], lengths[-1]] if lengths else None,
-        "registers": dict(registers.most_common()),
-        "per_tag_rows": dict(per_tag_rows.most_common()),
-        "per_tag_spans": dict(per_tag_spans.most_common()),
-        "per_tag_chars": dict(per_tag_chars.most_common()),
-        "per_label_chars": dict(per_label.most_common()),
-    }
+    """The shared verifier bound to this corpus's label set."""
+    _verify_record(record, tag_set, label_set_name=LABEL_SET_NAME)
 
 
 # endregion
@@ -887,8 +686,8 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     train_prefectures = {row[0] for row in train_source}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")
-    train_munis = {norm_key(row[1]) for row in train_source} | {norm_key(row[1]) for row in val_source}
-    board_munis = {norm_key(row[1]) for row in board}
+    train_munis = {normalize_text(row[1]) for row in train_source} | {normalize_text(row[1]) for row in val_source}
+    board_munis = {normalize_text(row[1]) for row in board}
     overlap = train_munis & board_munis
     if overlap:
         raise RuntimeError(f"board municipalities leak into train/val: {sorted(overlap)[:5]}")

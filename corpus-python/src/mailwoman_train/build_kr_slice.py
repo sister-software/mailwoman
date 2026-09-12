@@ -50,18 +50,17 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from .build_cjk_overlay import verify_cn_record as verify_record
-from .build_jp_slice import (
+from .char_tokenizer import build_char_vocab, save_char_vocab
+from .corpora.builder import (
     MAX_FIELD_CHARS,
     MAX_RENDERED_CHARS,
     SCHEMA,
     RowRenderer,
     coverage_stats,
     muni_bucket,
-    norm_key,
     select_exact,
     water_fill,
 )
-from .char_tokenizer import build_char_vocab, save_char_vocab
 from .kr_juso import REGION_ALIASES, LabelRow, alias_key_index, empty_key_index, index_label_row, iter_label_rows
 from .kr_registry import (
     Aligned,
@@ -74,6 +73,7 @@ from .kr_registry import (
     transform_coordinates,
 )
 from .labels import resolve_label_set
+from .text.normalize import normalize_text
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 DEFAULT_JUSO_ZIP = Path(DATA_ROOT) / "corpus" / "sources" / "juso-kr" / "202608ALLMTCHG00.zip"
@@ -248,7 +248,7 @@ def eligible(row: LabelRow, max_field_chars: int) -> str | None:
 
 def unit_key(region: str, sigungu: str) -> str:
     """The centroid / hold-out key: the register's current region name, so a pre-merger permit row keys the same unit."""
-    return norm_key(f"{REGION_ALIASES.get(region, region)}|{sigungu}")
+    return normalize_text(f"{REGION_ALIASES.get(region, region)}|{sigungu}")
 
 
 def registry_record(aligned: Aligned) -> dict[str, Any]:
