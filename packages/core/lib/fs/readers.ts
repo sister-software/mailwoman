@@ -13,29 +13,10 @@ import { readFile, readdir } from "node:fs/promises"
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import { asTarget, open } from "#fs/readers/stat"
+import { asTarget, open, statPath } from "#fs/readers/stat"
 import { parseJSONStrict } from "#json"
 
-export {
-	entryLeadsToDirectory,
-	formatFileSize,
-	globPaths,
-	isDirectory,
-	isExecutable,
-	isFile,
-	isSymbolicLink,
-	isWritable,
-	open,
-	pathExists,
-	readFileSize,
-	readLink,
-	realPath,
-	statLink,
-	statPath,
-	tryRealPath,
-	tryStat,
-	tryStatLink,
-} from "#fs/readers/stat"
+export * from "#fs/readers/stat"
 
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"
@@ -168,7 +149,15 @@ export function readLocalBuffer<S extends Array<PathBuilderLike | URL>>(...pathS
  * @category Files
  */
 export function readDirectory(path: PathBuilderLike | URL): Promise<string[]> {
-	return readdir(asTarget(path))
+	const target = asTarget(path)
+
+	return statPath(target).then((stat) => {
+		if (!stat.isDirectory()) {
+			throw new Error(`Path ${target} is not a directory.`)
+		}
+
+		return readdir(target)
+	})
 }
 
 /**
