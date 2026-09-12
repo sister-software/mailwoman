@@ -593,6 +593,10 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
+		// The fp32 arm of a PAIRED run is the one an int8 arm follows, and int8 is what ships. Unpaired, the single arm
+		// carries the shipped package whatever its tag reads, so it keeps every de-order run.
+		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
+
 		// Package-shaped (#718): the metric probes (which support weightsCache) load ALL channels —
 		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = the arm's own
@@ -702,6 +706,11 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 					// sealed, so a query is a pure function of its arguments; the memo shares hit objects between
 					// callers, so a caller that mutated one would change this leg's report.
 					lookupMemo: true,
+					// Five of the six runs feed no floor: the verdict reads one cell, the `native DE` anchor-ON
+					// locality, which is also in the fp32↔int8 delta cap and so runs on both arms. The other five
+					// are a record, and a record wants one reading per promotion rather than two. They run on the
+					// arm that ships — the second one when the battery is paired, the only one when it is not.
+					...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
 				},
 				(line) => deorderOut.push(line),
 				(line) => deorderErr.push(line)
