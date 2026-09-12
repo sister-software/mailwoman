@@ -29,9 +29,8 @@
  *   silently emitted zero rows from the real corpus.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { glob, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import FastGlob from "fast-glob"
 
 /**
  * A WOF GeoJSON feature, as published by the per-record bundles.
@@ -174,19 +173,13 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  * walk. Adapters can add stricter validation downstream if they need it.
  */
 export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WOFRecord> {
-	const stream = FastGlob.stream(["**/*.geojson"], {
+	for await (const filePath of glob("**/*.geojson", {
 		cwd: repoDir,
-		absolute: true,
-		onlyFiles: true,
-		suppressErrors: true,
-	})
-
-	for await (const entry of stream) {
-		if (opts.signal?.aborted) return
-		const filePath = String(entry)
-
-		if (filePath.includes("-alt-")) continue
-
+		exclude: ["**/*-alt-*.geojson"],
+		// Preserve the recursive fast-glob walk this replaces: bundle repositories can expose data through a link.
+		followSymlinks: true,
+		signal: opts.signal,
+	})) {
 		let text: string
 
 		try {

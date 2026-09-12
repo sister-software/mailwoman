@@ -25,7 +25,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { globPaths } from "@mailwoman/core/fs/readers"
+import { glob } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -197,7 +197,9 @@ const SitusInterpolationDatabase: ParsedCommandComponent<Options> = ({ options }
 
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
-		const shapefiles = await globPaths(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`)
+		const shapefiles = (
+			await Array.fromAsync(glob(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`))
+		).toSorted()
 
 		if (!shapefiles.length) {
 			throw new CommandError(

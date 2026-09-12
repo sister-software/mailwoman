@@ -18,19 +18,15 @@
  *   - `admin-us` is one checkout reachable twice: the nested path is a SYMLINK to the flat one. Comparing
  *       `ls` output calls this a duplicate, and it is not — a directory cannot diverge from itself.
  *
- *   Both cost a double read, because `ingest-wof` passes no `followSymbolicLinks` and fast-glob defaults it
- *   to `true`, so the glob descends the alias as readily as the copy. `spr` is written `INSERT OR REPLACE`,
- *   so the second write is idempotent and today the whole thing costs read time and disk.
- *
  *   Only the INDEPENDENT copies carry the further hazard. The moment they diverge — one pulled, one not —
- *   the ingested value is LAST-WRITER-WINS over FastGlob's enumeration order, which nobody stated and
+ *   the ingested value is LAST-WRITER-WINS over filesystem enumeration order, which nobody stated and
  *   `verifyAdmin` cannot catch because it tests floors. An alias can never reach that state, so reporting
  *   the two as one number would either overstate the risk or hide it.
  */
 
 import { entryLeadsToDirectory, pathExists, readDirectoryEntries, realPath } from "@mailwoman/core/fs/readers"
 import { runFileSync } from "@mailwoman/core/process"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 /**
  * Where a clone sits relative to the repos root.
@@ -52,8 +48,8 @@ export interface ClonedRepo {
 	name: string
 	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the SAME directory — a symlink, not a second checkout. It still costs a double
-	 * read, and it can never diverge.
+	 * True when the layouts resolve to the SAME directory — a symlink, not a second checkout. The ingest does not follow
+	 * the alias, and one directory can never diverge from itself.
 	 */
 	aliased: boolean
 	/**
@@ -69,15 +65,15 @@ export interface ClonedRepo {
 }
 
 export interface ReposAudit {
-	root: string
+	root: PathBuilderLike
 	repos: ClonedRepo[]
 	/**
 	 * Repos present in both layouts as INDEPENDENT checkouts. Named separately because the count is the finding.
 	 */
 	duplicated: ClonedRepo[]
 	/**
-	 * Repos reachable through both layouts via a symlink — one physical copy. Read twice by the ingest, but incapable of
-	 * the divergence that makes {@link ReposAudit.duplicated} a correctness question rather than a cost one.
+	 * Repos reachable through both layouts via a symlink — one physical copy. The ingest skips the symlinked layout, and
+	 * the directory cannot diverge in the way {@link ReposAudit.duplicated} can.
 	 */
 	aliased: ClonedRepo[]
 	/**
@@ -120,7 +116,10 @@ function headOf(dir: string): string | undefined {
  * Only two levels are examined, because only two layouts exist: a repo directly under the root, and a repo under an
  * owner directory. Anything deeper is a repo's own contents.
  */
-export async function auditReposRoot(root: string, options: { readCommits?: boolean } = {}): Promise<ReposAudit> {
+export async function auditReposRoot(
+	root: PathBuilderLike,
+	options: { readCommits?: boolean } = {}
+): Promise<ReposAudit> {
 	const byName = new Map<string, ClonedRepo>()
 
 	const realPaths = new Map<string, string[]>()
@@ -149,7 +148,15 @@ export async function auditReposRoot(root: string, options: { readCommits?: bool
 		byName.set(name, existing)
 	}
 
-	if (!(await pathExists(root))) return { root, repos: [], duplicated: [], aliased: [], diverged: [] }
+	if (!(await pathExists(root))) {
+		return {
+			root,
+			repos: [],
+			duplicated: [],
+			aliased: [],
+			diverged: [],
+		}
+	}
 
 	for (const entry of await readDirectoryEntries(root)) {
 		const full = join(root, entry.name)
@@ -221,6 +228,6 @@ export function reposSentence(audit: ReposAudit): string {
 					: ", at identical commits, so the cost is read time and disk"
 				: ""
 		}` +
-		`${audit.aliased.length ? `; ${audit.aliased.length} symlinked into the other layout (read twice, cannot diverge)` : ""}.`
+		`${audit.aliased.length ? `; ${audit.aliased.length} symlinked into the other layout (ingested through the direct path once)` : ""}.`
 	)
 }

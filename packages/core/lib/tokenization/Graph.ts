@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-// Import `Sequence` from its leaf module, NOT the `@mailwoman/core/resources` barrel: the barrel
-// re-exports the libpostal/WOF dictionaries (top-level `readdir` + fast-glob, Node-only), which would
-// drag the entire resource-loading layer into any browser bundle that touches tokenization — and
-// `@mailwoman/phrase-grouper` touches it via `Span`. `Sequence` itself is a pure `extends Set`.
 import { Sequence } from "#resources/set"
 
+/**
+ * A graph node is a weakly-keyed object that can be stored in a graph.
+ */
 export type GraphNodeCallback<G> = (node: G) => boolean
 
 /**

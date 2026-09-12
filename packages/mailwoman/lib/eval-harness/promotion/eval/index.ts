@@ -70,8 +70,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import {
+	glob,
 	pathExists,
-	readDirectory,
 	readDirectoryEntries,
 	readLocalBuffer,
 	readLocalJSONFile,
@@ -213,11 +213,14 @@ export async function resolveThresholdSpecPath(check: string): Promise<string> {
  * Every eval spec shipped beside this module, newest-looking last. For `--spec` errors and tooling.
  */
 export async function listEvalSpecs(): Promise<string[]> {
-	if (await pathExists(SPECS_DIR)) {
-		return (await readDirectory(SPECS_DIR)).filter((file) => file.endsWith(".json")).toSorted()
-	}
-
-	return []
+	return (
+		await Array.fromAsync(
+			glob("*.json", {
+				cwd: SPECS_DIR,
+				absolute: false,
+			})
+		)
+	).toSorted()
 }
 
 /**

@@ -110,7 +110,9 @@ export async function runFile(
 /**
  * Options for {@linkcode runFileSync}: the builtin's. Output is always decoded as UTF-8.
  */
-export type RunFileSyncOptions = ExecFileSyncOptions & { cwd?: PathBuilderLike }
+export interface RunFileSyncOptions extends Omit<ExecFileSyncOptions, "cwd"> {
+	cwd?: PathBuilderLike
+}
 
 /**
  * {@linkcode runFile} for a synchronous slot. Answers stdout; throws on a non-zero exit, with the builtin's error.

@@ -10,13 +10,12 @@
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { glob, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import FastGlob from "fast-glob"
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 
 import {
@@ -257,17 +256,21 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 	const concurrency = opts.concurrency ?? 64
 	const batchCommitSize = opts.batchCommitSize ?? 500
 
-	const ignore = ["**/*-alt-*"]
+	const exclude = ["**/*-alt-*"]
 
 	if (!placetypes.has("postalcode")) {
-		ignore.push("**/whosonfirst-data-postalcode-*/**")
+		exclude.push("**/whosonfirst-data-postalcode-*/**")
 	}
 
-	const filePaths = await FastGlob("**/data/**/*.geojson", {
-		cwd: resolvePath(opts.dataDir),
-		absolute: true,
-		ignore,
-	})
+	const filePaths = await Array.fromAsync(
+		glob("**/data/**/*.geojson", {
+			cwd: opts.dataDir,
+			exclude,
+			// The repos root can expose one checkout through both layouts. Treat a symlink as an alias, not a
+			// second source tree: the direct checkout supplies its records once.
+			followSymlinks: false,
+		})
+	)
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`

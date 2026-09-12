@@ -35,7 +35,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readDirectory } from "@mailwoman/core/fs/readers"
+import { glob } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound } from "@mailwoman/core/numeric"
 import { join } from "path-ts"
@@ -169,24 +169,6 @@ async function readSource(con: DuckDBConnection, path: string): Promise<string> 
 }
 
 /**
- * Non-recursive `*.parquet` glob, sorted lexicographically — the Python `sorted(glob.glob(...))`.
- */
-async function globParquet(dir: string): Promise<string[]> {
-	let names: string[]
-
-	try {
-		names = await readDirectory(dir)
-	} catch {
-		return []
-	}
-
-	return names
-		.filter((f) => f.endsWith(".parquet"))
-		.map((f) => join(dir, f))
-		.toSorted()
-}
-
-/**
  * Options for {@linkcode lintSliceVocab}.
  */
 export interface LintSliceVocabOptions {
@@ -279,7 +261,15 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 
 	// 2. base parts — FULL by default; fraction<1 takes a proportional per-source slice (still big)
 	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
-	let parts = await globParquet(trainDir)
+
+	let parts = (
+		await Array.fromAsync(
+			glob("*.parquet", {
+				cwd: trainDir,
+				absolute: true,
+			})
+		)
+	).toSorted()
 
 	if (!parts.length) {
 		throw new Error("no base parts found")

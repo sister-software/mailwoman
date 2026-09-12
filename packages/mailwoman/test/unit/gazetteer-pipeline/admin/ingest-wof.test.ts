@@ -11,7 +11,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { createSymbolicLink, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -79,6 +79,27 @@ describe("ingestWOF centroids (#1726)", () => {
 			{ id: 2, latitude: 10.5, longitude: 20.25 },
 			{ id: 3, latitude: 30, longitude: 40 },
 		])
+	})
+})
+
+describe("ingestWOF directory symlinks", () => {
+	it("reads a checkout through its direct path once when the nested layout is an alias", async () => {
+		await using rootDirectory = await temporaryDirectory("mw-ingest-symlink-")
+		const root = rootDirectory.path
+		const repo = root("whosonfirst-data-admin-us")
+		const dataDir = repo("data", "000", "000")
+
+		await makeDirectories(dataDir)
+		await writeLocalFile(feature(42, {}), dataDir("42.geojson"))
+		await createSymbolicLink(repo, root("whosonfirst-data", "whosonfirst-data-admin-us"))
+
+		await using db = DatabaseClient.temp<WOFDatabase>()
+		await createUnifiedSchema(db)
+
+		const result = await ingestWOF(db, { dataDir: root })
+
+		expect(result.filesFound).toBe(1)
+		expect(result.placesIngested).toBe(1)
 	})
 })
 

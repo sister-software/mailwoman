@@ -29,7 +29,7 @@
 // oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
 import { titlecaseIfUpper } from "@mailwoman/core"
-import { globPaths } from "@mailwoman/core/fs/readers"
+import { glob } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
@@ -55,14 +55,17 @@ const CSV_OPTIONS = {
 type CSVRecord = Record<string, string | undefined>
 
 /**
- * Stream header-keyed records from one member of an archive.
+ * Stream header-keyed records from one member of a ZIP archive.
  */
-async function* csvRecordsFromZip(zipPath: string, entry: string): AsyncGenerator<CSVRecord> {
-	yield* CSVSpliterator.fromAsync<CSVRecord>(readZipEntry(zipPath, entry), CSV_OPTIONS)
+function csvRecordsFromZip(zipPath: string, entry: string): AsyncIterable<CSVRecord> {
+	return CSVSpliterator.fromAsync<CSVRecord>(readZipEntry(zipPath, entry), CSV_OPTIONS)
 }
 
-async function* csvRecordsFromFile(path: string): AsyncGenerator<CSVRecord> {
-	yield* CSVSpliterator.fromAsync<CSVRecord>(openReadStream(path), CSV_OPTIONS)
+/**
+ * Stream header-keyed records from a CSV file.
+ */
+function csvRecordsFromFile(filePath: string): AsyncIterable<CSVRecord> {
+	return CSVSpliterator.fromAsync<CSVRecord>(openReadStream(filePath), CSV_OPTIONS)
 }
 
 //#endregion
@@ -249,15 +252,18 @@ const out = values.out!
 const n = Number(values.n)
 const rng = new SeededRandom(Number(values.seed))
 
-async function* sourceRows(): AsyncGenerator<CSVRecord> {
+async function* sourceRows(): AsyncIterable<CSVRecord> {
 	if (values.zip) {
 		yield* csvRecordsFromZip(values.zip, values.entry!)
 
 		return
 	}
 
-	for (const path of await globPaths(values["csv-glob"]!)) {
-		yield* csvRecordsFromFile(path)
+	const pattern = values["csv-glob"]!
+	const filePaths = (await Array.fromAsync(glob(pattern))).toSorted()
+
+	for (const filePath of filePaths) {
+		yield* csvRecordsFromFile(filePath)
 	}
 }
 

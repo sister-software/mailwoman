@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import FastGlob from "fast-glob"
 import type { PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"
 
-import { readLocalTextFile } from "#fs/readers"
+import { glob, readLocalTextFile } from "#fs/readers"
 import { parseJSONStrict } from "#json"
 import { prepareRepositoryDirectories, type RepositorySource } from "#resources/git"
 import {
@@ -74,9 +73,8 @@ export class Placetype implements Disposable {
 
 		if (!exists) return
 
-		const definitionPaths = FastGlob.stream(["*.json"], {
-			cwd: repoDirectory("placetypes").toString(),
-			absolute: true,
+		const definitionPaths = glob("*.json", {
+			cwd: repoDirectory("placetypes"),
 		})
 
 		const batchIterator = parallelMap(

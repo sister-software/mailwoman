@@ -17,6 +17,7 @@ import { asTarget, open, statPath } from "#fs/readers/stat"
 import { parseJSONStrict } from "#json"
 
 export * from "#fs/readers/stat"
+export * from "#fs/readers/glob"
 
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"

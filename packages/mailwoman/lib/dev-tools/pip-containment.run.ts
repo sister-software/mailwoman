@@ -20,7 +20,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { globPaths, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { glob, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { pyFixed } from "@mailwoman/core/numeric"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
@@ -36,15 +36,8 @@ const MAX_LISTED_ARTIFACTS = 12
 const WOF_REPOS = dataRootPath("wof", "repos")
 
 async function adminRoots(): Promise<string[]> {
-	let matched: string[]
-
-	try {
-		matched = await globPaths(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)
-	} catch {
-		matched = []
-	}
-
-	matched.sort()
+	const pattern = WOF_REPOS("whosonfirst-data/whosonfirst-data-admin-*/data")
+	const matched = (await Array.fromAsync(glob(pattern))).toSorted()
 
 	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
 }
