@@ -35,8 +35,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from ..types import PieceSpan
 from .gazetteer_anchor import GazetteerLexicon, gazetteer_char_paint, load_gazetteer_lexicon
-from .types import PieceSpan
 
 #: Emitted per-piece feature width: ``[country_surface, country_ambiguous]``.
 COUNTRY_FEATURE_DIM = 2

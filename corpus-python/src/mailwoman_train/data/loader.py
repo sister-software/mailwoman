@@ -825,14 +825,14 @@ def iter_encoded(
     gazetteer_lexicon = None
     gazetteer_path = getattr(cfg_data, "gazetteer_lexicon_path", None)
     if gazetteer_path:
-        from ..gazetteer_anchor import load_gazetteer_lexicon
+        from ..features.gazetteer_anchor import load_gazetteer_lexicon
 
         gazetteer_lexicon = load_gazetteer_lexicon(gazetteer_path)
     # Country-lexicon (#1104): loaded once. None → no country features (back-compat).
     country_lexicon = None
     country_path = getattr(cfg_data, "country_lexicon_path", None)
     if country_path:
-        from ..country_lexicon import load_country_lexicon
+        from ..features.country_lexicon import load_country_lexicon
 
         country_lexicon = load_country_lexicon(country_path)
     # Street-type lexicon (P-A / Option A): same JSON schema as the gazetteer lexicon, so it reuses
@@ -840,14 +840,14 @@ def iter_encoded(
     street_type_lexicon = None
     street_type_path = getattr(cfg_data, "street_type_lexicon_path", None)
     if street_type_path:
-        from ..gazetteer_anchor import load_gazetteer_lexicon
+        from ..features.gazetteer_anchor import load_gazetteer_lexicon
 
         street_type_lexicon = load_gazetteer_lexicon(street_type_path)
     # Locality-surface lexicon (v3.16.0): same JSON schema → same loader.
     locality_surface_lexicon = None
     locality_path = getattr(cfg_data, "locality_surface_lexicon_path", None)
     if locality_path:
-        from ..gazetteer_anchor import load_gazetteer_lexicon
+        from ..features.gazetteer_anchor import load_gazetteer_lexicon
 
         locality_surface_lexicon = load_gazetteer_lexicon(locality_path)
     affix_relabel_lexicon = None

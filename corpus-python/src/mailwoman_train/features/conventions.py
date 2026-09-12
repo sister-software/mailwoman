@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import torch
 
-from .labels import LOCALE_COUNTRIES
+from ..labels import LOCALE_COUNTRIES
 
 # ISO-2 country → component tags that are ungrammatical in that address system.
 # fr: street types are LEADING particles (NF Z 10-011) — and the corpus labels those particles as

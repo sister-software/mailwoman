@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-from mailwoman_train.postcode_shapes import POSTCODE_PATTERNS, collect_matches
+from mailwoman_train.features.postcode_shapes import POSTCODE_PATTERNS, collect_matches
 
 # tests/mailwoman_train/<this file> -> tests/ -> corpus-python/ -> repo root.
 CANONICAL_TS = Path(__file__).resolve().parents[3] / "neural" / "postcode-repair.ts"

@@ -3634,9 +3634,9 @@ def grade_evidence_bundle(
     import torch
 
     sys.path.insert(0, "/data/corpus-python/src")
-    from mailwoman_train.country_lexicon import load_country_lexicon
     from mailwoman_train.data.loader import load_anchor_lookup
-    from mailwoman_train.gazetteer_anchor import load_gazetteer_lexicon
+    from mailwoman_train.features.country_lexicon import load_country_lexicon
+    from mailwoman_train.features.gazetteer_anchor import load_gazetteer_lexicon
     from mailwoman_train.labels import ID_TO_LABEL
     from mailwoman_train.model import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
@@ -3815,9 +3815,9 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     import torch
 
     sys.path.insert(0, "/data/corpus-python/src")
-    from mailwoman_train.country_lexicon import load_country_lexicon
     from mailwoman_train.data.loader import load_anchor_lookup
-    from mailwoman_train.gazetteer_anchor import load_gazetteer_lexicon
+    from mailwoman_train.features.country_lexicon import load_country_lexicon
+    from mailwoman_train.features.gazetteer_anchor import load_gazetteer_lexicon
     from mailwoman_train.labels import ID_TO_LABEL
     from mailwoman_train.model import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row

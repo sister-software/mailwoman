@@ -9,7 +9,7 @@ house number; shaped paints the anchor on it (the training signal the model need
 
 from __future__ import annotations
 
-from mailwoman_train.postcode_shapes import collect_matches
+from mailwoman_train.features.postcode_shapes import collect_matches
 from mailwoman_train.tokenizer import (
     ANCHOR_FEATURE_DIM,
     anchor_feature_vector,

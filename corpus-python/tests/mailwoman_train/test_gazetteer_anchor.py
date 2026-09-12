@@ -8,7 +8,7 @@ paint every word, and the char→piece projection mirrors the postcode anchor's 
 
 from __future__ import annotations
 
-from mailwoman_train.gazetteer_anchor import (
+from mailwoman_train.features.gazetteer_anchor import (
     GazetteerLexicon,
     gazetteer_char_paint,
     realign_gazetteer_to_pieces,

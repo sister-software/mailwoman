@@ -20,7 +20,7 @@ Everything must go through **R2 → a container-side `rclone` in a `sync_*` func
 ## Launching a retrain (the v1.6.0-boundary-stress example)
 
 1. **Build the corpus locally** — for an overlay (base + your new slice), assemble the overlay manifest.
-2. **Re-root the manifest paths to `/data`.** The data loader (`data_loader.py`) reads each slice's
+2. **Re-root the manifest paths to `/data`.** The data loader (`data/loader.py`) reads each slice's
    manifest `path` AS-IS; base slices must point at `/data/corpus/versioned/<base>/…` (where the base
    `sync` lands them), NOT the local `/mnt/playpen` build path. The overlay assembler does this
    (`_reroot`). **Verify: `python -c "...; sum('/mnt' in s['path'] for s in slices)"` must be 0.**

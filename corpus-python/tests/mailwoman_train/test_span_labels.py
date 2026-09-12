@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import pytest
 
-from mailwoman_train.gazetteer_anchor import GazetteerLexicon, realign_gazetteer_to_pieces
+from mailwoman_train.features.gazetteer_anchor import GazetteerLexicon, realign_gazetteer_to_pieces
 from mailwoman_train.tokenizer import (
     char_label_array_from_spans,
     encode_row,

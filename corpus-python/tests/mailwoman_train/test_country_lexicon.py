@@ -15,13 +15,13 @@ from __future__ import annotations
 
 import re
 
-from mailwoman_train.country_lexicon import (
+from mailwoman_train.features.country_lexicon import (
     COUNTRY_AMBIGUOUS_BIT,
     COUNTRY_SURFACE_BIT,
     GazetteerLexicon,
     realign_country_to_pieces,
 )
-from mailwoman_train.gazetteer_anchor import gazetteer_char_paint
+from mailwoman_train.features.gazetteer_anchor import gazetteer_char_paint
 from mailwoman_train.types import PieceSpan
 
 S = COUNTRY_SURFACE_BIT  # 1

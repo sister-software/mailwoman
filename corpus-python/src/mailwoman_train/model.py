@@ -35,8 +35,8 @@ from torch import nn
 
 from .config import Config
 from .crf import LinearChainCRF, TopKPath
+from .features.phrase_priors import PHRASE_FEATURE_DIM
 from .labels import ID_TO_LABEL, IGNORE_INDEX, NUM_LOCALES
-from .phrase_priors import PHRASE_FEATURE_DIM
 from .span_scorer import SemiMarkovCRF, SpanScorer, gold_segments
 
 
@@ -510,7 +510,7 @@ class MailwomanCoarseEncoder(nn.Module):
         # CE input only (returned logits untouched — inference behavior is the codex mask's job).
         self.use_conventions_loss_mask = bool(use_conventions_loss_mask)
         if self.use_conventions_loss_mask:
-            from .conventions import build_forbidden_mask
+            from .features.conventions import build_forbidden_mask
             from .labels import LABEL_TO_ID
 
             self.register_buffer(
