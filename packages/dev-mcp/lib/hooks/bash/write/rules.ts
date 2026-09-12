@@ -223,13 +223,20 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		// The reading forms of these subcommands are ordinary work: `stash list`, `stash show`, and a `checkout` that
 		// names a branch rather than a pathspec. Only the spellings that overwrite the working tree are refused.
 		//
+		// `git stash drop stash@{N}` is admitted, and only in that spelling. It writes no file — it removes one ref
+		// from a stack the operator's standing rule says to clear after restoring an entry, so refusing it made that
+		// rule impossible to follow. The explicit index is the whole condition: BARE `git stash drop` silently takes
+		// `stash@{0}`, and the stack is shared across every worktree, so the entry at the top is as likely to be
+		// another session's. Naming the index is what the standing rule already requires — re-find the entry by its
+		// SHA, then drop that index.
+		//
 		// `git apply` is NOT among them. The refusals here exist to route an edit through the symbol precheck, and to
 		// stop a command from discarding work the agent cannot see. A patch does neither: it is an artifact the author
 		// produced and can dry-run with `git apply --check`, it fails rather than clobbering when the context does not
 		// match, and it is the only exact way to land a mechanically generated change — a bulk deletion, a moved block
 		// — without retyping every line. Retyping a thousand lines to satisfy a guard is itself the correctness risk
 		// the guard is meant to reduce.
-		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b)|checkout\s+[^\n]*--\s)/u,
+		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b|drop\s+stash@\{\d+\}\s*$)|checkout\s+[^\n]*--\s)/u,
 		because: "this `git` subcommand overwrites the working tree",
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
@@ -312,7 +319,13 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 		.replaceAll(REDIRECT, " ")
 		// An opener starts a command of its own; a CLOSER does not end one. Replacing `)` with a separator too would
 		// leave `comm -12 <(sort a) b` with a segment headed by `b`, and a filename is not a command.
-		.replaceAll(/\$\(|<\(|\(|\{|\}/gu, " ; ")
+		//
+		// A BRACE only opens a group when whitespace follows it, and only closes one when whitespace or a separator
+		// precedes it — that is bash's own rule for `{ cmd; }`. Splitting on every brace instead read the ordinary git
+		// spellings `HEAD@{1}`, `stash@{0}` and `@{upstream}` as two segments, the second headed by a digit, and
+		// refused them with "`1` is not on the admitted command list". A brace glued to a word is part of that word:
+		// a reflog selector, a brace expansion, a format string.
+		.replaceAll(/\$\(|<\(|\(|\{(?=\s|$)|(?<=^|\s)\}/gu, " ; ")
 		.replaceAll(")", " ")
 
 	for (const rawSegment of expanded.split(/(?:&&|\|\||[;|&\n])/u)) {

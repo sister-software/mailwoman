@@ -14,7 +14,8 @@ from dataclasses import dataclass, field
 
 #: The R2 bucket every source reads from, and the volume mount every destination writes to. Both
 #: appear once here rather than in each command string, and `launch/app.py` takes them from here
-#: rather than declaring its own.
+#: rather than declaring its own: a second spelling of the mount point is a second thing to keep
+#: right, and the two would disagree silently.
 BUCKET = "mailwoman-assets"
 VOL_MOUNT = "/data"
 

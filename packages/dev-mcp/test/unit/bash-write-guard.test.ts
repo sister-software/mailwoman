@@ -51,9 +51,17 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		["a writer inside a command substitution", `echo $(sed -i 's/a/b/' AGENTS.md)`],
 		["a writer after a single ampersand", `true & sed -i 's/a/b/' AGENTS.md`],
 		["a writer in a conditional head", `if sed -i 's/a/b/' AGENTS.md; then echo ok; fi`],
+		// A real brace group still opens a command, because bash's own rule is that `{` opens one only when
+		// whitespace follows it — which is exactly the boundary the segmenter now splits on.
+		["a writer inside a brace group", `{ sed -i 's/a/b/' AGENTS.md; }`],
 		["a writer after an apostrophe in prose", `echo "don't" && sed -i 's/a/b/' AGENTS.md`],
 		["git restoring a path", `git restore packages/core/lib/env.ts`],
 		["git checkout over a pathspec", `git checkout -- packages/core`],
+		["popping the stash", `git stash pop`],
+		["applying a stash entry", `git stash apply 0f4c6a668db23aa251b8d462398d8780105ca9f0`],
+		// The stack is shared across every worktree, so the entry at the top is as likely to be another session's.
+		["dropping the stash with no index", `git stash drop`],
+		["dropping the stash by SHA rather than index", `git stash drop 0f4c6a668db23aa251b8d462398d8780105ca9f0`],
 		["git config writing a manifest", `git config -f packages/core/package.json foo.bar baz`],
 		["npm rewriting a manifest", `npm pkg set scripts.evil=x`],
 		["yarn running an arbitrary program", `yarn dlx replace-in-file a b AGENTS.md`],
@@ -135,6 +143,17 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a subshell group piped into a reader", `(git diff --name-only HEAD; git diff --cached --name-only) | sort -u`],
 		["process substitution as an argument", `comm -12 <(sort /tmp/a.txt) /tmp/b.txt`],
 		["reading the stash", `git stash list`],
+		// Writes no file, and the standing rule says to clear an entry once it has been restored. The explicit index
+		// is the condition: it is what stops a bare `drop` from silently taking another session's `stash@{0}`.
+		["dropping a named stash entry", `git stash drop stash@{0}`],
+		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
+		// A brace glued to a word is part of that word. Splitting on it read each of these as two segments, the second
+		// headed by a digit, and refused a read-only command with "`1` is not on the admitted command list".
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		["a reflog selector", `git rev-parse HEAD@{1}`],
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		["an upstream selector", `git log @{upstream}..HEAD --oneline`],
+		["a brace expansion", `wc -l packages/core/lib/{env,paths}.ts`],
 		["switching branch", `git checkout -b feature/x`],
 		["a conditional", `if test -f AGENTS.md; then head -1 AGENTS.md; fi`],
 		["a scratch directory", `mkdir -p /tmp/scratch && rm -rf /tmp/scratch`],
