@@ -31,10 +31,13 @@ SEQ_LEN = 8
 
 
 def build_reference_encoder() -> MailwomanCoarseEncoder:
-    """A small encoder with every optional head on, built from a fixed seed.
+    """A small encoder with EVERY optional channel and head on, built from a fixed seed.
 
-    The channels are on deliberately: a split that reorders parameter construction shows up as
-    different initial weights, and a channel left out of the fixture cannot catch that.
+    Every flag is on deliberately. Each channel's `nn.Linear` draws from the RNG as it is
+    constructed, so the initial weights encode the construction ORDER — reordering two channels,
+    or building one that the old code skipped, changes every weight downstream of the change. A
+    channel left off in the fixture constructs nothing and cannot catch a reordering that involves
+    it, which is why none are left off.
     """
     torch.manual_seed(0)
     return MailwomanCoarseEncoder(
@@ -53,7 +56,31 @@ def build_reference_encoder() -> MailwomanCoarseEncoder:
         use_phrase_priors=True,
         use_locale_conditioning=True,
         use_postcode_anchor=True,
+        inject_first_token=True,
+        use_gazetteer_anchor=True,
+        use_country_anchor=True,
+        country_ambiguous_scale=0.5,
+        use_street_type_anchor=True,
+        use_locality_surface_anchor=True,
+        use_affix_head=True,
+        use_deploc_head=True,
+        use_conventions_loss_mask=True,
+        use_span_boundary_head=True,
+        span_boundary_loss_weight=0.1,
+        use_span_scorer=True,
+        span_loss_weight=0.1,
     ).eval()
+
+
+def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
+    """A per-parameter sum, which changes if that parameter's initial values change.
+
+    The logits alone do not cover this. The reference forward pass supplies no channel features,
+    so a channel's projection is never invoked and never reaches a logit — a reordered channel
+    passes a logit comparison while every weight after it has shifted. `_init_weights` draws in
+    `self.parameters()` order, and these sums are what make that order observable.
+    """
+    return {name: round(float(p.detach().sum()), 6) for name, p in model.named_parameters()}
 
 
 def reference_logits(model: MailwomanCoarseEncoder) -> list[float]:
@@ -119,3 +146,21 @@ def test_state_dict_keys_match_the_committed_reference() -> None:
     assert actual == expected["state_dict_keys"], (
         "a state-dict key changed; every checkpoint on the volume was written with the old names"
     )
+
+
+def test_parameter_initialization_matches_the_committed_reference() -> None:
+    """Catches a construction reorder, which the logits do not.
+
+    Swapping two soft-feed channels changes what `_init_weights` draws for each and for everything
+    after them, so a from-scratch run stops reproducing earlier ones. Verified by swapping the
+    street-type and locality-surface channels: the logit and key comparisons both stayed green,
+    and these sums moved.
+    """
+    if not REFERENCE.is_file():
+        pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
+    expected = json.loads(REFERENCE.read_text())
+    actual = parameter_checksums(build_reference_encoder())
+
+    assert sorted(actual) == sorted(expected["parameter_checksums"]), "the parameter set changed"
+    drifted = [name for name, total in actual.items() if total != expected["parameter_checksums"][name]]
+    assert drifted == [], f"initial weights moved for {len(drifted)} parameters, starting at {drifted[:3]}"

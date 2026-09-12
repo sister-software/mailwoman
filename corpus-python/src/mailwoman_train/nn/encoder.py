@@ -83,6 +83,27 @@ class _CoarseEncoderOutput:
         self.locale_logits = locale_logits
 
 
+def _soft_feed_channel(
+    enabled: bool,
+    feature_dim: int,
+    hidden_size: int,
+) -> tuple[nn.Linear | None, nn.Parameter | None]:
+    """One soft-feed channel's projection and learned cue vector, or a pair of Nones.
+
+    Five channels (postcode anchor, gazetteer, country lexicon, street type, locality surface)
+    are built the same way and differ only in their feature width. Expressing that five times is
+    how the sixth gets built slightly differently.
+
+    A disabled channel must construct nothing at all, not construct-and-discard. `_init_weights`
+    re-initializes by walking `self.parameters()`, which yields parameters in registration order
+    and draws from the global RNG for each, so an extra registered module shifts the initial
+    weights of every parameter registered after it.
+    """
+    if not enabled:
+        return None, None
+    return nn.Linear(feature_dim, hidden_size, bias=True), nn.Parameter(torch.zeros(hidden_size))
+
+
 class MailwomanCoarseEncoder(nn.Module):
     """Minimal transformer for Stage 1 coarse BIO token classification.
 
@@ -314,35 +335,24 @@ class MailwomanCoarseEncoder(nn.Module):
         else:
             self.phrase_input_projection = None
 
-        # Postcode-anchor projection W ((k+2)→hidden) + the shared learned v_ANCHOR cue. None when
-        # the channel is off (forward skips it → bit-identical to a no-anchor encoder).
-        self.anchor_projection: nn.Linear | None
-        self.anchor_token_embedding: nn.Parameter | None
-        if self.use_postcode_anchor:
-            self.anchor_projection = nn.Linear(self.anchor_feature_dim, hidden_size, bias=True)
-            self.anchor_token_embedding = nn.Parameter(torch.zeros(hidden_size))
-        else:
-            self.anchor_projection = None
-            self.anchor_token_embedding = None
-
-        # Gazetteer-anchor projection W_g (feature_dim→hidden) + learned v_GAZ cue (#464). None when
-        # off (forward skips it → bit-identical to a no-gazetteer encoder).
-        self.gazetteer_projection: nn.Linear | None
-        self.gazetteer_token_embedding: nn.Parameter | None
-        if self.use_gazetteer_anchor:
-            self.gazetteer_projection = nn.Linear(self.gazetteer_feature_dim, hidden_size, bias=True)
-            self.gazetteer_token_embedding = nn.Parameter(torch.zeros(hidden_size))
-        else:
-            self.gazetteer_projection = None
-            self.gazetteer_token_embedding = None
-
-        # Country-lexicon projection W_c (feature_dim→hidden) + learned v_CTRY cue (#1104). None when
-        # off (forward skips it → bit-identical to a no-country encoder).
-        self.country_projection: nn.Linear | None
-        self.country_token_embedding: nn.Parameter | None
+        # The five soft-feed channels: a projection (feature_dim→hidden) plus a learned cue vector
+        # each, or None when the channel is off.
+        #
+        # Do not reorder these. `_init_weights` walks `self.parameters()`, which yields them in
+        # registration order and draws from the global RNG for each, so swapping two channels
+        # changes the initial weights of both and of everything registered after them. A loaded
+        # checkpoint is unaffected (load_state_dict overwrites), but a from-scratch run started
+        # after a reorder no longer reproduces one started before it.
+        self.anchor_projection, self.anchor_token_embedding = _soft_feed_channel(
+            self.use_postcode_anchor, self.anchor_feature_dim, hidden_size
+        )
+        self.gazetteer_projection, self.gazetteer_token_embedding = _soft_feed_channel(
+            self.use_gazetteer_anchor, self.gazetteer_feature_dim, hidden_size
+        )
+        self.country_projection, self.country_token_embedding = _soft_feed_channel(
+            self.use_country_anchor, self.country_feature_dim, hidden_size
+        )
         if self.use_country_anchor:
-            self.country_projection = nn.Linear(self.country_feature_dim, hidden_size, bias=True)
-            self.country_token_embedding = nn.Parameter(torch.zeros(hidden_size))
             # #1104 homograph-guard softener: a per-dim scale applied to country_features BEFORE the
             # projection. Dim 0 (country_surface) stays 1.0; dim 1 (country_ambiguous) scales by
             # country_ambiguous_scale (1.0 = v263 hard guard). A registered buffer so it EXPORTS as a
@@ -352,31 +362,13 @@ class MailwomanCoarseEncoder(nn.Module):
                 scale[1] = self.country_ambiguous_scale
             self.register_buffer("country_feature_scale", scale, persistent=False)
         else:
-            self.country_projection = None
-            self.country_token_embedding = None
             self.country_feature_scale = None
-
-        # Street-type projection W_s (feature_dim→hidden) + learned v_STREET cue (P-A). None when off
-        # (forward skips it → bit-identical to a no-street-type encoder).
-        self.street_type_projection: nn.Linear | None
-        self.street_type_token_embedding: nn.Parameter | None
-        if self.use_street_type_anchor:
-            self.street_type_projection = nn.Linear(self.street_type_feature_dim, hidden_size, bias=True)
-            self.street_type_token_embedding = nn.Parameter(torch.zeros(hidden_size))
-        else:
-            self.street_type_projection = None
-            self.street_type_token_embedding = None
-
-        # Locality-surface projection W_l (feature_dim→hidden) + learned v_LOC cue (v3.16.0). None when
-        # off (forward skips it → bit-identical to a no-locality-surface encoder).
-        self.locality_surface_projection: nn.Linear | None
-        self.locality_surface_token_embedding: nn.Parameter | None
-        if self.use_locality_surface_anchor:
-            self.locality_surface_projection = nn.Linear(self.locality_surface_feature_dim, hidden_size, bias=True)
-            self.locality_surface_token_embedding = nn.Parameter(torch.zeros(hidden_size))
-        else:
-            self.locality_surface_projection = None
-            self.locality_surface_token_embedding = None
+        self.street_type_projection, self.street_type_token_embedding = _soft_feed_channel(
+            self.use_street_type_anchor, self.street_type_feature_dim, hidden_size
+        )
+        self.locality_surface_projection, self.locality_surface_token_embedding = _soft_feed_channel(
+            self.use_locality_surface_anchor, self.locality_surface_feature_dim, hidden_size
+        )
 
         self.blocks = nn.ModuleList(
             [
@@ -392,6 +384,46 @@ class MailwomanCoarseEncoder(nn.Module):
         self.final_ln = nn.LayerNorm(hidden_size)
         self.classifier = nn.Linear(hidden_size, num_labels)
 
+        self._build_heads(
+            hidden_size=hidden_size,
+            num_labels=num_labels,
+            use_conventions_loss_mask=use_conventions_loss_mask,
+            use_affix_head=use_affix_head,
+            use_deploc_head=use_deploc_head,
+            use_span_boundary_head=use_span_boundary_head,
+            span_boundary_loss_weight=span_boundary_loss_weight,
+            use_span_scorer=use_span_scorer,
+            span_loss_weight=span_loss_weight,
+            span_dim=span_dim,
+            max_span=max_span,
+            use_crf=use_crf,
+        )
+
+        self._init_weights()
+
+    def _build_heads(
+        self,
+        *,
+        hidden_size: int,
+        num_labels: int,
+        use_conventions_loss_mask: bool,
+        use_affix_head: bool,
+        use_deploc_head: bool,
+        use_span_boundary_head: bool,
+        span_boundary_loss_weight: float,
+        use_span_scorer: bool,
+        span_loss_weight: float,
+        span_dim: int,
+        max_span: int,
+        use_crf: bool,
+    ) -> None:
+        """The output heads.
+
+        Do not reorder these, and keep the call where it sits in `__init__`. Registration order
+        decides what `_init_weights` draws for each parameter, so a move changes the initial
+        weights of every parameter registered after it and a from-scratch run stops reproducing
+        earlier ones.
+        """
         # Dedicated affix head (#492): MLP over [final hidden ; raw gazetteer 5-dim skip] ->
         # {O, B-street_prefix, I-street_prefix, B-street_suffix, I-street_suffix}. The gaz vector
         # skip-connects PAST the encoder so the head owns the clue->affix mapping (consult
@@ -505,8 +537,6 @@ class MailwomanCoarseEncoder(nn.Module):
         else:
             self.locale_head = None
             self.locale_film = None
-
-        self._init_weights()
 
     def _init_weights(self) -> None:
         """Xavier-style init for linears + small-normal embeddings + LN gamma=1.
