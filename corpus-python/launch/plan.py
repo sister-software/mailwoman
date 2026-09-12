@@ -1,6 +1,6 @@
-"""Turning one corpus-version entry into the commands and checks a sync runs.
+"""Turning one corpus-version entry into the transfers and checks a sync runs.
 
-Pure: no Modal, no network, no filesystem. That is what makes it testable — `launch/sync.py` is the
+Pure: no Modal, no network, no filesystem. That is what makes it testable — `launch/syncs.py` is the
 thin Modal function that runs what this returns, and the parity test calls this directly.
 
 The table holds the PARTS of a command and this assembles them. Storing assembled strings instead
@@ -13,9 +13,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 #: The R2 bucket every source reads from, and the volume mount every destination writes to. Both
-#: appear once here rather than in each of the 137 command strings.
+#: appear once here rather than in each command string, and `launch/app.py` takes them from here
+#: rather than declaring its own.
 BUCKET = "mailwoman-assets"
-VOLUME_MOUNT = "/data"
+VOL_MOUNT = "/data"
 
 # rclone flag sets, named for what they trade. R2 intermittently answers 501, so every set that
 # moves a corpus carries `--low-level-retries 30 --retries 8`; each operation succeeds on a retry.
@@ -99,14 +100,42 @@ class CorpusVersion:
     pycache: tuple[str, ...] = PACKAGE
     checks: tuple[str, ...] = field(default=())
 
+    #: A module and function in the training package that check what `checks` cannot express:
+    #: numbered ranges, conjunctions, file contents. Called as `f(package_root, versioned_root)`,
+    #: answering `{what the check means: whether it holds}`. A country's expectations live in that
+    #: country's package, never here.
+    verifier: tuple[str, str] | None = None
+
+
+@dataclass(frozen=True)
+class Transfer:
+    """One rclone invocation with both endpoints resolved.
+
+    The runner needs the destination on its own, to count what landed — rclone exits 0 on an empty
+    source prefix, so the file count is the only thing that separates "copied nothing" from
+    "copied". Recovering it by splitting `command` would make that check depend on argument order.
+    """
+
+    source: str
+    destination: str
+    flags: str
+
+    @property
+    def command(self) -> str:
+        return f"rclone copy {self.source} {self.destination} {self.flags}"
+
 
 @dataclass(frozen=True)
 class SyncPlan:
-    """The commands to run and the paths to verify, fully resolved."""
+    """The transfers to run and the paths to verify, fully resolved."""
 
-    rclone_commands: list[str]
+    transfers: list[Transfer]
     check_paths: list[str]
     pycache_paths: list[str]
+
+    @property
+    def rclone_commands(self) -> list[str]:
+        return [transfer.command for transfer in self.transfers]
 
 
 def corpus_versions(entry: CorpusVersion) -> list[str]:
@@ -114,13 +143,15 @@ def corpus_versions(entry: CorpusVersion) -> list[str]:
     return [copy.version for copy in entry.copies if copy.version is not None]
 
 
+def resolve(copy: Copy) -> Transfer:
+    """One table row's bucket-relative and volume-relative paths, made absolute."""
+    return Transfer(f":s3:{BUCKET}/{copy.source}", f"{VOL_MOUNT}/{copy.destination}", copy.flags)
+
+
 def plan_sync(entry: CorpusVersion) -> SyncPlan:
-    """Assemble one version's commands and absolute paths."""
+    """Assemble one version's transfers and absolute paths."""
     return SyncPlan(
-        rclone_commands=[
-            f"rclone copy :s3:{BUCKET}/{copy.source} {VOLUME_MOUNT}/{copy.destination} {copy.flags}"
-            for copy in entry.copies
-        ],
-        check_paths=[f"{VOLUME_MOUNT}/{path}" for path in entry.checks],
-        pycache_paths=[f"{VOLUME_MOUNT}/{PACKAGE_ROOT}/{path}" for path in entry.pycache],
+        transfers=[resolve(copy) for copy in entry.copies],
+        check_paths=[f"{VOL_MOUNT}/{path}" for path in entry.checks],
+        pycache_paths=[f"{VOL_MOUNT}/{PACKAGE_ROOT}/{path}" for path in entry.pycache],
     )

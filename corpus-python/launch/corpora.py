@@ -301,6 +301,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             "corpus/versioned/v8-jp-full-2026-08-04/train/part-0007.parquet",
             "corpus/versioned/v8-jp-full-2026-08-04/val/part-0000.parquet",
         ),
+        verifier=("mailwoman_train.countries.cjk.staging", "staged_overlay"),
     ),
     "v8cjk_kana": CorpusVersion(
         copies=(
@@ -371,6 +372,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             corpus("v8-cjk-regs-2026-09-08", FLAT, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
+        verifier=("mailwoman_train.countries.cjk.staging", "staged_registries"),
     ),
     "v8cjk_shi": CorpusVersion(
         copies=(

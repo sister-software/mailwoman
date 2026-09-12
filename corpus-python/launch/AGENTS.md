@@ -1,21 +1,38 @@
 # Modal retrain launch — runbook
 
-Notes for whoever (agent or human) launches a training run on Modal. Read this before touching
-`train_remote.py` or kicking a retrain. The flow has several non-obvious failure points; each failure mode
+Notes for whoever (agent or human) launches a training run on Modal. Read this before touching the
+`launch/` package or kicking a retrain. The flow has several non-obvious failure points; each failure mode
 below has cost a run or hours.
+
+## Run it with `-m`, from `corpus-python/`
+
+```bash
+cd corpus-python
+modal run -m launch.train_remote::<name> [--flag value ...]
+```
+
+**Module mode, never a file path.** `modal run launch/train_remote.py` imports the file as a TOP-LEVEL
+module with `launch/` itself on `sys.path`, so `launch` is unimportable and every `from .x import y` in
+the package raises `ImportError: attempted relative import with no known parent package`. `-m` imports it
+as `launch.train_remote` with the package intact.
+
+`launch/train_remote.py` defines nothing. It imports every module so the one `app` carries every
+function, because `::<name>` resolves against that file's namespace — its docstring has the table of
+what lives where.
 
 ## The flow, in one line
 
 Corpus + configs + tokenizer live in Cloudflare R2 (`mailwoman-assets`) → a **container-side `rclone`**
-in a `sync_*` function pulls them into the `mailwoman-training` Modal Volume (`/data`) → the training
-reads from the volume. The local `.env` carries the R2 creds (`RCLONE_S3_*`); `train_remote.py` loads it
-itself, so `source .env` before `modal run` is not required (but IS required for local `rclone`).
+pulls them into the `mailwoman-training` Modal Volume (`/data`) → the training reads from the volume.
+The local `.env` carries the R2 creds (`RCLONE_S3_*`); `launch/app.py` loads it itself, so `source .env`
+before `modal run` is not required (but IS required for local `rclone`).
 
 ## ⚠️ `modal volume put` is BLIND — never use it for the corpus
 
 Files written via `modal volume put` are visible to `modal volume ls/get` but **NOT to a mounted
 training container**, and `vol.reload()` does not bridge it (verified 2026-06-12 with a marker file).
-Everything must go through **R2 → a container-side `rclone` in a `sync_*` function → `vol.commit()`**.
+Everything must go through **R2 → a container-side `rclone` → `vol.commit()`**. When the bucket refuses
+the token, `stage_v8cjk_regs` does the same container-side write from a local mount instead.
 
 ## Launching a retrain (the v1.6.0-boundary-stress example)
 
@@ -32,17 +49,31 @@ Everything must go through **R2 → a container-side `rclone` in a `sync_*` func
    R2 intermittently returns **501** — ride it with `--low-level-retries 30 --retries 8` (each op
    succeeds on a retry). **Pass rclone flags inline, not via a shell variable** — zsh doesn't word-split
    unquoted vars, so `$FLAGS` arrives as one bogus flag.
-4. **Add a `sync_v0XX`** to `train_remote.py`, mirroring `sync_v050`: rclone `corpus-python/src/` (the
-   config) + the overlay corpus; `shutil.rmtree` the stale `…/mailwoman_train/__pycache__`; `vol.commit()`;
-   then print a verify block (`os.path.isfile` on the config, the MANIFEST, your slice, AND a re-rooted
-   base slice). The base + tokenizer usually persist on the volume from prior runs — don't re-sync the
-   ~30 GB base unless it's actually missing.
-5. **Run the sync:** `modal run corpus-python/launch/train_remote.py::sync_v0XX`. Confirm every verify line is `True`.
+4. **Add a row to `launch/corpora.py`**, not a function. A row names its transfers with `corpus()`,
+   `mirror()` and `file_into()`, the `__pycache__` directories to clear, and the paths that must exist
+   afterwards — the config, the MANIFEST, your slice, AND a re-rooted base slice. The base + tokenizer
+   usually persist on the volume from prior runs, so don't re-transfer the ~30 GB base unless it is
+   actually missing. When a path list cannot say what you need — a numbered range, a file's contents —
+   put that in the country's own `staging.py` and name it in the row's `verifier`.
+
+   While a corpus is still being tried, `sync_assets --corpus-versions <name>` stages it with no row at
+   all. Add the row when it becomes a run somebody will repeat.
+
+5. **Run the sync:** `modal run -m launch.train_remote::sync --version <key>`. It raises naming anything
+   that did not land, so a clean exit is the confirmation.
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
 mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it OUT of the variable
    set; a new tokenizer is a separate, intended change.
-7. **Launch the GPU train (the real spend):**
-   `modal run -d corpus-python/launch/train_remote.py --config <recipe>.yaml --resume none` (detached; A100).
+7. **Launch the GPU train (the real spend).** Through the detached launcher, never from a shell: a
+   `modal run` is a local client whose death cancels the remote input, so a harness that kills the
+   client loses the run. The Bash guard refuses the direct spelling for that reason.
+
+   ```bash
+   node packages/mailwoman/lib/dev-tools/launch-detached.run.ts \
+     --log <file> --cwd corpus-python \
+     -- modal run -d -m launch.train_remote --config <recipe>.yaml --resume none
+   ```
+
 8. **Sanity-check the loss in the first ~300 steps — BEFORE walking away.** `modal app logs <app-id>`;
    `train_loss` must be a normal CE scale (O(1–10)) and **decreasing**. An exploded loss (thousands /
    millions, not falling) means a loss term is `-inf`-ing gold labels. _This bit v1.6.0: the conventions
@@ -75,12 +106,13 @@ eval. (2) `crf_loss_weight` is `0.0`, so `export_crf_transitions()` returns `Non
 no `crf-transitions.json`; production therefore decodes **argmax**, and a check run without it is faithful.
 
 ```bash
+# (from corpus-python/)
 # 1. Export the final checkpoint to fp32 ONNX (writes {output-dir}/model.onnx on the volume)
-modal run corpus-python/launch/train_remote.py::export_onnx \
+modal run -m launch.train_remote::export_onnx \
   --output-dir=/data/output-v160-boundary-stress-s42 --step=40000
 
 # 2. Int8-quantize it (must run in the training image; local ORT trips on the dynamo graph)
-modal run corpus-python/launch/train_remote.py::quantize_onnx \
+modal run -m launch.train_remote::quantize_onnx \
   --fp32-path=/data/output-v160-boundary-stress-s42/model.onnx \
   --int8-path=/data/models/quantized/model-v160-step-40000-int8.onnx
 

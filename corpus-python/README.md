@@ -18,6 +18,11 @@ A module with an `if __name__ == "__main__"` block runs as `python -m mailwoman_
 docstring carries the command, and `test_builder_entry_points` checks that the command names the
 module it is written in.
 
+`launch/` is the second package: the Modal launcher, one module per role, with `launch/AGENTS.md`
+as its runbook. Run it with `-m` from this directory — `modal run -m launch.train_remote::<name>` —
+because a file path puts `launch/` itself on `sys.path` and the package's relative imports then
+fail. `launch/train_remote.py`'s docstring is the table of what each module owns.
+
 The JSONL → Parquet conversion that lived here in Phase 1 was deleted alongside the JS-native
 Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/parquet.ts` —
 `mailwoman corpus build` now writes `.parquet` slices directly with no Python in the loop.
@@ -25,7 +30,7 @@ Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/par
 ## Install
 
 Everything runs under [`uv`](https://docs.astral.sh/uv/); the interpreter is pinned by
-`.python-version` (3.12 — matches `launch/train_remote.py`'s image). Call every tool through
+`.python-version` (3.12 — matches `launch/app.py`'s image). Call every tool through
 `uv run` so it uses the project environment, never a stray system install.
 
 ```sh
