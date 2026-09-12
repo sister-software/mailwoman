@@ -2,10 +2,10 @@
 
 All notable changes are recorded here at a high level. For the full,
 authoritative mapping of **which npm version shipped which model and which
-capabilities**, see [`docs/articles/releases.mdx`](./docs/articles/releases.mdx)
+capabilities**, see [`docs/records/site-2026-08/releases.mdx`](./docs/records/site-2026-08/releases.mdx)
 (rendered at https://mailwoman.ai/releases). Per-release detail
 lives in the [GitHub releases](https://github.com/sister-software/mailwoman/releases)
-and the per-step eval reports under `docs/articles/evals/`.
+and the per-step eval reports under `docs/records/evals/`.
 
 ## Versioning
 

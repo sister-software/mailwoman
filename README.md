@@ -167,7 +167,7 @@ A locale appears here only when a coordinate-graded eval backs it.
 
 The [browser demo](https://mailwoman.ai/demo) carries the same coverage. Full
 receipts live in the [scope declaration](./docs/engineering/SCOPE.mdx) and the [eval
-reports](./docs/articles/evals/).
+reports](./docs/records/evals/).
 
 ## Points of interest, for agents
 
@@ -235,7 +235,7 @@ under the MIT license, and Mailwoman bundles third-party data under its own term
 Mailwoman is a Yarn 4 monorepo: one root package (`mailwoman`) plus the scoped
 `@mailwoman/*` workspaces that compose it. Start with [`AGENTS.md`](./AGENTS.md) for the
 orientation map (workspaces, where to read next, the release pipeline) and
-[`docs/articles/plan/`](./docs/articles/plan/) for the design record.
+[`docs/records/plan/`](./docs/records/plan/) for the design record.
 
 ```bash
 git clone https://github.com/sister-software/mailwoman.git
