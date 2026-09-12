@@ -5261,9 +5261,7 @@ def sync_v8cjk():
         "v8-cjk-full runs bf16 like v8-jp-full": _file_contains(
             f"{package}/configs/v8-cjk-full.yaml", "precision: bf16"
         ),
-        "scorer knows stage3-cjk": _file_contains(
-            f"{VOL_MOUNT}/corpus-python/scripts/score_jp_probe_board.py", '"stage3-cjk"'
-        ),
+        "scorer knows stage3-cjk": _file_contains(f"{package}/evaluation/jp_probe_board.py", '"stage3-cjk"'),
         "stage3-cjk label set": _file_contains(f"{package}/labels.py", '"stage3-cjk"'),
         "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),
         "CN train part": os.path.isfile(f"{overlay}/train/cn-units-0000.parquet"),

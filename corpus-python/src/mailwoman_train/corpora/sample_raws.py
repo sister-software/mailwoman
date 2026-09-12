@@ -19,12 +19,13 @@ from __future__ import annotations
 import argparse
 import random
 import sys
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 
 import pyarrow.parquet as pq
 
 
-def reservoir_sample(it, k: int, rng: random.Random) -> list[str]:
+def reservoir_sample(it: Iterable[str], k: int, rng: random.Random) -> list[str]:
     """Algorithm R reservoir sampler over an iterable of strings."""
     out: list[str] = []
     for i, x in enumerate(it):
@@ -37,7 +38,7 @@ def reservoir_sample(it, k: int, rng: random.Random) -> list[str]:
     return out
 
 
-def iter_raws(corpus_dir: Path, country: str):
+def iter_raws(corpus_dir: Path, country: str) -> Iterator[str]:
     """Yield `raw` strings from every train slice whose row matches `country`."""
     for slice in sorted((corpus_dir / "train").glob("*.parquet")):
         # Column-projected read keeps RSS low even on 1M-row slices.

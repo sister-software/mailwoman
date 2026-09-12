@@ -16,7 +16,7 @@ by the old→new id map with scale/zero-point untouched — kept rows stay byte-
 what makes bar B2 (logit bit-parity) provable rather than approximate. Never prune-then-requantize.
 
 Usage:
-    python corpus-python/scripts/prune_vocab.py \
+    python -m mailwoman_train.tokenizer.vocab_prune \
         --tokenizer neural-weights-en-us/tokenizer.model \
         --onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v401-base-step-060000-int8.onnx \
         --train-counts $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/utilization-v0150-venue.npz \
@@ -52,7 +52,11 @@ def main() -> None:
     vocab_size = sp.get_piece_size()
 
     counts = np.load(args.train_counts)["counts"]
-    assert counts.shape == (vocab_size,), f"counts shape {counts.shape} != vocab {vocab_size}"
+    # These four checks guard artifact SURGERY: each one catches a mismatch that would otherwise
+    # write a tokenizer or a graph whose pieces and embedding rows disagree. `assert` disappears
+    # under `python -O`, which is exactly when a silently wrong artifact would ship.
+    if counts.shape != (vocab_size,):
+        raise ValueError(f"counts shape {counts.shape} != vocab {vocab_size}")
     eval_fired = set(json.loads(Path(args.eval_fired).read_text())["fired_ids"])
 
     keep = np.zeros(vocab_size, dtype=bool)
@@ -63,7 +67,8 @@ def main() -> None:
     # unused / byte). Byte-fallback pieces are type BYTE — kept via the same check.
     proto = sp_pb2.ModelProto()
     proto.ParseFromString(Path(args.tokenizer).read_bytes())
-    assert len(proto.pieces) == vocab_size
+    if len(proto.pieces) != vocab_size:
+        raise ValueError(f"tokenizer has {len(proto.pieces)} pieces, vocab is {vocab_size}")
 
     normal = sp_pb2.ModelProto.SentencePiece.Type.NORMAL
     single_codepoint = 0
@@ -98,8 +103,8 @@ def main() -> None:
     pruned.CopyFrom(proto)
     del pruned.pieces[:]
 
-    for i in kept_ids:
-        pruned.pieces.append(proto.pieces[int(i)])
+    for kept_id in kept_ids:
+        pruned.pieces.append(proto.pieces[int(kept_id)])
 
     tokenizer_out = out_dir / "tokenizer.model"
     tokenizer_out.write_bytes(pruned.SerializeToString())
@@ -111,14 +116,16 @@ def main() -> None:
     for init in model.graph.initializer:
         if init.name == "inner.token_embeddings.weight_quantized":
             table = numpy_helper.to_array(init)
-            assert table.shape[0] == vocab_size, f"embedding rows {table.shape[0]} != vocab {vocab_size}"
+            if table.shape[0] != vocab_size:
+                raise ValueError(f"embedding rows {table.shape[0]} != vocab {vocab_size}")
             new_table = np.ascontiguousarray(table[kept_ids])
             replacement = numpy_helper.from_array(new_table, name=init.name)
             init.CopyFrom(replacement)
             swapped = True
             break
 
-    assert swapped, "embedding initializer not found"
+    if not swapped:
+        raise ValueError("embedding initializer not found; the graph has no table to prune")
     onnx_out = out_dir / "model.onnx"
     onnx.save(model, str(onnx_out))
 

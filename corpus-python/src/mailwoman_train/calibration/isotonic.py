@@ -23,7 +23,7 @@ Honesty guardrails baked in:
 The output table is consumed by the opt-in decoder calibrator (`core/decoder/calibration.ts`).
 
 Usage:
-  python3 corpus-python/scripts/fit-isotonic-calibration.py \
+  python -m mailwoman_train.calibration.isotonic \
     --conf data/eval/calibration/confidences.jsonl \
     --out data/eval/calibration/isotonic-en-us-v4.0.0.json \
     --report docs/articles/evals/calibration/2026-06-07-isotonic-calibration.md \
@@ -33,10 +33,13 @@ Usage:
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[2]
+from ..paths import repo_root_path
+
+REPO = repo_root_path()
 
 
 def pava(y: np.ndarray, w: np.ndarray) -> np.ndarray:
@@ -62,7 +65,7 @@ def pava(y: np.ndarray, w: np.ndarray) -> np.ndarray:
     return out
 
 
-def fit_isotonic(conf: np.ndarray, correct: np.ndarray):
+def fit_isotonic(conf: np.ndarray, correct: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Return (x_sorted, g) — the isotonic step function over confidence. Evaluate via np.interp."""
     order = np.argsort(conf, kind="mergesort")
     xs = conf[order]
@@ -73,10 +76,11 @@ def fit_isotonic(conf: np.ndarray, correct: np.ndarray):
 
 def calibrate(x: np.ndarray, xs: np.ndarray, g: np.ndarray) -> np.ndarray:
     """Apply the isotonic fit to confidences `x` (clamped to the fit range by np.interp)."""
-    return np.interp(x, xs, g)
+    calibrated: np.ndarray = np.interp(x, xs, g)
+    return calibrated
 
 
-def ece(conf: np.ndarray, correct: np.ndarray, n_bins: int) -> tuple[float, float, list[dict]]:
+def ece(conf: np.ndarray, correct: np.ndarray, n_bins: int) -> tuple[float, float, list[dict[str, Any]]]:
     """Expected + Max Calibration Error over equal-width bins. Returns (ECE, MCE, per-bin rows)."""
     edges = np.linspace(0.0, 1.0, n_bins + 1)
     n = len(conf)
@@ -99,7 +103,7 @@ def ece(conf: np.ndarray, correct: np.ndarray, n_bins: int) -> tuple[float, floa
     return e, mce, rows
 
 
-def robust_mce(rows: list[dict], min_n: int = 20) -> float:
+def robust_mce(rows: list[dict[str, Any]], min_n: int = 20) -> float:
     """Max calibration error over bins with at least `min_n` samples — equal-width MCE is otherwise
     dominated by single-sample sparse bins (especially post-isotonic, where calibrated values cluster)."""
     gaps = [abs(r["conf"] - r["acc"]) for r in rows if r["n"] >= min_n and r["conf"] is not None]
@@ -172,8 +176,8 @@ def main() -> None:
     # mis-calibrated; a subgroup needs >=100 eval spans to report (else the ECE is bin noise).
     ev_tag, ev_country = tag[eval_idx], country[eval_idx]
 
-    def group_ece(keys):
-        out = {}
+    def group_ece(keys: np.ndarray) -> dict[str, dict[str, Any]]:
+        out: dict[str, dict[str, Any]] = {}
         for k in sorted(set(keys.tolist())):
             m = keys == k
             if int(m.sum()) < 100:
@@ -241,7 +245,7 @@ def main() -> None:
     print(f"  Brier eval: raw {brier(ev_conf, ev_correct):.4f} → cal {brier(ev_cal, ev_correct):.4f}")
 
     # Self-reported markdown (eval figures must be generated, never hand-typed).
-    def fmt(v):
+    def fmt(v: float | None) -> str:
         return f"{v:.3f}" if v is not None else "—"
 
     lines = []
@@ -284,7 +288,7 @@ def main() -> None:
     )
     lines.append("")
 
-    def reliability_table(title: str, rows: list[dict], label: str) -> None:
+    def reliability_table(title: str, rows: list[dict[str, Any]], label: str) -> None:
         lines.append(f"## Reliability (held-out eval, {title})")
         lines.append("")
         lines.append(f"| confidence bin | n | mean {label} | accuracy | gap |")
@@ -301,7 +305,7 @@ def main() -> None:
     reliability_table("raw confidence", rel_raw, "conf")
     reliability_table("calibrated confidence", rel_cal, "cal")
 
-    def subgroup_table(title: str, groups: dict) -> None:
+    def subgroup_table(title: str, groups: dict[str, dict[str, Any]]) -> None:
         lines.append(f"## ECE by {title} (held-out eval, raw → calibrated)")
         lines.append("")
         lines.append(f"| {title} | n | accuracy | ECE raw | ECE calibrated |")
@@ -336,8 +340,8 @@ def main() -> None:
     lines.append("")
     lines.append("| bin center | calibrated |")
     lines.append("| --- | --- |")
-    for t in table:
-        lines.append(f"| {t['center']:.3f} | {t['calibrated']:.3f} |")
+    for bin_row in table:
+        lines.append(f"| {bin_row['center']:.3f} | {bin_row['calibrated']:.3f} |")
     lines.append("")
     lines.append("## How it's wired")
     lines.append("")

@@ -25,26 +25,10 @@ checkpoint and no torch.
 
 from __future__ import annotations
 
-import importlib.util
-import sys
-from pathlib import Path
-
 import pytest
 
+from mailwoman_train.evaluation import jp_probe_board as scorer
 from mailwoman_train.labels import resolve_label_set
-
-_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "score_jp_probe_board.py"
-
-
-def _load_scorer():
-    spec = importlib.util.spec_from_file_location("score_jp_probe_board", _SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-scorer = _load_scorer()
 
 JP = resolve_label_set("stage3-jp")
 # A tiny stand-in centroid table. The real one is keyed on raw kanji `pref|muni`; the key is opaque

@@ -42,10 +42,10 @@ default from it. ``--label-set stage3`` reproduces the Leg-1 read exactly.
 
 Usage:
   # Leg-1 probe board (unchanged behavior)
-  uv run python scripts/score_jp_probe_board.py --checkpoint <dir-with-pytorch_model.bin>
+  python -m mailwoman_train.evaluation.jp_probe_board --checkpoint <dir-with-pytorch_model.bin>
 
   # Phase-3 full-slice board
-  uv run python scripts/score_jp_probe_board.py --checkpoint <dir> --label-set stage3-jp \
+  python -m mailwoman_train.evaluation.jp_probe_board --checkpoint <dir> --label-set stage3-jp \
       --board $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04/jp-board.jsonl \
       --vocab $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04/char-vocab-jp-full.json \
       --centroids $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-probe/jp-muni-centroids.json
@@ -59,16 +59,14 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import sys
 import unicodedata
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-
-from mailwoman_train.labels import resolve_label_set  # noqa: E402
-from mailwoman_train.paths import data_root_path  # noqa: E402
+from ..labels import resolve_label_set
+from ..paths import data_root_path
 
 #: Resolved when a default is needed, not at import: this module is loaded by path in
 #: `test_jp_board_registers`, where no data root is configured and none is required.
@@ -174,14 +172,14 @@ def decode_spans(raw: str, label_ids: Sequence[int], id_to_label: Mapping[int, s
 
 
 def score_board(
-    rows: Iterable[Mapping],
+    rows: Iterable[Mapping[str, Any]],
     predict: Callable[[str], Sequence[int]],
     centroids: Mapping[str, Sequence[float]],
     *,
     id_to_label: Mapping[int, str],
     resolve_tags: tuple[str, str],
     accept_km: float = ACCEPT_KM,
-) -> dict:
+) -> dict[str, Any]:
     """Run the pre-registered read over ``rows``, plus the per-register split of the same outcomes.
 
     ``predict(raw) -> per-character label ids`` is injected so the arithmetic is testable without a
@@ -304,7 +302,11 @@ def score_board(
 
 
 def format_report(
-    result: Mapping, *, accept_km: float = ACCEPT_KM, check: float = CHECK, all_municipalities: bool = False
+    result: Mapping[str, Any],
+    *,
+    accept_km: float = ACCEPT_KM,
+    check: float = CHECK,
+    all_municipalities: bool = False,
 ) -> str:
     """The printed read. The check line is the blended fraction and nothing else."""
     lines = [
@@ -388,8 +390,8 @@ def main() -> None:
     # (and testable) without the torch install.
     import torch
 
-    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
-    from mailwoman_train.tokenizer.char import encode_row_units, load_char_vocab
+    from ..nn.encoder import MailwomanCoarseEncoder
+    from ..tokenizer.char import encode_row_units, load_char_vocab
 
     label_set = resolve_label_set(args.label_set)
     resolve_tags = RESOLVE_TAGS[args.label_set]
@@ -424,7 +426,8 @@ def main() -> None:
             attention_mask=torch.tensor([enc["attention_mask"]], dtype=torch.long),
             char_ids=torch.tensor([enc["char_ids"]], dtype=torch.long),
         )
-        return out.logits[0].argmax(-1).tolist()
+        ids: list[int] = out.logits[0].argmax(-1).tolist()
+        return ids
 
     rows = [json.loads(ln) for ln in Path(args.board).read_text().splitlines() if ln.strip()]
     with torch.no_grad():

@@ -12,7 +12,7 @@ table to the committed confidences and fails (exit 1) if the held-out calibrated
 needs the confidences dump, which is regenerated, not committed in full).
 
 Usage:
-  python3 corpus-python/scripts/calibration-drift-guard.py \
+  python -m mailwoman_train.calibration.drift_guard \
     --table data/eval/calibration/isotonic-en-us-v4.0.0.json \
     --conf data/eval/calibration/confidences.jsonl [--tolerance 0.02 --seed 20260607]
 """
@@ -24,10 +24,12 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[2]
+from ..paths import repo_root_path
+
+REPO = repo_root_path()
 
 
-def ece(conf, correct, n_bins=15):
+def ece(conf: np.ndarray, correct: np.ndarray, n_bins: int = 15) -> float:
     edges = np.linspace(0.0, 1.0, n_bins + 1)
     n = len(conf)
     if n == 0:

@@ -10,7 +10,7 @@ BITWISE equal. Channel inputs are fed zeros: parity must hold for any channel va
 surgery is sound, and the full-battery bar (B3) covers realistic feeds end-to-end.
 
 Usage:
-    python corpus-python/scripts/verify_prune.py \
+    python -m mailwoman_train.tokenizer.vocab_prune_verify \
         --orig-tokenizer neural-weights-en-us/tokenizer.model \
         --orig-onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v401-base-step-060000-int8.onnx \
         --pruned-dir $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/pruned-v1 \
@@ -28,7 +28,7 @@ from pathlib import Path
 
 import numpy as np
 
-from mailwoman_train.paths import data_root_path
+from ..paths import data_root_path
 
 
 def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, seed: int) -> list[str]:
@@ -135,7 +135,10 @@ def main() -> None:
     for text in logit_texts:
         ids = orig.encode(text)
         mapped = [int(old_to_new[i]) for i in ids]
-        assert -1 not in mapped, f"unmapped id in B2 input: {text!r}"
+        # An unmapped id means the pruned vocabulary dropped a piece this input needs, so the
+        # comparison below would score a graph against inputs it cannot represent.
+        if -1 in mapped:
+            raise ValueError(f"unmapped id in B2 input: {text!r}")
 
         def feeds_for(session_ids: list[int]) -> dict[str, np.ndarray]:
             """Assemble feeds per the model's actual meta: every input is (batch, sequence[, F])."""

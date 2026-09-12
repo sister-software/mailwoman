@@ -43,7 +43,6 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
-import os
 import sys
 import time
 import urllib.error
@@ -52,6 +51,8 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from ..env import private
 
 API_URL = "https://api.deepseek.com/v1/chat/completions"
 DEFAULT_MODEL = "deepseek-v4-flash"
@@ -134,7 +135,21 @@ Constraints:
 """
 
 
-KRYPTONITE_CATEGORIES = [
+def require_api_key() -> str:
+    """The DeepSeek key, or a refusal naming the variable.
+
+    Every generation call needs it, so failing at the first prompt rather than after the seeds are
+    loaded keeps the message next to the cause.
+    """
+    api_key = private().deepseek_api_key
+    if not api_key:
+        raise RuntimeError("DEEPSEEK_API_KEY is not set; generation needs it")
+    return api_key
+
+
+#: One entry per adversarial category: its name, a description the prompt carries verbatim, worked
+#: examples, and the relative share of the generation budget it takes.
+KRYPTONITE_CATEGORIES: list[dict[str, Any]] = [
     {
         "category": "venue-shadow-region",
         "description": "Address with a venue/brand name whose tokens overlap with region abbreviations or names — the venue contains 'NY', 'TX', 'LA', 'CA', etc., but the actual region in the address is elsewhere.",
@@ -250,8 +265,9 @@ def deepseek_call(body: dict[str, Any], api_key: str, max_retries: int = 5) -> d
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=300) as resp:
-                return json.loads(resp.read())
+            with urllib.request.urlopen(req, timeout=300) as resp:  # nosec B310 — the API base is a constant https URL
+                payload: dict[str, Any] = json.loads(resp.read())
+                return payload
         except urllib.error.HTTPError as e:
             if e.code in (429, 500, 502, 503, 504):
                 last_exc = e
@@ -321,7 +337,7 @@ def build_translit_user_prompt(script_label: str, seeds: list[dict[str, Any]]) -
 
 
 def emit_transliteration(args: argparse.Namespace) -> None:
-    api_key = os.environ["DEEPSEEK_API_KEY"]
+    api_key = require_api_key()
     # Load seeds
     seeds: list[dict[str, Any]] = []
     for path in args.seed_paths:
@@ -375,7 +391,7 @@ def emit_transliteration(args: argparse.Namespace) -> None:
     canonical_f = open(canonical_path, "a", encoding="utf-8")
     rawlog_f = open(rawlog_path, "a", encoding="utf-8")
 
-    stats = Counter()
+    stats: Counter[str] = Counter()
     t0 = time.time()
     processed = 0
 
@@ -396,7 +412,7 @@ def emit_transliteration(args: argparse.Namespace) -> None:
         content = resp["choices"][0]["message"].get("content") or ""
         finish = resp["choices"][0].get("finish_reason")
         rows = parse_jsonl_response(content)
-        bstats = Counter()
+        bstats: Counter[str] = Counter()
         out_rows = []
         # Map response row by index, fall back to position.
         for rec_idx, rec in enumerate(rows):
@@ -522,7 +538,7 @@ def build_kryptonite_user_prompt(category: dict[str, Any], n: int) -> str:
 
 
 def emit_kryptonite(args: argparse.Namespace) -> None:
-    api_key = os.environ["DEEPSEEK_API_KEY"]
+    api_key = require_api_key()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     canonical_path = out_dir / "canonical-kryptonite.jsonl"
@@ -532,17 +548,18 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
     # Total to generate.
     total = args.target_count
     # Allocate per category by weight.
-    weights = [c["weight"] for c in KRYPTONITE_CATEGORIES]
+    weights = [float(c["weight"]) for c in KRYPTONITE_CATEGORIES]
     wsum = sum(weights)
     per_cat = {
-        c["category"]: max(50, round(total * w / wsum)) for c, w in zip(KRYPTONITE_CATEGORIES, weights, strict=True)
+        str(c["category"]): max(50, round(total * w / wsum))
+        for c, w in zip(KRYPTONITE_CATEGORIES, weights, strict=True)
     }
     print(f"per-category target row counts: {per_cat}", flush=True)
 
     # Compose batches.
     batches = []
     for cat in KRYPTONITE_CATEGORIES:
-        need = per_cat[cat["category"]]
+        need = per_cat[str(cat["category"])]
         nb = (need + args.batch_size - 1) // args.batch_size
         for bi in range(nb):
             this_n = min(args.batch_size, need - bi * args.batch_size)
@@ -562,7 +579,7 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
     ck_lock = __import__("threading").Lock()
     canonical_f = open(canonical_path, "a", encoding="utf-8")
     rawlog_f = open(rawlog_path, "a", encoding="utf-8")
-    stats = Counter()
+    stats: Counter[str] = Counter()
     t0 = time.time()
     processed = 0
 
@@ -584,7 +601,7 @@ def emit_kryptonite(args: argparse.Namespace) -> None:
         content = resp["choices"][0]["message"].get("content") or ""
         finish = resp["choices"][0].get("finish_reason")
         rows = parse_jsonl_response(content)
-        bstats = Counter()
+        bstats: Counter[str] = Counter()
         out_rows = []
         for rec_idx, rec in enumerate(rows):
             raw = rec.get("raw")

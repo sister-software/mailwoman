@@ -25,9 +25,9 @@ from pathlib import Path
 import sentencepiece as spm
 import torch
 
-from mailwoman_train.labels import ID_TO_LABEL
-from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
-from mailwoman_train.nn.span_scorer import SEGMENT_TYPES
+from ..labels import ID_TO_LABEL
+from ..nn.encoder import MailwomanCoarseEncoder
+from ..nn.span_scorer import SEGMENT_TYPES
 
 # The street FAMILY, matching mailwoman/eval-harness/parity-corpus.ts PARITY_FLOORS.
 STREET_TYPES = {"street", "street_prefix", "street_prefix_particle", "street_suffix"}
@@ -111,7 +111,11 @@ def main() -> int:
             [i for i, lab in enumerate(bio) if lab != "O" and lab.split("-", 1)[1] in STREET_TYPES],
         )
 
-        # seg@1 — the semi-Markov argmax segmentation over street-family segments.
+        # seg@1 — the semi-Markov argmax segmentation over street-family segments. A checkpoint
+        # without a span scorer has nothing to decode, and reporting it as a zero score would read
+        # as a model that failed rather than one this check does not apply to.
+        if model.semi_crf is None:
+            raise RuntimeError("this checkpoint has no span scorer; seg@1 needs one to decode")
         segmentation = model.semi_crf.decode(out.span_scores, mask.sum(dim=1).long())[0]
         seg_street = _join_runs(
             text,

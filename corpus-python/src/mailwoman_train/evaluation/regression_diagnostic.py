@@ -21,10 +21,7 @@ random samples per bucket.
 
 # Usage
 
-    python -m mailwoman_train  # no — this isn't a CLI subcommand. Run directly:
-
-    PATH="$HOME/training-venv/bin:$PATH" \\
-      ~/training-venv/bin/python corpus-python/scripts/diagnose_regression.py \\
+    python -m mailwoman_train.evaluation.regression_diagnostic \\
       --config corpus-python/src/mailwoman_train/configs/<config>.yaml \\
       --checkpoint /data/models/checkpoints/<run>/step-XXXXX \\
       --golden-dir data/eval/golden/v0.1.2 \\
@@ -33,7 +30,7 @@ random samples per bucket.
 
 The ``--tags`` arg accepts any comma-separated subset of ACTIVE_TAGS (default:
 all of them). The ``--checkpoint`` arg expects a directory containing the
-``pytorch_model.bin`` + ``config.json`` written by ``train.py``.
+``pytorch_model.bin`` + ``config.json`` the training loop writes.
 
 # v0.4.0 reference distributions (source-only step-2200 vs golden v0.1.2)
 
@@ -70,23 +67,15 @@ import random
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 import torch
 
-# Repo layout: this script lives in corpus-python/scripts/. Add corpus-python/src
-# to path so the mailwoman_train package imports without an editable-install.
-_HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(_HERE.parent / "src"))
-
-from mailwoman_train.config import load_config  # noqa: E402
-from mailwoman_train.evaluation.evaluate import (  # noqa: E402
-    decode_components,
-    golden_to_bio_labels,
-    load_golden_dir,
-)
-from mailwoman_train.labels import ACTIVE_TAGS  # noqa: E402
-from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
-from mailwoman_train.tokenizer import Tokenizer  # noqa: E402
+from ..config import load_config
+from ..labels import ACTIVE_TAGS
+from ..nn.encoder import MailwomanCoarseEncoder
+from ..tokenizer import Tokenizer
+from .evaluate import decode_components, golden_to_bio_labels, load_golden_dir
 
 
 def classify_error(raw: str, gold: str, pred: str, tag: str) -> str:
@@ -125,8 +114,8 @@ def parse_tags(tags_arg: str | None) -> tuple[str, ...]:
     return tuple(out)
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+def main() -> None:
+    ap = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     ap.add_argument("--config", required=True, help="Path to the YAML config used for the run.")
     ap.add_argument("--checkpoint", required=True, help="Path to the checkpoint directory.")
     ap.add_argument(
@@ -157,8 +146,8 @@ def main():
     golden = load_golden_dir(Path(args.golden_dir))
     print(f"loaded {len(golden)} golden entries", file=sys.stderr)
 
-    fps: dict[str, list] = {tag: [] for tag in target_tags}
-    fns: dict[str, list] = {tag: [] for tag in target_tags}
+    fps: dict[str, list[Any]] = {tag: [] for tag in target_tags}
+    fns: dict[str, list[Any]] = {tag: [] for tag in target_tags}
 
     with torch.no_grad():
         for entry in golden:
@@ -189,7 +178,7 @@ def main():
         print(f"\n=== TAG: {tag} ===")
         for kind, bucket in (("FALSE POSITIVES", fps[tag]), ("FALSE NEGATIVES", fns[tag])):
             counts: dict[str, int] = {}
-            samples_by: dict[str, list] = {}
+            samples_by: dict[str, list[Any]] = {}
             for entry, g, p, cat in bucket:
                 counts[cat] = counts.get(cat, 0) + 1
                 samples_by.setdefault(cat, []).append((entry, g, p))

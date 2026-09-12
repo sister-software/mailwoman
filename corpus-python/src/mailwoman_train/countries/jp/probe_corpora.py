@@ -32,7 +32,7 @@ builder reads the parquet (pyarrow, row-group streaming) in the workspace whose 
 result. Provenance and licensing follow the parquet's own sources column (OA/MLIT).
 
 Usage:
-  uv run python scripts/build_jp_probe_slice.py \
+  python -m mailwoman_train.countries.jp.probe_corpora \
       [--train-rows 200000] [--val-rows 4000] [--board-rows 2000] [--seed 42] \
       [--postcode-fraction 0.30] [--out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-probe]
 """
@@ -43,18 +43,16 @@ import argparse
 import hashlib
 import json
 import random
-import sys
 import unicodedata
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-
-from mailwoman_train.paths import data_root_path  # noqa: E402
-from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab  # noqa: E402
+from ...paths import data_root_path
+from ...tokenizer.char import build_char_vocab, save_char_vocab
 
 #: Resolved when a default is needed, not at import, so `--help` runs with no data root configured.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
@@ -108,10 +106,11 @@ def load_kenall_postcodes(path: Path) -> dict[str, str]:
 
 
 def muni_bucket(muni: str) -> int:
-    return int(hashlib.md5(norm_key(muni).encode("utf-8")).hexdigest(), 16) % 100
+    # md5 is a stable bucketing hash here, never a security digest (bandit B324).
+    return int(hashlib.md5(norm_key(muni).encode("utf-8"), usedforsecurity=False).hexdigest(), 16) % 100
 
 
-def render_row(pref: str, muni: str, street: str | None, number: str | None, postcode: str | None) -> dict:
+def render_row(pref: str, muni: str, street: str | None, number: str | None, postcode: str | None) -> dict[str, Any]:
     """Concatenate fields large-to-small, recording each field's span as it lands."""
     raw = ""
     starts: list[int] = []
@@ -188,11 +187,11 @@ def main() -> None:
     # region Pass 1: per-prefecture reservoirs (train/val pool) + board reservoir.
 
     per_pref_cap = 3 * ((args.train_rows + args.val_rows) // 47)
-    pool: dict[str, list[dict]] = {}
+    pool: dict[str, list[dict[str, Any]]] = {}
     pool_seen: Counter[str] = Counter()
-    board_res: list[dict] = []
+    board_res: list[dict[str, Any]] = []
     board_seen = 0
-    dropped = Counter()
+    dropped: Counter[str] = Counter()
 
     pf = pq.ParquetFile(args.parquet)
     cols = ["address_levels", "street", "number", "lon", "lat"]
@@ -241,7 +240,7 @@ def main() -> None:
     for res in pool.values():
         rng.shuffle(res)
     order = sorted(pool)
-    draw: list[dict] = []
+    draw: list[dict[str, Any]] = []
     target = args.train_rows + args.val_rows
     idx = {p: 0 for p in order}
     while len(draw) < target:
@@ -263,7 +262,7 @@ def main() -> None:
     out_dir = Path(args.out_dir)
     kenall_hit = kenall_miss = 0
 
-    def encode(rows: list[dict], with_postcode: bool) -> list[dict]:
+    def encode(rows: list[dict[str, Any]], with_postcode: bool) -> list[dict[str, Any]]:
         nonlocal kenall_hit, kenall_miss
         encoded = []
         for r in rows:

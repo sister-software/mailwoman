@@ -23,7 +23,7 @@ not FR-grade surface disjointness. The reserved-surface list is still emitted fo
 builders.
 
 Usage:
-  uv run python scripts/build_de_fragment_board.py [--per-class 400] [--seed 42] \
+  python -m mailwoman_train.countries.de.fragment_board [--per-class 400] [--seed 42] \
       [--out mailwoman/eval-harness/fixtures/overture-fragments-de.jsonl]
 """
 
@@ -35,10 +35,11 @@ import random
 import re
 import unicodedata
 from pathlib import Path
+from typing import Any
 
 import pyarrow.parquet as pq
 
-from mailwoman_train.paths import data_root_path
+from ...paths import data_root_path
 
 #: Resolved when a default is needed, not at import.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-de.parquet")
@@ -100,11 +101,11 @@ def main() -> None:
         return False
 
     # Seeded per-class reservoirs; one street surface appears at most once per class.
-    res: dict[str, list[dict]] = {k: [] for k in KLASSES}
+    res: dict[str, list[dict[str, Any]]] = {k: [] for k in KLASSES}
     seen_counts: dict[str, int] = {k: 0 for k in KLASSES}
     seen_surfaces: dict[str, set[str]] = {k: set() for k in KLASSES}
 
-    def offer(klass: str, row: dict, dedupe_key: str) -> None:
+    def offer(klass: str, row: dict[str, Any], dedupe_key: str) -> None:
         if dedupe_key in seen_surfaces[klass]:
             return
         seen_surfaces[klass].add(dedupe_key)

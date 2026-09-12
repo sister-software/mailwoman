@@ -56,11 +56,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import subprocess
+import subprocess  # nosec B404 — spawns external toolchain binaries by design (git for provenance stamps)
 import sys
 import tempfile
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 try:
     import sentencepiece as spm
@@ -93,7 +94,7 @@ def iter_lines(source: Path | None) -> Iterable[str]:
 def git_commit() -> str | None:
     """Best-effort: return the current HEAD SHA, or None if not a git checkout."""
     try:
-        out = subprocess.check_output(
+        out = subprocess.check_output(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary
             ["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent, stderr=subprocess.DEVNULL
         )
         return out.decode("utf-8").strip()
@@ -109,7 +110,7 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def train(input_path: Path, output_dir: Path, version: str) -> dict:
+def train(input_path: Path, output_dir: Path, version: str) -> dict[str, Any]:
     """Train SentencePiece and persist the model + META.json."""
     output_dir.mkdir(parents=True, exist_ok=True)
     model_prefix = output_dir / "tokenizer"

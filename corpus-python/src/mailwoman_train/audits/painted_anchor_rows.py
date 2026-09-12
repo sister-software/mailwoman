@@ -18,7 +18,7 @@ WHAT IT EXERCISES. The real train-side code, not a re-implementation:
 skipped is the char->piece projection, which cannot turn a painted row into an unpainted one (it
 copies per-char values onto pieces).
 
-    python3 corpus-python/scripts/count_painted_anchor_rows.py \
+    python -m mailwoman_train.audits.painted_anchor_rows \
       --lookup $MAILWOMAN_DATA_ROOT/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json \
       --slice $MAILWOMAN_DATA_ROOT/corpus/slices/synth-gb-v1.jsonl \
       --limit 100000
@@ -30,14 +30,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-
-from mailwoman_train.data.loader import load_anchor_lookup  # noqa: E402
-from mailwoman_train.features.postcode_shapes import collect_matches  # noqa: E402
-from mailwoman_train.tokenizer import ANCHOR_FEATURE_DIM, _paint_anchor_chars  # noqa: E402
+from ..data.loader import load_anchor_lookup
+from ..features.postcode_shapes import collect_matches
+from ..tokenizer import ANCHOR_FEATURE_DIM
+from ..tokenizer.anchors import _paint_anchor_chars
 
 
 def count_slice(

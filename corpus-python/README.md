@@ -3,14 +3,20 @@
 Python helpers for the Mailwoman pipeline. **Not** a Yarn workspace — has its own
 `pyproject.toml` and runs under `uv` (Python 3.12, pinned by `.python-version`), never from Node.
 
-Two Python responsibilities now live here:
+Everything is one package, `src/mailwoman_train/`, laid out by role:
 
-1. **Tokenizer training** (`scripts/train_tokenizer.py`) — Phase 1: trains a SentencePiece
-   unigram model on a balanced US/FR sample of `raw` strings; writes `tokenizer.model` +
-   `tokenizer.vocab` + `META.json` to `/data/models/tokenizer/v<version>/`.
-2. **Model training** (`src/mailwoman_train/`, invoked via `python -m mailwoman_train …`) —
-   Phase 2: end-to-end train → eval → ONNX export → int8 quantize → weights-package assembly
-   for the Stage 1 coarse token-classification model.
+- **`cli/commands/`** — one module per subcommand of `python -m mailwoman_train`: the pipeline
+  from train through eval, ONNX export, int8 quantize and weights-package assembly.
+- **`countries/<code>/`** — what one country contributes, and nothing another country reads. A
+  country with its own corpus builder and label set is in `countries.COUNTRY_MODULES`; one that
+  only contributes source readers is in `SOURCE_ONLY`.
+- **`corpora/`, `data/`, `text/`, `tokenizer/`, `features/`, `nn/`, `optim/`, `train/`,
+  `evaluation/`, `export/`, `audits/`, `calibration/`, `observability/`** — the shared machinery,
+  one directory per role.
+
+A module with an `if __name__ == "__main__"` block runs as `python -m mailwoman_train.<path>`; its
+docstring carries the command, and `test_builder_entry_points` checks that the command names the
+module it is written in.
 
 The JSONL → Parquet conversion that lived here in Phase 1 was deleted alongside the JS-native
 Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/parquet.ts` —
@@ -46,8 +52,8 @@ project environment and the `pyproject.toml` config:
 
 - **Ruff** (`uv run ruff`) — lint **and** format in one tool; the Python counterpart of the
   repo's `oxlint` + `oxfmt`. Config: `[tool.ruff]`.
-- **mypy** (`uv run mypy`) — `--strict` typing over `src/` (the shipped library; `modal/`
-  and `scripts/` move under the check as they clean up). Config: `[tool.mypy]`.
+- **mypy** (`uv run mypy`) — `--strict` typing over `src/`, at zero errors. `modal/` stays outside
+  it. Config: `[tool.mypy]`.
 - **bandit** (`uv run bandit -r src`) — security/static analysis. Config: `[tool.bandit]`.
 - **pytest** (`uv run pytest`) — the corpus test suite.
 
@@ -88,11 +94,11 @@ firmware hangs in fused attention paths. See `DECISIONS.md` for the full rationa
 Empirical batch envelope on gfx1103: micro-batch ≤64 bf16 stable, ≥96 hangs.
 `configs/stage1-coarse.yaml` ships with `batch_size=64`, `grad_accum_steps=2` (effective 128).
 
-## Scripts (`scripts/`)
+## `scripts/`
 
-- `train_tokenizer.py` — SentencePiece training entrypoint (see Phase 1 docstring).
-- `sample_balanced_raws.py` — Pull a balanced per-country `raw` sample from a corpus directory
-  via PyArrow reservoir sampling. Used to feed `train_tokenizer.py`.
+One Python file, and it stays out of the package on purpose. `verify_toolchain.py` imports only
+the standard library, and the pre-commit hook plus `package.json` invoke it as bare `python3`;
+folding it in would make a commit depend on a synced virtual environment.
 
 ## Phase 2 training CLI (`mailwoman_train`)
 

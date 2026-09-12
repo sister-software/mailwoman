@@ -10,16 +10,13 @@ Norway guard) so the two failure classes don't blur.
 from __future__ import annotations
 
 import dataclasses
-import sys
-from pathlib import Path
 
 import yaml
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from ..config import Config, load_config
+from ..paths import package_path
 
-from mailwoman_train.config import Config, load_config  # noqa: E402
-
-CONFIGS_DIR = Path(__file__).resolve().parent.parent / "src" / "mailwoman_train" / "configs"
+CONFIGS_DIR = package_path("configs")
 
 
 def audit_keys(node: object, schema: type, prefix: str, junk: list[str]) -> None:
