@@ -313,7 +313,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
             "corpus-python/src/mailwoman_train/configs/v8-cjk-kana.yaml",
-            "corpus-python/src/mailwoman_train/countries/jp/corpora.py",
+            "corpus-python/src/mailwoman_train/countries/jp/corpora/__init__.py",
             "corpus/versioned/v8-cjk-kana-2026-09-06/MANIFEST.json",
             "corpus/versioned/v8-cjk-kana-2026-09-06/char-vocab-cjk.json",
             "corpus/versioned/v8-cjk-kana-2026-09-06/train/cn-units-0000.parquet",
@@ -384,7 +384,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
             "corpus-python/src/mailwoman_train/configs/v8-cjk-shi.yaml",
-            "corpus-python/src/mailwoman_train/countries/jp/corpora.py",
+            "corpus-python/src/mailwoman_train/countries/jp/corpora/__init__.py",
             "corpus/versioned/v8-cjk-shi-2026-09-06/MANIFEST.json",
             "corpus/versioned/v8-cjk-shi-2026-09-06/char-vocab-cjk.json",
             "corpus/versioned/v8-jp-shi-2026-09-06/jp-board.jsonl",

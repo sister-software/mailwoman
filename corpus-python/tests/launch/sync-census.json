@@ -302,7 +302,7 @@
 	"sync_v8cjk_kana": {
 		"check_paths": [
 			"/data/corpus-python/src/mailwoman_train/configs/v8-cjk-kana.yaml",
-			"/data/corpus-python/src/mailwoman_train/countries/jp/corpora.py",
+			"/data/corpus-python/src/mailwoman_train/countries/jp/corpora/__init__.py",
 			"/data/corpus/versioned/v8-cjk-kana-2026-09-06/MANIFEST.json",
 			"/data/corpus/versioned/v8-cjk-kana-2026-09-06/char-vocab-cjk.json",
 			"/data/corpus/versioned/v8-cjk-kana-2026-09-06/train/cn-units-0000.parquet",
@@ -382,7 +382,7 @@
 	"sync_v8cjk_shi": {
 		"check_paths": [
 			"/data/corpus-python/src/mailwoman_train/configs/v8-cjk-shi.yaml",
-			"/data/corpus-python/src/mailwoman_train/countries/jp/corpora.py",
+			"/data/corpus-python/src/mailwoman_train/countries/jp/corpora/__init__.py",
 			"/data/corpus/versioned/v8-cjk-shi-2026-09-06/MANIFEST.json",
 			"/data/corpus/versioned/v8-cjk-shi-2026-09-06/char-vocab-cjk.json",
 			"/data/corpus/versioned/v8-jp-shi-2026-09-06/jp-board.jsonl",
