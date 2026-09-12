@@ -1,151 +1,28 @@
-"""Training-time augmentation: expand abbreviations to teach token equivalence.
+"""Editing one row's text without losing what the text carried.
 
-Four augmentations, applied independently with configurable probability:
-
-1. **Directional expansion**: "NW" → "Northwest", "SE" → "Southeast", etc.
-   Teaches the model that both abbreviated and expanded directionals are the same
-   component, without requiring inference-time normalization.
-
-2. **Region-abbreviation expansion**: "NY" → "New York", "CA" → "California", etc.
-   Only US state abbreviations for now. Teaches the model that "NY" and "New York"
-   are both B-region, improving locality/region disambiguation.
-
-3. **Region+postcode glue** (#513): "NY 14201" → "NY14201" in ``raw`` ONLY — the
-   ``tokens`` + ``labels`` lists stay split. ``whitespace_spans`` locates tokens by
-   substring search (no whitespace requirement), so the char-offset piece projection
-   still lands B-region on the letter pieces and B/I-postcode on the digit pieces of
-   the fused surface. Teaches the model to split the fused token at the SP-piece
-   level (the v4.3.0 "glue" regression class).
-
-The expansion augmentations SPLICE the expansion into ``raw`` at the token's char
-range (located via ``whitespace_spans``, same as the glue) AND update the tokens +
-labels lists to match; the expanded form inherits the original token's BIO label
-(B- for the first word, I- for continuation words). The glue augmentation mutates
-``raw`` alone. No augmentation ever rebuilds ``raw`` from the token list — a
-``" ".join(tokens)`` rebuild destroys whatever the tokens don't carry (newlines,
-double spaces) and re-quantizes spans to token boundaries (a trailing comma inside
-a ``"123,"`` token would get absorbed into the po_box span). v0.5.0 (#519) makes
-that punctuation essential, so every augmented copy must keep the source raw's
-characters except for the deliberate edit (PR #534 open question 3).
+Every augmentation here SPLICES: it replaces a character range in ``raw`` and re-targets the token
+list, the label list and the char-offset span triple to match. No augmentation rebuilds ``raw``
+from the token list — a ``" ".join(tokens)`` rebuild destroys whatever the tokens do not carry
+(newlines, double spaces) and re-quantizes spans to token boundaries, so a trailing comma inside a
+``"123,"`` token would get absorbed into the po_box span. v0.5.0 (#519) makes that punctuation
+essential, so every augmented copy keeps the source raw's characters except for the deliberate
+edit (PR #534 open question 3).
 
 **Char-offset spans** (#519, v0.5.0): rows from a v0.5.0 corpus carry
-``span_starts``/``span_ends``/``span_tags`` beside tokens/labels, and every augmented COPY this
-module yields must re-target them by the same splice arithmetic — offsets after the edit shift by
-the replacement's length delta, a span containing the edit grows/shrinks at its end, and a span
-boundary falling strictly INSIDE the edited token is impossible to re-target (the
-replaced surface no longer exists) and raises loudly. Yielding a mutated raw with the source
-row's spans would corrupt the labels silently — the exact hazard that put the augmentation
-re-target in the same change as the loader wiring. Rows without spans (frozen pre-v0.5.0
-corpora) pass through the legacy token path unchanged; a PARTIAL triple raises.
+``span_starts``/``span_ends``/``span_tags`` beside tokens/labels, and every augmented COPY must
+re-target them by the same splice arithmetic — offsets after the edit shift by the replacement's
+length delta, a span containing the edit grows/shrinks at its end, and a span boundary falling
+strictly INSIDE the edited token is impossible to re-target (the replaced surface no longer exists)
+and raises loudly. Yielding a mutated raw with the source row's spans would corrupt the labels
+silently. Rows without spans (frozen pre-v0.5.0 corpora) pass through the legacy token path
+unchanged; a PARTIAL triple raises.
 """
 
 from __future__ import annotations
 
-import random
-from collections.abc import Iterator
 from typing import Any, cast
 
-from ..tokenizer import whitespace_spans
-
-# US directional abbreviations → expanded forms.
-DIRECTIONALS: dict[str, str] = {
-    "N": "North",
-    "S": "South",
-    "E": "East",
-    "W": "West",
-    "NE": "Northeast",
-    "NW": "Northwest",
-    "SE": "Southeast",
-    "SW": "Southwest",
-}
-
-# Ordinal street names, both directions ("5th" ↔ "Fifth") — the 8.2.0 pre-ship metamorphic catch:
-# "350 Fifth Ave, New York, NY" (the Empire State Building) lost its locality while the digit form
-# parsed clean. The num-ordinal BAND relation is a stated product invariant (gauntlet metamorphic);
-# teach the equivalence instead of hoping for it. First..Tenth covers the overwhelming mass of US
-# ordinal streets; applied ONLY to street-family-labeled tokens (a "5th" unit/floor is not a street).
-ORDINAL_STREETS: dict[str, str] = {
-    "1st": "First",
-    "2nd": "Second",
-    "3rd": "Third",
-    "4th": "Fourth",
-    "5th": "Fifth",
-    "6th": "Sixth",
-    "7th": "Seventh",
-    "8th": "Eighth",
-    "9th": "Ninth",
-    "10th": "Tenth",
-    "First": "1st",
-    "Second": "2nd",
-    "Third": "3rd",
-    "Fourth": "4th",
-    "Fifth": "5th",
-    "Sixth": "6th",
-    "Seventh": "7th",
-    "Eighth": "8th",
-    "Ninth": "9th",
-    "Tenth": "10th",
-}
-
-_STREET_FAMILY_LABELS = frozenset(
-    ("B-street", "I-street", "B-street_prefix", "I-street_prefix", "B-street_suffix", "I-street_suffix")
-)
-
-# US state abbreviations → full names. Only unambiguous 2-letter codes.
-US_STATES: dict[str, str] = {
-    "AL": "Alabama",
-    "AK": "Alaska",
-    "AZ": "Arizona",
-    "AR": "Arkansas",
-    "CA": "California",
-    "CO": "Colorado",
-    "CT": "Connecticut",
-    "DE": "Delaware",
-    "FL": "Florida",
-    "GA": "Georgia",
-    "HI": "Hawaii",
-    "ID": "Idaho",
-    "IL": "Illinois",
-    "IN": "Indiana",
-    "IA": "Iowa",
-    "KS": "Kansas",
-    "KY": "Kentucky",
-    "LA": "Louisiana",
-    "ME": "Maine",
-    "MD": "Maryland",
-    "MA": "Massachusetts",
-    "MI": "Michigan",
-    "MN": "Minnesota",
-    "MS": "Mississippi",
-    "MO": "Missouri",
-    "MT": "Montana",
-    "NE": "Nebraska",
-    "NV": "Nevada",
-    "NH": "New Hampshire",
-    "NJ": "New Jersey",
-    "NM": "New Mexico",
-    "NY": "New York",
-    "NC": "North Carolina",
-    "ND": "North Dakota",
-    "OH": "Ohio",
-    "OK": "Oklahoma",
-    "OR": "Oregon",
-    "PA": "Pennsylvania",
-    "RI": "Rhode Island",
-    "SC": "South Carolina",
-    "SD": "South Dakota",
-    "TN": "Tennessee",
-    "TX": "Texas",
-    "UT": "Utah",
-    "VT": "Vermont",
-    "VA": "Virginia",
-    "WA": "Washington",
-    "WV": "West Virginia",
-    "WI": "Wisconsin",
-    "WY": "Wyoming",
-    "DC": "District of Columbia",
-}
-
+from ...tokenizer import whitespace_spans
 
 SPAN_KEYS = ("span_starts", "span_ends", "span_tags")
 
@@ -411,95 +288,3 @@ def upper_case_row(row: dict[str, Any]) -> dict[str, Any] | None:
     if upper == raw:
         return None
     return {**row, "raw": upper, "tokens": [t.upper() for t in row["tokens"]]}
-
-
-def augment_row(
-    row: dict[str, Any],
-    rng: random.Random,
-    directional_prob: float = 0.3,
-    region_prob: float = 0.3,
-    glue_prob: float = 0.0,
-    case_prob: float = 0.0,
-    punct_drop_prob: float = 0.0,
-    upper_case_prob: float = 0.0,
-    ordinal_prob: float = 0.0,
-) -> Iterator[dict[str, Any]]:
-    """Yield the original row, then optionally an augmented copy.
-
-    Each augmentation fires independently with its configured probability. When an
-    augmentation fires, a COPY of the row is yielded with the expansion applied.
-    The original row is always yielded first, unchanged.
-    """
-    yield row
-
-    tokens: list[str] = row["tokens"]
-    labels: list[str] = row["labels"]
-
-    # Directional expansion: find directional tokens and expand one.
-    if rng.random() < directional_prob:
-        directional_indices = [i for i, t in enumerate(tokens) if t in DIRECTIONALS]
-        if directional_indices:
-            idx = rng.choice(directional_indices)
-            yield splice_expansion(row, idx, DIRECTIONALS[tokens[idx]])
-
-    # Ordinal-street swap ("5th" ↔ "Fifth"): street-family labels only. The prob guard keeps the
-    # rng stream bit-identical for configs that leave the knob at 0 (every recipe before v3.24).
-    if ordinal_prob > 0 and rng.random() < ordinal_prob:
-        ordinal_indices = [
-            i
-            for i, (t, lab) in enumerate(zip(tokens, labels, strict=True))
-            if t in ORDINAL_STREETS and lab in _STREET_FAMILY_LABELS
-        ]
-        if ordinal_indices:
-            idx = rng.choice(ordinal_indices)
-            yield splice_expansion(row, idx, ORDINAL_STREETS[tokens[idx]])
-
-    # Region+postcode glue (#513): fuse the last region token with an immediately-following
-    # postcode token in raw. Letter→digit boundary only — that's the boundary SentencePiece
-    # is guaranteed to split (the eval's glue class); letter→letter fusions (e.g. GB outcodes)
-    # could yield a piece straddling the label boundary, which the char projection cannot
-    # represent (first-char label wins). The prob guard keeps the rng stream bit-identical
-    # for configs that leave the knob at 0.
-    if glue_prob > 0 and rng.random() < glue_prob:
-        glue_indices = [
-            i
-            for i in range(len(tokens) - 1)
-            if labels[i] in ("B-region", "I-region")
-            and labels[i + 1] == "B-postcode"
-            and tokens[i][-1:].isalpha()
-            and tokens[i + 1][:1].isdigit()
-        ]
-        if glue_indices:
-            yield glue_region_postcode(row, rng.choice(glue_indices))
-
-    # Region-abbreviation expansion: find region-labeled abbreviations and expand one.
-    if rng.random() < region_prob:
-        region_indices = [
-            i
-            for i, (t, lab) in enumerate(zip(tokens, labels, strict=True))
-            if t in US_STATES and lab in ("B-region", "I-region")
-        ]
-        if region_indices:
-            idx = rng.choice(region_indices)
-            yield splice_expansion(row, idx, US_STATES[tokens[idx]])
-
-    # Case augmentation (#829): a lowercased copy, length-preserving so spans/labels pass through.
-    # The prob guard keeps the rng stream bit-identical for configs that leave the knob at 0.
-    if case_prob > 0 and rng.random() < case_prob:
-        lowered = lowercase_row(row)
-        if lowered is not None:
-            yield lowered
-
-    # Punct-drop augmentation (#1101): a delimiter-free / whitespace-only copy (separator commas +
-    # quotes stripped). The prob guard keeps the rng stream bit-identical for configs at 0.
-    if punct_drop_prob > 0 and rng.random() < punct_drop_prob:
-        dropped = drop_separator_punct(row)
-        if dropped is not None:
-            yield dropped
-
-    # All-caps augmentation (#690 retirement path): an upper-cased copy so the model learns registry
-    # casing natively. Same prob-guard discipline as punct-drop (rng stream bit-identical at 0).
-    if upper_case_prob > 0 and rng.random() < upper_case_prob:
-        uppered = upper_case_row(row)
-        if uppered is not None:
-            yield uppered

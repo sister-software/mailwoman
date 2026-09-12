@@ -5,7 +5,6 @@ import random
 import pytest
 
 from mailwoman_train.data.augment import (
-    _expand_token,
     augment_row,
     drop_separator_punct,
     glue_region_postcode,
@@ -14,6 +13,7 @@ from mailwoman_train.data.augment import (
     splice_expansion,
     upper_case_row,
 )
+from mailwoman_train.data.augment.splice import _expand_token
 from mailwoman_train.tokenizer import realign_labels_to_pieces, realign_spans_to_pieces, whitespace_spans
 from mailwoman_train.types import PieceSpan
 
