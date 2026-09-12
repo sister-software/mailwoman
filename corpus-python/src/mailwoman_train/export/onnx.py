@@ -7,6 +7,10 @@ Per Phase 2 §7:
 - Verify ONNX inference matches PyTorch inference within 1e-4 on a 1000-sample probe.
 - Output: ``/data/models/onnx/model-v0.1.0-en-us.onnx`` (and per spec, the same weights are
   exported per-locale; Phase 3 may split them if size or load behavior demands).
+
+`graph.py` decides WHAT gets exported — which channels the model carries, whether that combination
+is exportable, and the wrapper and example inputs it needs. This module runs the export and checks
+the result against PyTorch.
 """
 
 from __future__ import annotations
@@ -17,6 +21,8 @@ from typing import Any
 import numpy as np
 import torch
 from torch import nn
+
+from .graph import build_export_graph, detect_channels
 
 
 def export_to_onnx(
@@ -52,418 +58,27 @@ def export_to_onnx(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     model.eval()
     model_cpu = model.to("cpu")
-    dummy_ids = torch.full((dummy_batch, max_length), pad_token_id, dtype=torch.long)
-    dummy_ids[:, 0] = 1  # ensure at least one non-pad slot
-    dummy_mask = torch.ones((dummy_batch, max_length), dtype=torch.long)
-
-    # Postcode-anchor channel (#239/#240): when the model carries it, export the anchor inputs so the
-    # inference runtime can FEED the anchor (without them the ONNX would be hard-wired anchor-free, the
-    # c=0 identity — which is exactly the "anchor not fed" path, not the channel under test).
-    has_anchor = bool(getattr(model_cpu, "use_postcode_anchor", False))
-    anchor_dim = int(getattr(model_cpu, "anchor_feature_dim", 0))
-    # Gazetteer-anchor channel (#464): same reasoning — the inputs must exist in the graph for the
-    # inference runtime to feed the candidate-tag clues.
-    has_gaz = bool(getattr(model_cpu, "use_gazetteer_anchor", False))
-    gaz_dim = int(getattr(model_cpu, "gazetteer_feature_dim", 0))
-    # Country-lexicon channel (#1104): the inputs must exist in the graph for the inference runtime to
-    # feed the country-surface clues. Shipped on top of anchor+gaz (the production ship-config).
-    has_country = bool(getattr(model_cpu, "use_country_anchor", False))
-    country_dim = int(getattr(model_cpu, "country_feature_dim", 0))
-    has_street_type = bool(getattr(model_cpu, "use_street_type_anchor", False))
-    street_type_dim = int(getattr(model_cpu, "street_type_feature_dim", 0))
-    has_locality_surface = bool(getattr(model_cpu, "use_locality_surface_anchor", False))
-    locality_surface_dim = int(getattr(model_cpu, "locality_surface_feature_dim", 0))
-    # Locale head (#511 Tier A / conventions layer): when the model carries the PR3 self-conditioning
-    # head, export its pooled posterior as a SECOND output ("locale_logits", shape [batch, num_locales],
-    # labels.LOCALE_COUNTRIES order). Consumers fetch outputs by name, so this is backward-compatible;
-    # without it the model's address-system detection is trained but UNREADABLE at inference — the gap
-    # the 2026-06-10 FR digit-split regression exposed.
-    has_locale = getattr(model_cpu, "locale_head", None) is not None
-
-    # ONNX exporter prefers plain-tensor outputs; wrap the model so forward returns just logits.
-    # One wrapper per input combination — the dynamo tracer wants a fixed positional signature.
-    class _LogitsOnly(nn.Module):
-        def __init__(self, inner: nn.Module) -> None:
-            super().__init__()
-            self.inner = inner
-            self.with_locale = False
-            self.with_spans = False
-
-        def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> Any:
-            out = self.inner(input_ids=input_ids, attention_mask=attention_mask)
-            outs = [out.logits]
-            if self.with_locale:
-                outs.append(out.locale_logits)
-            if self.with_spans:
-                outs.append(out.span_scores)
-            return tuple(outs) if len(outs) > 1 else outs[0]
-
-    class _LogitsOnlyChar(nn.Module):
-        def __init__(self, inner: nn.Module) -> None:
-            super().__init__()
-            self.inner = inner
-            self.with_locale = False
-            self.with_spans = False
-
-        def forward(self, char_ids: torch.Tensor, attention_mask: torch.Tensor) -> Any:
-            out = self.inner(char_ids=char_ids, attention_mask=attention_mask)
-            outs = [out.logits]
-            if self.with_locale:
-                outs.append(out.locale_logits)
-            if self.with_spans:
-                outs.append(out.span_scores)
-            return tuple(outs) if len(outs) > 1 else outs[0]
-
-    class _LogitsOnlyAnchor(nn.Module):
-        def __init__(self, inner: nn.Module) -> None:
-            super().__init__()
-            self.inner = inner
-            self.with_locale = False
-            self.with_spans = False
-
-        def forward(
-            self,
-            input_ids: torch.Tensor,
-            attention_mask: torch.Tensor,
-            anchor_features: torch.Tensor,
-            anchor_confidence: torch.Tensor,
-        ) -> Any:
-            out = self.inner(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                anchor_features=anchor_features,
-                anchor_confidence=anchor_confidence,
-            )
-            outs = [out.logits]
-            if self.with_locale:
-                outs.append(out.locale_logits)
-            if self.with_spans:
-                outs.append(out.span_scores)
-            return tuple(outs) if len(outs) > 1 else outs[0]
-
-    class _LogitsOnlyAnchorGaz(nn.Module):
-        def __init__(self, inner: nn.Module) -> None:
-            super().__init__()
-            self.inner = inner
-            self.with_locale = False
-            self.with_spans = False
-
-        def forward(
-            self,
-            input_ids: torch.Tensor,
-            attention_mask: torch.Tensor,
-            anchor_features: torch.Tensor,
-            anchor_confidence: torch.Tensor,
-            gazetteer_features: torch.Tensor,
-            gazetteer_confidence: torch.Tensor,
-        ) -> Any:
-            out = self.inner(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                anchor_features=anchor_features,
-                anchor_confidence=anchor_confidence,
-                gazetteer_features=gazetteer_features,
-                gazetteer_confidence=gazetteer_confidence,
-            )
-            outs = [out.logits]
-            if self.with_locale:
-                outs.append(out.locale_logits)
-            if self.with_spans:
-                outs.append(out.span_scores)
-            return tuple(outs) if len(outs) > 1 else outs[0]
-
-    class _LogitsOnlyAnchorGazCountry(nn.Module):
-        def __init__(self, inner: nn.Module) -> None:
-            super().__init__()
-            self.inner = inner
-            self.with_locale = False
-            self.with_spans = False
-
-        def forward(
-            self,
-            input_ids: torch.Tensor,
-            attention_mask: torch.Tensor,
-            anchor_features: torch.Tensor,
-            anchor_confidence: torch.Tensor,
-            gazetteer_features: torch.Tensor,
-            gazetteer_confidence: torch.Tensor,
-            country_features: torch.Tensor,
-            country_confidence: torch.Tensor,
-        ) -> Any:
-            out = self.inner(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                anchor_features=anchor_features,
-                anchor_confidence=anchor_confidence,
-                gazetteer_features=gazetteer_features,
-                gazetteer_confidence=gazetteer_confidence,
-                country_features=country_features,
-                country_confidence=country_confidence,
-            )
-            outs = [out.logits]
-            if self.with_locale:
-                outs.append(out.locale_logits)
-            if self.with_spans:
-                outs.append(out.span_scores)
-            return tuple(outs) if len(outs) > 1 else outs[0]
-
-    class _LogitsOnlyBundle(nn.Module):
-        """The full evidence-bundle export (Option-A Phase 2): anchor + gazetteer + country +
-        street_type + locality_surface — the only supported bundle combination (the v3.18-confirmed
-        recipe's ship shape)."""
-
-        def __init__(self, inner: nn.Module) -> None:
-            super().__init__()
-            self.inner = inner
-            self.with_locale = False
-            self.with_spans = False
-
-        def forward(
-            self,
-            input_ids: torch.Tensor,
-            attention_mask: torch.Tensor,
-            anchor_features: torch.Tensor,
-            anchor_confidence: torch.Tensor,
-            gazetteer_features: torch.Tensor,
-            gazetteer_confidence: torch.Tensor,
-            country_features: torch.Tensor,
-            country_confidence: torch.Tensor,
-            street_type_features: torch.Tensor,
-            street_type_confidence: torch.Tensor,
-            locality_surface_features: torch.Tensor,
-            locality_surface_confidence: torch.Tensor,
-        ) -> Any:
-            out = self.inner(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                anchor_features=anchor_features,
-                anchor_confidence=anchor_confidence,
-                gazetteer_features=gazetteer_features,
-                gazetteer_confidence=gazetteer_confidence,
-                country_features=country_features,
-                country_confidence=country_confidence,
-                street_type_features=street_type_features,
-                street_type_confidence=street_type_confidence,
-                locality_surface_features=locality_surface_features,
-                locality_surface_confidence=locality_surface_confidence,
-            )
-            outs = [out.logits]
-            if self.with_locale:
-                outs.append(out.locale_logits)
-            if self.with_spans:
-                outs.append(out.span_scores)
-            return tuple(outs) if len(outs) > 1 else outs[0]
-
-    class _LogitsOnlyGaz(nn.Module):
-        def __init__(self, inner: nn.Module) -> None:
-            super().__init__()
-            self.inner = inner
-            self.with_locale = False
-            self.with_spans = False
-
-        def forward(
-            self,
-            input_ids: torch.Tensor,
-            attention_mask: torch.Tensor,
-            gazetteer_features: torch.Tensor,
-            gazetteer_confidence: torch.Tensor,
-        ) -> Any:
-            out = self.inner(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                gazetteer_features=gazetteer_features,
-                gazetteer_confidence=gazetteer_confidence,
-            )
-            outs = [out.logits]
-            if self.with_locale:
-                outs.append(out.locale_logits)
-            if self.with_spans:
-                outs.append(out.span_scores)
-            return tuple(outs) if len(outs) > 1 else outs[0]
-
-    base_dynamic = {
-        "input_ids": {0: "batch", 1: "sequence"},
-        "attention_mask": {0: "batch", 1: "sequence"},
-    }
-    anchor_args = (
-        torch.zeros((dummy_batch, max_length, anchor_dim), dtype=torch.float32),
-        torch.zeros((dummy_batch, max_length), dtype=torch.float32),
+    graph = build_export_graph(
+        model_cpu,
+        detect_channels(model_cpu),
+        batch=dummy_batch,
+        max_length=max_length,
+        pad_token_id=pad_token_id,
+        char_window=char_window,
     )
-    gaz_args = (
-        torch.zeros((dummy_batch, max_length, gaz_dim), dtype=torch.float32),
-        torch.zeros((dummy_batch, max_length), dtype=torch.float32),
-    )
-    country_args = (
-        torch.zeros((dummy_batch, max_length, country_dim), dtype=torch.float32),
-        torch.zeros((dummy_batch, max_length), dtype=torch.float32),
-    )
-    # The country channel ships on top of anchor+gaz (the production ship-config). Exporting it in any
-    # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
-    # would silently run country-OFF (the #566/#685 OOD trap), so fail loud instead.
-    if has_country and not (has_anchor and has_gaz):
-        raise NotImplementedError(
-            "use_country_anchor is only exportable alongside the anchor + gazetteer channels "
-            "(the production ship-config); got has_anchor="
-            f"{has_anchor}, has_gaz={has_gaz}, has_country={has_country}."
-        )
-    # Evidence-bundle check (Option-A): the bundle exports ONLY as the full v3.18-confirmed shape —
-    # BOTH channels, on top of anchor+gaz+country. Any other combination would ship a model whose
-    # ONNX silently drops a trained channel (the #566/#685 OOD trap) — fail loud instead.
-    has_bundle = has_street_type or has_locality_surface
-    if has_bundle and not (has_street_type and has_locality_surface and has_anchor and has_gaz and has_country):
-        raise NotImplementedError(
-            "the evidence bundle is only exportable as BOTH channels on top of anchor+gazetteer+country "
-            f"(got street_type={has_street_type}, locality_surface={has_locality_surface}, "
-            f"anchor={has_anchor}, gaz={has_gaz}, country={has_country})."
-        )
-    has_char = bool(getattr(model_cpu, "use_char_embed", False))
-    if has_char:
-        if char_window is None or char_window <= 0:
-            raise ValueError("a char-path model needs char_window (the config's max_unit_width) to export")
-        dummy_chars = torch.zeros((dummy_batch, max_length, char_window), dtype=torch.long)
-        dummy_chars[:, 0, :] = 1  # <unk>, so the first unit is a real unit rather than all padding
-        export_model: Any = _LogitsOnlyChar(model_cpu).eval()
-        args: tuple[Any, ...] = (dummy_chars, dummy_mask)
-        input_names: list[str] = ["char_ids", "attention_mask"]
-        dynamic_shapes: dict[str, dict[int, str]] = {
-            "char_ids": {0: "batch", 1: "sequence"},  # dim 2 (char_window) is fixed
-            "attention_mask": {0: "batch", 1: "sequence"},
-        }
-    elif has_bundle:
-        street_type_args = (
-            torch.zeros((dummy_batch, max_length, street_type_dim), dtype=torch.float32),
-            torch.zeros((dummy_batch, max_length), dtype=torch.float32),
-        )
-        locality_surface_args = (
-            torch.zeros((dummy_batch, max_length, locality_surface_dim), dtype=torch.float32),
-            torch.zeros((dummy_batch, max_length), dtype=torch.float32),
-        )
-        export_model = _LogitsOnlyBundle(model_cpu).eval()  # carries with_locale/with_spans
-        args = (
-            dummy_ids,
-            dummy_mask,
-            *anchor_args,
-            *gaz_args,
-            *country_args,
-            *street_type_args,
-            *locality_surface_args,
-        )
-        input_names = [
-            "input_ids",
-            "attention_mask",
-            "anchor_features",
-            "anchor_confidence",
-            "gazetteer_features",
-            "gazetteer_confidence",
-            "country_features",
-            "country_confidence",
-            "street_type_features",
-            "street_type_confidence",
-            "locality_surface_features",
-            "locality_surface_confidence",
-        ]
-        dynamic_shapes = {
-            **base_dynamic,
-            "anchor_features": {0: "batch", 1: "sequence"},
-            "anchor_confidence": {0: "batch", 1: "sequence"},
-            "gazetteer_features": {0: "batch", 1: "sequence"},
-            "gazetteer_confidence": {0: "batch", 1: "sequence"},
-            "country_features": {0: "batch", 1: "sequence"},
-            "country_confidence": {0: "batch", 1: "sequence"},
-            "street_type_features": {0: "batch", 1: "sequence"},
-            "street_type_confidence": {0: "batch", 1: "sequence"},
-            "locality_surface_features": {0: "batch", 1: "sequence"},
-            "locality_surface_confidence": {0: "batch", 1: "sequence"},
-        }
-    elif has_anchor and has_gaz and has_country:
-        export_model = _LogitsOnlyAnchorGazCountry(model_cpu).eval()
-        args = (dummy_ids, dummy_mask, *anchor_args, *gaz_args, *country_args)
-        input_names = [
-            "input_ids",
-            "attention_mask",
-            "anchor_features",
-            "anchor_confidence",
-            "gazetteer_features",
-            "gazetteer_confidence",
-            "country_features",
-            "country_confidence",
-        ]
-        dynamic_shapes = {
-            **base_dynamic,
-            "anchor_features": {0: "batch", 1: "sequence"},  # dim 2 (feature_dim) is fixed
-            "anchor_confidence": {0: "batch", 1: "sequence"},
-            "gazetteer_features": {0: "batch", 1: "sequence"},
-            "gazetteer_confidence": {0: "batch", 1: "sequence"},
-            "country_features": {0: "batch", 1: "sequence"},
-            "country_confidence": {0: "batch", 1: "sequence"},
-        }
-    elif has_anchor and has_gaz:
-        export_model = _LogitsOnlyAnchorGaz(model_cpu).eval()
-        args = (dummy_ids, dummy_mask, *anchor_args, *gaz_args)
-        input_names = [
-            "input_ids",
-            "attention_mask",
-            "anchor_features",
-            "anchor_confidence",
-            "gazetteer_features",
-            "gazetteer_confidence",
-        ]
-        dynamic_shapes = {
-            **base_dynamic,
-            "anchor_features": {0: "batch", 1: "sequence"},  # dim 2 (feature_dim) is fixed
-            "anchor_confidence": {0: "batch", 1: "sequence"},
-            "gazetteer_features": {0: "batch", 1: "sequence"},
-            "gazetteer_confidence": {0: "batch", 1: "sequence"},
-        }
-    elif has_anchor:
-        export_model = _LogitsOnlyAnchor(model_cpu).eval()
-        args = (dummy_ids, dummy_mask, *anchor_args)
-        input_names = ["input_ids", "attention_mask", "anchor_features", "anchor_confidence"]
-        dynamic_shapes = {
-            **base_dynamic,
-            "anchor_features": {0: "batch", 1: "sequence"},  # dim 2 (anchor_feature_dim) is fixed
-            "anchor_confidence": {0: "batch", 1: "sequence"},
-        }
-    elif has_gaz:
-        export_model = _LogitsOnlyGaz(model_cpu).eval()
-        args = (dummy_ids, dummy_mask, *gaz_args)
-        input_names = ["input_ids", "attention_mask", "gazetteer_features", "gazetteer_confidence"]
-        dynamic_shapes = {
-            **base_dynamic,
-            "gazetteer_features": {0: "batch", 1: "sequence"},
-            "gazetteer_confidence": {0: "batch", 1: "sequence"},
-        }
-    else:
-        export_model = _LogitsOnly(model_cpu).eval()
-        args = (dummy_ids, dummy_mask)
-        input_names = ["input_ids", "attention_mask"]
-        dynamic_shapes = dict(base_dynamic)
-
-    export_model.with_locale = bool(has_locale)
-    # #727 stage-2: export the span scorer's (B, S, L, T) scores as a NAMED output. Consumers fetch
-    # outputs by name, so appending is backward-compatible — a runtime that never asks for
-    # `span_scores` pays nothing (ORT prunes the unfetched branch). The Phase-3 JS decoder + the
-    # semi-crf-transitions.json sidecar (package_weights.export_semi_crf_transitions) consume it.
-    has_spans = bool(getattr(model_cpu, "use_span_scorer", False))
-    export_model.with_spans = has_spans
-    output_names = ["logits"]
-    if has_locale:
-        output_names.append("locale_logits")
-    if has_spans:
-        output_names.append("span_scores")
 
     # Use the dynamo exporter (``dynamo=True``). The legacy TorchScript path hits
     # ``IndexError: tuple index out of range`` inside transformers ≥5's ``masking_utils``
     # (``sdpa_mask`` reads ``q_length.shape[0]`` on what the tracer sees as a tuple).
     # The dynamo path traces through correctly via FX.
     torch.onnx.export(
-        export_model,
-        args,
+        graph.module,
+        graph.args,
         str(output_path),
-        input_names=input_names,
-        output_names=output_names,
+        input_names=graph.input_names,
+        output_names=graph.output_names,
         opset_version=opset,
-        dynamic_shapes=dynamic_shapes,
+        dynamic_shapes=graph.dynamic_shapes,
         dynamo=True,
         external_data=False,
     )
