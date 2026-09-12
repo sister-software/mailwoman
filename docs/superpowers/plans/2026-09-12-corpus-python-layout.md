@@ -1,5 +1,15 @@
 # `corpus-python` Layout Implementation Plan
 
+> **COMPLETE — merged to `main` 2026-09-12 at `5725f7bf5`.** All fourteen tasks landed and every §11
+> acceptance criterion in the spec passes: 2,448 tests, `mypy` clean over 208 source files, ruff check
+> and format clean over 315, bandit 0 issues, the Python prefix check at zero groups, root `yarn health`
+> and root `yarn test` (9,460 tests) green, and **no module over 500 lines, no function over 120**.
+>
+> The step checkboxes below were never ticked during execution and are left as written — they are the
+> plan as authored, not a record of what happened. The record is the commit range and the criteria
+> above. One deviation from the spec is deliberate and documented there: the package is `evaluation/`,
+> not `eval/`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Restructure `corpus-python/` from 48 flat modules plus a 5,278-line launcher into role directories at the package root with `countries/<cc>/` for country-specific code, adding declared protocols and training callbacks.
@@ -45,7 +55,7 @@ corpus-python/
 │   ├── nn/                encoder, blocks, char_cnn, heads, crf, span_scorer, serialization
 │   ├── optim/             schedules, groups, fisher
 │   ├── train/             trainer.py, noise.py, checkpoint.py, pretrain.py, callbacks/
-│   ├── eval/              metrics.py, evaluate.py
+│   ├── evaluation/        metrics.py, evaluate.py (NOT `eval/` — see the spec)
 │   ├── export/            onnx.py, quantize.py, package_weights.py
 │   ├── corpora/           builder.py, fragment.py, secondary.py, registry.py
 │   ├── audits/            epoch_mixture, mixed_script, suffix_feed, opening_token

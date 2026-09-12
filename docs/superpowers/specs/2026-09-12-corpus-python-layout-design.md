@@ -17,25 +17,25 @@ every country, so a layout that costs one top-level entry per country does not s
 
 ## 2. What exists, measured
 
-| Unit                         | Lines                  | Shape                                                                      |
-| ---------------------------- | ---------------------- | -------------------------------------------------------------------------- |
-| `modal/train_remote.py`      | 5,278                  | one file, 92 top-level defs: 57 `sync_*`, 7 `mean_init_*`, 10 diagnostics  |
-| `src/mailwoman_train/`       | 17,371 over 48 modules | flat, no subpackages                                                       |
-| `src/mailwoman_corpus/`      | 7                      | a docstring and a `__version__`; zero importers in the tree                |
-| `scripts/`                   | 3,800 over 17 files    | 15 `snake_case.py`, 2 `kebab-case.py` (unimportable as modules)            |
-| `tests/mailwoman_train/`     | 9,793 over 74 files    | flat, mirrors the flat source                                              |
+| Unit                     | Lines                  | Shape                                                                     |
+| ------------------------ | ---------------------- | ------------------------------------------------------------------------- |
+| `modal/train_remote.py`  | 5,278                  | one file, 92 top-level defs: 57 `sync_*`, 7 `mean_init_*`, 10 diagnostics |
+| `src/mailwoman_train/`   | 17,371 over 48 modules | flat, no subpackages                                                      |
+| `src/mailwoman_corpus/`  | 7                      | a docstring and a `__version__`; zero importers in the tree               |
+| `scripts/`               | 3,800 over 17 files    | 15 `snake_case.py`, 2 `kebab-case.py` (unimportable as modules)           |
+| `tests/mailwoman_train/` | 9,793 over 74 files    | flat, mirrors the flat source                                             |
 
 Baseline on this branch: `983 passed, 11 skipped, 26 warnings in 29.60s` under
 `uv run --extra dev --extra train pytest tests -q`.
 
 The four longest functions:
 
-| Site                     | Lines | What it holds                                                                              |
-| ------------------------ | ----- | ------------------------------------------------------------------------------------------ |
-| `model.py:215-620`       | 405   | `MailwomanCoarseEncoder.__init__` — char CNN, soft-feed channels, CRF, span head, MLM      |
-| `model.py:653-1068`      | 415   | the same class's `forward`                                                                  |
-| `train.py:659-1134`      | 476   | `train()` — the loop plus logging, periodic eval, checkpointing, trackio                    |
-| `data_loader.py`         | 1,074 | manifest reader, path resolver, source sampler, row stream, encoder, collator               |
+| Site                | Lines | What it holds                                                                         |
+| ------------------- | ----- | ------------------------------------------------------------------------------------- |
+| `model.py:215-620`  | 405   | `MailwomanCoarseEncoder.__init__` — char CNN, soft-feed channels, CRF, span head, MLM |
+| `model.py:653-1068` | 415   | the same class's `forward`                                                            |
+| `train.py:659-1134` | 476   | `train()` — the loop plus logging, periodic eval, checkpointing, trackio              |
+| `data_loader.py`    | 1,074 | manifest reader, path resolver, source sampler, row stream, encoder, collator         |
 
 `config.py` is excluded from this work. It is 629 lines of typed dataclasses with a strict merge/coerce loader, which
 is the shape every reference project converges on. It moves into `config/` as two modules and is otherwise untouched.
@@ -65,13 +65,13 @@ A package-root `types.py` holding `PieceSpan` removes all five deferred imports.
 
 ### 3.2 `build_jp_slice.py` is the unnamed shared CJK module
 
-| Importer                     | What it takes from `build_jp_slice` |
-| ---------------------------- | ----------------------------------- |
-| `jp_registry.py:32`          | `JP_PREFECTURES`, `normalize_name`, `split_street` |
-| `build_tw_slice.py`          | the same helpers                    |
-| `build_kr_slice.py`          | the same helpers                    |
-| `build_cjk_overlay.py`       | the same helpers                    |
-| `build_registry_corpus.py`   | the same helpers                    |
+| Importer                   | What it takes from `build_jp_slice`                |
+| -------------------------- | -------------------------------------------------- |
+| `jp_registry.py:32`        | `JP_PREFECTURES`, `normalize_name`, `split_street` |
+| `build_tw_slice.py`        | the same helpers                                   |
+| `build_kr_slice.py`        | the same helpers                                   |
+| `build_cjk_overlay.py`     | the same helpers                                   |
+| `build_registry_corpus.py` | the same helpers                                   |
 
 `jp_registry.py` reads a government register and imports a corpus builder to get `normalize_name`. CJK text
 normalization has no home, so the first file that needed it became the home: 978 lines of builder that five modules
@@ -111,18 +111,18 @@ weights packages and the `--locale` flag.
 `packages/repo-health/lib/checks/prefix-directories.ts` treats two or more children sharing their first delimited
 segment as a family, with the sibling named for the prefix becoming the directory's `index`. Reading `_` for `-`:
 
-| Location                 | Prefix                                                     | Members             | Destination                                     |
-| ------------------------ | ---------------------------------------------------------- | ------------------- | ----------------------------------------------- |
-| `src/mailwoman_train/`   | `build`                                                    | 7 files             | `corpora/` plus `countries/<cc>/corpora.py`     |
-| `src/mailwoman_train/`   | `tokenizer`                                                | 3 files             | `tokenizer/`; `tokenizer.py` becomes its `__init__.py` |
-| `src/mailwoman_train/`   | `audit`                                                    | 3 files             | `audits/`                                       |
-| `src/mailwoman_train/`   | `jp`                                                       | 2 files             | `countries/jp/`                                 |
-| `src/mailwoman_train/`   | `kr`                                                       | 2 files             | `countries/kr/`                                 |
-| `scripts/`               | `build`                                                    | 3 files             | `cli/commands/`                                 |
-| `scripts/`               | `verify`                                                   | 2 files             | split; see section 8                            |
-| `tests/mailwoman_train/` | `span`, `tokenizer`, `jp`, `char`, `audit`, `anchor`, `country`, `augment` | 4,3,3,3,3,3,2,2 | mirror the source tree                          |
-| `modal/train_remote.py`  | `sync`                                                     | 57 functions        | one function over a table                       |
-| `modal/train_remote.py`  | `mean`                                                     | 7 functions         | `init.py`, one function over a table            |
+| Location                 | Prefix                                                                     | Members         | Destination                                            |
+| ------------------------ | -------------------------------------------------------------------------- | --------------- | ------------------------------------------------------ |
+| `src/mailwoman_train/`   | `build`                                                                    | 7 files         | `corpora/` plus `countries/<cc>/corpora.py`            |
+| `src/mailwoman_train/`   | `tokenizer`                                                                | 3 files         | `tokenizer/`; `tokenizer.py` becomes its `__init__.py` |
+| `src/mailwoman_train/`   | `audit`                                                                    | 3 files         | `audits/`                                              |
+| `src/mailwoman_train/`   | `jp`                                                                       | 2 files         | `countries/jp/`                                        |
+| `src/mailwoman_train/`   | `kr`                                                                       | 2 files         | `countries/kr/`                                        |
+| `scripts/`               | `build`                                                                    | 3 files         | `cli/commands/`                                        |
+| `scripts/`               | `verify`                                                                   | 2 files         | split; see section 8                                   |
+| `tests/mailwoman_train/` | `span`, `tokenizer`, `jp`, `char`, `audit`, `anchor`, `country`, `augment` | 4,3,3,3,3,3,2,2 | mirror the source tree                                 |
+| `modal/train_remote.py`  | `sync`                                                                     | 57 functions    | one function over a table                              |
+| `modal/train_remote.py`  | `mean`                                                                     | 7 functions     | `init.py`, one function over a table                   |
 
 The target satisfies the rule by construction.
 
@@ -149,7 +149,7 @@ mailwoman_train/
 │   ├── trainer.py            the loop only
 │   ├── noise.py  checkpoint.py  pretrain.py
 │   └── callbacks/            console, csv_metrics, evaluator, checkpointer, trackio
-├── eval/                     metrics.py, evaluate.py
+├── evaluation/               metrics.py, evaluate.py — NOT `eval/`, see below
 ├── export/                   onnx.py, quantize.py, package_weights.py
 ├── corpora/                  builder.py, fragment.py, secondary.py, registry.py
 ├── audits/                   epoch_mixture, mixed_script, suffix_feed, opening_token
@@ -164,6 +164,11 @@ mailwoman_train/
 
 `observability/` rather than `logging/`: a package named `logging` inside a package that also imports the standard
 library module of that name is legible to Python and confusing to a reader. `torchtitan` uses the same name.
+
+`evaluation/` rather than `eval/` for the same class of reason, plus a mechanical one. The agent worktree's
+write guard refuses any shell command containing that three-letter token, so a directory named exactly that
+could not be moved, renamed or removed from a worktree again — the name would have been a one-way door. It also
+stops reading as the builtin.
 
 ## 7. The extension work
 
@@ -298,6 +303,7 @@ Steps 1 through 7 touch nothing a Modal run reads before merge. Step 8 changes e
   while `mailwoman_train.train` takes 1,458,740 µs, so the 32 deferred imports in `cli.py` keep torch's 1.46 s off
   every `--help`. Of the 63 deferred intra-package imports in the tree, five are cycle-dodgers — `tokenizer.py` at
   541, 550, 566, 583 and 598 — and the other 58 buy startup weight.
+
 - A corpus version is added to `launch/corpora.py` as one table row, verified by adding the most recent existing
   version through the new path and diffing the generated command set against the current literal strings.
 
