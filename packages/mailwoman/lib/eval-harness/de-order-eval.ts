@@ -37,6 +37,58 @@ import { TextSpliterator } from "spliterator"
 import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 
 /**
+ * The six runs, in the order they execute and by the name each writes its `.md`/`.log` under.
+ *
+ * `de-native-on` is the only one a promotion floor reads — the `native DE` anchor-ON cell of the 2x2 is
+ * `de.native_locality`, which is also in the fp32↔int8 delta cap, so that run executes on BOTH arms. The other five are
+ * recorded, not floored.
+ */
+export const DE_ORDER_RUNS = ["de-native-on", "de-native-off", "de-intl-on", "de-intl-off", "us-on", "fr-on"] as const
+
+export type DeOrderRunName = (typeof DE_ORDER_RUNS)[number]
+
+interface DeOrderRun {
+	name: DeOrderRunName
+	/**
+	 * The heading this run prints, byte-identical to what the check has always written into `<tag>-deorder.md`.
+	 */
+	heading: string
+	evalJSONL: string
+	anchorOn: boolean
+	country: string
+}
+
+const DE_NATIVE = "data/eval/external/openaddresses-de-sample-native-order.jsonl"
+const DE_INTL = "data/eval/external/openaddresses-de-sample.jsonl"
+
+const RUN_PLAN: readonly DeOrderRun[] = [
+	{ name: "de-native-on", heading: "== DE native, anchor ON ==", evalJSONL: DE_NATIVE, anchorOn: true, country: "DE" },
+	{
+		name: "de-native-off",
+		heading: "== DE native, anchor OFF ==",
+		evalJSONL: DE_NATIVE,
+		anchorOn: false,
+		country: "DE",
+	},
+	{ name: "de-intl-on", heading: "== DE intl,   anchor ON ==", evalJSONL: DE_INTL, anchorOn: true, country: "DE" },
+	{ name: "de-intl-off", heading: "== DE intl,   anchor OFF ==", evalJSONL: DE_INTL, anchorOn: false, country: "DE" },
+	{
+		name: "us-on",
+		heading: "== US (anchor ON) ==",
+		evalJSONL: "data/eval/external/openaddresses-us-sample.jsonl",
+		anchorOn: true,
+		country: "US",
+	},
+	{
+		name: "fr-on",
+		heading: "== FR (anchor ON) ==",
+		evalJSONL: "data/eval/external/openaddresses-fr-sample.jsonl",
+		anchorOn: true,
+		country: "FR",
+	},
+]
+
+/**
  * Options for {@linkcode deOrderEval} — one field per flag the check used to serialize into argv.
  */
 export interface DeOrderEvalOptions {
@@ -73,6 +125,14 @@ export interface DeOrderEvalOptions {
 	 * runs keeps its own memo, because each builds its own rig.
 	 */
 	lookupMemo?: boolean
+	/**
+	 * Which of {@linkcode DE_ORDER_RUNS} to execute. Omitted runs all six.
+	 *
+	 * A run not selected prints its heading with `SKIPPED` and its 2x2 cell reads `—`, so a cell nobody measured cannot
+	 * be read as a cell that measured nothing. Selecting a subset that omits `de-native-on` produces no
+	 * `de.native_locality` and fails the promotion verdict, which is the correct outcome rather than a silent absence.
+	 */
+	runs?: readonly DeOrderRunName[]
 	/**
 	 * Write one `<run-name>.json` wall-time attribution file per run into this directory.
 	 *
@@ -120,11 +180,9 @@ export async function deOrderEval(
 		await makeDirectories(profileDirectory)
 	}
 
-	const deNative = "data/eval/external/openaddresses-de-sample-native-order.jsonl"
-	const deIntl = "data/eval/external/openaddresses-de-sample.jsonl"
+	const selected = new Set<DeOrderRunName>(options.runs ?? DE_ORDER_RUNS)
 
-	// run <eval-jsonl> <anchor-on> <default-country> <out-name>
-	const run = async (evalJsonl: string, anchorOn: boolean, country: string, outName: string): Promise<void> => {
+	const run = async ({ name: outName, evalJSONL, anchorOn, country }: DeOrderRun): Promise<void> => {
 		// Anchor OFF = oa-resolver-eval's `anchorOff` (overrides.anchor=false — the sanctioned, declared
 		// ablation; #887). The old idiom (an empty-anchor.json fed as the anchor lookup) is refused by the
 		// #718 fail-closed check: a lookup parsing to size 0 → UnfedChannelError.
@@ -141,7 +199,7 @@ export async function deOrderEval(
 		try {
 			await oaResolverEval(
 				{
-					eval: evalJsonl,
+					eval: evalJSONL,
 					model,
 					modelCard: card,
 					tokenizer: tok,
@@ -163,7 +221,11 @@ export async function deOrderEval(
 	}
 
 	// Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
-	const loc = async (name: string): Promise<string> => {
+	const loc = async (name: DeOrderRunName): Promise<string> => {
+		// A run nobody asked for reads `—`, not empty. An empty cell is what a SELECTED run leaves when it wrote no
+		// locality row, and the two readings are different facts.
+		if (!selected.has(name)) return "—"
+
 		let md: string
 
 		try {
@@ -182,29 +244,17 @@ export async function deOrderEval(
 		return ""
 	}
 
-	report("== DE native, anchor ON ==")
+	for (const entry of RUN_PLAN) {
+		if (!selected.has(entry.name)) {
+			report(`${entry.heading} SKIPPED`)
 
-	await run(deNative, true, "DE", "de-native-on")
+			continue
+		}
 
-	report("== DE native, anchor OFF ==")
+		report(entry.heading)
 
-	await run(deNative, false, "DE", "de-native-off")
-
-	report("== DE intl,   anchor ON ==")
-
-	await run(deIntl, true, "DE", "de-intl-on")
-
-	report("== DE intl,   anchor OFF ==")
-
-	await run(deIntl, false, "DE", "de-intl-off")
-
-	report("== US (anchor ON) ==")
-
-	await run("data/eval/external/openaddresses-us-sample.jsonl", true, "US", "us-on")
-
-	report("== FR (anchor ON) ==")
-
-	await run("data/eval/external/openaddresses-fr-sample.jsonl", true, "FR", "fr-on")
+		await run(entry)
+	}
 
 	report("")
 	report(`### Order-robustness 2x2 — DE locality-match (model: ${model})`)
