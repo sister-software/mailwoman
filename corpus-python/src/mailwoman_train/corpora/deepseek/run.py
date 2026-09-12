@@ -7,7 +7,7 @@ here.
 
 A worker answers `(batch_id, stats)`. Prefixing the id with `!RETRY:` leaves the batch PENDING: its
 parsed rows are still written (deterministic source ids dedupe a re-emit), and the next run asks
-for the rest. That is how a completion cut off at `max_tokens` stops costing the rows it dropped.
+for the rest. That is how a completion truncated at `max_tokens` stops costing the rows it dropped.
 """
 
 from __future__ import annotations

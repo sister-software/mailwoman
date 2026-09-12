@@ -55,7 +55,7 @@ BOARD_BUCKET_MIN = 90
 def select_register_rows(
     juso_zip: Path, args: argparse.Namespace, rng: random.Random, survey: RegisterSurvey
 ) -> tuple[list[LabelRow], list[LabelRow], list[LabelRow]]:
-    """Pass 3: stream the exact selection under the quotas, then shuffle and cut train / val / board."""
+    """Pass 3: stream the exact selection under the quotas, then shuffle and divide into the splits."""
     selectors = {
         region: select_exact(survey.pool_counts[region], survey.quotas[region], rng) for region in survey.pool_counts
     }

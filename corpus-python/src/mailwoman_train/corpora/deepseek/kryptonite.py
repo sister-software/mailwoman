@@ -24,7 +24,7 @@ MINIMUM_PER_CATEGORY = 50
 
 
 def plan_batches(target_count: int, batch_size: int) -> list[dict[str, Any]]:
-    """Split the budget across the categories by weight, then cut each share into request batches."""
+    """Split the budget across the categories by weight, then divide each share into request batches."""
     weights = [float(c["weight"]) for c in KRYPTONITE_CATEGORIES]
     total_weight = sum(weights)
     per_category = {

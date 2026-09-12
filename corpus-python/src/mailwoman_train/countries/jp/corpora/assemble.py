@@ -118,7 +118,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
 
 
 def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, survey: SourceSurvey) -> Selection:
-    """Stream pass 2 under the quotas, then shuffle, cut the splits, and apply the upweight."""
+    """Stream pass 2 under the quotas, then shuffle, divide into splits, and apply the upweight."""
     selectors = {p: select_exact(survey.pool_counts[p], survey.quotas[p], rng) for p in survey.pool_counts}
     board_selector = select_exact(survey.board_count, args.board_rows, rng)
     selected: list[SourceRow] = []

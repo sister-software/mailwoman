@@ -15,7 +15,7 @@ ASSAY TOOLING: if the assay confirms the data change, the production slice gradu
 holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the trained slice.
 
 `push` stamps every row with the same provenance block and a running `source_id`, so the ORDER
-these blocks run in is baked into the ids and into the 10% holdout the final shuffle cuts. Adding
+these blocks run in is baked into the ids and into the 10% holdout the final shuffle separates. Adding
 a block in the middle renumbers everything after it.
 """
 

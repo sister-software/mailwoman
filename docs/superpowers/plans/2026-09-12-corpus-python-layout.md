@@ -60,12 +60,14 @@ corpus-python/
 ## Task 1: `types.py` and the import cycle
 
 **Files:**
+
 - Create: `src/mailwoman_train/types.py`
 - Modify: `src/mailwoman_train/tokenizer.py:54-59` (remove `PieceSpan`), `:541,550,566,583,598` (lift the deferred imports)
 - Modify: `src/mailwoman_train/gazetteer_anchor.py:28`, `src/mailwoman_train/country_lexicon.py:39`
 - Test: `tests/mailwoman_train/test_import_hygiene.py`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `mailwoman_train.types.PieceSpan`, a frozen-field dataclass with `piece: str`, `piece_id: int`, `char_begin: int`, `char_end: int`. Every later task imports `PieceSpan` from `mailwoman_train.types`, never from `mailwoman_train.tokenizer`.
 
@@ -258,12 +260,14 @@ git commit -m "refactor(train): move PieceSpan to types.py and remove the deferr
 ## Task 2: `text/` and `corpora/builder.py`
 
 **Files:**
+
 - Create: `src/mailwoman_train/text/__init__.py`, `text/kana.py`, `text/normalize.py`
 - Create: `src/mailwoman_train/corpora/__init__.py`, `corpora/builder.py`
 - Modify: `src/mailwoman_train/build_jp_slice.py`, `build_tw_slice.py:59-69`, `build_kr_slice.py:52-63`, `build_cjk_overlay.py:46`, `build_registry_corpus.py:34-37`, `jp_registry.py:32`, `tw_registry.py:29`
 - Test: `tests/mailwoman_train/test_text_normalize.py`
 
 **Interfaces:**
+
 - Consumes: nothing from Task 1.
 - Produces:
   - `mailwoman_train.text.kana`: `fold_halfwidth_kana(text: str) -> str`, `kanji_to_int(text: str) -> int | None`
@@ -273,15 +277,15 @@ git commit -m "refactor(train): move PieceSpan to types.py and remove the deferr
 
 This is the measured boundary — every name that crosses a builder today:
 
-| Importer | Takes from | Names |
-| --- | --- | --- |
-| `jp_registry.py:32` | `build_jp_slice` | `JP_PREFECTURES`, `normalize_name`, `split_street` |
-| `build_tw_slice.py:59` | `build_jp_slice` | `MAX_FIELD_CHARS`, `SCHEMA`, `RowRenderer`, `coverage_stats`, `muni_bucket`, `norm_key`, `select_exact`, `verify_record`, `water_fill` |
-| `build_kr_slice.py:53` | `build_jp_slice` | the same nine plus `MAX_RENDERED_CHARS`, minus `verify_record` |
-| `build_cjk_overlay.py:46` | `build_jp_slice` | `MAX_RENDERED_CHARS`, `SCHEMA` |
-| `build_registry_corpus.py:35` | `build_jp_slice` | `BOARD_BUCKET_MIN`, `SCHEMA`, `coverage_stats`, `muni_bucket`, `norm_key`, `select_exact` |
-| `tw_registry.py:29` | `build_tw_slice` | `ascii_digits`, `normalize_text` |
-| `build_kr_slice.py:52`, `build_registry_corpus.py:34` | `build_cjk_overlay` | `verify_cn_record` |
+| Importer                                              | Takes from          | Names                                                                                                                                  |
+| ----------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `jp_registry.py:32`                                   | `build_jp_slice`    | `JP_PREFECTURES`, `normalize_name`, `split_street`                                                                                     |
+| `build_tw_slice.py:59`                                | `build_jp_slice`    | `MAX_FIELD_CHARS`, `SCHEMA`, `RowRenderer`, `coverage_stats`, `muni_bucket`, `norm_key`, `select_exact`, `verify_record`, `water_fill` |
+| `build_kr_slice.py:53`                                | `build_jp_slice`    | the same nine plus `MAX_RENDERED_CHARS`, minus `verify_record`                                                                         |
+| `build_cjk_overlay.py:46`                             | `build_jp_slice`    | `MAX_RENDERED_CHARS`, `SCHEMA`                                                                                                         |
+| `build_registry_corpus.py:35`                         | `build_jp_slice`    | `BOARD_BUCKET_MIN`, `SCHEMA`, `coverage_stats`, `muni_bucket`, `norm_key`, `select_exact`                                              |
+| `tw_registry.py:29`                                   | `build_tw_slice`    | `ascii_digits`, `normalize_text`                                                                                                       |
+| `build_kr_slice.py:52`, `build_registry_corpus.py:34` | `build_cjk_overlay` | `verify_cn_record`                                                                                                                     |
 
 `BOARD_BUCKET_MIN` does NOT move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`; the two importers alias it apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
 
@@ -349,13 +353,13 @@ A corpus builder is not a home for a helper five modules need. These names lived
 
 - [ ] **Step 4: Move the text helpers**
 
-Cut `fold_halfwidth_kana` (`build_jp_slice.py:178`) and `kanji_to_int` (`:212`) into `text/kana.py`, with their docstrings and any module-level regex or table they reference. Cut `norm_key` from `build_jp_slice.py` and `ascii_digits` plus `normalize_text` from `build_tw_slice.py` into `text/normalize.py`.
+Move `fold_halfwidth_kana` (`build_jp_slice.py:178`) and `kanji_to_int` (`:212`) into `text/kana.py`, with their docstrings and any module-level regex or table they reference. Move `norm_key` from `build_jp_slice.py` and `ascii_digits` plus `normalize_text` from `build_tw_slice.py` into `text/normalize.py`.
 
 Carry each docstring verbatim. `normalize_name`'s docstring holds a measured number ("coverage read 1.000001, which is how a six-row defect announces itself") — that function stays in `build_jp_slice.py` for now and moves in Task 13, docstring intact.
 
 - [ ] **Step 5: Move the builder machinery**
 
-Cut `SCHEMA`, `RowRenderer`, `MAX_FIELD_CHARS`, `MAX_RENDERED_CHARS`, `coverage_stats`, `muni_bucket`, `select_exact`, `verify_record` and `water_fill` from `build_jp_slice.py` into `corpora/builder.py`. Cut `verify_cn_record` from `build_cjk_overlay.py` into the same file.
+Move `SCHEMA`, `RowRenderer`, `MAX_FIELD_CHARS`, `MAX_RENDERED_CHARS`, `coverage_stats`, `muni_bucket`, `select_exact`, `verify_record` and `water_fill` from `build_jp_slice.py` into `corpora/builder.py`. Move `verify_cn_record` from `build_cjk_overlay.py` into the same file.
 
 `build_kr_slice.py:52` aliases `verify_cn_record` as `verify_record` on import while `build_tw_slice.py` imports a different `verify_record` from `build_jp_slice`. Both names now live in `corpora/builder.py`, so keep the alias at the Korean call site and do not merge the two functions.
 
@@ -389,32 +393,34 @@ git commit -m "refactor(train): give the shared CJK text helpers and row machine
 ## Task 3: The role directories
 
 **Files:**
+
 - Create: `src/mailwoman_train/{config,data,tokenizer,features,nn,optim,train,eval,export,audits,observability}/__init__.py`
 - Move: 30 modules, listed per group below
 - Test: no new test; the existing 989 are the check
 
 **Interfaces:**
+
 - Consumes: `mailwoman_train.types` (Task 1), `mailwoman_train.text.*` and `mailwoman_train.corpora.builder` (Task 2).
 - Produces: every module reachable at its new dotted path. No public function signature changes.
 
 Move in dependency order so each group's importers are already settled. `labels.py` has 55 importers and stays at the package root; `types.py` and `protocols.py` join it there.
 
-| Group | From | To |
-| --- | --- | --- |
-| config | `config.py` | `config/schema.py` (the five dataclasses, lines 17-494) + `config/load.py` (`_merge`, `_coerce`, `load_config`, `csv_log_path`) |
-| data | `data_loader.py` | `data/loader.py` |
-| data | `augment.py`, `relabel.py`, `emit.py`, `masking.py`, `dose.py` | `data/<same>.py` |
-| tokenizer | `tokenizer.py` | `tokenizer/__init__.py` |
-| tokenizer | `char_tokenizer.py`, `tokenizer_splice.py`, `tokenizer_train.py` | `tokenizer/char.py`, `tokenizer/splice.py`, `tokenizer/train.py` |
-| features | `gazetteer_anchor.py`, `country_lexicon.py`, `phrase_priors.py`, `postcode_shapes.py`, `conventions.py` | `features/<same>.py` |
-| nn | `model.py` | `nn/encoder.py` |
-| nn | `crf.py`, `span_scorer.py` | `nn/<same>.py` |
-| optim | `fisher.py` | `optim/fisher.py` |
-| train | `train.py`, `pretrain.py` | `train/trainer.py`, `train/pretrain.py` |
-| eval | `eval.py` | `eval/evaluate.py` |
-| export | `export_onnx.py`, `quantize.py`, `package_weights.py` | `export/onnx.py`, `export/quantize.py`, `export/package_weights.py` |
-| audits | `audit_epoch_mixture.py`, `audit_mixed_script.py`, `audit_suffix_feed.py`, `census_opening_token.py` | `audits/epoch_mixture.py`, `audits/mixed_script.py`, `audits/suffix_feed.py`, `audits/opening_token.py` |
-| observability | `trackio_logging.py` | `observability/trackio.py` |
+| Group         | From                                                                                                    | To                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| config        | `config.py`                                                                                             | `config/schema.py` (the five dataclasses, lines 17-494) + `config/load.py` (`_merge`, `_coerce`, `load_config`, `csv_log_path`) |
+| data          | `data_loader.py`                                                                                        | `data/loader.py`                                                                                                                |
+| data          | `augment.py`, `relabel.py`, `emit.py`, `masking.py`, `dose.py`                                          | `data/<same>.py`                                                                                                                |
+| tokenizer     | `tokenizer.py`                                                                                          | `tokenizer/__init__.py`                                                                                                         |
+| tokenizer     | `char_tokenizer.py`, `tokenizer_splice.py`, `tokenizer_train.py`                                        | `tokenizer/char.py`, `tokenizer/splice.py`, `tokenizer/train.py`                                                                |
+| features      | `gazetteer_anchor.py`, `country_lexicon.py`, `phrase_priors.py`, `postcode_shapes.py`, `conventions.py` | `features/<same>.py`                                                                                                            |
+| nn            | `model.py`                                                                                              | `nn/encoder.py`                                                                                                                 |
+| nn            | `crf.py`, `span_scorer.py`                                                                              | `nn/<same>.py`                                                                                                                  |
+| optim         | `fisher.py`                                                                                             | `optim/fisher.py`                                                                                                               |
+| train         | `train.py`, `pretrain.py`                                                                               | `train/trainer.py`, `train/pretrain.py`                                                                                         |
+| eval          | `eval.py`                                                                                               | `eval/evaluate.py`                                                                                                              |
+| export        | `export_onnx.py`, `quantize.py`, `package_weights.py`                                                   | `export/onnx.py`, `export/quantize.py`, `export/package_weights.py`                                                             |
+| audits        | `audit_epoch_mixture.py`, `audit_mixed_script.py`, `audit_suffix_feed.py`, `census_opening_token.py`    | `audits/epoch_mixture.py`, `audits/mixed_script.py`, `audits/suffix_feed.py`, `audits/opening_token.py`                         |
+| observability | `trackio_logging.py`                                                                                    | `observability/trackio.py`                                                                                                      |
 
 `config/__init__.py` re-exports the public names so `from mailwoman_train.config import Config, load_config` keeps working:
 
@@ -494,11 +500,13 @@ Expected: clean. `config/schema.py` is 478 lines, under the 500 limit; `tokenize
 ## Task 4: Split `tokenizer/__init__.py`
 
 **Files:**
+
 - Modify: `src/mailwoman_train/tokenizer/__init__.py` (609 lines)
 - Create: `src/mailwoman_train/tokenizer/features.py`
 - Test: existing coverage in `tests/mailwoman_train/test_tokenizer_alignment.py`
 
 **Interfaces:**
+
 - Consumes: `mailwoman_train.types.PieceSpan`, `mailwoman_train.features.*`.
 - Produces: `tokenizer.Tokenizer` and `tokenizer.encode_with_features` remain importable from `mailwoman_train.tokenizer`. `encode_with_features` moves to `tokenizer/features.py` and is re-exported from `__init__.py`.
 
@@ -512,7 +520,7 @@ Expected: 609. The 500-line limit is the reason for this task.
 
 - [ ] **Step 2: Move `encode_with_features` and its helpers**
 
-Cut `encode_with_features` (the function holding the five channel blocks at former lines 535-620) into `tokenizer/features.py`, together with any module-private helper it alone calls. Keep the `Tokenizer` class, `PieceSpan` re-export and the plain encode path in `__init__.py`.
+Move `encode_with_features` (the function holding the five channel blocks at former lines 535-620) into `tokenizer/features.py`, together with any module-private helper it alone calls. Keep the `Tokenizer` class, `PieceSpan` re-export and the plain encode path in `__init__.py`.
 
 - [ ] **Step 3: Re-export from `__init__.py`**
 
@@ -544,11 +552,13 @@ git commit -m "refactor(tokenizer): split the feature-channel encode path out of
 ## Task 5: Split `nn/encoder.py`
 
 **Files:**
+
 - Modify: `src/mailwoman_train/nn/encoder.py` (1,429 lines; `__init__` 405, `forward` 415)
 - Create: `src/mailwoman_train/nn/blocks.py`, `nn/char_cnn.py`, `nn/heads.py`, `nn/serialization.py`
 - Test: `tests/mailwoman_train/test_v0_5_0_forward_pass.py`, `test_char_units.py`, `test_span_scorer.py` — all existing
 
 **Interfaces:**
+
 - Consumes: `mailwoman_train.config.Config`, `mailwoman_train.labels`, `nn.crf`, `nn.span_scorer`, `features.conventions`, `features.phrase_priors`.
 - Produces: `nn.encoder.MailwomanCoarseEncoder`, `nn.encoder.build_model(cfg, vocab_size, pad_token_id, char_vocab_size=0)`, `nn.encoder.model_param_count(model)`. `nn.blocks.EncoderBlock` and `nn.char_cnn.CharCNNEmbedding` become importable in their own right.
 
@@ -623,7 +633,7 @@ PY
 
 - [ ] **Step 3: Extract `CharCNNEmbedding` and `EncoderBlock`**
 
-`git mv` is not usable here — these are classes inside a file. Cut `CharCNNEmbedding` (former `model.py:133-194`) into `nn/char_cnn.py` and `EncoderBlock` (former `model.py:84-132`) into `nn/blocks.py`, each with its docstring. Add to `nn/encoder.py`:
+`git mv` is not usable here — these are classes inside a file. Move `CharCNNEmbedding` (former `model.py:133-194`) into `nn/char_cnn.py` and `EncoderBlock` (former `model.py:84-132`) into `nn/blocks.py`, each with its docstring. Add to `nn/encoder.py`:
 
 ```python
 from .blocks import EncoderBlock
@@ -632,7 +642,7 @@ from .char_cnn import CharCNNEmbedding
 
 - [ ] **Step 4: Extract save/load**
 
-Cut `save_pretrained` (former `model.py:1160`) and `from_pretrained` (former `:1240`) into `nn/serialization.py` as module-level functions taking the model as their first argument, then re-attach them as thin methods:
+Move `save_pretrained` (former `model.py:1160`) and `from_pretrained` (former `:1240`) into `nn/serialization.py` as module-level functions taking the model as their first argument, then re-attach them as thin methods:
 
 ```python
     def save_pretrained(self, output_dir: Path | str) -> None:
@@ -704,11 +714,13 @@ git commit -m "refactor(nn): split the encoder into blocks, char CNN, heads and 
 ## Task 6: Split `train/trainer.py`
 
 **Files:**
+
 - Modify: `src/mailwoman_train/train/trainer.py` (1,134 lines; `train()` is 476)
 - Create: `src/mailwoman_train/train/noise.py`, `train/checkpoint.py`, `src/mailwoman_train/optim/schedules.py`, `optim/groups.py`, `src/mailwoman_train/eval/metrics.py`
 - Test: `tests/mailwoman_train/test_resume_lr_restamp.py`, `test_metrics.py`, `test_checkpoint_atomicity.py`, `test_linear_cooldown_schedule.py`, `test_cosine_resume_spike.py` — all existing
 
 **Interfaces:**
+
 - Consumes: everything Tasks 3-5 produced.
 - Produces:
   - `optim.schedules`: `cosine_with_warmup(optimizer, warmup_steps, max_steps)`, `linear_cooldown(optimizer, cooldown_start, max_steps)`, `constant_with_warmup(optimizer, warmup_steps)`, `build_scheduler(optim, cfg_train)`, `restamp_resume_lrs(...)`
@@ -722,15 +734,15 @@ The four private schedule functions lose their leading underscore when they move
 
 - [ ] **Step 1: Move the schedule and optimizer functions**
 
-Cut `_cosine_with_warmup`, `_linear_cooldown`, `_constant_with_warmup`, `_build_scheduler` and `_restamp_resume_lrs` into `optim/schedules.py`, renaming each without the underscore. Cut `build_optimizer` and `reinit_label_rows` into `optim/groups.py`.
+Move `_cosine_with_warmup`, `_linear_cooldown`, `_constant_with_warmup`, `_build_scheduler` and `_restamp_resume_lrs` into `optim/schedules.py`, renaming each without the underscore. Move `build_optimizer` and `reinit_label_rows` into `optim/groups.py`.
 
 - [ ] **Step 2: Move the perturbations and metrics**
 
-Cut `perturb_anchor_confidence`, `perturb_gazetteer_confidence` and `perturb_evidence_noise` into `train/noise.py`. Cut `_token_f1`, `_cross_pollution` and `eval_csv_row` into `eval/metrics.py`, dropping the underscores.
+Move `perturb_anchor_confidence`, `perturb_gazetteer_confidence` and `perturb_evidence_noise` into `train/noise.py`. Move `_token_f1`, `_cross_pollution` and `eval_csv_row` into `eval/metrics.py`, dropping the underscores.
 
 - [ ] **Step 3: Move checkpointing**
 
-Cut `save_checkpoint` and `find_latest_checkpoint` into `train/checkpoint.py`.
+Move `save_checkpoint` and `find_latest_checkpoint` into `train/checkpoint.py`.
 
 - [ ] **Step 4: Repoint the test imports**
 
@@ -763,10 +775,12 @@ git commit -m "refactor(train): move schedules, noise, metrics and checkpointing
 ## Task 7: `protocols.py`
 
 **Files:**
+
 - Create: `src/mailwoman_train/protocols.py`
 - Test: `tests/mailwoman_train/test_protocols.py`
 
 **Interfaces:**
+
 - Consumes: `mailwoman_train.types.PieceSpan`.
 - Produces: `protocols.CorpusBuilder`, `protocols.CountryModule`, `protocols.TrainCallback`. Task 8 implements `TrainCallback`; Task 9 implements `CountryModule`.
 
@@ -889,11 +903,13 @@ git commit -m "feat(train): declare the country, corpus-builder and callback int
 ## Task 8: `train/callbacks/`
 
 **Files:**
+
 - Create: `src/mailwoman_train/train/callbacks/__init__.py`, `callbacks/console.py`, `callbacks/csv_metrics.py`, `callbacks/evaluator.py`, `callbacks/checkpointer.py`, `callbacks/trackio.py`
 - Modify: `src/mailwoman_train/train/trainer.py`
 - Test: `tests/mailwoman_train/test_train_callbacks.py`
 
 **Interfaces:**
+
 - Consumes: `protocols.TrainCallback` (Task 7), `train.checkpoint.save_checkpoint`, `eval.metrics.eval_csv_row`, `observability.trackio`.
 - Produces: `train.callbacks.default_callbacks(cfg) -> list[TrainCallback]`, and the five classes `ConsoleCallback`, `CSVMetricsCallback`, `EvaluatorCallback`, `CheckpointerCallback`, `TrackioCallback`. `train.trainer.train` gains a keyword-only `callbacks: list[TrainCallback] | None = None` defaulting to `default_callbacks(cfg)`.
 
@@ -1016,11 +1032,13 @@ git commit -m "feat(train): drive logging, eval, checkpointing and trackio throu
 ## Task 9: `countries/`
 
 **Files:**
+
 - Create: `src/mailwoman_train/countries/__init__.py`, `countries/jp/{__init__,registers,corpora,text}.py`, `countries/kr/{__init__,registers,corpora,juso}.py`, `countries/tw/{__init__,registers,corpora}.py`, `countries/cjk/{__init__,overlay}.py`
 - Move: `jp_registry.py`, `jp_kana.py`, `build_jp_slice.py`, `kr_registry.py`, `kr_juso.py`, `build_kr_slice.py`, `tw_registry.py`, `build_tw_slice.py`, `build_cjk_overlay.py`
 - Test: `tests/mailwoman_train/test_country_registry.py`
 
 **Interfaces:**
+
 - Consumes: `protocols.CountryModule` (Task 7), `text.kana`, `text.normalize`, `corpora.builder` (Task 2).
 - Produces: `countries.COUNTRY_MODULES: dict[str, CountryModule]` keyed by ISO 3166-1 alpha-2 lowercase (`"jp"`, `"kr"`, `"tw"`), and `countries.country_module(code) -> CountryModule` raising `KeyError` with the known codes listed.
 
@@ -1074,7 +1092,7 @@ git mv src/mailwoman_train/jp_kana.py src/mailwoman_train/countries/jp/kana.py
 git mv src/mailwoman_train/build_jp_slice.py src/mailwoman_train/countries/jp/corpora.py
 ```
 
-Cut `JP_PREFECTURES`, `normalize_name`, `normalize_number` and `split_street` from `corpora.py` into `countries/jp/text.py`. Repoint `registers.py`'s former line 32 to `from .text import JP_PREFECTURES, normalize_name, split_street`.
+Move `JP_PREFECTURES`, `normalize_name`, `normalize_number` and `split_street` from `corpora.py` into `countries/jp/text.py`. Repoint `registers.py`'s former line 32 to `from .text import JP_PREFECTURES, normalize_name, split_street`.
 
 Write `countries/jp/__init__.py` exposing a module object that satisfies `CountryModule`:
 
@@ -1185,12 +1203,14 @@ git commit -m "refactor(train): key per-country code by country under countries/
 ## Task 10: `cli/commands/`
 
 **Files:**
+
 - Create: `src/mailwoman_train/cli/__init__.py`, `cli/parser.py`, `cli/commands/*.py`
 - Move: `src/mailwoman_train/cli.py` (654 lines), and fifteen of `scripts/*.py`
 - Modify: `src/mailwoman_train/__main__.py`
 - Test: `tests/mailwoman_train/test_cli_commands.py`
 
 **Interfaces:**
+
 - Consumes: every role module.
 - Produces: `cli.main(argv=None)`, and one `cli/commands/<name>.py` per subcommand, each exporting `add_parser(subparsers) -> None` and `run(args) -> int`.
 
@@ -1296,10 +1316,12 @@ git commit -m "refactor(cli): one file per subcommand, absorbing the one-off scr
 ## Task 11: Pin the launcher's behavior before touching it
 
 **Files:**
+
 - Create: `tests/launch/test_sync_table_parity.py`, `tests/launch/__init__.py`
 - Read only: `modal/train_remote.py`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `tests/launch/extract_current.py`, holding `extract_sync_functions(source: str) -> dict[str, SyncSpec]` where `SyncSpec` carries `rclone_commands: list[str]`, `check_paths: list[str]` and `pycache_paths: list[str]`.
 
@@ -1388,11 +1410,13 @@ git commit -m "test(launch): pin the 57 sync functions before collapsing them"
 ## Task 12: Rename `modal/` to `launch/`
 
 **Files:**
+
 - Move: `modal/train_remote.py`, `modal/AGENTS.md`, `modal/CLAUDE.md`
 - Create: `launch/__init__.py`
 - Modify: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `launch` as an importable package. `modal run -m launch.train` replaces `modal run corpus-python/modal/train_remote.py`.
 
@@ -1448,11 +1472,13 @@ git commit -m "refactor(launch): rename modal/ to launch/ so the package stops s
 ## Task 13: Collapse the launcher
 
 **Files:**
+
 - Create: `launch/app.py`, `launch/env.py`, `launch/corpora.py`, `launch/sync.py`, `launch/init.py`, `launch/train.py`, `launch/export.py`, `launch/diagnostics/*.py`
 - Delete: `launch/train_remote.py`
 - Modify: `launch/AGENTS.md`
 
 **Interfaces:**
+
 - Consumes: the fixture from Task 11.
 - Produces:
   - `launch.corpora.CORPUS_VERSIONS: dict[str, CorpusVersion]`, where `CorpusVersion` carries `version: str`, `rclone_pairs: list[tuple[str, str]]`, `check_paths: list[str]`, `pycache_paths: list[str]`
@@ -1536,12 +1562,14 @@ git commit -m "refactor(launch): drive corpus sync from a table instead of 57 cl
 ## Task 14: Mirror the tests, add the check, finish packaging
 
 **Files:**
+
 - Move: 74 files under `tests/mailwoman_train/`
 - Create: `src/mailwoman_train/py.typed`, `packages/repo-health/lib/checks/python-prefix-directories.ts`
 - Delete: `src/mailwoman_corpus/`
 - Modify: `corpus-python/pyproject.toml`, `packages/repo-health/lib/registry.ts`
 
 **Interfaces:**
+
 - Consumes: the finished source tree.
 - Produces: a test tree mirroring the source tree, and a `repo-health` check that keeps §5 satisfied.
 
