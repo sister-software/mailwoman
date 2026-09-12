@@ -21,9 +21,28 @@ torch = pytest.importorskip("torch")
 from mailwoman_train.labels import ACTIVE_BIO_LABELS  # noqa: E402
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 
-#: Committed beside this file by the pre-split code; regenerating it after the split would make the
-#: test compare the new code against itself.
+#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: after a change makes the test compare the new code against itself, so regenerate only when the
+#: current code is already verified against the existing reference.
+#:
+#: Regenerate with: uv run python tests/mailwoman_train/test_encoder_split_parity.py
 REFERENCE = Path(__file__).parent / "encoder-split-reference.json"
+
+#: Written into the artifact so a reader meets it there rather than here.
+REFERENCE_README = [
+    "Pins the encoder's forward pass and its initial weights across a refactor.",
+    "Regenerate: uv run python tests/mailwoman_train/test_encoder_split_parity.py",
+    "Fixture: build_reference_encoder() in the test beside this file — every channel and head on.",
+    "",
+    "logits: one forward pass over 8 tokens, flattened. A change means the forward path moved.",
+    "state_dict_keys: what save_pretrained writes. A change invalidates existing checkpoints.",
+    "parameter_checksums: each parameter's initial sum. Most are constants, not RNG state:",
+    "  _init_weights zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0 (a zeroed",
+    "  gamma collapses the layer to a constant output, which it has done), and zeroes locale_film",
+    "  last so locale conditioning starts as the identity. The remaining xavier_uniform_ weights",
+    "  are the RNG-dependent ones: they move if module construction is REORDERED, which the logits",
+    "  do not detect because the reference forward supplies no channel features.",
+]
 
 NUM_LABELS = len(ACTIVE_BIO_LABELS)
 VOCAB_SIZE = 64
@@ -73,12 +92,17 @@ def build_reference_encoder() -> MailwomanCoarseEncoder:
 
 
 def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
-    """A per-parameter sum, which changes if that parameter's initial values change.
+    """Every parameter's initial sum, as `_init_weights` leaves it.
 
     The logits alone do not cover this. The reference forward pass supplies no channel features,
     so a channel's projection is never invoked and never reaches a logit — a reordered channel
     passes a logit comparison while every weight after it has shifted. `_init_weights` draws in
     `self.parameters()` order, and these sums are what make that order observable.
+
+    Most of these are constants rather than RNG state, and the artifact's README says which and
+    why: `_init_weights` zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0, and
+    zeroes `locale_film` last so conditioning starts as a no-op. A constant moving means that
+    policy changed; a drawn weight moving means construction order did.
     """
     return {name: round(float(p.detach().sum()), 6) for name, p in model.named_parameters()}
 
@@ -148,6 +172,20 @@ def test_state_dict_keys_match_the_committed_reference() -> None:
     )
 
 
+def test_every_layer_norm_gamma_starts_at_one() -> None:
+    """The one init constant with a recorded failure behind it.
+
+    `_init_weights` zeroes every 1-D parameter and then resets LayerNorm gamma to 1.0. Without
+    that second pass a LayerNorm emits `0·normalized + beta` for every input, and the model
+    predicts one class for every token — which it did, with loss flat at the all-O baseline.
+    """
+    for name, module in build_reference_encoder().named_modules():
+        if isinstance(module, torch.nn.LayerNorm):
+            assert torch.all(module.weight == 1.0), f"{name}.weight (gamma) is not 1.0"
+            if module.bias is not None:
+                assert torch.all(module.bias == 0.0), f"{name}.bias (beta) is not 0.0"
+
+
 def test_parameter_initialization_matches_the_committed_reference() -> None:
     """Catches a construction reorder, which the logits do not.
 
@@ -157,10 +195,33 @@ def test_parameter_initialization_matches_the_committed_reference() -> None:
     and these sums moved.
     """
     if not REFERENCE.is_file():
-        pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
-    expected = json.loads(REFERENCE.read_text())
+        pytest.skip(f"no reference at {REFERENCE}; regenerate it before splitting")
+    expected = json.loads(REFERENCE.read_text())["parameter_checksums"]
     actual = parameter_checksums(build_reference_encoder())
 
-    assert sorted(actual) == sorted(expected["parameter_checksums"]), "the parameter set changed"
-    drifted = [name for name, total in actual.items() if total != expected["parameter_checksums"][name]]
+    assert sorted(actual) == sorted(expected), "the parameter set changed"
+    drifted = [name for name, total in actual.items() if total != expected[name]]
     assert drifted == [], f"initial weights moved for {len(drifted)} parameters, starting at {drifted[:3]}"
+
+
+def write_reference() -> None:
+    """Capture the current encoder as the reference the tests above compare against.
+
+    Run this only when the current code already passes against the existing reference — otherwise
+    the artifact records whatever the code does now, and the tests assert nothing.
+    """
+    model = build_reference_encoder()
+    payload = {
+        "README": REFERENCE_README,
+        "logits": reference_logits(model),
+        "state_dict_keys": sorted(model.state_dict().keys()),
+        "parameter_checksums": parameter_checksums(model),
+    }
+    REFERENCE.write_text(json.dumps(payload, indent="\t", sort_keys=False) + "\n")
+    print(f"wrote {REFERENCE}")
+    print(f"  {len(payload['logits'])} logits, {len(payload['state_dict_keys'])} state-dict keys")
+    print(f"  {len(payload['parameter_checksums'])} parameter checksums")
+
+
+if __name__ == "__main__":
+    write_reference()
