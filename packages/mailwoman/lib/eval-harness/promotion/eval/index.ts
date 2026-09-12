@@ -73,7 +73,7 @@ import { pathExists, readLocalBuffer, readLocalJSONFile, statPath } from "@mailw
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { isoDate, isoSeconds } from "@mailwoman/core/utils"
+import { isoSeconds } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -85,7 +85,8 @@ import { frParseRecall } from "#eval-harness/fr-parse-recall"
 import { maskRegressionCheck } from "#eval-harness/mask-regression"
 import { perLocaleF1 } from "#eval-harness/per/locale-f1"
 import { presetCompare } from "#eval-harness/preset-compare"
-import { assemblePromotionVerdict } from "#eval-harness/promotion/eval/verdict"
+import { finalizePromotionVerdict } from "#eval-harness/promotion/eval/finalize"
+import { LegProfile } from "#eval-harness/promotion/eval/leg-profile"
 import { scoreAffix, type ScoreAffixOptions } from "#eval-harness/score/affix"
 import { scoreCountryHomograph } from "#eval-harness/score/country-homograph"
 import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
@@ -170,6 +171,12 @@ export interface PromotionEvalOptions {
 	 * Battery output dir. Default `/tmp/eval-<label>-<hhmm>`.
 	 */
 	outDir?: PathBuilderLike
+	/**
+	 * Write a per-leg wall-time ledger here. PROFILING ONLY, and the path must name somewhere OUTSIDE
+	 * {@linkcode PromotionEvalOptions.outDir}: the receipt comparator reads every file under that directory byte-for-byte,
+	 * and a wall time differs between two runs of the same artifact. Omitted, nothing is written.
+	 */
+	profileJSON?: string
 }
 
 /**
@@ -471,6 +478,20 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const CARD = options.card ?? "packages/neural-weights-en-us/model-card.json"
 	const GAZ = options.gazetteerLexicon ?? "data/gazetteer/anchor-lexicon-v1.json"
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
+	await using profile = new LegProfile(options.profileJSON ?? "")
+
+	// Every leg takes the library thread resolution, and two ways of raising it were measured and REJECTED.
+	//
+	// A UNIFORM raise is eaten by de-order's own variance. Over one battery per `MAILWOMAN_INTRA_OP_THREADS` setting the
+	// four parse-only legs scale monotonically — 279.2 s at 1 thread, 168.9 at 2, 136.1 at 4, 106.1 at 8 — but de-order
+	// does not, and its int8 arm alone spanned 191.5-315.2 s across seven runs, wider than the 22.7 s the whole battery
+	// gains going 2 -> 8. The library default of 2 stands until a repeated measurement separates the two.
+	//
+	// Raising the PARSE-ONLY legs alone is worse than either. It does speed them up (per-locale fp32 79.8 s -> 51.5, the
+	// PO-box probe 37.8 -> 23.8, about 55 s across the four), but de-order, which passes no thread option and resolves
+	// half its rows through SQLite, went 191.5 s -> 311.7 and 315.2 in two runs, and the battery total 437.7 s -> 548.3
+	// and 532.9. A leg's classifier is never disposed, so its thread pool outlives it and the later legs contend with
+	// what the earlier ones left running.
 
 	// PACKAGE-SHAPED (#718-safe): when --weights-cache is set, the graded artifact + its tokenizer/card
 	// are the cache's own siblings. The metric probes load it via loadFromWeights (feeding anchor +
@@ -604,20 +625,22 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		// the metric probes is unchanged.
 		const perLocaleLines: string[] = []
 
-		await perLocaleF1(
-			{
-				...plOptions,
-				// Spec-declared, and spelled out rather than spread: per-locale-f1 names the lexicon field
-				// `gazetteerLexiconPath` where the affix probes call it `gazetteerLexicon`, and a spread would
-				// have carried the wrong key silently past TypeScript into a channel that stayed unfed.
-				...(check.golden_dir ? { goldenDir: check.golden_dir } : {}),
-				...(channelOptions.gazetteerLexicon ? { gazetteerLexiconPath: channelOptions.gazetteerLexicon } : {}),
-				...(channelOptions.suppressGazNearPostcode ? { suppressGazNearPostcode: true } : {}),
-				...(channelOptions.conventions ? { conventions: channelOptions.conventions } : {}),
-				...(channelOptions.bridgeGaps ? { bridgeGaps: true } : {}),
-				outJSON: `${OUT_DIR}/${tag}-per-locale.json`,
-			},
-			(line) => perLocaleLines.push(line)
+		await profile.time("per-locale", tag, () =>
+			perLocaleF1(
+				{
+					...plOptions,
+					// Spec-declared, and spelled out rather than spread: per-locale-f1 names the lexicon field
+					// `gazetteerLexiconPath` where the affix probes call it `gazetteerLexicon`, and a spread would
+					// have carried the wrong key silently past TypeScript into a channel that stayed unfed.
+					...(check.golden_dir ? { goldenDir: check.golden_dir } : {}),
+					...(channelOptions.gazetteerLexicon ? { gazetteerLexiconPath: channelOptions.gazetteerLexicon } : {}),
+					...(channelOptions.suppressGazNearPostcode ? { suppressGazNearPostcode: true } : {}),
+					...(channelOptions.conventions ? { conventions: channelOptions.conventions } : {}),
+					...(channelOptions.bridgeGaps ? { bridgeGaps: true } : {}),
+					outJSON: `${OUT_DIR}/${tag}-per-locale.json`,
+				},
+				(line) => perLocaleLines.push(line)
+			)
 		)
 
 		await writeLocalFile(renderLines(perLocaleLines), `${OUT_DIR}/${tag}-per-locale.md`)
@@ -627,7 +650,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		const runAffix = async (mdName: string, extra: ScoreAffixOptions): Promise<void> => {
 			const lines: string[] = []
 
-			await scoreAffix({ ...probeOptions, ...channelOptions, ...extra }, (line) => lines.push(line))
+			await profile.time(mdName.replace(`${tag}-`, "").replace(/\.md$/u, ""), tag, () =>
+				scoreAffix({ ...probeOptions, ...channelOptions, ...extra }, (line) => lines.push(line))
+			)
 
 			await writeLocalFile(renderLines(lines), `${OUT_DIR}/${mdName}`)
 		}
@@ -641,16 +666,18 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		const countryLines: string[] = []
 
-		await scoreCountryHomograph(
-			{
-				...probeOptions,
-				...channelOptions,
-				// The country probe ALWAYS suppresses gaz clues near a postcode, whether or not the spec
-				// asked for the gaz channel — this flag was hard-coded on its command line.
-				suppressGazNearPostcode: true,
-				json: `${OUT_DIR}/${tag}-country.json`,
-			},
-			(line) => countryLines.push(line)
+		await profile.time("country", tag, () =>
+			scoreCountryHomograph(
+				{
+					...probeOptions,
+					...channelOptions,
+					// The country probe ALWAYS suppresses gaz clues near a postcode, whether or not the spec
+					// asked for the gaz channel — this flag was hard-coded on its command line.
+					suppressGazNearPostcode: true,
+					json: `${OUT_DIR}/${tag}-country.json`,
+				},
+				(line) => countryLines.push(line)
+			)
 		)
 
 		await writeLocalFile(renderLines(countryLines), `${OUT_DIR}/${tag}-country.md`)
@@ -678,26 +705,28 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		const deorderErr: string[] = []
 
 		try {
-			await deOrderEval(
-				{
-					model: m,
-					card: armCard,
-					tokenizer: armTok,
-					anchorLookup: String(LK),
-					out: `${OUT_DIR}/${tag}-deorder`,
-					// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's `findPlace` calls
-					// repeat a key, and US resolve costs 25.5 ms/row without it against 7.4 with. The databases are
-					// sealed, so a query is a pure function of its arguments; the memo shares hit objects between
-					// callers, so a caller that mutated one would change this leg's report.
-					lookupMemo: true,
-					// Five of the six runs feed no floor: the verdict reads one cell, the `native DE` anchor-ON
-					// locality, which is also in the fp32↔int8 delta cap and so runs on both arms. The other five
-					// are a record, and a record wants one reading per promotion rather than two. They run on the
-					// arm that ships — the second one when the battery is paired, the only one when it is not.
-					...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
-				},
-				(line) => deorderOut.push(line),
-				(line) => deorderErr.push(line)
+			await profile.time("de-order", tag, () =>
+				deOrderEval(
+					{
+						model: m,
+						card: armCard,
+						tokenizer: armTok,
+						anchorLookup: String(LK),
+						out: `${OUT_DIR}/${tag}-deorder`,
+						// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's `findPlace` calls
+						// repeat a key, and US resolve costs 25.5 ms/row without it against 7.4 with. The databases are
+						// sealed, so a query is a pure function of its arguments; the memo shares hit objects between
+						// callers, so a caller that mutated one would change this leg's report.
+						lookupMemo: true,
+						// Five of the six runs feed no floor: the verdict reads one cell, the `native DE` anchor-ON
+						// locality, which is also in the fp32↔int8 delta cap and so runs on both arms. The other five
+						// are a record, and a record wants one reading per promotion rather than two. They run on the
+						// arm that ships — the second one when the battery is paired, the only one when it is not.
+						...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
+					},
+					(line) => deorderOut.push(line),
+					(line) => deorderErr.push(line)
+				)
 			)
 		} catch (error) {
 			deorderErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
@@ -732,7 +761,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const presetLines: string[] = []
 
 	try {
-		await presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line))
+		await profile.time("presets", undefined, () =>
+			presetCompare({ modelPath: shipModel }, (line) => presetLines.push(line))
+		)
 	} catch (error) {
 		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
 	}
@@ -744,13 +775,15 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// the ship artifact against the slim hot DB the demo serves. Env-restricted like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
 	// eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
-	await runDemoCascadeLeg({
-		outDir: OUT_DIR,
-		shipModel,
-		tokenizer: EFF_TOK,
-		card: EFF_CARD,
-		gazetteerLexicon: GAZ,
-	})
+	await profile.time("demo-cascade", undefined, () =>
+		runDemoCascadeLeg({
+			outDir: OUT_DIR,
+			shipModel,
+			tokenizer: EFF_TOK,
+			card: EFF_CARD,
+			gazetteerLexicon: GAZ,
+		})
+	)
 
 	// Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
 	if ("arena.perturb" in (check.floors ?? {})) {
@@ -765,19 +798,21 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		let arenaFailed = false
 
 		try {
-			await externalArenas(
-				{
-					model: shipModel,
-					tokenizer: EFF_TOK,
-					modelCard: EFF_CARD,
-					gazetteerLexicon: GAZ,
-					anchorLookup: String(LK),
-					outDir: `${OUT_DIR}/arenas`,
-					...(CONV_MODE ? { conventions: CONV_MODE } : {}),
-					...(BRIDGE_MODE ? { bridgeGaps: true } : {}),
-				},
-				(line) => arenaOut.push(line),
-				(line) => arenaErr.push(line)
+			await profile.time("arena", undefined, () =>
+				externalArenas(
+					{
+						model: shipModel,
+						tokenizer: EFF_TOK,
+						modelCard: EFF_CARD,
+						gazetteerLexicon: GAZ,
+						anchorLookup: String(LK),
+						outDir: `${OUT_DIR}/arenas`,
+						...(CONV_MODE ? { conventions: CONV_MODE } : {}),
+						...(BRIDGE_MODE ? { bridgeGaps: true } : {}),
+					},
+					(line) => arenaOut.push(line),
+					(line) => arenaErr.push(line)
+				)
 			)
 		} catch (error) {
 			// The child's non-zero exit is a throw in-process. It still lands in arenas.md — the old
@@ -808,20 +843,22 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		let barePassed: boolean
 
 		try {
-			const bare = await frParseRecall(
-				{
-					model: shipModel,
-					tokenizer: EFF_TOK,
-					modelCard: EFF_CARD,
-					// The leg's anchor + lexicon siblings must come from the arm being graded, not from whatever the
-					// checkout happens to have linked. Without this it read the tracked workspace, which is bare on a dev
-					// checkout, and the ENOENT surfaced as a bare-street floor FAILURE.
-					...(WC ? { weightsCache: WC } : {}),
-					floor: String(bareStreetFloor),
-					json: `${OUT_DIR}/fr-bare-street.json`,
-				},
-				(line) => bareOut.push(line),
-				(line) => bareErr.push(line)
+			const bare = await profile.time("fr-bare-street", undefined, () =>
+				frParseRecall(
+					{
+						model: shipModel,
+						tokenizer: EFF_TOK,
+						modelCard: EFF_CARD,
+						// The leg's anchor + lexicon siblings must come from the arm being graded, not from whatever the
+						// checkout happens to have linked. Without this it read the tracked workspace, which is bare on a dev
+						// checkout, and the ENOENT surfaced as a bare-street floor FAILURE.
+						...(WC ? { weightsCache: WC } : {}),
+						floor: String(bareStreetFloor),
+						json: `${OUT_DIR}/fr-bare-street.json`,
+					},
+					(line) => bareOut.push(line),
+					(line) => bareErr.push(line)
+				)
 			)
 
 			barePassed = bare.pass
@@ -858,16 +895,18 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		const maskLines: string[] = []
 
 		try {
-			const mask = await maskRegressionCheck(
-				{
-					model: shipModel,
-					tokenizer: EFF_TOK,
-					modelCard: EFF_CARD,
-					anchorLookup: String(LK),
-					gazetteerLexicon: GAZ,
-					json: `${OUT_DIR}/mask-regression.json`,
-				},
-				(line) => maskLines.push(line)
+			const mask = await profile.time("mask-regression", undefined, () =>
+				maskRegressionCheck(
+					{
+						model: shipModel,
+						tokenizer: EFF_TOK,
+						modelCard: EFF_CARD,
+						anchorLookup: String(LK),
+						gazetteerLexicon: GAZ,
+						json: `${OUT_DIR}/mask-regression.json`,
+					},
+					(line) => maskLines.push(line)
+				)
 			)
 
 			MASK_CHECK_STATUS = mask.pass ? 0 : 1
@@ -889,47 +928,13 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		console.log("⚠ mask-regression check SKIPPED — spec declares no requires_conventions (no mask in the ship config)")
 	}
 
-	// Collect verdicts and verify both promotion locks.
-	// Folds BOTH locks: the floor verdict AND the mask-regression check above. Either miss fails the eval.
-	let VERDICT_STATUS: number
-
-	try {
-		const { failed } = await assemblePromotionVerdict({
-			check: CHECK,
-			outDir: OUT_DIR,
-			withInt8: Boolean(INT8 || WC8),
-			...(options.weightsCache ? { gradedArtifact: "weights-cache" as const } : {}),
-		})
-
-		VERDICT_STATUS = failed ? 1 : 0
-	} catch (error) {
-		console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
-
-		VERDICT_STATUS = 1
-	}
-
-	if (VERDICT_STATUS !== 0 || MASK_CHECK_STATUS !== 0) {
-		if (MASK_CHECK_STATUS !== 0) {
-			console.error(`✗ check FAILED the mask-regression lock (#718) — see ${OUT_DIR}/mask-regression.md`)
-		}
-
-		return 1
-	}
-
-	// Update the evaluation ledger automatically after a passing verdict.
-	// The ledger froze at v4.4.0 because appending relied on a human remembering. On a PASS, print
-	// the exact ledger-append command with everything pre-filled; the release-prep flow runs it with
-	// the real npm version. (Not auto-executed here: the runner runs on candidates that may never
-	// ship, and the ledger records shipped/shippable versions keyed by npm semver.)
-	const shipDate = isoDate()
-
-	console.log(
-		`\nledger (#885): on promote, append this run —\n` +
-			`  node packages/mailwoman/out/cli/index.js eval ledger-append \\\n` +
-			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
-			`    --run-id ${LABEL.replaceAll(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
-			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${EFF_CARD}`
-	)
-
-	return 0
+	return await finalizePromotionVerdict({
+		card: EFF_CARD,
+		check: CHECK,
+		gradedFromWeightsCache: Boolean(options.weightsCache),
+		label: LABEL,
+		maskCheckStatus: MASK_CHECK_STATUS,
+		outDir: OUT_DIR,
+		withInt8: Boolean(INT8 || WC8),
+	})
 }
