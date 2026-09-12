@@ -429,13 +429,47 @@ class MailwomanCoarseEncoder(nn.Module):
         max_span: int,
         use_crf: bool,
     ) -> None:
-        """The output heads.
+        """The output heads, in two groups that differ in what they touch.
 
-        Do not reorder these, and keep the call where it sits in `__init__`. Registration order
+        The merge heads OWN columns of the classifier's output: their logits replace specific label
+        columns in `forward`, so they reach the exported graph and change what inference predicts.
+        The structured heads sit beside the classifier — the CRF decodes its output, the span scorer
+        and span-boundary head score it — and touch no column.
+
+        Do not reorder these, and keep the calls where they sit in `__init__`. Registration order
         decides what `_init_weights` draws for each parameter, so a move changes the initial
         weights of every parameter registered after it and a from-scratch run stops reproducing
         earlier ones.
         """
+        self._build_merge_heads(
+            hidden_size=hidden_size,
+            num_labels=num_labels,
+            use_conventions_loss_mask=use_conventions_loss_mask,
+            use_affix_head=use_affix_head,
+            use_deploc_head=use_deploc_head,
+        )
+        self._build_structured_heads(
+            hidden_size=hidden_size,
+            num_labels=num_labels,
+            use_span_boundary_head=use_span_boundary_head,
+            span_boundary_loss_weight=span_boundary_loss_weight,
+            use_span_scorer=use_span_scorer,
+            span_loss_weight=span_loss_weight,
+            span_dim=span_dim,
+            max_span=max_span,
+            use_crf=use_crf,
+        )
+
+    def _build_merge_heads(
+        self,
+        *,
+        hidden_size: int,
+        num_labels: int,
+        use_conventions_loss_mask: bool,
+        use_affix_head: bool,
+        use_deploc_head: bool,
+    ) -> None:
+        """Heads whose logits replace columns of the classifier's output."""
         # Dedicated affix head (#492): MLP over [final hidden ; raw gazetteer 5-dim skip] ->
         # {O, B-street_prefix, I-street_prefix, B-street_suffix, I-street_suffix}. The gaz vector
         # skip-connects PAST the encoder so the head owns the clue->affix mapping (consult
@@ -496,6 +530,20 @@ class MailwomanCoarseEncoder(nn.Module):
             deploc_ids = [_L2I["B-dependent_locality"], _L2I["I-dependent_locality"]]
             self.register_buffer("deploc_label_ids", torch.tensor(deploc_ids, dtype=torch.long), persistent=False)
 
+    def _build_structured_heads(
+        self,
+        *,
+        hidden_size: int,
+        num_labels: int,
+        use_span_boundary_head: bool,
+        span_boundary_loss_weight: float,
+        use_span_scorer: bool,
+        span_loss_weight: float,
+        span_dim: int,
+        max_span: int,
+        use_crf: bool,
+    ) -> None:
+        """Heads that score or decode the classifier's output without replacing any of it."""
         # Span-boundary auxiliary head (#727, GLiNER-lite probe). A TRAINING-ONLY 2-logit head over the
         # final hidden state predicting, per token, whether an entity span STARTS (a B-* tag) and whether
         # one ENDS here (an entity token whose successor doesn't continue it). The BIO head places tags;
