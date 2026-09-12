@@ -27,7 +27,7 @@ replaced wholesale.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import torch
 from torch import nn
@@ -102,6 +102,55 @@ def _soft_feed_channel(
     if not enabled:
         return None, None
     return nn.Linear(feature_dim, hidden_size, bias=True), nn.Parameter(torch.zeros(hidden_size))
+
+
+def _inject_soft_feed(
+    hidden: torch.Tensor,
+    *,
+    name: str,
+    flag: str,
+    projection: nn.Linear | None,
+    cue: nn.Parameter | None,
+    features: torch.Tensor | None,
+    confidence: torch.Tensor | None,
+    feature_dim: int,
+    scale: torch.Tensor | None = None,
+) -> tuple[torch.Tensor, torch.Tensor | None]:
+    """Add one soft-feed channel to the token representations.
+
+    Every channel is the same additive form: `h_i + c_i · (W · features_i + cue)`. The confidence
+    scaling is what keeps a channel continuous rather than a switch — a token with no clue has
+    c=0 and contributes exactly nothing, so an encoder given no features computes what an encoder
+    built without the channel computes.
+
+    Absent features on an ENABLED channel are zeros, which is the well-defined "no clue anywhere"
+    inference path. Features supplied for a DISABLED channel raise: that combination means the
+    caller built the wrong encoder, and silently dropping the evidence they passed would train or
+    serve a model that ignores half its input.
+
+    Returns the updated representations and the projected vector, which the postcode anchor needs
+    for its second, pooled injection.
+    """
+    if projection is None or cue is None:
+        if features is not None:
+            raise ValueError(
+                f"{name}_features supplied but {flag}=False — rebuild the "
+                f"encoder with {flag}=True or drop the {name} arguments"
+            )
+        return hidden, None
+
+    bsz, seq = hidden.shape[0], hidden.shape[1]
+    if features is None or confidence is None:
+        features = torch.zeros(bsz, seq, feature_dim, dtype=hidden.dtype, device=hidden.device)
+        confidence = torch.zeros(bsz, seq, dtype=hidden.dtype, device=hidden.device)
+    elif features.shape != (bsz, seq, feature_dim):
+        raise ValueError(f"{name}_features shape {tuple(features.shape)} != ({bsz}, {seq}, {feature_dim})")
+
+    projected = features.to(hidden.dtype)
+    if scale is not None:
+        projected = projected * scale.to(hidden.dtype)
+    vector = projection(projected) + cue
+    return hidden + confidence.to(hidden.dtype).unsqueeze(-1) * vector, vector
 
 
 class MailwomanCoarseEncoder(nn.Module):
@@ -590,6 +639,54 @@ class MailwomanCoarseEncoder(nn.Module):
         locality_surface_confidence: torch.Tensor | None = None,
         char_ids: torch.Tensor | None = None,
     ) -> _CoarseEncoderOutput:
+        h = self._embed_inputs(
+            input_ids=input_ids,
+            char_ids=char_ids,
+            phrase_features=phrase_features,
+            anchor_features=anchor_features,
+            anchor_confidence=anchor_confidence,
+            gazetteer_features=gazetteer_features,
+            gazetteer_confidence=gazetteer_confidence,
+            country_features=country_features,
+            country_confidence=country_confidence,
+            street_type_features=street_type_features,
+            street_type_confidence=street_type_confidence,
+            locality_surface_features=locality_surface_features,
+            locality_surface_confidence=locality_surface_confidence,
+        )
+        bsz, seq = h.shape[0], h.shape[1]
+        return self._encode_and_score(
+            h,
+            attention_mask=attention_mask,
+            labels=labels,
+            locale_ids=locale_ids,
+            gazetteer_features=gazetteer_features,
+            bsz=bsz,
+            seq=seq,
+        )
+
+    def _embed_inputs(
+        self,
+        *,
+        input_ids: torch.Tensor | None,
+        char_ids: torch.Tensor | None,
+        phrase_features: torch.Tensor | None,
+        anchor_features: torch.Tensor | None,
+        anchor_confidence: torch.Tensor | None,
+        gazetteer_features: torch.Tensor | None,
+        gazetteer_confidence: torch.Tensor | None,
+        country_features: torch.Tensor | None,
+        country_confidence: torch.Tensor | None,
+        street_type_features: torch.Tensor | None,
+        street_type_confidence: torch.Tensor | None,
+        locality_surface_features: torch.Tensor | None,
+        locality_surface_confidence: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """Token representations with every enabled soft-feed channel added.
+
+        Each channel is additive and confidence-scaled, so this returns exactly what an encoder
+        built without any of them would return when none is enabled or none is supplied.
+        """
         # Token embedding source: char-composed (CharCNN over per-token char IDs, shape (B, S, W)) or the
         # SentencePiece piece-ID lookup (input_ids, shape (B, S)). Everything after `h` is identical.
         if self.use_char_embed:
@@ -643,16 +740,19 @@ class MailwomanCoarseEncoder(nn.Module):
         # v_ANCHOR), added to the input embedding. anchor_confidence carries the curriculum-perturbed
         # confidence (0 outside any postcode span / absent postcode), so c=0 tokens get a_i=0 with no
         # regime switch. Absent features default to zeros — the well-defined "no anchor" inference path.
-        if self.anchor_projection is not None and self.anchor_token_embedding is not None:
-            if anchor_features is None or anchor_confidence is None:
-                anchor_features = torch.zeros(bsz, seq, self.anchor_feature_dim, dtype=h.dtype, device=h.device)
+        h, anchor_vec = _inject_soft_feed(
+            h,
+            name="anchor",
+            flag="use_postcode_anchor",
+            projection=self.anchor_projection,
+            cue=self.anchor_token_embedding,
+            features=anchor_features,
+            confidence=anchor_confidence,
+            feature_dim=self.anchor_feature_dim,
+        )
+        if anchor_vec is not None:
+            if anchor_confidence is None:
                 anchor_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
-            elif anchor_features.shape != (bsz, seq, self.anchor_feature_dim):
-                raise ValueError(
-                    f"anchor_features shape {tuple(anchor_features.shape)} != ({bsz}, {seq}, {self.anchor_feature_dim})"
-                )
-            anchor_vec = self.anchor_projection(anchor_features.to(h.dtype)) + self.anchor_token_embedding
-            h = h + anchor_confidence.to(h.dtype).unsqueeze(-1) * anchor_vec
             if self.inject_first_token:
                 # Dual-injection (#327, v0.9.4): ALSO inject the pooled anchor at position 0 — an
                 # order-INDEPENDENT global cue the locality can attend back to regardless of where the
@@ -668,109 +768,83 @@ class MailwomanCoarseEncoder(nn.Module):
                 # `seq-1` cat that trips the ONNX opset version-converter. (1, S, 1) × (B, 1, hidden).
                 pos_indicator = (torch.arange(seq, device=h.device) == 0).to(h.dtype).view(1, seq, 1)
                 h = h + pos0_add * pos_indicator
-        elif anchor_features is not None:
-            raise ValueError(
-                "anchor_features supplied but use_postcode_anchor=False — rebuild the "
-                "encoder with use_postcode_anchor=True or drop the anchor arguments"
-            )
 
-        # Gazetteer-anchor injection (#464). Per-token additive: g_i = c_i · (W_g·features + v_GAZ),
-        # added to the input embedding. Confidence is 1.0 where any lexicon bit fires, 0 elsewhere —
-        # c=0 tokens are the no-clue identity (same continuum as the postcode anchor, no regime
-        # switch). Span-local by construction; no first-token pooling (clues are positional facts).
-        if self.gazetteer_projection is not None and self.gazetteer_token_embedding is not None:
-            if gazetteer_features is None or gazetteer_confidence is None:
-                gazetteer_features = torch.zeros(bsz, seq, self.gazetteer_feature_dim, dtype=h.dtype, device=h.device)
-                gazetteer_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
-            elif gazetteer_features.shape != (bsz, seq, self.gazetteer_feature_dim):
-                raise ValueError(
-                    f"gazetteer_features shape {tuple(gazetteer_features.shape)} != "
-                    f"({bsz}, {seq}, {self.gazetteer_feature_dim})"
-                )
-            gaz_vec = self.gazetteer_projection(gazetteer_features.to(h.dtype)) + self.gazetteer_token_embedding
-            h = h + gazetteer_confidence.to(h.dtype).unsqueeze(-1) * gaz_vec
-        elif gazetteer_features is not None:
-            raise ValueError(
-                "gazetteer_features supplied but use_gazetteer_anchor=False — rebuild the "
-                "encoder with use_gazetteer_anchor=True or drop the gazetteer arguments"
-            )
+        # Gazetteer-anchor injection (#464). Confidence is 1.0 where any lexicon bit fires, 0
+        # elsewhere. Span-local by construction; no first-token pooling, because a lexicon clue is a
+        # positional fact about the token it sits on, where a postcode identifies the whole row.
+        h, _ = _inject_soft_feed(
+            h,
+            name="gazetteer",
+            flag="use_gazetteer_anchor",
+            projection=self.gazetteer_projection,
+            cue=self.gazetteer_token_embedding,
+            features=gazetteer_features,
+            confidence=gazetteer_confidence,
+            feature_dim=self.gazetteer_feature_dim,
+        )
 
         # Country-lexicon injection (#1104). Per-token additive: t_i = c_i · (W_c·features + v_CTRY),
         # added to the input embedding. Confidence is 1.0 where a country surface fires, 0 elsewhere —
         # the no-clue identity (same continuum as the other channels). Independent of the gazetteer's
         # near-postcode suppression: a trailing "…12345 USA" keeps its country clue.
-        if self.country_projection is not None and self.country_token_embedding is not None:
-            if country_features is None or country_confidence is None:
-                country_features = torch.zeros(bsz, seq, self.country_feature_dim, dtype=h.dtype, device=h.device)
-                country_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
-            elif country_features.shape != (bsz, seq, self.country_feature_dim):
-                raise ValueError(
-                    f"country_features shape {tuple(country_features.shape)} != "
-                    f"({bsz}, {seq}, {self.country_feature_dim})"
-                )
-            # #1104 homograph-guard softener: scale the ambiguous dim (buffer [1.0, ambiguous_scale])
-            # before projection. No-op at scale 1.0 (v263); bakes into the ONNX at export.
-            # country_feature_scale is None only when the anchor is off, which this branch excludes.
-            scaled_country = country_features.to(h.dtype) * cast(torch.Tensor, self.country_feature_scale).to(h.dtype)
-            ctry_vec = self.country_projection(scaled_country) + self.country_token_embedding
-            h = h + country_confidence.to(h.dtype).unsqueeze(-1) * ctry_vec
-        elif country_features is not None:
-            raise ValueError(
-                "country_features supplied but use_country_anchor=False — rebuild the "
-                "encoder with use_country_anchor=True or drop the country arguments"
-            )
+        # The #1104 homograph-guard softener rides in as `scale`: a per-dim buffer
+        # [1.0, ambiguous_scale] applied before the projection. No-op at scale 1.0 (v263); bakes
+        # into the ONNX graph at export, so inference feeds the raw feature.
+        h, _ = _inject_soft_feed(
+            h,
+            name="country",
+            flag="use_country_anchor",
+            projection=self.country_projection,
+            cue=self.country_token_embedding,
+            features=country_features,
+            confidence=country_confidence,
+            feature_dim=self.country_feature_dim,
+            scale=self.country_feature_scale,
+        )
 
         # Street-type injection (P-A / Option A). Per-token additive: s_i = c_i · (W_s·features + v_STREET).
         # Confidence is 1.0 where a street-type surface fires, 0 elsewhere — the no-clue identity. Span-local
         # positional fact; no first-token pooling. Gives the encoder the street-type evidence the P-A
         # diagnostic showed it never had, so a street name can be distinguished from a locality name.
-        if self.street_type_projection is not None and self.street_type_token_embedding is not None:
-            if street_type_features is None or street_type_confidence is None:
-                street_type_features = torch.zeros(
-                    bsz, seq, self.street_type_feature_dim, dtype=h.dtype, device=h.device
-                )
-                street_type_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
-            elif street_type_features.shape != (bsz, seq, self.street_type_feature_dim):
-                raise ValueError(
-                    f"street_type_features shape {tuple(street_type_features.shape)} != "
-                    f"({bsz}, {seq}, {self.street_type_feature_dim})"
-                )
-            street_vec = (
-                self.street_type_projection(street_type_features.to(h.dtype)) + self.street_type_token_embedding
-            )
-            h = h + street_type_confidence.to(h.dtype).unsqueeze(-1) * street_vec
-        elif street_type_features is not None:
-            raise ValueError(
-                "street_type_features supplied but use_street_type_anchor=False — rebuild the "
-                "encoder with use_street_type_anchor=True or drop the street_type arguments"
-            )
+        h, _ = _inject_soft_feed(
+            h,
+            name="street_type",
+            flag="use_street_type_anchor",
+            projection=self.street_type_projection,
+            cue=self.street_type_token_embedding,
+            features=street_type_features,
+            confidence=street_type_confidence,
+            feature_dim=self.street_type_feature_dim,
+        )
 
         # Locality-surface injection (v3.16.0 evidence bundle). Per-token additive: l_i = c_i ·
         # (W_l·features + v_LOC). Same no-clue-identity continuum as every other channel.
-        if self.locality_surface_projection is not None and self.locality_surface_token_embedding is not None:
-            if locality_surface_features is None or locality_surface_confidence is None:
-                locality_surface_features = torch.zeros(
-                    bsz, seq, self.locality_surface_feature_dim, dtype=h.dtype, device=h.device
-                )
-                locality_surface_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
-            elif locality_surface_features.shape != (bsz, seq, self.locality_surface_feature_dim):
-                raise ValueError(
-                    f"locality_surface_features shape {tuple(locality_surface_features.shape)} != "
-                    f"({bsz}, {seq}, {self.locality_surface_feature_dim})"
-                )
-            loc_vec = (
-                self.locality_surface_projection(locality_surface_features.to(h.dtype))
-                + self.locality_surface_token_embedding
-            )
-            h = h + locality_surface_confidence.to(h.dtype).unsqueeze(-1) * loc_vec
-        elif locality_surface_features is not None:
-            raise ValueError(
-                "locality_surface_features supplied but use_locality_surface_anchor=False — rebuild the "
-                "encoder with use_locality_surface_anchor=True or drop the locality_surface arguments"
-            )
+        h, _ = _inject_soft_feed(
+            h,
+            name="locality_surface",
+            flag="use_locality_surface_anchor",
+            projection=self.locality_surface_projection,
+            cue=self.locality_surface_token_embedding,
+            features=locality_surface_features,
+            confidence=locality_surface_confidence,
+            feature_dim=self.locality_surface_feature_dim,
+        )
 
-        h = self.input_dropout(self.input_ln(h))
+        embedded: torch.Tensor = self.input_dropout(self.input_ln(h))
+        return embedded
 
+    def _encode_and_score(
+        self,
+        h: torch.Tensor,
+        *,
+        attention_mask: torch.Tensor | None,
+        labels: torch.Tensor | None,
+        locale_ids: torch.Tensor | None,
+        gazetteer_features: torch.Tensor | None,
+        bsz: int,
+        seq: int,
+    ) -> _CoarseEncoderOutput:
+        """Run the transformer body, condition on locale, emit logits, and compute the losses."""
         # nn.MultiheadAttention key_padding_mask: True = mask (ignore), False = keep.
         kpm: torch.Tensor | None = None
         if attention_mask is not None:
@@ -828,6 +902,39 @@ class MailwomanCoarseEncoder(nn.Module):
             logits = logits.clone()
             logits[:, :, self.deploc_label_ids] = deploc_logits[:, :, 1:]
 
+        loss, span_scores_out = self._compute_losses(
+            hidden=h,
+            logits=logits,
+            labels=labels,
+            attention_mask=attention_mask,
+            locale_ids=locale_ids,
+            locale_logits=locale_logits,
+            affix_logits=affix_logits,
+        )
+        return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits, span_scores=span_scores_out)
+
+    def _compute_losses(
+        self,
+        *,
+        hidden: torch.Tensor,
+        logits: torch.Tensor,
+        labels: torch.Tensor | None,
+        attention_mask: torch.Tensor | None,
+        locale_ids: torch.Tensor | None,
+        locale_logits: torch.Tensor | None,
+        affix_logits: torch.Tensor | None,
+    ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
+        """The supervised loss, its auxiliary terms, and the span scores.
+
+        Four terms can contribute, each gated independently: token CE (with the optional CRF NLL
+        beside it), the affix head's own CE, the locale auxiliary CE, the span-boundary BCE, and the
+        semi-Markov span NLL. Every one of them is summed into the same scalar and none of them is
+        visible in `logits`, so a term that stops firing changes what the model learns and nothing
+        the inference path returns.
+
+        Answers `None` for the loss when no term fired, which is inference. The span scores come
+        back separately because they are an output, not a loss: the export path reads them.
+        """
         loss: torch.Tensor | None = None
         if labels is not None:
             ce_logits = logits
@@ -944,7 +1051,7 @@ class MailwomanCoarseEncoder(nn.Module):
                 # Run the head in the ambient (autocast) dtype, then upcast the LOGITS to fp32 for a
                 # stable BCE — the same pattern the locale aux-CE uses (`locale_logits.float()`). Upcasting
                 # `h` before the matmul instead would clash with the bf16 head weights (mat1/mat2 dtype).
-                sb_logits = self.span_boundary_head(h)  # (B, S, 2), ambient dtype
+                sb_logits = self.span_boundary_head(hidden)  # (B, S, 2), ambient dtype
                 targets = torch.stack([start_tgt, end_tgt], dim=-1)  # (B, S, 2)
                 per_pos = nn.functional.binary_cross_entropy_with_logits(
                     sb_logits.float(), targets, reduction="none"
@@ -959,7 +1066,7 @@ class MailwomanCoarseEncoder(nn.Module):
         span_scores_out: torch.Tensor | None = None
 
         if self.use_span_scorer and self.span_scorer is not None:
-            span_scores_out = self.span_scorer(h)
+            span_scores_out = self.span_scorer(hidden)
 
             if labels is not None and attention_mask is not None and self.span_loss_weight > 0:
                 assert self.semi_crf is not None  # nosec B101 — type narrowing; built in __init__ when use_span_scorer
@@ -983,7 +1090,7 @@ class MailwomanCoarseEncoder(nn.Module):
                     span_term = self.span_loss_weight * span_nll
                     loss = span_term if loss is None else loss + span_term.to(loss.dtype)
 
-        return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits, span_scores=span_scores_out)
+        return loss, span_scores_out
 
     @torch.no_grad()
     def predict(
