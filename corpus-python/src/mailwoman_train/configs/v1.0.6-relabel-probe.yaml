@@ -24,7 +24,7 @@
 # /data/gazetteer/affix-relabel-lexicon-v1.json (built by scripts/build-affix-relabel-lexicon.mjs),
 # and the clean step-040000 copied to output-v106-relabel-probe-s42/checkpoints/ (done 2026-06-10).
 # Launch:
-#   modal run -d scripts/modal/train_remote.py --config v1.0.6-relabel-probe.yaml --resume auto
+#   cd corpus-python && modal run -d -m launch.train_remote --config v1.0.6-relabel-probe.yaml --resume auto
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation

@@ -35,7 +35,7 @@
 # this does not confound with the CRF precision question.
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py --config v0_7_0-calibration-label-smoothing.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_0-calibration-label-smoothing.yaml --resume none
 #
 # Authoritative eval is run LOCALLY post-training on data/eval/golden/v0.1.2/test
 # (the held-out split from task #34), read exactly once — see the v0.7 plan.

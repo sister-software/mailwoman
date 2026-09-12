@@ -35,7 +35,7 @@
 #
 # init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 2000 steps, warmup 200.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.6.0-no-fragment-b4b.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.6.0-no-fragment-b4b.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment

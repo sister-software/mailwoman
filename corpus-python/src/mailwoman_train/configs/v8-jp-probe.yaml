@@ -16,7 +16,7 @@
 #   "bare char CharCNN alone reaches the floor" — never alignment (Phase 0 retired 1,560/1,560).
 #   Leg 2 (unification bake-off, char-word vs SP on Latin) runs in the same session, checks v9 only.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v8-jp-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v8-jp-probe

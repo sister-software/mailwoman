@@ -19,7 +19,7 @@
 #
 # Launch (ONLY with operator confirmation — see project-v06x-hold + the fork in
 # the night-3 postmortem §0c):
-#   modal run -d scripts/modal/train_remote.py --config v0_7_0b-calibration-ls005.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_0b-calibration-ls005.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

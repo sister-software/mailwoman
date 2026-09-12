@@ -38,7 +38,7 @@
 #   itself erodes base competence; STOP, architecture question (from-scratch vs shelve) to the
 #   operator. No knob iteration inside the run.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.22.0-bundle-v385feed-8k.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.22.0-bundle-v385feed-8k.yaml --resume none
 #
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam

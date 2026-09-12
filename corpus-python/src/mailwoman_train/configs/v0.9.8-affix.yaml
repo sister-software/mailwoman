@@ -39,7 +39,7 @@
 #   # assemble overlay MANIFEST (v0.4.5-unit-v2 base + the affix slice), then modal volume put both.
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.8-affix.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

@@ -33,7 +33,7 @@
 #     the feature ON; invariance suite vs v385 (does the input channel introduce a new class?).
 #   VERDICT: 3k reached, contrast graded → A live | A insufficient. One run; no knob iteration.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.15.0-street-type.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.15.0-street-type.yaml --resume none
 #   (--resume none REQUIRED: init_from + the fresh channel live in the else branch; --resume auto no-ops it.)
 #
 data:

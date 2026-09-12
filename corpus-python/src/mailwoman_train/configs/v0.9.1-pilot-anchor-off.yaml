@@ -35,7 +35,7 @@
 #   modal volume put mailwoman-training <MANIFEST.json>                corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.0-pilot-selfcond.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

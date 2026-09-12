@@ -40,7 +40,7 @@
 #   modal volume put mailwoman-training <MANIFEST.json>                corpus/versioned/v0.4.2-de-bothorder/corpus-v0.4.2-de-bothorder/MANIFEST.json
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.2-de-bothorder.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

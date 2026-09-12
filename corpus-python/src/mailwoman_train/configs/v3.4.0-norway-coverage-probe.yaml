@@ -30,7 +30,7 @@
 # NOT A SHIP. A PASS justifies the 8k run (init_from v264 = "what v310 would have been with the bug
 # fixed"), pre-registered against the same rows. Promotion is the operator's act.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.4.0-norway-coverage-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.4.0-norway-coverage-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment

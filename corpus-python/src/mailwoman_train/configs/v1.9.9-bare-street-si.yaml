@@ -13,7 +13,7 @@
 # graded end-to-end (si-lost37.jsonl): >= 30/37 resolved; (c) US 12-row spot byte-identical-ish.
 # FULL CHECK: unchanged from v1.9.8's registration (US-2k ni, CZ/PL/SK/SI 1k ni incl. SI PASS, FR
 # bare-street WIN, 17 floors).
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.9-bare-street-si.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.9-bare-street-si.yaml --resume none
 #
 # --- v1.9.8 header below for the record ---
 # === v1.9.8-bare-street-bsplice (#901 run 1 — the fr-bare-street slice on the SHIPPED spliced base) ===
@@ -36,7 +36,7 @@
 # fr-parse-recall.ts bare-FR street-intact rate moves UP from the shipped-pair baseline AND US quick
 # slices hold. Early-kill @1k on non-decreasing loss. PASS -> RESUME this run's step-002000 ckpt with
 # max_steps bumped to 12000 (the +10k full-run precedent from v1.9.4). Full check = the night plan table.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.8-bare-street-bsplice.yaml
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.8-bare-street-bsplice.yaml
 #
 # --- v1.9.4 header (the slice's rationale) kept below for the record ---
 # === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary WITHOUT a postcode anchor) ===
@@ -68,7 +68,7 @@
 # FLAT → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is OFF
 # in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
 # v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the check.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.4-fr-bare-street.yaml --resume auto
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.4-fr-bare-street.yaml --resume auto
 data:
   # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
   corpus_dir: /data/corpus/versioned/v0.9.9-si-bare-village/corpus-v0.9.9-si-bare-village

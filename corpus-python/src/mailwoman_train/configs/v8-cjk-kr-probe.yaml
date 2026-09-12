@@ -21,8 +21,8 @@
 #     surface is learnable from the mixture and earns the 24k run (`v8-cjk-kr.yaml`); lower is the finding.
 #
 # Launch:
-#   modal run corpus-python/modal/train_remote.py::sync_v8cjk_kr
-#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-kr-probe.yaml --resume auto
+#   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk_kr
+#   cd corpus-python && modal run -d -m launch.train_remote --config v8-cjk-kr-probe.yaml --resume auto
 
 data:
   corpus_dir: /data/corpus/versioned/v8-cjk-kr-2026-09-06

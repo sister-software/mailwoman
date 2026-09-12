@@ -23,7 +23,7 @@
 #   brief: "build it with lexicon selectivity as a first-class build discipline"). Any miss ⇒ THREE
 #   strikes on the axis — STOP, fork to operator/DeepSeek with full attribution. One run.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.17.0-selective-locality.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.17.0-selective-locality.yaml --resume none
 #
 data:
   corpus_dir: /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc # FEED — v0.14.0-gb + synth-nz-v2 + synth-es-pedania (+synth-fr-lieudit if landed).

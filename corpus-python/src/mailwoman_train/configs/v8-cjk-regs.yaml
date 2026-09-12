@@ -28,8 +28,8 @@
 #   * Score BOTH arms (this run and v8-cjk-kr) on the same scorer in the same session.
 #
 # Launch (after the probe clears its bar):
-#   modal run corpus-python/modal/train_remote.py::sync_v8cjk_regs
-#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-regs.yaml --resume auto
+#   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk_regs
+#   cd corpus-python && modal run -d -m launch.train_remote --config v8-cjk-regs.yaml --resume auto
 
 data:
   corpus_dir: /data/corpus/versioned/v8-cjk-regs-2026-09-08

@@ -36,7 +36,7 @@
 # FLAT → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is OFF
 # in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
 # v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the check.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.4-fr-bare-street.yaml --resume auto
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.4-fr-bare-street.yaml --resume auto
 data:
   # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
   corpus_dir: /data/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street

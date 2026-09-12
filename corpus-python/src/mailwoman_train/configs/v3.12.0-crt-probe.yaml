@@ -41,7 +41,7 @@
 #   per DeepSeek's estimate), not a ship candidate. No promote path; report only. cRT "recovers the
 #   window" is a logged hypothesis (DeepSeek), not a check.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.12.0-crt-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.12.0-crt-probe.yaml --resume none
 #   (--resume none REQUIRED: reinit_label_rows lives in the init_from branch; --resume auto silently
 #   no-ops it — same discipline as v3.11.0-deploc-feed.)
 #
@@ -73,7 +73,7 @@
 #              2026-07-22 night shift CONDITIONAL on every bar above passing. Any bar fails → stage
 #              only, report, no promote (no silent check drift; treadmill guard: no knob iteration).
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.11.0-deploc-feed.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.11.0-deploc-feed.yaml --resume none
 #   (--resume none REQUIRED: reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it.)
 #
 # --- original v3.10.0-gb-probe header follows (provenance retained) ---

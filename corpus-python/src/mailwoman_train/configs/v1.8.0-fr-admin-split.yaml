@@ -17,7 +17,7 @@
 # v1.5.0 on the held-out commune set (mean <= 0.95x + significant) AND US guardrail (mean regress <=1%
 # rel, p90 <=0.1km) AND #727 diacritic (Lozère -> region, not "ère"). NOT promoted without operator GO.
 # CORPUS: corpus-v0.5.0 (690 slices verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.8.0-fr-admin-split.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.8.0-fr-admin-split.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

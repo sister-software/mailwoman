@@ -7,7 +7,7 @@
 # cedex >= 80 on the slice's val (data/.../po-box val.jsonl) AND FR postcode >= 99.5 (cedex puts
 # trailing digits after the locality — the adjacent surface to the digit-split class) AND golden
 # po_box rows no-regression. Fail -> layout audit before any re-probe.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.2.2-probe-pobox.yaml --resume auto
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.2.2-probe-pobox.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.4.14-pobox
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

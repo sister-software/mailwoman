@@ -6,7 +6,7 @@
 # floors + us-recall-flip-census + a PACKAGE-SWAP gauntlet (the #718-safe Dublin coordinate check).
 # Residual after this: the #727 boundary-digit-absorption class (postcode-adjacent region -> street).
 # LAUNCH: modal volume put --force mailwoman-training <this> <this>  &&  \
-#         modal run -d corpus-python/modal/train_remote.py --config v2.5.7-fragment-v5-gentle-full.yaml --resume auto
+#         cd corpus-python && modal run -d -m launch.train_remote --config v2.5.7-fragment-v5-gentle-full.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

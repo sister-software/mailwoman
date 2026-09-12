@@ -20,7 +20,7 @@
 # better-defined than the parent's non-stationary epochs.
 #
 # LAUNCH exactly once:
-#   modal run -d corpus-python/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v4.3.3-cooldown46k.yaml \
 #     --resume /data/output-v433-suffix-boundary-base-s42/checkpoints/step-040000
 #

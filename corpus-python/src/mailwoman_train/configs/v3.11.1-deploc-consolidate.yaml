@@ -21,7 +21,7 @@
 #   STOP    : if not clean at 10000, NO model ships from this lineage this round — the fork goes to
 #             a full redesign discussion. No further resume extensions, no knob iteration.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.11.1-deploc-consolidate.yaml --resume auto
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.11.1-deploc-consolidate.yaml --resume auto
 #
 # --- original v3.11.0-deploc-feed header follows (provenance; its Launch line does NOT apply) ---
 # Escalation of v3.10.1-gb-probe2 (PRIMARY PASS: first decode-layer dep-loc emissions ever — NZ 3/246,
@@ -49,7 +49,7 @@
 #              2026-07-22 night shift CONDITIONAL on every bar above passing. Any bar fails → stage
 #              only, report, no promote (no silent check drift; treadmill guard: no knob iteration).
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.11.0-deploc-feed.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.11.0-deploc-feed.yaml --resume none
 #   (--resume none REQUIRED: reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it.)
 #
 # --- original v3.10.0-gb-probe header follows (provenance retained) ---

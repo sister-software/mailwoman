@@ -39,7 +39,7 @@
 #   # then `modal volume put` the parquet + the manifest onto the mailwoman-training volume.
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.14-affix-ml.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

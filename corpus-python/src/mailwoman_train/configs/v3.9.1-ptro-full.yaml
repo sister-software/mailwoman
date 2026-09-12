@@ -26,7 +26,7 @@
 #
 # NOT A SHIP. A PASS justifies the 8k. Promotion is the operator's act (autonomous shift: stage +
 # report, do not promote defaultVersion without the full check battery green).
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.9.0-ptro-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.9.0-ptro-probe.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
   tokenizer_dir: /data/models/tokenizer/v0.12.0-ptro-splice

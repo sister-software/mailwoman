@@ -16,7 +16,7 @@
 # incl. fr.region floored 16.2, perturb arena >= 71, po_box >= 70 real / cedex >= 70, intersection >= 50.
 # (The spec's po_box/cedex floors read data/eval/external/po-box-cedex-val.jsonl; intersection reads
 # intersection-real + the VT golden. Runner extension lands with the check.)
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.3.0-boundary-consolidation.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.3.0-boundary-consolidation.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.4.15-boundary
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

@@ -77,7 +77,7 @@
 # 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
 # Operator steps: (1) `modal volume put` the (regenerated) parquet + manifest, (2) `modal run`.
 #
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.7.0-boundary-stress.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.7.0-boundary-stress.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

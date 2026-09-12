@@ -33,7 +33,7 @@
 # does not hold on a from-scratch run.
 #
 # Launch (the operator runs this):
-#   modal run -d corpus-python/modal/train_remote.py --config v8-jp-full-2k.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-full-2k.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v8-jp-full-2026-08-04

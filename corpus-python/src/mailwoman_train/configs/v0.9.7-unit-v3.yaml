@@ -39,7 +39,7 @@
 #   per-locale-f1.ts (US/FR) + the real-designator unit eval + de-order-eval.ts (DE 2x2 regression check).
 #
 # CORPUS: v0.4.5-unit-v2 (SAME as v2 — no rebuild). Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.7-unit-v3.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

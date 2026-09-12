@@ -43,7 +43,7 @@
 #   (build the multi-locale affix + balanced country slices per #469 / #464, then assemble the manifest:
 #    affix-ml slices + the v0.4.10-country-bal synth-country train slice.)
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v1.0.0-consolidation.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
@@ -157,7 +157,7 @@ train:
   grad_clip_norm: 1.0
   # RESUME the consolidated step-040000 (output_dir below is the consolidation dir) for 2k more steps.
   # lr_schedule constant → lr stays 1.5e-4 on resume; checkpoints 41000/42000 land beside the preserved
-  # 040000. Launch: modal run -d ...train_remote.py --config v1.0.0-affixdiag.yaml --resume auto
+  # 040000. Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.0.0-affixdiag.yaml --resume auto
   max_steps: 42000
   eval_every_steps: 1000
   save_every_steps: 1000

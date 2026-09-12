@@ -48,7 +48,7 @@
 # 2k PROBE (not a ship candidate). On PASS: operator decides whether to escalate to 8k. On a
 # PRIMARY miss: invoke the pre-registered fallback (locality-mapped) — do not iterate the knobs.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.10.0-gb-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.10.0-gb-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb # DELTA — GB overlay (v0.13.0-latam base + synth-gb-v1, 800k rows, 32.8% B-dependent_locality).

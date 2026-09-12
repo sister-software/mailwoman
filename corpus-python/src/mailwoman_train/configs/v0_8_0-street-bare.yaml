@@ -11,7 +11,7 @@
 # no regression to existing tags (street suffix is the signal, so bare localities are unaffected).
 # Promote only if harness improves meaningfully AND no tag regresses >2pp.
 #
-# Launch: modal run -d scripts/modal/train_remote.py --config v0_8_0-street-bare.yaml --resume none --trackio
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v0_8_0-street-bare.yaml --resume none --trackio
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

@@ -44,7 +44,7 @@
 #          --slice <each slice in the feed>
 #   3. Confirm the startup census DRAWS the GB/NL/ES/IT sources (the v383 gap: a truncated census
 #      log hid a source drawing zero rows). A lookup key with no row to paint is still no gradient.
-#   4. modal run -d corpus-python/modal/train_remote.py --config v4.2.0-base-anchor-v2.yaml --resume none
+#   4. cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2.yaml --resume none
 #
 # SHIP OBLIGATION — the inference half, which does NOT live in this file. The train painter keys a
 # postcode as `raw[begin:end].replace(" ", "").upper()` over a shape-detected span (`SW1A 2AA` ->

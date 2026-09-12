@@ -30,7 +30,7 @@
 # LEXICON: /data/gazetteer/anchor-lexicon-v1.json (scripts/build-gazetteer-anchor-lexicon.mjs from
 #   @mailwoman/codex; modal volume put before launch).
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.12-country-gaz.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

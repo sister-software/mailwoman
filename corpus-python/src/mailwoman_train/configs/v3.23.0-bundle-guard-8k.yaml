@@ -36,7 +36,7 @@
 #   VERDICT: G1-G5 + G6-formatted => promotion battery + the inputMode implementation arc.
 #   No knob iteration inside the run.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.23.0-bundle-guard-8k.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.23.0-bundle-guard-8k.yaml --resume none
 #
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam

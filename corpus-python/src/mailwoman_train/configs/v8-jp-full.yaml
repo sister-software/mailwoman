@@ -78,8 +78,8 @@
 #     `stage3-jp` and would be dropped wholesale.
 #
 # Launch (the operator runs this — it is recorded here, not executed by tooling):
-#   modal run -d corpus-python/modal/train_remote.py --config v8-jp-full.yaml --resume auto
-# Prerequisite: the slice must be on the Modal volume — see `sync_jp_full` in train_remote.py.
+#   cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-full.yaml --resume auto
+# Prerequisite: the slice must be on the Modal volume — see the `jp_full` row in launch/corpora.py.
 
 data:
   corpus_dir: /data/corpus/versioned/v8-jp-full-2026-08-04

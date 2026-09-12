@@ -26,7 +26,7 @@
 # × 3000 steps ≈ 25 min).
 #
 # Launch:
-#   modal run scripts/modal/train_remote.py --config v0_6_2-crf-fp32-diagnostic.yaml
+#   cd corpus-python && modal run -m launch.train_remote --config v0_6_2-crf-fp32-diagnostic.yaml
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

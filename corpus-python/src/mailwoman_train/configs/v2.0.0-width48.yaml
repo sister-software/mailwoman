@@ -58,7 +58,7 @@
 #   (build the multi-locale affix + balanced country slices per #469 / #464, then assemble the manifest:
 #    affix-ml slices + the v0.4.10-country-bal synth-country train slice.)
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v1.0.0-consolidation.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

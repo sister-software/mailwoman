@@ -16,7 +16,7 @@
 #
 # CORPUS: same v0.5.0 + synth-fr-order (already on Modal volume, no re-upload needed).
 # KNOWN CAVEAT: UTF-16 span offsets; ~0.06% astral rows skipped (#558 guard).
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.5.1-fr-order.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.5.1-fr-order.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
