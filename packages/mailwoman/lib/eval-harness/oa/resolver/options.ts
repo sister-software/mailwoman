@@ -156,6 +156,24 @@ export interface OAResolverEvalOptions {
 	 */
 	postcodeDatabases?: string
 	/**
+	 * Answer a repeated `findPlace` query from a per-run memo instead of querying the gazetteer again.
+	 *
+	 * The databases a run reads are sealed and read-only, so a query is a pure function of its arguments and the memo
+	 * cannot go stale. It does hand two callers the same hit list: the memo returns a fresh array each time so an
+	 * in-place sort stays local, but the hit objects themselves are shared.
+	 *
+	 * On 2,000 US rows the run makes 22,109 calls over 6,872 distinct queries, at 2.2 ms per call.
+	 */
+	lookupMemo?: boolean
+	/**
+	 * Write a wall-time attribution JSON here: rig setup, and the per-row `neural.parse` / `resolver.resolveTree` split.
+	 *
+	 * PROFILING ONLY. The promotion comparator reads every file under the output directory byte-for-byte, so this path
+	 * must name somewhere outside it. Omitted (the default) the harness writes nothing and costs two `performance.now()`
+	 * calls per row.
+	 */
+	profileJSON?: string
+	/**
 	 * #690/#895 tri-state pin: force normalizeCase OFF.
 	 */
 	rawCase?: boolean

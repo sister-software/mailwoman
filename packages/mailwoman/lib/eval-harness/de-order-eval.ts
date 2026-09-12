@@ -60,6 +60,26 @@ export interface DeOrderEvalOptions {
 	 * Where the six per-run `.md`/`.log` pairs land. Default `/tmp/order-eval`.
 	 */
 	out?: string
+	/**
+	 * Row cap applied to EACH of the six runs (0/omitted = all rows).
+	 *
+	 * PROFILING ONLY. The six corpora are 3,000 rows each except the US no-regression run at 10,000, and a capped run
+	 * reads the first N rows in file order — which is not a stratified sample. A capped run's locality percentages are
+	 * therefore not comparable with a floor reading, and `promotion-eval.ts` never passes this.
+	 */
+	limit?: number
+	/**
+	 * Answer a repeated `findPlace` query from a per-run memo (see `OAResolverEvalOptions.lookupMemo`). Each of the six
+	 * runs keeps its own memo, because each builds its own rig.
+	 */
+	lookupMemo?: boolean
+	/**
+	 * Write one `<run-name>.json` wall-time attribution file per run into this directory.
+	 *
+	 * PROFILING ONLY, and it must name somewhere OUTSIDE the promotion output directory: the receipt comparator reads
+	 * every file under that directory byte-for-byte, and a timing number differs between two runs of the same artifact.
+	 */
+	profileDirectory?: string
 }
 
 /**
@@ -92,7 +112,14 @@ export async function deOrderEval(
 		return { ok: false, out }
 	}
 
+	const profileDirectory = options.profileDirectory ?? ""
+
 	await makeDirectories(out)
+
+	if (profileDirectory) {
+		await makeDirectories(profileDirectory)
+	}
+
 	const deNative = "data/eval/external/openaddresses-de-sample-native-order.jsonl"
 	const deIntl = "data/eval/external/openaddresses-de-sample.jsonl"
 
@@ -120,6 +147,9 @@ export async function deOrderEval(
 					tokenizer: tok,
 					...anchorOptions,
 					defaultCountry: country,
+					...(options.limit ? { limit: options.limit } : {}),
+					...(options.lookupMemo ? { lookupMemo: true } : {}),
+					...(profileDirectory ? { profileJSON: String(join(profileDirectory, `${outName}.json`)) } : {}),
 				},
 				(line) => outLines.push(line),
 				(line) => errLines.push(line)

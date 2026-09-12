@@ -23,8 +23,11 @@ async function main(): Promise<void> {
 			options: {
 				"anchor-lookup": { type: "string" },
 				card: { type: "string" },
+				limit: { type: "string" },
+				"lookup-memo": { type: "boolean" },
 				model: { type: "string" },
 				out: { type: "string" },
+				"profile-dir": { type: "string" },
 				tokenizer: { type: "string" },
 			},
 		}).values
@@ -42,6 +45,9 @@ async function main(): Promise<void> {
 		tokenizer: values["tokenizer"] as string | undefined,
 		anchorLookup: values["anchor-lookup"] as string | undefined,
 		out: values["out"] as string | undefined,
+		limit: values["limit"] ? Number(values["limit"]) : undefined,
+		lookupMemo: values["lookup-memo"] === true,
+		profileDirectory: values["profile-dir"] as string | undefined,
 	})
 
 	// Parity with the old `need --model and --card` → exit 1.
