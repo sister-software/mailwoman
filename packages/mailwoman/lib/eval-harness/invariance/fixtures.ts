@@ -30,7 +30,9 @@ export interface InvarianceRow {
 export async function loadSuite(path: string = DEFAULT_SUITE_PATH): Promise<InvarianceRow[]> {
 	await assertPathExists(path, "Invariance suite should exist")
 
-	return JSONSpliterator.from<InvarianceRow>(path, { comment: "//" }).toArray()
+	// `from` splits a CharacterSequence already in memory; `fromAsync` opens a path. Handed a path,
+	// `from` parsed the path string itself as the first row — "packages/m…" is not valid JSON.
+	return JSONSpliterator.fromAsync<InvarianceRow>(path, { comment: "//" }).toArray()
 }
 
 //#endregion
