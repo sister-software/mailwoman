@@ -28,13 +28,19 @@ from __future__ import annotations
 
 import importlib.metadata
 import re
+import subprocess  # nosec B404 — probes the project venv's interpreter for installed versions
 import sys
 import tomllib
 from pathlib import Path
 
 # The export/quant deps whose version is required for the shipped ONNX graph. datasets/tqdm/
 # trackio are loose by design (they don't touch the graph), so they are NOT guarded here.
-INVARIANT_DEPS = ("torch", "transformers", "onnx", "onnxruntime")
+#
+# `onnxscript` was absent from this list while five graph pins existed, so pyproject read 0.7.1
+# against the Modal image's 0.7.0 and this check still printed that the two agree. It is the dynamo
+# exporter, which decides the graph — a narrower guard than its own message claims is worse than no
+# guard, because the message is what a reader trusts.
+INVARIANT_DEPS = ("torch", "transformers", "onnx", "onnxruntime", "onnxscript")
 MAX_OPSET = 17
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -57,6 +63,40 @@ def _pins_from_pyproject() -> dict[str, str]:
         m = PIN_RE.match(spec.strip())
         if m and m.group(1) in INVARIANT_DEPS:
             out[m.group(1)] = m.group(2)
+    return out
+
+
+#: The interpreter that exports and quantizes locally. `REPRODUCIBILITY.md`'s quantize step and
+#: `verify-export-quant-versions.run.ts` both use it, so it is the environment these pins describe.
+PROJECT_VENV = REPO_ROOT / "corpus-python" / ".venv" / "bin" / "python3"
+
+
+def _installed_versions() -> dict[str, str]:
+    """Installed versions of the guarded deps, read from the project venv where there is one.
+
+    The pre-commit hook invokes this script with a bare `python3`, so reading THIS interpreter
+    reports whatever the system Python happens to carry — a stray global copy of one dep made the
+    check disagree with the venv that actually runs the export. Falls back to this interpreter when
+    no venv exists, which is the lint-only checkout the skip note describes.
+    """
+    if PROJECT_VENV.is_file():
+        probe = (
+            "import importlib.metadata as m\n"
+            f"for d in {list(INVARIANT_DEPS)!r}:\n"
+            "    try: print(d, m.version(d))\n"
+            "    except Exception: pass\n"
+        )
+        result = subprocess.run(  # nosec B603 — fixed argv, no shell, interpreter inside this checkout
+            [str(PROJECT_VENV), "-c", probe], capture_output=True, text=True, check=False
+        )
+        if result.returncode == 0:
+            return dict(line.split() for line in result.stdout.splitlines() if line.strip())
+    out: dict[str, str] = {}
+    for dep in INVARIANT_DEPS:
+        try:
+            out[dep] = importlib.metadata.version(dep)
+        except importlib.metadata.PackageNotFoundError:
+            continue
     return out
 
 
@@ -133,13 +173,13 @@ def main() -> int:
         if wrong:
             problems.append(f"{name}: calls ruff@{', ruff@'.join(wrong)} but pyproject [dev] pins =={ruff_pin}")
 
-    # Conditional: if the heavy deps are actually installed (train machine / Modal), they must match
-    # the pins. In a lint-only checkout they are absent by design — skip with a note, don't fail.
+    # Conditional: if the heavy deps are actually installed, they must match the pins. In a
+    # lint-only checkout they are absent by design — skip with a note, don't fail.
+    installed = _installed_versions()
     installed_checked = 0
     for dep, pin in pyproject.items():
-        try:
-            got = importlib.metadata.version(dep)
-        except importlib.metadata.PackageNotFoundError:
+        got = installed.get(dep)
+        if got is None:
             continue
         installed_checked += 1
         if got != pin:

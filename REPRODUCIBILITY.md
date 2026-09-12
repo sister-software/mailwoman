@@ -44,7 +44,7 @@ before trusting anything.
 
 ## The pinned export/quant toolchain
 
-`torch==2.12.0 · transformers==5.9.0 · onnx==1.21.0 · onnxruntime==1.26.0 · onnxscript==0.7.0`
+`torch==2.12.0 · transformers==5.9.0 · onnx==1.22.0 · onnxruntime==1.26.0 · onnxscript==0.7.2`
 (the v4.1.0 set; the authoritative list is `corpus-python/launch/train_remote.py`'s training image).
 **This set is essential**: opset ≤17 + the `value_info` strip in `quantize.py` are what
 keep the int8 graph Safari-WebGPU-safe. Check your local env against it:

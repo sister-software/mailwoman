@@ -60,7 +60,7 @@ training_image = (
         "transformers==5.9.0",
         "onnx==1.22.0",
         "onnxruntime==1.26.0",
-        "onnxscript==0.7.0",
+        "onnxscript==0.7.2",
         # --- non-graph deps
         # sentencepiece is PINNED, not floored (2026-08-01). It was `>=0.2.0` under a comment saying
         # unpinned floors are fine here — that assumption was false, because SP decides the token IDS

@@ -48,8 +48,12 @@ train = [
 	"transformers==5.9.0",
 	"datasets>=5.0.1",
 	"onnx==1.22.0",
-	# dynamo exporter dependency — same pin as the Modal training image (train_remote.py).
-	"onnxscript==0.7.1",
+	# The dynamo exporter itself, so it decides the graph. This read 0.7.1 against the Modal image's
+	# 0.7.0 and nothing noticed, because the consistency guard checked four of the five graph pins.
+	# Both now read 0.7.2. The byte-identity receipt the onnx 1.21.0 -> 1.22.0 bump carries is OWED
+	# here and not yet taken: it needs a re-export and re-quant on Modal, compared md5-for-md5
+	# against the shipped fp32 and int8 artifacts. Take it before the next bundle ships.
+	"onnxscript==0.7.2",
 	"onnxruntime==1.26.0",
 	"tqdm>=4.70.0",
 	# Optional experiment tracking. Logging is best-effort and guarded at runtime
