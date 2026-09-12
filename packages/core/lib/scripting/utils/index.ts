@@ -3,7 +3,7 @@ import { defaultRegistry } from "async-init"
 import { ResourceError } from "#errors/schema"
 import { ConsoleLogger } from "#logging"
 
-export { cliArguments, passThroughCLIArguments, scriptEntryPath } from "#scripting/arguments"
+export { cliArguments, optionPropertyName, passThroughCLIArguments, scriptEntryPath } from "#scripting/arguments"
 
 /**
  * Print a message to stderr and exit non-zero. Typed `never`, so a caller gets definite-assignment narrowing after the

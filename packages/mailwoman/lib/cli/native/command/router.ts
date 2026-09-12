@@ -1,6 +1,7 @@
 import { readDirectoryEntries, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { optionPropertyName } from "@mailwoman/core/scripting/utils"
 import { createElement } from "react"
 import type { ComponentType } from "react"
 
@@ -25,37 +26,6 @@ const COMMANDS_ROOT = pathToFileURL(`${String(resolvePackagePath("mailwoman", "o
 
 const commandURL = (parts: readonly string[], index = false): URL =>
 	new URL(`${parts.join("/")}${index ? "/index" : ""}.js`, COMMANDS_ROOT)
-
-/**
- * Kebab segments whose property spelling capitalizes the whole acronym, per the house casing convention.
- *
- * A segment missing here derives a property the command's own `Options` does not declare. The flag still parses and
- * still passes validation; it reaches the component under a name nothing reads, so it does nothing and reports no
- * error. Add the segment here when a flag carries an acronym.
- */
-const OPTION_INITIALISMS = new Map([
-	["csv", "CSV"],
-	["db", "DB"],
-	["html", "HTML"],
-	["ids", "IDs"],
-	["json", "JSON"],
-	["jsonl", "JSONL"],
-	["km", "KM"],
-	["svg", "SVG"],
-	["xml", "XML"],
-])
-
-/**
- * Convert a kebab-case option name to its TypeScript property name.
- */
-export function optionPropertyName(value: string): string {
-	const [head = "", ...tail] = value.split("-")
-
-	return (
-		head +
-		tail.map((part) => OPTION_INITIALISMS.get(part) ?? `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join("")
-	)
-}
 
 /**
  * The command names one directory of the compiled tree offers — what a user types, not what the files are called.
