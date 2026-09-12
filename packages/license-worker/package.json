@@ -186,7 +186,7 @@
 		"@types/react-dom": "^19.2.7",
 		"@vitest/runner": "^4.1.11",
 		"@vitest/snapshot": "^4.1.11",
-		"vitest": "4.1.11",
+		"vitest": "5.0.0",
 		"wrangler": "^4.129.0"
 	},
 	"engines": {
