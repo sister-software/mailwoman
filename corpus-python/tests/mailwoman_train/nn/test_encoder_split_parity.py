@@ -172,6 +172,22 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
     assert first == second
 
 
+#: How far a rebuilt value may sit from the committed one and still count as unmoved.
+#:
+#: NOT exact equality, which is what this compared first and why these two tests failed on CI while
+#: passing on the machine that wrote the reference: the same fp32 graph over four transformer blocks
+#: lands on a different last digit under a different CPU's kernels and vectorization (0.637875 here,
+#: 0.637876 on the runner). Exact equality therefore pins the HOST as well as the code, and the
+#: failure names the split rather than the machine.
+#:
+#: 1e-4 relative still does the job this pin exists for. A split that changes the forward pass —
+#: a reordered channel, a dropped term, a head wired to the wrong input — moves a logit by a
+#: fraction of its own magnitude, four orders of magnitude above this floor. Registration ORDER is
+#: pinned exactly by `parameter_checksums`, which sums initial weights straight off the RNG and
+#: never reaches a matmul, so the strict half of this file is unaffected.
+TOLERANCE = 1e-4
+
+
 def test_logits_match_the_committed_reference() -> None:
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
@@ -179,7 +195,9 @@ def test_logits_match_the_committed_reference() -> None:
     actual = reference_logits(build_reference_encoder())
 
     assert len(actual) == len(expected["logits"]), "logit count changed — the head geometry moved"
-    assert actual == expected["logits"], "the split changed the forward pass"
+    assert actual == pytest.approx(expected["logits"], rel=TOLERANCE, abs=TOLERANCE), (
+        "the split changed the forward pass"
+    )
 
 
 def test_loss_matches_the_committed_reference() -> None:
@@ -190,7 +208,7 @@ def test_loss_matches_the_committed_reference() -> None:
     if "loss" not in expected:
         pytest.skip("reference predates the loss capture; regenerate it")
 
-    assert reference_loss(build_reference_encoder()) == expected["loss"], (
+    assert reference_loss(build_reference_encoder()) == pytest.approx(expected["loss"], rel=TOLERANCE, abs=TOLERANCE), (
         "the split changed a loss term while leaving the logits intact"
     )
 

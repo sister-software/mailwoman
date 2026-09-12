@@ -114,6 +114,20 @@ def _events(output: str) -> list[str]:
     return events
 
 
+#: How far a rebuilt checksum may sit from the committed one and still count as unmoved.
+#:
+#: NOT exact equality, which is what this compared first and why it passed on the machine that wrote
+#: the reference and failed on CI: a fp32 training step lands on a different last digit under a
+#: different CPU's kernels, and seventeen of the fifty tensors here differed only there. Exact
+#: equality pins the HOST alongside the code, and the failure then names the trajectory rather than
+#: the machine.
+#:
+#: Relative to the checksum's own magnitude, floored at 1.0 so a near-zero bias is judged on absolute
+#: terms rather than on a ratio that explodes. A rewrite that actually moves the trajectory — a
+#: reordered update, a changed schedule, a dropped clip — moves these by percent.
+TOLERANCE = 1e-4
+
+
 def _weight_checksums(checkpoint: Path) -> dict[str, float]:
     state = torch.load(checkpoint / "pytorch_model.bin", map_location="cpu", weights_only=True)
     return {name: round(float(tensor.double().abs().sum()), 6) for name, tensor in sorted(state.items())}
@@ -173,7 +187,11 @@ def test_the_trajectory_matches_the_pinned_weights(tmp_path: Path) -> None:
     expected = json.loads(REFERENCE.read_text(encoding="utf-8"))["weight_checksums"]
 
     assert set(actual) == set(expected), "the parameter set moved"
-    divergent = {name: (actual[name], expected[name]) for name in actual if actual[name] != expected[name]}
+    divergent = {
+        name: (actual[name], expected[name])
+        for name in actual
+        if abs(actual[name] - expected[name]) > TOLERANCE * max(abs(expected[name]), 1.0)
+    }
     assert divergent == {}, f"the optimizer trajectory moved on {len(divergent)} tensors: {divergent}"
 
 

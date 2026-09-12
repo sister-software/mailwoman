@@ -108,6 +108,28 @@ def fitted(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
         patch.undo()
 
 
+#: How far a rebuilt figure may sit from the committed one and still count as unmoved.
+#:
+#: The table carries full-precision floats off numpy reductions — `mean` sums pairwise, and the
+#: order that walks depends on SIMD width, so the same inputs can land on a different last digit
+#: under a different CPU. Comparing exactly would pin the HOST as well as the code and report a
+#: refactor that did not happen. A fit that actually changed moves ECE in the third decimal.
+TOLERANCE = 1e-9
+
+
+def approximately(value: Any) -> Any:
+    """`value` with every float inside it wrapped for tolerant comparison, structure preserved."""
+    if isinstance(value, bool) or value is None:
+        return value
+    if isinstance(value, float):
+        return pytest.approx(value, rel=TOLERANCE, abs=TOLERANCE)
+    if isinstance(value, dict):
+        return {key: approximately(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [approximately(item) for item in value]
+    return value
+
+
 def test_the_table_matches_the_committed_reference(fitted: dict[str, Any]) -> None:
     """The artifact a decoder loads: the metrics, the subgroups, the curve and the 20 bins."""
     expected = json.loads(REFERENCE.read_text())["table"]
@@ -115,7 +137,7 @@ def test_the_table_matches_the_committed_reference(fitted: dict[str, Any]) -> No
     # `created_from` is the fixture's own scratch path, which differs every run.
     expected.pop("created_from", None)
     actual.pop("created_from", None)
-    assert actual == expected
+    assert actual == approximately(expected)
 
 
 def test_the_report_matches_the_committed_reference(fitted: dict[str, Any]) -> None:
