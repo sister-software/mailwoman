@@ -46,7 +46,7 @@
 	},
 	"sync_substrate_repairs": {
 		"check_paths": [
-			"/data/corpus-python/src/mailwoman_train/audits/epoch_mixture.py",
+			"/data/corpus-python/src/mailwoman_train/audits/epoch_mixture/__init__.py",
 			"/data/corpus-python/src/mailwoman_train/configs/v4.3.3-cooldown46k.yaml",
 			"/data/corpus-python/src/mailwoman_train/data/loader/__init__.py",
 			"/data/corpus-python/src/mailwoman_train/data/relabel.py",

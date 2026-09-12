@@ -89,7 +89,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
-            "corpus-python/src/mailwoman_train/audits/epoch_mixture.py",
+            "corpus-python/src/mailwoman_train/audits/epoch_mixture/__init__.py",
             "corpus-python/src/mailwoman_train/configs/v4.3.3-cooldown46k.yaml",
             "corpus-python/src/mailwoman_train/data/loader/__init__.py",
             "corpus-python/src/mailwoman_train/data/relabel.py",

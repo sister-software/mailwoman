@@ -1,0 +1,90 @@
+{
+	"README": [
+		"Pins one seeded epoch-mixture audit across a refactor.",
+		"Regenerate: uv run python -m tests.mailwoman_train.audits.test_audit_epoch_mixture",
+		"Fixture: _write_corpus() in the test beside this file — 300 big rows and 30 small,",
+		"  audited at 400 draws over four windows with two augmentations on."
+	],
+	"report": {
+		"requested": {
+			"big": 0.5,
+			"small": 0.5
+		},
+		"draw_level": {
+			"totals": {
+				"big": 202,
+				"small": 198
+			},
+			"windows": [
+				{
+					"big": 55,
+					"small": 45
+				},
+				{
+					"big": 47,
+					"small": 53
+				},
+				{
+					"small": 46,
+					"big": 54
+				},
+				{
+					"small": 54,
+					"big": 46
+				}
+			],
+			"per_source": {
+				"big": {
+					"requested_share": 0.5,
+					"draws": 202,
+					"draw_share": 0.505,
+					"max_window_relative_deviation": 0.10000000000000009,
+					"rows": 300,
+					"reps_per_row": 0.6733333333333333
+				},
+				"small": {
+					"requested_share": 0.5,
+					"draws": 198,
+					"draw_share": 0.495,
+					"max_window_relative_deviation": 0.09999999999999998,
+					"rows": 30,
+					"reps_per_row": 6.6
+				}
+			},
+			"by_country": {
+				"US": 400
+			}
+		},
+		"emitted_level": {
+			"totals": {
+				"big": 178,
+				"small": 222
+			},
+			"per_source": {
+				"big": {
+					"emitted": 178,
+					"emitted_share": 0.445,
+					"distortion_vs_draw_share": 0.8811881188118812
+				},
+				"small": {
+					"emitted": 222,
+					"emitted_share": 0.555,
+					"distortion_vs_draw_share": 1.1212121212121213
+				}
+			},
+			"by_country": {
+				"US": 400
+			},
+			"augmented_share": 0.6
+		},
+		"meta": {
+			"seed": 43,
+			"draws_requested": 400,
+			"draws_realized": 400,
+			"window": 100,
+			"full_windows": 4,
+			"corpus_receipt_status": "pass"
+		},
+		"required_corpus_receipts": []
+	}
+}

@@ -9,6 +9,7 @@ unit the model reads — augmentable sources claim extra share of a row_limit).
 
 from __future__ import annotations
 
+import json
 import random
 from pathlib import Path
 
@@ -124,6 +125,50 @@ def test_emitted_level_counts_augmented_copies_against_the_row_budget(tmp_path: 
     totals = report["emitted_level"]["totals"]
     assert sum(totals.values()) == 400
     assert report["emitted_level"]["augmented_share"] > 0.3
+
+
+#: Committed beside this file, captured from the code as it stood BEFORE a split. The assertions
+#: above read shares and ranges, which a reordered draw can satisfy while sampling different rows;
+#: this pins the whole report, every window and every per-source figure included.
+#:
+#: Regenerate with: uv run python -m tests.mailwoman_train.audits.test_audit_epoch_mixture
+AUGMENTED_REFERENCE = Path(__file__).parent / "epoch-mixture-reference.json"
+
+
+def _pinned_report(corpus: Path) -> dict:
+    """One audit with augmentation on, so both passes and their divergence are in the report."""
+    report = _audit(corpus, augment={"upper_case": 1.0, "case": 0.5})
+    report["meta"].pop("corpus_dir")  # the test's own scratch path, different every run
+    return report
+
+
+def test_the_whole_report_matches_the_committed_reference(tmp_path: Path) -> None:
+    """A share stays in range while the rows behind it change; the windows and counts do not."""
+    expected = json.loads(AUGMENTED_REFERENCE.read_text())["report"]
+    assert _pinned_report(_write_corpus(tmp_path)) == expected
+
+
+def _write_reference() -> None:
+    """Capture the current audit as the reference the test above compares against.
+
+    Run this only when the current code already passes against the existing reference — otherwise
+    the artifact records whatever the code does now, and the test asserts nothing.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as scratch:
+        report = _pinned_report(_write_corpus(Path(scratch)))
+    payload = {
+        "README": [
+            "Pins one seeded epoch-mixture audit across a refactor.",
+            "Regenerate: uv run python -m tests.mailwoman_train.audits.test_audit_epoch_mixture",
+            "Fixture: _write_corpus() in the test beside this file — 300 big rows and 30 small,",
+            "  audited at 400 draws over four windows with two augmentations on.",
+        ],
+        "report": report,
+    }
+    AUGMENTED_REFERENCE.write_text(json.dumps(payload, ensure_ascii=False, indent="\t") + "\n")
+    print(f"wrote {AUGMENTED_REFERENCE}")
 
 
 def _seeded_control_shares(corpus: Path) -> tuple[float, float]:
@@ -318,3 +363,7 @@ train:
     report = json.loads(report_path.read_text(encoding="utf-8"))
     assert report["meta"]["corpus_receipt_status"] == "fail"
     assert report["required_corpus_receipts"][0]["observed_draws"] == 0
+
+
+if __name__ == "__main__":
+    _write_reference()
