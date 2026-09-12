@@ -18,6 +18,44 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+_Nothing yet._
+
+## 10.0.0 — 2026-09-12
+
+### Removed — `@mailwoman/formatter`, folded into `@mailwoman/codex`
+
+The package is gone from npm. Its three modules moved into `@mailwoman/codex`, beside the layout table they
+evaluate, and are reached as `@mailwoman/codex/address-format`, `/address-key` and `/address-render`. Repoint
+imports; the names are unchanged.
+
+Folding an evaluator into a reference-data package needed an answer, and the answer is that the modules stay
+separate rather than merging: a consumer that wants only the table imports the layouts and loads no renderer, which
+is what living in a different package used to promise. What made it possible is that the formatter reached
+`@mailwoman/core` exactly once, through a type-only import feeding `formatFromClassificationMap` — a function with
+no caller in the tree, only its own test. Deleting it removes the edge, so codex keeps its zero-runtime-dependency
+posture and depends on `type-fest` alone.
+
+### Removed — `@fragaria/address-formatter`
+
+mailwoman owns its address layouts now; the third-party dependency is gone rather than wrapped. The layouts are
+data in codex and the renderer evaluates them, which is the division the fold above preserves.
+
+### Breaking — `ComponentTag` and the placetype map move to `@mailwoman/codex`
+
+The address vocabulary is reference data about address shape, and codex is the per-address-system reference
+package; keeping the union in `@mailwoman/core` made the formatter, the resolver and the layout work read it
+through the package that owns tokenization and the decoder. `placetype-map.ts` travels with it — the
+tag-to-WOF-placetype mapping, its equivalence groups and its per-country overrides are the same kind of claim, and
+its only import was the union. Import `ComponentTag` from `@mailwoman/codex`.
+
+### Breaking — `spliterator` 7.0.0 changes three CSV reader defaults
+
+A CSV reader needs no options object now, and two of the three changes are visible to anyone who was passing one:
+`mode` derives from `header` (`"array"` when `header: false`, otherwise `"object"`), quote handling defaults ON,
+and column keys are lower case (`LON` becomes `lon`). A reader that indexed all-caps keys reads `undefined` on
+every row rather than failing — the Form 499 defect recorded below is exactly that, found by the reader's own
+header assertion. Of 55 call sites in this tree, 28 already said `header: false` and were untouched.
+
 ### Fixed — a half-materialized char-weights package parsed as a Latin model
 
 `packageHasBinaries` answered `false` for a weights directory holding `model.onnx` and `char-vocab.json` with no
@@ -171,24 +209,6 @@ register with the rooftop as the truth, graded through the gauntlet's grader by
 building_led 12/60, official 38/60 on the shipped model; the 50 passes are pinned. The regression-database builder and
 the board builder share one seed-to-row mapping, `seedCaseToTableRow`.
 
-### Added — the Taiwan rooftop tier: a national address-point database from the civil-affairs registers
-
-`台北市中正區重慶南路一段122號` parsed correctly and resolved to Taipei City's point, 5 km from the address, because no
-register below the admin ladder existed for Taiwan. `mailwoman situs address-points --country TW` now builds
-`address-points/address-points-tw.db` from the Overture-TW parquet (9,712,173 points across 173,642 streets, the
-fifteen civil-affairs bureaus in the provenance), and `OvertureNationalDatabaseProvider` serves it in the geocode
-session below BAN and above OSM. The register scopes a point by 縣市 + 鄉鎮市區 and carries no postcode, so the
-address-point query carries the parse's `region` and `subregion`, and a `zh` reader composes its scope from the pair
-(or matches the stored pair by its 鄉鎮市區 tail when the line names no 縣市). The `zh` street locale is the Han fold:
-NFKC, 臺 → 台, no whitespace, the 號 dropped from the number, and the sub-number forms `30之19號` / `30號之19` /
-`30附40號` falling to the base number. On a 2,000-row draw of the Taiwan board, 1,998 rows answer at the
-address-point tier and 1,958 within 100 m of the row's own point; the same probe address answers 25.0399658,
-121.5124584 at 1 m. `OGDL-Taiwan-1.0` joins the obligations table, and the situs manifest records an SPDX expression:
-the string it stamped before was refused by the manifest check, so the US per-state build had been failing at its last
-step. The pre-commit hook read its CLI-freshness reference after the formatter had touched every staged source, so a
-commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
-first.
-
 ### Fixed — one naming convention for postcode formats; one pin for the Overture addresses theme
 
 An inventory of every hardcoded locale, country, script and Overture-release constant that steers training or the
@@ -233,6 +253,26 @@ more populous carrier outrank the place the name officially is, so the region no
 city's three districts contradicted it. The candidate build's alias pass now refuses a region's alias when another
 region of the same country holds it as its official name, and counts what it refused; a source without a `names`
 table refuses nothing.
+
+## 9.4.0 — 2026-09-08
+
+### Added — the Taiwan rooftop tier: a national address-point database from the civil-affairs registers
+
+`台北市中正區重慶南路一段122號` parsed correctly and resolved to Taipei City's point, 5 km from the address, because no
+register below the admin ladder existed for Taiwan. `mailwoman situs address-points --country TW` now builds
+`address-points/address-points-tw.db` from the Overture-TW parquet (9,712,173 points across 173,642 streets, the
+fifteen civil-affairs bureaus in the provenance), and `OvertureNationalDatabaseProvider` serves it in the geocode
+session below BAN and above OSM. The register scopes a point by 縣市 + 鄉鎮市區 and carries no postcode, so the
+address-point query carries the parse's `region` and `subregion`, and a `zh` reader composes its scope from the pair
+(or matches the stored pair by its 鄉鎮市區 tail when the line names no 縣市). The `zh` street locale is the Han fold:
+NFKC, 臺 → 台, no whitespace, the 號 dropped from the number, and the sub-number forms `30之19號` / `30號之19` /
+`30附40號` falling to the base number. On a 2,000-row draw of the Taiwan board, 1,998 rows answer at the
+address-point tier and 1,958 within 100 m of the row's own point; the same probe address answers 25.0399658,
+121.5124584 at 1 m. `OGDL-Taiwan-1.0` joins the obligations table, and the situs manifest records an SPDX expression:
+the string it stamped before was refused by the manifest check, so the US per-state build had been failing at its last
+step. The pre-commit hook read its CLI-freshness reference after the formatter had touched every staged source, so a
+commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
+first.
 
 ### Added — Taiwan's 鄉鎮市區 as register-derived localities, scoped to their 縣市
 
@@ -307,6 +347,8 @@ clone of an outcome schema that already had a name. Photon's `/api` + `/reverse`
 `Stamped{Batch,Resolve,Format}Response`. The wire bodies are unchanged; the emitted documents gain those components,
 and the generated clients name their types after them. This is what turned the `clients` job red on the v9.3.0 release
 run — `cargo check --examples` against the drifted `examples/basic.rs`.
+
+## 9.3.0 — 2026-09-06
 
 ### Changed — each package declares the environment variables it reads
 
@@ -465,6 +507,16 @@ The rest of `filer/lib/sdk/` and all of `bdc/lib/sdk/` are unchanged: no serve p
 would spend published subpaths on a naming preference rather than a measured violation.
 
 ## Notable releases
+
+### 10.0.0 — two packages retired, the address vocabulary lands in codex
+
+The first major since the 9.x line. `@mailwoman/formatter` and `@fragaria/address-formatter` are both gone:
+mailwoman owns its address layouts now, as data in `@mailwoman/codex` with a renderer that evaluates them.
+`ComponentTag` and the placetype map move to codex with them, so the address vocabulary no longer reaches consumers
+through the package that owns tokenization and the decoder. `spliterator` 7.0.0 changes three CSV reader defaults
+under all of it.
+
+The shipped model is unchanged at 9.1.0 — this is a code release.
 
 ### 4.15.0 — postcode-anchor fix (`v1.9.3a3-anchor-absorption`)
 

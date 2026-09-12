@@ -41,6 +41,7 @@ import {
 	writeLocalFile,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -64,12 +65,30 @@ type ClientSurface = (typeof CLIENT_SURFACES)[number]
 const FLAVORS = ["3.1", "3.0"] as const
 
 /**
- * Every surface's compiled CLI entry point — the emitters this pipeline shells out to. Resolved through
- * `workspacePath`, never by treating the workspace name as a repo-root segment: that shape pointed at the pre-regroup
- * layout and read every emitter as missing after a clean, successful compile.
+ * Every surface's compiled CLI entry point — the emitters this pipeline shells out to.
+ *
+ * Read from the workspace's own `bin`, not assembled from a literal emit path. The literal was `out/cli.js` and went
+ * stale twice: once when the 2026-08-14 regroup moved the workspaces, and again when the prefix-directory pass moved
+ * `mailwoman`'s `lib/cli.ts` to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three kept
+ * the flat name. Both times a clean, successful compile read as a missing emitter, and the second time it failed inside
+ * a release run. `bin` is the manifest's declaration of where the entry point is; the emit layout underneath it is free
+ * to move.
+ *
+ * Resolved through `workspacePath`, never by treating the workspace name as a repo-root segment — that was the first
+ * failure's shape.
  */
-export function emitterCLIPath(surface: ClientSurface): string {
-	return workspacePath(surface, "out", "cli.js")
+export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
+	const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
+		workspacePath(surface, "package.json")
+	)
+
+	const entry = typeof bin === "string" ? bin : bin?.[surface]
+
+	if (!entry) {
+		throw new Error(`${surface}: package.json declares no \`bin\` for the OpenAPI emitter to run`)
+	}
+
+	return workspacePath(surface, entry)
 }
 
 /**
@@ -156,14 +175,14 @@ async function checkCompiled(): Promise<void> {
 	const missing: string[] = []
 
 	for (const surface of CLIENT_SURFACES) {
-		if (!(await pathExists(emitterCLIPath(surface)))) {
+		if (!(await pathExists(await emitterCLIPath(surface)))) {
 			missing.push(surface)
 		}
 	}
 
 	if (missing.length) {
 		fail(
-			`out/cli.js missing for: ${missing.join(", ")} — run \`yarn compile\` first (client generation reads the compiled openapi emitters, not source)`
+			`compiled emitter missing for: ${missing.join(", ")} — run \`yarn compile\` first (client generation reads the compiled openapi emitters, not source)`
 		)
 	}
 }
@@ -178,7 +197,7 @@ async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => voi
 	const v30 = {} as Record<ClientSurface, string>
 
 	for (const surface of CLIENT_SURFACES) {
-		const cli = emitterCLIPath(surface)
+		const cli = await emitterCLIPath(surface)
 
 		for (const flavor of FLAVORS) {
 			const out = join(specsDir, `${surface}-${flavor}.json`)
@@ -840,7 +859,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 
 	const steps: Array<{ check: string; run: () => Promise<string | void> }> = [
 		{
-			check: "compile-check: out/cli.js present (mailwoman, libpostal, photon, nominatim)",
+			check: "compile-check: each surface's declared bin is compiled (mailwoman, libpostal, photon, nominatim)",
 			run: async () => {
 				await checkCompiled()
 			},

@@ -70,24 +70,22 @@ test("rustLibRs declares a generate_api! module + a *_local() constructor for ev
 	expect(source).not.toContain("mailwoman_hosted")
 })
 
-test("emitterCLIPath resolves every surface inside its real workspace, from repository root", async () => {
+test("emitterCLIPath resolves every surface to the compiled bin its manifest declares", async () => {
 	const { sep } = await import("path-ts")
-	const { dirname, join } = await import("path-ts")
 	const { emitterCLIPath } = await import("mailwoman/tools/generate-clients")
 
 	for (const surface of CLIENT_SURFACES) {
-		const cli = emitterCLIPath(surface)
-		const expectedTail = join("packages", surface, "out", "cli.js")
-		const manifest = join(dirname(dirname(cli)), "package.json")
+		const cli = await emitterCLIPath(surface)
 
-		// The compiled entry lives under packages/<workspace>/out/ — the shape the 2026-08-14 regroup
-		// established. The pre-regroup resolution treated the workspace name as a repo-root segment,
-		// so a clean successful compile still read every emitter as missing.
+		// Inside the workspace, not at a repo-root segment named for it — the 2026-08-14 regroup's shape.
 		expect(cli.split(sep)).toContain("packages")
-		expect(cli.endsWith(expectedTail)).toBe(true)
+		expect(cli.split(sep)).toContain(surface)
 
-		// Tie the resolution to the real tree: the workspace directory the path claims must exist,
-		// so the NEXT layout move fails here loudly instead of inside a red release job.
-		expect(await pathExists(manifest)).toBe(true)
+		// THE assertion, and the one this test did not make before: the file the emitter will be run as
+		// has to be there. It checked that the workspace's package.json existed instead, so when the
+		// prefix-directory pass moved mailwoman's `lib/cli.ts` to `lib/cli/index.ts` — making its emit
+		// `out/cli/index.js` while the other three kept `out/cli.js` — this stayed green and the release
+		// run failed on it. A path that is merely well-shaped is not a path that resolves.
+		expect(await pathExists(cli), `${surface}: ${cli} does not exist — run \`yarn compile\``).toBe(true)
 	}
 })
