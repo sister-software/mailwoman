@@ -1,4 +1,4 @@
-"""The table generates exactly what the 57 hand-written sync functions do.
+"""The table generates exactly what the hand-written sync functions do.
 
 This is the check the census exists for. `launch/corpora.py` holds one row per corpus version and
 `plan_sync` assembles the commands; the fixture holds what the clones produce today, extracted from
@@ -57,8 +57,8 @@ def test_every_corpus_version_can_be_read_off_the_table() -> None:
     """
     versions = {version for entry in CORPUS_VERSIONS.values() for version in corpus_versions(entry)}
 
-    assert len(versions) == 53, sorted(versions)
-    assert "v0.12.0-nz" in versions
+    assert len(versions) == 28, sorted(versions)
+    assert "v0.30.0-bare-postcode" in versions
     assert "v8-cjk-regs-2026-09-08" in versions
     # Every one is a bare version name, never a path: a slash here means a literal crept back in.
     assert not [version for version in versions if "/" in version]
@@ -69,5 +69,5 @@ def test_the_totals_match_the_measured_census() -> None:
     every per-version list comparison only if both lists agreed, but the totals make the size of
     the whole table visible in one number."""
     plans = [plan_sync(entry) for entry in CORPUS_VERSIONS.values()]
-    assert sum(len(plan.rclone_commands) for plan in plans) == 137
-    assert sum(len(plan.check_paths) for plan in plans) == 317
+    assert sum(len(plan.rclone_commands) for plan in plans) == 59
+    assert sum(len(plan.check_paths) for plan in plans) == 167

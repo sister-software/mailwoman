@@ -1,15 +1,17 @@
-"""The launcher's 57 sync functions, pinned before anything moves them.
+"""The launcher's sync functions, pinned so nothing moves them silently.
 
 Nothing imports `launch/train_remote.py`: it pulls in the Modal SDK, talks to a volume, and every
 function in it is a deployment entry point. A green suite therefore says nothing about it, which is
-why renaming the directory or collapsing the 57 near-identical clones into a table would otherwise
-be unverifiable — and a sync that silently stops staging one corpus version is a launch that trains
-on the wrong data and reports success.
+why renaming the directory or collapsing near-identical clones into a table would otherwise be
+unverifiable — and a sync that silently stops staging one corpus version is a launch that trains on
+the wrong data and reports success.
 
 `sync-census.json` is what the file does today: every rclone command, every path checked, every
 `__pycache__` cleared, resolved to concrete strings. Do NOT regenerate it after a change to the
 launcher — that asserts the new code against itself. Regenerate it only when a sync function is
-deliberately added or edited, and say which in the commit message.
+deliberately added or edited, and say which in the commit message. Removing a function is the one
+edit that needs no regeneration: drop its row and every surviving row stays pinned to what it
+staged before the removal.
 """
 
 from __future__ import annotations
@@ -26,10 +28,10 @@ LAUNCHER = Path(__file__).resolve().parents[2] / "launch" / "train_remote.py"
 SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train"
 FIXTURE = Path(__file__).with_name("sync-census.json")
 
-#: Measured on the pre-collapse file. A table that generates fewer commands stages less corpus.
-EXPECTED_FUNCTIONS = 57
-EXPECTED_RCLONE_COMMANDS = 137
-EXPECTED_CHECK_PATHS = 317
+#: Measured on the file. A table that generates fewer commands stages less corpus.
+EXPECTED_FUNCTIONS = 20
+EXPECTED_RCLONE_COMMANDS = 59
+EXPECTED_CHECK_PATHS = 167
 
 #: Functions whose command count cannot equal their count of `rclone copy` literals, with the
 #: reason. Every other function must match exactly — see the cross-check below for why that

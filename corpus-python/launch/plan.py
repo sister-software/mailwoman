@@ -21,19 +21,12 @@ VOLUME_MOUNT = "/data"
 # moves a corpus carries `--low-level-retries 30 --retries 8`; each operation succeeds on a retry.
 #: Large corpora: the most parallelism, with progress logged because the transfer outlives a glance.
 WIDE = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
-#: Moderate parallelism, no progress logging.
+#: Moderate parallelism, no progress logging. Used where the transfer is a tokenizer or a
+#: checkpoint rather than a corpus — megabytes, not tens of gigabytes.
 STEADY = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
-#: STEADY with progress logging.
-STEADY_LOGGED = STEADY + " --stats 30s --stats-log-level NOTICE"
-#: The widest, for the one sync that moves the whole base corpus.
-WIDEST = "--transfers 16 --checkers 32 --stats 30s --stats-log-level NOTICE"
-#: No retry budget. Used only where the source is small and a failure is cheap to repeat.
-NARROW = "--transfers 4"
-PLAIN = "--transfers 8"
 
 #: Which `__pycache__` directories a sync clears. A container-side write of new `.py` over old
 #: leaves stale `.pyc` that imports instead, so a sync that ships code must clear them.
-NONE: tuple[str, ...] = ()
 PACKAGE = ("__pycache__",)
 PACKAGE_AND_CONFIGS = ("__pycache__", "configs/__pycache__")
 
