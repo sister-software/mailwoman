@@ -34,10 +34,10 @@ from . import jp_registry, tw_registry
 from .build_cjk_overlay import verify_cn_record
 from .build_jp_slice import BOARD_BUCKET_MIN as JP_BOARD_BUCKET_MIN
 from .build_tw_slice import BOARD_BUCKET_MIN as TW_BOARD_BUCKET_MIN
-from .char_tokenizer import build_char_vocab, save_char_vocab
 from .corpora.builder import SCHEMA, coverage_stats, muni_bucket, select_exact
 from .labels import resolve_label_set
 from .text.normalize import normalize_text
+from .tokenizer.char import build_char_vocab, save_char_vocab
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 SOURCES = Path(DATA_ROOT) / "corpus" / "sources"

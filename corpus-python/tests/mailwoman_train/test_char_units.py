@@ -16,7 +16,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train.char_tokenizer import (
+from mailwoman_train.config import DataConfig
+from mailwoman_train.data.loader import iter_encoded
+from mailwoman_train.labels import IGNORE_INDEX, LABEL_TO_ID
+from mailwoman_train.tokenizer import char_label_array_from_spans, whitespace_spans
+from mailwoman_train.tokenizer.char import (
     PAD_CHAR_ID,
     UNK_CHAR_ID,
     build_char_vocab,
@@ -24,10 +28,6 @@ from mailwoman_train.char_tokenizer import (
     encode_row_units,
     save_char_vocab,
 )
-from mailwoman_train.config import DataConfig
-from mailwoman_train.data.loader import iter_encoded
-from mailwoman_train.labels import IGNORE_INDEX, LABEL_TO_ID
-from mailwoman_train.tokenizer import char_label_array_from_spans, whitespace_spans
 
 # region encode_row_units
 

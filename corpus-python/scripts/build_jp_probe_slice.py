@@ -54,7 +54,7 @@ import pyarrow.parquet as pq
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from mailwoman_train.char_tokenizer import build_char_vocab, save_char_vocab  # noqa: E402
+from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab  # noqa: E402
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-jp.parquet"

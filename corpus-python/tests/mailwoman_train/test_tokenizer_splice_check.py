@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from mailwoman_train.tokenizer_splice import check_codepoint_overlap, collect_sample_codepoints
+from mailwoman_train.tokenizer.splice import check_codepoint_overlap, collect_sample_codepoints
 
 
 @pytest.fixture()

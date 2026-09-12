@@ -55,7 +55,6 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from .char_tokenizer import build_char_vocab, save_char_vocab
 from .corpora.builder import (
     MAX_FIELD_CHARS,
     SCHEMA,
@@ -68,6 +67,7 @@ from .corpora.builder import (
 from .corpora.builder import verify_record as _verify_record
 from .labels import resolve_label_set
 from .text.normalize import ascii_digits, fullwidth_digits, normalize_text
+from .tokenizer.char import build_char_vocab, save_char_vocab
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 DEFAULT_PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-tw.parquet"

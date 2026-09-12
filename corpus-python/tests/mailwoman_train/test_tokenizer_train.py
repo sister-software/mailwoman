@@ -1,6 +1,6 @@
 """Trainer-harness unit tests.
 
-These tests cover the pieces of ``mailwoman_train.tokenizer_train`` that don't need a
+These tests cover the pieces of ``mailwoman_train.tokenizer.train`` that don't need a
 corpus on disk: script detection, byte-fallback measurement, UDS file parsing, and the
 postcode-shape preservation invariant when UDS literals are present in the SP model.
 
@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 import sentencepiece as spm  # type: ignore[import-not-found]
 
-from mailwoman_train.tokenizer_train import (
+from mailwoman_train.tokenizer.train import (
     DEFAULT_USER_DEFINED_SYMBOLS,
     detect_script,
     iter_train_slices,

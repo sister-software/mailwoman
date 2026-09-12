@@ -377,8 +377,8 @@ def main() -> None:
     # (and testable) without the torch install.
     import torch
 
-    from mailwoman_train.char_tokenizer import encode_row_units, load_char_vocab
     from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.tokenizer.char import encode_row_units, load_char_vocab
 
     label_set = resolve_label_set(args.label_set)
     resolve_tags = RESOLVE_TAGS[args.label_set]

@@ -426,7 +426,7 @@ def cmd_tokenizer(args: argparse.Namespace) -> int:
     """Train a SentencePiece tokenizer from a corpus version (v0.5.0 Thread A harness)."""
     import logging
 
-    from .tokenizer_train import (
+    from .tokenizer.train import (
         DEFAULT_USER_DEFINED_SYMBOLS,
         TrainerConfig,
         parse_user_defined_symbols_file,

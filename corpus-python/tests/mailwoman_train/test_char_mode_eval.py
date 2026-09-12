@@ -16,9 +16,9 @@ import pyarrow.parquet as pq
 import torch
 
 from mailwoman_train.build_jp_slice import SCHEMA
-from mailwoman_train.char_tokenizer import build_char_vocab, save_char_vocab
 from mailwoman_train.config import load_config
 from mailwoman_train.model import build_model
+from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train import _eval_val
 
 CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"

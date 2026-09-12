@@ -50,7 +50,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from .build_cjk_overlay import verify_cn_record as verify_record
-from .char_tokenizer import build_char_vocab, save_char_vocab
 from .corpora.builder import (
     MAX_FIELD_CHARS,
     MAX_RENDERED_CHARS,
@@ -74,6 +73,7 @@ from .kr_registry import (
 )
 from .labels import resolve_label_set
 from .text.normalize import normalize_text
+from .tokenizer.char import build_char_vocab, save_char_vocab
 
 DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
 DEFAULT_JUSO_ZIP = Path(DATA_ROOT) / "corpus" / "sources" / "juso-kr" / "202608ALLMTCHG00.zip"

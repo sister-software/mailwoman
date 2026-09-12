@@ -33,16 +33,22 @@ def _module_name(path: Path) -> str:
     return ".".join(["mailwoman_train", *parts])
 
 
-def _resolve(module: str | None, level: int, holder: str) -> str:
-    """The absolute module a `from ... import` names, given the module holding it."""
+def _resolve(module: str | None, level: int, holder: str, *, is_package: bool) -> str:
+    """The absolute module a `from ... import` names, given the module holding it.
+
+    Inside a package's `__init__.py` a single dot means that package; inside a plain module it means
+    the package containing it. Conflating the two makes `from .x` in `a/b/__init__.py` resolve to
+    `a.x`, and if `a.x` happens to exist the check passes over a broken import.
+    """
     if level == 0:
         return module or ""
     base = holder.split(".")
-    anchor = base[: len(base) - level] if len(base) > level else base[:1]
+    drop = level - 1 if is_package else level
+    anchor = base[: len(base) - drop] if len(base) > drop else base[:1]
     return ".".join([*anchor, module]) if module else ".".join(anchor)
 
 
-def _imports(tree: ast.AST, holder: str, *, deferred: bool) -> set[tuple[str, int]]:
+def _imports(tree: ast.AST, holder: str, *, deferred: bool, is_package: bool) -> set[tuple[str, int]]:
     """Intra-package targets imported at module level (deferred=False) or in a body (deferred=True)."""
     found: set[tuple[str, int]] = set()
     bodies = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)]
@@ -53,7 +59,7 @@ def _imports(tree: ast.AST, holder: str, *, deferred: bool) -> set[tuple[str, in
             continue
         if (id(node) in inside) is not deferred:
             continue
-        target = _resolve(node.module, node.level, holder)
+        target = _resolve(node.module, node.level, holder, is_package=is_package)
         if target.startswith("mailwoman_train"):
             found.add((target, node.lineno))
 
@@ -65,7 +71,9 @@ def _module_level_graph() -> dict[str, set[str]]:
     for path in sorted(SOURCE_ROOT.rglob("*.py")):
         holder = _module_name(path)
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        graph[holder] = {target for target, _ in _imports(tree, holder, deferred=False)}
+        graph[holder] = {
+            target for target, _ in _imports(tree, holder, deferred=False, is_package=path.name == "__init__.py")
+        }
     return graph
 
 
@@ -90,7 +98,7 @@ def test_no_deferred_import_dodges_a_cycle() -> None:
     for path in sorted(SOURCE_ROOT.rglob("*.py")):
         holder = _module_name(path)
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for target, lineno in sorted(_imports(tree, holder, deferred=True)):
+        for target, lineno in sorted(_imports(tree, holder, deferred=True, is_package=path.name == "__init__.py")):
             if _reaches(graph, target, holder):
                 offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which imports back")
 
@@ -117,7 +125,7 @@ def test_every_deferred_import_names_a_module_that_exists() -> None:
     for path in sorted(SOURCE_ROOT.rglob("*.py")):
         holder = _module_name(path)
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for target, lineno in sorted(_imports(tree, holder, deferred=True)):
+        for target, lineno in sorted(_imports(tree, holder, deferred=True, is_package=path.name == "__init__.py")):
             if target not in known:
                 offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which does not exist")
 

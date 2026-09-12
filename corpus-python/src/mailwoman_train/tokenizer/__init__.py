@@ -36,10 +36,10 @@ from typing import Any, cast
 
 import sentencepiece as spm
 
-from .country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
-from .gazetteer_anchor import realign_gazetteer_to_pieces, suppress_gazetteer_near_postcode
-from .labels import IGNORE_INDEX, LABEL_TO_ID, LOCALE_TO_ID, NUM_LOCALES, collapse_label
-from .types import PieceSpan
+from ..country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
+from ..gazetteer_anchor import realign_gazetteer_to_pieces, suppress_gazetteer_near_postcode
+from ..labels import IGNORE_INDEX, LABEL_TO_ID, LOCALE_TO_ID, NUM_LOCALES, collapse_label
+from ..types import PieceSpan
 
 # Anchor feature width: a uniform country posterior over the locale set + a 2-d normalized centroid.
 # Must equal the model's ``anchor_feature_dim`` default (NUM_LOCALES + 2) — single source of truth.
@@ -428,7 +428,7 @@ def realign_anchor_to_pieces_shaped(
     ``D-`` / Dutch-spaced shapes inherit the gold path's space-strip+upper normalization — a pre-existing
     minor gap, not introduced here; the dominant NUM5/ZIP4/EU-numeric shapes normalize identically.)
     """
-    from .postcode_shapes import collect_matches
+    from ..postcode_shapes import collect_matches
 
     zero = [0.0] * ANCHOR_FEATURE_DIM
     char_feat: list[list[float]] = [zero] * len(raw)

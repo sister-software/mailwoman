@@ -30,7 +30,7 @@ from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
-from .labels import IGNORE_INDEX, LABEL_TO_ID, collapse_label
+from ..labels import IGNORE_INDEX, LABEL_TO_ID, collapse_label
 
 PAD_CHAR_ID = 0
 UNK_CHAR_ID = 1

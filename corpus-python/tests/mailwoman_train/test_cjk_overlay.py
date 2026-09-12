@@ -13,8 +13,8 @@ import pytest
 
 from mailwoman_train.build_cjk_overlay import build, merge_char_vocab, to_cn_record, verify_cn_record
 from mailwoman_train.build_jp_slice import SCHEMA
-from mailwoman_train.char_tokenizer import save_char_vocab
 from mailwoman_train.labels import resolve_label_set
+from mailwoman_train.tokenizer.char import save_char_vocab
 
 TAGS = frozenset(resolve_label_set("stage3-cjk").tags)
 

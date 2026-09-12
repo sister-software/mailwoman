@@ -2570,7 +2570,7 @@ def mean_init_nsplice():
     sys.path.insert(0, "/data/corpus-python/src")
     from pathlib import Path
 
-    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+    from mailwoman_train.tokenizer.splice import mean_init_embeddings
 
     vol.reload()
     old_v, new_v = mean_init_embeddings(
@@ -2649,7 +2649,7 @@ def mean_init_fr_nsplice():
     sys.path.insert(0, "/data/corpus-python/src")
     from pathlib import Path
 
-    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+    from mailwoman_train.tokenizer.splice import mean_init_embeddings
 
     vol.reload()
     out = Path(f"{VOL_MOUNT}/models/fr-nsplice-expanded")
@@ -2681,7 +2681,7 @@ def mean_init_multisplice():
     sys.path.insert(0, "/data/corpus-python/src")
     from pathlib import Path
 
-    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+    from mailwoman_train.tokenizer.splice import mean_init_embeddings
 
     vol.reload()
     out = Path(f"{VOL_MOUNT}/models/multisplice-expanded")
@@ -3440,7 +3440,7 @@ def mean_init_numsplice():
     from pathlib import Path
 
     sys.path.insert(0, "/data/corpus-python/src")
-    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+    from mailwoman_train.tokenizer.splice import mean_init_embeddings
 
     vol.reload()
     out = Path(f"{VOL_MOUNT}/models/numsplice-expanded")
@@ -3472,7 +3472,7 @@ def mean_init_ptro():
     from pathlib import Path
 
     sys.path.insert(0, "/data/corpus-python/src")
-    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+    from mailwoman_train.tokenizer.splice import mean_init_embeddings
 
     vol.reload()
     out = Path(f"{VOL_MOUNT}/models/ptro-expanded")
@@ -3503,7 +3503,7 @@ def mean_init_numsplice23():
     from pathlib import Path
 
     sys.path.insert(0, "/data/corpus-python/src")
-    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+    from mailwoman_train.tokenizer.splice import mean_init_embeddings
 
     vol.reload()
     out = Path(f"{VOL_MOUNT}/models/numsplice23-expanded")
@@ -3536,7 +3536,7 @@ def mean_init_numsplice3():
     from pathlib import Path
 
     sys.path.insert(0, "/data/corpus-python/src")
-    from mailwoman_train.tokenizer_splice import mean_init_embeddings
+    from mailwoman_train.tokenizer.splice import mean_init_embeddings
 
     vol.reload()
     out = Path(f"{VOL_MOUNT}/models/numsplice3-expanded")
@@ -4029,7 +4029,7 @@ def sync_jp_probe():
     corpus = f"{VOL_MOUNT}/corpus/versioned/v8-jp-probe"
     print("  v8-jp-probe config present:", os.path.isfile(f"{src}/configs/v8-jp-probe.yaml"))
     print("  char path in data_loader:", "char_mode" in open(f"{src}/data/loader.py").read())
-    print("  encode_row_units present:", "encode_row_units" in open(f"{src}/char_tokenizer.py").read())
+    print("  encode_row_units present:", "encode_row_units" in open(f"{src}/tokenizer/char.py").read())
     print("  train slice present:", os.path.isfile(f"{corpus}/train/part-0000.parquet"))
     print("  val slice present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
     print("  char vocab present:", os.path.isfile(f"{corpus}/char-vocab-jp-v1.json"))

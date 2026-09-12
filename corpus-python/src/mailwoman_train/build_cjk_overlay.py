@@ -43,10 +43,10 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from .char_tokenizer import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
 from .corpora.builder import SCHEMA
 from .corpora.builder import verify_record as _verify_record
 from .labels import resolve_label_set
+from .tokenizer.char import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
 
 LABEL_SET_NAME = "stage3-cjk"
 CN_SOURCE = "coarse-placer-cn-units"

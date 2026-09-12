@@ -43,10 +43,10 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from ..char_tokenizer import encode_row_units, load_char_vocab
 from ..config import Config, DataConfig
 from ..labels import IGNORE_INDEX, active_components_present, locale_id, resolve_label_set
 from ..tokenizer import Tokenizer, char_label_array_from_spans, encode_row, whitespace_spans
+from ..tokenizer.char import encode_row_units, load_char_vocab
 from .augment import SPAN_KEYS
 from .emit import EmitPolicy, emit_row
 from .relabel import AffixRelabelLexicon

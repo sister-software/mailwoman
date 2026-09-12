@@ -690,7 +690,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         raise ValueError(f"data.char_mode={char_mode!r} and model.use_char_embed={use_char_embed} must be set together")
     char_vocab_size = 0
     if char_mode != "off":
-        from .char_tokenizer import load_char_vocab
+        from .tokenizer.char import load_char_vocab
 
         char_vocab_path = getattr(cfg.data, "char_vocab_path", None)
         if not char_vocab_path:

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import pytest
 
-from mailwoman_train.char_tokenizer import build_char_vocab, encode_row_units
 from mailwoman_train.labels import (
     ACTIVE_BIO_LABELS,
     CN_FINE_TAGS,
@@ -24,6 +23,7 @@ from mailwoman_train.labels import (
     resolve_label_set,
 )
 from mailwoman_train.tokenizer import char_label_array_from_spans
+from mailwoman_train.tokenizer.char import build_char_vocab, encode_row_units
 
 JP = resolve_label_set("stage3-jp")
 DEFAULT = resolve_label_set()
