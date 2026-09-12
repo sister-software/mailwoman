@@ -40,7 +40,7 @@ def _find_packages_root() -> Path:
 
 def cmd_train(args: argparse.Namespace) -> int:
     from .config import load_config
-    from .train import train
+    from .train.trainer import train
 
     cfg = load_config(args.config)
     if args.output_dir:
@@ -84,7 +84,7 @@ def cmd_eval(args: argparse.Namespace) -> int:
     import torch
 
     from .config import load_config
-    from .eval import (
+    from .evaluation.evaluate import (
         load_golden_dir,
         render_report_markdown,
         report_to_json,
@@ -124,7 +124,7 @@ def cmd_eval(args: argparse.Namespace) -> int:
 def cmd_export(args: argparse.Namespace) -> int:
     from .config import load_config
     from .data.loader import iter_batches
-    from .export_onnx import export_to_onnx, verify_parity
+    from .export.onnx import export_to_onnx, verify_parity
     from .nn.encoder import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
 
@@ -137,7 +137,7 @@ def cmd_export(args: argparse.Namespace) -> int:
         # The char path has no SentencePiece tokenizer: the graph takes `char_ids (B, S, W)` where S is the
         # config's max_units and W its max_unit_width, and the parity sample is real val rows encoded the way
         # training encoded them.
-        from .export_onnx import verify_char_parity
+        from .export.onnx import verify_char_parity
 
         if cfg.data.max_units is None or cfg.data.max_unit_width is None:
             sys.stderr.write("char_mode: char needs data.max_units and data.max_unit_width to export\n")
@@ -187,7 +187,7 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 def cmd_quantize(args: argparse.Namespace) -> int:
-    from .quantize import quantize_dynamic_int8
+    from .export.quantize import quantize_dynamic_int8
 
     out = quantize_dynamic_int8(Path(args.input), Path(args.output))
     print(json.dumps({"output": str(out)}, indent=2))
@@ -196,14 +196,14 @@ def cmd_quantize(args: argparse.Namespace) -> int:
 
 def cmd_package(args: argparse.Namespace) -> int:
     from .config import load_config
-    from .eval import load_golden_dir, report_to_json, run_eval
-    from .nn.encoder import MailwomanCoarseEncoder
-    from .package_weights import (
+    from .evaluation.evaluate import load_golden_dir, report_to_json, run_eval
+    from .export.package_weights import (
         build_model_card,
         render_package_json,
         render_readme,
         write_package,
     )
+    from .nn.encoder import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
 
     cfg = load_config(args.config)
@@ -270,7 +270,7 @@ def cmd_package(args: argparse.Namespace) -> int:
 def cmd_smoke(args: argparse.Namespace) -> int:
     """End-to-end smoke: train → eval → export → quantize → package."""
     from .config import load_config
-    from .train import train as train_fn
+    from .train.trainer import train as train_fn
 
     cfg = load_config(args.config)
     # Smokes default to constant-LR per the v0.5.0 verdict-smoke framework
@@ -293,7 +293,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     # Eval against golden set.
     import torch
 
-    from .eval import (
+    from .evaluation.evaluate import (
         load_golden_dir,
         render_report_markdown,
         report_to_json,
@@ -314,7 +314,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     (ck / "eval-report.json").write_text(json.dumps(report_to_json(report), indent=2) + "\n", encoding="utf-8")
 
     # Export to ONNX.
-    from .export_onnx import export_to_onnx, verify_parity
+    from .export.onnx import export_to_onnx, verify_parity
 
     onnx_dir = Path("/data/models/onnx")
     fp32_path = onnx_dir / f"model-{Path(cfg.train.output_dir).name}-fp32.onnx"
@@ -336,7 +336,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     print(f"smoke: ONNX parity {parity}")
 
     # Quantize.
-    from .quantize import quantize_dynamic_int8
+    from .export.quantize import quantize_dynamic_int8
 
     quant_dir = Path("/data/models/quantized")
     int8_path = quant_dir / f"model-{Path(cfg.train.output_dir).name}-int8.onnx"
@@ -344,7 +344,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     print(f"smoke: int8 → {int8_path}")
 
     # Package.
-    from .package_weights import (
+    from .export.package_weights import (
         build_model_card,
         render_package_json,
         render_readme,

@@ -28,7 +28,7 @@ from mailwoman_train.labels import (  # noqa: E402
     locale_id,
 )
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
-from mailwoman_train.train import _cross_pollution  # noqa: E402
+from mailwoman_train.train.trainer import _cross_pollution  # noqa: E402
 
 NUM_LABELS = len(ACTIVE_BIO_LABELS)
 VOCAB_SIZE = 64

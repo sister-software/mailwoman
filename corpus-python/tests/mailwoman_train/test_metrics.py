@@ -12,7 +12,7 @@ import pytest
 torch = pytest.importorskip("torch")  # training deps (torch) aren't installed in lint-only envs
 
 from mailwoman_train.labels import ACTIVE_BIO_LABELS, LABEL_TO_ID  # noqa: E402
-from mailwoman_train.train import _token_f1  # noqa: E402
+from mailwoman_train.train.trainer import _token_f1  # noqa: E402
 
 NUM = len(ACTIVE_BIO_LABELS)
 

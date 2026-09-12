@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import torch
 
-from mailwoman_train.train import _build_scheduler, _restamp_resume_lrs, build_optimizer
+from mailwoman_train.train.trainer import _build_scheduler, _restamp_resume_lrs, build_optimizer
 
 
 class TinyModel(torch.nn.Module):

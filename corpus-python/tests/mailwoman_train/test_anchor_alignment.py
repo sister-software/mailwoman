@@ -77,7 +77,7 @@ def test_confidence_curriculum_no_op_early_perturbs_late():
     """The robustness curriculum is a no-op before 25% of max_steps, then perturbs downward + zeros
     whole rows after — never above 1.0, never a discrete regime (#239/#240)."""
     torch = pytest.importorskip("torch")
-    from mailwoman_train.train import perturb_anchor_confidence
+    from mailwoman_train.train.trainer import perturb_anchor_confidence
 
     conf = torch.ones(128, 6)
     assert torch.equal(perturb_anchor_confidence(conf, 0, 20000), conf)  # 0% → untouched

@@ -2134,7 +2134,7 @@ def preflight_corpus_receipts(config_name: str) -> str:
     if not config_path.is_file():
         raise RuntimeError(f"Config not found: {config_path}")
 
-    from mailwoman_train.audit_epoch_mixture import CorpusReceiptError, run
+    from mailwoman_train.audits.epoch_mixture import CorpusReceiptError, run
     from mailwoman_train.config import load_config
 
     cfg = load_config(config_path)
@@ -2207,7 +2207,7 @@ def _train_gpu(
     # key — e.g. a setting the volume-side config.py predates — raises here at launch,
     # naming the dotted key + file, instead of silently running a fine-tune with every setting inert.
     from mailwoman_train.config import load_config
-    from mailwoman_train.train import train as run_train
+    from mailwoman_train.train.trainer import train as run_train
 
     cfg = load_config(config_path)
 
@@ -2225,7 +2225,7 @@ def _train_gpu(
     if cfg.data.required_corpus_receipts:
         from pathlib import Path
 
-        from mailwoman_train.audit_epoch_mixture import verify_corpus_receipt_report
+        from mailwoman_train.audits.epoch_mixture import verify_corpus_receipt_report
 
         receipt_report = Path(f"{VOL_MOUNT}/audits/epoch-mixture-{Path(config_path).stem}.json")
         verify_corpus_receipt_report(
@@ -2316,7 +2316,7 @@ def diagnose_suffix_plasticity(
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
     from mailwoman_train.config import load_config
-    from mailwoman_train.train import train as run_train
+    from mailwoman_train.train.trainer import train as run_train
 
     config_path = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v4.3.1-suffix-boundary-target-dose-8k.yaml"
     cfg = load_config(config_path)
@@ -2729,7 +2729,7 @@ def export_onnx(
 
     import torch
 
-    from mailwoman_train.export_onnx import export_to_onnx
+    from mailwoman_train.export.onnx import export_to_onnx
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer
 
@@ -2762,7 +2762,7 @@ def export_onnx(
     # keeping the export byte-identical for every pre-#727 recipe.
     import json as _json
 
-    from mailwoman_train.package_weights import export_semi_crf_transitions
+    from mailwoman_train.export.package_weights import export_semi_crf_transitions
 
     transitions = export_semi_crf_transitions(model)
     if transitions is not None:
@@ -2806,7 +2806,7 @@ def quantize_onnx(
     vol.reload()
 
     sys.path.insert(0, "/data/corpus-python/src")
-    from mailwoman_train.quantize import quantize_dynamic_int8
+    from mailwoman_train.export.quantize import quantize_dynamic_int8
 
     fp32 = Path(fp32_path)
     int8 = Path(int8_path)
@@ -2953,7 +2953,7 @@ def eval_de(
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
-    from mailwoman_train.train import _token_f1
+    from mailwoman_train.train.trainer import _token_f1
 
     ck = Path(f"{output_dir}/checkpoints/step-{step}")
     tok = Tokenizer(Path(tokenizer_path))
@@ -4323,7 +4323,7 @@ def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml
     if not config_path.is_file():
         raise RuntimeError(f"Config not found: {config_path}")
 
-    from mailwoman_train.audit_epoch_mixture import CorpusReceiptError, run
+    from mailwoman_train.audits.epoch_mixture import CorpusReceiptError, run
 
     stem = config_path.stem
     json_path = Path(f"{VOL_MOUNT}/audits/epoch-mixture-{stem}.json")
@@ -4363,7 +4363,7 @@ def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", dra
     if not config_path.is_file():
         raise RuntimeError(f"Config not found: {config_path}")
 
-    from mailwoman_train.census_opening_token import run
+    from mailwoman_train.audits.opening_token import run
 
     json_path = Path(f"{VOL_MOUNT}/audits/opening-token-{config_path.stem}.json")
     run(config_path, json_path=json_path, draws=draws or None)
@@ -4399,7 +4399,7 @@ def audit_suffix_feed(
     if not config_path.is_file():
         raise RuntimeError(f"Config not found: {config_path}")
 
-    from mailwoman_train.audit_suffix_feed import run
+    from mailwoman_train.audits.suffix_feed import run
 
     relabel_path = Path(relabel_lexicon)
     json_path = Path(f"{VOL_MOUNT}/audits/suffix-feed-{config_path.stem}-{relabel_path.stem}.json")

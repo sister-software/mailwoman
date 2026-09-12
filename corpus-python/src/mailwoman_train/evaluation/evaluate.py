@@ -26,10 +26,10 @@ from typing import Any
 
 import torch
 
-from .config import Config
-from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS
-from .tokenizer import Tokenizer
-from .types import PieceSpan
+from ..config import Config
+from ..labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS
+from ..tokenizer import Tokenizer
+from ..types import PieceSpan
 
 
 @dataclass
@@ -84,7 +84,7 @@ def golden_to_bio_labels(
         for i in range(idx, end):
             char_labels[i] = f"B-{tag}" if i == idx else f"I-{tag}"
 
-    from .labels import LABEL_TO_ID
+    from ..labels import LABEL_TO_ID
 
     label_ids: list[int] = []
     prev_tag: str | None = None

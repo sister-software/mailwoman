@@ -1,4 +1,4 @@
-from mailwoman_train.audit_mixed_script import audit_rows, gold_components, script_runs
+from mailwoman_train.audits.mixed_script import audit_rows, gold_components, script_runs
 
 
 def _row(raw: str, spans: list[tuple[int, int, str]], *, country: str = "GB") -> dict:

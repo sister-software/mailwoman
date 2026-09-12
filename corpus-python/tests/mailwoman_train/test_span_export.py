@@ -9,10 +9,10 @@ import numpy as np
 import pytest
 import torch
 
+from mailwoman_train.export.package_weights import export_semi_crf_transitions
 from mailwoman_train.labels import ACTIVE_BIO_LABELS
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
 from mailwoman_train.nn.span_scorer import NUM_SEGMENT_TYPES, SEGMENT_TYPES
-from mailwoman_train.package_weights import export_semi_crf_transitions
 
 _GEOM = dict(
     vocab_size=64,
@@ -33,7 +33,7 @@ def _session(path):
 
 
 def test_span_model_exports_span_scores_output(tmp_path):
-    from mailwoman_train.export_onnx import export_to_onnx
+    from mailwoman_train.export.onnx import export_to_onnx
 
     torch.manual_seed(3)
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5, max_span=4)
@@ -55,7 +55,7 @@ def test_span_model_exports_span_scores_output(tmp_path):
 
 
 def test_spanless_model_export_is_unchanged(tmp_path):
-    from mailwoman_train.export_onnx import export_to_onnx
+    from mailwoman_train.export.onnx import export_to_onnx
 
     torch.manual_seed(4)
     model = MailwomanCoarseEncoder(**_GEOM)
@@ -66,7 +66,7 @@ def test_spanless_model_export_is_unchanged(tmp_path):
 
 def test_fetching_only_logits_from_a_span_graph_works(tmp_path):
     # The browser path: never asks for span_scores; must be able to ignore it entirely.
-    from mailwoman_train.export_onnx import export_to_onnx
+    from mailwoman_train.export.onnx import export_to_onnx
 
     torch.manual_seed(5)
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5, max_span=4)

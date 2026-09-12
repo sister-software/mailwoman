@@ -16,7 +16,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train.audit_epoch_mixture import (
+from mailwoman_train.audits.epoch_mixture import (
     CorpusReceiptError,
     audit_mixture,
     corpus_receipt_binding,

@@ -40,7 +40,7 @@ MAX_OPSET = 17
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = REPO_ROOT / "corpus-python" / "pyproject.toml"
 MODAL_IMAGE = REPO_ROOT / "corpus-python" / "modal" / "train_remote.py"
-EXPORT_ONNX = REPO_ROOT / "corpus-python" / "src" / "mailwoman_train" / "export_onnx.py"
+EXPORT_ONNX = REPO_ROOT / "corpus-python" / "src" / "mailwoman_train" / "export" / "onnx.py"
 
 # Every file that names a ruff version for `uvx` to fetch. Each must agree with the [dev] pin.
 RUFF_CALL_SITES = (REPO_ROOT / "package.json", REPO_ROOT / ".husky" / "pre-commit")

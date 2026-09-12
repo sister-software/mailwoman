@@ -27,7 +27,7 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 
 from mailwoman_train.config import TrainConfig, load_config
-from mailwoman_train.train import build_optimizer
+from mailwoman_train.train.trainer import build_optimizer
 
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
 

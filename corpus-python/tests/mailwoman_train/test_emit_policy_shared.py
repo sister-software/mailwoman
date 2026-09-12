@@ -19,7 +19,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from mailwoman_train.audit_epoch_mixture import audit_mixture
+from mailwoman_train.audits.epoch_mixture import audit_mixture
 from mailwoman_train.data.emit import EmitPolicy, emit_row
 from mailwoman_train.data.loader import iter_rows
 

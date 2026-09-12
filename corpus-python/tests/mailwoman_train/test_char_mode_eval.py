@@ -19,7 +19,7 @@ from mailwoman_train.build_jp_slice import SCHEMA
 from mailwoman_train.config import load_config
 from mailwoman_train.nn.encoder import build_model
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
-from mailwoman_train.train import _eval_val
+from mailwoman_train.train.trainer import _eval_val
 
 CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
 PROBE_2K = CONFIGS / "v8-cjk-full-2k.yaml"
@@ -76,7 +76,7 @@ def test_eval_val_runs_without_a_tokenizer_on_the_char_path(tmp_path: Path) -> N
 
 def test_eval_csv_row_has_one_cell_per_label_set_tag() -> None:
     from mailwoman_train.labels import resolve_label_set
-    from mailwoman_train.train import eval_csv_row
+    from mailwoman_train.train.trainer import eval_csv_row
 
     tags = resolve_label_set("stage3-cjk").tags
     header = ["step", "wall_seconds", "train_loss", "lr", "val_loss", "val_macro_f1", *(f"f1.{t}" for t in tags)]

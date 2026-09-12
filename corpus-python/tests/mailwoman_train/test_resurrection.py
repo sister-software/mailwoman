@@ -9,7 +9,7 @@ from `reinit_label_rows` resetting only the named rows to the live-row mean.
 import torch
 
 from mailwoman_train.labels import LABEL_TO_ID
-from mailwoman_train.train import build_optimizer, reinit_label_rows
+from mailwoman_train.train.trainer import build_optimizer, reinit_label_rows
 
 
 class TinyModel(torch.nn.Module):

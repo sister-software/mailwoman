@@ -20,7 +20,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from mailwoman_train.train import _build_scheduler, _restamp_resume_lrs, build_optimizer
+from mailwoman_train.train.trainer import _build_scheduler, _restamp_resume_lrs, build_optimizer
 
 PEAK_LR = 5e-4
 RESUME_STEP = 90  # deep in the cosine tail: multiplier ≈ 0.03, so a peak restamp is a ~33× spike

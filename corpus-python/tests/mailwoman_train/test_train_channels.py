@@ -23,7 +23,7 @@ torch = pytest.importorskip("torch")  # training deps (torch) aren't installed i
 
 from mailwoman_train.data.loader import EncodedExample, collate  # noqa: E402
 from mailwoman_train.labels import IGNORE_INDEX  # noqa: E402
-from mailwoman_train.train import _to_tensor_batch  # noqa: E402
+from mailwoman_train.train.trainer import _to_tensor_batch  # noqa: E402
 
 SEQ = 4
 

@@ -26,7 +26,7 @@ import torch
 from mailwoman_train.config import load_config
 from mailwoman_train.labels import JP_FINE_TAGS, STAGE3_BIO_LABELS, resolve_label_set
 from mailwoman_train.nn.encoder import build_model
-from mailwoman_train.train import _build_scheduler, build_optimizer
+from mailwoman_train.train.trainer import _build_scheduler, build_optimizer
 
 CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
 FULL = CONFIGS / "v8-jp-full.yaml"

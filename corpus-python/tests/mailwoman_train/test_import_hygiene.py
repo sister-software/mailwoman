@@ -22,7 +22,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train"
 #: preparation; once each sits in its own module, neither file imports the other.
 KNOWN_CYCLES = frozenset(
     {
-        "train.py:664 defers mailwoman_train.pretrain, which imports back",
+        "train/trainer.py:664 defers mailwoman_train.train.pretrain, which imports back",
     }
 )
 

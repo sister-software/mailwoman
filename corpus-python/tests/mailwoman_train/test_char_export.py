@@ -36,7 +36,7 @@ def _char_model() -> MailwomanCoarseEncoder:
 
 
 def test_char_model_exports_char_ids_and_no_input_ids(tmp_path):
-    from mailwoman_train.export_onnx import export_to_onnx
+    from mailwoman_train.export.onnx import export_to_onnx
 
     path = export_to_onnx(_char_model(), tmp_path / "char.onnx", max_length=UNITS, char_window=WINDOW)
     session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
@@ -48,14 +48,14 @@ def test_char_model_exports_char_ids_and_no_input_ids(tmp_path):
 
 
 def test_char_model_export_refuses_without_the_window(tmp_path):
-    from mailwoman_train.export_onnx import export_to_onnx
+    from mailwoman_train.export.onnx import export_to_onnx
 
     with pytest.raises(ValueError, match="char_window"):
         export_to_onnx(_char_model(), tmp_path / "char.onnx", max_length=UNITS)
 
 
 def test_char_parity_holds_on_random_units(tmp_path):
-    from mailwoman_train.export_onnx import export_to_onnx, verify_char_parity
+    from mailwoman_train.export.onnx import export_to_onnx, verify_char_parity
 
     model = _char_model()
     path = export_to_onnx(model, tmp_path / "char.onnx", max_length=UNITS, char_window=WINDOW)

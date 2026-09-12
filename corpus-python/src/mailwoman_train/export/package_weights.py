@@ -26,7 +26,7 @@ from typing import Any
 
 import torch
 
-from .labels import (
+from ..labels import (
     ACTIVE_BIO_LABELS,
     ACTIVE_TAGS,
     STAGE1_COARSE_TAGS,
@@ -146,7 +146,7 @@ def export_semi_crf_transitions(model: torch.nn.Module) -> dict[str, Any] | None
     semi_crf = getattr(model, "semi_crf", None)
     if semi_crf is None:
         return None
-    from .nn.span_scorer import SEGMENT_TYPES
+    from ..nn.span_scorer import SEGMENT_TYPES
 
     return {
         "segment_types": list(SEGMENT_TYPES),

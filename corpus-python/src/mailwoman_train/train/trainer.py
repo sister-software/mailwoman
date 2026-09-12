@@ -32,12 +32,12 @@ import torch
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 
-from .config import Config, csv_log_path
-from .data.dose import format_derivation, resolve_config_doses
-from .data.loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
-from .nn.encoder import build_model, force_math_sdpa, model_param_count
-from .tokenizer import Tokenizer
+from ..config import Config, csv_log_path
+from ..data.dose import format_derivation, resolve_config_doses
+from ..data.loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
+from ..labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
+from ..nn.encoder import build_model, force_math_sdpa, model_param_count
+from ..tokenizer import Tokenizer
 
 
 def _set_seed(seed: int) -> None:
@@ -577,7 +577,7 @@ def _eval_val(
         return {"val_loss": float("nan"), "val_rows": 0, "macro_f1": 0.0}
     preds = torch.cat(all_preds, dim=0)
     labels = torch.cat(all_labels, dim=0)
-    from .labels import resolve_label_set
+    from ..labels import resolve_label_set
 
     label_set = resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
     metrics = _token_f1(preds, labels, num_labels=len(label_set.bio_labels), bio_labels=label_set.bio_labels)
@@ -690,7 +690,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         raise ValueError(f"data.char_mode={char_mode!r} and model.use_char_embed={use_char_embed} must be set together")
     char_vocab_size = 0
     if char_mode != "off":
-        from .tokenizer.char import load_char_vocab
+        from ..tokenizer.char import load_char_vocab
 
         char_vocab_path = getattr(cfg.data, "char_vocab_path", None)
         if not char_vocab_path:
@@ -705,7 +705,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if resume_from is not None:
         # Use the checkpoint's saved model rather than a fresh from-scratch init.
-        from .nn.encoder import MailwomanCoarseEncoder
+        from ..nn.encoder import MailwomanCoarseEncoder
 
         print(f"resuming from {resume_from}")
         model = MailwomanCoarseEncoder.from_pretrained(resume_from)
@@ -877,14 +877,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     fisher_acc = None
     fisher_window_start = None
     if getattr(cfg.train, "fisher_capture", False):
-        from .optim.fisher import FisherAccumulator
+        from ..optim.fisher import FisherAccumulator
 
         fisher_acc = FisherAccumulator(model)
         fisher_window_start = cfg.train.max_steps - int(getattr(cfg.train, "fisher_capture_last_n_steps", 2000))
         print(f"[fisher] capture armed for steps >= {max(0, fisher_window_start)}")
     ewc = None
     if float(getattr(cfg.train, "ewc_lambda", 0.0)) > 0.0:
-        from .optim.fisher import EWCPenalty
+        from ..optim.fisher import EWCPenalty
 
         ewc_reference = getattr(cfg.train, "ewc_reference", None) or getattr(cfg.train, "init_from", "")
         ewc_fisher_path = getattr(cfg.train, "ewc_fisher_path", None)
@@ -904,7 +904,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     csv_mode = "a" if resume_step > 0 and csv_path.is_file() else "w"
     csv_fh = csv_path.open(csv_mode, encoding="utf-8", newline="")
     csv_writer = csv.writer(csv_fh)
-    from .labels import resolve_label_set as _resolve_label_set
+    from ..labels import resolve_label_set as _resolve_label_set
 
     _label_set = _resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
     per_tag_cols = [f"f1.{tag}" for tag in _label_set.tags]
@@ -923,7 +923,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
 
     # Optional Trackio mirror of the CSV metrics (no-op unless cfg.train.trackio_enabled).
     # Defined before the try/ below so the finally block can always call tracker.finish().
-    from .trackio_logging import init_tracker
+    from ..observability.trackio import init_tracker
 
     tracker = init_tracker(cfg)
 

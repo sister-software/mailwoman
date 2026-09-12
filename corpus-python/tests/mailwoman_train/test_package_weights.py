@@ -11,14 +11,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mailwoman_train.labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, STAGE2_FINE_TAGS
-from mailwoman_train.package_weights import (
+from mailwoman_train.export.package_weights import (
     _components_supported_blurb,
     _phase_label,
     _target_status_line,
     build_model_card,
     render_readme,
 )
+from mailwoman_train.labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, STAGE2_FINE_TAGS
 
 
 def test_phase_label_reports_current_stage():

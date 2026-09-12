@@ -19,7 +19,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from mailwoman_train.train import _build_scheduler, _restamp_resume_lrs, build_optimizer
+from mailwoman_train.train.trainer import _build_scheduler, _restamp_resume_lrs, build_optimizer
 
 PARENT_PEAK_LR = 5e-4
 PARENT_CFG = SimpleNamespace(lr_schedule="cosine", warmup_steps=1000, max_steps=60000)

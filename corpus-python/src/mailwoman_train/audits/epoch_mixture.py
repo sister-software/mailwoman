@@ -42,12 +42,12 @@ from itertools import islice
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .data.dose import format_derivation, resolve_config_doses
-from .data.emit import EmitPolicy, emit_row
-from .data.loader import _raw_row_stream, source_row_counts
+from ..data.dose import format_derivation, resolve_config_doses
+from ..data.emit import EmitPolicy, emit_row
+from ..data.loader import _raw_row_stream, source_row_counts
 
 if TYPE_CHECKING:
-    from .config import CorpusReceiptConfig
+    from ..config import CorpusReceiptConfig
 
 _AUGMENT_KEYS = ("directional", "region", "glue", "case", "punct_drop", "upper_case", "ordinal")
 
@@ -328,7 +328,7 @@ def run(
     Seed follows the train loop's convention (``cfg.train.seed + epoch``); the epoch length
     is the config's ``train_rows_per_epoch`` unless ``draws`` overrides it.
     """
-    from .config import load_config
+    from ..config import load_config
 
     cfg = load_config(config_path)
     d = cfg.data

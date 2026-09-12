@@ -314,7 +314,7 @@ def test_build_optimizer_gives_the_span_head_its_own_lr():
     barely moved in 2k steps (loss 26.4 -> 17.8, still falling; raw span NLL ~35 where a converged
     semi-CRF is O(1)). Param groups let the head run at 1e-3 while the encoder stays at 1e-5.
     """
-    from mailwoman_train.train import build_optimizer
+    from mailwoman_train.train.trainer import build_optimizer
 
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5)
     optim, labels = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=1e-3)
@@ -333,7 +333,7 @@ def test_build_optimizer_gives_the_span_head_its_own_lr():
 
 def test_build_optimizer_is_single_group_without_the_override():
     """Default (no span_head_learning_rate) must stay exactly what every prior recipe got."""
-    from mailwoman_train.train import build_optimizer
+    from mailwoman_train.train.trainer import build_optimizer
 
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5)
     optim, labels = build_optimizer(model, learning_rate=1e-5, weight_decay=0.01, span_head_learning_rate=None)
@@ -345,7 +345,7 @@ def test_build_optimizer_is_single_group_without_the_override():
 
 def test_build_optimizer_respects_frozen_params():
     """A frozen param must not enter any group — the freeze_* idioms rely on it."""
-    from mailwoman_train.train import build_optimizer
+    from mailwoman_train.train.trainer import build_optimizer
 
     model = MailwomanCoarseEncoder(**_GEOM, use_span_scorer=True, span_loss_weight=0.5)
     for name, p in model.named_parameters():

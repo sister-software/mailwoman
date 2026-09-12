@@ -79,7 +79,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "src"))
 
 from mailwoman_train.config import load_config  # noqa: E402
-from mailwoman_train.eval import (  # noqa: E402
+from mailwoman_train.evaluation.evaluate import (  # noqa: E402
     decode_components,
     golden_to_bio_labels,
     load_golden_dir,
