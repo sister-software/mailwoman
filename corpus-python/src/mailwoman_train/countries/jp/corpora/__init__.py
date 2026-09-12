@@ -69,12 +69,14 @@ The modules:
 
 - `rows.py` — rendering one address in one register, and verifying the record.
 - `sources.py` — reading the Overture parquet and the KEN_ALL postcode join.
-- `build.py` — the two passes, the encoder, the writers and the report.
+- `assemble.py` — the two passes, the encoder, the writers and the report. Named for what it does
+  rather than `build.py`, because this package re-exports a FUNCTION called `build` and the two
+  names cannot both answer to `corpora.build`.
 """
 
 from __future__ import annotations
 
-from .build import (
+from .assemble import (
     BOARD_BUCKET_MIN,
     RowEncoder,
     Selection,

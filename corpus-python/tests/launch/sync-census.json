@@ -333,7 +333,7 @@
 		"check_paths": [
 			"/data/corpus-python/src/mailwoman_train/configs/v8-cjk-kr-probe.yaml",
 			"/data/corpus-python/src/mailwoman_train/configs/v8-cjk-kr.yaml",
-			"/data/corpus-python/src/mailwoman_train/countries/kr/corpora.py",
+			"/data/corpus-python/src/mailwoman_train/countries/kr/corpora/__init__.py",
 			"/data/corpus/versioned/v8-cjk-kr-2026-09-06/MANIFEST.json",
 			"/data/corpus/versioned/v8-cjk-kr-2026-09-06/char-vocab-cjk.json",
 			"/data/corpus/versioned/v8-cjk-kr-2026-09-06/train/cn-units-0000.parquet",

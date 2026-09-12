@@ -22,7 +22,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train.countries.kr import corpora as kr_corpora
+from mailwoman_train.countries.kr import registers
 from mailwoman_train.countries.kr.corpora import build
 
 from .kr_fixture import JusoAddress, JusoRegion, write_juso_zip, write_permit_csv
@@ -275,7 +275,7 @@ def reference_args(archive: Path, permits: Path, out_dir: Path, registry_dir: Pa
 
 def run_build(root: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """One build against the fixture, with the projection stubbed, returned as the pinned payload."""
-    monkeypatch.setattr(kr_corpora, "transform_coordinates", stub_transform)
+    monkeypatch.setattr(registers, "transform_coordinates", stub_transform)
     archive, permits = write_fixture(root)
     out_dir, registry_dir = root / "slice", root / "registry"
     report = build(reference_args(archive, permits, out_dir, registry_dir))

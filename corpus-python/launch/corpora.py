@@ -342,7 +342,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         checks=(
             "corpus-python/src/mailwoman_train/configs/v8-cjk-kr-probe.yaml",
             "corpus-python/src/mailwoman_train/configs/v8-cjk-kr.yaml",
-            "corpus-python/src/mailwoman_train/countries/kr/corpora.py",
+            "corpus-python/src/mailwoman_train/countries/kr/corpora/__init__.py",
             "corpus/versioned/v8-cjk-kr-2026-09-06/MANIFEST.json",
             "corpus/versioned/v8-cjk-kr-2026-09-06/char-vocab-cjk.json",
             "corpus/versioned/v8-cjk-kr-2026-09-06/train/cn-units-0000.parquet",

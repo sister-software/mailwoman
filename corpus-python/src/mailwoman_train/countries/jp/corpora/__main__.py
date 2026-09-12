@@ -13,7 +13,7 @@ Usage::
 
 from __future__ import annotations
 
-from .build import main
+from .assemble import main
 
 if __name__ == "__main__":
     main()
