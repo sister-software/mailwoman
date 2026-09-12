@@ -82,17 +82,17 @@ describe("bash-write-guard: a Modal launch this shell could kill", () => {
 	// ~1000 of 2000 on 2026-07-15 with no checkpoint written; `run_in_background` on `modal run -d …` was stopped by the
 	// host's memory guard on 2026-09-09 and Modal cancelled the input at step 21,000 of 60,000, last save at 20,000.
 	it.each([
-		["a detached launch", `modal run -d corpus-python/modal/train_remote.py --config x.yaml`],
-		["a detached launch, long flag", `modal run --detach corpus-python/modal/train_remote.py --config x.yaml`],
-		["a timed launch", `timeout 600 modal run -d corpus-python/modal/train_remote.py --config x.yaml`],
-		["a timed Modal command with no detach", `timeout 200 modal run corpus-python/modal/train_remote.py::audit`],
-		["a detached launch behind a directory change", `cd corpus-python && modal run -d modal/train_remote.py`],
+		["a detached launch", `modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
+		["a detached launch, long flag", `modal run --detach corpus-python/launch/train_remote.py --config x.yaml`],
+		["a timed launch", `timeout 600 modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
+		["a timed Modal command with no detach", `timeout 200 modal run corpus-python/launch/train_remote.py::audit`],
+		["a detached launch behind a directory change", `cd corpus-python && modal run -d launch/train_remote.py`],
 	])("refuses %s", (_label, command) => {
 		expect(refusalFor(command)).not.toBeNull()
 	})
 
 	it("explains process ownership rather than the Write tool", () => {
-		const command = `modal run -d corpus-python/modal/train_remote.py --config x.yaml`
+		const command = `modal run -d corpus-python/launch/train_remote.py --config x.yaml`
 
 		expect(guidanceFor(command)).toContain("launch-detached.run.ts")
 		expect(guidanceFor(command)).not.toContain("Edit tool")
@@ -151,7 +151,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a log captured through tee outside the tree", `yarn compile 2>&1 | tee /tmp/compile.log`],
 		["a timeout around a test run", `timeout 600 yarn test`],
 		["this repository's operator CLI", `yarn mwops health all`],
-		["a short Modal command with no detach and no timeout", `modal run corpus-python/modal/train_remote.py::sync_v540`],
+		["a short Modal command with no detach and no timeout", `modal run corpus-python/launch/train_remote.py::sync_v540`],
 		["a Modal volume read", `modal volume ls mailwoman-training /output-v540/checkpoints`],
 		[
 			"the detached launcher itself",
@@ -201,7 +201,7 @@ describe("bash-write-guard: the hook around the judgement", () => {
 			hook_event_name: "PreToolUse",
 			tool_name: "Bash",
 			cwd: REPO_ROOT,
-			tool_input: { command: `modal run -d corpus-python/modal/train_remote.py --config x.yaml` },
+			tool_input: { command: `modal run -d corpus-python/launch/train_remote.py --config x.yaml` },
 		})
 
 		expect(output.hookSpecificOutput?.permissionDecision).toBe("deny")

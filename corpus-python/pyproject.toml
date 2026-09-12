@@ -10,7 +10,7 @@ dependencies = [
 	# Pin loose; install via uv from this directory.
 	# PyArrow was dropped in Phase 1.5 (#18 §4) when corpus build moved to JS-native Parquet
 	# via @dsnp/parquetjs, then re-added in Phase 2 (issue #10) for the training data loader.
-	"sentencepiece==0.2.2", # PINNED, not floored — see corpus-python/modal/train_remote.py for the 0.2.1/0.2.2 tie-break divergence
+	"sentencepiece==0.2.2", # PINNED, not floored — see corpus-python/launch/train_remote.py for the 0.2.1/0.2.2 tie-break divergence
 	"pyarrow>=25.0.0",
 	"pyyaml>=6",
 	"numpy>=1.26,<3",
@@ -41,7 +41,7 @@ dev = [
 train = [
 	# Pinned to the exact export/quant toolchain that produced the v4.1.0 ONNX artifact
 	# (2026-06-09). Unpinned `>=` drifted (transformers→5.x, onnx→1.21) and broke int8
-	# quant; these match corpus-python/modal/train_remote.py's image so a local export/quant
+	# quant; these match corpus-python/launch/train_remote.py's image so a local export/quant
 	# produces the same browser-shipped graph. See that file's pin comment for the
 	# mobile-Safari (onnxruntime-web native WebGPU EP) invariant before bumping.
 	"torch==2.12.0",
@@ -85,10 +85,10 @@ ignore = ["E501"]
 # Format code blocks inside docstrings too (this package is docstring-heavy).
 docstring-code-format = true
 
-# mypy — strict typing over the SHIPPED LIBRARY first. modal/ and scripts/ are deliberately
-# outside `files`: the check is src/, and tests live under tests/ (out of this scope) until the
-# library baseline is zero, then the tests join it. The corpus was ~50% annotated when this
-# landed; the strict baseline is a known, shrinking list.
+# mypy — strict typing over src/, at zero errors. `launch/` is outside `files` because it imports
+# the Modal SDK, which is not a dependency here: it is installed wherever `modal run` runs, so
+# checking it locally would report every SDK name as missing. `scripts/` holds one standard-library
+# file the pre-commit hook runs under a bare python3. Tests are out of scope for now.
 [tool.mypy]
 python_version = "3.12"
 files = ["src"]
@@ -112,7 +112,7 @@ follow_imports = "skip"
 
 # bandit — security/static analysis over src. Tests are excluded by bandit's own defaults.
 [tool.bandit]
-exclude_dirs = ["modal", "scripts"]
+exclude_dirs = ["launch", "scripts"]
 # B311: pseudo-random generators are used for corpus sampling/splits, seeded for
 # reproducibility (audits/, build_*_slice, data/loader.py, tokenizer/train.py). They are
 # data-generation randomness, never security/crypto — the CSPRNG rule does not apply.

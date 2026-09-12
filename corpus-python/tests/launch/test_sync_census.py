@@ -1,6 +1,6 @@
 """The launcher's 57 sync functions, pinned before anything moves them.
 
-Nothing imports `modal/train_remote.py`: it pulls in the Modal SDK, talks to a volume, and every
+Nothing imports `launch/train_remote.py`: it pulls in the Modal SDK, talks to a volume, and every
 function in it is a deployment entry point. A green suite therefore says nothing about it, which is
 why renaming the directory or collapsing the 57 near-identical clones into a table would otherwise
 be unverifiable — and a sync that silently stops staging one corpus version is a launch that trains
@@ -21,7 +21,7 @@ import pytest
 
 from .extract_current import extract_sync_functions
 
-LAUNCHER = Path(__file__).resolve().parents[2] / "modal" / "train_remote.py"
+LAUNCHER = Path(__file__).resolve().parents[2] / "launch" / "train_remote.py"
 FIXTURE = Path(__file__).with_name("sync-census.json")
 
 #: Measured on the pre-collapse file. Task 13 collapses the clones into a table and these must not

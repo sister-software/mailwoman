@@ -166,7 +166,7 @@ def test_an_import_names_the_module_that_declares_it() -> None:
     declared = {name: _declared_names(tree) for name, tree in modules.items()}
     submodules = {name.rsplit(".", 1)[0] for name in modules if "." in name}
     offenders: list[str] = []
-    roots = [SOURCE_ROOT, PACKAGE_ROOT / "tests", PACKAGE_ROOT / "modal"]
+    roots = [SOURCE_ROOT, PACKAGE_ROOT / "tests", PACKAGE_ROOT / "launch"]
     assert all(root.is_dir() for root in roots), f"a root to scan is missing: {roots}"
 
     for root in roots:

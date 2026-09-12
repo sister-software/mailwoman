@@ -25,7 +25,7 @@ Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/par
 ## Install
 
 Everything runs under [`uv`](https://docs.astral.sh/uv/); the interpreter is pinned by
-`.python-version` (3.12 — matches `modal/train_remote.py`'s image). Call every tool through
+`.python-version` (3.12 — matches `launch/train_remote.py`'s image). Call every tool through
 `uv run` so it uses the project environment, never a stray system install.
 
 ```sh
@@ -52,8 +52,9 @@ project environment and the `pyproject.toml` config:
 
 - **Ruff** (`uv run ruff`) — lint **and** format in one tool; the Python counterpart of the
   repo's `oxlint` + `oxfmt`. Config: `[tool.ruff]`.
-- **mypy** (`uv run mypy`) — `--strict` typing over `src/`, at zero errors. `modal/` stays outside
-  it. Config: `[tool.mypy]`.
+- **mypy** (`uv run mypy`) — `--strict` typing over `src/`, at zero errors. `launch/` stays outside
+  it: it imports the Modal SDK, which is installed wherever `modal run` runs, never here.
+  Config: `[tool.mypy]`.
 - **bandit** (`uv run bandit -r src`) — security/static analysis. Config: `[tool.bandit]`.
 - **pytest** (`uv run pytest`) — the corpus test suite.
 

@@ -19,7 +19,7 @@ an API drift must degrade to CSV-only, not take the run down with it. So:
   * every ``log``/``finish`` call swallows exceptions behind a one-line warning.
 
 Auth: Trackio uploads to the Space using the HF cached login or ``HF_TOKEN``. On Modal,
-``HF_TOKEN`` is injected via the ``hf_secret`` in scripts/modal/train_remote.py; locally
+``HF_TOKEN`` is injected via the ``hf_secret`` in launch/train_remote.py; locally
 it uses your ``hf auth login`` token. No token -> Space upload fails -> CSV-only.
 """
 

@@ -37,12 +37,12 @@ Everything must go through **R2 → a container-side `rclone` in a `sync_*` func
    then print a verify block (`os.path.isfile` on the config, the MANIFEST, your slice, AND a re-rooted
    base slice). The base + tokenizer usually persist on the volume from prior runs — don't re-sync the
    ~30 GB base unless it's actually missing.
-5. **Run the sync:** `modal run scripts/modal/train_remote.py::sync_v0XX`. Confirm every verify line is `True`.
+5. **Run the sync:** `modal run corpus-python/launch/train_remote.py::sync_v0XX`. Confirm every verify line is `True`.
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
 mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it OUT of the variable
    set; a new tokenizer is a separate, intended change.
 7. **Launch the GPU train (the real spend):**
-   `modal run -d scripts/modal/train_remote.py --config <recipe>.yaml --resume none` (detached; A100).
+   `modal run -d corpus-python/launch/train_remote.py --config <recipe>.yaml --resume none` (detached; A100).
 8. **Sanity-check the loss in the first ~300 steps — BEFORE walking away.** `modal app logs <app-id>`;
    `train_loss` must be a normal CE scale (O(1–10)) and **decreasing**. An exploded loss (thousands /
    millions, not falling) means a loss term is `-inf`-ing gold labels. _This bit v1.6.0: the conventions
@@ -76,11 +76,11 @@ no `crf-transitions.json`; production therefore decodes **argmax**, and a check 
 
 ```bash
 # 1. Export the final checkpoint to fp32 ONNX (writes {output-dir}/model.onnx on the volume)
-modal run scripts/modal/train_remote.py::export_onnx \
+modal run corpus-python/launch/train_remote.py::export_onnx \
   --output-dir=/data/output-v160-boundary-stress-s42 --step=40000
 
 # 2. Int8-quantize it (must run in the training image; local ORT trips on the dynamo graph)
-modal run scripts/modal/train_remote.py::quantize_onnx \
+modal run corpus-python/launch/train_remote.py::quantize_onnx \
   --fp32-path=/data/output-v160-boundary-stress-s42/model.onnx \
   --int8-path=/data/models/quantized/model-v160-step-40000-int8.onnx
 
