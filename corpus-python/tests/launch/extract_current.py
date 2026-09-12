@@ -57,10 +57,39 @@ class _Resolver:
         if isinstance(node, ast.FormattedValue):
             return self._formatted(node)
         if isinstance(node, ast.List | ast.Tuple):
-            return [self.value(element) for element in node.elts]
+            return [item for element in node.elts for item in self._element(element)]
+        if isinstance(node, ast.ListComp | ast.GeneratorExp):
+            return self._comprehension(node)
         if isinstance(node, ast.Call):
             return self._call(node)
         return None
+
+    def _element(self, element: ast.AST) -> list[Any]:
+        """One element of a list or tuple, flattening a `*(… for … in …)` into its items.
+
+        A starred generator is how the launcher writes "one copy per corpus version" inline. Losing
+        it drops every command it expands to, which is a census that reports fewer transfers than
+        the launcher runs.
+        """
+        if isinstance(element, ast.Starred):
+            expanded = self.value(element.value)
+            return expanded if isinstance(expanded, list) else []
+        return [self.value(element)]
+
+    def _comprehension(self, node: ast.ListComp | ast.GeneratorExp) -> list[Any] | None:
+        """Evaluate a single-generator comprehension over a literal sequence or `range(n)`."""
+        if len(node.generators) != 1 or node.generators[0].ifs:
+            return None
+        generator = node.generators[0]
+        items = self.value(generator.iter)
+        if not isinstance(items, list):
+            return None
+        out = []
+        for item in items:
+            inner = _Resolver(self.env)
+            inner.bind(generator.target, item)
+            out.append(inner.value(node.elt))
+        return out
 
     def _joined(self, node: ast.JoinedStr) -> str:
         out = []
@@ -119,7 +148,12 @@ def _collect(spec: SyncSpec, resolver: _Resolver, body: list[ast.stmt]) -> None:
             _record(spec, value)
         elif isinstance(statement, ast.For):
             items = resolver.value(statement.iter)
-            _record(spec, items, pycache=_is_pycache_loop(statement))
+            # Record only a loop over a LITERAL sequence. `for cmd in cmds:` re-reads a list the
+            # assignment above already recorded, and counting it again doubles every command in the
+            # thirteen functions written that way — a census that is consistently wrong, which no
+            # comparison against itself can detect.
+            if isinstance(statement.iter, ast.List | ast.Tuple):
+                _record(spec, items, pycache=_is_pycache_loop(statement))
             if isinstance(items, list) and items:
                 resolver.bind(statement.target, items[0])
             _collect(spec, resolver, statement.body)

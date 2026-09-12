@@ -14,6 +14,7 @@ deliberately added or edited, and say which in the commit message.
 
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
@@ -24,11 +25,18 @@ from .extract_current import extract_sync_functions
 LAUNCHER = Path(__file__).resolve().parents[2] / "launch" / "train_remote.py"
 FIXTURE = Path(__file__).with_name("sync-census.json")
 
-#: Measured on the pre-collapse file. Task 13 collapses the clones into a table and these must not
-#: move: a table that generates fewer commands stages less corpus.
+#: Measured on the pre-collapse file. A table that generates fewer commands stages less corpus.
 EXPECTED_FUNCTIONS = 57
-EXPECTED_RCLONE_COMMANDS = 194
+EXPECTED_RCLONE_COMMANDS = 137
 EXPECTED_CHECK_PATHS = 317
+
+#: Functions whose command count cannot equal their count of `rclone copy` literals, with the
+#: reason. Every other function must match exactly — see the cross-check below for why that
+#: comparison is the one that catches a census which is wrong but self-consistent.
+EXPANDS_DIFFERENTLY = {
+    "sync_assets": "parameterized: it builds commands from runtime arguments, so none are static",
+    "sync_v8cjk_regs": "one literal is a generator over a 7-name tuple, so 3 literals are 9 commands",
+}
 
 
 def _census() -> dict[str, dict[str, list[str]]]:
@@ -70,6 +78,58 @@ def test_the_census_is_the_measured_size() -> None:
     assert len(specs) == EXPECTED_FUNCTIONS
     assert sum(len(spec.rclone_commands) for spec in specs.values()) == EXPECTED_RCLONE_COMMANDS
     assert sum(len(spec.check_paths) for spec in specs.values()) == EXPECTED_CHECK_PATHS
+
+
+def _rclone_literals(node: ast.FunctionDef) -> int:
+    """Count `rclone copy` string literals, reading the source rather than interpreting it.
+
+    `ast.walk` yields an f-string as a JoinedStr AND as its leading Constant, so a naive walk counts
+    every command twice — the same double-count this check exists to catch.
+    """
+    nested = {id(child) for sub in ast.walk(node) if isinstance(sub, ast.JoinedStr) for child in ast.walk(sub)}
+    total = 0
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.JoinedStr) and sub.values:
+            first = sub.values[0]
+            if isinstance(first, ast.Constant) and str(first.value).startswith("rclone copy"):
+                total += 1
+        elif isinstance(sub, ast.Constant) and id(sub) not in nested and str(sub.value).startswith("rclone copy"):
+            total += 1
+    return total
+
+
+def test_every_command_traces_to_one_literal_in_the_source() -> None:
+    """The extractor's count, checked against the source by a second method.
+
+    The census is compared against itself everywhere else, so a census that is WRONG but consistent
+    passes every other test here. Two defects of that shape shipped: `for cmd in cmds:` re-read a
+    list the assignment above had already recorded, doubling 64 commands, and a starred generator
+    resolved to nothing, dropping 7. Both are visible only against an independent count.
+    """
+    tree = ast.parse(LAUNCHER.read_text(encoding="utf-8"))
+    specs = extract_sync_functions(LAUNCHER.read_text(encoding="utf-8"))
+    mismatched: dict[str, tuple[int, int]] = {}
+    for node in tree.body:
+        if not (isinstance(node, ast.FunctionDef) and node.name.startswith("sync_")):
+            continue
+        if node.name in EXPANDS_DIFFERENTLY:
+            continue
+        literals = _rclone_literals(node)
+        extracted = len(specs[node.name].rclone_commands)
+        if literals != extracted:
+            mismatched[node.name] = (literals, extracted)
+    assert mismatched == {}, f"literals vs extracted: {mismatched}"
+
+
+def test_the_exceptions_are_still_exceptional() -> None:
+    """A named exception that starts matching is a stale entry, not a passing check."""
+    tree = ast.parse(LAUNCHER.read_text(encoding="utf-8"))
+    specs = extract_sync_functions(LAUNCHER.read_text(encoding="utf-8"))
+    by_name = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+    for name in EXPANDS_DIFFERENTLY:
+        literals = _rclone_literals(by_name[name])
+        extracted = len(specs[name].rclone_commands)
+        assert literals != extracted, f"{name} now matches — delete it from EXPANDS_DIFFERENTLY"
 
 
 @pytest.mark.parametrize(
