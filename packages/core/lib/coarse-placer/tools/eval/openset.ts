@@ -204,17 +204,17 @@ export async function evalOpenSet(
 	 */
 	const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
-	function load(file: string): Promise<DataRow[]> {
-		return Array.fromAsync(JSONSpliterator.fromAsync<DataRow>(resolvePath(dataDir, file)))
+	function load(file: string) {
+		return JSONSpliterator.fromAsync<DataRow>(resolvePath(dataDir, file))
 	}
 
 	// Fit the Mahalanobis params on IN-MAP TRAIN logits (no test leak): per-class
 	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
 	report?.("fitting Mahalanobis on in-map train logits…")
-	const trainRows = await load("train.jsonl")
+	const trainRows = load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
 
-	for (const r of trainRows) {
+	for await (const r of trainRows) {
 		if (r.country === "OTHER") continue
 		const arr = byClass.get(r.country)
 
@@ -361,10 +361,14 @@ export async function evalOpenSet(
 		}
 	}
 
-	const inmapTest = (await load("test.jsonl")).filter((r) => r.country !== "OTHER") // the 11 countries only
+	// the 11 countries only
+	const inmapScored = await load("test.jsonl")
+		.filter((r) => r.country !== "OTHER")
+		.map((r) => scoreRow(r.raw, r.country))
+		.toArray()
+
 	const heldout = (await readLatinOffmapRows<DataRow>(dataDir)).filter((r) => r.group === "heldout")
 
-	const inmapScored = inmapTest.map((r) => scoreRow(r.raw, r.country))
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
 
 	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + TEST.
@@ -459,7 +463,7 @@ export async function evalOpenSet(
 	const lines: string[] = [
 		`# Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)`,
 		"",
-		`_Frozen shipped model (\`${basename(modelDir)}\`), NO retrain. In-map test ${inmapTest.length} rows ` +
+		`_Frozen shipped model (\`${basename(modelDir)}\`), NO retrain. In-map test ${inmapScored.length} rows ` +
 			`(11 countries); off-map HELDOUT ${heldout.length} rows (never-trained families: baltic/oceania/middle-east). ` +
 			`Mahalanobis fit on ≤${fitPerClass}/class in-map train logits. The 11-way routing is fixed; each score only ` +
 			`changes the reject decision._`,

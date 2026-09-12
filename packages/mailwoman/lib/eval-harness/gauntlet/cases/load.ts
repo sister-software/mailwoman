@@ -22,12 +22,12 @@
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
 
-import { readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { basename, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "#eval-harness/gauntlet/cases/seed-case"
 
@@ -123,7 +123,7 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
  * @throws {CorpusRowError} On a malformed or off-schema row, naming the file and line.
  */
 export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Promise<SeedCase[]> {
-	const entries = await readDirectoryEntries(dir)
+	const entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 
 	const ccDirs = entries
 		.filter((e) => e.isDirectory() && COUNTRY_DIR.test(e.name))
@@ -135,7 +135,7 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 
 	for (const cc of ccDirs) {
 		const ccPath = join(dir, cc)
-		const files = (await readDirectory(ccPath)).filter((f) => f.endsWith(".jsonl")).toSorted()
+		const files = await Globerator.files("jsonl", { cwd: ccPath, absolute: false }).toSorted()
 		const ccCases: SeedCase[] = []
 
 		for (const file of files) {

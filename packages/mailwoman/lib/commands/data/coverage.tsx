@@ -20,7 +20,8 @@
  *   is looking at.
  */
 
-import { statPath, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { Globerator } from "spliterator/node/fs"
 
 import {
 	type CommandSpec,
@@ -73,7 +74,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		if (await pathExists(configDir)) {
 			const pairs: Array<{ n: string; at: number }> = []
 
-			for (const n of await readDirectory(configDir)) {
+			for await (const n of Globerator.files("yaml", { cwd: configDir, absolute: false })) {
 				if (n.endsWith(".yaml") && !n.includes("smoke")) {
 					pairs.push({ n, at: (await statPath(`${configDir}/${n}`)).mtimeMs })
 				}
@@ -89,14 +90,8 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		// `9` > `2`) nor numerically (`v8-jp-full` beats both) — measured: the name sort picked `v0.9.9` and silently
 		// reported the coverage of a corpus nine versions old. The report always names the manifest it used.
 		if (await pathExists(versioned)) {
-			for (const version of await readDirectory(versioned)) {
-				for (const inner of await readDirectory(`${versioned}/${version}`)) {
-					const candidate = `${versioned}/${version}/${inner}/MANIFEST.json`
-
-					if (await pathExists(candidate)) {
-						manifests.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
-					}
-				}
+			for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: versioned })) {
+				manifests.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
 			}
 		}
 

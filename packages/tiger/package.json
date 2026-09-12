@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/tiger",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "US Census TIGER/Line data processing and analysis.",
 	"keywords": [
 		"census",
@@ -86,7 +86,7 @@
 		"@turf/boolean-contains": "^7.4.0",
 		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",
-		"spliterator": "^7.4.0",
+		"spliterator": "^7.5.1",
 		"type-fest": "^5.9.0"
 	},
 	"devDependencies": {

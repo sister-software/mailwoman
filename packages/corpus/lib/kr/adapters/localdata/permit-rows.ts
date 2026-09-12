@@ -11,10 +11,10 @@
  *   file can be measured before any row enters a corpus.
  */
 
-import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
 import { basename, extname, join, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import type { Aligned } from "#kr/adapters/localdata/align"
 
@@ -130,7 +130,7 @@ export async function* readPermitDirectory(
 	directory: PathBuilderLike,
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
-	const files = (await readDirectoryEntries(directory))
+	const files = await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false })
 		.filter((entry) => entry.isFile() && entry.name.endsWith(".csv"))
 		.map((entry) => entry.name)
 		.toSorted()

@@ -303,6 +303,9 @@ const requireDisableReasonRule: Rule = {
  * the two stat helpers differ in what they treat as an error, so the suggestion names the builtin's own contract rather
  * than the nearest-looking helper.
  */
+const GLOBERATOR_DIRECTORY_HINT =
+	'`Globerator.from("*", { cwd: path, absolute: false })`, adding `withFileTypes: true, onlyFiles: false` when entry types are needed (spliterator/node/fs)'
+
 const ASYNC_FILESYSTEM_HELPERS = new Map<string, string>([
 	["appendFileSync", "`appendLocalTextFile(content, path)` (@mailwoman/core/fs/writers)"],
 	["chmodSync", "`changeMode(path, mode)` (@mailwoman/core/fs/writers)"],
@@ -317,7 +320,7 @@ const ASYNC_FILESYSTEM_HELPERS = new Map<string, string>([
 	],
 	["mkdtempSync", "`temporaryDirectory(prefix)` (@mailwoman/core/fs/temporary), bound with `await using`"],
 	["readFileSync", "`readLocalTextFile(path)` or `readLocalBuffer(path)` (@mailwoman/core/fs/readers)"],
-	["readdirSync", "`readDirectory(path)` or `readDirectoryEntries(path)` (@mailwoman/core/fs/readers)"],
+	["readdirSync", GLOBERATOR_DIRECTORY_HINT],
 	["realpathSync", "`realPath(path)`, or `tryRealPath(path)` for null-on-absent (@mailwoman/core/fs/readers)"],
 	["renameSync", "`movePath(source, destination)` (@mailwoman/core/fs/writers)"],
 	[
@@ -347,6 +350,8 @@ const FUNCTION_NODE_TYPES = new Set([
  * surrounding function was declared.
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
+
+const MOCKING_FUNCTIONS = new Set(["mock", "doMock", "importActual", "importMock", "unmock", "doUnmock"])
 
 const noSyncFSInAsyncRule: Rule = {
 	meta: {
@@ -484,7 +489,9 @@ const noPrivateImportInTestRule: Rule = {
 
 				if (callee?.type !== "MemberExpression" || callee.object?.name !== "vi") return
 
-				if (!["mock", "doMock", "importActual", "importMock", "unmock", "doUnmock"].includes(callee.property?.name)) {
+				const calleePropertyName = callee.property?.name
+
+				if (!calleePropertyName || !MOCKING_FUNCTIONS.has(calleePropertyName)) {
 					return
 				}
 
@@ -747,7 +754,7 @@ const preferHomeRule: Rule = {
 				}
 			},
 			TemplateLiteral(node: AstNode) {
-				const text = (node.quasis ?? []).map((quasi: AstNode) => quasi.value?.cooked ?? "").join(" ")
+				const text = (node.quasis ?? []).map((quasi) => quasi.value?.cooked ?? "").join(" ")
 				reportStringHome(context, node, text)
 			},
 		}

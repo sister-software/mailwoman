@@ -16,10 +16,11 @@
  *   imports, plus `HEAD` and the dirty set, and a change makes the engine UNREACHABLE rather than wrong.
  */
 
-import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { runFileSync } from "@mailwoman/core/process"
 import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Workspaces whose source an engine's module graph reaches. Editing anything here can change a parse or a resolve, so
@@ -86,7 +87,7 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
 		let entries
 
 		try {
-			entries = await readDirectoryEntries(dir)
+			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
 			// A workspace that does not exist in this checkout contributes nothing rather than throwing — the caller's
 			// emptiness check is what catches a list that is wrong in total.

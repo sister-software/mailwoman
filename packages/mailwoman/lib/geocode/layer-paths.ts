@@ -8,8 +8,8 @@
  *   session would attach, and the reverse.
  */
 
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { resolvePath, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * The layer databases the session attaches when present, keyed by the layer's short id, each as the path segments under
@@ -62,7 +62,7 @@ export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: Lay
 	const [directory, canonical] = LAYER_DATABASES[id].segments
 
 	try {
-		return (await readDirectory(resolvePath(dataRoot, directory)))
+		return (await Globerator.files("db", { cwd: resolvePath(dataRoot, directory), absolute: false }).toArray())
 			.filter((name) => name.endsWith(".db") && name !== canonical)
 			.toSorted()
 	} catch {

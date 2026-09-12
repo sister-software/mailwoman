@@ -83,22 +83,16 @@ async function main() {
 			continue
 		}
 
-		const rows = (
-			await Array.fromAsync(
-				JSONSpliterator.fromAsync<{
-					raw: string
-					components?: Record<string, string>
-					lat: number
-					lon: number
-				}>(file)
-			)
-		).slice(0, N)
-
 		const s = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
 		const sT1: number[] = []
 		const sB5: number[] = []
 
-		for (const row of rows) {
+		for await (const row of JSONSpliterator.fromAsync<{
+			raw: string
+			components?: Record<string, string>
+			lat: number
+			lon: number
+		}>(file).take(N)) {
 			s.n++
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
 			const r = await resolver.resolveTree(tree, { defaultCountry: cc })

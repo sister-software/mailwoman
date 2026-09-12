@@ -35,7 +35,7 @@
  *   `--country` runs (a temp-build would wipe prior countries' rows).
  */
 
-import { pathExists, readDirectoryRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound } from "@mailwoman/core/numeric"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
@@ -43,6 +43,7 @@ import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/s
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
 import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames/tail"
@@ -252,9 +253,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 async function geojsonFiles(dir: string): Promise<string[]> {
 	if (!(await pathExists(dir))) return []
 
-	return ((await readDirectoryRecursive(dir)) as string[])
-		.filter((p) => p.endsWith(".geojson"))
-		.map((p) => join(dir, p))
+	return Globerator.files("geojson", { cwd: dir, recursive: true }).toArray()
 }
 
 export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOptions): Promise<void> {

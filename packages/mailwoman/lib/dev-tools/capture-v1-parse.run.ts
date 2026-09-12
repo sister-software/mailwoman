@@ -19,9 +19,13 @@ const PARITY_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-i
 const SYNTHETIC_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/synthetic-inputs.txt"
 const OUT_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/v1-parse-golden.jsonl"
 
-const parityInputs = await Array.fromAsync(JSONSpliterator.fromAsync<ParityCase>(PARITY_PATH), (c) => c.input)
+const parityInputs = await JSONSpliterator.fromAsync<ParityCase>(PARITY_PATH)
+	.map((c) => c.input)
+	.toArray()
 
-const syntheticInputs = await Array.fromAsync(TextSpliterator.fromAsync(SYNTHETIC_PATH), (line) => line.trim())
+const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH)
+	.map((line) => line.trim())
+	.toArray()
 
 const inputs = [...new Set([...parityInputs, ...syntheticInputs.filter((line) => line.length > 0)])]
 

@@ -8,34 +8,14 @@
  *   code makes a blocking filesystem call, and the `debt` check in `packages/repo-health` counts any that appears.
  */
 
-import type { Dirent } from "node:fs"
-import { readFile, readdir } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import { asTarget, open } from "#fs/readers/stat"
+import { open } from "#fs/readers/stat"
 import { parseJSONStrict } from "#json"
 
-export {
-	entryLeadsToDirectory,
-	formatFileSize,
-	globPaths,
-	isDirectory,
-	isExecutable,
-	isFile,
-	isSymbolicLink,
-	isWritable,
-	open,
-	pathExists,
-	readFileSize,
-	readLink,
-	realPath,
-	statLink,
-	statPath,
-	tryRealPath,
-	tryStat,
-	tryStatLink,
-} from "#fs/readers/stat"
+export * from "#fs/readers/stat"
 
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"
@@ -109,8 +89,8 @@ function readTarget(pathSegments: Array<PathBuilderLike | URL>): URL | string {
 /**
  * Read a local text file.
  *
- * @category Node
  * @category Files
+ * @runtime node
  */
 export function readLocalTextFile<S extends Array<PathBuilderLike | URL>>(...pathSegments: S): Promise<string> {
 	if (!pathSegments.length) {
@@ -121,7 +101,7 @@ export function readLocalTextFile<S extends Array<PathBuilderLike | URL>>(...pat
 }
 
 /**
- * @deprecated Use `readLocalJSONFile` instead
+ * @deprecated Use `readPackageJSONFile` instead
  */
 export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}/package.json`): Promise<never>
 
@@ -130,8 +110,8 @@ export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}
  *
  * Parsing is strict: a file that is not JSON throws here rather than answering `undefined` several frames later.
  *
- * @category Node
  * @category Files
+ * @runtime node
  * @see `readPackageJSON` in `#module/resolve-from` for a `package.json`, which answers the manifest shape and takes a
  *   package name as readily as a path.
  */
@@ -148,10 +128,31 @@ export function readLocalJSONFile<
 }
 
 /**
+ * Read a local JSON file, answering `null` when the file does not exist.
+ *
+ * Parsing is strict: a file that is not JSON throws here rather than answering `null` several frames later.
+ *
+ * @category Files
+ * @runtime node
+ */
+export function tryReadLocalJSONFile<
+	T = Record<string, unknown>,
+	S extends Array<PathBuilderLike | URL> = Array<PathBuilderLike | URL>,
+>(...pathSegments: S): Promise<T | null> {
+	return readLocalTextFile(...pathSegments)
+		.then((content) => parseJSONStrict<T>(content))
+		.catch((error) => {
+			if (error.code === "ENOENT") return null
+
+			throw error
+		})
+}
+
+/**
  * Read a local file's bytes.
  *
- * @category Node
  * @category Files
+ * @runtime node
  */
 export function readLocalBuffer<S extends Array<PathBuilderLike | URL>>(...pathSegments: S): Promise<Buffer> {
 	if (!pathSegments.length) {
@@ -159,65 +160,6 @@ export function readLocalBuffer<S extends Array<PathBuilderLike | URL>>(...pathS
 	}
 
 	return readFile(readTarget(pathSegments))
-}
-
-/**
- * List the entry names directly inside a directory.
- *
- * @category Node
- * @category Files
- */
-export function readDirectory(path: PathBuilderLike | URL): Promise<string[]> {
-	return readdir(asTarget(path))
-}
-
-/**
- * List a directory's entries with their types, so a caller can tell a file from a directory without a stat apiece.
- *
- * @category Node
- * @category Files
- */
-export function readDirectoryEntries(path: PathBuilderLike | URL): Promise<Dirent[]> {
-	return readdir(asTarget(path), { withFileTypes: true })
-}
-
-/**
- * List every entry under a directory, at any depth, as paths relative to it.
- *
- * The recursive counterpart to {@linkcode readDirectory}. It walks the whole tree before answering, so it is the wrong
- * reader for a directory whose size is unknown — reach for it where the tree is a build artifact you produced.
- *
- * @category Node
- * @category Files
- */
-export function readDirectoryRecursive(path: PathBuilderLike | URL): Promise<string[]> {
-	return readdir(asTarget(path), { recursive: true })
-}
-
-/**
- * List every entry under a directory, at any depth, WITH its type — `Dirent.parentPath` names the directory each was
- * found in, which a plain recursive read leaves the caller to reconstruct.
- */
-export function readDirectoryEntriesRecursive(path: PathBuilderLike | URL): Promise<Dirent[]> {
-	return readdir(asTarget(path), { recursive: true, withFileTypes: true })
-}
-
-/**
- * List a directory's entry names, answering an empty list when the directory does not exist.
- *
- * The distinction is the caller's to make and this function makes ONE of the two available: an absent directory and an
- * empty one are the same answer here. Where absence means something — an unbuilt artifact, a missing extract — use
- * {@linkcode readDirectory} and let the ENOENT reach you.
- *
- * @category Node
- * @category Files
- */
-export function tryReadDirectory(path: PathBuilderLike | URL): Promise<string[]> {
-	return readdir(asTarget(path)).catch((error) => {
-		if (error.code === "ENOENT") return []
-
-		throw error
-	})
 }
 
 // #endregion

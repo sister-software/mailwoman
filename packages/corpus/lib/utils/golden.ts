@@ -21,10 +21,10 @@
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 
@@ -173,7 +173,7 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
  * Validate every `.jsonl` in a golden directory.
  */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = (await readDirectory(dir)).filter((n) => n.endsWith(".jsonl")).toSorted()
+	const files = await Globerator.files("jsonl", { cwd: dir, absolute: false }).toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 

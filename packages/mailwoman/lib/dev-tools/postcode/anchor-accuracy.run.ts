@@ -83,16 +83,16 @@ interface EvalRow {
 
 async function main(): Promise<void> {
 	const { evalPath, country, databases } = parseArgs()
-	const lookup = new WOFPostcodeLookup(databases)
+	using lookup = new WOFPostcodeLookup(databases)
 
-	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<EvalRow>(evalPath))
+	const rows = JSONSpliterator.fromAsync<EvalRow>(evalPath)
 	let withPostcode = 0
 	let placed = 0
 	let inGazetteerNoCentroid = 0
 	let notInGazetteer = 0
 	const distances: number[] = []
 
-	for (const row of rows) {
+	for await (const row of rows) {
 		const postcode: string | undefined = row.expected?.postcode ?? row.postcode ?? row.components?.postcode
 		const lat: number | undefined = row.lat
 		const lon: number | undefined = row.lon
@@ -121,7 +121,6 @@ async function main(): Promise<void> {
 		distances.push(haversineKm(lat, lon, placedHit.lat, placedHit.lon))
 	}
 
-	lookup[Symbol.dispose]()
 	distances.sort((a, b) => a - b)
 
 	console.log(`# Postcode-anchor centroid accuracy — ${country}`)

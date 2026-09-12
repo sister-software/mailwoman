@@ -31,12 +31,13 @@
  *   ```
  */
 
-import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { join } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import type { GoldenCandidateEntry as GoldenEntry } from "#utils/golden"
 
@@ -165,9 +166,6 @@ export async function promoteGolden(
 		throw new Error(`Candidates file not found: ${options.input}`)
 	}
 
-	const candidates = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenEntry>(options.input))
-	report?.(`  ${candidates.length} candidates loaded`)
-
 	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
 	// and we dedupe new candidates against them so v_new = v_old ∪ accepted_candidates.
 	const priorDir = join(goldenRoot, prior)
@@ -175,9 +173,10 @@ export async function promoteGolden(
 	const seenNormalized = new Set<string>()
 
 	if (await pathExists(priorDir)) {
-		for (const f of (await readDirectory(priorDir)).filter((n) => n.endsWith(".jsonl"))) {
+		for await (const f of Globerator.files("jsonl", { cwd: priorDir, absolute: false })) {
 			const country = f.replace(".jsonl", "").toUpperCase()
-			const entries = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)))
+			const entries = await JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)).toArray()
+
 			priorEntries.push({ country, entries })
 
 			for (const e of entries) {
@@ -192,7 +191,7 @@ export async function promoteGolden(
 
 	// Filter pass
 	const stats: PromoteStats = {
-		candidatesIn: candidates.length,
+		candidatesIn: 0,
 		filteredOut: { glued: 0, postcodeLeading: 0, suspicious: 0, duplicate: 0, forwardDup: 0 },
 		kept: 0,
 		perCountry: {},
@@ -201,7 +200,8 @@ export async function promoteGolden(
 	const accepted: GoldenEntry[] = []
 	const seenInBatch = new Set<string>()
 
-	for (const cand of candidates) {
+	for await (const cand of JSONSpliterator.fromAsync<GoldenEntry>(options.input)) {
+		stats.candidatesIn++
 		const norm = foldCaseWhitespace(cand.raw)
 
 		// Dedup pass 1: against prior versioned golden
@@ -245,6 +245,8 @@ export async function promoteGolden(
 		const country = cand.country || "OTHER"
 		stats.perCountry[country] = (stats.perCountry[country] ?? 0) + 1
 	}
+
+	report?.(`  ${stats.candidatesIn} candidates loaded`)
 
 	// Bucket per country, including forward-copied entries
 	const buckets = new Map<string, GoldenEntry[]>()
@@ -324,7 +326,8 @@ export async function promoteGolden(
 
 	// Forward-copy non-.jsonl files (README.md, etc.) from prior
 	if (await pathExists(priorDir)) {
-		for (const f of (await readDirectory(priorDir)).filter((n) => !n.endsWith(".jsonl"))) {
+		for await (const f of Globerator.from("*", { cwd: priorDir, absolute: false })) {
+			if (f.endsWith(".jsonl")) continue
 			await copyFileTo(join(priorDir, f), join(outDir, f))
 			report?.(`  forward-copied: ${f}`)
 		}

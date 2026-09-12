@@ -69,20 +69,14 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import {
-	pathExists,
-	readDirectory,
-	readDirectoryEntries,
-	readLocalBuffer,
-	readLocalJSONFile,
-	statPath,
-} from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { isoDate, isoSeconds } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { deOrderEval } from "#eval-harness/de-order-eval"
 import { demoCascadeSmoke } from "#eval-harness/demo/cascade/smoke"
@@ -213,11 +207,12 @@ export async function resolveThresholdSpecPath(check: string): Promise<string> {
  * Every eval spec shipped beside this module, newest-looking last. For `--spec` errors and tooling.
  */
 export async function listEvalSpecs(): Promise<string[]> {
-	if (await pathExists(SPECS_DIR)) {
-		return (await readDirectory(SPECS_DIR)).filter((file) => file.endsWith(".json")).toSorted()
-	}
-
-	return []
+	return (
+		await Globerator.from("*.json", {
+			cwd: SPECS_DIR,
+			absolute: false,
+		}).toArray()
+	).toSorted()
 }
 
 /**
@@ -253,30 +248,19 @@ async function runLoreGuards(env: {
 	}
 
 	// Refuse to evaluate artifacts older than their source inputs.
-	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. Same shape in-process: the
-	// same two directory levels, the same `.ts` filter, the same reference mtime (`packages/core/out` itself),
-	// and the same short-circuit on the FIRST hit — the `-quit` mattered, since `packages/core/` is large.
+	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. The two patterns cover
+	// those same two levels. Iteration stops at the first newer file, matching `find -quit` without collecting entries.
 	if (await pathExists("packages/core/out")) {
 		const reference = (await statPath("packages/core/out")).mtimeMs
 
 		const staleSource = await (async (): Promise<string | undefined> => {
-			for (const depth1 of await readDirectoryEntries("packages/core")) {
-				const path1 = join("packages/core", depth1.name)
+			for await (const relativePath of Globerator.from(["*.ts", "*/*.ts"], {
+				cwd: "packages/core",
+				absolute: false,
+			})) {
+				const sourcePath = join("packages/core", relativePath)
 
-				if (depth1.isFile()) {
-					if (depth1.name.endsWith(".ts") && (await statPath(path1)).mtimeMs > reference) return path1
-
-					continue
-				}
-
-				if (!depth1.isDirectory()) continue
-
-				for (const depth2 of await readDirectoryEntries(path1)) {
-					if (!depth2.isFile() || !depth2.name.endsWith(".ts")) continue
-					const path2 = join(path1, depth2.name)
-
-					if ((await statPath(path2)).mtimeMs > reference) return path2
-				}
+				if ((await statPath(sourcePath)).mtimeMs > reference) return sourcePath
 			}
 
 			return undefined
@@ -593,6 +577,10 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
+		// The fp32 arm of a PAIRED run is the one an int8 arm follows, and int8 is what ships. Unpaired, the single arm
+		// carries the shipped package whatever its tag reads, so it keeps every de-order run.
+		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
+
 		// Package-shaped (#718): the metric probes (which support weightsCache) load ALL channels —
 		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = the arm's own
@@ -702,6 +690,11 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 					// sealed, so a query is a pure function of its arguments; the memo shares hit objects between
 					// callers, so a caller that mutated one would change this leg's report.
 					lookupMemo: true,
+					// Five of the six runs feed no floor: the verdict reads one cell, the `native DE` anchor-ON
+					// locality, which is also in the fp32↔int8 delta cap and so runs on both arms. The other five
+					// are a record, and a record wants one reading per promotion rather than two. They run on the
+					// arm that ships — the second one when the battery is paired, the only one when it is not.
+					...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
 				},
 				(line) => deorderOut.push(line),
 				(line) => deorderErr.push(line)

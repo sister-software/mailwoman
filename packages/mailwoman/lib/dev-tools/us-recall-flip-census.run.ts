@@ -39,9 +39,7 @@ interface GoldenRow {
 	components: Record<string, string>
 }
 
-const rows: GoldenRow[] = (
-	await Array.fromAsync(JSONSpliterator.fromAsync<GoldenRow>("data/eval/golden/v0.1.2/dev/us.jsonl"))
-).slice(0, SAMPLE)
+const rows = await JSONSpliterator.fromAsync<GoldenRow>("data/eval/golden/v0.1.2/dev/us.jsonl").take(SAMPLE).toArray()
 
 const baseline = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const candidate = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: candidateRoot })

@@ -26,10 +26,6 @@ const MAX_MISSING_TAIL_COMPONENTS = 3
 
 const SCRATCH = "/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad"
 
-const fixtures: ParityFixture[] = (
-	await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH))
-).filter((f) => !f.dropped && f.expect)
-
 const classifier = await NeuralAddressClassifier.loadFromWeights({
 	locale: "en-US",
 	cacheRoot: `${SCRATCH}/v251-grade-cache`,
@@ -68,7 +64,9 @@ function looksMangled(gold: string, got: string): boolean {
 	return i === got.length && gold.length - got.length <= MAX_MISSING_TAIL_COMPONENTS
 }
 
-for (const fixture of fixtures) {
+for await (const fixture of JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH)) {
+	if (fixture.dropped || !fixture.expect) continue
+
 	const byTag = groupTuplesByTag(await classifier.parse(fixture.input, { postcodeRepair: true }))
 
 	// STREET

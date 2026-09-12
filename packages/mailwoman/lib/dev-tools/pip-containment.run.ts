@@ -20,13 +20,14 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { globPaths, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { pyFixed } from "@mailwoman/core/numeric"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { geometryContains, type GeometryLiteral } from "@mailwoman/spatial"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Artifact examples collected before the list is truncated.
@@ -36,15 +37,8 @@ const MAX_LISTED_ARTIFACTS = 12
 const WOF_REPOS = dataRootPath("wof", "repos")
 
 async function adminRoots(): Promise<string[]> {
-	let matched: string[]
-
-	try {
-		matched = await globPaths(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)
-	} catch {
-		matched = []
-	}
-
-	matched.sort()
+	const pattern = WOF_REPOS("whosonfirst-data/whosonfirst-data-admin-*/data")
+	const matched = await Globerator.from(pattern).toSorted()
 
 	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
 }

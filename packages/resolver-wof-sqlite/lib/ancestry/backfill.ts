@@ -45,10 +45,10 @@
  *   nothing.
  */
 
-import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import type { WOFDatabase } from "#schema"
 
@@ -88,7 +88,9 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 		let names: string[]
 
 		try {
-			names = (await readDirectoryEntries(dir)).filter((e) => e.isDirectory()).map((e) => e.name)
+			names = (await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray())
+				.filter((entry) => entry.isDirectory())
+				.map((entry) => entry.name)
 		} catch {
 			return
 		}

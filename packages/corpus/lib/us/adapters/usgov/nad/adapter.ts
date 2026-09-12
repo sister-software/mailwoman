@@ -31,11 +31,11 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
@@ -237,8 +237,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			// inputPath is a directory of NDJSON slices (per fetch-nad.ts featureserver output).
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
 			// featureserver slice pattern is the primary distribution.
-			const entries = await readDirectory(opts.inputPath)
-			const slices = entries.filter((n) => n.endsWith(".ndjson")).toSorted()
+			const slices = await Globerator.files("ndjson", { cwd: opts.inputPath, absolute: false }).toSorted()
 
 			let emitted = 0
 			outer: for (const slice of slices) {

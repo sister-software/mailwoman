@@ -30,12 +30,13 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
 import { basename, join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { createGeocodeCommandOptions } from "#geocode/command-options"
 import { createGeocodeSession } from "#geocode/session"
@@ -72,7 +73,7 @@ const PQ_NO_COORDINATE = 90
 async function allPostcodes(csvDir: string): Promise<Set<string>> {
 	const out = new Set<string>()
 
-	for (const file of (await readDirectory(csvDir)).filter((f) => f.endsWith(".csv"))) {
+	for await (const file of Globerator.files("csv", { cwd: csvDir, absolute: false })) {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
 		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			const pc = line.split(",")[0]?.replaceAll('"', "").trim()
@@ -90,7 +91,7 @@ async function samplePostcodes(csvDir: string, perArea: number, seed: number): P
 	const random = mulberry32(seed)
 	const out: SampledPostcode[] = []
 
-	for (const file of (await readDirectory(csvDir)).filter((f) => f.endsWith(".csv")).toSorted()) {
+	for (const file of await Globerator.files("csv", { cwd: csvDir, absolute: false }).toSorted()) {
 		const rows: SampledPostcode[] = []
 
 		// Code-Point area files are small (the largest ~90k rows); whole-file split is bounded here.

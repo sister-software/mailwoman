@@ -25,8 +25,9 @@
  */
 
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
-import { isDirectory, readDirectoryEntries, readLocalTextFile } from "#fs/readers"
+import { isDirectory, readLocalTextFile } from "#fs/readers"
 import { temporaryDirectory } from "#fs/temporary"
 import { copyPath, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
 import { CommandError } from "#scripting/command"
@@ -82,7 +83,7 @@ export async function downloadLibpostalResources(
 	const sourceDicts = join(cloneDir, "resources", "dictionaries")
 
 	// Alphabetize the contents of each dictionary file in place.
-	for (const entry of await readDirectoryEntries(sourceDicts)) {
+	for await (const entry of Globerator.from("*", { cwd: sourceDicts, withFileTypes: true, onlyFiles: false })) {
 		if (entry.isFile()) {
 			await sortFileInPlace(join(sourceDicts, entry.name))
 		}

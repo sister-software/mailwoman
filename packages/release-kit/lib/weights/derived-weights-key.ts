@@ -19,11 +19,12 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
 import { createHash } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
 import { join, relative, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer` payload enumerated by
@@ -63,9 +64,7 @@ async function gazetteerDataPaths(): Promise<string[]> {
 
 	if (!(await pathExists(dir))) return []
 
-	return (await readDirectory(dir))
-		.filter((name) => name.endsWith(".json") || name.endsWith(".jsonl"))
-		.map((name) => join(dir, name))
+	return Globerator.files(["json", "jsonl"], { cwd: dir }).toArray()
 }
 
 /**
@@ -86,7 +85,7 @@ async function postcodePipelinePaths(): Promise<string[]> {
 	for (const dir of dirs) {
 		if (!(await pathExists(dir))) continue
 
-		for (const name of await readDirectory(dir)) {
+		for await (const name of Globerator.from("*", { cwd: dir, absolute: false })) {
 			if ((name.endsWith(".ts") || name.endsWith(".js")) && !name.includes(".test.") && !name.endsWith(".map")) {
 				paths.push(join(dir, name))
 			}

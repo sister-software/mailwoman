@@ -94,11 +94,9 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 	spec: SpanBoardSpec<Fixture>,
 	options: SpanBoardOptions = {}
 ): Promise<SpanBoardOutcome> {
-	const fixtures = (
-		await Array.fromAsync(JSONSpliterator.fromAsync<Fixture>(options.fixturesPath ?? spec.defaultFixturesPath))
-	).filter((fixture) => !options.klass || fixture.klass === options.klass)
-
-	if (!fixtures.length) throw new Error(`${spec.name}: no fixtures matched (klass=${options.klass ?? "*"})`)
+	const fixtures = JSONSpliterator.fromAsync<Fixture>(options.fixturesPath ?? spec.defaultFixturesPath).filter(
+		(fixture) => !options.klass || fixture.klass === options.klass
+	)
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",
@@ -106,8 +104,10 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 	})
 
 	const tally = new Map<string, { hit: number; total: number; misses: Array<Fixture & { got: string }> }>()
+	let fixtureCount = 0
 
-	for (const fixture of fixtures) {
+	for await (const fixture of fixtures) {
+		fixtureCount++
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 		const { ok, got } = spec.grade(fixture, flattenNodes(tree.roots))
 		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
@@ -123,7 +123,9 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 		tally.set(fixture.klass, bucket)
 	}
 
-	for (const line of spec.headerLines(fixtures.length)) {
+	if (!fixtureCount) throw new Error(`${spec.name}: no fixtures matched (klass=${options.klass ?? "*"})`)
+
+	for (const line of spec.headerLines(fixtureCount)) {
 		console.log(line)
 	}
 

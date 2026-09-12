@@ -48,7 +48,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { tryStat, pathExists, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { tryStat, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
@@ -77,6 +77,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { cellToParent } from "h3-js"
 import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
@@ -524,14 +525,15 @@ interface UPRNAcquisitionSidecar {
  * Locate the acquired archive in an offline `sourceDir`.
  */
 async function resolveOfflineArchive(sourceDir: string): Promise<string> {
-	const entries = await readDirectory(sourceDir).catch(() => [] as string[])
-	const archive = entries.find((name) => /^osopenuprn_.*\.zip$/i.test(name))
+	const archive = await Globerator.from("*", { cwd: sourceDir, absolute: false, throwIfDirectoryMissing: false }).find(
+		(name) => /^osopenuprn_.*\.zip$/i.test(name)
+	)
 
 	if (!archive) {
 		throw new Error(`buildUPRNLayer: offline build found no osopenuprn_*.zip in ${sourceDir}`)
 	}
 
-	return String(join(sourceDir, archive))
+	return join(sourceDir, archive)
 }
 
 /**

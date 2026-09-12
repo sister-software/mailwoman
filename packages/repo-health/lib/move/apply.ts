@@ -14,10 +14,11 @@
  *   deletion beside an addition.
  */
 
-import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { dirname, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import type { RepoContext } from "#check"
 import { emittedMoves } from "#move/literals"
@@ -87,7 +88,7 @@ async function removeEmptiedDirectories(repoRoot: string, directories: readonly 
 
 			if (!(await pathExists(path))) break
 
-			if ((await readDirectory(path)).length) break
+			if (await Globerator.from("*", { cwd: path, absolute: false, onlyFiles: false }).some(() => true)) break
 
 			await removePath(path)
 			current = String(dirname(current))

@@ -23,12 +23,13 @@
  */
 
 import { validateTree } from "@mailwoman/core/decoder"
-import { readDirectory, readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { parseForGeocode } from "mailwoman/geocode"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {
@@ -83,13 +84,13 @@ async function boardRows(): Promise<Row[]> {
 	const root = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"))
 	const rows: Row[] = []
 
-	for (const entry of await readDirectory(root)) {
+	for await (const entry of Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false })) {
 		let files: string[]
 
 		try {
 			// A country directory carries more than `regression.jsonl` — street-name-boundaries, gloss-keys, others.
 			// Reading only the first name silently measured 326 of 854 rows.
-			files = (await readDirectory(join(root, entry))).filter((f) => f.endsWith(".jsonl"))
+			files = await Globerator.files("jsonl", { cwd: join(root, entry), absolute: false }).toArray()
 		} catch {
 			continue
 		}

@@ -36,7 +36,7 @@ import type {
 import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
-import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
@@ -45,6 +45,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { Globerator } from "spliterator/node/fs"
 
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
@@ -150,7 +151,9 @@ async function countDatabases(subdir: string, prefix: string): Promise<number> {
 	try {
 		const re = new RegExp(`^${prefix}-us-[a-z]{2}\\.db$`)
 
-		return (await readDirectory(`${DATA_ROOT}/${subdir}`)).filter((f) => re.test(f)).length
+		return await Globerator.from("*.db", { cwd: `${DATA_ROOT}/${subdir}`, absolute: false })
+			.filter((file) => re.test(file))
+			.reduce((count) => count + 1, 0)
 	} catch {
 		return 0
 	}

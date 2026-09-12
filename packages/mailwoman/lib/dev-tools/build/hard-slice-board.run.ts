@@ -109,8 +109,10 @@ const CASES_ROOT = new URL("../eval-harness/gauntlet/cases/", import.meta.url)
 
 async function sweepRow(cc: string, caseID: string): Promise<Record<string, unknown>> {
 	const path = new URL(`${cc}/regression.jsonl`, CASES_ROOT)
-	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<Record<string, unknown>>(path.pathname))
-	const row = rows.find((r) => r["id"] === caseID)
+
+	const row = await JSONSpliterator.fromAsync<Record<string, unknown>>(path.pathname).find(
+		(candidate) => candidate["id"] === caseID
+	)
 
 	if (!row) throw new Error(`sweep case ${caseID} not found in ${path.pathname}`)
 

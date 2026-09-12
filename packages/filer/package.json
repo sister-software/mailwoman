@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/filer",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "Identity-crosswalk infrastructure for FCC broadband filers — builds and reads filer.db, linking FRN/Form 499/BDC provider_id/holding & management company identifiers with provenance and temporal (asOf) scoping (Phase 3a)",
 	"keywords": [
 		"broadband",
@@ -203,7 +203,7 @@
 		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^7.4.0",
+		"spliterator": "^7.5.1",
 		"type-fest": "^5.9.0",
 		"zod": "^4.5.4"
 	},

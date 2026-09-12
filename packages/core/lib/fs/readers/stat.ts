@@ -10,7 +10,6 @@ import {
 	open as openNative,
 	access,
 	constants,
-	glob,
 	lstat,
 	readlink,
 	realpath,
@@ -108,6 +107,27 @@ export function isDirectory(path: PathBuilderLike | URL): Promise<boolean> {
 }
 
 /**
+ * Assert that a path exists and is a directory, throwing an error if it does not.
+ *
+ * @category Files
+ * @throws AssertionError if the path does not exist or is not a directory.
+ * @runtime node
+ */
+export function assertIsDirectory(path: PathBuilderLike | URL, message?: string): Promise<void> {
+	return statPath(path).then((stats) => {
+		if (stats.isDirectory()) {
+			return void 0
+		}
+
+		throw new AssertionError({
+			message: message ?? `Expected path to be a directory`,
+			expected: path.toString(),
+			actual: "not a directory",
+		})
+	})
+}
+
+/**
  * Whether a path exists and is a file.
  */
 export function isFile(path: PathBuilderLike | URL): Promise<boolean> {
@@ -125,8 +145,9 @@ export function isSymbolicLink(path: PathBuilderLike | URL): Promise<boolean> {
  * Whether a directory entry leads to a directory, symbolic links included.
  *
  * `Dirent.isDirectory()` is FALSE for a symbolic link to a directory, so a walk keyed on it alone skips every linked
- * tree — while a glob with `followSymbolicLinks` (the default) descends into them, and the two then describe different
- * trees. A link is resolved through `stat`, which also answers `false` for a dangling one.
+ * tree. A glob only descends into them when its `followSymlinks` option is `true`; a caller that walks links must use
+ * this helper so both traversals describe the same tree. A link is resolved through `stat`, which also answers `false`
+ * for a dangling one.
  */
 export function entryLeadsToDirectory(entry: Dirent): Promise<boolean> {
 	if (entry.isDirectory()) return Promise.resolve(true)
@@ -211,16 +232,6 @@ export function isExecutable(path: PathBuilderLike): Promise<boolean> {
 		() => true,
 		() => false
 	)
-}
-
-/**
- * Every path matching a glob pattern.
- *
- * Sorted, because `glob` answers in directory order and a build that names its inputs in a receipt should name them the
- * same way twice.
- */
-export async function globPaths(pattern: string | string[]): Promise<string[]> {
-	return (await Array.fromAsync(glob(pattern))).toSorted()
 }
 
 /**

@@ -29,9 +29,9 @@ import { formatAddress } from "@mailwoman/codex/address-format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { join, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { stableSourceID } from "#adapters/utils"
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
@@ -66,7 +66,7 @@ interface LieuDitTuple {
 async function departementFiles(banDir: PathBuilderLike): Promise<string[]> {
 	const byDept = new Map<string, string>()
 
-	for (const name of (await readDirectory(banDir)).toSorted()) {
+	for (const name of await Globerator.from("*", { cwd: banDir, absolute: false }).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue

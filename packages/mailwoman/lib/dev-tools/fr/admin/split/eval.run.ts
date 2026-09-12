@@ -139,15 +139,6 @@ async function main() {
 	const wofDBArg = String(stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db"))
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 
-	const rows = await Array.fromAsync(
-		JSONSpliterator.fromAsync<{
-			raw: string
-			components?: Record<string, string>
-			lat: number
-			lon: number
-		}>(goldenPath)
-	)
-
 	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
 		await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite"),
@@ -267,7 +258,12 @@ async function main() {
 		diacriticBroken = 0,
 		hasGoldRegion = 0
 
-	for (const row of rows) {
+	for await (const row of JSONSpliterator.fromAsync<{
+		raw: string
+		components?: Record<string, string>
+		lat: number
+		lon: number
+	}>(goldenPath)) {
 		rowIdx++
 
 		const tree = await neural.parse(row.raw, {
@@ -337,7 +333,7 @@ async function main() {
 		}
 	}
 
-	const n = rows.length
+	const n = rowIdx + 1
 
 	const summary = {
 		label,

@@ -27,15 +27,17 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { tryReadLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { join, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Where runs land. Under the data root, never the repo — see the module docstring on cache-versus-record.
  */
-export const RUN_STORE_DIR = String(dataRootPath("dev-mcp", "runs"))
+export const RUN_STORE_DIR = dataRootPath("dev-mcp", "runs")
 
 /**
  * Age ceiling in days. A stored run describes the tree that produced it, and after two weeks of commits that tree is
@@ -93,6 +95,7 @@ export interface StoredRun {
 }
 
 export interface RunSummary {
+	file: string
 	run_id: string
 	tool: string
 	created_at: string
@@ -148,21 +151,15 @@ export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date)
 }
 
 /**
- * Read one run back, or `undefined` when it is not there.
+ * Read one run back, or `null` when it is absent or unreadable.
  *
- * `undefined` here means pruned or never stored, and those are not distinguishable after the fact — which is why
- * {@link RETENTION_DAYS} is documented rather than silent. A caller that finds nothing has to re-measure.
+ * `null` here means pruned, never stored, or unreadable, and those are not distinguishable after the fact — which is
+ * why {@link RETENTION_DAYS} is documented rather than silent. A caller that finds nothing has to re-measure.
  */
-export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | undefined> {
+export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | null> {
 	const path = runPath(runID, dir)
 
-	if (!(await pathExists(path))) return undefined
-
-	try {
-		return await readLocalJSONFile<StoredRun>(path)
-	} catch {
-		return undefined
-	}
+	return tryReadLocalJSONFile<StoredRun>(path).catch(() => null)
 }
 
 /**
@@ -189,42 +186,43 @@ export function replayIndex(run: StoredRun, arm: string): Map<string, RecordedAn
 	return new Map(answers.map((answer) => [answer.id, answer]))
 }
 
-async function readAll(dir: PathBuilderLike): Promise<Array<{ run: StoredRun; bytes: number; file: string }>> {
-	if (!(await pathExists(dir))) return []
+interface StoredRunFile {
+	run: StoredRun
+	bytes: number
+	file: string
+}
 
-	const out: Array<{ run: StoredRun; bytes: number; file: string }> = []
-
-	for (const file of await readDirectory(dir)) {
-		if (!file.endsWith(".json")) continue
-
-		try {
-			const raw = await readLocalTextFile(join(dir, file))
-
-			out.push({ run: parseJSONStrict<StoredRun>(raw), bytes: raw.length, file })
-		} catch {
-			// A half-written or corrupt run is skipped rather than throwing: one bad file must not make the whole store
-			// unreadable, and `prune` will take it on age.
-		}
-	}
-
-	return out.toSorted((a, b) => b.run.created_at.localeCompare(a.run.created_at))
+/**
+ * Read a stored run file and return its contents along with metadata.
+ *
+ * @returns `null` if the file is corrupt or cannot be read.
+ */
+async function readStoredRunFile(dir: PathBuilderLike, file: string): Promise<StoredRunFile | null> {
+	return readLocalTextFile(join(dir, file))
+		.then((raw) => ({ run: parseJSONStrict<StoredRun>(raw), bytes: raw.length, file }))
+		.catch(() => null)
 }
 
 export async function listRuns(
 	dir: PathBuilderLike = RUN_STORE_DIR,
 	currentFingerprint?: string
 ): Promise<RunSummary[]> {
-	return (await readAll(dir)).map(({ run, bytes }) => ({
-		run_id: run.run_id,
-		tool: run.tool,
-		created_at: run.created_at,
-		tree_fingerprint: run.tree_fingerprint,
-		engine_id: run.engine_id,
-		input_set_id: run.input_set_id,
-		bytes,
-		replayable_arms: Object.keys(run.answers ?? {}),
-		fingerprint_matches_now: currentFingerprint === undefined ? null : run.tree_fingerprint === currentFingerprint,
-	}))
+	return Globerator.files("json", { cwd: dir, absolute: false, throwIfDirectoryMissing: false })
+		.map((file) => readStoredRunFile(dir, file))
+		.filter(isPresent)
+		.map(({ run, bytes, file }): RunSummary => ({
+			file,
+			run_id: run.run_id,
+			tool: run.tool,
+			created_at: run.created_at,
+			tree_fingerprint: run.tree_fingerprint,
+			engine_id: run.engine_id,
+			input_set_id: run.input_set_id,
+			bytes,
+			replayable_arms: Object.keys(run.answers ?? {}),
+			fingerprint_matches_now: currentFingerprint === undefined ? null : run.tree_fingerprint === currentFingerprint,
+		}))
+		.toSorted((a, b) => b.created_at.localeCompare(a.created_at))
 }
 
 export interface PruneReport {
@@ -244,19 +242,20 @@ export async function pruneRuns(
 	dir: PathBuilderLike = RUN_STORE_DIR,
 	keep: number = RETENTION_MAX_RUNS
 ): Promise<PruneReport> {
-	const all = await readAll(dir)
+	const all = await listRuns(dir)
 	const cutoff = now.getTime() - RETENTION_DAYS * 24 * 60 * 60 * 1000
 
 	const byAge: string[] = []
 	const survivors: typeof all = []
 
 	for (const entry of all) {
-		const created = Date.parse(entry.run.created_at)
+		const created = Date.parse(entry.created_at)
 
 		// An unparseable timestamp is treated as OLD. A run that cannot say when it happened cannot be trusted to
 		// describe a current tree, and keeping it forever is the worse failure.
 		if (!Number.isFinite(created) || created < cutoff) {
-			byAge.push(entry.run.run_id)
+			byAge.push(entry.run_id)
+
 			await removePathIfPresent(join(dir, entry.file))
 
 			continue
@@ -268,9 +267,13 @@ export async function pruneRuns(
 	const byCount: string[] = []
 
 	for (const entry of survivors.slice(keep)) {
-		byCount.push(entry.run.run_id)
+		byCount.push(entry.run_id)
 		await removePathIfPresent(join(dir, entry.file))
 	}
 
-	return { pruned_by_age: byAge, pruned_by_count: byCount, kept: Math.min(survivors.length, keep) }
+	return {
+		pruned_by_age: byAge,
+		pruned_by_count: byCount,
+		kept: Math.min(survivors.length, keep),
+	}
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/universe",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"private": true,
 	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
@@ -92,7 +92,7 @@
 		"path-ts": "^2.3.0",
 		"release-it": "^19.2.4",
 		"sherif": "^1.13.0",
-		"spliterator": "^7.4.0",
+		"spliterator": "^7.5.1",
 		"ts-morph": "^28.0.0",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"vitest": "4.1.11",

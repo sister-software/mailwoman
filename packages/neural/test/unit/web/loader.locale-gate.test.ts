@@ -18,12 +18,13 @@
  *      byte-stable `undefined` on no match.
  */
 
-import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "@mailwoman/neural/web-loader"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 import { describe, expect, test } from "vitest"
 
 const browserSafePackageRoots = {
@@ -39,7 +40,7 @@ const browserSafePackageRoots = {
 async function sourceFiles(dir: string): Promise<string[]> {
 	const out: string[] = []
 
-	for (const entry of await readDirectoryEntries(dir)) {
+	for await (const entry of Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false })) {
 		if (entry.name === "out" || entry.name === "node_modules") continue
 		const full = join(dir, entry.name)
 

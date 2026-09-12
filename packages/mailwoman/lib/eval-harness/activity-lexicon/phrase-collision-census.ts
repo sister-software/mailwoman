@@ -31,12 +31,13 @@
  */
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
-import { pathExists, readDirectoryRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
-import { resolvePath, join, type PathBuilderLike } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"
 import { poiTaxonomyLookup } from "#poi/intent"
@@ -345,10 +346,7 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 
 		if (!(await pathExists(root))) continue
 
-		const paths = (await readDirectoryRecursive(root))
-			.filter((entry) => entry.endsWith(".jsonl"))
-			.map((entry) => resolvePath(root, entry))
-			.toSorted()
+		const paths = await Globerator.files("jsonl", { cwd: root, recursive: true }).toSorted()
 
 		for (const path of paths) {
 			files++

@@ -1,9 +1,10 @@
-import { readDirectoryEntries, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { optionPropertyName } from "@mailwoman/core/scripting/utils"
 import { createElement } from "react"
 import type { ComponentType } from "react"
+import { Globerator } from "spliterator/node/fs"
 
 import { commandPathCandidates, declaredCommandName, isPrefixDirectory } from "#cli/native/command/names"
 import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp, renderInkCommand } from "#cli/native/spec"
@@ -34,7 +35,7 @@ const commandURL = (parts: readonly string[], index = false): URL =>
  * they answer to. `listCommandNames` is help-only, so reading one extra directory level costs nothing anyone waits on.
  */
 async function listCommandNames(directory: URL): Promise<string[]> {
-	const entries = await readDirectoryEntries(directory)
+	const entries = await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false }).toArray()
 	const names: string[] = []
 
 	for (const entry of entries) {
@@ -47,7 +48,7 @@ async function listCommandNames(directory: URL): Promise<string[]> {
 		if (!entry.isDirectory()) continue
 
 		const nested = new URL(`${entry.name}/`, directory)
-		const children = await readDirectoryEntries(nested)
+		const children = await Globerator.from("*", { cwd: nested, withFileTypes: true, onlyFiles: false }).toArray()
 		const hasIndex = children.some((child) => child.isFile() && child.name === "index.js")
 
 		const commands = children.filter(

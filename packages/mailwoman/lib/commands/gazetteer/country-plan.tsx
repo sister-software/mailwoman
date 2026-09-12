@@ -146,9 +146,8 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 			}
 
 			if (audit.aliased.length) {
-				// Read twice by the ingest all the same — `ingest-wof` passes no `followSymbolicLinks` and
-				// fast-glob defaults it to true — but one directory cannot diverge from itself.
-				lines.push("", "symlinked into the other layout — one copy, read twice, cannot diverge:")
+				// `ingestWOF` does not follow directory symlinks, so the direct checkout supplies these records once.
+				lines.push("", "symlinked into the other layout — one copy, ingested through the direct path once:")
 
 				for (const repo of audit.aliased) {
 					lines.push(`  · ${repo.name}`)

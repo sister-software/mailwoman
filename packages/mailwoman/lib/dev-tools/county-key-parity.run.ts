@@ -19,12 +19,12 @@
 
 import { US_STATE_BY_ABBREVIATION, type USStateAbbreviation } from "@mailwoman/codex/us/state"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 interface StateParity {
 	state: string
@@ -61,7 +61,11 @@ function wofCountiesByState(candidatePath: string): Map<string, number> {
 
 export async function countyKeyParity(candidatePath: string, interpolationDir: string): Promise<StateParity[]> {
 	const wof = wofCountiesByState(candidatePath)
-	const files = (await readDirectory(interpolationDir)).filter((file) => EXTRACT_NAME.test(file)).toSorted()
+
+	const files = (await Globerator.files("db", { cwd: interpolationDir, absolute: false }).toSorted()).filter((file) =>
+		EXTRACT_NAME.test(file)
+	)
+
 	const report: StateParity[] = []
 
 	for (const file of files) {

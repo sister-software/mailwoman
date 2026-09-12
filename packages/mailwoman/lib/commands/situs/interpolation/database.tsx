@@ -25,7 +25,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { globPaths } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -34,6 +33,7 @@ import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/stree
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
@@ -197,7 +197,9 @@ const SitusInterpolationDatabase: ParsedCommandComponent<Options> = ({ options }
 
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
-		const shapefiles = await globPaths(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`)
+		const shapefiles = (
+			await Globerator.from(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).toArray()
+		).toSorted()
 
 		if (!shapefiles.length) {
 			throw new CommandError(

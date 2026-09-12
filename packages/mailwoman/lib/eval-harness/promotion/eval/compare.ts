@@ -9,9 +9,10 @@
  *   arena narration's paths under its own output directory and elapsed-time progress messages.
  */
 
-import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { join, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 type JSONValue = boolean | null | number | string | JSONValue[] | { [key: string]: JSONValue }
 
@@ -82,7 +83,7 @@ function compareJSON(
 }
 
 async function listFiles(directory: PathBuilderLike, prefix = ""): Promise<string[]> {
-	const entries = await readDirectoryEntries(directory)
+	const entries = await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false }).toArray()
 	const files: string[] = []
 
 	for (const entry of entries) {

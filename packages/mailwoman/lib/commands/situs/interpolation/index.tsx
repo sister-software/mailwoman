@@ -26,7 +26,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -37,6 +37,7 @@ import { sleep } from "@mailwoman/core/utils/sleep"
 import { Box, Text } from "ink"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import {
 	type CommandSpec,
@@ -573,7 +574,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// States from our target list that have at least one downloaded county SHP. The listing is materialized once
 		// so the filter callback stays synchronous.
-		const edgesEntries = await readDirectory(EDGES_DIR)
+		const edgesEntries = await Globerator.files("shp", { cwd: EDGES_DIR, absolute: false }).toArray()
 
 		const availableStates = TARGET_STATES.filter((abbr) => {
 			const fips = STATE_FIPS[abbr]

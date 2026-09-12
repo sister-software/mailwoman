@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/poi-taxonomy",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "POI category taxonomy + phrase lexicon — Overture category snapshot, infrastructure extension namespace, and the synonym table mapping query phrases ('drinking fountain', 'fiber hut') to category ids.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -90,6 +90,6 @@
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*",
-		"spliterator": "^7.4.0"
+		"spliterator": "^7.5.1"
 	}
 }

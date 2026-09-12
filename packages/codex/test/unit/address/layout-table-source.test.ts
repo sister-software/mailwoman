@@ -23,9 +23,10 @@
 import { isAlternation, isLayout, isSlot, type AddressAtom, type AddressLayout } from "@mailwoman/codex/address-layout"
 import { ADDRESS_LAYOUTS, layoutForCountry } from "@mailwoman/codex/address-layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "@mailwoman/codex/address-layouts-generated"
-import { readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -92,9 +93,7 @@ const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i
 const countryFormats = await (async () => {
 	const out = new Map<string, string | null>()
 
-	for (const file of (await readDirectory(specsDirectory)).toSorted()) {
-		if (!file.endsWith(".json")) continue
-
+	for (const file of await Globerator.files("json", { cwd: specsDirectory, absolute: false }).toSorted()) {
 		const metadata = await readLocalJSONFile<{ fmt?: string }>(join(specsDirectory, file))
 
 		out.set(file.replace(/\.json$/, ""), metadata.fmt ?? null)

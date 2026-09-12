@@ -76,9 +76,10 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 	const fp32 = await CoarsePlacer.fromArtifactDir(resolvePath(fp32Dir), { abstainBelow })
 	const int8 = await CoarsePlacer.fromArtifactDir(resolvePath(int8Dir), { abstainBelow })
 
-	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(resolvePath(dataDir, "test.jsonl")))
+	const test = await JSONSpliterator.fromAsync<TestRow>(resolvePath(dataDir, "test.jsonl")).toArray()
 
 	const classes = (await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(fp32Dir, "meta.json"))).classes
+
 	let okF = 0
 	let okI = 0
 	let agree = 0
