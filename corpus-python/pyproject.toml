@@ -14,6 +14,11 @@ dependencies = [
 	"pyarrow>=25.0.0",
 	"pyyaml>=6",
 	"numpy>=1.26,<3",
+	# Platform-native data/config/cache/temp directories, the counterpart of the `env-paths` the
+	# TypeScript side resolves `DefaultMailwomanPaths` from. Both sides must answer the same
+	# directory for the same platform, or a tool written in one language cannot find what the other
+	# wrote. See `mailwoman_train/env.py`.
+	"platformdirs>=4.3",
 ]
 
 # Heavy ML deps live under [train] so plain tokenizer-training and corpus utilities

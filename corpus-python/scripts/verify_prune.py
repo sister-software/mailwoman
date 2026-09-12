@@ -28,6 +28,8 @@ from pathlib import Path
 
 import numpy as np
 
+from mailwoman_train.paths import data_root_path
+
 
 def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, seed: int) -> list[str]:
     """Fresh random sample across slices: pick slices round-robin, one random batch each."""
@@ -66,9 +68,18 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
         "--data-root-remap",
-        default="/data:/mnt/playpen/mailwoman-data",
+        default=None,
+        help=(
+            "rewrite a manifest's build-machine prefix onto this machine, as '<from>:<to>'. "
+            "Defaults to '/data:$MAILWOMAN_DATA_ROOT', which is the Modal volume mount rewritten "
+            "onto the local root."
+        ),
     )
     args = parser.parse_args()
+    # Resolved here rather than as an argparse default so `--help` and an explicit value need no
+    # data root configured.
+    if args.data_root_remap is None:
+        args.data_root_remap = f"/data:{data_root_path()}"
 
     import sentencepiece as spm
 

@@ -80,7 +80,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
 import re
 import sys
@@ -105,14 +104,16 @@ from .corpora.builder import (
 from .corpora.builder import verify_record as _verify_record
 from .jp_kana import municipality_kana_from_admin_db, municipality_kana_lookup
 from .labels import resolve_label_set
+from .paths import resolve_data_root_default
 from .text.kana import fold_halfwidth_kana, int_to_kanji, kanji_to_int
 from .text.normalize import normalize_text
 from .tokenizer.char import build_char_vocab, save_char_vocab
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-DEFAULT_PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-jp.parquet"
-DEFAULT_KENALL = Path(DATA_ROOT) / "KEN_ALL_ROME" / "KEN_ALL_ROME.CSV"
-DEFAULT_ADMIN_DB = Path(DATA_ROOT) / "wof" / "admin-global-priority.db"
+#: Where each input sits under `$MAILWOMAN_DATA_ROOT`. Resolved after parsing, not here: reading the
+#: root at import would raise for a caller who passes the flag and never needs it.
+PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
+KENALL_PARTS = ("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
+ADMIN_DB_PARTS = ("wof", "admin-global-priority.db")
 
 LABEL_SET_NAME = "stage3-jp"
 
@@ -737,12 +738,15 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--parquet", default=str(DEFAULT_PARQUET))
-    parser.add_argument("--kenall", default=str(DEFAULT_KENALL))
+    parser.add_argument("--parquet", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(PARQUET_PARTS))
+    parser.add_argument("--kenall", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(KENALL_PARTS))
     parser.add_argument(
         "--admin-db",
-        default=str(DEFAULT_ADMIN_DB),
-        help="WOF admin DB for the municipality kana readings (#2165); an empty string disables the register",
+        default=None,
+        help=(
+            "WOF admin DB for the municipality kana readings (#2165); an empty string disables the register. "
+            "Defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(ADMIN_DB_PARTS)
+        ),
     )
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--train-rows", type=int, default=2_000_000)
@@ -766,7 +770,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true", help="overwrite a non-empty --out-dir")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    args.parquet = resolve_data_root_default(args.parquet, *PARQUET_PARTS)
+    args.kenall = resolve_data_root_default(args.kenall, *KENALL_PARTS)
+    # An explicit empty string disables the register, so only `None` means "use the default".
+    if args.admin_db is None:
+        args.admin_db = resolve_data_root_default(None, *ADMIN_DB_PARTS)
+    return args
 
 
 def main(argv: Sequence[str] | None = None) -> None:

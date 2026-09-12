@@ -64,7 +64,7 @@
 #     means the slice's FR/DE shapes are fighting the native-order slices — STOP and re-audit.
 #
 # CORPUS PREREQUISITE: the slice JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
-# corpus is staged at /mnt/playpen/.../corpus/versioned/v0.6.0-boundary-stress/ — assembled via
+# corpus is staged at $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.6.0-boundary-stress/ — assembled via
 # scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched).
 #
 # #511 locality/street overlap — INVESTIGATED + RESOLVED (no longer a pre-retrain blocker). A targeted

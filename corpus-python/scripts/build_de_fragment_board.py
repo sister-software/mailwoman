@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
 import re
 import unicodedata
@@ -39,9 +38,11 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-de.parquet"
-LEXICON = Path(DATA_ROOT) / "gazetteer" / "locality-surface-lexicon-v7.json"
+from mailwoman_train.paths import data_root_path
+
+#: Resolved when a default is needed, not at import.
+PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-de.parquet")
+LEXICON_PARTS = ("gazetteer", "locality-surface-lexicon-v7.json")
 
 TRAINING_STATES = {"BE", "SN"}  # synth-german's OA parts — geographically excluded.
 
@@ -88,7 +89,7 @@ def main() -> None:
     args = ap.parse_args()
 
     rng = random.Random(args.seed)
-    lexicon_entries = set(json.loads(LEXICON.read_text())["entries"].keys())
+    lexicon_entries = set(json.loads(data_root_path(*LEXICON_PARTS).read_text())["entries"].keys())
 
     def hits_lexicon(street: str) -> bool:
         toks = painter_fold(street)
@@ -115,7 +116,7 @@ def main() -> None:
             if j < args.per_class:
                 res[klass][j] = row
 
-    pf = pq.ParquetFile(PARQUET)
+    pf = pq.ParquetFile(data_root_path(*PARQUET_PARTS))
     for batch in pf.iter_batches(batch_size=65536, columns=["street", "number", "address_levels"]):
         streets = batch["street"].to_pylist()
         numbers = batch["number"].to_pylist()

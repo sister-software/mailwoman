@@ -38,7 +38,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
 import sys
 from collections import Counter, defaultdict
@@ -72,12 +71,14 @@ from .kr_registry import (
     transform_coordinates,
 )
 from .labels import resolve_label_set
+from .paths import resolve_data_root_default
 from .text.normalize import normalize_text
 from .tokenizer.char import build_char_vocab, save_char_vocab
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-DEFAULT_JUSO_ZIP = Path(DATA_ROOT) / "corpus" / "sources" / "juso-kr" / "202608ALLMTCHG00.zip"
-DEFAULT_PERMIT_DIR = Path(DATA_ROOT) / "corpus" / "sources" / "localdata-kr"
+#: Resolved after parsing, not here: reading the data root at import would raise for a caller who
+#: passes the flags and never needs it.
+JUSO_ZIP_PARTS = ("corpus", "sources", "juso-kr", "202608ALLMTCHG00.zip")
+PERMIT_DIR_PARTS = ("corpus", "sources", "localdata-kr")
 LABEL_SET_NAME = "stage3-cjk"
 SOURCE = "juso-kr"
 REGISTRY_SOURCE = "localdata-kr"
@@ -599,8 +600,10 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n", maxsplit=1)[0])
-    parser.add_argument("--juso-zip", default=str(DEFAULT_JUSO_ZIP))
-    parser.add_argument("--permit-dir", default=str(DEFAULT_PERMIT_DIR))
+    parser.add_argument("--juso-zip", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(JUSO_ZIP_PARTS))
+    parser.add_argument(
+        "--permit-dir", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(PERMIT_DIR_PARTS)
+    )
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--registry-out-dir", required=True)
     parser.add_argument("--train-rows", type=int, default=2_000_000)
@@ -622,7 +625,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true", help="overwrite a non-empty output directory")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    args.juso_zip = resolve_data_root_default(args.juso_zip, *JUSO_ZIP_PARTS)
+    args.permit_dir = resolve_data_root_default(args.permit_dir, *PERMIT_DIR_PARTS)
+    return args
 
 
 def main(argv: Sequence[str] | None = None) -> None:

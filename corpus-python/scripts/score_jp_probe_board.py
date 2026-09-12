@@ -59,7 +59,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import os
 import sys
 import unicodedata
 from collections import Counter
@@ -69,9 +68,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from mailwoman_train.labels import resolve_label_set  # noqa: E402
+from mailwoman_train.paths import data_root_path  # noqa: E402
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-PROBE_DIR = Path(DATA_ROOT) / "corpus" / "versioned" / "v8-jp-probe"
+#: Resolved when a default is needed, not at import: this module is loaded by path in
+#: `test_jp_board_registers`, where no data root is configured and none is required.
+PROBE_DIR_PARTS = ("corpus", "versioned", "v8-jp-probe")
+
+
+def probe_dir(*parts: str) -> Path:
+    """The probe corpus directory under `$MAILWOMAN_DATA_ROOT`."""
+    return data_root_path(*PROBE_DIR_PARTS, *parts)
+
 
 CTX = 3
 WIDTH = 7
@@ -357,9 +364,10 @@ def main() -> None:
     ap.add_argument(
         "--all-municipalities", action="store_true", help="print every held-out municipality, not the lowest five"
     )
-    ap.add_argument("--board", default=str(PROBE_DIR / "jp-probe-board.jsonl"))
-    ap.add_argument("--vocab", default=str(PROBE_DIR / "char-vocab-jp-v1.json"))
-    ap.add_argument("--centroids", default=str(PROBE_DIR / "jp-muni-centroids.json"))
+    probe = "$MAILWOMAN_DATA_ROOT/" + "/".join(PROBE_DIR_PARTS)
+    ap.add_argument("--board", default=None, help=f"defaults to {probe}/jp-probe-board.jsonl")
+    ap.add_argument("--vocab", default=None, help=f"defaults to {probe}/char-vocab-jp-v1.json")
+    ap.add_argument("--centroids", default=None, help=f"defaults to {probe}/jp-muni-centroids.json")
     ap.add_argument(
         "--label-set",
         default="stage3",
@@ -372,6 +380,9 @@ def main() -> None:
         help="override the two tags concatenated into the centroid key, as 'region,locality'",
     )
     args = ap.parse_args()
+    args.board = args.board or str(probe_dir("jp-probe-board.jsonl"))
+    args.vocab = args.vocab or str(probe_dir("char-vocab-jp-v1.json"))
+    args.centroids = args.centroids or str(probe_dir("jp-muni-centroids.json"))
 
     # Imported here, not at module scope, so the pure scoring arithmetic above stays importable
     # (and testable) without the torch install.

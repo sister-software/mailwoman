@@ -16,8 +16,8 @@ holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the t
 
 Usage:
     python -m mailwoman_train.build_fragment_slice \
-        --oa-root /mnt/playpen/mailwoman-data/openaddresses/extracted \
-        --corpus-parquet-glob '/mnt/playpen/mailwoman-data/corpus/versioned/v0.5.0/**/train/part-000*.parquet' \
+        --oa-root "$MAILWOMAN_DATA_ROOT/openaddresses/extracted" \
+        --corpus-parquet-glob "$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.5.0/**/train/part-000*.parquet" \
         --out-parquet out/part-fragment.parquet --out-dev out/fragment-dev.jsonl
 """
 

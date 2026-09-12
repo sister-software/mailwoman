@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
 import sys
 from collections import Counter
@@ -36,12 +35,21 @@ from .build_jp_slice import BOARD_BUCKET_MIN as JP_BOARD_BUCKET_MIN
 from .build_tw_slice import BOARD_BUCKET_MIN as TW_BOARD_BUCKET_MIN
 from .corpora.builder import SCHEMA, coverage_stats, muni_bucket, select_exact
 from .labels import resolve_label_set
+from .paths import data_root_path
 from .text.normalize import normalize_text
 from .tokenizer.char import build_char_vocab, save_char_vocab
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-SOURCES = Path(DATA_ROOT) / "corpus" / "sources"
-OVERTURE = Path(DATA_ROOT) / "overture" / "2026-06-17.0"
+
+def sources_dir(*parts: str) -> Path:
+    """A register source under `$MAILWOMAN_DATA_ROOT/corpus/sources`."""
+    return data_root_path("corpus", "sources", *parts)
+
+
+def overture_dir(*parts: str) -> Path:
+    """An Overture extract under `$MAILWOMAN_DATA_ROOT/overture`."""
+    return data_root_path("overture", "2026-06-17.0", *parts)
+
+
 LABEL_SET_NAME = "stage3-cjk"
 
 # One aligned string with its hold-out key and the projected coordinate (registers carry none, so it is None).
@@ -50,7 +58,7 @@ Candidate = tuple[dict[str, Any], str]
 
 def tw_candidates(index: tw_registry.TWKeyIndex) -> Iterator[tuple[Candidate | None, str]]:
     """(aligned record + unit key, or None) and the raw string, for every address form of every register row."""
-    for row in tw_registry.iter_register_rows(SOURCES / "gcis-tw"):
+    for row in tw_registry.iter_register_rows(sources_dir("gcis-tw")):
         for text in (row.address, row.tax_address):
             if not text:
                 continue
@@ -64,7 +72,7 @@ def tw_candidates(index: tw_registry.TWKeyIndex) -> Iterator[tuple[Candidate | N
 def jp_candidates(
     index: jp_registry.JPKeyIndex, rng: random.Random, postcode_fraction: float
 ) -> Iterator[tuple[Candidate | None, str]]:
-    for row in jp_registry.iter_corporate_rows(SOURCES / "houjin-jp" / "00_zenkoku_all_20260831.zip"):
+    for row in jp_registry.iter_corporate_rows(sources_dir("houjin-jp", "00_zenkoku_all_20260831.zip")):
         aligned = jp_registry.align_corporate_row(row, index, with_postcode=rng.random() < postcode_fraction)
         text = f"{row.prefecture}{row.municipality}{row.street}"
         if aligned is None:
@@ -100,10 +108,10 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         raise SystemExit(f"{out_dir} exists and is non-empty — pass --force to overwrite")
 
     if args.locale == "tw":
-        index: Any = tw_registry.TWKeyIndex.from_parquet(OVERTURE / "addresses-tw.parquet", args.max_row_groups)
+        index: Any = tw_registry.TWKeyIndex.from_parquet(overture_dir("addresses-tw.parquet"), args.max_row_groups)
         candidates: Callable[[], Iterator[tuple[Candidate | None, str]]] = lambda: tw_candidates(index)  # noqa: E731
     else:
-        index = jp_registry.JPKeyIndex.from_parquet(OVERTURE / "addresses-jp.parquet", args.max_row_groups)
+        index = jp_registry.JPKeyIndex.from_parquet(overture_dir("addresses-jp.parquet"), args.max_row_groups)
         # A separate stream for the postcode coin. Seeded like the selector it would draw in lockstep with it — one
         # draw per row each — and a selected row (draw < 0.12) would always be a postcode row (draw < 0.3): the first
         # build read 199,960 of 200,000 rows with a 〒 prefix at a fraction of 0.3.

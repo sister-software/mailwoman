@@ -12,7 +12,7 @@ export path that Phase 2 builds.
 Usage:
   uv run python scripts/eval_seg_at_1.py \
       --checkpoint /tmp/v300-ckpt \
-      --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.9.0-multisplice \
+      --tokenizer "$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice" \
       --fixtures ../mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl
 """
 

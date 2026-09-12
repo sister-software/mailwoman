@@ -13,7 +13,7 @@ Usage:
         --manifest $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue/MANIFEST.json \
         --tokenizer neural-weights-en-us/tokenizer.model \
         --out $MAILWOMAN_DATA_ROOT/scratch-vocab-prune/utilization-v0150-venue.npz \
-        [--workers 14] [--data-root-remap /data:/mnt/playpen/mailwoman-data]
+        [--workers 14] [--data-root-remap "/data:$MAILWOMAN_DATA_ROOT"]
 """
 
 from __future__ import annotations
@@ -26,6 +26,8 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
+
+from mailwoman_train.paths import data_root_path
 
 _SP = None
 _TOKENIZER_PATH: str | None = None
@@ -68,10 +70,17 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=max(2, (os.cpu_count() or 4) - 2))
     parser.add_argument(
         "--data-root-remap",
-        default="/data:" + os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data"),
-        help="colon-separated FROM:TO prefix remap for manifest slice paths",
+        default=None,
+        help=(
+            "colon-separated FROM:TO prefix remap for manifest slice paths; defaults to "
+            "'/data:$MAILWOMAN_DATA_ROOT', the Modal volume mount rewritten onto the local root"
+        ),
     )
     args = parser.parse_args()
+    # Resolved here rather than as an argparse default so `--help` and an explicit value need no
+    # data root configured.
+    if args.data_root_remap is None:
+        args.data_root_remap = f"/data:{data_root_path()}"
 
     import sentencepiece as spm
 

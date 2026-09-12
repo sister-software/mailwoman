@@ -42,7 +42,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import random
 import sys
 import unicodedata
@@ -54,11 +53,13 @@ import pyarrow.parquet as pq
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+from mailwoman_train.paths import data_root_path  # noqa: E402
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab  # noqa: E402
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-jp.parquet"
-KENALL = Path(DATA_ROOT) / "KEN_ALL_ROME" / "KEN_ALL_ROME.CSV"
+#: Resolved when a default is needed, not at import, so `--help` runs with no data root configured.
+PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
+KENALL_PARTS = ("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
+OUT_DIR_PARTS = ("corpus", "versioned", "v8-jp-probe")
 
 SCHEMA = pa.schema(
     [
@@ -165,15 +166,18 @@ def render_row(pref: str, muni: str, street: str | None, number: str | None, pos
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--parquet", default=str(PARQUET))
-    ap.add_argument("--kenall", default=str(KENALL))
-    ap.add_argument("--out-dir", default=str(Path(DATA_ROOT) / "corpus" / "versioned" / "v8-jp-probe"))
+    ap.add_argument("--parquet", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(PARQUET_PARTS))
+    ap.add_argument("--kenall", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(KENALL_PARTS))
+    ap.add_argument("--out-dir", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(OUT_DIR_PARTS))
     ap.add_argument("--train-rows", type=int, default=200_000)
     ap.add_argument("--val-rows", type=int, default=4_000)
     ap.add_argument("--board-rows", type=int, default=2_000)
     ap.add_argument("--postcode-fraction", type=float, default=0.30)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
+    args.parquet = args.parquet or str(data_root_path(*PARQUET_PARTS))
+    args.kenall = args.kenall or str(data_root_path(*KENALL_PARTS))
+    args.out_dir = args.out_dir or str(data_root_path(*OUT_DIR_PARTS))
 
     rng = random.Random(args.seed)
     kenall = load_kenall_postcodes(Path(args.kenall))

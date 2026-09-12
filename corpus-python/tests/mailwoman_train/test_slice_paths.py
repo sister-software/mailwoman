@@ -40,7 +40,9 @@ def test_rerooting_still_works(tmp_path: Path) -> None:
     corpus = _mk(tmp_path, [])
     slice = corpus / "train" / "part-0000.parquet"
     slice.write_bytes(b"x")
-    stale = "/mnt/playpen/elsewhere/train/part-0000.parquet"
+    # A manifest written on another machine: the path is absolute and wrong here, which is the
+    # whole point. Any absolute path that does not exist serves; it need not be a real one.
+    stale = "/build-machine/corpus/train/part-0000.parquet"
     (corpus / "MANIFEST.json").write_text(json.dumps({"slices": [{"split": "train", "path": stale}]}))
     assert _slice_paths(corpus, "train") == [slice]
 

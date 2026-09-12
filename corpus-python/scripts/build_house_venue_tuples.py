@@ -30,16 +30,18 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
 import random
 import re
 import sqlite3
 from pathlib import Path
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-FR_DB = Path(DATA_ROOT) / "ban" / "address-points-fr.db"
-US_DIR = Path(DATA_ROOT) / "address-points"
-GB_CSV = Path(DATA_ROOT) / "ppd" / "2026-07-22" / "gb-tuples.csv"
+from mailwoman_train.paths import data_root_path
+
+#: Resolved when needed, not at import, so `--help` runs with no data root configured.
+FR_DB_PARTS = ("ban", "address-points-fr.db")
+US_DIR_PARTS = ("address-points",)
+GB_CSV_PARTS = ("ppd", "2026-07-22", "gb-tuples.csv")
+OUT_PARTS = ("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
 
 # Plain or letter-suffixed house numbers ("9", "45A") — the synthesizer owns range generation.
 GB_NUMBER_RE = re.compile(r"^\d+[A-Za-z]?$")
@@ -136,8 +138,10 @@ def main() -> None:
     ap.add_argument("--us", type=int, default=60_000)
     ap.add_argument("--gb", type=int, default=60_000)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--out", default=str(Path(DATA_ROOT) / "corpus" / "intermediate" / "house-venue-tuples-v3.jsonl"))
+    ap.add_argument("--out", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(OUT_PARTS))
     args = ap.parse_args()
+    if args.out is None:
+        args.out = str(data_root_path(*OUT_PARTS))
     rng = random.Random(args.seed)
 
     reserved = set()
@@ -150,7 +154,7 @@ def main() -> None:
 
     with out_path.open("w", encoding="utf-8") as fh:
         # FR: BAN — no region in the FR rendering, but the tuple field is required; carry "".
-        for street, number, postcode, locality in sample_db(FR_DB, args.fr, rng):
+        for street, number, postcode, locality in sample_db(data_root_path(*FR_DB_PARTS), args.fr, rng):
             if street in reserved:
                 skipped_reserved += 1
                 continue
@@ -171,7 +175,7 @@ def main() -> None:
             n_fr += 1
 
         # US: spread across states, region = the state code from the filename.
-        state_dbs = sorted(US_DIR.glob("address-points-us-*.db"))
+        state_dbs = sorted(data_root_path(*US_DIR_PARTS).glob("address-points-us-*.db"))
         rng.shuffle(state_dbs)
         per_state = max(1, args.us // len(state_dbs)) if state_dbs else 0
         for db_path in state_dbs:
@@ -201,7 +205,7 @@ def main() -> None:
         # it) but never rendered — the GB tail is `locality postcode`.
         n_gb = 0
         if args.gb > 0:
-            for tup in sample_gb(GB_CSV, args.gb, rng):
+            for tup in sample_gb(data_root_path(*GB_CSV_PARTS), args.gb, rng):
                 fh.write(json.dumps(tup, ensure_ascii=False) + "\n")
                 n_gb += 1
 

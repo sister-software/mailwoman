@@ -22,7 +22,7 @@ label-stage bump lands.
 Usage::
 
     python -m mailwoman_train.build_secondary_slice \\
-        --out-parquet /mnt/playpen/mailwoman-data/corpus/staging/secondary/part-secondary.parquet \\
+        --out-parquet "$MAILWOMAN_DATA_ROOT/corpus/staging/secondary/part-secondary.parquet" \\
         --out-dev out/secondary-dev.jsonl
 """
 

@@ -151,9 +151,9 @@ def _slice_paths(corpus_dir: Path, split: str) -> list[Path]:
        a manifest whose base-slice paths deliberately point into the OTHER corpus dir
        (``/data/.../v0.3.0/...``). Those are correct and must be used VERBATIM — re-rooting them to
        ``corpus_dir`` would point at files that don't exist (v0.4.0 only has the overlay slices).
-    2. **Portability.** A non-overlay manifest stores absolute paths from the BUILD machine
-       (``/mnt/playpen/...``) that don't exist when the corpus is mounted elsewhere (Modal volume
-       at ``/data/...``).
+    2. **Portability.** A non-overlay manifest stores absolute paths from the BUILD machine's data
+       root, which do not exist when the corpus is mounted elsewhere (the Modal volume at
+       ``/data/...``).
 
     So per slice: use the manifest path AS-IS when it exists; otherwise RE-ROOT it under
     ``corpus_dir`` (take the ``<split>/<basename>`` tail). This serves both cases — overlay

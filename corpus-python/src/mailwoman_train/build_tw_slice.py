@@ -43,7 +43,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
 import re
 import sys
@@ -66,11 +65,13 @@ from .corpora.builder import (
 )
 from .corpora.builder import verify_record as _verify_record
 from .labels import resolve_label_set
+from .paths import resolve_data_root_default
 from .text.normalize import ascii_digits, fullwidth_digits, normalize_text
 from .tokenizer.char import build_char_vocab, save_char_vocab
 
-DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")
-DEFAULT_PARQUET = Path(DATA_ROOT) / "overture" / "2026-06-17.0" / "addresses-tw.parquet"
+#: Resolved after parsing, not here: reading the data root at import would raise for a caller who
+#: passes `--parquet` and never needs it.
+PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-tw.parquet")
 LABEL_SET_NAME = "stage3-cjk"
 SOURCE = "overture-tw"
 COUNTRY = "TW"
@@ -418,7 +419,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n", maxsplit=1)[0])
-    parser.add_argument("--parquet", default=str(DEFAULT_PARQUET))
+    parser.add_argument("--parquet", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(PARQUET_PARTS))
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--train-rows", type=int, default=2_000_000)
     parser.add_argument("--val-rows", type=int, default=20_000)
@@ -431,7 +432,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-row-groups", type=int, default=None, help="smoke builds: read this many row groups")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true", help="overwrite a non-empty --out-dir")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    args.parquet = resolve_data_root_default(args.parquet, *PARQUET_PARTS)
+    return args
 
 
 def main(argv: Sequence[str] | None = None) -> None:
