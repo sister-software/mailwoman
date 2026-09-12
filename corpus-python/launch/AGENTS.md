@@ -87,8 +87,10 @@ mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps i
 
 ## Stale `__pycache__`
 
-A container-side write of new `.py` over old leaves stale `.pyc` that imports instead (the night-3 pyc
-failure mode). Every `sync_*` clears `…/mailwoman_train/__pycache__` before `vol.commit()`.
+A container-side write of new `.py` over old leaves stale `.pyc` that imports instead, so the run
+imports the PREVIOUS code and reports success against it. Every sync clears the directories its row's
+`pycache` names before `vol.commit()`; the default is `…/mailwoman_train/__pycache__`, and a row that
+also ships configs uses `PACKAGE_AND_CONFIGS`.
 
 ## Recovering
 
