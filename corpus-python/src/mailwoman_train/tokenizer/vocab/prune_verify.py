@@ -24,7 +24,9 @@ from __future__ import annotations
 import argparse
 import json
 import random
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -56,7 +58,7 @@ def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, see
     return rows[:n]
 
 
-def main() -> None:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--orig-tokenizer", required=True)
     parser.add_argument("--orig-onnx", required=True)
@@ -75,17 +77,107 @@ def main() -> None:
             "onto the local root."
         ),
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     # Resolved here rather than as an argparse default so `--help` and an explicit value need no
     # data root configured.
     if args.data_root_remap is None:
         args.data_root_remap = f"/data:{data_root_path()}"
+    return args
+
+
+def check_segmentation_identity(orig: Any, pruned: Any, old_to_new: np.ndarray, texts: list[str], label: str) -> int:
+    """B1 — how many of `texts` the two tokenizers segment differently, modulo the id renumbering.
+
+    An id that maps to -1 counts as a difference on its own: the pruned vocabulary dropped a piece
+    this text needs, so the sequences could only match by coincidence of length.
+    """
+    diffs = 0
+    for text in texts:
+        a = orig.encode(text)
+        b = pruned.encode(text)
+        mapped = [int(old_to_new[i]) for i in a]
+
+        if mapped != b or -1 in mapped:
+            diffs += 1
+
+            if diffs <= 5:
+                print(f"[B1 DIFF] {label}: {text!r}")
+                print(f"    orig  : {orig.encode(text, out_type=str)}")
+                print(f"    pruned: {pruned.encode(text, out_type=str)}")
+
+    print(f"[B1] {label}: {len(texts):,} texts, {diffs} diffs")
+    return diffs
+
+
+def feeds_for(input_metas: Sequence[Any], session_ids: list[int]) -> dict[str, np.ndarray]:
+    """Assemble feeds per the model's actual meta: every input is (batch, sequence[, F]).
+
+    Every channel is fed zeros. Parity must hold for ANY channel values if the surgery is sound —
+    the graphs differ only in the embedding gather table — and the full-battery bar (B3) is what
+    covers realistic feeds end to end.
+    """
+    feeds: dict[str, np.ndarray] = {}
+    length = len(session_ids)
+
+    for meta in input_metas:
+        np_type = np.int64 if "int64" in meta.type else np.float32
+        shape = tuple(1 if dim == "batch" else length if dim == "sequence" else int(dim) for dim in meta.shape)
+
+        if meta.name == "input_ids":
+            feeds[meta.name] = np.asarray([session_ids], dtype=np.int64)
+        elif meta.name == "attention_mask":
+            feeds[meta.name] = np.ones(shape, dtype=np_type)
+        else:
+            feeds[meta.name] = np.zeros(shape, dtype=np_type)
+
+    return feeds
+
+
+def check_logit_parity(
+    orig: Any,
+    old_to_new: np.ndarray,
+    orig_session: Any,
+    pruned_session: Any,
+    texts: list[str],
+) -> int:
+    """B2 — how many of `texts` the two graphs answer differently, bit for bit.
+
+    BITWISE, not close: the kept embedding rows are byte-identical and the rest of the graph is
+    untouched, so any difference at all is the surgery having changed something it should not have.
+    """
+    input_metas = orig_session.get_inputs()
+    diffs = 0
+    for text in texts:
+        ids = orig.encode(text)
+        mapped = [int(old_to_new[i]) for i in ids]
+        # An unmapped id means the pruned vocabulary dropped a piece this input needs, so the
+        # comparison below would score a graph against inputs it cannot represent.
+        if -1 in mapped:
+            raise ValueError(f"unmapped id in B2 input: {text!r}")
+
+        out_a = orig_session.run(None, feeds_for(input_metas, ids))
+        out_b = pruned_session.run(None, feeds_for(input_metas, mapped))
+
+        for a, b in zip(out_a, out_b, strict=True):
+            if not np.array_equal(a, b):
+                diffs += 1
+
+                if diffs <= 3:
+                    print(f"[B2 DIFF] {text!r}: max |Δ| {np.max(np.abs(a - b))}")
+
+                break
+
+    print(f"[B2] {len(texts)} inputs, {diffs} non-bit-equal")
+    return diffs
+
+
+def main() -> None:
+    args = parse_args()
 
     import sentencepiece as spm
 
     pruned_dir = Path(args.pruned_dir)
-    id_map = np.load(pruned_dir / "id-map.npz")
-    old_to_new = id_map["old_to_new"]
+    old_to_new = np.load(pruned_dir / "id-map.npz")["old_to_new"]
 
     orig = spm.SentencePieceProcessor()
     orig.LoadFromFile(args.orig_tokenizer)
@@ -96,30 +188,9 @@ def main() -> None:
     remap = tuple(args.data_root_remap.split(":", 1))
     train_sample = sample_training_rows(args.manifest, remap, args.sample_rows, args.seed)
 
-    # --- B1 ---
-    def check(texts: list[str], label: str) -> int:
-        diffs = 0
+    b1 = check_segmentation_identity(orig, pruned, old_to_new, eval_texts, "eval-surface")
+    b1 += check_segmentation_identity(orig, pruned, old_to_new, train_sample, "train-sample")
 
-        for text in texts:
-            a = orig.encode(text)
-            b = pruned.encode(text)
-            mapped = [int(old_to_new[i]) for i in a]
-
-            if mapped != b or -1 in mapped:
-                diffs += 1
-
-                if diffs <= 5:
-                    print(f"[B1 DIFF] {label}: {text!r}")
-                    print(f"    orig  : {orig.encode(text, out_type=str)}")
-                    print(f"    pruned: {pruned.encode(text, out_type=str)}")
-
-        print(f"[B1] {label}: {len(texts):,} texts, {diffs} diffs")
-
-        return diffs
-
-    b1 = check(eval_texts, "eval-surface") + check(train_sample, "train-sample")
-
-    # --- B2 ---
     import onnxruntime as ort
 
     so = ort.SessionOptions()
@@ -129,48 +200,8 @@ def main() -> None:
 
     rng = random.Random(args.seed)
     logit_texts = rng.sample(eval_texts, min(args.logit_inputs, len(eval_texts)))
-    input_metas = orig_session.get_inputs()
-    b2 = 0
+    b2 = check_logit_parity(orig, old_to_new, orig_session, pruned_session, logit_texts)
 
-    for text in logit_texts:
-        ids = orig.encode(text)
-        mapped = [int(old_to_new[i]) for i in ids]
-        # An unmapped id means the pruned vocabulary dropped a piece this input needs, so the
-        # comparison below would score a graph against inputs it cannot represent.
-        if -1 in mapped:
-            raise ValueError(f"unmapped id in B2 input: {text!r}")
-
-        def feeds_for(session_ids: list[int]) -> dict[str, np.ndarray]:
-            """Assemble feeds per the model's actual meta: every input is (batch, sequence[, F])."""
-            feeds: dict[str, np.ndarray] = {}
-            length = len(session_ids)
-
-            for meta in input_metas:
-                np_type = np.int64 if "int64" in meta.type else np.float32
-                shape = tuple(1 if dim == "batch" else length if dim == "sequence" else int(dim) for dim in meta.shape)
-
-                if meta.name == "input_ids":
-                    feeds[meta.name] = np.asarray([session_ids], dtype=np.int64)
-                elif meta.name == "attention_mask":
-                    feeds[meta.name] = np.ones(shape, dtype=np_type)
-                else:
-                    feeds[meta.name] = np.zeros(shape, dtype=np_type)
-
-            return feeds
-
-        out_a = orig_session.run(None, feeds_for(ids))
-        out_b = pruned_session.run(None, feeds_for(mapped))
-
-        for a, b in zip(out_a, out_b, strict=True):
-            if not np.array_equal(a, b):
-                b2 += 1
-
-                if b2 <= 3:
-                    print(f"[B2 DIFF] {text!r}: max |Δ| {np.max(np.abs(a - b))}")
-
-                break
-
-    print(f"[B2] {len(logit_texts)} inputs, {b2} non-bit-equal")
     verdict = "PASS" if b1 == 0 and b2 == 0 else "FAIL"
     print(f"VERDICT: {verdict} (B1 diffs {b1}, B2 diffs {b2})")
     (pruned_dir / "verify-report.json").write_text(
