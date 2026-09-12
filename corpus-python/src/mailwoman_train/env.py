@@ -52,7 +52,7 @@ def _is_macos() -> bool:
 class PublicEnv:
     """Non-secret operational configuration. Never holds a credential."""
 
-    #: Root for downloaded data and runtime artifacts. REQUIRED — see `_require_data_root`.
+    #: Root for downloaded data and runtime artifacts. Required: there is no usable default.
     data_root: Path
     #: Configuration files. Platform default when unset, matching the TypeScript side.
     config_root: Path

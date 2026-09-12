@@ -258,57 +258,20 @@ class MailwomanCoarseEncoder(nn.Module):
         # so the phrase-prior contribution can be ablated cleanly.
         self.use_phrase_priors = use_phrase_priors
         self.phrase_feature_dim = int(phrase_feature_dim) if use_phrase_priors else 0
-        # Postcode-anchor conditioning channel (de-risk pilot, #239/#240; DeepSeek 2026-06-05).
-        # A per-token additive injection at the postcode span: a_i = c_i · (W·anchor_features +
-        # v_ANCHOR), added to the token+position embedding. anchor_features is a fixed-width
-        # ``(B, S, anchor_feature_dim)`` vector — a uniform country posterior over the NUM_LOCALES
-        # locale set (0 outside member countries) plus a 2-d centroid — and ``anchor_confidence`` is
-        # the per-token ``(B, S)`` confidence scalar (0 outside any postcode span). Robustness is the
-        # confidence CURRICULUM applied UPSTREAM (data loader perturbs the scalar by training step);
-        # the model is perturbation-agnostic, so absent / zero-confidence anchors are just the c=0
-        # tail of a continuum — no discrete [NO-ANCHOR] embedding, no regime switch. Position-local
-        # by construction: this is the property self-conditioning's global FiLM lacked (it composes
-        # with that FiLM cleanly — anchor at the INPUT, FiLM on the hidden states after the blocks).
+        # A disabled channel records width 0 and constructs nothing, so its absence is not a
+        # zero-width projection but no projection at all.
         self.use_postcode_anchor = use_postcode_anchor
         self.anchor_feature_dim = int(anchor_feature_dim) if use_postcode_anchor else 0
         # Dual-injection (#327): also place the pooled anchor at position 0. Only meaningful with the
         # anchor on; harmlessly ignored otherwise.
         self.inject_first_token = bool(inject_first_token) and use_postcode_anchor
-        # Gazetteer-anchor conditioning channel (#464; knowledge-ladder rung 3.2). Same additive
-        # input-layer shape as the postcode anchor: g_i = c_i · (W_g·gazetteer_features + v_GAZ),
-        # where gazetteer_features is the per-token multi-hot candidate-tag set (country/region/
-        # po_box/cedex/homograph) painted from the RAW SURFACE by the codex lexicon — never from
-        # labels, so train and inference share one computation. The clue INFORMS, the model decides
-        # (model-first; the homograph bit explicitly marks "context is critical here"). c=0
-        # tokens get g_i=0 — no regime switch, same continuum argument as the postcode anchor.
         self.use_gazetteer_anchor = use_gazetteer_anchor
         self.gazetteer_feature_dim = int(gazetteer_feature_dim) if use_gazetteer_anchor else 0
-        # Country-lexicon conditioning channel (#1104). Same additive input-layer shape as the gazetteer
-        # anchor: t_i = c_i · (W_c·country_features + v_CTRY), where country_features is the per-token
-        # [country_surface, country_ambiguous] clue painted from the RAW SURFACE by the codex country
-        # lexicon — never labels, so train and inference share one computation. Country is a CLOSED,
-        # enumerable class (~250 surfaces) the learned grammar mislabels in the WOF-admin leading
-        # long-form case; this de-entangles the country signal from the gazetteer's shared 5-hot slot
-        # (its own projection + cue) and is NOT zeroed near a postcode. Clue informs, model decides.
         self.use_country_anchor = use_country_anchor
         self.country_feature_dim = int(country_feature_dim) if use_country_anchor else 0
         self.country_ambiguous_scale = float(country_ambiguous_scale)
-        # Street-type conditioning channel (P-A / Option A, the retrieval-augmented-encoding probe). Same
-        # additive input-layer shape as the country/gazetteer anchors: s_i = c_i · (W_s·street_features +
-        # v_STREET), where street_features is a per-token multi-hot painted from the RAW SURFACE by the
-        # codex street-type lexicon (rue/boulevard/street/straße/…) — never labels, so train and inference
-        # share one computation. A SEPARATE channel (its own projection + cue), NOT a gazetteer slot, so
-        # v385 loads bit-clean and no existing feature dim shifts. Positive-evidence-only. Clue informs,
-        # model decides — the P-A hypothesis is that street↔locality LABELING errors are literal evidence
-        # absence (P-C: open-vocab FR misses are mis-labeling, not mis-segmentation).
         self.use_street_type_anchor = use_street_type_anchor
         self.street_type_feature_dim = int(street_type_feature_dim) if use_street_type_anchor else 0
-        # Locality-surface conditioning channel (v3.16.0 evidence-bundle probe — Option A's second
-        # correlated channel). Same additive input-layer shape; features are the per-token
-        # [locality, locality_homograph] clue painted from the RAW SURFACE by the locality-surface
-        # lexicon (WOF US+FR locality/localadmin names, curated, homograph = place-name in ≥2
-        # countries). The BUNDLE doctrine (P-A verdict): street-type and locality-membership must be
-        # weighed against each other in context so neither becomes a decisive soft rule.
         self.use_locality_surface_anchor = use_locality_surface_anchor
         self.locality_surface_feature_dim = int(locality_surface_feature_dim) if use_locality_surface_anchor else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
@@ -736,10 +699,43 @@ class MailwomanCoarseEncoder(nn.Module):
                 "encoder with use_phrase_priors=True or drop the features argument"
             )
 
-        # Postcode-anchor injection (#239/#240). Per-token additive: a_i = c_i · (W·features +
-        # v_ANCHOR), added to the input embedding. anchor_confidence carries the curriculum-perturbed
-        # confidence (0 outside any postcode span / absent postcode), so c=0 tokens get a_i=0 with no
-        # regime switch. Absent features default to zeros — the well-defined "no anchor" inference path.
+        return self._inject_channels(
+            h,
+            anchor_features=anchor_features,
+            anchor_confidence=anchor_confidence,
+            gazetteer_features=gazetteer_features,
+            gazetteer_confidence=gazetteer_confidence,
+            country_features=country_features,
+            country_confidence=country_confidence,
+            street_type_features=street_type_features,
+            street_type_confidence=street_type_confidence,
+            locality_surface_features=locality_surface_features,
+            locality_surface_confidence=locality_surface_confidence,
+        )
+
+    def _inject_channels(
+        self,
+        h: torch.Tensor,
+        *,
+        anchor_features: torch.Tensor | None,
+        anchor_confidence: torch.Tensor | None,
+        gazetteer_features: torch.Tensor | None,
+        gazetteer_confidence: torch.Tensor | None,
+        country_features: torch.Tensor | None,
+        country_confidence: torch.Tensor | None,
+        street_type_features: torch.Tensor | None,
+        street_type_confidence: torch.Tensor | None,
+        locality_surface_features: torch.Tensor | None,
+        locality_surface_confidence: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """Add each enabled soft-feed channel to the token representations.
+
+        The channels are independent and additive, so their order here does not change the result.
+        That is unlike their CONSTRUCTION order, which decides what `_init_weights` draws for each.
+        """
+        bsz, seq = h.shape[0], h.shape[1]
+
+        # The anchor is the one channel with a second injection: see the pooled position-0 add below.
         h, anchor_vec = _inject_soft_feed(
             h,
             name="anchor",
@@ -1006,6 +1002,35 @@ class MailwomanCoarseEncoder(nn.Module):
             else:
                 loss = ce_loss
 
+        return self._add_auxiliary_losses(
+            loss,
+            hidden=hidden,
+            labels=labels,
+            attention_mask=attention_mask,
+            locale_ids=locale_ids,
+            locale_logits=locale_logits,
+        )
+
+    def _add_auxiliary_losses(
+        self,
+        loss: torch.Tensor | None,
+        *,
+        hidden: torch.Tensor,
+        labels: torch.Tensor | None,
+        attention_mask: torch.Tensor | None,
+        locale_ids: torch.Tensor | None,
+        locale_logits: torch.Tensor | None,
+    ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
+        """The three auxiliary terms, each gated on its own flag and weight.
+
+        Each shapes the shared encoder without appearing in the inference graph: the locale CE
+        supervises the pooled representation the FiLM conditioning reads, the span-boundary BCE
+        pressures span edges, and the semi-Markov NLL scores segmentations. `loss` arrives as the
+        supervised term or None, and each addition guards its own empty-batch case — an all-ignored
+        batch contributes nothing rather than dividing by zero.
+
+        Returns the accumulated loss and the span scores, which are an output rather than a term.
+        """
         # PR3: auxiliary locale cross-entropy. Supervises the locale head against the row's
         # country so the pooled representation (and therefore the FiLM conditioning) actually
         # encodes "which country". fp32 CE over the small locale vocabulary. Rows whose country
