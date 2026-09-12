@@ -525,9 +525,11 @@ async function verifyPython(
 	run("uv", ["build"], { cwd: pythonDir })
 
 	const distDir = join(pythonDir, "dist")
+
 	const entries = (await pathExists(distDir))
 		? await Globerator.from("*", { cwd: distDir, absolute: false }).toArray()
 		: []
+
 	const wheel = entries.find((f) => f.endsWith(".whl"))
 	const sdist = entries.find((f) => f.endsWith(".tar.gz"))
 

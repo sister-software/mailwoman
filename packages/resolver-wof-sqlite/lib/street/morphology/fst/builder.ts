@@ -114,6 +114,7 @@ export async function buildStreetMorphologyFST(
 			absolute: false,
 			onlyFiles: false,
 		}).toArray()
+
 		const localeProbes: Array<[string, boolean]> = []
 
 		for (const entry of entries) {
