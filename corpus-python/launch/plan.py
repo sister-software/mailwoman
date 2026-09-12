@@ -41,18 +41,61 @@ PACKAGE_AND_CONFIGS = ("__pycache__", "configs/__pycache__")
 PACKAGE_ROOT = "corpus-python/src/mailwoman_train"
 
 
+#: Where a corpus version lives on each side. A version's name appears in up to four places in a
+#: transfer pair, so it is written once and these compose the rest.
+CORPUS_SOURCE_ROOT = "corpus"
+CORPUS_VOLUME_ROOT = "corpus/versioned"
+
+# How a corpus version's directories nest, which differs by when the version was built rather than
+# by anything about its contents. All three shapes are in use; `corpus(...)` names one per row so
+# the version string is written once instead of two or four times.
+#: Both sides carry the inner `corpus-<version>` directory.
+NESTED = "nested"
+#: The bucket holds the parts directly; the volume gains the inner `corpus-<version>` directory.
+WRAPPED = "wrapped"
+#: Neither side carries it.
+FLAT = "flat"
+
+
 @dataclass(frozen=True)
 class Copy:
     """One rclone transfer: a path under the bucket, a path under the volume, and the flag set.
 
-    Source and destination are both carried because they disagree for 100 of the 194 transfers —
-    a corpus lands under `corpus/versioned/`, a single lexicon file lands in a directory. Deriving
-    one from the other would be inventing a rule the launcher does not follow.
+    Build these with `corpus`, `mirror` or `file_into` rather than by hand — a literal pair spells
+    a version name up to four times, which is how a corpus version comes to exist only as a string
+    inside a transfer nobody can enumerate.
     """
 
     source: str
     destination: str
     flags: str = WIDE
+
+    #: The corpus version this moves, when it moves one. Carried so the set of versions the
+    #: launcher knows about can be READ OFF the table — otherwise a version exists only as a
+    #: substring of two paths and nobody can answer "which versions are there".
+    version: str | None = None
+
+
+def corpus(version: str, layout: str = NESTED, *, flags: str = WIDE) -> Copy:
+    """A corpus version, from the bucket to its place under `corpus/versioned/`.
+
+    `flags` is keyword-only because it and `layout` are both strings: `corpus("v0.10.0", STEADY)`
+    reads as a flag choice and binds as a layout, producing a source path that does not exist.
+    """
+    inner = f"corpus-{version}/"
+    source = f"{CORPUS_SOURCE_ROOT}/{version}/" + (inner if layout == NESTED else "")
+    destination = f"{CORPUS_VOLUME_ROOT}/{version}/" + ("" if layout == FLAT else inner)
+    return Copy(source, destination, flags, version=version)
+
+
+def mirror(path: str, *, flags: str = WIDE) -> Copy:
+    """A directory that lands at the same path on the volume — the training code, the lexicons."""
+    return Copy(path, path, flags)
+
+
+def file_into(path: str, *, flags: str = WIDE, directory: str | None = None) -> Copy:
+    """One file, into the directory it already sits in, or into `directory` when it moves."""
+    return Copy(path, directory if directory is not None else path.rsplit("/", 1)[0] + "/", flags)
 
 
 @dataclass(frozen=True)
@@ -71,6 +114,11 @@ class SyncPlan:
     rclone_commands: list[str]
     check_paths: list[str]
     pycache_paths: list[str]
+
+
+def corpus_versions(entry: CorpusVersion) -> list[str]:
+    """The corpus versions this entry stages, in order."""
+    return [copy.version for copy in entry.copies if copy.version is not None]
 
 
 def plan_sync(entry: CorpusVersion) -> SyncPlan:

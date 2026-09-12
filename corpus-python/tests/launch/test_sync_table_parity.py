@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 from launch.corpora import CORPUS_VERSIONS
-from launch.plan import plan_sync
+from launch.plan import corpus_versions, plan_sync
 
 FIXTURE = Path(__file__).with_name("sync-census.json")
 
@@ -46,6 +46,22 @@ def test_each_version_generates_what_its_function_ran(version: str) -> None:
     assert plan.rclone_commands == census["rclone_commands"], f"{version}: transfers differ"
     assert sorted(plan.check_paths) == census["check_paths"], f"{version}: verified paths differ"
     assert sorted(set(plan.pycache_paths)) == census["pycache_paths"], f"{version}: pycache clears differ"
+
+
+def test_every_corpus_version_can_be_read_off_the_table() -> None:
+    """A version must be enumerable, not just present.
+
+    While each transfer spelled its version into two literal paths, the set of corpus versions the
+    launcher knows about existed only as substrings and nobody could list it. `corpus()` records the
+    name, so this answers "which versions are there" from the table itself.
+    """
+    versions = {version for entry in CORPUS_VERSIONS.values() for version in corpus_versions(entry)}
+
+    assert len(versions) == 53, sorted(versions)
+    assert "v0.12.0-nz" in versions
+    assert "v8-cjk-regs-2026-09-08" in versions
+    # Every one is a bare version name, never a path: a slash here means a literal crept back in.
+    assert not [version for version in versions if "/" in version]
 
 
 def test_the_totals_match_the_measured_census() -> None:

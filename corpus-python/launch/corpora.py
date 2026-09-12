@@ -1,14 +1,23 @@
 """What each corpus version stages onto the volume, as data.
 
-One entry per version. A new version is a row here, not a new Modal function — the variation
-between versions is which directories move and which files must land afterwards, and that is a
-manifest rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
+One row per version. A new version is a row here, not a new Modal function — the variation between
+versions is which directories move and which files must land afterwards, and that is a manifest
+rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
 
-Each row carries both halves of every transfer. The destination is not derived from the source
-because 100 of the 137 transfers disagree with any single rule that could derive it: a corpus
-version usually lands under `corpus/versioned/<version>/corpus-<version>/`, sometimes under
-`corpus/versioned/<version>/` with no inner directory, and a single lexicon file lands in a
-directory rather than at a path. Carrying both is what a manifest is for.
+A version name is written ONCE per transfer. `corpus("v0.12.0-nz")` derives both the bucket path
+and the volume path, because the name otherwise appears four times in one pair and a corpus version
+ends up existing only as a substring of two strings nobody can enumerate. `corpus_versions()` reads
+them back off the table for exactly that reason.
+
+The three layouts differ by when a version was built, not by anything about its contents, so each
+row names which one it uses:
+
+    NESTED   corpus/<v>/corpus-<v>/  ->  corpus/versioned/<v>/corpus-<v>/   (22 transfers)
+    FLAT     corpus/<v>/             ->  corpus/versioned/<v>/              (21)
+    WRAPPED  corpus/<v>/             ->  corpus/versioned/<v>/corpus-<v>/   (12)
+
+`mirror` is a directory that lands at the same path (68), `file_into` a single file into a
+directory (13 into its own, 1 elsewhere). Those six shapes cover all 137 transfers.
 
 `checks` are the paths the sync verifies after copying. They matter because rclone EXITS 0 WHEN THE
 SOURCE PREFIX IS EMPTY: without a check, a version whose R2 prefix was never uploaded syncs
@@ -19,16 +28,19 @@ pointing back at the sync.
 from __future__ import annotations
 
 from .plan import (
+    FLAT,
     NARROW,
     NONE,
     PACKAGE_AND_CONFIGS,
     PLAIN,
     STEADY,
     STEADY_LOGGED,
-    WIDE,
     WIDEST,
-    Copy,
+    WRAPPED,
     CorpusVersion,
+    corpus,
+    file_into,
+    mirror,
 )
 
 #: Keyed by the name that followed `sync_` on the function this replaces, so an operator who knows
@@ -39,17 +51,17 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "corpus": CorpusVersion(
         copies=(
-            Copy("corpus/v0.3.0/", "corpus/versioned/v0.3.0/corpus-v0.3.0/", WIDEST),
-            Copy("corpus/v0.4.0/", "corpus/versioned/v0.4.0/corpus-v0.4.0/", PLAIN),
-            Copy("models/tokenizer/", "models/tokenizer/", NARROW),
-            Copy("corpus-python/", "corpus-python/", NARROW),
+            corpus("v0.3.0", WRAPPED, flags=WIDEST),
+            corpus("v0.4.0", WRAPPED, flags=PLAIN),
+            mirror("models/tokenizer/", flags=NARROW),
+            mirror("corpus-python/", flags=NARROW),
         ),
         pycache=NONE,
     ),
     "country_channel": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("gazetteer/", "gazetteer/", WIDE),
+            mirror("corpus-python/src/"),
+            mirror("gazetteer/"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v2.6.3-country-channel.yaml",
@@ -59,7 +71,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         ),
     ),
     "country_softguard": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v2.6.4-country-softguard.yaml",
             "corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5/MANIFEST.json",
@@ -69,12 +81,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "deploc": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.15.0-deploc/corpus-v0.15.0-deploc/",
-                "corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.15.0-deploc"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.11.0-deploc-feed.yaml",
@@ -88,7 +96,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         ),
     ),
     "deploc_head": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.14.0-deploc-head.yaml",
             "output-v384-latam-probe-s42/checkpoints/step-008000",
@@ -96,15 +104,15 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "evidence_bundle": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("gazetteer/locality-surface-lexicon-v1.json", "gazetteer/", WIDE),
-            Copy("gazetteer/locality-surface-lexicon-v2.json", "gazetteer/", WIDE),
-            Copy("gazetteer/locality-surface-lexicon-v3.json", "gazetteer/", WIDE),
-            Copy("gazetteer/locality-surface-lexicon-v4.json", "gazetteer/", WIDE),
-            Copy("gazetteer/locality-surface-lexicon-v5.json", "gazetteer/", WIDE),
-            Copy("gazetteer/street-type-lexicon-v2.json", "gazetteer/", WIDE),
-            Copy("gazetteer/locality-surface-lexicon-v6.json", "gazetteer/", WIDE),
-            Copy("gazetteer/street-type-lexicon-v3.json", "gazetteer/", WIDE),
+            mirror("corpus-python/src/"),
+            file_into("gazetteer/locality-surface-lexicon-v1.json"),
+            file_into("gazetteer/locality-surface-lexicon-v2.json"),
+            file_into("gazetteer/locality-surface-lexicon-v3.json"),
+            file_into("gazetteer/locality-surface-lexicon-v4.json"),
+            file_into("gazetteer/locality-surface-lexicon-v5.json"),
+            file_into("gazetteer/street-type-lexicon-v2.json"),
+            file_into("gazetteer/locality-surface-lexicon-v6.json"),
+            file_into("gazetteer/street-type-lexicon-v3.json"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.16.0-evidence-bundle.yaml",
@@ -115,8 +123,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "gb": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("corpus/v0.14.0-gb/corpus-v0.14.0-gb/", "corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb/", WIDE),
+            mirror("corpus-python/src/"),
+            corpus("v0.14.0-gb"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.10.0-gb-probe.yaml",
@@ -130,16 +138,16 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "gb_venue": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("corpus/v0.15.1-gb-venue/", "corpus/versioned/v0.15.1-gb-venue/", WIDE),
-            Copy("corpus/v0.15.2-gb-venue-country/", "corpus/versioned/v0.15.2-gb-venue-country/", WIDE),
+            mirror("corpus-python/src/"),
+            corpus("v0.15.1-gb-venue", FLAT),
+            corpus("v0.15.2-gb-venue-country", FLAT),
         ),
     ),
     "jp_full": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("corpus/v8-jp-full-2026-08-04/", "corpus/versioned/v8-jp-full-2026-08-04/", WIDE),
-            Copy("corpus/v8-jp-probe/jp-muni-centroids.json", "corpus/versioned/v8-jp-probe/", WIDE),
+            mirror("corpus-python/src/"),
+            corpus("v8-jp-full-2026-08-04", FLAT),
+            file_into("corpus/v8-jp-probe/jp-muni-centroids.json", directory="corpus/versioned/v8-jp-probe/"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v8-jp-full-2k.yaml",
@@ -155,12 +163,12 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "jp_probe": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("corpus/v8-jp-probe/", "corpus/versioned/v8-jp-probe/", WIDE),
-            Copy("corpus/v8-leg2/", "corpus/versioned/v8-leg2/", WIDE),
-            Copy("gazetteer/locality-surface-lexicon-v7.json", "gazetteer/", WIDE),
-            Copy("corpus/v0.15.0-venue/", "corpus/versioned/v0.15.0-venue/", WIDE),
-            Copy("eval/fixtures/overture-fragments-de.jsonl", "eval/fixtures/", WIDE),
+            mirror("corpus-python/src/"),
+            corpus("v8-jp-probe", FLAT),
+            corpus("v8-leg2", FLAT),
+            file_into("gazetteer/locality-surface-lexicon-v7.json"),
+            corpus("v0.15.0-venue", FLAT),
+            file_into("eval/fixtures/overture-fragments-de.jsonl"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v8-jp-probe.yaml",
@@ -175,12 +183,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "latam": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.13.0-latam/corpus-v0.13.0-latam/",
-                "corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.13.0-latam"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.8.4-latam-probe.yaml",
@@ -194,12 +198,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "latam_br": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.14.0-latam-br/corpus-v0.14.0-latam-br/",
-                "corpus/versioned/v0.14.0-latam-br/corpus-v0.14.0-latam-br/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.14.0-latam-br"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.8.6-latam-br-8k.yaml",
@@ -213,12 +213,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "no_fragment_b4b": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/",
-                "corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.11.0-no-fragment"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.6.0-no-fragment-b4b.yaml",
@@ -230,9 +226,9 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "nsplice": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy("models/tokenizer/v0.7.0-nsplice/", "models/tokenizer/v0.7.0-nsplice/", STEADY),
-            Copy("models/tokenizer/v0.7.1-nsplice/", "models/tokenizer/v0.7.1-nsplice/", STEADY),
+            mirror("corpus-python/src/", flags=STEADY),
+            mirror("models/tokenizer/v0.7.0-nsplice/", flags=STEADY),
+            mirror("models/tokenizer/v0.7.1-nsplice/", flags=STEADY),
         ),
         checks=(
             "models/bsplice-expanded/pytorch_model.bin",
@@ -241,8 +237,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "nz": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("corpus/v0.12.0-nz/corpus-v0.12.0-nz/", "corpus/versioned/v0.12.0-nz/corpus-v0.12.0-nz/", WIDE),
+            mirror("corpus-python/src/"),
+            corpus("v0.12.0-nz"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.8.2-nz-locale-probe.yaml",
@@ -255,11 +251,11 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         ),
     ),
     "src_727": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
         checks=("corpus-python/src/mailwoman_train/configs/v2.6.0-span-boundary-probe.yaml",),
     ),
     "src_727_stage2": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.0.0-span-head.yaml",
             "corpus-python/src/mailwoman_train/configs/v3.0.1-span-head-lr.yaml",
@@ -267,10 +263,10 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         ),
     ),
     "src_gb": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
     ),
     "src_v3100": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.10.0-span-ship-probe.yaml",
             "corpus-python/src/mailwoman_train/nn/span_scorer.py",
@@ -278,8 +274,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "street_type": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("gazetteer/street-type-lexicon-v1.json", "gazetteer/", WIDE),
+            mirror("corpus-python/src/"),
+            file_into("gazetteer/street-type-lexicon-v1.json"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v3.15.0-street-type.yaml",
@@ -289,8 +285,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "substrate_repairs": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("gazetteer/affix-relabel-lexicon-v2.json", "gazetteer/", WIDE),
+            mirror("corpus-python/src/"),
+            file_into("gazetteer/affix-relabel-lexicon-v2.json"),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -305,8 +301,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v050": CorpusVersion(
         copies=(
-            Copy("corpus/v0.5.0/corpus-v0.5.0/", "corpus/versioned/v0.5.0/corpus-v0.5.0/", WIDE),
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
+            corpus("v0.5.0"),
+            mirror("corpus-python/src/"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.4.0-charoffset.yaml",
@@ -315,12 +311,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v060": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress/",
-                "corpus/versioned/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.6.0-boundary-stress"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.6.0-boundary-stress.yaml",
@@ -331,12 +323,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v061": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress/",
-                "corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.6.1-boundary-stress"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.7.0-boundary-stress.yaml",
@@ -347,12 +335,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v080": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/",
-                "corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.8.0-fr-admin-split"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.8.0-fr-admin-split.yaml",
@@ -363,12 +347,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v081": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/",
-                "corpus/versioned/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.8.1-fr-admin-split"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.8.1-fr-admin-split.yaml",
@@ -379,12 +359,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v090": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.0-multilocale/corpus-v0.9.0-multilocale/",
-                "corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.0-multilocale"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.0-multilocale.yaml",
@@ -397,12 +373,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v091": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.1-multilocale/corpus-v0.9.1-multilocale/",
-                "corpus/versioned/v0.9.1-multilocale/corpus-v0.9.1-multilocale/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.1-multilocale"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.1-multilocale-3order.yaml",
@@ -415,12 +387,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v092": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/",
-                "corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.2-multilocale-au"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.2-multilocale-au.yaml",
@@ -433,12 +401,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v094_fr_bare": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/",
-                "corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.4-fr-bare-street"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.4-fr-bare-street.yaml",
@@ -449,7 +413,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         ),
     ),
     "v095_case": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.5-surface-aug.yaml",
             "corpus-python/src/mailwoman_train/data/augment.py",
@@ -457,7 +421,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         ),
     ),
     "v193": CorpusVersion(
-        copies=(Copy("corpus-python/src/", "corpus-python/src/", WIDE),),
+        copies=(mirror("corpus-python/src/"),),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.3-anchor-absorption.yaml",
             "corpus-python/src/mailwoman_train/features/postcode_shapes.py",
@@ -468,12 +432,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v193a1": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/",
-                "corpus/versioned/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.3-anchor-absorption"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.3a1-anchor-absorption.yaml",
@@ -486,12 +446,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v193a2": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/",
-                "corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.3a2-anchor-absorption"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.3a2-anchor-absorption.yaml",
@@ -504,12 +460,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v193a3": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/",
-                "corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.3a3-anchor-absorption"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.3a3-anchor-absorption.yaml",
@@ -522,12 +474,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v196_slavic": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/",
-                "corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.9.6-slavic-anchor"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.6-slavic-anchor.yaml",
@@ -540,9 +488,9 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v197_bsplice": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY_LOGGED),
-            Copy("models/tokenizer/v0.6.0-bsplice/", "models/tokenizer/v0.6.0-bsplice/", STEADY_LOGGED),
-            Copy("models/bsplice-expanded/", "models/bsplice-expanded/", STEADY_LOGGED),
+            mirror("corpus-python/src/", flags=STEADY_LOGGED),
+            mirror("models/tokenizer/v0.6.0-bsplice/", flags=STEADY_LOGGED),
+            mirror("models/bsplice-expanded/", flags=STEADY_LOGGED),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v1.9.7-bsplice.yaml",
@@ -554,25 +502,21 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v210": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy(
-                "corpus/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/",
-                "corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/",
-                STEADY,
-            ),
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.10.0-boundary-family", flags=STEADY),
         ),
     ),
     "v241_fr_nsplice": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy("models/tokenizer/v0.8.0-fr-nsplice/", "models/tokenizer/v0.8.0-fr-nsplice/", STEADY),
+            mirror("corpus-python/src/", flags=STEADY),
+            mirror("models/tokenizer/v0.8.0-fr-nsplice/", flags=STEADY),
         ),
     ),
     "v420_batch": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy("corpus/v0.17.0-batch/", "corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/", WIDE),
-            Copy("anchor/pilot-anchor-lookup-v2-2026-08-05.json", "anchor/", WIDE),
+            mirror("corpus-python/src/"),
+            corpus("v0.17.0-batch", WRAPPED),
+            file_into("anchor/pilot-anchor-lookup-v2-2026-08-05.json"),
         ),
         checks=(
             "anchor/pilot-anchor-lookup-v2-2026-08-05.json",
@@ -586,12 +530,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v431_suffix_boundary": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.18.1-suffix-boundary/",
-                "corpus/versioned/v0.18.1-suffix-boundary/corpus-v0.18.1-suffix-boundary/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.18.1-suffix-boundary", WRAPPED),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -605,12 +545,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v440": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.19.0-suffix-boundary-v2/",
-                "corpus/versioned/v0.19.0-suffix-boundary-v2/corpus-v0.19.0-suffix-boundary-v2/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.19.0-suffix-boundary-v2", WRAPPED),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -625,12 +561,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v450": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.20.0-psc-frsurfaces/",
-                "corpus/versioned/v0.20.0-psc-frsurfaces/corpus-v0.20.0-psc-frsurfaces/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.20.0-psc-frsurfaces", WRAPPED),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -646,12 +578,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v451": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.21.0-psc-frsurfaces-v2/",
-                "corpus/versioned/v0.21.0-psc-frsurfaces-v2/corpus-v0.21.0-psc-frsurfaces-v2/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.21.0-psc-frsurfaces-v2", WRAPPED),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -667,12 +595,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v452": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.22.0-psc-frsurfaces-v3/",
-                "corpus/versioned/v0.22.0-psc-frsurfaces-v3/corpus-v0.22.0-psc-frsurfaces-v3/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.22.0-psc-frsurfaces-v3", WRAPPED),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -688,12 +612,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v460": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.23.0-admin-surfaces/",
-                "corpus/versioned/v0.23.0-admin-surfaces/corpus-v0.23.0-admin-surfaces/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.23.0-admin-surfaces", WRAPPED),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -710,12 +630,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v530_reviewed_postcode_tail": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy(
-                "corpus/v0.28.0-reviewed-postcode-tail/",
-                "corpus/versioned/v0.28.0-reviewed-postcode-tail/corpus-v0.28.0-reviewed-postcode-tail/",
-                STEADY,
-            ),
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.28.0-reviewed-postcode-tail", WRAPPED, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -728,12 +644,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v540_target_families": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy(
-                "corpus/v0.29.0-target-families/",
-                "corpus/versioned/v0.29.0-target-families/corpus-v0.29.0-target-families/",
-                STEADY,
-            ),
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.29.0-target-families", WRAPPED, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -750,12 +662,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v560_bare_postcode": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy(
-                "corpus/v0.30.0-bare-postcode/",
-                "corpus/versioned/v0.30.0-bare-postcode/corpus-v0.30.0-bare-postcode/",
-                STEADY,
-            ),
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.30.0-bare-postcode", WRAPPED, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -772,12 +680,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v6": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6/",
-                "corpus/versioned/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.10.7-fragment-v6"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v2.9.0-country-counterweight.yaml",
@@ -788,12 +692,8 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v7": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", WIDE),
-            Copy(
-                "corpus/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/",
-                "corpus/versioned/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/",
-                WIDE,
-            ),
+            mirror("corpus-python/src/"),
+            corpus("v0.10.8-fragment-v7"),
         ),
         checks=(
             "corpus-python/src/mailwoman_train/configs/v2.9.1-country-leading.yaml",
@@ -804,9 +704,9 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v8cjk": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy("corpus-python/scripts/", "corpus-python/scripts/", STEADY),
-            Copy("corpus/v8-cjk-2026-09-05/", "corpus/versioned/v8-cjk-2026-09-05/", STEADY),
+            mirror("corpus-python/src/", flags=STEADY),
+            mirror("corpus-python/scripts/", flags=STEADY),
+            corpus("v8-cjk-2026-09-05", FLAT, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -832,10 +732,10 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v8cjk_kana": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy("corpus-python/scripts/", "corpus-python/scripts/", STEADY),
-            Copy("corpus/v8-jp-kana-2026-09-06/", "corpus/versioned/v8-jp-kana-2026-09-06/", STEADY),
-            Copy("corpus/v8-cjk-kana-2026-09-06/", "corpus/versioned/v8-cjk-kana-2026-09-06/", STEADY),
+            mirror("corpus-python/src/", flags=STEADY),
+            mirror("corpus-python/scripts/", flags=STEADY),
+            corpus("v8-jp-kana-2026-09-06", FLAT, flags=STEADY),
+            corpus("v8-cjk-kana-2026-09-06", FLAT, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -859,11 +759,11 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v8cjk_kr": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy("corpus-python/scripts/", "corpus-python/scripts/", STEADY),
-            Copy("corpus/v8-jp-kana-2026-09-06/", "corpus/versioned/v8-jp-kana-2026-09-06/", STEADY),
-            Copy("corpus/v8-kr-2026-09-06/", "corpus/versioned/v8-kr-2026-09-06/", STEADY),
-            Copy("corpus/v8-cjk-kr-2026-09-06/", "corpus/versioned/v8-cjk-kr-2026-09-06/", STEADY),
+            mirror("corpus-python/src/", flags=STEADY),
+            mirror("corpus-python/scripts/", flags=STEADY),
+            corpus("v8-jp-kana-2026-09-06", FLAT, flags=STEADY),
+            corpus("v8-kr-2026-09-06", FLAT, flags=STEADY),
+            corpus("v8-cjk-kr-2026-09-06", FLAT, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
@@ -888,24 +788,24 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
     ),
     "v8cjk_regs": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy("corpus-python/scripts/", "corpus-python/scripts/", STEADY),
-            Copy("corpus/v8-jp-kana-2026-09-06/", "corpus/versioned/v8-jp-kana-2026-09-06/", STEADY),
-            Copy("corpus/v8-kr-2026-09-08/", "corpus/versioned/v8-kr-2026-09-08/", STEADY),
-            Copy("corpus/v8-kr-registry-2026-09-08/", "corpus/versioned/v8-kr-registry-2026-09-08/", STEADY),
-            Copy("corpus/v8-tw-2026-09-08/", "corpus/versioned/v8-tw-2026-09-08/", STEADY),
-            Copy("corpus/v8-tw-registry-2026-09-08/", "corpus/versioned/v8-tw-registry-2026-09-08/", STEADY),
-            Copy("corpus/v8-jp-registry-2026-09-08/", "corpus/versioned/v8-jp-registry-2026-09-08/", STEADY),
-            Copy("corpus/v8-cjk-regs-2026-09-08/", "corpus/versioned/v8-cjk-regs-2026-09-08/", STEADY),
+            mirror("corpus-python/src/", flags=STEADY),
+            mirror("corpus-python/scripts/", flags=STEADY),
+            corpus("v8-jp-kana-2026-09-06", FLAT, flags=STEADY),
+            corpus("v8-kr-2026-09-08", FLAT, flags=STEADY),
+            corpus("v8-kr-registry-2026-09-08", FLAT, flags=STEADY),
+            corpus("v8-tw-2026-09-08", FLAT, flags=STEADY),
+            corpus("v8-tw-registry-2026-09-08", FLAT, flags=STEADY),
+            corpus("v8-jp-registry-2026-09-08", FLAT, flags=STEADY),
+            corpus("v8-cjk-regs-2026-09-08", FLAT, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
     ),
     "v8cjk_shi": CorpusVersion(
         copies=(
-            Copy("corpus-python/src/", "corpus-python/src/", STEADY),
-            Copy("corpus-python/scripts/", "corpus-python/scripts/", STEADY),
-            Copy("corpus/v8-jp-shi-2026-09-06/", "corpus/versioned/v8-jp-shi-2026-09-06/", STEADY),
-            Copy("corpus/v8-cjk-shi-2026-09-06/", "corpus/versioned/v8-cjk-shi-2026-09-06/", STEADY),
+            mirror("corpus-python/src/", flags=STEADY),
+            mirror("corpus-python/scripts/", flags=STEADY),
+            corpus("v8-jp-shi-2026-09-06", FLAT, flags=STEADY),
+            corpus("v8-cjk-shi-2026-09-06", FLAT, flags=STEADY),
         ),
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
