@@ -12,11 +12,11 @@ from __future__ import annotations
 from mailwoman_train.postcode_shapes import collect_matches
 from mailwoman_train.tokenizer import (
     ANCHOR_FEATURE_DIM,
-    PieceSpan,
     anchor_feature_vector,
     realign_anchor_to_pieces,
     realign_anchor_to_pieces_shaped,
 )
+from mailwoman_train.types import PieceSpan
 
 
 def _piece(text: str, begin: int, end: int) -> PieceSpan:

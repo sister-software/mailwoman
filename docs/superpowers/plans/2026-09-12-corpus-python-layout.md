@@ -85,10 +85,13 @@ Record both cumulative microsecond figures in the task's commit message. If the 
 Create `tests/mailwoman_train/test_import_hygiene.py`:
 
 ```python
-"""No intra-package import may sit inside a function body.
+"""A deferred intra-package import may not dodge an import cycle.
 
-A deferred import turns an ImportError into a first-call failure, so a broken module reaches a
-training run instead of failing at startup. This is the §3.1 regression detector.
+A deferred import is legitimate when it buys startup weight: `cli.py` defers 32 of them and keeps
+torch's 1.46 s off every `--help` (measured — `mailwoman_train.cli` imports in 22,340 us against
+`mailwoman_train.train`'s 1,458,740 us). It is a defect when the target module imports this one back,
+because then the deferral is hiding a circular graph and an ImportError surfaces at first call
+rather than at import. This detector flags the second and leaves the first alone.
 """
 
 from __future__ import annotations
@@ -99,36 +102,75 @@ from pathlib import Path
 SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train"
 
 
-def _function_level_imports(tree: ast.AST) -> list[tuple[str, int]]:
-    found: list[tuple[str, int]] = []
+def _module_name(path: Path) -> str:
+    relative = path.relative_to(SOURCE_ROOT).with_suffix("")
+    parts = [p for p in relative.parts if p != "__init__"]
+    return ".".join(["mailwoman_train", *parts])
+
+
+def _resolve(module: str | None, level: int, holder: str) -> str:
+    if level == 0:
+        return module or ""
+    base = holder.split(".")
+    anchor = base[: len(base) - level + 1] if level > 1 else base[:-1] or base
+    return ".".join([*anchor, module]) if module else ".".join(anchor)
+
+
+def _imports(tree: ast.AST, holder: str, *, deferred: bool) -> set[tuple[str, int]]:
+    """Every intra-package target imported at module level (deferred=False) or in a body (True)."""
+    found: set[tuple[str, int]] = set()
+    bodies = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)]
+    inside = {id(n) for body in bodies for n in ast.walk(body)}
     for node in ast.walk(tree):
-        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+        if not isinstance(node, ast.ImportFrom):
             continue
-        for inner in ast.walk(node):
-            if isinstance(inner, ast.ImportFrom):
-                module = inner.module or ""
-                if inner.level > 0 or module.startswith("mailwoman_train"):
-                    found.append((f"{node.name}: from {'.' * inner.level}{module}", inner.lineno))
-            elif isinstance(inner, ast.Import):
-                for alias in inner.names:
-                    if alias.name.startswith("mailwoman_train"):
-                        found.append((f"{node.name}: import {alias.name}", inner.lineno))
+        if (id(node) in inside) is not deferred:
+            continue
+        target = _resolve(node.module, node.level, holder)
+        if target.startswith("mailwoman_train"):
+            found.add((target, node.lineno))
     return found
 
 
-def test_no_function_level_intra_package_imports() -> None:
+def _module_level_graph() -> dict[str, set[str]]:
+    graph: dict[str, set[str]] = {}
+    for path in sorted(SOURCE_ROOT.rglob("*.py")):
+        holder = _module_name(path)
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        graph[holder] = {t for t, _ in _imports(tree, holder, deferred=False)}
+    return graph
+
+
+def _reaches(graph: dict[str, set[str]], start: str, goal: str) -> bool:
+    seen: set[str] = set()
+    stack = list(graph.get(start, ()))
+    while stack:
+        current = stack.pop()
+        if current == goal:
+            return True
+        if current in seen:
+            continue
+        seen.add(current)
+        stack.extend(graph.get(current, ()))
+    return False
+
+
+def test_no_deferred_import_dodges_a_cycle() -> None:
+    graph = _module_level_graph()
     offenders: list[str] = []
     for path in sorted(SOURCE_ROOT.rglob("*.py")):
+        holder = _module_name(path)
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for description, lineno in _function_level_imports(tree):
-            offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} {description}")
-    assert offenders == [], "deferred intra-package imports:\n" + "\n".join(offenders)
+        for target, lineno in sorted(_imports(tree, holder, deferred=True)):
+            if _reaches(graph, target, holder):
+                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which imports back")
+    assert offenders == [], "deferred imports dodging a cycle:\n" + "\n".join(offenders)
 
 
 def test_piece_span_is_declared_in_types() -> None:
     from mailwoman_train import types
 
-    assert {f for f in types.PieceSpan.__dataclass_fields__} == {
+    assert set(types.PieceSpan.__dataclass_fields__) == {
         "piece",
         "piece_id",
         "char_begin",
@@ -142,7 +184,9 @@ def test_piece_span_is_declared_in_types() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygiene.py -q
 ```
 
-Expected: both tests FAIL. The first lists the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
+Expected: both tests FAIL. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598 — and nothing else. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
+
+If the first test names more than those five, the cycle reachability walk is over-reaching; read the extra entries before weakening the assertion. If it names fewer, the walk is under-reaching and the detector is worthless — a false negative here is indistinguishable from a clean tree.
 
 - [ ] **Step 4: Create `types.py`**
 

@@ -25,7 +25,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from .tokenizer import PieceSpan
+from .types import PieceSpan
 
 # Leading/trailing strip: chars that are not Unicode letters/digits. Mirrors the builder's
 # /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu — Python's \w with re.UNICODE covers [\p{L}\p{N}_]; underscore

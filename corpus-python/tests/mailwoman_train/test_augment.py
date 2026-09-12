@@ -14,7 +14,8 @@ from mailwoman_train.augment import (
     splice_expansion,
     upper_case_row,
 )
-from mailwoman_train.tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces, whitespace_spans
+from mailwoman_train.tokenizer import realign_labels_to_pieces, realign_spans_to_pieces, whitespace_spans
+from mailwoman_train.types import PieceSpan
 
 
 def test_expand_token_single_word():

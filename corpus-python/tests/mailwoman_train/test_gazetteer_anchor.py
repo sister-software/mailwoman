@@ -14,7 +14,7 @@ from mailwoman_train.gazetteer_anchor import (
     realign_gazetteer_to_pieces,
     suppress_gazetteer_near_postcode,
 )
-from mailwoman_train.tokenizer import PieceSpan
+from mailwoman_train.types import PieceSpan
 
 BITS = {"country": 1, "region": 2, "po_box": 4, "cedex": 8, "homograph": 16}
 SLOTS = ("country", "region", "po_box", "cedex", "homograph")

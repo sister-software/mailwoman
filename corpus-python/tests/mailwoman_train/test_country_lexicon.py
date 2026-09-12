@@ -22,7 +22,7 @@ from mailwoman_train.country_lexicon import (
     realign_country_to_pieces,
 )
 from mailwoman_train.gazetteer_anchor import gazetteer_char_paint
-from mailwoman_train.tokenizer import PieceSpan
+from mailwoman_train.types import PieceSpan
 
 S = COUNTRY_SURFACE_BIT  # 1
 A = COUNTRY_AMBIGUOUS_BIT  # 2

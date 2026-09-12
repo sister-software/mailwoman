@@ -56,6 +56,10 @@ Five deferred imports inside `encode_with_features` exist to dodge the cycle. Th
 shared value type, lives in the module that also does the work. An `ImportError` inside `country_lexicon` therefore
 raises at first call rather than at import, so a broken module reaches a training run instead of failing at startup.
 
+Their comment claims they keep `tokenizer.py` import-light. Measured, that claim does not hold: `gazetteer_anchor`
+adds 2,263 µs and `country_lexicon` 117 µs on top of `tokenizer`'s 36,869 µs, which is 6.5%. Neither module reaches
+torch. Deferred imports elsewhere in the tree do buy real weight and stay — see §11.
+
 Both `huggingface/nanotron` and `allenai/OLMo-core` hold value types in a `data/types.py` that everything imports.
 A package-root `types.py` holding `PieceSpan` removes all five deferred imports.
 
@@ -287,8 +291,13 @@ Steps 1 through 7 touch nothing a Modal run reads before merge. Step 8 changes e
   decide where the threshold lands: `config.py`'s dataclass block is 478 lines and moves to `config/schema.py`
   under it; `tokenizer.py` is 609 and must therefore split further than a rename into `tokenizer/__init__.py`.
 - The Python prefix check reports zero groups.
-- No intra-package import appears inside a function body in `src/mailwoman_train/`, which is the §3.1 regression
-  detector. An indented `from .` or `from mailwoman_train.` is the shape to search for.
+- No intra-package import inside a function body names a module that transitively imports the module holding it.
+  That is the §3.1 regression detector, and it flags a cycle rather than every deferred import.
+
+  A deferred import is not a defect on its own. Measured on this branch: `mailwoman_train.cli` imports in 22,340 µs
+  while `mailwoman_train.train` takes 1,458,740 µs, so the 32 deferred imports in `cli.py` keep torch's 1.46 s off
+  every `--help`. Of the 63 deferred intra-package imports in the tree, five are cycle-dodgers — `tokenizer.py` at
+  541, 550, 566, 583 and 598 — and the other 58 buy startup weight.
 - A corpus version is added to `launch/corpora.py` as one table row, verified by adding the most recent existing
   version through the new path and diffing the generated command set against the current literal strings.
 

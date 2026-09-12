@@ -31,13 +31,15 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
 import sentencepiece as spm
 
+from .country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
+from .gazetteer_anchor import realign_gazetteer_to_pieces, suppress_gazetteer_near_postcode
 from .labels import IGNORE_INDEX, LABEL_TO_ID, LOCALE_TO_ID, NUM_LOCALES, collapse_label
+from .types import PieceSpan
 
 # Anchor feature width: a uniform country posterior over the locale set + a 2-d normalized centroid.
 # Must equal the model's ``anchor_feature_dim`` default (NUM_LOCALES + 2) — single source of truth.
@@ -48,15 +50,6 @@ ANCHOR_FEATURE_DIM = NUM_LOCALES + 2
 # ``neural/anchor-inference.ts``'s ``GB_UNIT_KEY`` / ``GB_INWARD_LENGTH``.
 _GB_UNIT_KEY = re.compile(r"^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$")
 _GB_INWARD_LENGTH = 3
-
-
-@dataclass(frozen=True)
-class PieceSpan:
-    piece: str
-    piece_id: int
-    # Character offsets into the original ``raw`` string (inclusive begin, exclusive end).
-    char_begin: int
-    char_end: int
 
 
 class Tokenizer:
@@ -537,9 +530,6 @@ def encode_row(
         out["anchor_confidence"] = confs
 
     if gazetteer_lexicon is not None:
-        # Local import keeps tokenizer.py import-light for consumers that never use the anchor.
-        from .gazetteer_anchor import realign_gazetteer_to_pieces
-
         gfeats, gconfs = realign_gazetteer_to_pieces(raw, list(spans), gazetteer_lexicon)
         gfeats = gfeats[:max_length]
         gconfs = gconfs[:max_length]
@@ -547,8 +537,6 @@ def encode_row(
         # the model never learns the biased region->postcode CRF transition. Keyed off the SAME anchor
         # confidence inference uses (consistent train/inference). No-op without the anchor channel.
         if gazetteer_choreography and "anchor_confidence" in out:
-            from .gazetteer_anchor import suppress_gazetteer_near_postcode
-
             gfeats, gconfs = suppress_gazetteer_near_postcode(
                 gfeats, gconfs, out["anchor_confidence"][: len(gconfs)], gazetteer_lexicon.feature_dim
             )
@@ -563,8 +551,6 @@ def encode_row(
         # Country-lexicon channel (#1104): per-piece [country_surface, country_ambiguous] painted from
         # the RAW SURFACE only (never labels; identical at train + inference). Independent of the
         # near-postcode gazetteer choreography — a trailing "…12345 USA" keeps its country clue.
-        from .country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
-
         cfeats, cconfs = realign_country_to_pieces(raw, list(spans), country_lexicon)
         cfeats = cfeats[:max_length]
         cconfs = cconfs[:max_length]
@@ -580,8 +566,6 @@ def encode_row(
         # by the codex street-type lexicon. Same schema as the gazetteer lexicon, so it reuses the same
         # generic realign. Independent of the near-postcode choreography (a street-type word is a street
         # fact wherever it sits). Positive-evidence-only — absence paints zero.
-        from .gazetteer_anchor import realign_gazetteer_to_pieces
-
         sfeats, sconfs = realign_gazetteer_to_pieces(raw, list(spans), street_type_lexicon)
         sfeats = sfeats[:max_length]
         sconfs = sconfs[:max_length]
@@ -595,8 +579,6 @@ def encode_row(
     if locality_surface_lexicon is not None:
         # Locality-surface channel (v3.16.0 evidence bundle): per-piece [locality, locality_homograph]
         # painted from the RAW SURFACE. Same lexicon schema as the gazetteer → same generic realign.
-        from .gazetteer_anchor import realign_gazetteer_to_pieces
-
         lfeats, lconfs = realign_gazetteer_to_pieces(raw, list(spans), locality_surface_lexicon)
         lfeats = lfeats[:max_length]
         lconfs = lconfs[:max_length]

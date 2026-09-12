@@ -28,7 +28,8 @@ import torch
 
 from .config import Config
 from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS
-from .tokenizer import PieceSpan, Tokenizer
+from .tokenizer import Tokenizer
+from .types import PieceSpan
 
 
 @dataclass

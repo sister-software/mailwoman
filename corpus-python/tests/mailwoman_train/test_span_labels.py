@@ -24,7 +24,6 @@ import pytest
 
 from mailwoman_train.gazetteer_anchor import GazetteerLexicon, realign_gazetteer_to_pieces
 from mailwoman_train.tokenizer import (
-    PieceSpan,
     char_label_array_from_spans,
     encode_row,
     realign_anchor_to_pieces,
@@ -32,6 +31,7 @@ from mailwoman_train.tokenizer import (
     realign_labels_to_pieces,
     realign_spans_to_pieces,
 )
+from mailwoman_train.types import PieceSpan
 
 
 def _pieces(raw: str, chunks: list[str]) -> list[PieceSpan]:

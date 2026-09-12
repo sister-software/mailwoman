@@ -13,10 +13,10 @@ import pytest
 from mailwoman_train.labels import LOCALE_TO_ID, NUM_LOCALES
 from mailwoman_train.tokenizer import (
     ANCHOR_FEATURE_DIM,
-    PieceSpan,
     anchor_feature_vector,
     realign_anchor_to_pieces,
 )
+from mailwoman_train.types import PieceSpan
 
 # "Strasse 12 10115 Berlin" — the postcode "10115" sits at chars [11, 16).
 RAW = "Strasse 12 10115 Berlin"
