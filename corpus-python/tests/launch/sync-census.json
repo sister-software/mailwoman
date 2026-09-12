@@ -272,7 +272,7 @@
 		"check_paths": [
 			"/data/corpus-python/src/mailwoman_train/configs/v8-cjk-full-2k.yaml",
 			"/data/corpus-python/src/mailwoman_train/configs/v8-cjk-full.yaml",
-			"/data/corpus-python/src/mailwoman_train/evaluation/jp_probe_board.py",
+			"/data/corpus-python/src/mailwoman_train/evaluation/jp_probe_board/__init__.py",
 			"/data/corpus-python/src/mailwoman_train/labels.py",
 			"/data/corpus/versioned/v8-cjk-2026-09-05/MANIFEST.json",
 			"/data/corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json",

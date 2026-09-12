@@ -48,7 +48,8 @@ def staged_overlay(package: str, versioned: str) -> dict[str, bool]:
     return {
         **_overlay_files(versioned, OVERLAY_CORPUS),
         "v8-cjk-full runs bf16 like v8-jp-full": _contains(f"{package}/configs/v8-cjk-full.yaml", "precision: bf16"),
-        "the scorer knows stage3-cjk": _contains(f"{package}/evaluation/jp_probe_board.py", '"stage3-cjk"'),
+        # `score.py` holds RESOLVE_TAGS — the file that decides which two spans form the centroid key.
+        "the scorer knows stage3-cjk": _contains(f"{package}/evaluation/jp_probe_board/score.py", '"stage3-cjk"'),
         "the stage3-cjk label set is present": _contains(f"{package}/labels.py", '"stage3-cjk"'),
     }
 

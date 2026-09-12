@@ -284,7 +284,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         checks=(
             "corpus-python/src/mailwoman_train/configs/v8-cjk-full-2k.yaml",
             "corpus-python/src/mailwoman_train/configs/v8-cjk-full.yaml",
-            "corpus-python/src/mailwoman_train/evaluation/jp_probe_board.py",
+            "corpus-python/src/mailwoman_train/evaluation/jp_probe_board/__init__.py",
             "corpus-python/src/mailwoman_train/labels.py",
             "corpus/versioned/v8-cjk-2026-09-05/MANIFEST.json",
             "corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json",

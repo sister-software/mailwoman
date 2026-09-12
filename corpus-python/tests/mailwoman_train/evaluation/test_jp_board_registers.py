@@ -277,3 +277,60 @@ def test_municipality_macro_weights_each_held_out_municipality_once():
     report = scorer.format_report(result)
     assert "municipality macro" in report
     assert "KITA" in report.split("lowest five")[1]
+
+
+#: A kana row: the model reads the surface back exactly, and the centroid table does not key it.
+#: The row's own kanji fields do, which is what `gold_exact` reads — the kana register renders
+#: うんぜん市 for 雲仙市 and the pre-registered number scores it unresolved either way.
+KANA_ROW = {
+    **_row("とうきょう", "ちよだ", "1-2-3", "kana", 139.75, 35.68),
+    "pref": "TOKYO",
+    "muni": "CHIYODA",
+}
+
+
+def _score_kana() -> dict:
+    return scorer.score_board(
+        [KANA_ROW],
+        lambda _raw: _labels_from_spans(KANA_ROW),
+        CENTROIDS,
+        id_to_label=JP.id_to_label,
+        resolve_tags=_RESOLVE,
+    )
+
+
+def test_a_gold_exact_row_is_counted_beside_the_check_and_never_inside_it():
+    """`gold_exact` is reported next to the pre-registered number, never folded into it.
+
+    A fold reads as a higher acceptability than the pre-registration defines, on the rows the
+    centroid table cannot key — which is exactly the population the kana register is.
+    """
+    result = _score_kana()
+
+    assert result["gold_exact_unresolved"] == 1
+    assert result["unresolved"] == 1
+    assert result["acceptable"] == 0, "gold_exact must not count toward the pre-registered number"
+    assert result["fraction"] == 0.0
+    assert result["per_register"]["kana"] == {
+        "rows": 1,
+        "acceptable": 0,
+        "unresolved": 1,
+        "gold_exact": 1,
+        "fraction": 0.0,
+    }
+    assert result["per_municipality"]["ちよだ"] == {"rows": 1, "acceptable": 0, "gold_exact": 1, "fraction": 0.0}
+
+
+def test_a_gold_exact_row_needs_its_own_coordinate_within_the_radius():
+    """The gold pair names a centroid; the row still has to sit near it."""
+    far = {**KANA_ROW, "lon": 0.0, "lat": 0.0}
+    result = scorer.score_board(
+        [far],
+        lambda _raw: _labels_from_spans(far),
+        CENTROIDS,
+        id_to_label=JP.id_to_label,
+        resolve_tags=_RESOLVE,
+    )
+
+    assert result["unresolved"] == 1
+    assert result["gold_exact_unresolved"] == 0
