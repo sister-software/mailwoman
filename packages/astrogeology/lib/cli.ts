@@ -10,8 +10,8 @@
  */
 
 import { parseArguments, passThroughCLIArguments } from "@mailwoman/core/scripting/arguments"
+import { optionPropertyName } from "@mailwoman/core/scripting/utils"
 import { type CommandSpec, renderInkCommand, runNativeCommand } from "mailwoman/cli-kit"
-import { optionPropertyName } from "mailwoman/cli-native/command-router"
 import { type ComponentType, createElement } from "react"
 
 /**

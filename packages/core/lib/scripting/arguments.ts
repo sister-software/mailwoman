@@ -63,6 +63,40 @@ export function requiredArgument(scope: string, name: string, value: string | un
 	return value
 }
 
+/**
+ * Kebab segments whose property spelling capitalizes the whole acronym, per the house casing convention.
+ *
+ * A segment missing here derives a property the command's own `Options` does not declare. The flag still parses and
+ * still passes validation; it reaches the component under a name nothing reads, so it does nothing and reports no
+ * error. Add the segment here when a flag carries an acronym.
+ */
+const OPTION_INITIALISMS = new Map([
+	["csv", "CSV"],
+	["db", "DB"],
+	["html", "HTML"],
+	["ids", "IDs"],
+	["json", "JSON"],
+	["jsonl", "JSONL"],
+	["km", "KM"],
+	["svg", "SVG"],
+	["xml", "XML"],
+])
+
+/**
+ * Convert a kebab-case option name to its TypeScript property name.
+ *
+ * `@mailwoman/repo-health`'s `cli-flag-properties` check derives every command's property names with this function, so
+ * a flag whose property nothing declares fails a check rather than doing nothing at runtime.
+ */
+export function optionPropertyName(value: string): string {
+	const [head = "", ...tail] = value.split("-")
+
+	return (
+		head +
+		tail.map((part) => OPTION_INITIALISMS.get(part) ?? `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join("")
+	)
+}
+
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
 	// The builtin types its result from the whole config object, so supplying `args` moves the type; the parsed shape
 	// depends on `options`/`allowPositionals` alone, which `T` carries.
