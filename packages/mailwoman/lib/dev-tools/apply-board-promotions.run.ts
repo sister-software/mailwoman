@@ -88,10 +88,7 @@ const found = new Map<string, string>()
 for (const cc of countryDirectories) {
 	const directory = join(CASES_DIR, cc)
 
-	const files = (await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false }).toArray())
-		.filter((entry) => entry.isFile() && entry.name.endsWith(".jsonl"))
-		.map((entry) => entry.name)
-		.toSorted()
+	const files = await Globerator.files("jsonl", { cwd: directory, absolute: false }).toSorted()
 
 	for (const name of files) {
 		const path = join(directory, name)

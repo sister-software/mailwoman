@@ -130,10 +130,7 @@ export async function* readPermitDirectory(
 	directory: PathBuilderLike,
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
-	const files = await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false })
-		.filter((entry) => entry.isFile() && entry.name.endsWith(".csv"))
-		.map((entry) => entry.name)
-		.toSorted()
+	const files = await Globerator.files("csv", { cwd: directory, absolute: false }).toSorted()
 
 	for (const name of files) {
 		yield* readPermitFile(join(directory, name), options)

@@ -22,8 +22,6 @@ const cases: ParityCase[] = []
 let parityFileCount = 0
 
 for (const entry of await Globerator.files("test.ts", { cwd: TEST_DIR, absolute: false }).toSorted()) {
-	if (!entry.endsWith(".test.ts")) continue
-
 	const path = join(TEST_DIR, entry)
 	const text = await readLocalTextFile(path)
 

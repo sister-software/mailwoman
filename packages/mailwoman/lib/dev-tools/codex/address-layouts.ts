@@ -151,8 +151,6 @@ const streetNodes = new Set<string>()
 let withoutFormat = 0
 
 for (const file of await Globerator.files("json", { cwd: specsDirectory, absolute: false }).toSorted()) {
-	if (!file.endsWith(".json")) continue
-
 	const code = file.replace(/\.json$/, "")
 
 	if (HAND_AUTHORED.has(code)) continue

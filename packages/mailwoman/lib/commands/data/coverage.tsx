@@ -75,7 +75,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 			const pairs: Array<{ n: string; at: number }> = []
 
 			for await (const n of Globerator.files("yaml", { cwd: configDir, absolute: false })) {
-				if (n.endsWith(".yaml") && !n.includes("smoke")) {
+				if (!n.includes("smoke")) {
 					pairs.push({ n, at: (await statPath(`${configDir}/${n}`)).mtimeMs })
 				}
 			}

@@ -311,7 +311,6 @@ async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[
 		// (resolve-flag, benchmark-flag, runtime-pipeline, etc.) use vitest's `test()` directly.
 		// We extract from all .test.ts files and skip the ones with zero matching calls — the
 		// extractor is a no-op on those.
-		if (!entry.endsWith(".test.ts")) continue
 		const filePath = join(testsDir, entry)
 
 		try {
