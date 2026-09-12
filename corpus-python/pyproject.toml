@@ -32,7 +32,7 @@ dev = [
 	# alone left them a minor version behind. mypy/bandit resolve through uv.lock, so they carry
 	# floors only.
 	"pytest>=9.1.1",
-	"ruff==0.16.5",
+	"ruff==0.16.6",
 	"mypy>=1.15",
 	"bandit>=1.8",
 	# PyYAML is untyped upstream; the stub package keeps `mypy --strict` honest about our code.
