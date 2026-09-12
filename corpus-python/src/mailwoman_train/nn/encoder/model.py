@@ -32,26 +32,30 @@ import torch
 from torch import nn
 
 from ...features.phrase_priors import PHRASE_FEATURE_DIM
-from ...labels import ID_TO_LABEL, NUM_LOCALES
+from ...labels import NUM_LOCALES
 from .. import serialization
-from ..blocks import EncoderBlock
-from ..char_cnn import CharCNNEmbedding
 from .channels import CoarseEncoderChannels
+from .construct import CoarseEncoderConstruct, resolve_label_map
 from .decode import CoarseEncoderDecode
 from .heads import CoarseEncoderHeads
 from .losses import CoarseEncoderLosses
 from .output import CoarseEncoderOutput
 from .soft_feed import soft_feed_channel
 
-#: The pre-split spellings. `_CoarseEncoderOutput` is constructed by name in `forward` and
-#: `_soft_feed_channel` in `__init__`; keeping the aliases means the method bodies that moved
-#: between files did not have to change a character, which is what lets the parity reference
-#: pin the move.
+#: The pre-split spellings. `_CoarseEncoderOutput` is constructed by name in `forward`; keeping the
+#: aliases means the method bodies that moved between files did not have to change a character,
+#: which is what lets the parity reference pin the move.
 _CoarseEncoderOutput = CoarseEncoderOutput
 _soft_feed_channel = soft_feed_channel
 
 
-class MailwomanCoarseEncoder(CoarseEncoderHeads, CoarseEncoderChannels, CoarseEncoderLosses, CoarseEncoderDecode):
+class MailwomanCoarseEncoder(
+    CoarseEncoderConstruct,
+    CoarseEncoderHeads,
+    CoarseEncoderChannels,
+    CoarseEncoderLosses,
+    CoarseEncoderDecode,
+):
     """Minimal transformer for Stage 1 coarse BIO token classification.
 
     Inputs:
@@ -117,183 +121,62 @@ class MailwomanCoarseEncoder(CoarseEncoderHeads, CoarseEncoderChannels, CoarseEn
         char_vocab_size: int = 0,
         char_embed_dim: int = 64,
         char_kernel_sizes: tuple[int, ...] = (3, 4, 5),
-        # v8 CJK Phase 2: THIS model's label map (index -> BIO label). None = the module-global
-        # STAGE3 map (every pre-Phase-2 checkpoint). The JP 47-label head passes its own; save()
-        # persists it and from_pretrained() restores it, so a checkpoint always knows its labels.
-        id_to_label: dict[int, str] | None = None,
+        id_to_label: dict[int, str] | None = None,  # see `resolve_label_map`
     ) -> None:
         super().__init__()
-        self.pad_token_id = pad_token_id
-        self.max_position_embeddings = max_position_embeddings
-        self.hidden_size = hidden_size
         self.num_labels = num_labels
-        if id_to_label is not None:
-            self.id_to_label: dict[int, str] = dict(id_to_label)
-            if len(self.id_to_label) != num_labels:
-                raise ValueError(f"id_to_label carries {len(self.id_to_label)} labels but num_labels={num_labels}")
-        else:
-            # Default = the module-global STAGE3 map, truncated to num_labels (the historical
-            # behavior — probe/test models with small heads index a prefix of it). A head WIDER
-            # than the global map has no honest default and must pass its own.
-            if num_labels > len(ID_TO_LABEL):
-                raise ValueError(f"num_labels={num_labels} exceeds the default label map — pass id_to_label")
-            self.id_to_label = {i: ID_TO_LABEL[i] for i in range(num_labels)}
-        # PR3 self-conditioning: an auxiliary locale head over the pooled sequence + a FiLM
-        # modulation of the per-token reps by the inferred locale. See forward() for the data
-        # flow and the design doc (2026-06-04-pr3-self-conditioned-retrain.md) for the why.
-        self.use_locale_conditioning = use_locale_conditioning
-        self.num_locales = int(num_locales)
-        self.locale_loss_weight = float(locale_loss_weight)
-        # v0.5.0 thread C: phrase-prior input-layer features (from Stage 2.7 phrase grouper,
-        # Thread E). When ``use_phrase_priors`` is on, the encoder takes an additional
-        # ``(B, S, phrase_feature_dim)`` tensor at forward time, concatenates it onto the
-        # token+position embedding, and projects back to ``hidden_size``. The projection is
-        # the minimum addition needed to thread the structural prior through without bumping
-        # the encoder body's hidden dim — keeps the v0.5.0 baseline fair vs v0.3.0/v0.4.0
-        # so the phrase-prior contribution can be ablated cleanly.
-        self.use_phrase_priors = use_phrase_priors
-        self.phrase_feature_dim = int(phrase_feature_dim) if use_phrase_priors else 0
-        # A disabled channel records width 0 and constructs nothing, so its absence is not a
-        # zero-width projection but no projection at all.
-        self.use_postcode_anchor = use_postcode_anchor
-        self.anchor_feature_dim = int(anchor_feature_dim) if use_postcode_anchor else 0
-        # Dual-injection (#327): also place the pooled anchor at position 0. Only meaningful with the
-        # anchor on; harmlessly ignored otherwise.
-        self.inject_first_token = bool(inject_first_token) and use_postcode_anchor
-        self.use_gazetteer_anchor = use_gazetteer_anchor
-        self.gazetteer_feature_dim = int(gazetteer_feature_dim) if use_gazetteer_anchor else 0
-        self.use_country_anchor = use_country_anchor
-        self.country_feature_dim = int(country_feature_dim) if use_country_anchor else 0
-        self.country_ambiguous_scale = float(country_ambiguous_scale)
-        self.use_street_type_anchor = use_street_type_anchor
-        self.street_type_feature_dim = int(street_type_feature_dim) if use_street_type_anchor else 0
-        self.use_locality_surface_anchor = use_locality_surface_anchor
-        self.locality_surface_feature_dim = int(locality_surface_feature_dim) if use_locality_surface_anchor else 0
-        # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
-        # label smoothing on the per-token CE leg for calibration. Both conditionable for
-        # ablation studies via the kwargs above.
-        self.use_crf = use_crf
-        self.label_smoothing = label_smoothing
-        # CRF NLL is per-sequence (not per-token like CE), and unbounded — at random init
-        # it can be ~seq_len*log(num_tags) ≈ 128*3 = 380 vs CE's ~log(num_tags) ≈ 3 per token.
-        # Equal-weight summing lets CRF gradients drown out CE. 0.1 keeps CRF as a structural
-        # regularizer on the emissions without overwhelming the token-level discriminative
-        # signal. First-attempt training (weight=1.0) plateaued + then regressed val_macro_f1
-        # from 0.26 → 0.17 by step 750.
-        self.crf_loss_weight = crf_loss_weight
-        # v0.4.0: CRF NLL normalization mode. "per_sequence" preserves v0.3.0 behavior;
-        # "per_token" sums NLL / total real tokens for a magnitude comparable to per-token
-        # CE — eliminates the crf_loss_weight hand-tuning search v0.3.0 went through.
-        if crf_normalization not in ("per_sequence", "per_token"):
-            raise ValueError(f"crf_normalization must be 'per_sequence' or 'per_token', got {crf_normalization!r}")
-        self.crf_normalization = crf_normalization
-        # v0.6.2 diagnostic flag: force the CRF forward (NLL + transition-table forward pass)
-        # to compute in fp32 even when the surrounding autocast region is bf16. The 2026-05-28
-        # postmortem's hypothesis for v0.6.0's twin NaN failures was numerical instability of
-        # the 33×33 transition matrix with masked `-inf` entries under bf16. Wrapping just the
-        # CRF call in `torch.autocast(enabled=False)` keeps the rest of the model in bf16 for
-        # throughput while isolating the suspect math. Default False to keep all existing
-        # configs bit-identical to their prior runs.
-        self.crf_fp32 = crf_fp32
-        # v0.4.0: per-class CE weights as a buffer. Registered as a buffer so it follows
-        # the model to GPU + serializes with state_dict. None disables (uniform weights).
-        if class_weights is not None:
-            if class_weights.shape != (num_labels,):
-                raise ValueError(f"class_weights shape {tuple(class_weights.shape)} != expected ({num_labels},)")
-            self.register_buffer("class_weights", class_weights.clone().detach().float())
-        else:
-            self.class_weights = None
-
-        self.token_embeddings = nn.Embedding(vocab_size, hidden_size, padding_idx=pad_token_id)
-        self.position_embeddings = nn.Embedding(max_position_embeddings, hidden_size)
-        self.input_dropout = nn.Dropout(hidden_dropout_prob)
-        self.input_ln = nn.LayerNorm(hidden_size)
-        # CharCNN front-end (the #825 tokenizer-fragmentation fix). When on, the per-token embedding is
-        # COMPOSED from the token's characters (see CharCNNEmbedding) instead of a SentencePiece piece-ID
-        # lookup, so a whole word ("Čistá") is one token and diacritics never fragment the span. The
-        # SentencePiece token_embeddings table stays built (unused in char mode) so the pretrain / MLM /
-        # save code paths keep working unchanged; the ship-slim path drops it once the arch is chosen.
-        self.use_char_embed = bool(use_char_embed)
-        self.char_embed_dim = int(char_embed_dim)
-        self.char_kernel_sizes = tuple(char_kernel_sizes)
-        self.char_vocab_size = int(char_vocab_size)
-        self.char_cnn: CharCNNEmbedding | None
-        if self.use_char_embed:
-            if char_vocab_size <= 0:
-                raise ValueError("use_char_embed=True requires char_vocab_size > 0")
-            self.char_cnn = CharCNNEmbedding(
-                char_vocab_size=char_vocab_size,
-                char_embed_dim=char_embed_dim,
-                hidden_size=hidden_size,
-                kernel_sizes=self.char_kernel_sizes,
-                pad_char_id=0,
-                dropout=hidden_dropout_prob,
-            )
-        else:
-            self.char_cnn = None
-        # Linear projection ``(hidden + phrase_feature_dim) → hidden`` so the body's
-        # transformer stack keeps its declared ``hidden_size``. xavier_uniform_ init via
-        # ``_init_weights``; bias init zero. None when ``use_phrase_priors`` is off — the
-        # forward path skips the projection entirely in that case (keeps v0.4.0 numerics
-        # bit-identical for back-compat ablations).
-        self.phrase_input_projection: nn.Linear | None
-        if self.use_phrase_priors:
-            self.phrase_input_projection = nn.Linear(hidden_size + self.phrase_feature_dim, hidden_size, bias=True)
-        else:
-            self.phrase_input_projection = None
-
-        # The five soft-feed channels: a projection (feature_dim→hidden) plus a learned cue vector
-        # each, or None when the channel is off.
-        #
-        # Do not reorder these. `_init_weights` walks `self.parameters()`, which yields them in
-        # registration order and draws from the global RNG for each, so swapping two channels
-        # changes the initial weights of both and of everything registered after them. A loaded
-        # checkpoint is unaffected (load_state_dict overwrites), but a from-scratch run started
-        # after a reorder no longer reproduces one started before it.
-        self.anchor_projection, self.anchor_token_embedding = _soft_feed_channel(
-            self.use_postcode_anchor, self.anchor_feature_dim, hidden_size
+        self.id_to_label = resolve_label_map(id_to_label, num_labels)
+        self._configure_losses(
+            num_labels=num_labels,
+            use_crf=use_crf,
+            label_smoothing=label_smoothing,
+            crf_loss_weight=crf_loss_weight,
+            crf_normalization=crf_normalization,
+            crf_fp32=crf_fp32,
+            class_weights=class_weights,
         )
-        self.gazetteer_projection, self.gazetteer_token_embedding = _soft_feed_channel(
-            self.use_gazetteer_anchor, self.gazetteer_feature_dim, hidden_size
+        self._build_embeddings(
+            vocab_size=vocab_size,
+            hidden_size=hidden_size,
+            max_position_embeddings=max_position_embeddings,
+            pad_token_id=pad_token_id,
+            hidden_dropout_prob=hidden_dropout_prob,
+            use_phrase_priors=use_phrase_priors,
+            phrase_feature_dim=phrase_feature_dim,
+            use_char_embed=use_char_embed,
+            char_embed_dim=char_embed_dim,
+            char_kernel_sizes=char_kernel_sizes,
+            char_vocab_size=char_vocab_size,
         )
-        self.country_projection, self.country_token_embedding = _soft_feed_channel(
-            self.use_country_anchor, self.country_feature_dim, hidden_size
+        self._build_channels(
+            hidden_size=hidden_size,
+            use_postcode_anchor=use_postcode_anchor,
+            anchor_feature_dim=anchor_feature_dim,
+            inject_first_token=inject_first_token,
+            use_gazetteer_anchor=use_gazetteer_anchor,
+            gazetteer_feature_dim=gazetteer_feature_dim,
+            use_country_anchor=use_country_anchor,
+            country_feature_dim=country_feature_dim,
+            country_ambiguous_scale=country_ambiguous_scale,
+            use_street_type_anchor=use_street_type_anchor,
+            street_type_feature_dim=street_type_feature_dim,
+            use_locality_surface_anchor=use_locality_surface_anchor,
+            locality_surface_feature_dim=locality_surface_feature_dim,
         )
-        if self.use_country_anchor:
-            # #1104 homograph-guard softener: a per-dim scale applied to country_features BEFORE the
-            # projection. Dim 0 (country_surface) stays 1.0; dim 1 (country_ambiguous) scales by
-            # country_ambiguous_scale (1.0 = v263 hard guard). A registered buffer so it EXPORTS as a
-            # constant into the ONNX graph — inference feeds the raw feature, the graph does the scaling.
-            scale = torch.ones(self.country_feature_dim)
-            if self.country_feature_dim >= 2:
-                scale[1] = self.country_ambiguous_scale
-            self.register_buffer("country_feature_scale", scale, persistent=False)
-        else:
-            self.country_feature_scale = None
-        self.street_type_projection, self.street_type_token_embedding = _soft_feed_channel(
-            self.use_street_type_anchor, self.street_type_feature_dim, hidden_size
+        self._build_body(
+            hidden_size=hidden_size,
+            num_hidden_layers=num_hidden_layers,
+            num_attention_heads=num_attention_heads,
+            intermediate_size=intermediate_size,
+            hidden_dropout_prob=hidden_dropout_prob,
+            num_labels=num_labels,
         )
-        self.locality_surface_projection, self.locality_surface_token_embedding = _soft_feed_channel(
-            self.use_locality_surface_anchor, self.locality_surface_feature_dim, hidden_size
-        )
-
-        self.blocks = nn.ModuleList(
-            [
-                EncoderBlock(
-                    hidden_size=hidden_size,
-                    num_heads=num_attention_heads,
-                    ff_intermediate=intermediate_size,
-                    dropout=hidden_dropout_prob,
-                )
-                for _ in range(num_hidden_layers)
-            ]
-        )
-        self.final_ln = nn.LayerNorm(hidden_size)
-        self.classifier = nn.Linear(hidden_size, num_labels)
-
         self._build_heads(
             hidden_size=hidden_size,
             num_labels=num_labels,
+            use_locale_conditioning=use_locale_conditioning,
+            num_locales=num_locales,
+            locale_loss_weight=locale_loss_weight,
             use_conventions_loss_mask=use_conventions_loss_mask,
             use_affix_head=use_affix_head,
             use_deploc_head=use_deploc_head,

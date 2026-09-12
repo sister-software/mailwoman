@@ -23,6 +23,9 @@ class CoarseEncoderHeads(CoarseEncoderState):
         *,
         hidden_size: int,
         num_labels: int,
+        use_locale_conditioning: bool,
+        num_locales: int,
+        locale_loss_weight: float,
         use_conventions_loss_mask: bool,
         use_affix_head: bool,
         use_deploc_head: bool,
@@ -46,6 +49,11 @@ class CoarseEncoderHeads(CoarseEncoderState):
         weights of every parameter registered after it and a from-scratch run stops reproducing
         earlier ones.
         """
+        # PR3 self-conditioning: an auxiliary locale head over the pooled sequence, plus a FiLM
+        # modulation of the per-token reps by the inferred locale. `forward` carries the data flow.
+        self.use_locale_conditioning = use_locale_conditioning
+        self.num_locales = int(num_locales)
+        self.locale_loss_weight = float(locale_loss_weight)
         self._build_merge_heads(
             hidden_size=hidden_size,
             num_labels=num_labels,
