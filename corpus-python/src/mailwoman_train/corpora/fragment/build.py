@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -49,8 +50,13 @@ from .sources import (
     span_rows_from_corpus,
 )
 
+#: How a block adds one row: the rendered fields, the row's country, its locale, its licence note.
+#: Every block takes this rather than a list, because the id `push` stamps carries the row's INDEX —
+#: a block that appended to its own list and merged later would renumber everything after it.
+Push = Callable[[dict[str, Any], str, str, str], None]
 
-def main() -> None:
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--oa-root", type=Path, required=True)
     ap.add_argument("--corpus-parquet-glob", required=True)
@@ -70,26 +76,16 @@ def main() -> None:
     ap.add_argument("--out-parquet", type=Path, required=True)
     ap.add_argument("--out-dev", type=Path, required=True)
     ap.add_argument("--per-locale-cap", type=int, default=PER_LOCALE_CAP)
-    args = ap.parse_args()
+    return ap.parse_args(argv)
 
-    rng = random.Random(SEED)
-    rows: list[dict[str, Any]] = []
 
-    def push(base: dict[str, Any], country: str, locale: str, license_note: str) -> None:
-        rows.append(
-            {
-                **base,
-                "country": country,
-                "locale": locale,
-                "source": "synth-fragment",
-                "source_id": f"synth-fragment-{country}-{len(rows)}",
-                "corpus_version": "0.10.2",
-                "license": license_note,
-                "synth_method": "fragment-assay",
-                "synth_base_id": None,
-            }
-        )
+def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
+    """Every row a locale's OpenAddresses extract yields, in the order the registers are listed.
 
+    Locales are visited in sorted order so the ids are stable across runs; within a locale the
+    blocks run bare street, street with number, bare locality, locality with postcode, unit,
+    comma-free context, then the country counterweight.
+    """
     for locale_dir, (country, locale, trailing) in sorted(OA_LOCALES.items()):
         pairs, cities, city_postcodes, units, triples = collect_oa_pairs(args.oa_root, locale_dir, args.per_locale_cap)
         license_note = f"Synthetic — fragment-assay; street/number/city from OpenAddresses {locale_dir}"
@@ -149,6 +145,15 @@ def main() -> None:
             f"{len(units)} units, {len(triples)} context"
         )
 
+
+def push_corpus_harvest_rows(
+    args: argparse.Namespace, push: Push
+) -> tuple[list[tuple[str, str]], dict[str, list[str]]]:
+    """Rows lifted from an existing corpus's spans, plus the two pools the country block reuses.
+
+    Returns the US (locality, region) pairs and the per-country locality lists, because the
+    counterweight block below zips them against street surfaces rather than re-reading the corpus.
+    """
     corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap, max_parts=30)
     # Slice-v3: GLOBAL bare-locality twins (all countries; cap/4 each) — the gauntlet
     # global-dublin-bare regression showed famous cities outside the OA slice locales lose their
@@ -226,6 +231,20 @@ def main() -> None:
 
         print(f"corpus:{country}: {len(streets)} bare streets")
 
+    return admin_pairs, corpus_localities
+
+
+def push_country_counterweight_rows(
+    args: argparse.Namespace,
+    push: Push,
+    admin_pairs: list[tuple[str, str]],
+    corpus_localities: dict[str, list[str]],
+) -> None:
+    """The #1104 country rows: a tail-position block and a leading-position one.
+
+    Both draw from `country_rng`, which is seeded separately from the slice's own shuffle, so this
+    block's numbers do not move when a block before it changes size.
+    """
     # Slice-v6 (#1104): country counterweight. The golden country classes are US + FR heavy, and NEITHER
     # is an OA_LOCALES locale, so those tails had ZERO signal — the country-sparse fine-tune eroded
     # recall 88.6%→82.0%. The corpus rarely co-locates street+locality in one row (WOF-admin-heavy), so
@@ -310,6 +329,13 @@ def main() -> None:
 
     print(f"#1104 country counterweight: {country_rows} tail + {leading_rows} leading rows")
 
+
+def write_slice(args: argparse.Namespace, rows: list[dict[str, Any]], rng: random.Random) -> None:
+    """Shuffle once, separate the first tenth as the dev holdout, and write both.
+
+    The holdout is read, never trained, so the shuffle is what decides which rows a read-out can
+    measure. It is the only place this function's `rng` is consumed.
+    """
     rng.shuffle(rows)
     dev_count = len(rows) // 10
     dev, train = rows[:dev_count], rows[dev_count:]
@@ -324,3 +350,29 @@ def main() -> None:
 
     print(f"slice: {len(train)} rows -> {args.out_parquet}")
     print(f"dev:   {len(dev)} rows -> {args.out_dev}")
+
+
+def main() -> None:
+    args = parse_args()
+    rng = random.Random(SEED)
+    rows: list[dict[str, Any]] = []
+
+    def push(base: dict[str, Any], country: str, locale: str, license_note: str) -> None:
+        rows.append(
+            {
+                **base,
+                "country": country,
+                "locale": locale,
+                "source": "synth-fragment",
+                "source_id": f"synth-fragment-{country}-{len(rows)}",
+                "corpus_version": "0.10.2",
+                "license": license_note,
+                "synth_method": "fragment-assay",
+                "synth_base_id": None,
+            }
+        )
+
+    push_oa_locale_rows(args, push)
+    admin_pairs, corpus_localities = push_corpus_harvest_rows(args, push)
+    push_country_counterweight_rows(args, push, admin_pairs, corpus_localities)
+    write_slice(args, rows, rng)

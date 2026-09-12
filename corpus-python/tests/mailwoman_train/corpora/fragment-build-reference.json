@@ -1,0 +1,261 @@
+{
+	"README": [
+		"Pins one seeded fragment build across a refactor.",
+		"Regenerate: uv run python -m tests.mailwoman_train.corpora.test_fragment_build_parity",
+		"Fixture: write_fixture() in the test beside this file — two OpenAddresses locales and a",
+		"  span-schema corpus parquet, at the shapes the collectors read.",
+		"",
+		"train / dev: every row as source_id + country + raw, in emission order. The source_id",
+		"  carries the row's index in the push list, so a block that moves renumbers everything",
+		"  after it; the dev split is the first 10% the final shuffle separates."
+	],
+	"train": [
+		{
+			"source_id": "synth-fragment-AT-4",
+			"country": "AT",
+			"raw": "Ringstrasse"
+		},
+		{
+			"source_id": "synth-fragment-US-44",
+			"country": "US",
+			"raw": "3081 N Hartland Rd White River Junction United States"
+		},
+		{
+			"source_id": "synth-fragment-AU-26",
+			"country": "AU",
+			"raw": "711 139 Bouverie Street"
+		},
+		{
+			"source_id": "synth-fragment-AT-9",
+			"country": "AT",
+			"raw": "Linz 4020"
+		},
+		{
+			"source_id": "synth-fragment-AU-29",
+			"country": "AU",
+			"raw": "45 George Street, Sydney, Australia"
+		},
+		{
+			"source_id": "synth-fragment-AT-16",
+			"country": "AT",
+			"raw": "Bahnhofplatz 21, Linz, Österreich"
+		},
+		{
+			"source_id": "synth-fragment-AU-31",
+			"country": "AU",
+			"raw": "139 Bouverie Street, Melbourne, AUS"
+		},
+		{
+			"source_id": "synth-fragment-AU-21",
+			"country": "AU",
+			"raw": "Sydney"
+		},
+		{
+			"source_id": "synth-fragment-AT-12",
+			"country": "AT",
+			"raw": "Hauptstrasse 12 Wien Austria"
+		},
+		{
+			"source_id": "synth-fragment-AT-3",
+			"country": "AT",
+			"raw": "Hauptstrasse 12"
+		},
+		{
+			"source_id": "synth-fragment-US-36",
+			"country": "US",
+			"raw": "White River Junction VT"
+		},
+		{
+			"source_id": "synth-fragment-FR-38",
+			"country": "FR",
+			"raw": "Paris"
+		},
+		{
+			"source_id": "synth-fragment-AT-10",
+			"country": "AT",
+			"raw": "3 12 Hauptstrasse"
+		},
+		{
+			"source_id": "synth-fragment-AU-24",
+			"country": "AU",
+			"raw": "Perth 6000"
+		},
+		{
+			"source_id": "synth-fragment-US-48",
+			"country": "US",
+			"raw": "United States of America, NY, White River Junction"
+		},
+		{
+			"source_id": "synth-fragment-AT-0",
+			"country": "AT",
+			"raw": "Bahnhofplatz"
+		},
+		{
+			"source_id": "synth-fragment-US-42",
+			"country": "US",
+			"raw": "5th Ave"
+		},
+		{
+			"source_id": "synth-fragment-AU-18",
+			"country": "AU",
+			"raw": "Adelaide Terrace"
+		},
+		{
+			"source_id": "synth-fragment-AU-32",
+			"country": "AU",
+			"raw": "139 Bouverie Street Melbourne AUS"
+		},
+		{
+			"source_id": "synth-fragment-US-47",
+			"country": "US",
+			"raw": "United States, VT, White River Junction"
+		},
+		{
+			"source_id": "synth-fragment-ZZ-33",
+			"country": "ZZ",
+			"raw": "Dublin"
+		},
+		{
+			"source_id": "synth-fragment-AU-30",
+			"country": "AU",
+			"raw": "45 George Street Sydney Australia"
+		},
+		{
+			"source_id": "synth-fragment-AU-28",
+			"country": "AU",
+			"raw": "139 Bouverie Street Melbourne"
+		},
+		{
+			"source_id": "synth-fragment-AU-20",
+			"country": "AU",
+			"raw": "George Street"
+		},
+		{
+			"source_id": "synth-fragment-AU-22",
+			"country": "AU",
+			"raw": "Melbourne"
+		},
+		{
+			"source_id": "synth-fragment-US-41",
+			"country": "US",
+			"raw": "N Hartland Rd"
+		},
+		{
+			"source_id": "synth-fragment-US-45",
+			"country": "US",
+			"raw": "2242 5th Ave, New York, USA"
+		},
+		{
+			"source_id": "synth-fragment-ZZ-35",
+			"country": "ZZ",
+			"raw": "Casablanca"
+		},
+		{
+			"source_id": "synth-fragment-US-43",
+			"country": "US",
+			"raw": "3081 N Hartland Rd, White River Junction, United States"
+		},
+		{
+			"source_id": "synth-fragment-AT-13",
+			"country": "AT",
+			"raw": "Bahnhofplatz 21 Linz"
+		},
+		{
+			"source_id": "synth-fragment-NO-39",
+			"country": "NO",
+			"raw": "Oslo"
+		},
+		{
+			"source_id": "synth-fragment-US-46",
+			"country": "US",
+			"raw": "2242 5th Ave New York USA"
+		},
+		{
+			"source_id": "synth-fragment-AT-2",
+			"country": "AT",
+			"raw": "Hauptstrasse"
+		},
+		{
+			"source_id": "synth-fragment-AU-27",
+			"country": "AU",
+			"raw": "45 George Street Sydney Australia"
+		},
+		{
+			"source_id": "synth-fragment-US-37",
+			"country": "US",
+			"raw": "New York NY"
+		},
+		{
+			"source_id": "synth-fragment-AT-5",
+			"country": "AT",
+			"raw": "Ringstrasse 7"
+		},
+		{
+			"source_id": "synth-fragment-ZZ-34",
+			"country": "ZZ",
+			"raw": "Melbourne"
+		},
+		{
+			"source_id": "synth-fragment-AT-6",
+			"country": "AT",
+			"raw": "Wien"
+		},
+		{
+			"source_id": "synth-fragment-AT-8",
+			"country": "AT",
+			"raw": "Graz 8010"
+		},
+		{
+			"source_id": "synth-fragment-AT-14",
+			"country": "AT",
+			"raw": "Hauptstrasse 12, Wien, Austria"
+		},
+		{
+			"source_id": "synth-fragment-AT-15",
+			"country": "AT",
+			"raw": "Hauptstrasse 12 Wien Austria"
+		},
+		{
+			"source_id": "synth-fragment-AT-17",
+			"country": "AT",
+			"raw": "Bahnhofplatz 21 Linz Österreich"
+		},
+		{
+			"source_id": "synth-fragment-AT-1",
+			"country": "AT",
+			"raw": "Bahnhofplatz 21"
+		},
+		{
+			"source_id": "synth-fragment-AT-7",
+			"country": "AT",
+			"raw": "Graz"
+		},
+		{
+			"source_id": "synth-fragment-US-40",
+			"country": "US",
+			"raw": "White River Junction"
+		}
+	],
+	"dev": [
+		{
+			"source_id": "synth-fragment-AU-25",
+			"country": "AU",
+			"raw": "4 88 Adelaide Terrace"
+		},
+		{
+			"source_id": "synth-fragment-AU-23",
+			"country": "AU",
+			"raw": "Melbourne 3000"
+		},
+		{
+			"source_id": "synth-fragment-AU-19",
+			"country": "AU",
+			"raw": "Bouverie Street"
+		},
+		{
+			"source_id": "synth-fragment-AT-11",
+			"country": "AT",
+			"raw": "2 21 Bahnhofplatz"
+		}
+	]
+}
