@@ -42,9 +42,9 @@ from itertools import islice
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .data_loader import _raw_row_stream, source_row_counts
-from .dose import format_derivation, resolve_config_doses
-from .emit import EmitPolicy, emit_row
+from .data.dose import format_derivation, resolve_config_doses
+from .data.emit import EmitPolicy, emit_row
+from .data.loader import _raw_row_stream, source_row_counts
 
 if TYPE_CHECKING:
     from .config import CorpusReceiptConfig

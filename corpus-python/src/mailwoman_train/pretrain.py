@@ -31,8 +31,8 @@ import torch
 from torch.optim import AdamW
 
 from .config import Config
-from .data_loader import iter_batches
-from .masking import mask_tokens
+from .data.loader import iter_batches
+from .data.masking import mask_tokens
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 from .trackio_logging import init_tracker

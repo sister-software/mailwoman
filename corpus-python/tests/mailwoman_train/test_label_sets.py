@@ -148,7 +148,7 @@ def test_sp_path_refuses_a_non_default_set() -> None:
     import random
 
     from mailwoman_train.config import DataConfig
-    from mailwoman_train.data_loader import iter_encoded
+    from mailwoman_train.data.loader import iter_encoded
 
     cfg = DataConfig(corpus_dir="/nonexistent", label_set="stage3-jp", char_mode="off")
     with pytest.raises(ValueError, match="only supported with data.char_mode"):

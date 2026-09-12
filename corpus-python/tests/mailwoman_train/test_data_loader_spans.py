@@ -18,9 +18,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train import data_loader
 from mailwoman_train.config import DataConfig
-from mailwoman_train.data_loader import iter_encoded, iter_rows
+from mailwoman_train.data import loader as data_loader
+from mailwoman_train.data.loader import iter_encoded, iter_rows
 
 #: Stands in for the SentencePiece tokenizer in the tests below. Each of them replaces ``encode_row``,
 #: which is the only thing that would touch a tokenizer, so the object is never called — but
@@ -176,7 +176,7 @@ def test_training_source_inventory_is_not_required_in_validation_split(tmp_path:
 def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Path) -> None:
     """The mutation-upstream hazard, pinned at the loader level: with the directional expansion
     AND the #511 relabel both on, every emitted row's spans must address ITS OWN raw."""
-    from mailwoman_train.relabel import AffixRelabelLexicon
+    from mailwoman_train.data.relabel import AffixRelabelLexicon
 
     corpus = _write_corpus(
         tmp_path,

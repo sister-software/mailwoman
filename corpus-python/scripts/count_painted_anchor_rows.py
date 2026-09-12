@@ -35,7 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from mailwoman_train.data_loader import load_anchor_lookup  # noqa: E402
+from mailwoman_train.data.loader import load_anchor_lookup  # noqa: E402
 from mailwoman_train.postcode_shapes import collect_matches  # noqa: E402
 from mailwoman_train.tokenizer import ANCHOR_FEATURE_DIM, _paint_anchor_chars  # noqa: E402
 

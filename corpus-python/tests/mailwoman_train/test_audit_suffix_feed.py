@@ -18,7 +18,7 @@ RELABEL lexicon is the variable under test — v1 reproduces the 2026-08-09 base
 from __future__ import annotations
 
 from mailwoman_train.audit_suffix_feed import classify_street_group, evaluate_row
-from mailwoman_train.relabel import AffixRelabelLexicon
+from mailwoman_train.data.relabel import AffixRelabelLexicon
 
 LEX_V2 = AffixRelabelLexicon(
     directionals={"w": "W", "west": "W"},

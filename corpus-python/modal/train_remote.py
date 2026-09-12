@@ -410,7 +410,7 @@ def sync_v050():
     print("  v1.4.0 config present:", os.path.isfile(cfg))
     print(
         "  loader has astral-skip:",
-        "astral_skipped" in open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/data_loader.py").read(),
+        "astral_skipped" in open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/data/loader.py").read(),
     )
 
 
@@ -677,7 +677,7 @@ def sync_src_v3100():
     src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
     augment_src = open(f"{src_dir}/augment.py").read()
     has_upper = "def upper_case_row" in augment_src
-    loader_src = open(f"{src_dir}/data_loader.py").read()
+    loader_src = open(f"{src_dir}/data/loader.py").read()
     has_loader_thread = "augment_upper_case_prob" in loader_src
     config_src = open(f"{src_dir}/config.py").read()
     has_cfg = "augment_upper_case_prob" in config_src
@@ -2874,7 +2874,7 @@ def diagnose_corpus(
                     print(f"  MISSING: {s['path']}")
                     break
 
-    from mailwoman_train.data_loader import _slice_first_source, _slice_paths
+    from mailwoman_train.data.loader import _slice_first_source, _slice_paths
 
     paths = _slice_paths(corpus_dir, "train")
     print(f"\n_slice_paths returned {len(paths)} train slices")
@@ -2899,7 +2899,7 @@ def diagnose_corpus(
 
     # Pre-launch verification: do rows of the target country/source actually survive the filter?
     if verify_country or verify_source:
-        from mailwoman_train.data_loader import iter_rows
+        from mailwoman_train.data.loader import iter_rows
         from mailwoman_train.labels import locale_id
 
         cw = {c: 1.0 for c in (verify_country.split(",") if verify_country else ["US", "FR", "DE"])}
@@ -2949,7 +2949,7 @@ def eval_de(
     import pyarrow.parquet as pq
     import torch
 
-    from mailwoman_train.data_loader import load_anchor_lookup
+    from mailwoman_train.data.loader import load_anchor_lookup
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
     from mailwoman_train.model import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
@@ -3046,7 +3046,7 @@ def digit_prior(
 
     import yaml
 
-    from mailwoman_train.data_loader import iter_rows
+    from mailwoman_train.data.loader import iter_rows
 
     cfg_path = Path("/data/corpus-python/src/mailwoman_train/configs") / config_name
     cfg = yaml.safe_load(cfg_path.read_text())
@@ -3228,7 +3228,7 @@ def piece_prior(
     import yaml
 
     from mailwoman_train.config import DataConfig
-    from mailwoman_train.data_loader import iter_encoded
+    from mailwoman_train.data.loader import iter_encoded
     from mailwoman_train.labels import ID_TO_LABEL
     from mailwoman_train.tokenizer import Tokenizer
 
@@ -3362,7 +3362,7 @@ def country_census_raw(
     vol.reload()
     sys.path.insert(0, "/data/corpus-python/src")
 
-    from mailwoman_train.data_loader import _slice_paths
+    from mailwoman_train.data.loader import _slice_paths
 
     slices = _slice_paths(Path(corpus_dir), "train")
     print(f"train slices: {len(slices)}")
@@ -3635,7 +3635,7 @@ def grade_evidence_bundle(
 
     sys.path.insert(0, "/data/corpus-python/src")
     from mailwoman_train.country_lexicon import load_country_lexicon
-    from mailwoman_train.data_loader import load_anchor_lookup
+    from mailwoman_train.data.loader import load_anchor_lookup
     from mailwoman_train.gazetteer_anchor import load_gazetteer_lexicon
     from mailwoman_train.labels import ID_TO_LABEL
     from mailwoman_train.model import MailwomanCoarseEncoder
@@ -3816,7 +3816,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
 
     sys.path.insert(0, "/data/corpus-python/src")
     from mailwoman_train.country_lexicon import load_country_lexicon
-    from mailwoman_train.data_loader import load_anchor_lookup
+    from mailwoman_train.data.loader import load_anchor_lookup
     from mailwoman_train.gazetteer_anchor import load_gazetteer_lexicon
     from mailwoman_train.labels import ID_TO_LABEL
     from mailwoman_train.model import MailwomanCoarseEncoder
@@ -4028,7 +4028,7 @@ def sync_jp_probe():
     src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
     corpus = f"{VOL_MOUNT}/corpus/versioned/v8-jp-probe"
     print("  v8-jp-probe config present:", os.path.isfile(f"{src}/configs/v8-jp-probe.yaml"))
-    print("  char path in data_loader:", "char_mode" in open(f"{src}/data_loader.py").read())
+    print("  char path in data_loader:", "char_mode" in open(f"{src}/data/loader.py").read())
     print("  encode_row_units present:", "encode_row_units" in open(f"{src}/char_tokenizer.py").read())
     print("  train slice present:", os.path.isfile(f"{corpus}/train/part-0000.parquet"))
     print("  val slice present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
@@ -4282,8 +4282,8 @@ def sync_substrate_repairs():
 
     checks = {
         "epoch-mixture audit module": os.path.isfile(f"{package}/audit_epoch_mixture.py"),
-        "stationary sampler landed": _contains(f"{package}/data_loader.py", "STATIONARY mixture"),
-        "val-policy guard landed": _contains(f"{package}/data_loader.py", "TRAIN-ONLY policy"),
+        "stationary sampler landed": _contains(f"{package}/data/loader.py", "STATIONARY mixture"),
+        "val-policy guard landed": _contains(f"{package}/data/loader.py", "TRAIN-ONLY policy"),
         "schedule-aware restamp landed": _contains(f"{package}/train.py", "SCHEDULE-AWARE"),
         "atomic checkpoint save landed": _contains(f"{package}/train.py", "completeness marker"),
         "linear_cooldown schedule landed": _contains(f"{package}/train.py", "_linear_cooldown"),
@@ -4461,7 +4461,7 @@ def sync_v440():
         "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
         "v2 slice parquet": os.path.isfile(f"{corpus}/train/part-suffix-boundary-v2.parquet"),
         "v2 affix lexicon": os.path.isfile(f"{VOL_MOUNT}/gazetteer/affix-relabel-lexicon-v2.json"),
-        "augment exclusion in loader": _file_contains(f"{package}/data_loader.py", "augment_exclude_sources"),
+        "augment exclusion in loader": _file_contains(f"{package}/data/loader.py", "augment_exclude_sources"),
         "base slice reachable": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
         ),

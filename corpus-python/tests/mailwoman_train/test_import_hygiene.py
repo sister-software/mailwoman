@@ -102,6 +102,28 @@ def test_no_deferred_import_dodges_a_cycle() -> None:
     assert closed == [], "these cycles are closed — delete them from KNOWN_CYCLES:\n" + "\n".join(closed)
 
 
+def test_every_deferred_import_names_a_module_that_exists() -> None:
+    """A deferred import is not checked until it runs, and most of them never run under test.
+
+    Moving a module one directory deeper re-levels every relative import inside it. A module-level
+    import that survives the move wrong fails at import; a deferred one fails at first call, on a
+    branch a config has to enable. Four of these pointed at `mailwoman_train.data.gazetteer_anchor`
+    after the data move and the whole suite stayed green.
+    """
+    known = {_module_name(path) for path in SOURCE_ROOT.rglob("*.py")}
+    known |= {name.rsplit(".", 1)[0] for name in known if "." in name}
+    offenders: list[str] = []
+
+    for path in sorted(SOURCE_ROOT.rglob("*.py")):
+        holder = _module_name(path)
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for target, lineno in sorted(_imports(tree, holder, deferred=True)):
+            if target not in known:
+                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which does not exist")
+
+    assert offenders == [], "deferred imports naming a missing module:\n" + "\n".join(offenders)
+
+
 def test_piece_span_is_declared_in_types() -> None:
     from mailwoman_train import types
 

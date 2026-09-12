@@ -21,7 +21,7 @@ import pytest
 
 torch = pytest.importorskip("torch")  # training deps (torch) aren't installed in lint-only envs
 
-from mailwoman_train.data_loader import EncodedExample, collate  # noqa: E402
+from mailwoman_train.data.loader import EncodedExample, collate  # noqa: E402
 from mailwoman_train.labels import IGNORE_INDEX  # noqa: E402
 from mailwoman_train.train import _to_tensor_batch  # noqa: E402
 

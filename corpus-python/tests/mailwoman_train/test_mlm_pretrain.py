@@ -20,8 +20,8 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
+from mailwoman_train.data.masking import mask_tokens  # noqa: E402
 from mailwoman_train.labels import ACTIVE_BIO_LABELS  # noqa: E402
-from mailwoman_train.masking import mask_tokens  # noqa: E402
 from mailwoman_train.model import MailwomanCoarseEncoder  # noqa: E402
 
 NUM_LABELS = len(ACTIVE_BIO_LABELS)

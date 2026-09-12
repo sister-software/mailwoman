@@ -23,8 +23,8 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from mailwoman_train.data_loader import iter_rows
-from mailwoman_train.relabel import AffixRelabelLexicon
+from mailwoman_train.data.loader import iter_rows
+from mailwoman_train.data.relabel import AffixRelabelLexicon
 
 LEGACY_SCHEMA = pa.schema(
     [

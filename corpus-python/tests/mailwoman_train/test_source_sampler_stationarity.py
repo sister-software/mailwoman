@@ -23,7 +23,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train.data_loader import iter_rows
+from mailwoman_train.data.loader import iter_rows
 
 LEGACY_SCHEMA = pa.schema(
     [

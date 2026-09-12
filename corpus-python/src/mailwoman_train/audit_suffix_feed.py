@@ -37,8 +37,8 @@ from itertools import islice
 from pathlib import Path
 from typing import Any
 
-from .data_loader import _raw_row_stream
-from .relabel import AffixRelabelLexicon, relabel_row
+from .data.loader import _raw_row_stream
+from .data.relabel import AffixRelabelLexicon, relabel_row
 
 TARGET_SOURCE = "synth-suffix-boundary"
 

@@ -45,7 +45,7 @@ import random
 from collections.abc import Iterator
 from typing import Any, cast
 
-from .tokenizer import whitespace_spans
+from ..tokenizer import whitespace_spans
 
 # US directional abbreviations → expanded forms.
 DIRECTIONALS: dict[str, str] = {

@@ -32,8 +32,8 @@ from typing import Any
 
 import yaml
 
-from .data_loader import _raw_row_stream
-from .relabel import AffixRelabelLexicon, relabel_row
+from .data.loader import _raw_row_stream
+from .data.relabel import AffixRelabelLexicon, relabel_row
 
 _SCRIPT_MARKERS = (
     ("LATIN", "Latin"),

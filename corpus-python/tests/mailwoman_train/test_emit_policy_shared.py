@@ -20,8 +20,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from mailwoman_train.audit_epoch_mixture import audit_mixture
-from mailwoman_train.data_loader import iter_rows
-from mailwoman_train.emit import EmitPolicy, emit_row
+from mailwoman_train.data.emit import EmitPolicy, emit_row
+from mailwoman_train.data.loader import iter_rows
 
 SCHEMA = pa.schema(
     [

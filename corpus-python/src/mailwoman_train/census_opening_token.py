@@ -42,9 +42,9 @@ from pathlib import Path
 from typing import Any
 
 from .config import load_config
-from .data_loader import _raw_row_stream
-from .dose import resolve_config_doses
-from .emit import EmitPolicy, emit_row
+from .data.dose import resolve_config_doses
+from .data.emit import EmitPolicy, emit_row
+from .data.loader import _raw_row_stream
 
 
 def _digits(token: str) -> bool:

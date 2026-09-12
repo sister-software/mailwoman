@@ -25,7 +25,7 @@ from mailwoman_train.char_tokenizer import (
     save_char_vocab,
 )
 from mailwoman_train.config import DataConfig
-from mailwoman_train.data_loader import iter_encoded
+from mailwoman_train.data.loader import iter_encoded
 from mailwoman_train.labels import IGNORE_INDEX, LABEL_TO_ID
 from mailwoman_train.tokenizer import char_label_array_from_spans, whitespace_spans
 
@@ -261,7 +261,7 @@ def test_char_batch_trains_a_char_embed_model(tmp_path: Path) -> None:
     """End-to-end: loader char batch → collate → tensors → use_char_embed forward → finite loss."""
     torch = pytest.importorskip("torch")
 
-    from mailwoman_train.data_loader import collate
+    from mailwoman_train.data.loader import collate
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
     from mailwoman_train.model import MailwomanCoarseEncoder
 

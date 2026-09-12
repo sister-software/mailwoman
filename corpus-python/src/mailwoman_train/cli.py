@@ -123,7 +123,7 @@ def cmd_eval(args: argparse.Namespace) -> int:
 
 def cmd_export(args: argparse.Namespace) -> int:
     from .config import load_config
-    from .data_loader import iter_batches
+    from .data.loader import iter_batches
     from .export_onnx import export_to_onnx, verify_parity
     from .model import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
@@ -325,7 +325,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
         pad_token_id=tokenizer.pad_id,
     )
     # 32 val samples for parity at smoke scale.
-    from .data_loader import iter_batches
+    from .data.loader import iter_batches
 
     samples = []
     for batch in iter_batches(cfg, tokenizer, split="val", batch_size=1, seed=0, row_limit=32):
@@ -480,7 +480,7 @@ def _infer_corpus_version(corpus_dir: Path) -> str:
 
 def cmd_verify_tokenizer(args: argparse.Namespace) -> int:
     from .config import load_config
-    from .data_loader import verify_tokenizer_alignment
+    from .data.loader import verify_tokenizer_alignment
     from .tokenizer import Tokenizer
 
     cfg = load_config(args.config)

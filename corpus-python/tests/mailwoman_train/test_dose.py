@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from mailwoman_train.dose import derive_source_weights, format_derivation, total_samples
+from mailwoman_train.data.dose import derive_source_weights, format_derivation, total_samples
 
 # The v4.6.0 run the issue measured: 60,000 steps × batch 128, fixed weights summing to 168.
 SAMPLES = total_samples(60_000, 128)

@@ -33,8 +33,8 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
-from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .dose import format_derivation, resolve_config_doses
+from .data.dose import format_derivation, resolve_config_doses
+from .data.loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
 from .labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer

@@ -104,7 +104,7 @@ def resolve_config_doses(cfg: Any, corpus_dir: Path | None = None) -> list[Deriv
     doses = getattr(cfg.data, "source_doses", None)
     if not doses:
         return []
-    from .data_loader import source_row_counts
+    from .loader import source_row_counts
 
     rows_by_source = source_row_counts(Path(corpus_dir or cfg.data.corpus_dir), "train")
     samples = total_samples(cfg.train.max_steps, cfg.train.batch_size, getattr(cfg.train, "grad_accum_steps", 1))

@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from mailwoman_train.data_loader import _LEGACY_SLICES_KEY, _slice_paths, manifest_slices
+from mailwoman_train.data.loader import _LEGACY_SLICES_KEY, _slice_paths, manifest_slices
 
 
 def _mk(tmp: Path, slices: list[dict], base_version: str | None = None) -> Path:
