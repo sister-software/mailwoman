@@ -47,8 +47,10 @@
 #   node scripts/build-unit-slice.mjs --output /tmp/unit-val.jsonl  --golden --count 2000 --seed 99
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/unit-train.jsonl --output /tmp/part-unit-train.parquet
 #   # assemble overlay MANIFEST (v0.4.3 base + the unit slice), then:
-#   modal volume put mailwoman-training /tmp/part-unit-train.parquet corpus/versioned/v0.4.4-unit/corpus-v0.4.4-unit/train/part-unit-train.parquet
-#   modal volume put mailwoman-training <MANIFEST.json>              corpus/versioned/v0.4.4-unit/corpus-v0.4.4-unit/MANIFEST.json
+#   # NOT `modal volume put`: a mounted container cannot see what it writes, so a run staged that
+#   # way trains on whatever was already there and reports success. Route it through R2 instead.
+#   mailwoman corpus upload --corpus-version v0.4.4-unit
+#   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.4-unit
 #
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \

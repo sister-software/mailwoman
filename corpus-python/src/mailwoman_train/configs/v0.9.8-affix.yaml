@@ -36,7 +36,10 @@
 #   node scripts/build-street-affix-slice.mjs --output /tmp/affix-train.jsonl --count 50000 --seed 42
 #   node scripts/build-street-affix-slice.mjs --output /tmp/affix-val.jsonl --golden --count 2000 --seed 99
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/affix-train.jsonl --output <NEW>/train/part-affix-train.parquet
-#   # assemble overlay MANIFEST (v0.4.5-unit-v2 base + the affix slice), then modal volume put both.
+#   # assemble the overlay MANIFEST (v0.4.5-unit-v2 base + the affix slice), then stage both through
+#   # R2 — NOT `modal volume put`, which a mounted container cannot see:
+#   mailwoman corpus upload --corpus-version v0.4.6-affix
+#   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.6-affix
 #
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \

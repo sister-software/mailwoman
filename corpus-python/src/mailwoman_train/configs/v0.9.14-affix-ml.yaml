@@ -36,7 +36,10 @@
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/affix-ml-train.jsonl --output <NEW>/train/part-affix-ml-train.parquet
 #   python3 scripts/assemble-affix-ml-overlay-manifest.py --base <v0.4.6-affix MANIFEST.json> \
 #       --new-dir <NEW> --modal-root /data/.../corpus-v0.4.11-affix-ml --version v0.4.11-affix-ml
-#   # then `modal volume put` the parquet + the manifest onto the mailwoman-training volume.
+#   # then stage the parquet + the manifest through R2 — NOT `modal volume put`, which a mounted
+#   # container cannot see:
+#   mailwoman corpus upload --corpus-version v0.4.11-affix-ml
+#   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.11-affix-ml
 #
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \

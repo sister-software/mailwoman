@@ -36,6 +36,11 @@ CONTINUATION = re.compile(r"\\\n#\s*")
 #: "(2) `modal run`." — there, a backtick follows immediately.
 MODAL_RUN = re.compile(r"modal run\s+([^\n`]+)")
 
+#: Every mention of the blind staging command, and the subset that warns AGAINST it. A mention the
+#: warning form does not cover is an instruction to use it.
+BLIND_STAGING = re.compile(r"modal volume put\b")
+WARNED_AGAINST = re.compile(r"\bnot `?modal volume put\b", re.IGNORECASE)
+
 NAMED_CONFIG = re.compile(r"--config\s+(\S+)")
 NAMED_VERSION = re.compile(r"::sync\s+--version\s+(\S+)")
 #: The function a command selects with `::`.
@@ -118,6 +123,28 @@ def test_every_selected_function_can_be_launched(recipe: Path) -> None:
                 f"{recipe.name}: ::{named} is not exported by launch/train_remote.py; "
                 f"launchable: {', '.join(sorted(LAUNCHABLE))}"
             )
+
+
+@pytest.mark.parametrize("recipe", RECIPES, ids=lambda p: p.name)
+def test_no_recipe_tells_the_reader_to_stage_blind(recipe: Path) -> None:
+    """`modal volume put` writes what a mounted container cannot see.
+
+    The file lands, `modal volume ls/get` shows it, and `vol.reload()` does not bridge the gap
+    (verified 2026-06-12 with a marker file). A run staged that way reads whatever was on the volume
+    already and reports success — the corpus is wrong and nothing says so. Sixteen v0.9.x headers
+    instructed it, written before the blindness was found.
+
+    Naming it to warn against it is the point of the warning, so a mention the warning form covers
+    stands. Comparing the two counts is what separates them: an instruction is a mention with no
+    "not" in front of it.
+    """
+    for line in recipe.read_text(encoding="utf-8").splitlines():
+        mentions = len(BLIND_STAGING.findall(line))
+        warnings = len(WARNED_AGAINST.findall(line))
+        assert mentions == warnings, (
+            f"{recipe.name}: `modal volume put` cannot stage anything a run will read — "
+            f"upload to R2 and use sync_assets instead: {line.strip()}"
+        )
 
 
 @pytest.mark.parametrize("recipe", RECIPES, ids=lambda p: p.name)

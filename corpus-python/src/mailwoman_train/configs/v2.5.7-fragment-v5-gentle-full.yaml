@@ -5,7 +5,10 @@
 # oscillation that broke the Dublin pin at the aggressive 5e-5/8k schedule. Grade: full parity
 # floors + us-recall-flip-census + a PACKAGE-SWAP gauntlet (the #718-safe Dublin coordinate check).
 # Residual after this: the #727 boundary-digit-absorption class (postcode-adjacent region -> street).
-# LAUNCH: modal volume put --force mailwoman-training <this> <this>  &&  \
+# LAUNCH: this recipe reaches the volume with the rest of the training code, and NOT `modal volume
+#         put`, which writes what a mounted container cannot see.
+#         mailwoman corpus upload --code  &&  \
+#         cd corpus-python && modal run -m launch.train_remote::sync_assets  &&  \
 #         cd corpus-python && modal run -d -m launch.train_remote --config v2.5.7-fragment-v5-gentle-full.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5

@@ -30,9 +30,10 @@
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output /tmp/part-german-train.parquet
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
 #   # then the overlay MANIFEST (v0.4.0 slices + the 2 German slices) — see the build-log doc — and:
-#   modal volume put mailwoman-training /tmp/part-german-train.parquet corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/train/part-german-train.parquet
-#   modal volume put mailwoman-training /tmp/part-german-val.parquet   corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet
-#   modal volume put mailwoman-training <MANIFEST.json>                corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
+#   # NOT `modal volume put`: a mounted container cannot see what it writes, so a run staged that
+#   # way trains on whatever was already there and reports success. Route it through R2 instead.
+#   mailwoman corpus upload --corpus-version v0.4.1-de
+#   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.1-de
 #
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \

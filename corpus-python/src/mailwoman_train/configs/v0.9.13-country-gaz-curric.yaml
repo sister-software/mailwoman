@@ -35,7 +35,10 @@
 #
 # CORPUS: v0.4.10-country-bal (UNCHANGED — single-variable discipline; the lexicon is a side input).
 # LEXICON: /data/gazetteer/anchor-lexicon-v1.json (scripts/build-gazetteer-anchor-lexicon.mjs from
-#   @mailwoman/codex; modal volume put before launch).
+#   @mailwoman/codex). Stage it through R2 before launch — NOT `modal volume put`, which a mounted
+#   container cannot see:
+#   cd corpus-python && modal run -m launch.train_remote::sync_assets \
+#     --extras gazetteer/anchor-lexicon-v1.json>gazetteer/
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.12-country-gaz.yaml --resume none \

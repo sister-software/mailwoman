@@ -75,7 +75,9 @@
 # shows Paris/Marseille/Lyon 95–99% locality in FR data) → familiar dept-diverse FR cities kept. DE dropped
 # (street-dominated too; synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
 # 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
-# Operator steps: (1) `modal volume put` the (regenerated) parquet + manifest, (2) `modal run`.
+# Operator steps: (1) upload the regenerated parquet + manifest with `mailwoman corpus upload
+# --corpus-version v0.6.1-boundary-stress` and stage them with `sync_assets --corpus-versions
+# v0.6.1-boundary-stress` — NOT `modal volume put`, which a mounted container cannot see; (2) launch.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.7.0-boundary-stress.yaml --resume none
 data:
