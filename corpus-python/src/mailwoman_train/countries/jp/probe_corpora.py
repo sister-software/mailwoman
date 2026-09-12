@@ -45,6 +45,7 @@ import json
 import random
 import unicodedata
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -163,7 +164,30 @@ def render_row(pref: str, muni: str, street: str | None, number: str | None, pos
     }
 
 
-def main() -> None:
+@dataclass
+class Reservoirs:
+    """What one pass over the parquet keeps: the per-prefecture pool and the held-out board.
+
+    Both are reservoir samples drawn from the same `random.Random`, so the two branches consume
+    draws in the order the rows arrive. Splitting the pass in two — board first, pool second —
+    would sample different addresses from the same seed.
+    """
+
+    pool: dict[str, list[dict[str, Any]]]
+    board: list[dict[str, Any]]
+    board_seen: int
+    dropped: Counter[str]
+
+
+@dataclass
+class PostcodeJoin:
+    """The KEN_ALL join as it ran: the counts the build report carries."""
+
+    hit: int = 0
+    miss: int = 0
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser()
     ap.add_argument("--parquet", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(PARQUET_PARTS))
     ap.add_argument("--kenall", default=None, help="defaults to $MAILWOMAN_DATA_ROOT/" + "/".join(KENALL_PARTS))
@@ -173,19 +197,20 @@ def main() -> None:
     ap.add_argument("--board-rows", type=int, default=2_000)
     ap.add_argument("--postcode-fraction", type=float, default=0.30)
     ap.add_argument("--seed", type=int, default=42)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     args.parquet = args.parquet or str(data_root_path(*PARQUET_PARTS))
     args.kenall = args.kenall or str(data_root_path(*KENALL_PARTS))
     args.out_dir = args.out_dir or str(data_root_path(*OUT_DIR_PARTS))
+    return args
 
-    rng = random.Random(args.seed)
-    kenall = load_kenall_postcodes(Path(args.kenall))
-    print(f"KEN_ALL municipalities: {len(kenall):,}")
 
-    # endregion
+def fill_reservoirs(args: argparse.Namespace, rng: random.Random) -> Reservoirs:
+    """One streaming pass over the parquet, filling both reservoirs.
 
-    # region Pass 1: per-prefecture reservoirs (train/val pool) + board reservoir.
-
+    Each prefecture carries its OWN reservoir so Tokyo cannot drown Tottori, capped at three times
+    a prefecture's share of the target. A municipality whose bucket lands in the board range goes
+    to the board instead, which is what keeps board municipalities unseen by train and val.
+    """
     per_pref_cap = 3 * ((args.train_rows + args.val_rows) // 47)
     pool: dict[str, list[dict[str, Any]]] = {}
     pool_seen: Counter[str] = Counter()
@@ -232,11 +257,17 @@ def main() -> None:
                         res[j] = row
     print(f"prefectures in pool: {len(pool)}; board reservoir: {len(board_res):,} of {board_seen:,} seen")
     print(f"dropped: {dict(dropped)}")
+    return Reservoirs(pool=pool, board=board_res, board_seen=board_seen, dropped=dropped)
 
-    # endregion
 
-    # region Round-robin draw to target, then split train/val (val = tail of the shuffled draw).
+def draw_splits(
+    args: argparse.Namespace, pool: dict[str, list[dict[str, Any]]], rng: random.Random
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Round-robin across prefectures to the target, then split train/val off the shuffled draw.
 
+    Round-robin is what makes the draw stratified: each pass takes one row from every prefecture
+    that still has one, so a prefecture's share is its supply rather than its population.
+    """
     for res in pool.values():
         rng.shuffle(res)
     order = sorted(pool)
@@ -253,35 +284,56 @@ def main() -> None:
         if not progressed:
             break
     rng.shuffle(draw)
-    train_rows, val_rows = draw[: args.train_rows], draw[args.train_rows : target]
+    return draw[: args.train_rows], draw[args.train_rows : target]
 
-    # endregion
 
-    # region Render + write.
+def encode_rows(
+    rows: list[dict[str, Any]],
+    *,
+    kenall: dict[str, str],
+    join: PostcodeJoin,
+    rng: random.Random,
+    postcode_fraction: float,
+) -> list[dict[str, Any]]:
+    """Render each row, joining a postcode onto the configured fraction of them.
 
-    out_dir = Path(args.out_dir)
-    kenall_hit = kenall_miss = 0
+    The coin is drawn BEFORE the lookup and for every row, so a municipality KEN_ALL does not cover
+    still consumes its draw — the row order a seeded build produces does not depend on the join's
+    hit rate.
+    """
+    encoded = []
+    for r in rows:
+        postcode = None
+        if rng.random() < postcode_fraction:
+            postcode = kenall.get(norm_key(r["pref"] + r["muni"]))
+            if postcode:
+                join.hit += 1
+            else:
+                join.miss += 1
+        encoded.append(render_row(r["pref"], r["muni"], r["street"], r["number"], postcode))
+    return encoded
 
-    def encode(rows: list[dict[str, Any]], with_postcode: bool) -> list[dict[str, Any]]:
-        nonlocal kenall_hit, kenall_miss
-        encoded = []
-        for r in rows:
-            postcode = None
-            if with_postcode and rng.random() < args.postcode_fraction:
-                postcode = kenall.get(norm_key(r["pref"] + r["muni"]))
-                if postcode:
-                    kenall_hit += 1
-                else:
-                    kenall_miss += 1
-            encoded.append(render_row(r["pref"], r["muni"], r["street"], r["number"], postcode))
-        return encoded
 
-    for split, rows in (("train", train_rows), ("val", val_rows)):
-        enc = encode(rows, with_postcode=True)
+def write_splits(
+    out_dir: Path,
+    splits: tuple[tuple[str, list[dict[str, Any]]], ...],
+    *,
+    kenall: dict[str, str],
+    join: PostcodeJoin,
+    rng: random.Random,
+    postcode_fraction: float,
+) -> None:
+    """Write each split's parquet, and RAISE rather than ship a corpus the checks fail.
+
+    An all-O row cannot occur by construction — the raw is concatenated from the labeled fields —
+    so one means the build is broken rather than the data thin. The printed char coverage is the
+    JSON-hides-gaps guard: a fraction well under 1 says spans stopped covering the raw.
+    """
+    for split, rows in splits:
+        enc = encode_rows(rows, kenall=kenall, join=join, rng=rng, postcode_fraction=postcode_fraction)
         (out_dir / split).mkdir(parents=True, exist_ok=True)
         table = pa.Table.from_pylist(enc, schema=SCHEMA)
         pq.write_table(table, out_dir / split / "part-0000.parquet")
-        # Sanity: no all-O rows (every row has >= 2 spans by construction), BIO char coverage.
         all_o = sum(1 for e in enc if not e["span_tags"])
         if all_o:
             raise RuntimeError(f"{split}: {all_o} all-O rows — corpus build broken")
@@ -289,25 +341,45 @@ def main() -> None:
         total = sum(len(e["raw"].replace(" ", "").replace("〒", "")) for e in enc)
         print(f"{split}: {len(enc):,} rows; BIO char coverage {labeled / total:.4f}")
 
+
+def check_stratification(
+    train_rows: list[dict[str, Any]], val_rows: list[dict[str, Any]], board: list[dict[str, Any]]
+) -> tuple[Counter[str], set[str]]:
+    """RAISE on a train split missing a prefecture, or on a board municipality that leaks into it.
+
+    Both failures produce a corpus that still trains and a board that still scores — the board
+    would just be measuring memorization, which is the one thing it exists to rule out.
+    """
     prefs = Counter(r["pref"] for r in train_rows)
     if len(prefs) != 47:
         raise RuntimeError(f"train covers {len(prefs)} prefectures, expected exactly 47 — stratification broken")
     train_munis = {norm_key(r["muni"]) for r in train_rows} | {norm_key(r["muni"]) for r in val_rows}
-    board_munis = {norm_key(r["muni"]) for r in board_res}
+    board_munis = {norm_key(r["muni"]) for r in board}
     overlap = train_munis & board_munis
     if overlap:
         raise RuntimeError(f"board municipalities leak into train/val: {sorted(overlap)[:5]}")
+    return prefs, board_munis
 
+
+def write_board(
+    out_dir: Path,
+    board: list[dict[str, Any]],
+    *,
+    kenall: dict[str, str],
+    rng: random.Random,
+    postcode_fraction: float,
+) -> None:
+    """Write the held-out board: the rendered row plus the gold fields the resolve side scores against."""
     board_path = out_dir / "jp-probe-board.jsonl"
     with board_path.open("w", encoding="utf-8") as fh:
-        for r in board_res:
+        for r in board:
             postcode = kenall.get(norm_key(r["pref"] + r["muni"]))
             rendered = render_row(
                 r["pref"],
                 r["muni"],
                 r["street"],
                 r["number"],
-                postcode if rng.random() < args.postcode_fraction else None,
+                postcode if rng.random() < postcode_fraction else None,
             )
             fh.write(
                 json.dumps(
@@ -323,24 +395,52 @@ def main() -> None:
                 + "\n"
             )
 
-    # endregion
 
-    # region Char vocab (D2): sealed, from the TRAIN split only, min_count=2.
+def seal_char_vocab(out_dir: Path) -> dict[str, int]:
+    """Build the char vocabulary from the TRAIN split alone, at min_count=2.
 
+    Reading it back off the written parquet rather than from the in-memory rows is what makes it
+    sealed against the split that ships: a vocabulary built from val or board would let a character
+    the model never trained on carry an id.
+    """
     train_table = pq.read_table(out_dir / "train" / "part-0000.parquet", columns=["raw"])
     vocab = build_char_vocab((r for r in train_table["raw"].to_pylist()), min_count=2)
-    vocab_path = out_dir / "char-vocab-jp-v1.json"
-    save_char_vocab(vocab, vocab_path)
+    save_char_vocab(vocab, out_dir / "char-vocab-jp-v1.json")
+    return vocab
+
+
+def main() -> None:
+    args = parse_args()
+    rng = random.Random(args.seed)
+    kenall = load_kenall_postcodes(Path(args.kenall))
+    print(f"KEN_ALL municipalities: {len(kenall):,}")
+
+    reservoirs = fill_reservoirs(args, rng)
+    train_rows, val_rows = draw_splits(args, reservoirs.pool, rng)
+
+    out_dir = Path(args.out_dir)
+    join = PostcodeJoin()
+    write_splits(
+        out_dir,
+        (("train", train_rows), ("val", val_rows)),
+        kenall=kenall,
+        join=join,
+        rng=rng,
+        postcode_fraction=args.postcode_fraction,
+    )
+    prefs, board_munis = check_stratification(train_rows, val_rows, reservoirs.board)
+    write_board(out_dir, reservoirs.board, kenall=kenall, rng=rng, postcode_fraction=args.postcode_fraction)
+    vocab = seal_char_vocab(out_dir)
 
     report = {
         "seed": args.seed,
         "train_rows": len(train_rows),
         "val_rows": len(val_rows),
-        "board_rows": len(board_res),
+        "board_rows": len(reservoirs.board),
         "prefectures_train": len(prefs),
         "prefecture_min_max": [min(prefs.values()), max(prefs.values())],
         "board_municipalities": len(board_munis),
-        "kenall_join": {"hit": kenall_hit, "miss": kenall_miss},
+        "kenall_join": {"hit": join.hit, "miss": join.miss},
         "char_vocab_size": len(vocab),
         "postcode_fraction": args.postcode_fraction,
         "source_parquet": str(args.parquet),
