@@ -22,10 +22,11 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { Box, Text } from "ink"
 import { useState } from "react"
+import { Globerator } from "spliterator/node/fs"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 import { $private } from "#env"
@@ -87,7 +88,9 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 		const versions = splitList(options.corpusVersion)
 
 		if (!versions.length && !options.tokenizer && !options.code) {
-			const available = (await pathExists(corpusRoot)) ? (await readDirectory(corpusRoot)).toSorted().slice(-6) : []
+			const available = (await pathExists(corpusRoot))
+				? (await Globerator.from("*", { cwd: corpusRoot, absolute: false }).toSorted()).slice(-6)
+				: []
 
 			throw new Error(
 				"nothing selected. Pass --corpus-version <v> (and/or --tokenizer, --code).\n" +

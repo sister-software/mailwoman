@@ -47,7 +47,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { isFile, pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { isFile, pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
@@ -58,6 +58,7 @@ import { $public } from "@mailwoman/neural/env"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { dirname, join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -598,7 +599,7 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
 			await makeDirectories(fakePackageDir)
 
-			for (const entry of await readDirectory(packageDir)) {
+			for await (const entry of Globerator.from("*", { cwd: packageDir, absolute: false })) {
 				const source = join(packageDir, entry)
 
 				// NEVER symlink the artifact this test is about to overwrite. `writeFileSync` FOLLOWS a symlink, so

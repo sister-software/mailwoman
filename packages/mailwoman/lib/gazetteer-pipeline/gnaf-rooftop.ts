@@ -30,7 +30,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import {
@@ -52,6 +52,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { latLngToCell } from "h3-js"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * G-NAF `STREET_SUFFIX_CODE` → display word.
@@ -170,7 +171,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 
 	const only = options.states ? new Set(options.states.map((s) => s.toUpperCase())) : null
 
-	const states = (await readDirectory(standardDir))
+	const states = (await Globerator.files("psv", { cwd: standardDir, absolute: false }).toArray())
 		.filter((f) => f.endsWith("_ADDRESS_DETAIL_psv.psv"))
 		.map((f) => f.replace("_ADDRESS_DETAIL_psv.psv", ""))
 		.filter((s) => !only || only.has(s))

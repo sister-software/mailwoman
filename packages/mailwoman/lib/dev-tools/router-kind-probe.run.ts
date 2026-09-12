@@ -14,10 +14,6 @@ import { JSONSpliterator } from "spliterator"
 
 import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parity-corpus"
 
-const fixtures: ParityFixture[] = (
-	await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH))
-).filter((f) => !f.dropped && f.expect)
-
 function classOf(expect: Record<string, string[]>): string {
 	const tags = Object.keys(expect)
 	const has = (t: string) => tags.includes(t)
@@ -35,7 +31,9 @@ function classOf(expect: Record<string, string[]>): string {
 
 const table = new Map<string, Map<string, number>>()
 
-for (const fixture of fixtures) {
+for await (const fixture of JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH)) {
+	if (fixture.dropped || !fixture.expect) continue
+
 	const cls = classOf(fixture.expect!)
 	const normalized = normalize(fixture.input)
 	const shape = computeQueryShape(normalized)

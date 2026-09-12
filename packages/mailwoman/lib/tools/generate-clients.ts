@@ -33,7 +33,7 @@
  *   rotting silently in a file nobody compiles.
  */
 
-import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	copyFileTo,
 	makeDirectories,
@@ -43,6 +43,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import type { Check } from "#cli-kit"
 import { readMailwomanVersion } from "#cli/kit/metadata"
@@ -524,7 +525,9 @@ async function verifyPython(
 	run("uv", ["build"], { cwd: pythonDir })
 
 	const distDir = join(pythonDir, "dist")
-	const entries = (await pathExists(distDir)) ? await readDirectory(distDir) : []
+	const entries = (await pathExists(distDir))
+		? await Globerator.from("*", { cwd: distDir, absolute: false }).toArray()
+		: []
 	const wheel = entries.find((f) => f.endsWith(".whl"))
 	const sdist = entries.find((f) => f.endsWith(".tar.gz"))
 

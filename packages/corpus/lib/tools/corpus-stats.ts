@@ -37,9 +37,9 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { accumulateCooccurrences, createCooccurrenceStats, streamTokenLabelRows } from "#utils/slice-stats"
 
@@ -55,7 +55,7 @@ async function discoverSlices(slicesArg: string): Promise<string[]> {
 	const stat = await statPath(slicesArg)
 
 	if (stat.isDirectory()) {
-		return (await readDirectory(slicesArg)).filter((f) => f.endsWith(".parquet")).map((f) => join(slicesArg, f))
+		return await Globerator.files("parquet", { cwd: slicesArg }).toArray()
 	}
 
 	if (stat.isFile() && slicesArg.endsWith(".parquet")) return [slicesArg]

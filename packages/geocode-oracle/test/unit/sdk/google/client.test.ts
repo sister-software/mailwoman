@@ -18,10 +18,11 @@
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
-import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` is a LIVE getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
@@ -234,7 +235,7 @@ describe("the response cache", () => {
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
 		expect(transport.calls).toHaveLength(1)
-		expect((await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))).toHaveLength(1)
+		expect(await Globerator.files("json", { cwd: cacheDir }).toArray()).toHaveLength(1)
 	})
 
 	it("never writes the API key to disk, nor into a filename", async () => {
@@ -244,7 +245,7 @@ describe("the response cache", () => {
 
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
-		const entries = (await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))
+		const entries = await Globerator.files("json", { cwd: cacheDir, absolute: false }).toArray()
 
 		expect(entries).toHaveLength(1)
 
@@ -263,7 +264,7 @@ describe("the response cache", () => {
 
 		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a permanently
 		// broken address, self-healing only by hand-deleting a hash-named file.
-		expect((await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))).toHaveLength(0)
+		expect(await Globerator.files("json", { cwd: cacheDir }).toArray()).toHaveLength(0)
 	})
 
 	it("does persist ZERO_RESULTS as a stable answer", async () => {

@@ -2,9 +2,10 @@
  * Guard command-owned flags against root-owned --help/--version and -h/-v.
  */
 
-import { readDirectoryEntriesRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { join, relative, sep } from "path-ts"
+import { relative, sep } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 
@@ -20,9 +21,9 @@ async function listCommandModules(): Promise<string[]> {
 	const files: string[] = []
 
 	for (const root of COMMAND_ROOTS) {
-		for (const entry of await readDirectoryEntriesRecursive(root)) {
-			if (entry.isFile() && /\.(?:ts|tsx)$/u.test(entry.name) && !entry.name.endsWith(".test.ts")) {
-				files.push(join(entry.parentPath, entry.name))
+		for await (const file of Globerator.files(["ts", "tsx"], { cwd: root, recursive: true })) {
+			if (!file.endsWith(".test.ts")) {
+				files.push(file)
 			}
 		}
 	}

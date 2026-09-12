@@ -11,12 +11,13 @@
  *   that a dirty tree says so in the commit it reports, and that neither leaves litter behind.
  */
 
-import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runFileSync } from "@mailwoman/core/process"
 import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree/arm"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -165,7 +166,7 @@ describe("runWorktreeArm — cleanup", () => {
 		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
 		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
 		// A stash-based arm would have moved these; a worktree cannot, which is why it is a worktree.
-		expect(await readDirectory(root)).toContain("packages")
+		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")
 	})
 })
 

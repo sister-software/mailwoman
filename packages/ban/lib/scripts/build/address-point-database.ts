@@ -29,7 +29,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -48,6 +48,7 @@ import {
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { extractBANAddrPoints } from "#sdk/extract"
 import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "#sdk/fetch"
@@ -100,7 +101,7 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 	const byDept = new Map<string, string>()
 	const wanted = depts ? new Set(depts.map((d) => d.toLowerCase())) : null
 
-	for (const name of (await readDirectory(csvDir)).toSorted()) {
+	for (const name of await Globerator.from("*", { cwd: csvDir, absolute: false }).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue

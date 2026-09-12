@@ -35,10 +35,10 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { glob } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound } from "@mailwoman/core/numeric"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { connectDuckDB, type DuckDBConnection } from "#utils/parquet"
 
@@ -263,12 +263,10 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
-		await Array.fromAsync(
-			glob("*.parquet", {
-				cwd: trainDir,
-				absolute: true,
-			})
-		)
+		await Globerator.from("*.parquet", {
+			cwd: trainDir,
+			absolute: true,
+		}).toArray()
 	).toSorted()
 
 	if (!parts.length) {

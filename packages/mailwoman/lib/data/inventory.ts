@@ -23,19 +23,13 @@
  *   visible instead of leaving it as a filesystem detail.
  */
 
-import {
-	pathExists,
-	readDirectoryEntries,
-	readLink,
-	isSymbolicLink,
-	statPath,
-	type Dirent,
-} from "@mailwoman/core/fs/readers"
+import { pathExists, readLink, isSymbolicLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 import { basename, join, relative } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Whether an artifact can say how it was made.
@@ -168,7 +162,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 		let entries: Dirent[]
 
 		try {
-			entries = await readDirectoryEntries(dir)
+			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
 			// An unreadable directory is not a finding about provenance; skip it rather than fail the report.
 			return

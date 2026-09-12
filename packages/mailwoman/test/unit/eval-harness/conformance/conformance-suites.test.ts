@@ -14,7 +14,6 @@
  *   Gauntlet harness, so this leg runs wherever the repo does.
  */
 
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	CONFORMANCE_SUITE_DIR,
@@ -23,11 +22,12 @@ import {
 	suiteForLaw,
 } from "mailwoman/eval-harness/conformance/suites"
 import { basename } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
 describe("the conformance suite register", () => {
 	it("names every committed suite file in its own directory", async () => {
-		const committed = (await readDirectory(CONFORMANCE_SUITE_DIR)).filter((entry) => entry.endsWith(".jsonl"))
+		const committed = await Globerator.files("jsonl", { cwd: CONFORMANCE_SUITE_DIR, absolute: false }).toArray()
 		const registered = new Set(CONFORMANCE_SUITES.map((suite) => basename(suite.path)))
 
 		expect(committed.length).toBeGreaterThan(0)

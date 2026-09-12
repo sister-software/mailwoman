@@ -25,8 +25,8 @@ import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/
 // via the post-reset dynamic import below; a `const` carries no type side, so the type position needs its own static
 // import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // NOTE: `./sec-client.ts` is imported DYNAMICALLY below, after `vi.resetModules()` — see the
@@ -382,7 +382,7 @@ describe("createSECClient: on-disk cache", () => {
 		})
 
 		await expect(failingClient.get(errorURL)).rejects.toThrow(/500/)
-		expect(await readDirectory(cacheDir.path)).toHaveLength(0)
+		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
 
 		const succeeding = stubTransport([{ body: { ok: true } }])
 
@@ -414,7 +414,7 @@ describe("createSECClient: on-disk cache", () => {
 		expect((caught as Error).message).toContain(archiveURL)
 		// An unchanged bad body cannot be fixed by retrying, so it must not be requeued either.
 		expect(isTransientResourceError(caught)).toBe(false)
-		expect(await readDirectory(cacheDir.path)).toHaveLength(0)
+		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
 
 		// Nothing was poisoned, so a later attempt against the same (archive!) URL still fetches.
 		const fixed = stubTransport([{ body: { ok: true } }])
@@ -508,7 +508,7 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 		})
 
 		expect(await client.getDocument(archiveURL)).toBe("")
-		expect(await readDirectory(cacheDir.path)).toHaveLength(0)
+		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
 
 		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
 		expect(bad.calls).toHaveLength(2)

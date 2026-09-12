@@ -26,10 +26,11 @@
  */
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * What a extract can be joined THROUGH, which decides what a corpus builder can extract from it.
@@ -165,8 +166,7 @@ export async function gazetteerArtifacts(dataRoot?: PathBuilderLike): Promise<st
 
 	if (!(await pathExists(wof))) return []
 
-	return (await readDirectory(wof))
-		.filter((name) => name.endsWith(".db"))
+	return (await Globerator.files("db", { cwd: wof, absolute: false }).toArray())
 		.filter((name) => !/\.(?:prev\d*|bak)\b/.test(name))
 		.toSorted()
 		.map((name) => join(wof, name))

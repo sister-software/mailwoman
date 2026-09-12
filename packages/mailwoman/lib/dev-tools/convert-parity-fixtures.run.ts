@@ -57,12 +57,11 @@ function countryFor(file: string): string {
 	return "ZZ"
 }
 
-const cases = await Array.fromAsync(JSONSpliterator.fromAsync<ParityCase>(IN_PATH))
 const fixtures: ParityFixture[] = []
 const droppedTagCounts = new Map<string, number>()
 const perFileIndex = new Map<string, number>()
 
-for (const parityCase of cases) {
+for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 	const base = (parityCase.file.split("/").pop() ?? parityCase.file).replace(/\.test\.ts$/, "")
 	const index = (perFileIndex.get(base) ?? 0) + 1
 	perFileIndex.set(base, index)

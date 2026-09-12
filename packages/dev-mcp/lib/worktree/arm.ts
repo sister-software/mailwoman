@@ -33,7 +33,6 @@
  *   for the same reason, since "source that can change a geocode" is the one question both are asking.
  */
 
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -41,6 +40,7 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 
@@ -108,13 +108,17 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
 
 	await makeDirectories(target)
 
-	for (const entry of await readDirectory(source)) {
+	for await (const entry of Globerator.from("*", { cwd: source, absolute: false, onlyFiles: false })) {
 		if (scopesWithWorkspaces.has(entry)) {
 			const scopeTarget = join(target, entry)
 
 			await makeDirectories(scopeTarget)
 
-			for (const member of await readDirectory(join(source, entry))) {
+			for await (const member of Globerator.from("*", {
+				cwd: join(source, entry),
+				absolute: false,
+				onlyFiles: false,
+			})) {
 				const full = `${entry}/${member}`
 				const workspace = workspaceByName.get(full)
 

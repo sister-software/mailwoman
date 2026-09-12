@@ -24,9 +24,10 @@
  *   the two as one number would either overstate the risk or hide it.
  */
 
-import { entryLeadsToDirectory, pathExists, readDirectoryEntries, realPath } from "@mailwoman/core/fs/readers"
+import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers"
 import { runFileSync } from "@mailwoman/core/process"
 import { join, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Where a clone sits relative to the repos root.
@@ -158,7 +159,7 @@ export async function auditReposRoot(
 		}
 	}
 
-	for (const entry of await readDirectoryEntries(root)) {
+	for await (const entry of Globerator.from("*", { cwd: root, withFileTypes: true, onlyFiles: false })) {
 		const full = join(root, entry.name)
 
 		if (!(await entryLeadsToDirectory(entry))) continue
@@ -170,7 +171,7 @@ export async function auditReposRoot(
 		}
 
 		// An owner directory. Its children are the nested layout; a name that is itself a repo was handled above.
-		for (const child of await readDirectoryEntries(full)) {
+		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
 			const childPath = join(full, child.name)
 
 			if (child.name.startsWith("whosonfirst-") && (await entryLeadsToDirectory(child))) {

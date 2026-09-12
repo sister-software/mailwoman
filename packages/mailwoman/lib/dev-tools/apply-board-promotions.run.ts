@@ -30,10 +30,10 @@
  *   [--refuse-country de,es,gb,in,it,nz] [--dry-run]
  */
 
-import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { join } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { writeSeedCaseFile } from "#dev-tools/grade-seed-cases"
 import { CASES_DIR } from "#eval-harness/gauntlet/cases/load"
@@ -72,7 +72,9 @@ const wanted = new Set(
 		.toArray()
 )
 
-const countryDirectories = (await readDirectoryEntries(CASES_DIR))
+const countryDirectories = (
+	await Globerator.from("*", { cwd: CASES_DIR, withFileTypes: true, onlyFiles: false }).toArray()
+)
 	.filter((entry) => entry.isDirectory())
 	.map((entry) => entry.name)
 	.toSorted()
@@ -86,7 +88,7 @@ const found = new Map<string, string>()
 for (const cc of countryDirectories) {
 	const directory = join(CASES_DIR, cc)
 
-	const files = (await readDirectoryEntries(directory))
+	const files = (await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false }).toArray())
 		.filter((entry) => entry.isFile() && entry.name.endsWith(".jsonl"))
 		.map((entry) => entry.name)
 		.toSorted()

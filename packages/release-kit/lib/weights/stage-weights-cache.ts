@@ -27,10 +27,11 @@
  *       --card /path/to/model-card-eval-en-gb.json
  */
 
-import { isFile, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { isFile, pathExists } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, isAbsolute, join, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 export interface StageWeightsCacheOptions {
 	repoRoot: string
@@ -91,7 +92,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	if (options.from) {
 		const fromDir = resolvePath(repoRoot, options.from)
 
-		for (const entry of await readDirectory(fromDir)) {
+		for await (const entry of Globerator.from("*", { cwd: fromDir, absolute: false })) {
 			const source = join(fromDir, entry)
 
 			// Files only: `scripts/` and any other directory in a workspace package is not part of the

@@ -23,9 +23,10 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { isDirectory, readDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { isDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import type { FSTNode } from "#fst/matcher"
 import { FSTMatcher, normalizeTokens } from "#fst/matcher"
@@ -108,7 +109,11 @@ export async function buildStreetMorphologyFST(
 	if (opts.locales && opts.locales.length) {
 		locales = opts.locales
 	} else {
-		const entries = await readDirectory(opts.dictionariesDir)
+		const entries = await Globerator.from("*", {
+			cwd: opts.dictionariesDir,
+			absolute: false,
+			onlyFiles: false,
+		}).toArray()
 		const localeProbes: Array<[string, boolean]> = []
 
 		for (const entry of entries) {

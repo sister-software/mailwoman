@@ -56,11 +56,9 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	const ndjson = resolvePath(scratch.path, "moon.ndjson")
 	const out = resolvePath(scratch.path, "moon.pmtiles")
 
-	const rows = await Array.fromAsync(
-		JSONSpliterator.fromAsync<NomenclatureSourceRow>(fixturePath("moon-nomenclature.ndjson"))
-	)
+	const rows = JSONSpliterator.fromAsync<NomenclatureSourceRow>(fixturePath("moon-nomenclature.ndjson"))
 
-	const features = rows.map((row) => featureFromSourceRow("moon", row))
+	const features = await rows.map((row) => featureFromSourceRow("moon", row)).toArray()
 
 	expect(features).toHaveLength(5)
 	// Marco Polo P straddles the prime meridian: the box stays narrow after the 360 wrap.

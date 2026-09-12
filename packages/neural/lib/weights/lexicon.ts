@@ -9,8 +9,9 @@
  *   error, and a resolution ladder — and `resolveWeights` calls it as one step among a dozen.
  */
 
-import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { type PathBuilder, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { readRequiredChannels } from "#weights/channels"
 
@@ -59,7 +60,9 @@ const warnedUndeclaredLexicon = new Set<string>()
  */
 async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Promise<string[]> {
 	try {
-		return (await readDirectory(dir)).filter((name) => name.startsWith(prefix) && name.endsWith(".json")).toSorted()
+		return (await Globerator.files("json", { cwd: dir, absolute: false }).toArray())
+			.filter((name) => name.startsWith(prefix))
+			.toSorted()
 	} catch {
 		return []
 	}

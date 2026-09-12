@@ -30,10 +30,11 @@ import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { crc32 } from "@mailwoman/core/fs/compression"
-import { readLocalTextFile, readDirectory } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
@@ -462,7 +463,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const failing = bdcTransport([{ status: 500, statusText: "Internal Server Error" }])
 
 		await expect(clientFor(failing, { maxAttempts: 1 }).get("/map/error")).rejects.toBeInstanceOf(ResourceError)
-		expect(await readDirectory(cacheDir)).toHaveLength(0)
+		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
 	})
 
 	it("refuses to cache a 200 whose body is not a BDC `{ data: … }` envelope, and self-heals", async () => {
@@ -471,7 +472,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const bad = bdcTransport([{ body: { error: "nope" } }])
 
 		expect(await clientFor(bad).get("/map/not-an-envelope")).toEqual({ error: "nope" })
-		expect(await readDirectory(cacheDir)).toHaveLength(0)
+		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
 
 		const fixed = bdcTransport([{ body: { data: [1] } }])
 
@@ -487,7 +488,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		expect(await client.get(path, undefined, { skipCache: true })).toEqual({ data: [2] })
 
 		expect(transport.calls).toHaveLength(2)
-		expect(await readDirectory(cacheDir)).toHaveLength(0)
+		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
 	})
 
 	it("de-dupes concurrent misses for the SAME url onto a single in-flight request", async () => {
@@ -531,7 +532,7 @@ describe("createBDCClient: the binary download path", () => {
 		expect(Buffer.from(await client.getArrayBuffer(path)).toString()).toBe("second")
 
 		expect(transport.calls).toHaveLength(2)
-		expect(await readDirectory(cacheDir)).toHaveLength(0)
+		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
 		expect(warn.mock.calls.flat().join(" ")).not.toMatch(/refusing to cache/i)
 
 		warn.mockRestore()

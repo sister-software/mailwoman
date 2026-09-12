@@ -53,7 +53,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"
@@ -76,6 +76,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { cellToParent } from "h3-js"
 import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
 /**
@@ -324,8 +325,11 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 	vintage: NSULVintage
 	sources: NSULRegionSource[]
 }> {
-	const entries = await readDirectory(sourceDir).catch(() => [] as string[])
-	const archiveName = entries.find((name) => ARCHIVE_NAME.test(name))
+	const archiveName = await Globerator.from("*", {
+		cwd: sourceDir,
+		absolute: false,
+		throwIfDirectoryMissing: false,
+	}).find((name) => ARCHIVE_NAME.test(name))
 
 	if (!archiveName) {
 		throw new Error(`buildNSULLayer: no NSUL_E<epoch>_<MON>_<YYYY>.zip in ${sourceDir}`)
@@ -337,7 +341,7 @@ export async function openNSULArchive(sourceDir: string): Promise<{
 		throw new Error(`buildNSULLayer: cannot read a vintage out of ${archiveName}`)
 	}
 
-	const archivePath = String(join(sourceDir, archiveName))
+	const archivePath = join(sourceDir, archiveName)
 	const members = await listZipEntries(archivePath)
 	const found = new Map<string, string>()
 
@@ -377,16 +381,25 @@ export async function openNSULArchive(sourceDir: string): Promise<{
  * names none. Vintage directories are `YYYY-MM`, so lexical order is chronological order.
  */
 export async function resolveLatestNSULSourceDir(root = String(dataRootPath("nsul"))): Promise<string> {
-	const candidates = await readDirectory(root).catch(() => [] as string[])
-
-	for (const name of candidates
+	const candidates = await Globerator.from("*", {
+		cwd: root,
+		absolute: false,
+		onlyFiles: false,
+		throwIfDirectoryMissing: false,
+	})
 		.filter((entry) => /^\d{4}-\d{2}$/.test(entry))
-		.toSorted()
-		.toReversed()) {
-		const dir = String(join(root, name))
-		const entries = await readDirectory(dir).catch(() => [] as string[])
+		.toArray()
 
-		if (entries.some((entry) => ARCHIVE_NAME.test(entry))) return dir
+	for (const name of candidates.toSorted().toReversed()) {
+		const dir = join(root, name)
+
+		const hasArchive = await Globerator.from("*", {
+			cwd: dir,
+			absolute: false,
+			throwIfDirectoryMissing: false,
+		}).some((entry) => ARCHIVE_NAME.test(entry))
+
+		if (hasArchive) return dir
 	}
 
 	throw new Error(`buildNSULLayer: no <YYYY-MM>/NSUL_*.zip acquisition under ${root}`)

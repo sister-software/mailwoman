@@ -69,20 +69,14 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import {
-	glob,
-	pathExists,
-	readDirectoryEntries,
-	readLocalBuffer,
-	readLocalJSONFile,
-	statPath,
-} from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { isoDate, isoSeconds } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { deOrderEval } from "#eval-harness/de-order-eval"
 import { demoCascadeSmoke } from "#eval-harness/demo/cascade/smoke"
@@ -214,12 +208,10 @@ export async function resolveThresholdSpecPath(check: string): Promise<string> {
  */
 export async function listEvalSpecs(): Promise<string[]> {
 	return (
-		await Array.fromAsync(
-			glob("*.json", {
-				cwd: SPECS_DIR,
-				absolute: false,
-			})
-		)
+		await Globerator.from("*.json", {
+			cwd: SPECS_DIR,
+			absolute: false,
+		}).toArray()
 	).toSorted()
 }
 
@@ -256,30 +248,19 @@ async function runLoreGuards(env: {
 	}
 
 	// Refuse to evaluate artifacts older than their source inputs.
-	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. Same shape in-process: the
-	// same two directory levels, the same `.ts` filter, the same reference mtime (`packages/core/out` itself),
-	// and the same short-circuit on the FIRST hit — the `-quit` mattered, since `packages/core/` is large.
+	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. The two patterns cover
+	// those same two levels. Iteration stops at the first newer file, matching `find -quit` without collecting entries.
 	if (await pathExists("packages/core/out")) {
 		const reference = (await statPath("packages/core/out")).mtimeMs
 
 		const staleSource = await (async (): Promise<string | undefined> => {
-			for (const depth1 of await readDirectoryEntries("packages/core")) {
-				const path1 = join("packages/core", depth1.name)
+			for await (const relativePath of Globerator.from(["*.ts", "*/*.ts"], {
+				cwd: "packages/core",
+				absolute: false,
+			})) {
+				const sourcePath = join("packages/core", relativePath)
 
-				if (depth1.isFile()) {
-					if (depth1.name.endsWith(".ts") && (await statPath(path1)).mtimeMs > reference) return path1
-
-					continue
-				}
-
-				if (!depth1.isDirectory()) continue
-
-				for (const depth2 of await readDirectoryEntries(path1)) {
-					if (!depth2.isFile() || !depth2.name.endsWith(".ts")) continue
-					const path2 = join(path1, depth2.name)
-
-					if ((await statPath(path2)).mtimeMs > reference) return path2
-				}
+				if ((await statPath(sourcePath)).mtimeMs > reference) return sourcePath
 			}
 
 			return undefined

@@ -331,10 +331,6 @@ function extractSurface(
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
 
-	const fixtures = (
-		await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(options.fixturesPath ?? PARITY_FIXTURES_PATH))
-	).filter((fixture) => !fixture.dropped && fixture.expect)
-
 	const logTransition = await buildTransitionTable(options.goldenDir ?? "data/eval/golden/v0.1.2/dev")
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
@@ -346,7 +342,12 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		PARITY_FLOORS.map((floor) => [floor.label, { total: 0, base: 0, top1: 0, oracle5: 0, oracleK: 0 }])
 	)
 
-	for (const fixture of fixtures) {
+	let fixtureCount = 0
+
+	for await (const fixture of JSONSpliterator.fromAsync<ParityFixture>(
+		options.fixturesPath ?? PARITY_FIXTURES_PATH
+	).filter((candidate) => !candidate.dropped && candidate.expect)) {
+		fixtureCount++
 		// Production config parity (#1146): every path production parses on feeds the query-shape
 		// emission prior — `safeClassify` in the runtime pipeline, and `geocode-core` since #981 (which
 		// fixed this same divergence for the drop-in servers). This harness was the last surface still
@@ -437,7 +438,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		console.log("")
 	}
 
-	console.log(`oracle-recall@k — k=${k}, ${fixtures.length} live fixtures, segment decode over current emissions`)
+	console.log(`oracle-recall@k — k=${k}, ${fixtureCount} live fixtures, segment decode over current emissions`)
 	console.log("")
 	console.log(`label          n     token@1  seg@1   oracle@5  oracle@${k}`)
 

@@ -5,13 +5,14 @@
  * @file Rewrites a golden-set directory and renders its review deck.
  */
 
-import { pathExists, readDirectoryEntries, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import {
 	relabelGoldenStreetRow,
@@ -127,7 +128,7 @@ export async function relabelGoldenDirectory(
 	const walk = async (dirIn: string, dirOut: string, prefix: string): Promise<void> => {
 		await makeDirectories(dirOut)
 
-		for (const name of await readDirectoryEntries(dirIn)) {
+		for await (const name of Globerator.from("*", { cwd: dirIn, withFileTypes: true, onlyFiles: false })) {
 			const from = join(dirIn, name.name)
 			const to = join(dirOut, name.name)
 

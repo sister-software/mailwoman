@@ -29,8 +29,9 @@
  *   silently emitted zero rows from the real corpus.
  */
 
-import { glob, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * A WOF GeoJSON feature, as published by the per-record bundles.
@@ -173,7 +174,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  * walk. Adapters can add stricter validation downstream if they need it.
  */
 export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WOFRecord> {
-	for await (const filePath of glob("**/*.geojson", {
+	for await (const filePath of Globerator.from("**/*.geojson", {
 		cwd: repoDir,
 		exclude: ["**/*-alt-*.geojson"],
 		// Preserve the recursive fast-glob walk this replaces: bundle repositories can expose data through a link.

@@ -33,7 +33,6 @@
 import {
 	isDirectory,
 	pathExists,
-	readDirectory,
 	readLocalJSONFile,
 	readLocalTextFile,
 } from "@mailwoman/core/fs/readers"
@@ -46,6 +45,7 @@ import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * How well a country can be geocoded, in the three tiers the resolution ladder actually has.
@@ -335,15 +335,14 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 
 	if (!(await pathExists(casesRoot))) return out
 
-	for (const dir of await readDirectory(casesRoot)) {
+	for await (const dir of Globerator.from("*", { cwd: casesRoot, absolute: false, onlyFiles: false })) {
 		if (!/^[a-z]{2}$/.test(dir)) continue
 
 		const dirPath = join(casesRoot, dir)
 
 		if (!(await isDirectory(dirPath))) continue
 
-		for (const file of await readDirectory(dirPath)) {
-			if (!file.endsWith(".jsonl")) continue
+		for await (const file of Globerator.files("jsonl", { cwd: dirPath, absolute: false })) {
 
 			// A line that does not parse is skipped rather than failing the census, so a hand-edited fixture never hides
 			// the rest of its file.

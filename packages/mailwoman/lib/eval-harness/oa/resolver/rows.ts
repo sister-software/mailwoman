@@ -24,8 +24,9 @@ export interface OARow {
  * Read the eval JSONL, capped at `limit` rows. `Infinity` reads the file whole.
  */
 export async function readOARows(evalPath: string, limit: number): Promise<OARow[]> {
-	return (await Array.fromAsync(JSONSpliterator.fromAsync<OARow>(evalPath))).slice(
-		0,
-		limit === Infinity ? undefined : limit
-	)
+	return (
+		limit === Infinity
+			? JSONSpliterator.fromAsync<OARow>(evalPath)
+			: JSONSpliterator.fromAsync<OARow>(evalPath).take(limit)
+	).toArray()
 }

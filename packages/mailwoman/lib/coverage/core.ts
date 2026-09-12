@@ -31,11 +31,12 @@
  *   native dependency on end users who only ever run parse/geocode.
  */
 
-import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname, join } from "path-ts"
 import { $ } from "zx"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely wrap more than half the
@@ -161,7 +162,7 @@ const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9
  */
 async function resolveStates(opts: CoverageBuildOptions): Promise<StateDatabase[]> {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
-	const files = (await readDirectory(opts.dataRoot)).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))
+	const files = await Globerator.from("address-points-us-??.db", { cwd: opts.dataRoot, absolute: false }).toArray()
 	const bySlug = new Map(files.map((f) => [f.replaceAll(/^address-points-us-|\.db$/g, ""), f]))
 
 	const slugs =

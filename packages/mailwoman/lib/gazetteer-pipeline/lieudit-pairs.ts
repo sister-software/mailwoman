@@ -21,8 +21,8 @@
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * One lieu-dit pair in the pair-index entry shape. Raw surfaces — the caller applies the same `normalizeFSTToken` fold
@@ -68,7 +68,7 @@ export interface LieuDitExtractResult {
 export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 	const byDept = new Map<string, string>()
 
-	for (const name of await readDirectory(banDir)) {
+	for await (const name of Globerator.from("*", { cwd: banDir, absolute: false })) {
 		const match = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!match) continue

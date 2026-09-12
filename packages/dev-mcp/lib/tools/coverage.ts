@@ -8,9 +8,10 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage"
+import { Globerator } from "spliterator/node/fs"
 import { z } from "zod"
 
 import type { DevTool, DevToolDeps } from "#tool-kit"
@@ -32,14 +33,13 @@ async function newestConfig(repoRoot: string): Promise<string> {
 	if (!(await pathExists(dir))) return ""
 
 	const named = (
-		await Promise.all(
-			(await readDirectory(dir))
-				.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
-				.map(async (n) => ({ n, at: (await statPath(`${dir}/${n}`)).mtimeMs }))
-		)
+		await Globerator.files("yaml", { cwd: dir, absolute: false })
+			.filter((name) => !name.includes("smoke"))
+			.parallelMap(async (name) => ({ name, at: (await statPath(`${dir}/${name}`)).mtimeMs }))
+			.toArray()
 	).toSorted((a, b) => b.at - a.at)
 
-	return named.length ? `${dir}/${named[0]!.n}` : ""
+	return named.length ? `${dir}/${named[0]!.name}` : ""
 }
 
 /**
@@ -57,14 +57,8 @@ async function newestManifest(): Promise<string> {
 
 	const found: Array<{ path: string; at: number }> = []
 
-	for (const version of await readDirectory(root)) {
-		for (const inner of await readDirectory(`${root}/${version}`)) {
-			const candidate = `${root}/${version}/${inner}/MANIFEST.json`
-
-			if (await pathExists(candidate)) {
-				found.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
-			}
-		}
+	for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: root })) {
+		found.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
 	}
 
 	return found.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""

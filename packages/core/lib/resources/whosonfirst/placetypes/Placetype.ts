@@ -6,8 +6,9 @@
 
 import type { PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
-import { glob, readLocalTextFile } from "#fs/readers"
+import { readLocalTextFile } from "#fs/readers"
 import { parseJSONStrict } from "#json"
 import { prepareRepositoryDirectories, type RepositorySource } from "#resources/git"
 import {
@@ -73,14 +74,14 @@ export class Placetype implements Disposable {
 
 		if (!exists) return
 
-		const definitionPaths = glob("*.json", {
+		const definitionPaths = Globerator.from("*.json", {
 			cwd: repoDirectory("placetypes"),
 		})
 
 		const batchIterator = parallelMap(
 			definitionPaths,
 			async (definitionPath) => {
-				const definitionContent = await readLocalTextFile(String(definitionPath))
+				const definitionContent = await readLocalTextFile(definitionPath)
 				const definition = parseJSONStrict<PlacetypeDefinition>(definitionContent)
 
 				Placetype.register(definition)
@@ -90,7 +91,9 @@ export class Placetype implements Disposable {
 			{ concurrency: batchSize }
 		)
 
-		await Array.fromAsync(batchIterator)
+		for await (const _definition of batchIterator) {
+			// `parallelMap` performs registration above; its yielded definitions have no further consumer.
+		}
 	}
 
 	/**

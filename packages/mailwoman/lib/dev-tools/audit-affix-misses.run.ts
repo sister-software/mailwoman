@@ -43,14 +43,14 @@ const { values: args } = parseArguments({
 
 if (!args.model) throw new Error("--model required")
 
-const rows = await Array.fromAsync(
-	JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.file!)
-)
+const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.file!).toArray()
 
 // Mirror score-affix's SHIP-CONFIG construction exactly — loadFromWeights ignores a modelPath
 // and grades the default symlink with no anchor channel (the zero-fill crash signature this
 // audit's first run produced — caught by the misses-vs-scorer discrepancy).
-const card = await readLocalJSONFile<{ labels: string[] }>("packages/neural-weights-en-us/model-card.json")
+const card = await import("@mailwoman/neural-weights-en-us/model-card.json", { with: { type: "json" } }).then(
+	(m) => m.default
+)
 
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(args.model!)])
 
@@ -63,6 +63,7 @@ const neural = new NeuralAddressClassifier({
 	suppressGazetteerNearPostcode: true,
 })
 
+// TODO: susceptible to drft. Grab this from the codex package.
 const COMMON_SUFFIXES = new Set([
 	"st",
 	"street",

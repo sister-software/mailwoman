@@ -23,7 +23,6 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
@@ -31,6 +30,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#eval-harness/parity-corpus"
 
@@ -67,11 +67,11 @@ async function loadCorpus(
 	if (spec?.startsWith("golden:")) {
 		const [, dir, sampleArg] = spec.split(":")
 		const sampleN = sampleArg ? Number(sampleArg) : Infinity
-		const files = (await readDirectory(resolvePath(dir!))).filter((f) => f.endsWith(".jsonl"))
+		const files = Globerator.files("jsonl", { cwd: resolvePath(dir!), absolute: false })
 		const fixtures: Fixture[] = []
 
-		for (const file of files) {
-			const src = basename(file, ".jsonl")
+		for await (const file of files) {
+			const src = file.replace(/\.jsonl$/, "")
 			let i = -1
 
 			for await (const row of JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(

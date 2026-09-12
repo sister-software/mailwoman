@@ -30,7 +30,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
-import { readDirectory, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -49,6 +49,7 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 import ts from "typescript"
 
 import { normLoose } from "#dev-tools/value-match"
@@ -303,7 +304,7 @@ async function extractAssertions(file: string): Promise<ExtractedAssertion[]> {
 async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[]> {
 	const all: ExtractedAssertion[] = []
 
-	for (const entry of await readDirectory(testsDir)) {
+	for await (const entry of Globerator.from("*.test.ts", { cwd: testsDir, absolute: false })) {
 		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts / intersection.test.ts
 		// / compound_street.test.ts / place.*.test.ts / transit.test.ts / libpostal.test.ts /
 		// functional.test.ts use the `assert(input, ...expected)` shape. CLI integration tests
@@ -540,8 +541,7 @@ interface FalsehoodRow {
 async function loadFalsehoods(dir: string): Promise<ExtractedAssertion[]> {
 	const out: ExtractedAssertion[] = []
 
-	for (const entry of await readDirectory(dir)) {
-		if (!entry.endsWith(".jsonl")) continue
+	for await (const entry of Globerator.files("jsonl", { cwd: dir, absolute: false })) {
 		const file = basename(entry, ".jsonl")
 
 		for await (const line of TextSpliterator.fromAsync(join(dir, entry))) {

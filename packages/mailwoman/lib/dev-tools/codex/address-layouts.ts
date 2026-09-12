@@ -23,10 +23,11 @@
  *   Usage: `node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts`
  */
 
-import { readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { COMMA_JOINED_STREET_COUNTRIES, STREET_ORDERS, type StreetOrder } from "#dev-tools/codex/street-orders"
 import { NO_SUB_LOCALITY_LINE_COUNTRIES } from "#dev-tools/codex/sub-locality-line"
@@ -149,7 +150,7 @@ const usedSlots = new Set<string>()
 const streetNodes = new Set<string>()
 let withoutFormat = 0
 
-for (const file of (await readDirectory(specsDirectory)).toSorted()) {
+for (const file of await Globerator.files("json", { cwd: specsDirectory, absolute: false }).toSorted()) {
 	if (!file.endsWith(".json")) continue
 
 	const code = file.replace(/\.json$/, "")

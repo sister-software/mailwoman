@@ -208,7 +208,7 @@ export async function* readJusoLabelRows(
 
 		const lots = new Map<string, [string, string, string]>()
 
-		for (const row of await Array.fromAsync(fields(archivePath, lotMember))) {
+		for await (const row of fields(archivePath, lotMember)) {
 			if (row.length <= LOT.primary || row[LOT.primary] !== "1") continue
 
 			const lot = `${row[LOT.mountain] === "1" ? "산" : ""}${joinNumber(row[LOT.main]!, row[LOT.sub]!)}`
@@ -218,7 +218,7 @@ export async function* readJusoLabelRows(
 
 		const supplements = new Map<string, [string, string]>()
 
-		for (const row of await Array.fromAsync(fields(archivePath, supplementMember))) {
+		for await (const row of fields(archivePath, supplementMember)) {
 			if (row.length <= SUP.apartment) continue
 
 			supplements.set(row[SUP.id]!, [row[SUP.postcode]!, row[SUP.buildingLocal] || row[SUP.buildingRegister]!])

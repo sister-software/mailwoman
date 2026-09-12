@@ -29,7 +29,6 @@
 // oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
 import { titlecaseIfUpper } from "@mailwoman/core"
-import { glob } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
@@ -39,6 +38,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { pyJSONDumps } from "@mailwoman/core/utils"
 import { dirname } from "path-ts"
 import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 //#region CSV source
 
@@ -260,7 +260,7 @@ async function* sourceRows(): AsyncIterable<CSVRecord> {
 	}
 
 	const pattern = values["csv-glob"]!
-	const filePaths = (await Array.fromAsync(glob(pattern))).toSorted()
+	const filePaths = await Globerator.from(pattern).toSorted()
 
 	for (const filePath of filePaths) {
 		yield* csvRecordsFromFile(filePath)

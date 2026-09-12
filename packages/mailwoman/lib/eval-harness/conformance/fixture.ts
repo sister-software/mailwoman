@@ -395,15 +395,16 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
  * than it has rows, and a smaller violation count is indistinguishable from a law that holds.
  */
 export async function loadConformanceFixtures(path: string): Promise<ConformanceFixture[]> {
-	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<unknown>(path))
 	const fixtures: ConformanceFixture[] = []
 	const seen = new Set<string>()
+	let index = 0
 
-	for (const [index, raw] of rows.entries()) {
-		const fixture = parseConformanceFixture(raw, `${path}:${index + 1}`)
+	for await (const raw of JSONSpliterator.fromAsync<unknown>(path)) {
+		index++
+		const fixture = parseConformanceFixture(raw, `${path}:${index}`)
 
 		if (seen.has(fixture.id)) {
-			throw new Error(`${path}:${index + 1}: duplicate fixture id "${fixture.id}" — ids name rows in failure output`)
+			throw new Error(`${path}:${index}: duplicate fixture id "${fixture.id}" — ids name rows in failure output`)
 		}
 
 		seen.add(fixture.id)

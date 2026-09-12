@@ -26,11 +26,11 @@
  *   excluded by (street, locality, postcode) so the training slice never overlaps the benchmark.
  */
 
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { PSVSpliterator, TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 export interface GNAFAssembleOptions {
 	/**
@@ -125,7 +125,7 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 
 export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssembleResult> {
 	const progress = opts.onProgress ?? (() => {})
-	const files = await readDirectory(opts.standardDir)
+	const files = await Globerator.from("*", { cwd: opts.standardDir, absolute: false }).toArray()
 
 	const pick = (re: RegExp, exclude?: RegExp) =>
 		files.filter((f) => re.test(f) && !(exclude && exclude.test(f))).map((f) => join(opts.standardDir, f))

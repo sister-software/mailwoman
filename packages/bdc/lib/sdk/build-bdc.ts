@@ -50,7 +50,7 @@
  *      the house rule exists for.
  */
 
-import { pathExists, readDirectory, readFileRange } from "@mailwoman/core/fs/readers"
+import { pathExists, readFileRange } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	createLayerCoverageTable,
@@ -75,6 +75,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
 import { basename, dirname, join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import {
 	BDC_COVERAGE_H3_RESOLUTION,
@@ -465,7 +466,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	if (!(await pathExists(options.out))) {
 		const base = basename(options.out)
 
-		const parked = (await readDirectory(dirname(options.out))).find(
+		const parked = await Globerator.from("*", { cwd: dirname(options.out), absolute: false }).find(
 			(name) => name === `${base}.prev` || name.startsWith(`${base}.old-`)
 		)
 

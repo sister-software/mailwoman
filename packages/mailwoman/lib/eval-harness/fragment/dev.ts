@@ -45,9 +45,8 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	tagAccuracy: number
 	trailingNumberToPostcode: number
 }> {
-	const rows: DevRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<DevRow>(options.fixturesPath))
-
-	const sample = options.limit && options.limit > 0 ? rows.slice(0, options.limit) : rows
+	const rows = JSONSpliterator.fromAsync<DevRow>(options.fixturesPath)
+	const sample = options.limit && options.limit > 0 ? rows.take(options.limit) : rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",
@@ -59,8 +58,10 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	let tagTotal = 0
 	let numberRows = 0
 	let numberAsPostcode = 0
+	let sampleCount = 0
 
-	for (const row of sample) {
+	for await (const row of sample) {
+		sampleCount++
 		const gold = row.span_tags.map((tag, i) => [tag, row.raw.slice(row.span_starts[i], row.span_ends[i])] as const)
 		const byTag = groupTuplesByTag(await classifier.parse(row.raw, { postcodeRepair: true }))
 
@@ -95,11 +96,11 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 		}
 	}
 
-	const spanExact = sample.length ? spanHits / sample.length : 0
+	const spanExact = sampleCount ? spanHits / sampleCount : 0
 	const tagAccuracy = tagTotal ? tagHits / tagTotal : 0
 	const trailingNumberToPostcode = numberRows ? numberAsPostcode / numberRows : 0
 
-	console.log(`fragment-dev: ${sample.length} rows`)
+	console.log(`fragment-dev: ${sampleCount} rows`)
 	console.log(`  span-exact           ${spanExact.toFixed(4)}`)
 	console.log(`  tag-accuracy         ${tagAccuracy.toFixed(4)}`)
 	console.log(`  number→postcode rate ${trailingNumberToPostcode.toFixed(4)} (${numberAsPostcode}/${numberRows})`)

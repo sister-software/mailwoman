@@ -8,9 +8,10 @@
  *   `node packages/mailwoman/lib/dev-tools/extract-parity-corpus.run.ts`
  */
 
-import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { join } from "path-ts"
 import { createNewlineWriter } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { extractAssertCalls, type ParityCase } from "#dev-tools/parity-extract"
 
@@ -20,7 +21,7 @@ const OUT_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-inpu
 const cases: ParityCase[] = []
 let parityFileCount = 0
 
-for (const entry of (await readDirectory(TEST_DIR)).toSorted()) {
+for (const entry of await Globerator.files("test.ts", { cwd: TEST_DIR, absolute: false }).toSorted()) {
 	if (!entry.endsWith(".test.ts")) continue
 
 	const path = join(TEST_DIR, entry)

@@ -16,8 +16,9 @@
  *   for the same reason. The failure mode is silence, so the answer is a refusal rather than a warning.
  */
 
-import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers"
 import { basename, join, relative, sep } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 
@@ -55,7 +56,7 @@ async function newestMtime(
 		let entries
 
 		try {
-			entries = await readDirectoryEntries(dir)
+			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
 			continue
 		}

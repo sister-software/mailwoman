@@ -25,20 +25,21 @@ interface ParityRow {
 	expected: Array<Record<string, unknown> | string>
 }
 
-const parity = await Array.fromAsync(JSONSpliterator.fromAsync<ParityRow>(PARITY_PATH))
-
 // The streetParts leg only fires when a house number is in play — feed it the cases that have one.
-const withHouseNumber = parity
+const withHouseNumber = await JSONSpliterator.fromAsync<ParityRow>(PARITY_PATH)
 	.filter((row) =>
 		row.expected.some((record) => typeof record === "object" && record !== null && "house_number" in record)
 	)
 	.map((row) => row.input)
+	.take(172)
+	.toArray()
 
-const syntheticInputs = (await Array.fromAsync(TextSpliterator.fromAsync(SYNTHETIC_PATH)))
+const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH)
 	.map((line) => line.trim())
 	.filter((line) => line.length > 0)
+	.toArray()
 
-const queries = [...new Set([...withHouseNumber.slice(0, 172), ...syntheticInputs])]
+const queries = [...new Set([...withHouseNumber, ...syntheticInputs])]
 
 const child = spawnProcess("node", ["packages/nominatim/out/cli.js", "serve", "--port", String(PORT)], {
 	stdio: ["ignore", "inherit", "inherit"],

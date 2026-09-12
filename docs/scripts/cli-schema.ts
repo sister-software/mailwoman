@@ -2,9 +2,10 @@
  * Read compiled command modules and assemble their native command specifications.
  */
 
-import { isDirectory, readDirectory } from "@mailwoman/core/fs/readers"
+import { isDirectory } from "@mailwoman/core/fs/readers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 export interface OptionSpec {
 	type: "boolean" | "string" | "number"
@@ -43,7 +44,7 @@ export async function readCommands(
 ): Promise<Map<string, CommandNode>> {
 	const commands = new Map<string, CommandNode>()
 
-	for (const entry of await readDirectory(directory)) {
+	for await (const entry of Globerator.from("*", { cwd: directory, absolute: false, onlyFiles: false })) {
 		if (ignoredEntries.has(entry.replace(/\.[cm]?js$/u, ""))) continue
 		const path = join(directory, entry)
 

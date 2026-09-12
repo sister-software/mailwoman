@@ -42,10 +42,10 @@ const { values } = parseArguments({
 	},
 })
 
-const rows = (await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(values.fixtures!)))
-	.filter((r) => (values.country ? r.country === values.country : true))
+const rows = JSONSpliterator.fromAsync<ParityFixture>(values.fixtures!)
+	.filter((row) => (values.country ? row.country === values.country : true))
 	// The shape the claim is about: a street AND a locality, separated by at least one comma.
-	.filter((r) => r.expect?.locality?.length && r.expect?.street?.length && r.input.includes(","))
+	.filter((row) => row.expect?.locality?.length && row.expect?.street?.length && row.input.includes(","))
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({
 	locale: values.locale!,
@@ -62,9 +62,11 @@ async function tagsFor(text: string): Promise<Map<string, string[]>> {
 
 let withComma = 0
 let withoutComma = 0
+let rowCount = 0
 const lost: string[] = []
 
-for (const row of rows) {
+for await (const row of rows) {
+	rowCount++
 	const gold = fold(row.expect!.locality!.join(""))
 	// Verbatim `eval-harness/invariance/transforms.ts::commaDrop`.
 	const stripped = row.input.replaceAll(",", "").replaceAll(/\s+/gu, " ").trim()
@@ -89,8 +91,8 @@ for (const row of rows) {
 }
 
 console.log(
-	`${values.label.padEnd(10)} ${values.raw ? "raw   " : "pipe  "} n=${rows.length}  ` +
-		`locality WITH commas ${withComma}/${rows.length}  COMMA-FREE ${withoutComma}/${rows.length}  ` +
+	`${values.label.padEnd(10)} ${values.raw ? "raw   " : "pipe  "} n=${rowCount}  ` +
+		`locality WITH commas ${withComma}/${rowCount}  COMMA-FREE ${withoutComma}/${rowCount}  ` +
 		`lost-by-comma-drop ${lost.length}`
 )
 

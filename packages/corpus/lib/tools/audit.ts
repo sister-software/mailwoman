@@ -15,9 +15,10 @@
  *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
  */
 
-import { pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { basename, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 /**
  * Share of a slice one source may hold before the mix is flagged as dominated by it.
@@ -116,7 +117,7 @@ async function scanSlices(corpusDir: PathBuilderLike, sampleCount: number): Prom
 
 		if (!(await pathExists(splitDir))) continue
 
-		const files = (await readDirectory(splitDir)).filter((f) => f.endsWith(".parquet")).toSorted()
+		const files = await Globerator.files("parquet", { cwd: splitDir, absolute: false }).toSorted()
 
 		stats.totalFiles += files.length
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))

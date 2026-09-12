@@ -282,21 +282,22 @@ export function canonicalizeHardSliceCase(c: HardSliceCase): HardSliceCase {
  * under-report its own size, and the arm comparison would be run on a set nobody declared.
  */
 export async function loadHardSliceBoard(path: string = HARD_SLICE_BOARD_PATH): Promise<HardSliceCase[]> {
-	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<unknown>(path))
 	const cases: HardSliceCase[] = []
 	const ids = new Set<string>()
+	let index = 0
 
-	for (const [index, row] of rows.entries()) {
+	for await (const row of JSONSpliterator.fromAsync<unknown>(path)) {
+		index++
 		const parsed = HardSliceCaseSchema.safeParse(row)
 
 		if (!parsed.success) {
 			throw new Error(
-				`${path}:${index + 1} — invalid hard-slice row: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+				`${path}:${index} — invalid hard-slice row: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
 			)
 		}
 
 		if (ids.has(parsed.data.id)) {
-			throw new Error(`${path}:${index + 1} — duplicate case id "${parsed.data.id}"`)
+			throw new Error(`${path}:${index} — duplicate case id "${parsed.data.id}"`)
 		}
 
 		ids.add(parsed.data.id)

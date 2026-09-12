@@ -10,13 +10,14 @@
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
-import { glob, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import {
 	choosePoint,
@@ -262,15 +263,13 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		exclude.push("**/whosonfirst-data-postalcode-*/**")
 	}
 
-	const filePaths = await Array.fromAsync(
-		glob("**/data/**/*.geojson", {
-			cwd: opts.dataDir,
-			exclude,
-			// The repos root can expose one checkout through both layouts. Treat a symlink as an alias, not a
-			// second source tree: the direct checkout supplies its records once.
-			followSymlinks: false,
-		})
-	)
+	const filePaths = await Globerator.from("**/data/**/*.geojson", {
+		cwd: opts.dataDir,
+		exclude,
+		// The repos root can expose one checkout through both layouts. Treat a symlink as an alias, not a
+		// second source tree: the direct checkout supplies its records once.
+		followSymlinks: false,
+	}).toArray()
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
