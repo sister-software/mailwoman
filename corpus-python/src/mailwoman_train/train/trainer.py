@@ -17,7 +17,6 @@ split). The richer golden-set eval lives in ``eval.py`` and is meant to run post
 
 from __future__ import annotations
 
-import csv
 import json
 import random
 import time
@@ -26,17 +25,21 @@ from pathlib import Path
 
 import torch
 
-from ..config import Config, csv_log_path
+from ..config import Config
 from ..data.dose import format_derivation, resolve_config_doses
 from ..data.loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from ..evaluation.metrics import cross_pollution, eval_csv_row, token_f1
+from ..evaluation.metrics import cross_pollution, token_f1
 from ..nn.encoder import build_model, force_math_sdpa, model_param_count
 from ..optim.groups import build_optimizer, reinit_label_rows
 from ..optim.schedules import build_scheduler, restamp_resume_lrs
+from ..protocols import TrainCallback
 from ..tokenizer import Tokenizer
 from .batch import precision_to_dtype, to_tensor_batch
+from .callbacks import default_callbacks
+from .callbacks.checkpointer import checkpoint_extras
 from .checkpoint import find_latest_checkpoint, save_checkpoint
 from .noise import perturb_anchor_confidence, perturb_evidence_noise, perturb_gazetteer_confidence
+from .state import TrainState
 
 
 def _set_seed(seed: int) -> None:
@@ -108,7 +111,12 @@ def _eval_val(
     return metrics
 
 
-def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
+def train(
+    cfg: Config,
+    *,
+    resume_from: str | Path | None = None,
+    callbacks: list[TrainCallback] | None = None,
+) -> None:
     _set_seed(cfg.train.seed)
     # MLM pre-training is a different objective + loop; route there (lazy import avoids a
     # train<->pretrain module cycle). pretrain() writes from_pretrained-loadable checkpoints.
@@ -350,38 +358,24 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         )
         print(f"[ewc] λ={cfg.train.ewc_lambda:g}, {ewc.covered_params:,} params braked against {ewc_reference}")
 
-    csv_path = csv_log_path(cfg)
-    csv_path.parent.mkdir(parents=True, exist_ok=True)
-    # On resume, append to the existing CSV instead of clobbering.
-    csv_mode = "a" if resume_step > 0 and csv_path.is_file() else "w"
-    csv_fh = csv_path.open(csv_mode, encoding="utf-8", newline="")
-    csv_writer = csv.writer(csv_fh)
-    from ..labels import resolve_label_set as _resolve_label_set
-
-    _label_set = _resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
-    per_tag_cols = [f"f1.{tag}" for tag in _label_set.tags]
-    if csv_mode == "w":
-        csv_writer.writerow(
-            [
-                "step",
-                "wall_seconds",
-                "train_loss",
-                "lr",
-                "val_loss",
-                "val_macro_f1",
-                *per_tag_cols,
-            ]
-        )
-
-    # Optional Trackio mirror of the CSV metrics (no-op unless cfg.train.trackio_enabled).
-    # Defined before the try/ below so the finally block can always call tracker.finish().
-    from ..observability.trackio import init_tracker
-
-    tracker = init_tracker(cfg)
+    state = TrainState(
+        cfg=cfg,
+        model=model,
+        tokenizer=tokenizer,
+        device=device,
+        optimizer=optim,
+        scheduler=scheduler,
+        output_dir=output_dir,
+        started=time.time(),
+        vocab_size=tokenizer.vocab_size if tokenizer is not None else 2,
+    )
+    if callbacks is None:
+        callbacks = default_callbacks(cfg, resume_step=resume_step)
+    for callback in callbacks:
+        callback.on_train_begin(state)
 
     step = resume_step
     micro_step = 0
-    started = time.time()
     train_loss_running = 0.0
     log_every = max(1, cfg.train.log_every_steps)
     print(f"max_steps={cfg.train.max_steps} batch_size={cfg.train.batch_size}")
@@ -471,101 +465,33 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 step += 1
                 train_loss_running += float(loss.detach().cpu()) * accum
 
+                # The running sum is the loop's, not a callback's: it accumulates across the window
+                # a callback only sees the end of, and resetting it is what closes that window.
                 if step % log_every == 0:
-                    avg = train_loss_running / log_every
+                    state.train_loss = train_loss_running / log_every
                     train_loss_running = 0.0
-                    lr = float(scheduler.get_last_lr()[0])
-                    elapsed = time.time() - started
-                    print(
-                        f"step {step}/{cfg.train.max_steps}"
-                        f"  train_loss={avg:.4f}  lr={lr:.6f}"
-                        f"  rate={step / elapsed:.2f} steps/s"
-                    )
-                    csv_writer.writerow(
-                        [step, f"{elapsed:.1f}", f"{avg:.6f}", f"{lr:.8f}", "", ""] + [""] * len(per_tag_cols)
-                    )
-                    csv_fh.flush()
-                    tracker.log({"train_loss": avg, "lr": lr, "wall_seconds": elapsed}, step=step)
+                state.learning_rate = float(scheduler.get_last_lr()[0])
+                state.elapsed = time.time() - state.started
+                for callback in callbacks:
+                    callback.on_step_end(state, step)
 
+                # Evaluating costs a forward pass over the val split, so the loop decides when it
+                # happens; the callbacks only observe the result.
                 if step % cfg.train.eval_every_steps == 0:
-                    val = _eval_val(cfg, tokenizer, model, device, max_rows=cfg.data.val_rows)
-                    tag_summary = "  ".join(
-                        f"{t}={val.get(f'f1_tag.{t}', 0.0):.3f}"
-                        for t in ("locality", "region", "street", "house_number", "postcode")
-                    )
-                    print(
-                        f"  [eval] val_loss={val.get('val_loss', float('nan')):.4f}"
-                        f"  macro_f1={val.get('macro_f1', 0.0):.4f}"
-                        f"  val_rows={val.get('val_rows', 0)}"
-                        f"\n         {tag_summary}"
-                    )
-                    # PR3 regression check: city/region-start → postcode rate (check < 1% per locale), plus
-                    # the aux locale-head accuracy. Only prints when self-conditioning is active.
-                    if "cross_pollution" in val:
-                        xpoll = "  ".join(
-                            f"{k.split('.', 1)[1]}={val[k] * 100:.2f}%"
-                            for k in sorted(val)
-                            if k.startswith("cross_pollution.")
-                        )
-                        print(
-                            f"         [pr3] cross_pollution={val['cross_pollution'] * 100:.2f}%"
-                            f"  ({xpoll})  locale_acc={val.get('locale_acc', float('nan')):.3f}"
-                        )
-                    elapsed = time.time() - started
-                    # CSV: per-tag F1, but a blank cell ("") for tags with no val support so readers
-                    # see NaN rather than a misleading 0.0.
-                    csv_writer.writerow(eval_csv_row(step, elapsed, val, _label_set.tags))
-                    csv_fh.flush()
-                    eval_metrics: dict[str, float] = {
-                        "val_loss": float(val.get("val_loss", float("nan"))),
-                        "val_macro_f1": float(val.get("macro_f1", 0.0)),
-                        "wall_seconds": elapsed,
-                    }
-                    # Log per-tag support alongside F1. A blank/missing `f1.<tag>` chart is then
-                    # self-explaining: `support.<tag>` = 0 means the val sample contains no examples
-                    # of that tag (a coverage gap — see Layer 2), NOT that the model scored zero. We
-                    # OMIT `f1.<tag>` when support is 0 so the dashboard draws a gap, not a flat-zero
-                    # line that reads as a model failure.
-                    tags_with_support = 0
-                    for tag in _label_set.tags:
-                        sup = int(val.get(f"support_tag.{tag}", 0))
-                        eval_metrics[f"support.{tag}"] = sup
-                        if sup > 0:
-                            eval_metrics[f"f1.{tag}"] = float(val.get(f"f1_tag.{tag}", 0.0))
-                            tags_with_support += 1
-                    eval_metrics["val_tags_with_support"] = tags_with_support
-                    # PR3: stream the cross-pollution regression check (overall + per-locale) and the aux
-                    # locale-head accuracy to the dashboard, so the 20k check is watchable live.
-                    for k, v in val.items():
-                        if k.startswith("cross_pollution") or k == "locale_acc":
-                            eval_metrics[k] = float(v)
-                    tracker.log(eval_metrics, step=step)
-
-                if step % cfg.train.save_every_steps == 0:
-                    extras = {
-                        "step": step,
-                        "config": {
-                            "data": asdict(cfg.data),
-                            "model": asdict(cfg.model),
-                            "train": asdict(cfg.train),
-                        },
-                        # Char mode has no SP tokenizer; 2 is build_model's dummy SP-table width
-                        # (the model's own config carries char_vocab_size).
-                        "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
-                    }
-                    saved_ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
-                    print(f"  [save] checkpoint → {saved_ck}")
-        # Final save.
-        extras = {
-            "step": step,
-            "config": {
-                "data": asdict(cfg.data),
-                "model": asdict(cfg.model),
-                "train": asdict(cfg.train),
-            },
-            "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
-        }
-        final_ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
+                    state.val = _eval_val(cfg, tokenizer, model, device, max_rows=cfg.data.val_rows)
+                    state.elapsed = time.time() - state.started
+                    for callback in callbacks:
+                        callback.on_eval_end(state, step, state.val)
+        # Final save. This one stays in the loop: the Fisher artifact is written beside it, and a
+        # run that reached its last step owes a checkpoint whether or not a callback is listening.
+        final_ck = save_checkpoint(
+            model,
+            output_dir,
+            step,
+            checkpoint_extras(state, step),
+            optim=optim,
+            scheduler=scheduler,
+        )
         # Fisher artifact lands BESIDE the final checkpoint (the weights-bundle contract: versioned
         # filename + provenance sidecar, the lexicon discipline). Zero-count capture (a run shorter
         # than its window says it was armed for) raises in finalize — loud, never a silent absence.
@@ -582,5 +508,6 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             )
             print(f"[fisher] artifact → {fisher_path} ({fisher_acc.count} batches)")
     finally:
-        csv_fh.close()
-        tracker.finish()
+        # A crashed run still closes its CSV and its tracker, so the partial metrics survive.
+        for callback in callbacks:
+            callback.on_train_end(state)

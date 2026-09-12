@@ -123,9 +123,10 @@ def test_the_loop_emits_its_events_in_order(tmp_path: Path, capsys: Any) -> None
     train(cfg)
     events = _events(capsys.readouterr().out)
 
-    # Within one step the progress line precedes the eval, and the eval precedes the save — the
-    # order the CSV is written in, and the order a reader of the log expects.
-    assert events == ["log:2", "eval", "save:2", "log:4", "eval", "save:4"], events
+    # The progress line, then the checkpoint, then the eval. The checkpoint and the eval both
+    # observe the same weights at a step where their intervals coincide — the eval takes no
+    # gradient — so their relative order is a property of the log, not of the run.
+    assert events == ["log:2", "save:2", "eval", "log:4", "save:4", "eval"], events
     assert Path(cfg.train.output_dir, "step-000004").is_dir()
 
 
