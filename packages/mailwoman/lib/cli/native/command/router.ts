@@ -26,7 +26,24 @@ const COMMANDS_ROOT = pathToFileURL(`${String(resolvePackagePath("mailwoman", "o
 const commandURL = (parts: readonly string[], index = false): URL =>
 	new URL(`${parts.join("/")}${index ? "/index" : ""}.js`, COMMANDS_ROOT)
 
-const OPTION_INITIALISMS = new Map([["db", "DB"]])
+/**
+ * Kebab segments whose property spelling capitalizes the whole acronym, per the house casing convention.
+ *
+ * A segment missing here derives a property the command's own `Options` does not declare. The flag still parses and
+ * still passes validation; it reaches the component under a name nothing reads, so it does nothing and reports no
+ * error. Add the segment here when a flag carries an acronym.
+ */
+const OPTION_INITIALISMS = new Map([
+	["csv", "CSV"],
+	["db", "DB"],
+	["html", "HTML"],
+	["ids", "IDs"],
+	["json", "JSON"],
+	["jsonl", "JSONL"],
+	["km", "KM"],
+	["svg", "SVG"],
+	["xml", "XML"],
+])
 
 /**
  * Convert a kebab-case option name to its TypeScript property name.
