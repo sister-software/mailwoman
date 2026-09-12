@@ -11,13 +11,19 @@
 import { APIClient } from "@mailwoman/core/api/APIClient"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { isTransientResourceError } from "@mailwoman/core/api/responses"
-import { readDirectory, readDirectoryEntries, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { CachedStorageValue, NotEmptyStorageValue } from "axios-cache-interceptor"
+import type { PathBuilderLike } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const ONE_HOUR_MS = 60 * 60 * 1000
+
+function directoryNames(directory: PathBuilderLike): Promise<string[]> {
+	return Globerator.from("*", { cwd: directory, absolute: false, onlyFiles: false }).toArray()
+}
 
 function cachedValue(body: unknown, ttl: number = ONE_HOUR_MS): CachedStorageValue {
 	return {
@@ -60,7 +66,7 @@ describe("buildDiskStorage: round trip", () => {
 		await storage.set("GET|https://example.invalid/x?cik=1", cachedValue({ cik: 1 }))
 		await storage.set("GET|https://example.invalid/x?cik=2", cachedValue({ cik: 2 }))
 
-		expect(await readDirectory(directory.path)).toHaveLength(2)
+		expect(await directoryNames(directory.path)).toHaveLength(2)
 
 		expect(((await storage.get("GET|https://example.invalid/x?cik=1")) as CachedStorageValue).data.data).toEqual({
 			cik: 1,
@@ -72,10 +78,10 @@ describe("buildDiskStorage: round trip", () => {
 		const expired: CachedStorageValue = { ...cachedValue({ stale: true }, 1), createdAt: Date.now() - 10_000 }
 
 		await storage.set("expired", expired)
-		expect(await readDirectory(directory.path)).toHaveLength(1)
+		expect(await directoryNames(directory.path)).toHaveLength(1)
 
 		expect((await storage.get("expired")).state).toBe("empty")
-		expect(await readDirectory(directory.path)).toHaveLength(0)
+		expect(await directoryNames(directory.path)).toHaveLength(0)
 	})
 
 	it("removes an entry on request, and clears the whole directory.path", async () => {
@@ -85,10 +91,13 @@ describe("buildDiskStorage: round trip", () => {
 		await storage.set("b", cachedValue({ b: 2 }))
 
 		await storage.remove("a")
-		expect(await readDirectory(directory.path)).toHaveLength(1)
+		expect(await directoryNames(directory.path)).toHaveLength(1)
 
 		await storage.clear?.()
-		expect(await readDirectoryEntries(directory.path)).toHaveLength(0)
+
+		expect(
+			await Globerator.from("*", { cwd: directory.path, withFileTypes: true, onlyFiles: false }).toArray()
+		).toHaveLength(0)
 	})
 
 	it("holds `loading` markers in memory only — never a file per in-flight request", async () => {
@@ -96,7 +105,7 @@ describe("buildDiskStorage: round trip", () => {
 
 		await storage.set("in-flight", { state: "loading", previous: "empty" })
 
-		expect(await readDirectory(directory.path)).toHaveLength(0)
+		expect(await directoryNames(directory.path)).toHaveLength(0)
 		expect((await storage.get("in-flight")).state).toBe("loading")
 
 		// And a separate instance (a separate process, in production) sees a clean miss rather than a
@@ -127,12 +136,12 @@ describe("buildDiskStorage: round trip", () => {
 
 		await storage.set("corrupt", cachedValue({ good: true }))
 
-		const [fileName] = await readDirectory(directory.path)
+		const [fileName] = await directoryNames(directory.path)
 
 		await writeLocalTextFile("{ not json", directory.resolve(fileName!))
 
 		expect((await storage.get("corrupt")).state).toBe("empty")
-		expect(await readDirectory(directory.path)).toHaveLength(0)
+		expect(await directoryNames(directory.path)).toHaveLength(0)
 	})
 })
 
@@ -147,12 +156,12 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 
 		await storage.set("poisoned", cachedValue("<html>not json</html>"))
 
-		expect(await readDirectory(directory.path)).toHaveLength(0)
+		expect(await directoryNames(directory.path)).toHaveLength(0)
 		expect((await storage.get("poisoned")).state).toBe("empty")
 
 		// Self-heals: a later, valid response for the same key caches normally.
 		await storage.set("poisoned", cachedValue({ ok: true }))
-		expect(await readDirectory(directory.path)).toHaveLength(1)
+		expect(await directoryNames(directory.path)).toHaveLength(1)
 	})
 
 	it("drops a superseded entry rather than leaving the older body behind", async () => {
@@ -164,12 +173,12 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		})
 
 		await storage.set("k", cachedValue({ generation: 1 }))
-		expect(await readDirectory(directory.path)).toHaveLength(1)
+		expect(await directoryNames(directory.path)).toHaveLength(1)
 
 		accept = false
 		await storage.set("k", cachedValue({ generation: 2 }))
 
-		expect(await readDirectory(directory.path)).toHaveLength(0)
+		expect(await directoryNames(directory.path)).toHaveLength(0)
 		expect((await storage.get("k")).state).toBe("empty")
 	})
 
@@ -181,7 +190,7 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 
 		await storage.set("forever", cachedValue({ immutable: true }, Number.POSITIVE_INFINITY))
 
-		expect(await readDirectory(directory.path)).toHaveLength(0)
+		expect(await directoryNames(directory.path)).toHaveLength(0)
 	})
 
 	it("refuses an unserializable body instead of throwing out of set()", async () => {
@@ -191,7 +200,7 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		circular.self = circular
 
 		await expect(storage.set("circular", cachedValue(circular))).resolves.toBeUndefined()
-		expect(await readDirectory(directory.path)).toHaveLength(0)
+		expect(await directoryNames(directory.path)).toHaveLength(0)
 	})
 })
 
@@ -212,11 +221,11 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 			const writerA = buildDiskStorage({ directory: directory.path })
 			const writerB = buildDiskStorage({ directory: directory.path })
 
-			const before = new Set(await readDirectory(directory.path))
+			const before = new Set(await directoryNames(directory.path))
 
 			await Promise.all([writerA.set(key, cachedValue(body)), writerB.set(key, cachedValue(body))])
 
-			const added = (await readDirectory(directory.path)).filter((name) => !before.has(name))
+			const added = (await directoryNames(directory.path)).filter((name) => !before.has(name))
 
 			// Exactly one: not zero (both writes vanished), not two (an orphaned `.building` file left
 			// behind alongside the final one — the old bug's ENOENT path did exactly that).
@@ -233,7 +242,7 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 
 		await storage.set("clean", cachedValue({ ok: true }))
 
-		expect((await readDirectory(directory.path)).filter((name) => name.endsWith(".building"))).toHaveLength(0)
+		expect((await directoryNames(directory.path)).filter((name) => name.endsWith(".building"))).toHaveLength(0)
 	})
 })
 

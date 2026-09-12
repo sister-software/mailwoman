@@ -20,8 +20,8 @@ import {
 	invoicePaidEvent,
 	invoicePaymentList,
 	subscriptionObject,
-} from "../support/stripe-fixtures.ts"
-import { signedWebhook, stripeFetch } from "../support/stripe-mock.ts"
+} from "../support/stripe/fixtures.ts"
+import { signedWebhook, stripeFetch } from "../support/stripe/mock.ts"
 
 const email = { send: async () => ({ messageID: "msg_1" }) }
 

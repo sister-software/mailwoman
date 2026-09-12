@@ -81,6 +81,10 @@ export const noRootScriptsCheck: RepoCheck = {
 
 		const codeFiles = await trackedSourcePaths(context, {
 			globs: [
+				// Both depths, because a `git ls-files` wildcard crosses `/` without the pathname flag: `lib/**/*.ts`
+				// requires a literal slash after `lib/`, so the first form alone never sees `lib/weights.ts`.
+				"packages/*/lib/*.ts",
+				"packages/*/lib/*.tsx",
 				"packages/*/lib/**/*.ts",
 				"packages/*/lib/**/*.tsx",
 				"docs/src/**/*.ts",

@@ -14,7 +14,7 @@
  *   without meaning to gets a message rather than a `undefined` it will misread.
  */
 
-import type { EffectiveConfig, Engine, EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
+import type { EffectiveConfig, Engine, EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
 import type { TreeFingerprint } from "@mailwoman/dev-mcp/tree-fingerprint"
 import type { GeocodeSession } from "mailwoman/geocode"
 

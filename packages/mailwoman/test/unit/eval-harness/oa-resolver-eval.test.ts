@@ -6,8 +6,9 @@
  *   resolved to, and the region predicate that decides whether it counts.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
-import { regionMatches } from "mailwoman/eval-harness/oa-resolver/admin-match"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { regionMatches } from "mailwoman/eval-harness/oa/resolver/admin-match"
 import {
 	collectResolved,
 	findAddressPointHit,
@@ -16,7 +17,7 @@ import {
 	hasStreetHouseNumber,
 	mostSpecific,
 	type Resolved,
-} from "mailwoman/eval-harness/oa-resolver/tree-hits"
+} from "mailwoman/eval-harness/oa/resolver/tree-hits"
 import { describe, expect, it } from "vitest"
 
 function node(tag: string, value: string, extra: Partial<AddressNode> = {}): AddressNode {

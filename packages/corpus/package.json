@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/corpus",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "Mailwoman corpus pipeline: BIO-labeled dataset builder for the neural classifier.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -82,6 +82,86 @@
 			"default": "./out/types.js"
 		},
 		"./data/*": "./data/*",
+		"./au/*": {
+			"types": "./out/au/*.d.ts",
+			"node": "./lib/au/*.ts",
+			"default": "./out/au/*.js"
+		},
+		"./cn/*": {
+			"types": "./out/cn/*.d.ts",
+			"node": "./lib/cn/*.ts",
+			"default": "./out/cn/*.js"
+		},
+		"./cz/*": {
+			"types": "./out/cz/*.d.ts",
+			"node": "./lib/cz/*.ts",
+			"default": "./out/cz/*.js"
+		},
+		"./de/*": {
+			"types": "./out/de/*.d.ts",
+			"node": "./lib/de/*.ts",
+			"default": "./out/de/*.js"
+		},
+		"./fr/*": {
+			"types": "./out/fr/*.d.ts",
+			"node": "./lib/fr/*.ts",
+			"default": "./out/fr/*.js"
+		},
+		"./international/*": {
+			"types": "./out/international/*.d.ts",
+			"node": "./lib/international/*.ts",
+			"default": "./out/international/*.js"
+		},
+		"./jp/*": {
+			"types": "./out/jp/*.d.ts",
+			"node": "./lib/jp/*.ts",
+			"default": "./out/jp/*.js"
+		},
+		"./kr/*": {
+			"types": "./out/kr/*.d.ts",
+			"node": "./lib/kr/*.ts",
+			"default": "./out/kr/*.js"
+		},
+		"./nl/*": {
+			"types": "./out/nl/*.d.ts",
+			"node": "./lib/nl/*.ts",
+			"default": "./out/nl/*.js"
+		},
+		"./no/*": {
+			"types": "./out/no/*.d.ts",
+			"node": "./lib/no/*.ts",
+			"default": "./out/no/*.js"
+		},
+		"./sg/*": {
+			"types": "./out/sg/*.d.ts",
+			"node": "./lib/sg/*.ts",
+			"default": "./out/sg/*.js"
+		},
+		"./si/*": {
+			"types": "./out/si/*.d.ts",
+			"node": "./lib/si/*.ts",
+			"default": "./out/si/*.js"
+		},
+		"./south-asia/*": {
+			"types": "./out/south-asia/*.d.ts",
+			"node": "./lib/south-asia/*.ts",
+			"default": "./out/south-asia/*.js"
+		},
+		"./tw/*": {
+			"types": "./out/tw/*.d.ts",
+			"node": "./lib/tw/*.ts",
+			"default": "./out/tw/*.js"
+		},
+		"./us/*": {
+			"types": "./out/us/*.d.ts",
+			"node": "./lib/us/*.ts",
+			"default": "./out/us/*.js"
+		},
+		"./ve/*": {
+			"types": "./out/ve/*.d.ts",
+			"node": "./lib/ve/*.ts",
+			"default": "./out/ve/*.js"
+		},
 		"./utils": {
 			"types": "./out/utils/index.d.ts",
 			"node": "./lib/utils/index.ts",
@@ -127,11 +207,6 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
-		"./codex/*": {
-			"types": "./out/codex/*.d.ts",
-			"node": "./lib/codex/*.ts",
-			"default": "./out/codex/*.js"
-		},
 		"./utils/parquet": {
 			"types": "./out/utils/parquet.d.ts",
 			"node": "./lib/utils/parquet.ts",
@@ -153,9 +228,9 @@
 			"default": "./out/tools/gb-title-case.js"
 		},
 		"./tools/golden-relabel-street": {
-			"types": "./out/tools/golden-relabel-street.d.ts",
-			"node": "./lib/tools/golden-relabel-street.ts",
-			"default": "./out/tools/golden-relabel-street.js"
+			"types": "./out/tools/golden/relabel-street/index.d.ts",
+			"node": "./lib/tools/golden/relabel-street/index.ts",
+			"default": "./out/tools/golden/relabel-street/index.js"
 		},
 		"./tools/overture-subvenue": {
 			"types": "./out/tools/overture-subvenue.d.ts",
@@ -163,19 +238,19 @@
 			"default": "./out/tools/overture-subvenue.js"
 		},
 		"./tools/sub-venue-lexicon": {
-			"types": "./out/tools/sub-venue-lexicon.d.ts",
-			"node": "./lib/tools/sub-venue-lexicon.ts",
-			"default": "./out/tools/sub-venue-lexicon.js"
+			"types": "./out/tools/sub/venue/lexicon.d.ts",
+			"node": "./lib/tools/sub/venue/lexicon.ts",
+			"default": "./out/tools/sub/venue/lexicon.js"
 		},
 		"./tools/sub-venue-promotions": {
-			"types": "./out/tools/sub-venue-promotions.d.ts",
-			"node": "./lib/tools/sub-venue-promotions.ts",
-			"default": "./out/tools/sub-venue-promotions.js"
+			"types": "./out/tools/sub/venue/promotions.d.ts",
+			"node": "./lib/tools/sub/venue/promotions.ts",
+			"default": "./out/tools/sub/venue/promotions.js"
 		},
 		"./tools/fetch/download": {
-			"types": "./out/tools/fetch/download.d.ts",
-			"node": "./lib/tools/fetch/download.ts",
-			"default": "./out/tools/fetch/download.js"
+			"types": "./out/tools/fetch/download/index.d.ts",
+			"node": "./lib/tools/fetch/download/index.ts",
+			"default": "./out/tools/fetch/download/index.js"
 		},
 		"./tools/fetch/ppd": {
 			"types": "./out/tools/fetch/ppd.d.ts",
@@ -226,18 +301,18 @@
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*",
+		"@mailwoman/record": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/tiger": "workspace:*",
 		"apache-arrow": "^21.2.0",
-		"fast-glob": "^3.3.3",
 		"fastest-levenshtein": "^1.0.16",
 		"parquet-wasm": "0.7.2",
 		"path-ts": "^2.3.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^6.4.1",
+		"spliterator": "^7.5.1",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

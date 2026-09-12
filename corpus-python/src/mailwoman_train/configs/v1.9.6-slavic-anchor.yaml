@@ -45,7 +45,7 @@
 # structure, test numbers). Early-kill @1k: train_loss not O(1) decreasing OR ROBUST-MISLEAD still
 # heavily anchor-following. RESUME from v192 ckpt (grow a capability, NOT init_from). CRF CE-only.
 # conventions-loss-mask OFF. NOT promoted without operator GO + the canary.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.3-anchor-absorption.yaml --resume <v192-ckpt>
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.3-anchor-absorption.yaml --resume <v192-ckpt>
 data:
   # PROBE A0 (this config): v192's corpus VERBATIM — anchor_paint_mode is a LOAD-TIME transform
   # (encode_row paints on shape, not the parquet), so the WHERE fix needs NO new data / NO rebuild. The

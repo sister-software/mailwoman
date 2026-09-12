@@ -6,19 +6,15 @@
  *   read and the nomenclature snapshot date, so the line changes when the archives do and never drifts from them.
  */
 
-import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "@mailwoman/astrogeology/schema/manifest"
-import { useEffect, useState } from "react"
+import type { PlanetaryBuildManifest } from "@mailwoman/astrogeology/schema/manifest"
+import { MapFooter } from "@mailwoman/react/map/MapFooter"
 
 import type { PlanetaryMapConfig } from "#bodies/config"
+import { useBuildManifest } from "#panels/useBuildManifest"
 
 export interface AttributionProps {
 	config: PlanetaryMapConfig
 }
-
-type ManifestState =
-	| { status: "loading" }
-	| { status: "ready"; manifest: PlanetaryBuildManifest }
-	| { status: "failed" }
 
 /**
  * One line per source the manifest names, in the manifest's order, then the renderer.
@@ -42,45 +38,18 @@ function creditLines(manifest: PlanetaryBuildManifest, config: PlanetaryMapConfi
 }
 
 export function Attribution({ config }: AttributionProps) {
-	const [state, setState] = useState<ManifestState>({ status: "loading" })
+	const state = useBuildManifest(config.artifacts.manifestURL)
 
-	useEffect(() => {
-		let cancelled = false
-
-		fetch(config.artifacts.manifestURL)
-			.then(async (response) => {
-				if (!response.ok) throw new Error(`${config.artifacts.manifestURL}: ${response.status}`)
-
-				return PlanetaryBuildManifestSchema.parse(await response.json())
-			})
-			.then(
-				(manifest) => {
-					if (!cancelled) {
-						setState({ status: "ready", manifest })
-					}
-				},
-				() => {
-					if (!cancelled) {
-						setState({ status: "failed" })
-					}
-				}
-			)
-
-		return () => {
-			cancelled = true
-		}
-	}, [config.artifacts.manifestURL])
-
+	// Before the manifest answers, the credit still names both sources: it is a licence obligation that cannot wait
+	// on a fetch, and the manifest only ever refines the snapshot date it carries.
 	const lines =
 		state.status === "ready"
 			? creditLines(state.manifest, config)
 			: ["USGS Astrogeology / IAU WGPSN — nomenclature", `${config.terrainCredit} — terrain`, "MapLibre"]
 
 	return (
-		<aside className="attribution" aria-label="Attribution" data-manifest={state.status}>
-			{lines.map((line) => (
-				<span key={line}>{line}</span>
-			))}
-		</aside>
+		<div className="attribution" data-manifest={state.status}>
+			<MapFooter identity={<strong>{config.displayName}</strong>} attribution={lines} />
+		</div>
 	)
 }

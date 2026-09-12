@@ -32,7 +32,7 @@
 #   SHIP CHECK: bare-street-hn holds its +13pp AND the contextful classes recover to ~ceiling AND
 #   US/5-digit/demo presets + FR fragment board + parity hold -> v6.5.0 candidate (first real
 #   house_number improvement). Promotion is the operator's act.
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.5.0-numsplice-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.0-numsplice-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment

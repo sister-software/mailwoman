@@ -9,14 +9,15 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ancestorLineage } from "#ancestry/index"
-import { candidateFromSearchRow, rankCandidates } from "#candidate-scoring"
+import { candidateFromSearchRow, rankCandidates } from "#candidate/scoring"
 import { loadCoincidentLocalities } from "#coincident-roles"
 import {
 	ADDRESS_CONVENTION_TABLE,
@@ -46,11 +47,11 @@ import {
 import { normalizePlacetypes, sanitizeFTSQuery } from "#fts/query"
 import { cfNormalize, softNameScore } from "#name-score"
 import { encyclopedicClauses } from "#place-importance-schema"
-import type { WOFPostalCityAliasLookup } from "#postal/city-alias-lookup"
+import type { WOFPostalCityAliasLookup } from "#postal/city/alias/lookup"
 import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking-weights"
 import type { WOFDatabase } from "#schema"
 import { fetchSearchRows, type RawSearchRow } from "#search-fetch"
-import { SqliteConventionSource } from "#sqlite-convention-source"
+import { SqliteConventionSource } from "#sqlite/convention-source"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 export interface WOFSQLitePlaceLookupOpts {

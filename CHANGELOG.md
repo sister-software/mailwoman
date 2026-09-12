@@ -18,6 +18,159 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Fixed — a half-materialized char-weights package parsed as a Latin model
+
+`packageHasBinaries` answered `false` for a weights directory holding `model.onnx` and `char-vocab.json` with no
+card, because the card is what declares the char encoder. The family then loaded as Latin and
+`富山県中新川郡上市町大岩148-7` came back as one locality with a postcode of `7` — a well-formed wrong answer with no
+signal anywhere. The vocabulary and the card ship together, so the pairing is the whole claim that this is a
+character-path family, and a directory carrying one without the other is now refused by name.
+
+### Fixed — the Form 499 reader keyed a column on the normalizer's old casing
+
+`normalizeColumnNames` returns every key lower case; the reader spelled the FRN column `CORESID` and read
+`undefined` on every row. Its own header assertion caught it. A survey of all 166 spliterator readers found this to
+be the only affected one — the five state and federal adapters that key human-readable headers all pass
+`normalizeKeys: false`, and `form499-workbook.ts` is the only file in the repository that calls
+`normalizeColumnNames` directly.
+
+### Changed — a command's name is what it declares, not where its file sits
+
+`listCommandNames` in the native CLI router read a command's name off its filename, so the layout was a user-facing
+contract: moving `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
+`mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder` provenance —
+stopped existing. The router now resolves a typed name against the literal path first and then against its
+prefix-directory readings, and the docs generator's tree takes each command's declared `spec.name`. A PREFIX
+DIRECTORY is transparent to the command path; a namespace like `gazetteer/inspect/` is not, and only the declared
+names tell them apart. Reading the compiled file's text rather than importing it keeps group help side-effect free.
+
+### Changed — the prefix-directory rule covers the whole tree, files and directories alike
+
+`recipe-prefix-directories` is now `prefix-directories`: three or more siblings sharing a hyphen-delimited prefix, in
+any directory, counting a subdirectory as a sibling beside a `.ts` file. Measured over the tracked tree: 163 groups
+at a threshold of two, 43 at three. Two kinds of name are excluded because they are contracts rather than layout, and
+both are derived rather than listed — a workspace directory is an npm package name, and a directory holding no
+tracked TypeScript belongs to whoever it mirrors (`hf-publish/mailwoman-cjk/` is a Hugging Face repository,
+`fixtures/…/whosonfirst-data-admin-fr/` an upstream one). Applying it renamed 186 files: 43 groups in the first
+reading, plus three the moves created — shortening `build-outlier-oa.ts` to `build/outlier-oa.ts` leaves `outlier-`
+repeated — which is why the fix re-takes its plan until the check is quiet.
+
+### Added — `mwops health fix`, a module move that proves every specifier it rewrites
+
+`@mailwoman/repo-health` gains a second, much shorter registry beside the checks: a fix, for a check whose repair is
+a mechanical consequence of its diagnostic. `recipe-prefix-directories` is the first, moving each repeated-prefix
+corpus recipe into its prefix directory. The move operation under it re-derives a replacement specifier from the
+owning package's own `imports`/`exports` patterns and writes it only once it RESOLVES to the moved file, so a
+replacement stays in the family the author wrote and a specifier nobody can prove refuses the whole plan.
+
+TypeScript's own `getEditsForFileRename` was measured first and is not the mechanism. Asked to move a corpus recipe,
+it rewrote a test file's `@mailwoman/corpus/recipes/fr/fragment` to `#lib/recipes/fr-fragment` — a public export
+subpath turned into a package-private import, naming `packages/corpus/lib/lib/recipes/…`, a path no checkout has.
+
+### Fixed — three imports that resolved to nothing while `tsc` reported success
+
+Moving the corpus recipes into prefix directories left `bare/postcode.ts` and `sub/venue.ts` importing their siblings
+at the old flat paths, plus seven test-file imports and one in `@mailwoman/neural`'s eval harness.
+`tsc -p packages/corpus/tsconfig.json` exited 0 on all of it: every subpath map lists `types` first, so the stale
+`out/recipes/bare-postcode-eval.d.ts` answered for a source file that had already moved, while Node took the `node`
+condition and raised `ERR_MODULE_NOT_FOUND`. Three path-keyed registers had gone stale with them — the
+duplicate-export allowlist, the banned-vocabulary exemption, and both Vale code configs' sub-venue globs, none of
+which is a module specifier and none of which the new move operation can see.
+
+### Fixed — an overlay corpus resolved ONE slice of 706, silently
+
+The 2026-09-01 vocabulary rename changed the manifest key the trainer's loader reads without migrating the
+manifests, which are immutable build artifacts. Measured on 2026-09-09: `v0.28.0-reviewed-postcode-tail`
+declares 706 train slices, and the loader resolved one — the overlay's own file — because the new key read
+empty and the glob fallback saw only the overlay directory. A run would have trained on 22 rows and reported
+success; the `val` split raised `FileNotFoundError`, which is the only reason it surfaced. The loader and the
+overlay assembler now accept either spelling and write only the current one, so the strict partial-resolution
+guard sees the declared slices and reports honestly. The assembler also takes a SET of parquets: eight chained
+single-slice overlays would leave seven dead directories and an eight-deep base chain for one version.
+
+`mailwoman corpus slice --variants 0` was silently one, because the command read `Number(options.variants) || 1`
+and zero is falsy. It doubled a slice built to emit only its self-contained rows: the po-box military slice came out
+at 10,558 rows against the 5,279 asked for. The count now goes through `countOption`, which also refuses a blank
+value, since `Number("")` is zero and would switch a slice off from the other direction. The `po-box` and
+`trailing-region` recipes honour `--source-name`, so a slice can be dosed apart from the rows that share its label
+rather than drawing whatever they draw.
+
+### Added — the v5.4.0 target-family corpus and config, each family named by its dose
+
+`v0.29.0-target-families` is a pure overlay add of eight parquets, 390,903 rows, onto v0.28.0's 711 slices.
+It carries the Singapore registers (142,083 rows, F6 and the SG board), the Pakistan and Bangladesh register
+lines (84,632) and the OpenStreetMap PK/BD/VN base formats (153,965) for F8, the corrected Spanish
+trailing-region surfaces (4,944) for F2, and the military po_box line (5,279) for F9. The config names each
+family in `source_doses` — reps per row, with the weight derived at launch — rather than guessing a weight:
+the six sources take 5.43% of the run, and the 2k probe holds the same 5.43% by dividing its doses by the step
+ratio. The launch log prints each derivation to three decimals, since a probe's exposures are legitimately
+below one and one decimal printed every one of them as zero. The OpenStreetMap sources are ODbL, so a
+proprietary build drops them from the mixture; the config header says so.
+
+### Added — board rows for the four target families that had none, graded before they were written
+
+`Camden, London`, `Barcelona 6001, Venezuela`, `St Mary's, Oxford` and `GPO Box 1234, Sydney NSW 2001` each named a
+failure class on an issue and had no board row to hold it. Sixty-seven rows now do, under `gauntlet/cases/<cc>/family-*.jsonl`,
+written by `packages/mailwoman/lib/dev-tools/family/board.run.ts` over a curated list: every point is a gazetteer
+record the builder resolves by name and refuses when absent or tied, and every status is what the shipped pipeline did
+when the file was written. The read moves two of the four issues. District plus city (#1914) parses on 20 of 21 rows,
+with the district as `dependent_locality`, and fails on the coordinate alone, 2.7–8.7 km off at the parent city's
+point: the stage that must change is the resolver, not the parse. Commonwealth and military po_box (#517) passes 14 of 16, `GPO Box`,
+`Locked Bag`, `Private Bag`, `PSC … Box` and `CMR … Box` all among them; the class is now the two `Unit … Box` rows.
+The locality-postcode family (#1821) reads 10 of 17, every Venezuelan row failing as measured; the possessive qualifier
+(#1754) 4 of 13. The grading and the case-file writer are one module, `grade-seed-cases.ts`, which the Singapore
+register board builder now shares.
+
+### Fixed — the trailing-region tuples name a Spanish region as its addresses do; a slice names its dose
+
+The Spanish trailing-region tuples taught the region in English: 3,289 rows on disk carried `Balearic Islands` (113),
+`Corunna` (214) and the accent-stripped `Leon` (143), and zero carried `Illes Balears`, the surface of the board row
+`…, 07691 Portopetro, Illes Balears, Spain` (#1673). The extraction read the gazetteer's English-preferred `spr.name`.
+It now reads the region's preferred names in the languages the region's addresses are written in, the country's
+official languages plus the province's co-official ones, and keeps the English exonym as one surface beside them; the
+locality takes its accented official form. The languages come from the codex, not from the names table's own list,
+because Who's On First's preferred name in a language not spoken in a province is often the parent community's
+(`Zamora` → `Castella i Lleó`): `@mailwoman/codex/es` carries the sixteen provinces the statutes give a co-official
+language, and `@mailwoman/codex/country`'s `regionLanguagesAlpha3` answers per region. `mailwoman corpus tuples` is the
+command that rebuilds them. Rebuilt, the Spanish tuples are 5,279 rows over 79 surfaces: `Islas Baleares`, `Illes
+Balears` and `Balearic Islands` at 101 each, `La Coruña`, `A Coruña` and `Corunna` at 163 each, `León` beside `Leon`.
+
+A training config may now name a slice's exposure instead of its weight (#1677): `source_doses` gives reps per row,
+and the trainer and the epoch audit derive the weight from the slice's row count and the run's samples at launch,
+printing the derivation. The 277-row slice that took 165 passes per row at weight 1.0 takes weight 0.030 for 5.
+
+### Added — OpenStreetMap corpus rows for Pakistan, Bangladesh and Vietnam, behind `--exclude-share-alike`
+
+`House 4, Street 25, F-7/2, Islamabad` parses `House` as the street and `F-7/2` as the house number;
+`01 Đường Trần Hưng Đạo, Buôn Ma Thuột` tags the street as a locality. The corpus held zero rows for the three
+countries: Overture's addresses theme has none (the three parquets are 532-byte headers), and the only open source is
+OpenStreetMap, which is ODbL. The `osm` corpus adapter (#733) now reads a per-country JSONL that `@mailwoman/osm`'s
+`emit-corpus-jsonl` script writes from a Geofabrik extract, and stamps every row `ODbL-1.0`, which the share-alike
+pattern matches, so a proprietary-weights build passing `--exclude-share-alike` drops them at ingest and the open
+weights alone learn from them. Over the three extracts: Pakistan 100,790 register rows → 77,636 corpus rows, Vietnam
+70,069 → 62,899, Bangladesh 21,847 → 5,753. Two register recipes render the forms the country templates do not,
+`pk-register` (`House 4, Street 25, F-7/2, Islamabad`, the sector drawn from the capital's grid; 80,081 rows) and
+`bd-register` (`58 Kalabagan 1st Ln, Dhaka 1205`, the trailing postcode without the template's dash; 4,551 rows). The
+extract now projects `addr:unit`, `addr:place`, `addr:subdistrict`, `addr:district` and `addr:province` beside the five
+tags the rooftop builder reads. The formatter strips a connector a template left standing when a slot was empty:
+Bangladesh's rows rendered `24 Road 104, Dhaka -` with no postcode.
+
+### Added — the Singapore typed registers in the corpus, and a board that grades them
+
+`Blk 533A Upper Cross St #27-40 Singapore 051533` parses with the street span running through the unit and `Blk`
+read as a locality; `17 Tanglin Rise S(247998)` yields no postcode and resolves to a namesake 11,300 km away. The
+Latin model had never seen either form: the Overture-SG source rows carry the register's own shape only. The
+`sg-register` corpus recipe now renders the 142,210 Overture-SG rows in the four forms a person in Singapore types —
+the HDB block line with a synthesized `#NN-NN` unit, the bracketed `S(NNNNNN)` postcode, the building-led line (the
+register's `unit` field holds a building or estate name on 91,818 rows), and the official line — 142,083 aligned rows,
+none quarantined, `Blk` and `S(` `)` untagged. The Overture corpus adapter no longer emits that field as a `unit`
+unless it carries a digit or is one word: `NIL` (47,407 rows) and `SERANGOON GARDEN ESTATE` were being taught as
+secondary-unit designators. `gauntlet/cases/sg/register.jsonl` is a 240-row board, 60 per form, drawn from the same
+register with the rooftop as the truth, graded through the gauntlet's grader by
+`packages/mailwoman/lib/dev-tools/sg-register-board.run.ts` before it was written: block 0/60, bracket_postcode 0/60,
+building_led 12/60, official 38/60 on the shipped model; the 50 passes are pinned. The regression-database builder and
+the board builder share one seed-to-row mapping, `seedCaseToTableRow`.
+
 ### Added — the Taiwan rooftop tier: a national address-point database from the civil-affairs registers
 
 `台北市中正區重慶南路一段122號` parsed correctly and resolved to Taipei City's point, 5 km from the address, because no
@@ -35,6 +188,51 @@ the string it stamped before was refused by the manifest check, so the US per-st
 step. The pre-commit hook read its CLI-freshness reference after the formatter had touched every staged source, so a
 commit staging a command file failed with an instruction `yarn compile` could not satisfy; the comparison now runs
 first.
+
+### Fixed — one naming convention for postcode formats; one pin for the Overture addresses theme
+
+An inventory of every hardcoded locale, country, script and Overture-release constant that steers training or the
+pipeline (#2219) found three copies of "which known-format names are postcodes" — `@mailwoman/query-shape`'s table,
+`@mailwoman/kind-classifier`'s copy of its twelve names, and `@mailwoman/core`'s copy of SEVEN, whose docstring said it
+mirrored the second. A Dutch, Czech, Slovak, Swedish or Greek postcode token passed the first two checks and missed
+core's short-circuit. `isPostcodeFormat` now lives in query-shape and reads the naming convention its table follows
+(`us_zip`, `us_zip4`, `<cc>_postcode`); kind-classifier imports it; core, which cannot depend on query-shape,
+implements the same convention, and a query-shape test pins every table entry to it. Five addresses-theme tools each
+carried their own Overture release literal at two different vintages, one of which named a directory that holds no
+addresses parquet; `@mailwoman/core/overture-pins` now carries the one addresses-theme pin and every one of them
+defaults to it. Two docstrings stated things that were no longer true: the locale hint's `ja-JP` for every CJK-script
+input ("only CJK locale we ship today", against the `ja-jp` and `zh-cn` overlays that ship over one family), and the
+invariance suite's country table ("mirrors the gauntlet's", against a two-entry overlap).
+
+### Added — Singapore postcodes answer at the building
+
+A six-digit Singapore postcode names one building, so `postalcode-sg-overture.db` — the per-postcode centroid of the
+Overture-SG register (123,883 codes; OneMap / Singapore Land Authority under the Singapore Open Data Licence 1.0,
+through Overture's CDLA-Permissive-2.0), built with `mailwoman eval es-postcode-centroids --country SG --pc-len 0` —
+joins the default postcode databases, and `SG` joins the codex table of address systems whose postcode outranks
+their locality. On a 300-row seeded draw of the register, each row geocoded as `<number> <street> Singapore
+<postcode>` and graded on its own point, the postcode point answers 300 of 300 within 1 km (p99 0.16 km) where
+locality-first answered 185 and sent the rest to the "Singapore" locality centroid (p90 11.43 km). The `#NN-NN` unit
+and `S(NNNNNN)` register forms still wait on the Latin model (#2204 §4). The centroid builder's `source` stamp now
+names the Overture release the parquet came from; it had written the pinned default's release on every row.
+
+### Fixed — one registry of synthetic place-id ranges; a region's variant name that is another region's official name is refused
+
+Two builders claimed the same synthetic id base each, and each kept its own docstring of the ranges it believed taken:
+the NZ locality database and Code-Point Open both minted from 9.7e12, the Prague districts and the Northern Ireland OSM
+postcodes both from 9.8e12. The candidate table's ancestry sidecars and a result's `placeID` are keyed by `spr_id`
+alone, so 3,033 ids in the served table named both a GB postcode and a New Zealand suburb (`9700000000000` was
+`AB101AB` and Abbey Caves). `@mailwoman/core/resolver/synthetic-id-ranges` now holds every base, with a test that
+keeps them distinct, ascending and at least 5e10 apart; the NZ localities move to 9.65e12 and the Prague districts to
+9.85e12, the postcode ranges stay, and every builder imports its constant from the registry. The NZ builder had also
+called the database swap without awaiting it, so a rebuild sealed an empty file; it awaits now.
+
+In the admin artifact exactly three regions carry, as a variant name, another same-country region's official name:
+Hsinchu County carries `新竹市` (Hsinchu City's), Chiayi County carries `嘉義市`, Sejong carries `충청남도`. Each let the
+more populous carrier outrank the place the name officially is, so the region node `新竹市` resolved the county and the
+city's three districts contradicted it. The candidate build's alias pass now refuses a region's alias when another
+region of the same country holds it as its official name, and counts what it refused; a source without a `names`
+table refuses nothing.
 
 ### Added — Taiwan's 鄉鎮市區 as register-derived localities, scoped to their 縣市
 

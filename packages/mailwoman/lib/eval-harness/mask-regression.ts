@@ -55,7 +55,7 @@ import {
 	rowsHaveTag,
 	scoreConventionsMaskOffOn,
 	UNFOLDED_ADDRESS_TAGS,
-} from "#eval-harness/per-tag-f1"
+} from "#eval-harness/per/tag-f1"
 
 /**
  * Options for {@linkcode maskRegressionCheck}.
@@ -181,7 +181,7 @@ export async function maskRegressionCheck(
 		}
 	}
 
-	// --- report the full per-tag delta table (every in-scope tag) ---------------------------------
+	// Report the complete per-tag delta table for every in-scope tag.
 	report(`\n--- per-tag mask-off vs mask-on F1 (in-scope tags) ---`)
 	report(`  locale  tag                    maskOff   maskOn     Δpp`)
 
@@ -194,7 +194,7 @@ export async function maskRegressionCheck(
 		)
 	}
 
-	// --- the assertion: no tag may regress more than the threshold under the mask -----------------
+	// Reject a mask whose regression exceeds the per-tag threshold.
 	const thresholdPp = THRESHOLD * 100
 	const violations = deltas.filter((d) => d.inScope && d.delta > thresholdPp)
 

@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import FastGlob from "fast-glob"
 import type { PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { readLocalTextFile } from "#fs/readers"
 import { parseJSONStrict } from "#json"
@@ -71,15 +71,14 @@ export class Placetype implements Disposable {
 
 		if (!exists) return
 
-		const definitionPaths = FastGlob.stream(["*.json"], {
-			cwd: repoDirectory("placetypes").toString(),
-			absolute: true,
+		const definitionPaths = Globerator.from("*.json", {
+			cwd: repoDirectory("placetypes"),
 		})
 
 		const batchIterator = parallelMap(
 			definitionPaths,
 			async (definitionPath) => {
-				const definitionContent = await readLocalTextFile(String(definitionPath))
+				const definitionContent = await readLocalTextFile(definitionPath)
 				const definition = parseJSONStrict<PlacetypeDefinition>(definitionContent)
 
 				Placetype.register(definition)
@@ -89,7 +88,9 @@ export class Placetype implements Disposable {
 			{ concurrency: batchSize }
 		)
 
-		await Array.fromAsync(batchIterator)
+		for await (const _definition of batchIterator) {
+			// `parallelMap` performs registration above; its yielded definitions have no further consumer.
+		}
 	}
 
 	/**

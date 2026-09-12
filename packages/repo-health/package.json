@@ -2,7 +2,7 @@
 	"name": "@mailwoman/repo-health",
 	"version": "9.2.0",
 	"private": true,
-	"description": "Repository health checks as a registry — each inspects the checkout and returns diagnostics or pass/fail, and nothing here mutates, generates, publishes, benchmarks, or probes.",
+	"description": "Repository health checks as a registry — each inspects the checkout and returns diagnostics or pass/fail; a check never writes, and the two exports that do (the debt baseline, and the module-move fixes) sit beside the registry rather than in it.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -55,6 +55,21 @@
 			"node": "./lib/ts-ast.ts",
 			"default": "./out/ts-ast.js"
 		},
+		"./fix": {
+			"types": "./out/fix.d.ts",
+			"node": "./lib/fix.ts",
+			"default": "./out/fix.js"
+		},
+		"./fixes": {
+			"types": "./out/fixes.d.ts",
+			"node": "./lib/fixes.ts",
+			"default": "./out/fixes.js"
+		},
+		"./move/*": {
+			"types": "./out/move/*.d.ts",
+			"node": "./lib/move/*.ts",
+			"default": "./out/move/*.js"
+		},
 		"./checks/*": {
 			"types": "./out/checks/*.d.ts",
 			"node": "./lib/checks/*.ts",
@@ -66,8 +81,8 @@
 		"@mailwoman/release-kit": "workspace:*",
 		"esbuild": "0.28.2",
 		"path-ts": "^2.3.0",
-		"spliterator": "^6.4.1",
-		"typescript": "^6.0.3"
+		"spliterator": "^7.5.1",
+		"typescript": "npm:@typescript/typescript6@^6.0.2"
 	},
 	"devDependencies": {
 		"@vvago/vale": "^3.20.0"

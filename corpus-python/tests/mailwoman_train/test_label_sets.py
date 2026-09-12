@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import pytest
 
-from mailwoman_train.char_tokenizer import build_char_vocab, encode_row_units
 from mailwoman_train.labels import (
     ACTIVE_BIO_LABELS,
     CN_FINE_TAGS,
@@ -24,6 +23,7 @@ from mailwoman_train.labels import (
     resolve_label_set,
 )
 from mailwoman_train.tokenizer import char_label_array_from_spans
+from mailwoman_train.tokenizer.char import build_char_vocab, encode_row_units
 
 JP = resolve_label_set("stage3-jp")
 DEFAULT = resolve_label_set()
@@ -101,7 +101,7 @@ def test_encode_row_units_maps_jp_labels_under_the_jp_set() -> None:
 
 def test_jp_headed_model_round_trips_its_label_map(tmp_path) -> None:
     pytest.importorskip("torch")
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
 
     model = MailwomanCoarseEncoder(
         vocab_size=2,
@@ -127,7 +127,7 @@ def test_jp_headed_model_round_trips_its_label_map(tmp_path) -> None:
 
 def test_wide_head_without_a_map_raises() -> None:
     pytest.importorskip("torch")
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
 
     with pytest.raises(ValueError, match="pass id_to_label"):
         MailwomanCoarseEncoder(
@@ -148,7 +148,7 @@ def test_sp_path_refuses_a_non_default_set() -> None:
     import random
 
     from mailwoman_train.config import DataConfig
-    from mailwoman_train.data_loader import iter_encoded
+    from mailwoman_train.data.loader import iter_encoded
 
     cfg = DataConfig(corpus_dir="/nonexistent", label_set="stage3-jp", char_mode="off")
     with pytest.raises(ValueError, match="only supported with data.char_mode"):

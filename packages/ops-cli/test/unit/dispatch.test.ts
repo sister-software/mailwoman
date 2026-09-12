@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { repoRootPath } from "@mailwoman/core/paths"
 import { dispatch, parseOptions } from "@mailwoman/ops-cli"
 import { describe, expect, it } from "vitest"
 
@@ -47,6 +48,24 @@ describe("mwops dispatch", () => {
 
 		expect(await dispatch(["health", "baseline", "nope"], h.io)).toBe(2)
 		expect(h.err.join("")).toContain('no baseline "nope"')
+	})
+
+	it("refuses a fix for a check that has none, naming the ones that do", async () => {
+		const h = io()
+
+		expect(await dispatch(["health", "fix", "nope"], h.io)).toBe(2)
+		expect(h.err.join("")).toContain('no fix for "nope"')
+		expect(h.err.join("")).toContain("prefix-directories")
+	})
+
+	it("reports nothing to move when the check already passes", async () => {
+		const h = io()
+		// A real root, because the fix reads the `workspaces` field to know which directory names are package names.
+		// The tracked-file list stays empty, so there is no repeated prefix and the fix plans no move.
+		const withRealRoot = { ...h.io, repoRoot: String(repoRootPath()) }
+
+		expect(await dispatch(["health", "fix", "prefix-directories"], withRealRoot)).toBe(0)
+		expect(h.out.join("")).toContain("nothing to move")
 	})
 
 	it("parses --key value, --key=value and bare flags, leaving values as strings for the schema", () => {

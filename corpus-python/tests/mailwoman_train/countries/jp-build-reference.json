@@ -1,0 +1,1015 @@
+{
+	"README": [
+		"Pins one seeded Japan build across a refactor.",
+		"Regenerate: uv run python tests/mailwoman_train/countries/test_jp_build_parity.py",
+		"Fixture: write_fixture() in the test beside this file — a synthetic Overture-JP parquet and",
+		"  KEN_ALL CSV carrying the shapes the renderers branch on, not a sample of the real source.",
+		"",
+		"train / val: every rendered row as raw + register + the span triple, in emission order.",
+		"  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole slice.",
+		"board: the held-out municipalities' rows, same form.",
+		"report: the build report with the paths removed, since those are the fixture's tmp dir."
+	],
+	"train": [
+		{
+			"raw": "〒460-0000 愛知県 名古屋市 栄三丁目6−8",
+			"register": "native",
+			"span_starts": [1, 10, 14, 19, 20, 23],
+			"span_ends": [9, 13, 18, 20, 23, 26],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "京都府宇治市宇治10番20号",
+			"register": "designator",
+			"span_starts": [0, 3, 6, 8, 11],
+			"span_ends": [3, 6, 8, 11, 14],
+			"span_tags": ["prefecture", "municipality", "district", "sub_block", "building_number"]
+		},
+		{
+			"raw": "日本 北海道 札幌市 大通東1-5-7-3",
+			"register": "compact_folded",
+			"span_starts": [0, 3, 7, 11, 14],
+			"span_ends": [2, 6, 10, 14, 21],
+			"span_tags": ["country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "大阪府 堺市 中区深井77",
+			"register": "native",
+			"span_starts": [0, 4, 7, 11],
+			"span_ends": [3, 6, 11, 13],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "日本 沖縄県 那覇市 久茂地3丁目1－1－6",
+			"register": "arabic_chome",
+			"span_starts": [0, 3, 7, 11, 14, 17],
+			"span_ends": [2, 6, 10, 14, 17, 22],
+			"span_tags": ["country", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "大阪府大阪市梅田1丁目2ー3ー3",
+			"register": "arabic_chome",
+			"span_starts": [0, 3, 6, 8, 11],
+			"span_ends": [3, 6, 8, 11, 16],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒907-0022 沖縄県石垣市字大川9",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 19],
+			"span_ends": [9, 13, 16, 19, 20],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県 名古屋市 栄三丁目6番8号6",
+			"register": "designator",
+			"span_starts": [1, 10, 14, 19, 20, 23, 25, 27],
+			"span_ends": [9, 13, 18, 20, 23, 25, 27, 28],
+			"span_tags": [
+				"postcode",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number",
+				"house_number"
+			]
+		},
+		{
+			"raw": "東京都 町田市 大字上田362B-2",
+			"register": "native",
+			"span_starts": [0, 4, 8, 12],
+			"span_ends": [3, 7, 12, 18],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒194-0211 東京都町田市大字上田362B-2",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 20],
+			"span_ends": [9, 13, 16, 20, 26],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県名古屋市栄三丁目6-8",
+			"register": "native",
+			"span_starts": [1, 10, 13, 17, 18, 21],
+			"span_ends": [9, 13, 17, 18, 21, 24],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県名古屋市栄三丁目6番8号6",
+			"register": "designator",
+			"span_starts": [1, 10, 13, 17, 18, 21, 23, 25],
+			"span_ends": [9, 13, 17, 18, 21, 23, 25, 26],
+			"span_tags": [
+				"postcode",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number",
+				"house_number"
+			]
+		},
+		{
+			"raw": "大阪府 堺市 中区深井77番地",
+			"register": "designator",
+			"span_starts": [0, 4, 7, 11],
+			"span_ends": [3, 6, 11, 15],
+			"span_tags": ["prefecture", "municipality", "district", "sub_block"]
+		},
+		{
+			"raw": "〒060-0041 日本北海道札幌市大通東一丁目5番7号",
+			"register": "designator",
+			"span_starts": [1, 10, 12, 15, 18, 21, 24, 26],
+			"span_ends": [9, 12, 15, 18, 21, 24, 26, 28],
+			"span_tags": [
+				"postcode",
+				"country",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number"
+			]
+		},
+		{
+			"raw": "〒060-0041 北海道札幌市大通東一丁目5-7-0",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 19, 22],
+			"span_ends": [9, 13, 16, 19, 22, 27],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒604-0000 京都府 京都市 烏丸通2丁目4-5-0",
+			"register": "arabic_chome",
+			"span_starts": [1, 10, 14, 18, 21, 24],
+			"span_ends": [9, 13, 17, 21, 24, 29],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒060-0041 北海道 札幌市 大通東1-5-7-0",
+			"register": "compact_folded",
+			"span_starts": [1, 10, 14, 18, 21],
+			"span_ends": [9, 13, 17, 21, 28],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒907-0022 日本沖縄県石垣市字大川9",
+			"register": "native",
+			"span_starts": [1, 10, 12, 15, 18, 21],
+			"span_ends": [9, 12, 15, 18, 21, 22],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "大阪府堺市中区深井77番地",
+			"register": "designator",
+			"span_starts": [0, 3, 5, 9],
+			"span_ends": [3, 5, 9, 13],
+			"span_tags": ["prefecture", "municipality", "district", "sub_block"]
+		},
+		{
+			"raw": "〒604-0000 京都府京都市烏丸通二丁目4-5-3",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 19, 22],
+			"span_ends": [9, 13, 16, 19, 22, 27],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "沖縄県那覇市久茂地三丁目1番1号6",
+			"register": "designator",
+			"span_starts": [0, 3, 6, 9, 12, 14, 16],
+			"span_ends": [3, 6, 9, 12, 14, 16, 17],
+			"span_tags": ["prefecture", "municipality", "district", "block", "sub_block", "building_number", "house_number"]
+		},
+		{
+			"raw": "沖縄県石垣市字大川9",
+			"register": "native",
+			"span_starts": [0, 3, 6, 9],
+			"span_ends": [3, 6, 9, 10],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒060-0041 北海道 札幌市 大通東一丁目5-7-3",
+			"register": "native",
+			"span_starts": [1, 10, 14, 18, 21, 24],
+			"span_ends": [9, 13, 17, 21, 24, 29],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "大阪府大阪市梅田一丁目2-3",
+			"register": "native",
+			"span_starts": [0, 3, 6, 8, 11],
+			"span_ends": [3, 6, 8, 11, 14],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒900-0015 沖縄県 那覇市 久茂地3－1－1",
+			"register": "compact_folded",
+			"span_starts": [1, 10, 14, 18, 21],
+			"span_ends": [9, 13, 17, 21, 26],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県名古屋市栄三丁目6番8号3",
+			"register": "designator",
+			"span_starts": [1, 10, 13, 17, 18, 21, 23, 25],
+			"span_ends": [9, 13, 17, 18, 21, 23, 25, 26],
+			"span_tags": [
+				"postcode",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number",
+				"house_number"
+			]
+		},
+		{
+			"raw": "東京都町田市大字上田362Bー2ー0",
+			"register": "native",
+			"span_starts": [0, 3, 6, 10],
+			"span_ends": [3, 6, 10, 18],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県 名古屋市 栄三丁目6-8",
+			"register": "native",
+			"span_starts": [1, 10, 14, 19, 20, 23],
+			"span_ends": [9, 13, 18, 20, 23, 26],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "京都府 京都市 烏丸通2-4-5",
+			"register": "compact_folded",
+			"span_starts": [0, 4, 8, 11],
+			"span_ends": [3, 7, 11, 16],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "沖縄県 石垣市 字大川9",
+			"register": "native",
+			"span_starts": [0, 4, 8, 11],
+			"span_ends": [3, 7, 11, 12],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "日本愛知県名古屋市栄三丁目6-8-0",
+			"register": "native",
+			"span_starts": [0, 2, 5, 9, 10, 13],
+			"span_ends": [2, 5, 9, 10, 13, 18],
+			"span_tags": ["country", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県 名古屋市 栄三丁目6番8号3",
+			"register": "designator",
+			"span_starts": [1, 10, 14, 19, 20, 23, 25, 27],
+			"span_ends": [9, 13, 18, 20, 23, 25, 27, 28],
+			"span_tags": [
+				"postcode",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number",
+				"house_number"
+			]
+		},
+		{
+			"raw": "東京都町田市大字上田362B-2",
+			"register": "native",
+			"span_starts": [0, 3, 6, 10],
+			"span_ends": [3, 6, 10, 16],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒907-0022 沖縄県 石垣市 字大川9",
+			"register": "native",
+			"span_starts": [1, 10, 14, 18, 21],
+			"span_ends": [9, 13, 17, 21, 22],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "北海道 函館市 本町1番2号",
+			"register": "designator",
+			"span_starts": [0, 4, 8, 10, 12],
+			"span_ends": [3, 7, 10, 12, 14],
+			"span_tags": ["prefecture", "municipality", "district", "sub_block", "building_number"]
+		},
+		{
+			"raw": "〒530-0000 大阪府大阪市梅田1丁目2−3",
+			"register": "arabic_chome",
+			"span_starts": [1, 10, 13, 16, 18, 21],
+			"span_ends": [9, 13, 16, 18, 21, 24],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒192-0000 東京都八王子市字崎枝12番4号0",
+			"register": "designator",
+			"span_starts": [1, 10, 13, 17, 20, 23, 25],
+			"span_ends": [9, 13, 17, 20, 23, 25, 26],
+			"span_tags": [
+				"postcode",
+				"prefecture",
+				"municipality",
+				"district",
+				"sub_block",
+				"building_number",
+				"house_number"
+			]
+		},
+		{
+			"raw": "〒040-0000 北海道函館市本町1-2-3",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 18],
+			"span_ends": [9, 13, 16, 18, 23],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒194-0211 東京都町田市大字上田362B-2-0",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 20],
+			"span_ends": [9, 13, 16, 20, 28],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "日本東京都町田市大字上田362B-2",
+			"register": "native",
+			"span_starts": [0, 2, 5, 8, 12],
+			"span_ends": [2, 5, 8, 12, 18],
+			"span_tags": ["country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "日本北海道札幌市大通東1ー5ー7",
+			"register": "compact_folded",
+			"span_starts": [0, 2, 5, 8, 11],
+			"span_ends": [2, 5, 8, 11, 16],
+			"span_tags": ["country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒611-0000 京都府宇治市宇治10−20−3",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 18],
+			"span_ends": [9, 13, 16, 18, 25],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "京都府京都市烏丸通2丁目4-5-3",
+			"register": "arabic_chome",
+			"span_starts": [0, 3, 6, 9, 12],
+			"span_ends": [3, 6, 9, 12, 17],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒192-0062 東京都八王子市八島町二丁目3-16",
+			"register": "native",
+			"span_starts": [1, 10, 13, 17, 20, 23],
+			"span_ends": [9, 13, 17, 20, 23, 27],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "東京都 町田市 大字上田362B-2-3",
+			"register": "native",
+			"span_starts": [0, 4, 8, 12],
+			"span_ends": [3, 7, 12, 20],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒040-0000 日本北海道函館市本町1-2-3",
+			"register": "native",
+			"span_starts": [1, 10, 12, 15, 18, 20],
+			"span_ends": [9, 12, 15, 18, 20, 25],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県名古屋市栄三丁目6-8",
+			"register": "native",
+			"span_starts": [1, 10, 13, 17, 18, 21],
+			"span_ends": [9, 13, 17, 18, 21, 24],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "東京都町田市大字上田362B-2",
+			"register": "native",
+			"span_starts": [0, 3, 6, 10],
+			"span_ends": [3, 6, 10, 16],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "沖縄県 那覇市 久茂地3丁目1-1",
+			"register": "arabic_chome",
+			"span_starts": [0, 4, 8, 11, 14],
+			"span_ends": [3, 7, 11, 14, 17],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "京都府 宇治市 宇治10-20-3",
+			"register": "native",
+			"span_starts": [0, 4, 8, 10],
+			"span_ends": [3, 7, 10, 17],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 日本愛知県名古屋市栄3丁目6-8-0",
+			"register": "arabic_chome",
+			"span_starts": [1, 10, 12, 15, 19, 20, 23],
+			"span_ends": [9, 12, 15, 19, 20, 23, 28],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "京都府 宇治市 宇治10ー20",
+			"register": "native",
+			"span_starts": [0, 4, 8, 10],
+			"span_ends": [3, 7, 10, 15],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒604-0000 京都府京都市烏丸通2-4-5",
+			"register": "compact_folded",
+			"span_starts": [1, 10, 13, 16, 19],
+			"span_ends": [9, 13, 16, 19, 24],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒530-0000 大阪府大阪市梅田一丁目2-3-3",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 18, 21],
+			"span_ends": [9, 13, 16, 18, 21, 26],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "大阪府 大阪市 梅田一丁目2番3号0",
+			"register": "designator",
+			"span_starts": [0, 4, 8, 10, 13, 15, 17],
+			"span_ends": [3, 7, 10, 13, 15, 17, 18],
+			"span_tags": ["prefecture", "municipality", "district", "block", "sub_block", "building_number", "house_number"]
+		},
+		{
+			"raw": "大阪府堺市中区深井77番地",
+			"register": "designator",
+			"span_starts": [0, 3, 5, 9],
+			"span_ends": [3, 5, 9, 13],
+			"span_tags": ["prefecture", "municipality", "district", "sub_block"]
+		},
+		{
+			"raw": "沖縄県 那覇市 久茂地3丁目1ー1",
+			"register": "arabic_chome",
+			"span_starts": [0, 4, 8, 11, 14],
+			"span_ends": [3, 7, 11, 14, 17],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "東京都八王子市字崎枝12-4-0",
+			"register": "native",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 16],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "愛知県名古屋市栄三丁目6番8号",
+			"register": "designator",
+			"span_starts": [0, 3, 7, 8, 11, 13],
+			"span_ends": [3, 7, 8, 11, 13, 15],
+			"span_tags": ["prefecture", "municipality", "district", "block", "sub_block", "building_number"]
+		},
+		{
+			"raw": "〒611-0000 日本京都府宇治市宇治10-20",
+			"register": "native",
+			"span_starts": [1, 10, 12, 15, 18, 20],
+			"span_ends": [9, 12, 15, 18, 20, 25],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒611-0000 京都府 宇治市 宇治10-20-0",
+			"register": "native",
+			"span_starts": [1, 10, 14, 18, 20],
+			"span_ends": [9, 13, 17, 20, 27],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "沖縄県那覇市久茂地三丁目1-1-3",
+			"register": "native",
+			"span_starts": [0, 3, 6, 9, 12],
+			"span_ends": [3, 6, 9, 12, 17],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 日本 愛知県 名古屋市 栄3-6-8",
+			"register": "compact_folded",
+			"span_starts": [1, 10, 13, 17, 22, 23],
+			"span_ends": [9, 12, 16, 21, 23, 28],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒900-0015 日本 沖縄県 那覇市 久茂地三丁目1番1号",
+			"register": "designator",
+			"span_starts": [1, 10, 13, 17, 21, 24, 27, 29],
+			"span_ends": [9, 12, 16, 20, 24, 27, 29, 31],
+			"span_tags": [
+				"postcode",
+				"country",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number"
+			]
+		},
+		{
+			"raw": "〒040-0000 日本北海道函館市本町1-2-6",
+			"register": "native",
+			"span_starts": [1, 10, 12, 15, 18, 20],
+			"span_ends": [9, 12, 15, 18, 20, 25],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "大阪府堺市中区深井77",
+			"register": "native",
+			"span_starts": [0, 3, 5, 9],
+			"span_ends": [3, 5, 9, 11],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "日本 東京都 町田市 大字上田362B−2−3",
+			"register": "native",
+			"span_starts": [0, 3, 7, 11, 15],
+			"span_ends": [2, 6, 10, 15, 23],
+			"span_tags": ["country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "沖縄県 石垣市 字大川9",
+			"register": "native",
+			"span_starts": [0, 4, 8, 11],
+			"span_ends": [3, 7, 11, 12],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "京都府 宇治市 宇治10-20",
+			"register": "native",
+			"span_starts": [0, 4, 8, 10],
+			"span_ends": [3, 7, 10, 15],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "北海道函館市本町1番2号6",
+			"register": "designator",
+			"span_starts": [0, 3, 6, 8, 10, 12],
+			"span_ends": [3, 6, 8, 10, 12, 13],
+			"span_tags": ["prefecture", "municipality", "district", "sub_block", "building_number", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県 名古屋市 栄3丁目6-8",
+			"register": "arabic_chome",
+			"span_starts": [1, 10, 14, 19, 20, 23],
+			"span_ends": [9, 13, 18, 20, 23, 26],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒530-0000 大阪府大阪市梅田1-2-3-0",
+			"register": "compact_folded",
+			"span_starts": [1, 10, 13, 16, 18],
+			"span_ends": [9, 13, 16, 18, 25],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒040-0000 日本北海道函館市本町1-2",
+			"register": "native",
+			"span_starts": [1, 10, 12, 15, 18, 20],
+			"span_ends": [9, 12, 15, 18, 20, 23],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "東京都町田市大字上田362B-2",
+			"register": "native",
+			"span_starts": [0, 3, 6, 10],
+			"span_ends": [3, 6, 10, 16],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒604-0000 日本京都府京都市烏丸通2-4-5-0",
+			"register": "compact_folded",
+			"span_starts": [1, 10, 12, 15, 18, 21],
+			"span_ends": [9, 12, 15, 18, 21, 28],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒900-0015 沖縄県那覇市久茂地三丁目1番1号3",
+			"register": "designator",
+			"span_starts": [1, 10, 13, 16, 19, 22, 24, 26],
+			"span_ends": [9, 13, 16, 19, 22, 24, 26, 27],
+			"span_tags": [
+				"postcode",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number",
+				"house_number"
+			]
+		},
+		{
+			"raw": "日本 京都府 宇治市 宇治10ー20ー0",
+			"register": "native",
+			"span_starts": [0, 3, 7, 11, 13],
+			"span_ends": [2, 6, 10, 13, 20],
+			"span_tags": ["country", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "大阪府堺市中区深井77",
+			"register": "native",
+			"span_starts": [0, 3, 5, 9],
+			"span_ends": [3, 5, 9, 11],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒192-0062 日本東京都八王子市八島町二丁目3-16",
+			"register": "native",
+			"span_starts": [1, 10, 12, 15, 19, 22, 25],
+			"span_ends": [9, 12, 15, 19, 22, 25, 29],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "日本 愛知県 名古屋市 栄3丁目6-8",
+			"register": "arabic_chome",
+			"span_starts": [0, 3, 7, 12, 13, 16],
+			"span_ends": [2, 6, 11, 13, 16, 19],
+			"span_tags": ["country", "prefecture", "municipality", "district", "block", "house_number"]
+		}
+	],
+	"val": [
+		{
+			"raw": "〒907-0022 沖縄県 石垣市 字大川9",
+			"register": "native",
+			"span_starts": [1, 10, 14, 18, 21],
+			"span_ends": [9, 13, 17, 21, 22],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "大阪府 堺市 中区深井77",
+			"register": "native",
+			"span_starts": [0, 4, 7, 11],
+			"span_ends": [3, 6, 11, 13],
+			"span_tags": ["prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "〒040-0000 北海道 函館市 本町1-2",
+			"register": "native",
+			"span_starts": [1, 10, 14, 18, 20],
+			"span_ends": [9, 13, 17, 20, 23],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		},
+		{
+			"raw": "大阪府大阪市梅田一丁目2番3号",
+			"register": "designator",
+			"span_starts": [0, 3, 6, 8, 11, 13],
+			"span_ends": [3, 6, 8, 11, 13, 15],
+			"span_tags": ["prefecture", "municipality", "district", "block", "sub_block", "building_number"]
+		},
+		{
+			"raw": "日本 北海道 札幌市 大通東一丁目5番7号",
+			"register": "designator",
+			"span_starts": [0, 3, 7, 11, 14, 17, 19],
+			"span_ends": [2, 6, 10, 14, 17, 19, 21],
+			"span_tags": ["country", "prefecture", "municipality", "district", "block", "sub_block", "building_number"]
+		},
+		{
+			"raw": "〒192-0062 日本 東京都 八王子市 八島町二丁目3－16－3",
+			"register": "native",
+			"span_starts": [1, 10, 13, 17, 22, 25, 28],
+			"span_ends": [9, 12, 16, 21, 25, 28, 34],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒460-0000 愛知県名古屋市栄三丁目6-8",
+			"register": "native",
+			"span_starts": [1, 10, 13, 17, 18, 21],
+			"span_ends": [9, 13, 17, 18, 21, 24],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒611-0000 京都府宇治市宇治10-20",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 18],
+			"span_ends": [9, 13, 16, 18, 23],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number"]
+		}
+	],
+	"board": [
+		{
+			"raw": "〒650-0000 日本兵庫県神戸市中央区元町通四丁目2番8号0",
+			"register": "designator",
+			"span_starts": [1, 10, 12, 15, 18, 24, 27, 29, 31],
+			"span_ends": [9, 12, 15, 18, 24, 27, 29, 31, 32],
+			"span_tags": [
+				"postcode",
+				"country",
+				"prefecture",
+				"municipality",
+				"district",
+				"block",
+				"sub_block",
+				"building_number",
+				"house_number"
+			]
+		},
+		{
+			"raw": "〒880-0805 宮崎県宮崎市橘通東一丁目9-3-0",
+			"register": "native",
+			"span_starts": [1, 10, 13, 16, 19, 22],
+			"span_ends": [9, 13, 16, 19, 22, 27],
+			"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "日本兵庫県神戸市中央区元町通四丁目2-8",
+			"register": "native",
+			"span_starts": [0, 2, 5, 8, 14, 17],
+			"span_ends": [2, 5, 8, 14, 17, 20],
+			"span_tags": ["country", "prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "宮崎県宮崎市橘通東一丁目9-3",
+			"register": "native",
+			"span_starts": [0, 3, 6, 9, 12],
+			"span_ends": [3, 6, 9, 12, 15],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "宮崎県 宮崎市 橘通東1丁目9-3",
+			"register": "arabic_chome",
+			"span_starts": [0, 4, 8, 11, 14],
+			"span_ends": [3, 7, 11, 14, 17],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "兵庫県神戸市中央区元町通四丁目2-8",
+			"register": "native",
+			"span_starts": [0, 3, 6, 12, 15],
+			"span_ends": [3, 6, 12, 15, 18],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "宮崎県 宮崎市 橘通東一丁目9-3",
+			"register": "native",
+			"span_starts": [0, 4, 8, 11, 14],
+			"span_ends": [3, 7, 11, 14, 17],
+			"span_tags": ["prefecture", "municipality", "district", "block", "house_number"]
+		},
+		{
+			"raw": "〒650-0000 日本 兵庫県 神戸市 中央区元町通4丁目2-8",
+			"register": "arabic_chome",
+			"span_starts": [1, 10, 13, 17, 21, 27, 30],
+			"span_ends": [9, 12, 16, 20, 27, 30, 33],
+			"span_tags": ["postcode", "country", "prefecture", "municipality", "district", "block", "house_number"]
+		}
+	],
+	"report": {
+		"seed": 42,
+		"label_set": "stage3-jp",
+		"source": "overture-jp",
+		"eligible_rows_scanned": 112,
+		"dropped_at_source": {},
+		"max_field_chars": 64,
+		"per_prefecture_cap": 8,
+		"prefectures_train": 6,
+		"board_municipalities": 2,
+		"board_rows": 8,
+		"kenall_join_tiers": {
+			"municipality": 31,
+			"town": 11,
+			"town_aza_stripped": 6
+		},
+		"register_availability": {
+			"reduced": 88
+		},
+		"char_vocab_size": 80,
+		"fractions": {
+			"postcode": 0.5,
+			"country": 0.3,
+			"spaced": 0.4,
+			"variant_hyphen": 0.25
+		},
+		"register_weights": {
+			"native": 0.4,
+			"arabic_chome": 0.25,
+			"compact_folded": 0.2,
+			"designator": 0.15,
+			"kana_municipality": 0.05
+		},
+		"upweight": {
+			"pattern": "市$:2",
+			"copies_appended": 40
+		},
+		"splits": {
+			"train": {
+				"rows": 80,
+				"parts": 5,
+				"coverage": {
+					"rows": 80,
+					"bio_char_coverage_all": 0.910173,
+					"bio_char_coverage_significant": 1.0,
+					"raw_len_min_median_max": [10, 22, 31],
+					"registers": {
+						"native": 44,
+						"designator": 17,
+						"arabic_chome": 10,
+						"compact_folded": 9
+					},
+					"per_tag_rows": {
+						"prefecture": 80,
+						"municipality": 80,
+						"district": 80,
+						"house_number": 72,
+						"postcode": 40,
+						"block": 33,
+						"country": 19,
+						"sub_block": 17,
+						"building_number": 14
+					},
+					"per_tag_spans": {
+						"prefecture": 80,
+						"municipality": 80,
+						"district": 80,
+						"house_number": 72,
+						"postcode": 40,
+						"block": 33,
+						"country": 19,
+						"sub_block": 17,
+						"building_number": 14
+					},
+					"per_tag_chars": {
+						"postcode": 320,
+						"house_number": 302,
+						"municipality": 252,
+						"prefecture": 240,
+						"district": 208,
+						"block": 99,
+						"sub_block": 42,
+						"country": 38,
+						"building_number": 29
+					},
+					"per_label_chars": {
+						"I-postcode": 280,
+						"I-house_number": 230,
+						"I-municipality": 172,
+						"I-prefecture": 160,
+						"O": 151,
+						"I-district": 128,
+						"B-prefecture": 80,
+						"B-municipality": 80,
+						"B-district": 80,
+						"B-house_number": 72,
+						"I-block": 66,
+						"B-postcode": 40,
+						"B-block": 33,
+						"I-sub_block": 25,
+						"B-country": 19,
+						"I-country": 19,
+						"B-sub_block": 17,
+						"I-building_number": 15,
+						"B-building_number": 14
+					}
+				}
+			},
+			"val": {
+				"rows": 8,
+				"parts": 1,
+				"coverage": {
+					"rows": 8,
+					"bio_char_coverage_all": 0.874286,
+					"bio_char_coverage_significant": 1.0,
+					"raw_len_min_median_max": [13, 23, 34],
+					"registers": {
+						"native": 6,
+						"designator": 2
+					},
+					"per_tag_rows": {
+						"prefecture": 8,
+						"municipality": 8,
+						"district": 8,
+						"house_number": 6,
+						"postcode": 5,
+						"block": 4,
+						"sub_block": 2,
+						"building_number": 2,
+						"country": 2
+					},
+					"per_tag_spans": {
+						"prefecture": 8,
+						"municipality": 8,
+						"district": 8,
+						"house_number": 6,
+						"postcode": 5,
+						"block": 4,
+						"sub_block": 2,
+						"building_number": 2,
+						"country": 2
+					},
+					"per_tag_chars": {
+						"postcode": 40,
+						"municipality": 25,
+						"prefecture": 24,
+						"district": 20,
+						"house_number": 20,
+						"block": 12,
+						"sub_block": 4,
+						"building_number": 4,
+						"country": 4
+					},
+					"per_label_chars": {
+						"I-postcode": 35,
+						"O": 22,
+						"I-municipality": 17,
+						"I-prefecture": 16,
+						"I-house_number": 14,
+						"I-district": 12,
+						"B-prefecture": 8,
+						"B-municipality": 8,
+						"B-district": 8,
+						"I-block": 8,
+						"B-house_number": 6,
+						"B-postcode": 5,
+						"B-block": 4,
+						"B-sub_block": 2,
+						"I-sub_block": 2,
+						"B-building_number": 2,
+						"I-building_number": 2,
+						"B-country": 2,
+						"I-country": 2
+					}
+				}
+			}
+		},
+		"board_coverage": {
+			"rows": 8,
+			"bio_char_coverage_all": 0.927374,
+			"bio_char_coverage_significant": 1.0,
+			"raw_len_min_median_max": [15, 20, 33],
+			"registers": {
+				"native": 5,
+				"arabic_chome": 2,
+				"designator": 1
+			},
+			"per_tag_rows": {
+				"prefecture": 8,
+				"house_number": 8,
+				"municipality": 8,
+				"block": 8,
+				"district": 8,
+				"country": 3,
+				"postcode": 3,
+				"sub_block": 1,
+				"building_number": 1
+			},
+			"per_tag_spans": {
+				"prefecture": 8,
+				"municipality": 8,
+				"district": 8,
+				"block": 8,
+				"house_number": 8,
+				"postcode": 3,
+				"country": 3,
+				"sub_block": 1,
+				"building_number": 1
+			},
+			"per_tag_chars": {
+				"district": 36,
+				"postcode": 24,
+				"prefecture": 24,
+				"municipality": 24,
+				"block": 24,
+				"house_number": 24,
+				"country": 6,
+				"sub_block": 2,
+				"building_number": 2
+			},
+			"per_label_chars": {
+				"I-district": 28,
+				"I-postcode": 21,
+				"I-prefecture": 16,
+				"I-municipality": 16,
+				"I-block": 16,
+				"I-house_number": 16,
+				"O": 13,
+				"B-prefecture": 8,
+				"B-municipality": 8,
+				"B-district": 8,
+				"B-block": 8,
+				"B-house_number": 8,
+				"B-postcode": 3,
+				"B-country": 3,
+				"I-country": 3,
+				"B-sub_block": 1,
+				"I-sub_block": 1,
+				"B-building_number": 1,
+				"I-building_number": 1
+			}
+		}
+	}
+}

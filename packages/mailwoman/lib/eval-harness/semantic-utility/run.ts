@@ -33,7 +33,7 @@ import {
 	type POIBoardFixture,
 	type POIBoardOptions,
 	type POIBoardOutcome,
-} from "#eval-harness/poi-board"
+} from "#eval-harness/poi/board"
 import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#eval-harness/preregistration"
 import {
 	computeProbeCounts,
@@ -138,7 +138,12 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}): Promise<ProbeReceipt> {
 	const definition = await loadProbeDefinition(options.definitionPath, options.freezePath)
 	const boardPath = options.boardFixturesPath ?? POI_BOARD_FIXTURES
-	const committed = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(boardPath))
+	const controlIDs = new Set(definition.controlRows.map((row) => row.id))
+
+	const committed = await JSONSpliterator.fromAsync<POIBoardFixture>(boardPath)
+		.filter((fixture) => controlIDs.has(fixture.id))
+		.toArray()
+
 	const controls = resolveControlRows(definition, committed)
 	const groupByID = new Map(definition.controlRows.map((row) => [row.id, row.group]))
 

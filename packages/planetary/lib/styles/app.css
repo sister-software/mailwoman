@@ -1,3 +1,12 @@
+/*
+ * Space is painted HERE, not by the map. Under globe projection a MapLibre background layer paints the sphere, and
+ * the canvas is transparent everywhere outside it — so the field around the body, and the stars in it, belong to the
+ * page behind the canvas. The body's own surface tone is the style's `planetary/space` layer.
+ *
+ * Colour and type come from `@mailwoman/react/tokens.css`, which `styles.css` pulls in; the two space colours are
+ * the exception, because they are a property of the body rather than of the interface.
+ */
+
 html,
 body,
 #root {
@@ -7,23 +16,67 @@ body,
 
 body {
 	background: #05070d;
-	color: #e8eef7;
-	font-family: system-ui, sans-serif;
+	color: var(--color-text-primary);
+	font-family: var(--font-family-text);
+	font-size: var(--font-size-body);
+	line-height: var(--line-height-body);
 }
 
 main[data-body="mars"] {
 	background: #0a0604;
-	color: #f6e3d1;
 }
 
 main[data-route] {
 	position: relative;
 	height: 100%;
+	isolation: isolate;
+}
+
+/*
+ * The star field: three layers of point highlights at different scales, so the field does not read as one repeating
+ * grid. It sits behind the canvas rather than in the map, so it never rotates with the body — the same way a
+ * starfield does not turn when you turn a globe on a desk.
+ */
+main[data-route]::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background-image:
+		radial-gradient(1.4px 1.4px at 18% 24%, rgb(255 255 255 / 0.75), transparent 60%),
+		radial-gradient(1.2px 1.2px at 73% 12%, rgb(255 255 255 / 0.6), transparent 60%),
+		radial-gradient(1.1px 1.1px at 41% 67%, rgb(255 255 255 / 0.55), transparent 60%),
+		radial-gradient(0.9px 0.9px at 88% 54%, rgb(255 255 255 / 0.5), transparent 60%),
+		radial-gradient(1px 1px at 9% 81%, rgb(255 255 255 / 0.45), transparent 60%),
+		radial-gradient(0.8px 0.8px at 57% 91%, rgb(255 255 255 / 0.4), transparent 60%),
+		radial-gradient(0.7px 0.7px at 31% 8%, rgb(255 255 255 / 0.35), transparent 60%);
+	background-size:
+		320px 320px,
+		540px 540px,
+		420px 420px,
+		760px 760px,
+		280px 280px,
+		620px 620px,
+		200px 200px;
+	pointer-events: none;
+}
+
+/* A viewer who has asked for less motion or contrast gets a plain field rather than a busy one. */
+@media (prefers-reduced-transparency: reduce) {
+	main[data-route]::before {
+		display: none;
+	}
 }
 
 main[data-route] > .mw-demo-map {
 	position: absolute;
 	inset: 0;
+	z-index: 1;
+}
+
+/* The canvas must not paint its own ground, or the star field behind it is never seen. */
+main[data-route] .maplibregl-canvas {
+	background: transparent;
 }
 
 .visually-hidden {
@@ -35,67 +88,47 @@ main[data-route] > .mw-demo-map {
 	white-space: nowrap;
 }
 
+/*
+ * The top column, the same one the Earth geocoder uses so the three apps read as one family: the search pill, the
+ * example chips, then the compass. The controls inside it are `@mailwoman/react`'s; this rule places the column.
+ *
+ * It is click-through between its controls, or the strip across the top of the globe would refuse a drag.
+ */
 .search-slot {
 	position: absolute;
-	top: 1rem;
-	left: 1rem;
-	width: min(24rem, calc(100% - 2rem));
-	z-index: 2;
+	top: calc(1rem + var(--safe-area-top));
+	left: calc(1rem + var(--safe-area-left));
+	right: calc(1rem + var(--safe-area-right));
+	max-width: 34rem;
+	z-index: 3;
+	display: grid;
+	gap: 0.5rem;
+	justify-items: stretch;
+	pointer-events: none;
 }
 
-.search-box input[type="search"] {
-	width: 100%;
-	box-sizing: border-box;
-	padding: 0.6rem 0.8rem;
-	font: inherit;
-	color: inherit;
-	background: rgb(0 0 0 / 0.65);
-	border: 1px solid rgb(255 255 255 / 0.2);
-	border-radius: 0.5rem;
+.search-slot > * {
+	pointer-events: auto;
+}
+
+.search-slot > .mw-map-compass {
+	justify-self: start;
 }
 
 .search-box .mw-demo-suggest {
 	margin-top: 0.4rem;
-	background: rgb(0 0 0 / 0.75);
-	border-radius: 0.5rem;
-	padding: 0.4rem;
 }
 
-.feature-panel {
-	position: absolute;
-	top: 1rem;
-	right: 1rem;
-	width: min(22rem, calc(100% - 2rem));
-	max-height: calc(100% - 2rem);
-	overflow: auto;
-	box-sizing: border-box;
-	padding: 1rem 1.2rem;
-	background: rgb(0 0 0 / 0.75);
-	border: 1px solid rgb(255 255 255 / 0.15);
-	border-radius: 0.75rem;
-	z-index: 2;
-}
-
-.feature-panel__header {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 1rem;
-}
-
-.feature-panel h2 {
-	margin: 0;
-	font-size: 1.25rem;
-}
-
-.feature-panel__close {
-	font: inherit;
-	font-size: 1.25rem;
-	line-height: 1;
-	color: inherit;
-	background: none;
-	border: 0;
-	cursor: pointer;
+/*
+ * The feature panel is `<MapSheet>` — the glass, the position beside the control column, the phone treatment and the
+ * close button all come from `@mailwoman/react`. Only the record inside it is this app's.
+ */
+@media (max-width: 600px) {
+	/* Clear of the control capsule in the same corner: 2.5rem of control, its 1rem inset, and a 0.5rem gap. */
+	.search-slot {
+		max-width: none;
+		right: calc(4rem + var(--safe-area-right));
+	}
 }
 
 .feature-panel dl {
@@ -105,8 +138,9 @@ main[data-route] > .mw-demo-map {
 	margin: 1rem 0;
 }
 
+/* A colour, not an opacity: a faded term also fades the glass behind it toward the map, which is where contrast goes. */
 .feature-panel dt {
-	opacity: 0.7;
+	color: var(--color-text-secondary);
 }
 
 .feature-panel dd {
@@ -116,20 +150,17 @@ main[data-route] > .mw-demo-map {
 .feature-panel__code,
 .feature-panel__convention,
 .feature-panel__source {
-	opacity: 0.6;
-	font-size: 0.85em;
+	color: var(--color-text-tertiary);
+	font-size: var(--font-size-caption);
 }
 
+/* The footer strip owns its own layout; this rule only pins it to the map's lower edge. */
 .attribution {
 	position: absolute;
-	bottom: 0.5rem;
-	left: 0.5rem;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0 0.75rem;
-	font-size: 0.7rem;
-	opacity: 0.75;
-	z-index: 2;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 3;
 }
 
 .not-found {

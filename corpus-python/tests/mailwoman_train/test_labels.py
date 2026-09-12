@@ -16,7 +16,9 @@ from mailwoman_train.labels import (
     collapse_label,
 )
 
-# --- Historical (frozen) -------------------------------------------------------------
+# endregion
+
+# region Historical (frozen)
 
 
 def test_stage1_bio_labels_well_formed():
@@ -42,7 +44,9 @@ def test_stage1_constants_are_immutable_across_ships():
     )
 
 
-# --- v0.3.0 STAGE2 -------------------------------------------------------------------
+# endregion
+
+# region v0.3.0 STAGE2
 
 
 def test_stage2_extends_stage1_with_fine_tags():
@@ -62,7 +66,9 @@ def test_stage2_preserves_stage1_label_ids():
         assert STAGE2_BIO_LABELS[i] == label
 
 
-# --- v0.6.0 STAGE3 (current active set) --------------------------------------------
+# endregion
+
+# region v0.6.0 STAGE3 (current active set)
 
 
 def test_stage3_extends_stage2_with_decomposition_tags():
@@ -104,7 +110,9 @@ def test_active_set_keeps_historical_stage_prefixes_intact():
     assert ACTIVE_BIO_LABELS[: len(STAGE1_BIO_LABELS)] == STAGE1_BIO_LABELS
 
 
-# --- collapse_label ------------------------------------------------------------------
+# endregion
+
+# region collapse_label
 
 
 def test_collapse_label_keeps_coarse():
@@ -143,7 +151,9 @@ def test_collapse_label_drops_unknown_tags():
     assert collapse_label("malformed") == "O"
 
 
-# --- active_components_present (relaxed check) ---------------------------------------
+# endregion
+
+# region active_components_present (relaxed check)
 
 
 def test_active_components_present_accepts_coarse_only_rows():

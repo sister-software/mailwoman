@@ -16,7 +16,7 @@
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
-import type { LayerSpecification, SourceSpecification } from "react-map-gl/maplibre"
+import type { LayerSpecification, MapInstance, SourceSpecification } from "react-map-gl/maplibre"
 
 import type { LngLat, ResolvedMapPlace } from "#map/place-render"
 import type { PipelineRuntime } from "#pipeline/types"
@@ -262,11 +262,17 @@ export interface GeocoderPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block (present or empty). The opt-in display toggles live here — calibrated
-	 * confidence + dev-mode — because the host owns both the toggle state AND the {@link result} / {@link debugDrawer}
-	 * renderers those toggles drive.
+	 * Rendered just above the result block (present or empty), for content that reads on THIS answer.
+	 *
+	 * A control that reads on the model rather than on an address belongs in {@link developerExtras}: above the result it
+	 * is the first thing a visitor meets, and on a phone it pushes the answer below the fold.
 	 */
 	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
+	/**
+	 * Host controls appended to the Developer sheet — the opt-in display toggles, whose state and the renderers they
+	 * drive both belong to the host.
+	 */
+	developerExtras?: ReactNode
 	/**
 	 * Replace the package's default {@link ResultPanel} entirely. When provided, the host renders its own result block
 	 * (span highlight, timing, hierarchy, precision detail, calibrated confidences) from the {@link ResultContext}. Absent
@@ -292,6 +298,14 @@ export interface GeocoderPanels {
 	 * Extra map controls mounted as `<MapCanvas>` children (host's DebugControl / LayerToggle via `useControl`).
 	 */
 	mapControls?: ReactNode
+	/**
+	 * A layer control, rendered in the chrome's top column under the example chips rather than in a MapLibre corner.
+	 *
+	 * A render-prop taking the live map handle, because a layer control reads `getStyle().layers` and writes
+	 * `setLayoutProperty` — it cannot be a static node. The handle is `null` until the map instantiates, so the host
+	 * returns `null` for that first frame rather than rendering an empty control.
+	 */
+	layers?: (context: { map: MapInstance | null }) => ReactNode
 	/**
 	 * A permalink control for the current address (host's PermalinkButton).
 	 */

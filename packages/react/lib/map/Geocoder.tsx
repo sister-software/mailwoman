@@ -18,7 +18,7 @@
  *   over a fake runtime (offline stub style + canned geocode) with no network, no ONNX, no gazetteer.
  */
 
-import { type ReactNode, useCallback, useEffect, useRef } from "react"
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import type { GeocoderPanels, GeocoderRuntime, MapBias } from "#map/types"
@@ -52,6 +52,16 @@ export interface GeocoderProps {
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
+	 * Open the developer disclosure on mount — the model version, the backend readout and compare. Collapsed by default
+	 * so the address field is the first thing a visitor meets. @default false
+	 */
+	developer?: boolean
+	/**
+	 * Fired with the query each time one is submitted. The host writes it into its own URL — this package never touches
+	 * `location`, because which parameter carries a query is the app's decision.
+	 */
+	onSubmitQuery?: (query: string) => void
+	/**
 	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
 	 * Matches the `map.getZoom() >= 4` threshold. @default 4
 	 */
@@ -65,10 +75,11 @@ export interface GeocoderProps {
 }
 
 interface GeocoderInnerProps extends Required<
-	Pick<GeocoderProps, "runtime" | "defaultAddress" | "minBiasZoom" | "applyResultCamera">
+	Pick<GeocoderProps, "runtime" | "defaultAddress" | "minBiasZoom" | "applyResultCamera" | "developer">
 > {
 	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
+	onSubmitQuery?: (query: string) => void
 }
 
 function GeocoderInner({
@@ -78,42 +89,44 @@ function GeocoderInner({
 	presets,
 	minBiasZoom,
 	applyResultCamera,
+	developer,
+	onSubmitQuery,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
+	// The chrome sits OUTSIDE `<MapCanvas>`, so it cannot take the handle from `useMap()`. A ref alone does not
+	// re-render the compass or the layer control when the map arrives, so the same poll that publishes the test
+	// handle also puts it in state — one poll, two consumers.
+	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
+	// The map announces itself; nothing polls for it. `onLoad` carries the instance, so the compass and the layer
+	// control render on the frame the map is ready rather than up to an interval later.
+	//
 	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias threshold)
-	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
-	// republished on `globalThis.__mailwomanMapCanvas`. The ref fills only after react-map-gl instantiates
-	// the map, hence the short poll; cleared on unmount so a torn-down geocoder never leaves a stale
-	// handle behind.
-	useEffect(() => {
-		const host = globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }
-
-		const timer = setInterval(() => {
-			const map = mapRef.current?.getMap()
-
-			if (map) {
-				host.__mailwomanMapCanvas = map
-				clearInterval(timer)
-			}
-		}, 250)
-
-		return () => {
-			clearInterval(timer)
-			delete host.__mailwomanMapCanvas
-		}
+	// before submitting, and a browser test cannot reach a React ref — so the same handle is republished on
+	// `globalThis.__mailwomanMapCanvas`, and cleared on unmount so a torn-down geocoder leaves no stale handle.
+	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
+		;(globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas = event.target
+		setMap(event.target)
 	}, [])
+
+	useEffect(
+		() => () => {
+			setMap(null)
+			delete (globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas
+		},
+		[]
+	)
 
 	// Read the viewport bias at submit time — through the map handle, never a threaded state value, so granting/zooming
 	// mid-session doesn't re-create the parse callback. Below the min-bias zoom, a whole-globe center is noise → null.
 	const getBias = useCallback((): MapBias | null => {
-		const map = mapRef.current?.getMap()
+		const live = mapRef.current?.getMap()
 
-		if (!map) return null
-		const zoom = map.getZoom()
+		if (!live) return null
+		const zoom = live.getZoom()
 
 		if (zoom < minBiasZoom) return null
-		const center = map.getCenter()
+		const center = live.getCenter()
 
 		return { center: [center.lng, center.lat], zoom }
 	}, [minBiasZoom])
@@ -153,7 +166,7 @@ function GeocoderInner({
 					style={{ width: "100%", height: "100%" }}
 					// One compact attribution pill (the map's own default is a wide, always-open "MapLibre | © …" bar), no
 					// maplibre wordmark logo.
-					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false }}
+					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
 					<OverlayLayers overlays={runtime.overlays} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
@@ -169,8 +182,11 @@ function GeocoderInner({
 				panels={panels}
 				presets={presets}
 				placeholder={defaultAddress}
+				map={map}
+				onSubmitQuery={onSubmitQuery}
 				onSelectVersion={onSelectVersion}
 				onForceWASMChange={onForceWASMChange}
+				developer={developer}
 			/>
 
 			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}
@@ -194,6 +210,8 @@ export function Geocoder({
 	presets = NO_PRESETS,
 	minBiasZoom = 4,
 	applyResultCamera = true,
+	developer = false,
+	onSubmitQuery,
 }: GeocoderProps): ReactNode {
 	return (
 		<ClientOnly
@@ -211,6 +229,8 @@ export function Geocoder({
 					presets={presets}
 					minBiasZoom={minBiasZoom}
 					applyResultCamera={applyResultCamera}
+					developer={developer}
+					onSubmitQuery={onSubmitQuery}
 				/>
 			)}
 		</ClientOnly>

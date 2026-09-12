@@ -32,8 +32,8 @@ import {
 	invoicePaymentList,
 	subscriptionDeletedEvent,
 	subscriptionObject,
-} from "../support/stripe-fixtures.ts"
-import { stripeFetch } from "../support/stripe-mock.ts"
+} from "../support/stripe/fixtures.ts"
+import { stripeFetch } from "../support/stripe/mock.ts"
 
 const sent: Array<{ message: LicenseEmail; idempotencyKey: string }> = []
 

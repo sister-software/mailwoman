@@ -1,0 +1,47 @@
+## Mailwoman chat style: "overlay" and "full run" carry more than one sense here.
+##
+## Vale existence rule, warning severity. Unlike the banned-shorthand rules, these
+## words are correct and stay — the nudge is to say WHICH sense, because three
+## unrelated mechanisms share the first word and the reader cannot tell them apart
+## from a bare mention:
+##
+##   corpus overlay   A corpus version that writes ONE new parquet and a manifest
+##                    naming everybody else's. v0.30.0 owns 1 of its 720 entries;
+##                    the other 719 are absolute paths into twenty earlier version
+##                    directories. It reuses DATA.
+##   weights overlay  A `neural-weights-<locale>` package that ships locale data and
+##                    no model graph, taking the base through `mailwoman.baseWeights`.
+##                    It reuses a MODEL.
+##   the run's start  `train.init_from` set means a fine-tune from a checkpoint;
+##                    absent means from scratch. `--resume auto|none` is a THIRD
+##                    thing again — crash recovery, not initialization.
+##
+## So "the overlay reuses the base" is true of two different mechanisms and false
+## of the third, and "a full training run" names the from-scratch case by a phrase
+## that sounds like a duration. 107 of 222 shipped configs set `init_from`, so the
+## from-scratch case is the minority one and the least safe to leave implied.
+##
+## WHY THE TOKENS ARE SHAPED THIS WAY. Vale runs Go RE2, which has no lookbehind and
+## no lookahead, so "bare mention" cannot be expressed as "overlay not preceded by a
+## qualifier". These match the determiner-plus-verb frames instead, which is where an
+## unqualified mention actually lands. A qualified mention has a word in between and
+## does not match: "the corpus overlay is", "the en-GB weights overlay was". Compound
+## nouns where a following word already disambiguates are left alone for the same
+## reason — "the overlay manifest", "the overlay base", "an overlay ADD" all survive,
+## and they are the established spellings in `MANIFEST.json` and the sync functions.
+##
+## Published prose is NOT covered. AGENTS.md and the package READMEs use "data-only
+## overlay" correctly and at length; extending this to the shared Mailwoman style is
+## its own change with its own sweep. Chat first, as `ProjectShorthand.yml` did.
+extends: existence
+message: "'%s' leaves the sense unstated — a CORPUS overlay reuses data files through a manifest, a WEIGHTS overlay reuses a model graph through `mailwoman.baseWeights`, and a run either starts from scratch (no `train.init_from`) or fine-tunes from a checkpoint. Name which: 'the corpus overlay', 'the en-GB weights overlay', 'the from-scratch run'."
+level: warning
+ignorecase: true
+tokens:
+  # "a full run" / "the full training run" — the from-scratch case named by a phrase
+  # that reads as a duration. Say from-scratch, or say fine-tune.
+  - (?:a|the|this|that|our|its) full (?:training )?runs?
+  # The corpus artifact welded to the weights or to the run.
+  - overlay (?:run|training|arm|fine-tune|checkpoint|weights-cache)
+  # A bare mention in a verb frame, where the sense carries the claim.
+  - (?:the|an|this|that|its|our) overlays? (?:is|was|are|were|adds?|added|carries|carried|holds?|held|reuses?|reused|points?|pointed|means?|meant|declares?|declared|resolves?|resolved)

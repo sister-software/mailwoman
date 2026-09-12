@@ -5,4 +5,5 @@
  *   Spanish (ES) address-system reference data.
  */
 
+export * from "#es/co-official-languages"
 export * from "#es/codigo-postal"

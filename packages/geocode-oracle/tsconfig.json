@@ -14,7 +14,6 @@
 		{ "path": "../address-id" },
 		{ "path": "../codex" },
 		{ "path": "../core" },
-		{ "path": "../formatter" },
 		{ "path": "../record" },
 		{ "path": "../spatial" },
 		{ "path": "../tiger" }

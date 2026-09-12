@@ -28,6 +28,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
+import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
@@ -113,6 +114,11 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
 		(cc) => `postalcode-${cc}-overture.db`
 	),
+	// Singapore: a six-digit postcode names one building, so the per-postcode centroid of the Overture rows (123,883
+	// codes from the OneMap / Singapore Land Authority register, Singapore Open Data Licence 1.0 under Overture's
+	// CDLA-Permissive-2.0) answers at rooftop grade with no training. Rebuild: `mailwoman eval es-postcode-centroids
+	// --country SG --pc-len 0 --parquet <overture>/addresses-sg.parquet`.
+	"postalcode-sg-overture.db",
 ]
 
 /**
@@ -294,8 +300,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	if (!(await pathExists(opts.adminIn))) throw new Error(`admin DB not found: ${opts.adminIn}`)
 
-	const { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE, ingestGeonamesAliases, buildPlaceSearchFTS } =
-		await import("@mailwoman/resolver-wof-sqlite")
+	const { ingestGeonamesAliases, buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 
 	const countries = [...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)]
 
@@ -588,6 +593,6 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 export * from "#gazetteer-pipeline/coverage-manifest"
 export * from "#gazetteer-pipeline/defaults"
 export * from "#gazetteer-pipeline/fts"
-export * from "#gazetteer-pipeline/verify"
+export * from "#gazetteer-pipeline/verify/index"
 export * from "#gazetteer-pipeline/admin/index"
 export * from "#gazetteer-pipeline/postcode/index"

@@ -26,7 +26,10 @@ test.describe("Demo — model-visualizer debug drawer", () => {
 		await demo.submit()
 		await expect(page.locator("aside[aria-label='Model decode-path visualizer']")).toHaveCount(0)
 
-		await page.getByText("Dev mode").click()
+		// The trace toggle sits behind the Developer capsule in the map chrome and reads "Trace the decode path" — the
+		// two display toggles moved there so they stop heading every result. Open that sheet, then check the box.
+		await page.getByLabel("Developer controls").click()
+		await page.getByLabel("Trace the decode path").check()
 		await expect(page.locator("aside[aria-label='Model decode-path visualizer']")).toBeVisible({ timeout: 30_000 })
 		demo.console.assertNoFailEvents()
 	})

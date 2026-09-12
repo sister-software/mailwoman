@@ -6,8 +6,8 @@
  *   elsewhere; a town answers under the prefecture when its county has no key; a plain miss stays a miss.
  */
 
+import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"

@@ -3,9 +3,9 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 /**
  *   Regression guard for `parse --default-country` (the resolver country scope). Without a country
  *   hint the WOF resolver resolves globally; the demo passes `country: "US"`, and this gives the
@@ -47,7 +47,7 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
-const cliBin = workspacePath("mailwoman", "out", "cli.js")
+const cliBin = await mailwomanCLIPath()
 const GLOBAL_WOF = $public.MAILWOMAN_WOF_GLOBAL_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
 describe("localeToCountry", () => {

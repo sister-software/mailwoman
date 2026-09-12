@@ -14,6 +14,19 @@
 ## .vale-chat.ini loads through the shared Mailwoman style, so chat coverage
 ## of `shard` is unchanged by its move out of this file.
 ##
+## `slice` and `dose` are the training-side pair, and they read as one thing to
+## someone who works in addresses rather than in mixtures:
+##
+##   slice -> the named artifact: the parquet by its filename, the corpus
+##            source by its `source` string, the recipe by its name, or plainly
+##            "the training rows for Czechia".
+##   dose  -> the measured quantity with its unit: reps per row, rows per pass,
+##            the `source_doses` value, the weight.
+##
+## They belong in Mailwoman/AmbiguousShorthand.yml beside the other five, and
+## the move costs 346 rewrites across AGENTS.md, two skills and ten engineering
+## pages. Chat first; the published-prose migration is its own change.
+##
 ## A backticked artifact name (`synth-suffix-boundary`,
 ## `packages/corpus/lib/shard-recipes/`) survives, because inline code is
 ## exempt — mention the artifact by its real name instead of the shorthand.
@@ -25,3 +38,5 @@ tokens:
   - the null
   - the cure
   - three-leg
+  - slice(?:s|d)?
+  - dos(?:e|es|ed|ing)

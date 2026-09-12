@@ -3,5 +3,4 @@
 
 export * from "#types/Classification"
 export * from "#types/classifier"
-export * from "#types/component"
 export * from "#types/mapping"

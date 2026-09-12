@@ -19,7 +19,7 @@
 # per-locale-f1 not worse >1pp; FR centroid flat). If mid-tier resolve is flat at 2-4k, KILL (the
 # change or the weight is wrong) before the full 40k. NOT promoted without operator GO (model swap).
 # CORPUS: corpus-v0.8.0 (base, incl. fr-admin-split) + overture-multilocale overlay -> R2 -> sync.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.0-multilocale.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.0-multilocale.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

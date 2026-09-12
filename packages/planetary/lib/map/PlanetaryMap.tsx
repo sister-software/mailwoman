@@ -9,12 +9,13 @@
 
 import {
 	createPlanetaryStyle,
+	PlanetaryHillshadeSourceID,
 	PlanetaryLabelsLayerID,
 	PlanetarySelectionLayerID,
 } from "@mailwoman/cartographer/planetary"
 import { MapCanvas } from "@mailwoman/react/map/MapCanvas"
 import { ResultCamera } from "@mailwoman/react/map/ResultCamera"
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { MapLayerMouseEvent, MapRef } from "react-map-gl/maplibre"
 
 import type { PlanetaryMapConfig } from "#bodies/config"
@@ -27,10 +28,24 @@ export interface PlanetaryMapProps {
 	config: PlanetaryMapConfig
 	selected: SelectedFeature | null
 	onSelect: (feature: SelectedFeature) => void
+	/**
+	 * The live map, once react-map-gl has instantiated it, and `null` again on unmount. The chrome sits outside this
+	 * component and cannot reach the handle through `useMap()`; the compass reads its bearing from here.
+	 */
+	onMapReady?: (map: ReturnType<MapRef["getMap"]> | null) => void
 }
 
-export function PlanetaryMap({ config, selected, onSelect }: PlanetaryMapProps) {
+export function PlanetaryMap({ config, selected, onSelect, onMapReady }: PlanetaryMapProps) {
 	const mapRef = useRef<MapRef>(null)
+
+	// The map announces itself through `onLoad`; nothing polls for it. The chrome sits outside this component, so a
+	// ref assignment would not re-render it — the handle goes up to the parent as state instead.
+	const publishMap = useCallback(
+		(event: { target: ReturnType<MapRef["getMap"]> }) => onMapReady?.(event.target),
+		[onMapReady]
+	)
+
+	useEffect(() => () => onMapReady?.(null), [onMapReady])
 
 	const style = useMemo(
 		() =>
@@ -44,6 +59,33 @@ export function PlanetaryMap({ config, selected, onSelect }: PlanetaryMapProps) 
 
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
+
+	// The deepest zoom the body's terrain archive carries, read from the live source once it resolves its TileJSON.
+	// The two bodies do not publish the same depth, so a framing clamp that used a constant would over-zoom one of
+	// them the first time either was rebuilt.
+	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
+
+	useEffect(() => {
+		const map = mapRef.current?.getMap()
+
+		if (!map) return
+
+		const read = () => {
+			const source = map.getSource(PlanetaryHillshadeSourceID)
+			const maxzoom = (source as { maxzoom?: number } | undefined)?.maxzoom
+
+			if (typeof maxzoom === "number") {
+				setMaxTerrainZoom(maxzoom)
+			}
+		}
+
+		read()
+		map.on("sourcedata", read)
+
+		return () => {
+			map.off("sourcedata", read)
+		}
+	}, [])
 
 	useEffect(() => {
 		const map = mapRef.current?.getMap()
@@ -88,14 +130,19 @@ export function PlanetaryMap({ config, selected, onSelect }: PlanetaryMapProps) 
 			projection="globe"
 			mapRef={mapRef}
 			style={{ width: "100%", height: "100%" }}
-			mapProps={{ interactiveLayerIds: [PlanetaryLabelsLayerID], onClick, attributionControl: false }}
+			mapProps={{
+				interactiveLayerIds: [PlanetaryLabelsLayerID],
+				onClick,
+				onLoad: publishMap,
+				attributionControl: false,
+			}}
 		>
 			{selected ? (
 				<ResultCamera
 					target={{
 						kind: "center",
 						center: [selected.centerLon, selected.centerLat],
-						zoom: framingZoom(selected.diameterKm),
+						zoom: framingZoom(selected.diameterKm, maxTerrainZoom),
 					}}
 					animate={!prefersReducedMotion()}
 				/>

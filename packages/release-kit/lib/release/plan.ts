@@ -26,7 +26,7 @@ import {
 	hfVersionBase,
 	planWeightsMaterialization,
 	readBaseModelVersion,
-} from "#weights/fetch-hf-weights"
+} from "#weights/fetch-hf-weights/index"
 
 export interface ReleasePlanPackage {
 	workspace: string

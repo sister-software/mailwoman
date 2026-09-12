@@ -10,8 +10,6 @@
 
 import type React from "react"
 
-import demoStyles from "./panels.module.css"
-
 export interface GeoBiasRowProps {
 	/**
 	 * Whether a device location is currently applied as a bias.
@@ -24,36 +22,24 @@ export interface GeoBiasRowProps {
 }
 
 /**
- * The "Bias: 📍 Use my location" row + the "map view already biases" helper text. Mirrors `_app.tsx`.
+ * The device-location bias, as one chip in the map chrome.
+ *
+ * The explanation rides the button's title rather than the map surface: prose laid over a map reads as a caption on the
+ * world beneath it, and the chip's pressed state already says whether the hint is on.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, onToggle }) => (
-	<div className={demoStyles.examples}>
-		<span className={demoStyles.examplesLabel}>Bias:</span>
+	<div className="mw-map-chiprow">
 		<button
 			type="button"
-			className={demoStyles.exampleBtn}
+			className="mw-map-chip"
 			aria-pressed={active}
-			style={active ? { outline: "2px solid var(--ifm-color-primary)", outlineOffset: "1px" } : undefined}
-			title="Add your device location as a soft proximity hint (in addition to the map view). Never a hard filter — a strong population signal still wins."
+			title="Add your device location as a soft proximity hint, in addition to the map view. Never a filter — a strong population signal still wins."
 			onClick={onToggle}
 		>
-			{active ? "📍 Using your location" : "📍 Use my location"}
+			{active ? "Using your location" : "Use my location"}
 		</button>
-		<span className={demoStyles.examplesLabel} style={{ opacity: 0.7 }}>
-			the map view already biases nearby namesakes
-		</span>
 	</div>
 )
-
-const TOGGLE_STYLE: React.CSSProperties = {
-	display: "inline-flex",
-	alignItems: "center",
-	gap: 6,
-	fontSize: 13,
-	margin: "8px 0",
-	cursor: "pointer",
-	color: "var(--ifm-color-emphasis-800)",
-}
 
 export interface CalibrationToggleProps {
 	checked: boolean
@@ -61,19 +47,21 @@ export interface CalibrationToggleProps {
 }
 
 /**
- * The opt-in "Calibrated confidence" display toggle. Mirrors `_app.tsx`.
+ * The opt-in "Calibrated confidence" display toggle, as a sheet row.
  */
 export const CalibrationToggle: React.FC<CalibrationToggleProps> = ({ checked, onChange }) => (
-	<label
-		style={TOGGLE_STYLE}
-		title="Map each span's raw softmax confidence to its calibrated probability of being correct (isotonic, held-out ECE 0.0055). The model is under-confident, so most spans shift upward."
-	>
-		<input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-		Calibrated confidence
-		<span style={{ color: "var(--ifm-color-emphasis-600)" }}>
-			{checked ? "— honest probability of correct" : "— raw softmax scores"}
-		</span>
-	</label>
+	<div className="mw-map-sheet__row">
+		<label className="mw-map-sheet__check">
+			<input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+			Calibrated confidence
+		</label>
+
+		<p className="mw-map-sheet__hint">
+			{checked
+				? "Each span's isotonic probability of being correct — held-out ECE 0.0055."
+				: "Raw softmax scores. The model is under-confident, so most spans shift upward once calibrated."}
+		</p>
+	</div>
 )
 
 export interface DevModeToggleProps {
@@ -82,14 +70,18 @@ export interface DevModeToggleProps {
 }
 
 /**
- * The "🐛 Dev mode" toggle that opens the decode-path model-visualizer drawer. Mirrors `_app.tsx`.
+ * The dev-mode toggle that opens the decode-path model-visualizer drawer, as a sheet row.
  */
 export const DevModeToggle: React.FC<DevModeToggleProps> = ({ checked, onChange }) => (
-	<label
-		style={TOGGLE_STYLE}
-		title="Open the model-visualizer drawer: trace this address through the decode path — tokens, retrieval channels, emissions, priors, repairs — beside the map."
-	>
-		<input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />🐛 Dev mode
-		<span style={{ color: "var(--ifm-color-emphasis-600)" }}>— trace the decode path</span>
-	</label>
+	<div className="mw-map-sheet__row">
+		<label className="mw-map-sheet__check">
+			<input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+			Trace the decode path
+		</label>
+
+		<p className="mw-map-sheet__hint">
+			Opens the model visualizer beside the map: tokens, retrieval channels, emissions, priors and repairs for the
+			address in the field.
+		</p>
+	</div>
 )

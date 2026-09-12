@@ -190,19 +190,18 @@ mailwoman poi "gas station near Springfield, IL" --db poi.db
 
 `mailwoman` is the entry point to 33 published packages. The rest of the toolkit:
 
-| Package                                             | What it does                                                                                      |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [`@mailwoman/formatter`](./formatter)               | The inverse of the parser — render components back to a locale-aware string + canonical match key |
-| [`@mailwoman/match`](./match)                       | Geocode-first record matcher: block → score → cluster (Fellegi-Sunter)                            |
-| [`@mailwoman/registry`](./registry)                 | Resolve messy address records to geocoded entities, export GeoJSON                                |
-| [`@mailwoman/address-id`](./address-id)             | Stable address primary key (`<state>.<H3-cell>.<hash>`) for joins + dedup                         |
-| [`@mailwoman/annotations`](./annotations)           | The OpenCage-style annotation composer behind the drop-in servers                                 |
-| [`@mailwoman/timezone-lookup`](./timezone-lookup)   | Coordinate → IANA timezone (point-in-polygon, `node:sqlite`)                                      |
-| [`@mailwoman/un-locode-lookup`](./un-locode-lookup) | Place → UN/LOCODE trade-location codes                                                            |
-| [`@mailwoman/nuts-lookup`](./nuts-lookup)           | EU coordinate → NUTS statistical regions                                                          |
-| [`@mailwoman/codex`](./codex)                       | Per-address-system postal reference data + branded types                                          |
-| [`@mailwoman/mcp`](./mcp)                           | MCP server exposing parse/geocode/POI-search/OverpassQL-export to agents over stdio               |
-| [`@mailwoman/poi-taxonomy`](./poi-taxonomy)         | Category lexicon behind POI-query detection — Overture taxonomy snapshot + synonym table          |
+| Package                                             | What it does                                                                                |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [`@mailwoman/match`](./match)                       | Geocode-first record matcher: block → score → cluster (Fellegi-Sunter)                      |
+| [`@mailwoman/registry`](./registry)                 | Resolve messy address records to geocoded entities, export GeoJSON                          |
+| [`@mailwoman/address-id`](./address-id)             | Stable address primary key (`<state>.<H3-cell>.<hash>`) for joins + dedup                   |
+| [`@mailwoman/annotations`](./annotations)           | The OpenCage-style annotation composer behind the drop-in servers                           |
+| [`@mailwoman/timezone-lookup`](./timezone-lookup)   | Coordinate → IANA timezone (point-in-polygon, `node:sqlite`)                                |
+| [`@mailwoman/un-locode-lookup`](./un-locode-lookup) | Place → UN/LOCODE trade-location codes                                                      |
+| [`@mailwoman/nuts-lookup`](./nuts-lookup)           | EU coordinate → NUTS statistical regions                                                    |
+| [`@mailwoman/codex`](./codex)                       | Postal address FORMATTER (components → a per-country string) + the reference data behind it |
+| [`@mailwoman/mcp`](./mcp)                           | MCP server exposing parse/geocode/POI-search/OverpassQL-export to agents over stdio         |
+| [`@mailwoman/poi-taxonomy`](./poi-taxonomy)         | Category lexicon behind POI-query detection — Overture taxonomy snapshot + synonym table    |
 
 ## License
 

@@ -31,7 +31,7 @@
 #     within ±0.7pp of v385 (87.6/91.1); presets byte-identical.
 #   VERDICT: 2k reached, invariance graded → B live | B insufficient. One run; no knob iteration.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.14.0-deploc-head.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.14.0-deploc-head.yaml --resume none
 #   (--resume none REQUIRED: init_from + the fresh head live in the else branch; --resume auto no-ops it.)
 #
 data:

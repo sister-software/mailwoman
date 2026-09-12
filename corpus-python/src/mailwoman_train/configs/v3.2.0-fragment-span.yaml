@@ -49,7 +49,7 @@
 # fp32 partition math is enforced inside span_scorer.py regardless of autocast (the v0.5.0 bf16 CRF
 # NaN scar applies to this exact arithmetic). Measured cost: +29% step time.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.2.0-fragment-span.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.2.0-fragment-span.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

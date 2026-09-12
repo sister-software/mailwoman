@@ -79,7 +79,7 @@ const out = createWriteStream("customers.geocoded.jsonl")
 const counts = { matched: 0, mismatched: 0, skipped: 0 }
 
 // enableQuoteHandling is opt-in: without it a quoted "Rowan, Fitch & Co." splits into two columns.
-for await (const row of CSVSpliterator.fromAsync("customers.csv", { mode: "object", enableQuoteHandling: true })) {
+for await (const row of CSVSpliterator.fromAsync("customers.csv")) {
 	if (!row.street || !row.city) {
 		console.warn(`skip      ${row.customer_id ?? "(no id)"} — street or city column is empty`)
 		counts.skipped++

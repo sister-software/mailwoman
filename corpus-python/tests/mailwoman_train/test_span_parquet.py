@@ -31,8 +31,10 @@ from pathlib import Path
 import pyarrow.parquet as pq
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-CONVERTER = REPO_ROOT / "corpus" / "src" / "tools" / "jsonl-to-parquet.ts"
+from tests import paths
+
+REPO_ROOT = paths.REPO_ROOT
+CONVERTER = REPO_ROOT / "packages" / "corpus" / "lib" / "tools" / "jsonl-to-parquet.ts"
 NODE = shutil.which("node")
 
 pytestmark = pytest.mark.skipif(

@@ -232,7 +232,7 @@
 		},
 		{
 			"term": "canonical key",
-			"definition": "A deterministic, normalized string representation of an address produced by @mailwoman/formatter. Lowercase, abbreviation-expanded, punctuation-stripped — so '123 Main St' and '123 MAIN STREET' produce the same key. Used for blocking in the matcher.",
+			"definition": "A deterministic, normalized string representation of an address produced by @mailwoman/codex. Lowercase, abbreviation-expanded, punctuation-stripped — so '123 Main St' and '123 MAIN STREET' produce the same key. Used for blocking in the matcher.",
 			"tags": ["record-matching"],
 			"aliases": ["match key"],
 			"relatedTerms": ["formatter", "blocking", "address ID"]

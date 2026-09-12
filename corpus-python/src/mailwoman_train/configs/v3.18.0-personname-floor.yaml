@@ -22,7 +22,7 @@
 #   CONFIRMED BUILDABLE → the Track-2 productionization brief. Any miss ⇒ STOP for real — five runs
 #   is the axis's budget; the residual goes to the brief as the open problem.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.18.0-personname-floor.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.18.0-personname-floor.yaml --resume none
 #
 data:
   corpus_dir: /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc # FEED — v0.14.0-gb + synth-nz-v2 + synth-es-pedania (+synth-fr-lieudit if landed).

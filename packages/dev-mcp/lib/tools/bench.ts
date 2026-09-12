@@ -10,7 +10,7 @@
 import { z } from "zod"
 
 import { assembleBench, summarizeLatency } from "#bench"
-import type { EngineConfig } from "#engine-registry"
+import type { EngineConfig } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, provenanceFor } from "#tool-kit"

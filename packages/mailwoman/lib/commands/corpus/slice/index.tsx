@@ -18,6 +18,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	countOption,
 	type ParsedCommandComponent,
 	stringOption,
 	useCommandTask,
@@ -137,7 +138,7 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 		const opts: SliceRecipeOpts = {
 			output: options.output,
 			seed,
-			variants: Number(options.variants) || 1,
+			variants: countOption(options.variants, 1),
 			input: options.input,
 			count: num(options.count),
 			golden: options.golden,

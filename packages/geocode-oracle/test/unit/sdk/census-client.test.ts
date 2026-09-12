@@ -14,7 +14,6 @@ import { isTransientResourceError } from "@mailwoman/core/api"
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import { ResourceError, type ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
 import { createCensusGeocoderClient, isCacheableCensusBody } from "@mailwoman/geocode-oracle/sdk/census-client"
@@ -25,6 +24,7 @@ import {
 	parseCensusAddressMatch,
 } from "@mailwoman/geocode-oracle/sdk/census-parser"
 import type { CensusAddressComponents, CensusAddressMatch } from "@mailwoman/geocode-oracle/sdk/census-types"
+import { Globerator } from "spliterator/node/fs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 function addressComponents(overrides: Partial<CensusAddressComponents> = {}): CensusAddressComponents {
@@ -268,7 +268,7 @@ describe("createCensusGeocoderClient", () => {
 
 		await client.lookupAddress("anywhere").catch(() => undefined)
 
-		expect((await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))).toHaveLength(0)
+		expect(await Globerator.files("json", { cwd: cacheDir }).toArray()).toHaveLength(0)
 	})
 
 	it("retries a 500 on the injected clock", async () => {

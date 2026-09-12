@@ -5,6 +5,6 @@
  *   TIGER operator tool exports.
  */
 
-export * from "#tools/race-dots"
-export * from "#tools/race-dots-map"
+export * from "#tools/race/dots/index"
+export * from "#tools/race/dots/map"
 export * from "#tools/serve-range"

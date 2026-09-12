@@ -22,7 +22,8 @@
  *   recognizing the region; this closes the gap for the bare-`City, State` class today.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 
 /**
@@ -122,7 +123,7 @@ function makeRegionNode(value: string, start: number, end: number, confidence: n
  * producing `region → locality` nesting. Returns the rewritten sibling list.
  */
 function correctSiblings(siblings: AddressNode[]): AddressNode[] {
-	// --- Pass 1: split a merged "City, ST" locality into region(ST) → locality(City). ---
+	// First split a merged "City, ST" locality into region(ST) then locality(City).
 	const afterSplit: AddressNode[] = []
 
 	for (const node of siblings) {
@@ -130,7 +131,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		afterSplit.push(split ?? node)
 	}
 
-	// --- Pass 2: a locality whose WHOLE value is a state becomes a region; sibling city localities
+	// Second, turn a locality whose whole value is a state into a region; sibling city localities
 	// nest under it. Only fires when there's exactly one state-name locality in the container (the
 	// unambiguous "City, State" shape) — avoids reparenting in a multi-locality list we don't model. ---
 	const stateIdxs = afterSplit

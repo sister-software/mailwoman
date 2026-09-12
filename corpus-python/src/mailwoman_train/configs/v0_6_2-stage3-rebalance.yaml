@@ -47,7 +47,7 @@
 # Cost: ~5h on A100 at v0.6.0 throughput.
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py --config v0_6_2-stage3-rebalance.yaml
+#   cd corpus-python && modal run -d -m launch.train_remote --config v0_6_2-stage3-rebalance.yaml
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

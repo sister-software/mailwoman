@@ -83,7 +83,7 @@ interface Options {
 	limit?: string
 	out?: string
 	probeOnly: boolean
-	corpusJsonl: boolean
+	corpusJSONL: boolean
 }
 
 function renderMarkdown(release: string, probes: CountryProbe[]): string {
@@ -280,7 +280,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 				await ingestCountry(cc)
 			}
 
-			if (options.corpusJsonl) {
+			if (options.corpusJSONL) {
 				await emitCorpusJSONL(cc)
 			}
 

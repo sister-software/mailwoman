@@ -62,6 +62,8 @@ export const spec = {
 		"errors-json": { type: "string", description: "Failure JSON" },
 		"out-resolved": { type: "string", description: "Resolved locality dump" },
 		"out-rows": { type: "string", description: "Outcome rows" },
+		"lookup-memo": booleanOption("Answer a repeated gazetteer query from a per-run memo"),
+		"profile-json": { type: "string", description: "Wall-time attribution JSON (profiling only)" },
 	},
 } as const satisfies CommandSpec
 
@@ -103,13 +105,15 @@ interface Options {
 	errorsJSON?: string
 	outResolved?: string
 	outRows?: string
+	lookupMemo: boolean
+	profileJSON?: string
 }
 
 const EvalOAResolver: ParsedCommandComponent<Options> = ({ options }) => {
 	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
 
 	const state = useCommandTask(async () => {
-		const { oaResolverEval } = await import("#eval-harness/oa-resolver-eval")
+		const { oaResolverEval } = await import("#eval-harness/oa/resolver/eval")
 
 		return await oaResolverEval({
 			...rest,

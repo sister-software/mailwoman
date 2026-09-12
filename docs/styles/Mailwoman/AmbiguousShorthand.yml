@@ -16,6 +16,12 @@
 ##   lever -> the named change: the config key, the corpus recipe file, the
 ##            weight, the run version; a gauntlet default-override is a pin.
 ##
+## `slice` and `dose` are refused in CHAT ONLY, from
+## MailwomanChat/ProjectShorthand.yml. They belong here by the same reasoning
+## as the five above, and moving them costs 346 rewrites across AGENTS.md, two
+## skills and ten engineering pages — a change of its own, not a side effect of
+## adding a token.
+##
 ## `shard(s)?` moved here from MailwomanChat/ProjectShorthand.yml so one list
 ## covers both surfaces; chat coverage is unchanged, because .vale-chat.ini
 ## loads the Mailwoman style too.

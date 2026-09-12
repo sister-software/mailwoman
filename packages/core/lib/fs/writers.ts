@@ -59,8 +59,8 @@ export type BufferLike =
 /**
  * Write a local text file, creating its parent directory first.
  *
- * @category Node
  * @category Files
+ * @runtime node
  */
 export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 	content: string | Promise<string>,
@@ -82,8 +82,8 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 /**
  * Write a local JSON file, tab-indented, creating its parent directory first.
  *
- * @category Node
  * @category Files
+ * @runtime node
  */
 export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBuilderLike[] = PathBuilderLike[]>(
 	content: T,
@@ -97,8 +97,8 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 /**
  * Write a local file's bytes, creating its parent directory first.
  *
- * @category Node
  * @category Files
+ * @runtime node
  */
 export async function writeLocalBuffer<S extends PathBuilderLike[]>(
 	content: BufferLike,
@@ -122,8 +122,8 @@ export async function writeLocalBuffer<S extends PathBuilderLike[]>(
  * then says so, and a reader does not have to follow the value back to its producer. This overload exists for the sites
  * where it genuinely does not: a payload that is a string on one branch and bytes on another.
  *
- * @category Node
  * @category Files
+ * @runtime node
  */
 /**
  * Write a UTF-8 text file readable and writable by its owner alone (`0600`), creating the parent directory. The mode is
@@ -169,8 +169,8 @@ export async function writeLocalFile<S extends PathBuilderLike[]>(
 /**
  * Append text to a local file, creating it and its parent directory when neither exists.
  *
- * @category Node
  * @category Files
+ * @runtime node
  */
 export async function appendLocalTextFile<S extends PathBuilderLike[]>(
 	content: string,

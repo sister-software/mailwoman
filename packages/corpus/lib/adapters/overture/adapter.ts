@@ -29,8 +29,8 @@
  *   `postcode` | | `locality`| `locality` (Overture address_levels municipality, or postal_city) |
  */
 
+import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
@@ -56,6 +56,23 @@ interface OvertureCorpusRow {
 	unit?: string
 	postcode?: string
 	locality?: string
+}
+
+/**
+ * Whether an Overture `unit` value is a secondary-unit designator — something with a digit in it, or one bare word
+ * (`EG`, `Penthouse`) — rather than a name. Overture-SG writes the ESTATE or BUILDING name in this field (91,818 of
+ * 142,210 rows carry a multi-word name such as `SERANGOON GARDEN ESTATE`) and the literal `NIL` on 47,407 more, where
+ * every other country's rows carry a digit-bearing unit or nothing (DE 3,084 digit-bearing of 40,837 non-empty; NL and
+ * ES none name-shaped). A name taught as `unit` teaches that a trailing proper name is one, which is the shape of the
+ * `#NNN`-unit defect the corpus exists to cure. Such a value is dropped here; a register recipe that wants the building
+ * name as a `venue` reads the JSONL itself.
+ */
+export function unitFieldIsDesignator(value: string): boolean {
+	const trimmed = value.trim()
+
+	if (!trimmed || trimmed.toUpperCase() === "NIL") return false
+
+	return /\d/u.test(trimmed) || !/\s/u.test(trimmed)
 }
 
 function parseLine(line: string): OvertureCorpusRow | null {
@@ -119,7 +136,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 
 				components.street = street
 
-				if (unit) {
+				if (unitFieldIsDesignator(unit)) {
 					components.unit = unit
 				}
 
@@ -131,13 +148,11 @@ export function createOvertureAdapter(): CorpusAdapter {
 					components.locality = locality
 				}
 
-				const raw = formatAddress(components, country, { separator: ", " })
+				const rendered = formatAddressRow(components, country, { singleLine: true })
 
-				if (!raw) continue
+				if (!rendered) continue
 
-				const aligned = reconcileComponents(components, raw)
-
-				if (!Object.keys(aligned).length) continue
+				const { raw, components: aligned } = rendered
 
 				yield {
 					raw,

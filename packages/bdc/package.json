@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/bdc",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "FCC Broadband Data Collection (BDC) availability data — fetch/parse/ingest provider and bdc.db layer reader",
 	"keywords": [
 		"bdc",
@@ -88,9 +88,9 @@
 			"default": "./out/sdk/parsing.js"
 		},
 		"./sdk/filing-dates": {
-			"types": "./out/sdk/filing-dates.d.ts",
-			"node": "./lib/sdk/filing-dates.ts",
-			"default": "./out/sdk/filing-dates.js"
+			"types": "./out/sdk/filing/dates.d.ts",
+			"node": "./lib/sdk/filing/dates.ts",
+			"default": "./out/sdk/filing/dates.js"
 		},
 		"./sdk/client": {
 			"types": "./out/sdk/client.d.ts",
@@ -108,9 +108,9 @@
 			"default": "./out/sdk/list-files.js"
 		},
 		"./sdk/filing-landscape": {
-			"types": "./out/sdk/filing-landscape.d.ts",
-			"node": "./lib/sdk/filing-landscape.ts",
-			"default": "./out/sdk/filing-landscape.js"
+			"types": "./out/sdk/filing/landscape.d.ts",
+			"node": "./lib/sdk/filing/landscape.ts",
+			"default": "./out/sdk/filing/landscape.js"
 		},
 		"./sdk/nearest-infrastructure": {
 			"types": "./out/sdk/nearest-infrastructure.d.ts",
@@ -144,7 +144,7 @@
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",
-		"spliterator": "^6.4.1",
+		"spliterator": "^7.5.1",
 		"type-fest": "^5.9.0",
 		"zod": "^4.5.4"
 	},

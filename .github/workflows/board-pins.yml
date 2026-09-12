@@ -66,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: | # shell
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            node packages/mailwoman/out/cli.js eval pins --check
+            node packages/mailwoman/out/cli/index.js eval pins --check
           else
-            node packages/mailwoman/out/cli.js eval pins --report-issue
+            node packages/mailwoman/out/cli/index.js eval pins --report-issue
           fi

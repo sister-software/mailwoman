@@ -4,7 +4,7 @@
 # Resume the v1.1.0 step-040000 (copied to a fresh dir), +4k. PRE-REGISTERED READ: the perturb
 # arena's glue rows (the ~25-30 "NY14201" class) recover at +4k AND affix floors hold (32-row
 # 78/67, v2 85/85) AND US postcode >= 97. Fail -> the change doesn't ride v4.4.0.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.2.0-probe-glue.yaml --resume auto
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.2.0-probe-glue.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

@@ -5,7 +5,7 @@
 # starvation). Resume v1.1.0 step-040000, +4k. PRE-REGISTERED READ: intersection_a/b alive on
 # intersection-real (P >= 90 — zero venue false fires is the bar that matters) AND spine flat
 # (street/locality/postcode within 1pp). Fail -> hard-negative sub-slice before any re-probe.
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.2.1-probe-intersection.yaml --resume auto
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.2.1-probe-intersection.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.4.13-intersection
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

@@ -70,6 +70,10 @@ It is worth saying and worth calling out that the source field settles it.
 That was the right call and tells the whole postcode-anchor story. The next
 failure has the same story.
 
+The reader is worth a second look and the rebuild is worth the wall clock.
+The module does not move alone, and that is the first thing to report, and
+that's the shape of every port after it.
+
 Perfect. Got it! Understood, the fix landed. Excellent, all tests pass.
 
 The null and the cure differ on one lever; the three-leg comparison decides.
@@ -132,3 +136,13 @@ printed the append command. (AmbiguousShorthand: a backticked script name and a
 backticked CLI command are contracts, not prose, so neither may match.)
 
 This paragraph names the thing you already read, which is filler in a reply.
+
+We launched a full training run at seed 42, and the overlay is v0.29.0 plus one
+file. An overlay run would have reused the checkpoint instead. (OverlaySense:
+three tokens — the duration-sounding name for the from-scratch case, a bare
+mention in a verb frame, and the corpus artifact welded to the run.)
+
+The corpus overlay is v0.29.0 plus one parquet, the en-GB weights overlay was
+absent from the candidate cache, and the overlay manifest declares 720 entries
+against an overlay base of v0.29.0. (OverlaySense: each mention carries its
+sense, or a following noun supplies it, so none of these four may match.)

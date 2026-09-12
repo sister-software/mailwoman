@@ -1,0 +1,2955 @@
+{
+	"README": [
+		"Pins one seeded JP probe build across a refactor.",
+		"Regenerate: uv run python -m tests.mailwoman_train.countries.test_jp_probe_parity",
+		"Fixture: write_fixture() in the test beside this file — all 47 prefectures, each with three",
+		"  pool municipalities and one board municipality found by bucket, plus a cp932 KEN_ALL.",
+		"",
+		"train / val: every rendered row as raw + span tags, in emission order. The order is the",
+		"  round-robin draw and the shuffle that follows it, both drawn from the one seeded RNG.",
+		"board: the held-out rows, each with its municipality and coordinate.",
+		"report: the build report, which carries the KEN_ALL join counts and the vocabulary size.",
+		"vocab: the sealed char vocabulary, which is built from the train split alone."
+	],
+	"train": [
+		{
+			"raw": "鹿児島県鹿0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "宮崎県宮1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒036-0002 福島県福2市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "静岡県静0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岩手県岩1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "佐賀県佐2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福岡県福1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "群馬県群2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒025-0001 愛知県愛1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "広島県広1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒009-0001 大分県大1市2丁目3-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "山梨県山1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福岡県福0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒028-0000 栃木県栃0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "和歌山県和2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "鳥取県鳥1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮城県宮0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "神奈川県神0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "青森県青2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒026-0001 新潟県新1市2丁目4-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "鹿児島県鹿1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "滋賀県滋2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒029-0002 沖縄県沖3市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "神奈川県神2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒008-0001 埼玉県埼1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "茨城県茨1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "神奈川県神0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒033-0001 神奈川県神1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 14, 17, 20]
+		},
+		{
+			"raw": "新潟県新2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福島県福2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮城県宮1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "高知県高0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "沖縄県沖1市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "香川県香1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福岡県福1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒020-0002 岩手県岩2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "佐賀県佐1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒019-0002 岡山県岡2市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒021-0000 島根県島0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒007-0000 和歌山県和0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 14, 17, 20]
+		},
+		{
+			"raw": "長崎県長0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮崎県宮2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "千葉県千1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒014-0001 富山県富1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒014-0002 富山県富3市3丁目4-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "宮城県宮1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒002-0001 京都府京1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "新潟県新0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒026-0000 新潟県新0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "長野県長1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒034-0001 福井県福1市2丁目2-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "東京都東0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "三重県三2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岡山県岡2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒012-0002 宮城県宮2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "島根県島2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "沖縄県沖3市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山梨県山1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒002-0001 京都府京1市2丁目4-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒011-0002 奈良県奈3市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "石川県石2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "長崎県長2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "島根県島1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒010-0001 大阪府大1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "宮崎県宮1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大阪府大0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛媛県愛2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒009-0000 大分県大0市1丁目3-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "北海道北1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒017-0001 山梨県山1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "長崎県長2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福岡県福0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "長野県長2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮城県宮2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福岡県福2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒025-0002 愛知県愛2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "秋田県秋2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒043-0001 静岡県静1市2丁目4-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒042-0001 青森県青1市2丁目2-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "千葉県千1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "新潟県新2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒028-0000 栃木県栃0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "山梨県山2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福島県福1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岡山県岡0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "栃木県栃1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大阪府大1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "富山県富0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "香川県香1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "千葉県千2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岐阜県岐1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "富山県富1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岩手県岩0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山形県山0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "兵庫県兵2市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岩手県岩0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒029-0001 沖縄県沖2市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒011-0000 奈良県奈1市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒020-0000 岩手県岩0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "徳島県徳2市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒027-0001 東京都東1市2丁目3-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒035-0000 福岡県福0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "徳島県徳3市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "和歌山県和0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "福岡県福0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "和歌山県和1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "山形県山2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "東京都東1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山形県山0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "栃木県栃0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "高知県高3市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岐阜県岐2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "奈良県奈3市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "京都府京0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒019-0002 岡山県岡2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "島根県島1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒024-0001 愛媛県愛1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "愛知県愛1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒003-0000 佐賀県佐0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "埼玉県埼2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛媛県愛0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛媛県愛0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "埼玉県埼2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大分県大1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒006-0002 千葉県千2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒032-0001 石川県石1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "岩手県岩0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "栃木県栃0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒018-0002 岐阜県岐2市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒040-0000 長崎県長0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "青森県青1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "青森県青1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒030-0000 滋賀県滋0市1丁目3-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "奈良県奈1市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "滋賀県滋2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "佐賀県佐0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒044-0000 香川県香0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "兵庫県兵3市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮崎県宮1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "神奈川県神1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "長野県長0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒019-0002 岡山県岡2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "三重県三1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鹿児島県鹿1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "大阪府大2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒041-0001 長野県長1市2丁目4-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "高知県高2市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛知県愛0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "青森県青2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "神奈川県神1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒038-0001 群馬県群1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "徳島県徳2市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒013-0002 宮崎県宮2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "島根県島0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮崎県宮0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒037-0001 秋田県秋1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒002-0002 京都府京2市3丁目4-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒015-0001 山口県山1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "静岡県静2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒032-0000 石川県石0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒036-0000 福島県福0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "三重県三2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "熊本県熊1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "滋賀県滋2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒021-0001 島根県島1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "神奈川県神0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "鹿児島県鹿1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "徳島県徳1市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "和歌山県和1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "大阪府大1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "高知県高2市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒009-0000 大分県大0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "沖縄県沖1市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福岡県福0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大分県大0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒033-0000 神奈川県神0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 14, 17, 20]
+		},
+		{
+			"raw": "宮城県宮1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "群馬県群0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "香川県香0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "新潟県新2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒031-0000 熊本県熊0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒011-0000 奈良県奈1市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "栃木県栃2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "奈良県奈2市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "静岡県静1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "埼玉県埼2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "熊本県熊0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒041-0000 長野県長0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "広島県広1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福井県福2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "和歌山県和0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒047-0001 鹿児島県鹿1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 14, 17, 20]
+		},
+		{
+			"raw": "愛知県愛1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "静岡県静1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "東京都東2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "広島県広0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "東京都東1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "長崎県長1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "千葉県千2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "兵庫県兵3市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "石川県石0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "広島県広1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "栃木県栃2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "沖縄県沖3市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒008-0001 埼玉県埼1市2丁目3-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "山口県山1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "香川県香0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "熊本県熊1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒027-0002 東京都東2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒030-0001 滋賀県滋1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "徳島県徳2市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山形県山1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒001-0000 三重県三0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒003-0000 佐賀県佐0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "福島県福0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "京都府京0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "奈良県奈3市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮崎県宮2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "静岡県静2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "北海道北2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "神奈川県神1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒041-0001 長野県長1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒024-0000 愛媛県愛0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "徳島県徳3市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒010-0001 大阪府大1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "茨城県茨1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒019-0000 岡山県岡0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "石川県石2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "東京都東0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岡山県岡0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒027-0000 東京都東0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒014-0000 富山県富0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒035-0001 福岡県福1市2丁目4-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "岐阜県岐1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "兵庫県兵2市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "北海道北1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "徳島県徳1市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "静岡県静0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山形県山1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岡山県岡0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "栃木県栃1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒024-0002 愛媛県愛2市3丁目4-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒022-0001 広島県広1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "沖縄県沖3市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岐阜県岐2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福井県福1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒040-0002 長崎県長2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒018-0001 岐阜県岐1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "富山県富3市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒045-0000 高知県高0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "新潟県新1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒027-0002 東京都東2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "大分県大2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "和歌山県和2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "徳島県徳3市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒017-0002 山梨県山2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "長野県長1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "北海道北1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山梨県山0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "広島県広0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "京都府京2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒043-0000 静岡県静0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "北海道北1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒042-0000 青森県青0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒041-0002 長野県長2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "福井県福0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鹿児島県鹿2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "青森県青0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛媛県愛0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒013-0000 宮崎県宮0市1丁目3-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "兵庫県兵1市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "熊本県熊1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒005-0000 北海道北0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "熊本県熊1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮城県宮2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "茨城県茨0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "兵庫県兵1市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒031-0002 熊本県熊2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "埼玉県埼1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒022-0000 広島県広0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒026-0000 新潟県新0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "兵庫県兵1市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "富山県富1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福井県福0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒012-0002 宮城県宮2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒015-0000 山口県山0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "福島県福1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "滋賀県滋2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒031-0000 熊本県熊0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "静岡県静2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒014-0001 富山県富1市2丁目2-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "群馬県群2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "茨城県茨1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岐阜県岐0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福井県福1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "広島県広0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大阪府大2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福島県福0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒027-0001 東京都東1市2丁目2-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "山梨県山2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "群馬県群2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "奈良県奈2市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒006-0002 千葉県千2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "北海道北0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮城県宮0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒024-0002 愛媛県愛2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "鳥取県鳥2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "三重県三1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大分県大2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大阪府大0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒028-0002 栃木県栃2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "愛媛県愛1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鹿児島県鹿2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒040-0000 長崎県長0市1丁目3-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "茨城県茨1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "埼玉県埼1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒043-0001 静岡県静1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "高知県高2市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒044-0000 香川県香0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "徳島県徳3市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "奈良県奈3市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒006-0002 千葉県千2市3丁目4-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "北海道北2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "兵庫県兵1市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岡山県岡1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福井県福0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒020-0002 岩手県岩2市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒030-0000 滋賀県滋0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒001-0000 三重県三0市1丁目3-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒017-0002 山梨県山2市3丁目4-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒021-0000 島根県島0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "三重県三2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒040-0000 長崎県長0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "長野県長0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "島根県島0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "北海道北2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "群馬県群0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛知県愛0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福岡県福1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "徳島県徳1市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "千葉県千1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "高知県高0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "長崎県長1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "沖縄県沖2市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鹿児島県鹿2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "滋賀県滋1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福島県福0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "京都府京2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "茨城県茨0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "沖縄県沖2市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒016-0001 山形県山1市2丁目4-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "奈良県奈2市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒042-0002 青森県青2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "茨城県茨0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒026-0001 新潟県新1市2丁目3-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "岩手県岩1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岩手県岩2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒010-0000 大阪府大0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "三重県三2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大分県大1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "青森県青1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山梨県山0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福島県福1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒002-0001 京都府京1市2丁目3-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "大分県大0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "佐賀県佐2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒011-0002 奈良県奈3市3丁目4-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "山形県山0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岩手県岩1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "島根県島1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "長崎県長1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "滋賀県滋1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "香川県香0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "兵庫県兵3市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒030-0000 滋賀県滋0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "千葉県千0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒003-0002 佐賀県佐2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "三重県三1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "熊本県熊2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛媛県愛1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "佐賀県佐1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛知県愛2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "茨城県茨3市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "長野県長0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒047-0000 鹿児島県鹿0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 14, 17, 20]
+		},
+		{
+			"raw": "新潟県新2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "高知県高3市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "石川県石0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "和歌山県和1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒038-0001 群馬県群1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "熊本県熊0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "大阪府大2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "佐賀県佐1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒009-0001 大分県大1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒047-0000 鹿児島県鹿0市1丁目2-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 14, 17, 20]
+		},
+		{
+			"raw": "静岡県静2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "京都府京2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "高知県高3市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "石川県石2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛知県愛2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒044-0002 香川県香2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "兵庫県兵2市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒046-0000 鳥取県鳥0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "福島県福0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "神奈川県神2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "宮崎県宮0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒021-0002 島根県島2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "長野県長2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "群馬県群2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福井県福2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "高知県高3市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒005-0002 北海道北2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "神奈川県神2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "鹿児島県鹿0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "〒044-0002 香川県香2市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "福岡県福2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "石川県石2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "福井県福1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "三重県三0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒002-0000 京都府京0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "香川県香2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒045-0002 高知県高3市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒034-0002 福井県福2市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "埼玉県埼0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山形県山0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "鳥取県鳥0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "栃木県栃1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "宮城県宮0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "和歌山県和2市3丁目1-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "福井県福0市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "佐賀県佐0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛知県愛0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒036-0001 福島県福1市2丁目2-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒002-0000 京都府京0市1丁目4-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "大阪府大0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "石川県石1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "群馬県群0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒022-0002 広島県広2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "愛知県愛2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "埼玉県埼0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "石川県石2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山2市3丁目3-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "新潟県新1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒022-0002 広島県広2市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒013-0002 宮崎県宮2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "富山県富1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岩手県岩1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "栃木県栃1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒006-0000 千葉県千0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "熊本県熊2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		}
+	],
+	"val": [
+		{
+			"raw": "長崎県長1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "佐賀県佐0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "愛知県愛1市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "広島県広2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "茨城県茨1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "埼玉県埼1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒038-0001 群馬県群1市2丁目2-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒016-0000 山形県山0市1丁目3-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "北海道北0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "青森県青1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒018-0002 岐阜県岐2市3丁目4-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "宮崎県宮0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岐阜県岐1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "千葉県千1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "富山県富0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山口県山1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒009-0001 大分県大1市2丁目5-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒019-0001 岡山県岡1市2丁目1-2",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒037-0002 秋田県秋2市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "香川県香1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "徳島県徳2市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "秋田県秋2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒039-0002 茨城県茨3市3丁目5-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "和歌山県和1市2丁目2-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "愛媛県愛0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "東京都東0市1丁目1-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "沖縄県沖1市1丁目2-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "茨城県茨3市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "三重県三2市3丁目4-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山梨県山0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "群馬県群1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒030-0000 滋賀県滋0市1丁目1-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒004-0002 兵庫県兵3市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "岐阜県岐1市2丁目1-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒016-0002 山形県山2市3丁目2-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "和歌山県和0市1丁目3-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 4, 7, 10]
+		},
+		{
+			"raw": "宮城県宮0市1丁目4-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒014-0002 富山県富3市3丁目3-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "〒008-0000 埼玉県埼0市1丁目5-1",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		},
+		{
+			"raw": "岐阜県岐0市1丁目5-1",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "沖縄県沖2市2丁目3-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山形県山2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "島根県島2市3丁目2-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "山梨県山2市3丁目5-3",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "岡山県岡1市2丁目5-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "石川県石1市2丁目4-2",
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"span_starts": [0, 3, 6, 9]
+		},
+		{
+			"raw": "〒042-0002 青森県青2市3丁目1-3",
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"span_starts": [1, 10, 13, 16, 19]
+		}
+	],
+	"board": [
+		{
+			"raw": "〒023-0003 徳島県徳0市4丁目1-4",
+			"span_starts": [1, 10, 13, 16, 19],
+			"span_ends": [9, 13, 16, 19, 22],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "徳島県",
+			"muni": "徳0市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.22,
+			"lat": 35.0
+		},
+		{
+			"raw": "〒041-0003 長野県長108市4丁目1-4",
+			"span_starts": [1, 10, 13, 18, 21],
+			"span_ends": [9, 13, 18, 21, 24],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "長野県",
+			"muni": "長108市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.4,
+			"lat": 35.0
+		},
+		{
+			"raw": "福井県福75市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "福井県",
+			"muni": "福75市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.33,
+			"lat": 35.0
+		},
+		{
+			"raw": "滋賀県滋6市4丁目1-4",
+			"span_starts": [0, 3, 6, 9],
+			"span_ends": [3, 6, 9, 12],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "滋賀県",
+			"muni": "滋6市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.29,
+			"lat": 35.0
+		},
+		{
+			"raw": "栃木県栃75市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "栃木県",
+			"muni": "栃75市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.27,
+			"lat": 35.0
+		},
+		{
+			"raw": "福島県福75市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "福島県",
+			"muni": "福75市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.35,
+			"lat": 35.0
+		},
+		{
+			"raw": "〒007-0003 和歌山県和7市4丁目1-4",
+			"span_starts": [1, 10, 14, 17, 20],
+			"span_ends": [9, 14, 17, 20, 23],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "和歌山県",
+			"muni": "和7市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.06,
+			"lat": 35.0
+		},
+		{
+			"raw": "〒027-0003 東京都東41市4丁目1-4",
+			"span_starts": [1, 10, 13, 17, 20],
+			"span_ends": [9, 13, 17, 20, 23],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "東京都",
+			"muni": "東41市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.26,
+			"lat": 35.0
+		},
+		{
+			"raw": "〒025-0003 愛知県愛48市4丁目1-4",
+			"span_starts": [1, 10, 13, 17, 20],
+			"span_ends": [9, 13, 17, 20, 23],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "愛知県",
+			"muni": "愛48市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.24,
+			"lat": 35.0
+		},
+		{
+			"raw": "大阪府大8市4丁目1-4",
+			"span_starts": [0, 3, 6, 9],
+			"span_ends": [3, 6, 9, 12],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "大阪府",
+			"muni": "大8市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.09,
+			"lat": 35.0
+		},
+		{
+			"raw": "奈良県奈0市4丁目1-4",
+			"span_starts": [0, 3, 6, 9],
+			"span_ends": [3, 6, 9, 12],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "奈良県",
+			"muni": "奈0市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.1,
+			"lat": 35.0
+		},
+		{
+			"raw": "〒012-0003 宮城県宮7市4丁目1-4",
+			"span_starts": [1, 10, 13, 16, 19],
+			"span_ends": [9, 13, 16, 19, 22],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "宮城県",
+			"muni": "宮7市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.11,
+			"lat": 35.0
+		},
+		{
+			"raw": "静岡県静46市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "静岡県",
+			"muni": "静46市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.42,
+			"lat": 35.0
+		},
+		{
+			"raw": "秋田県秋29市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "秋田県",
+			"muni": "秋29市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.36,
+			"lat": 35.0
+		},
+		{
+			"raw": "群馬県群23市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "群馬県",
+			"muni": "群23市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.37,
+			"lat": 35.0
+		},
+		{
+			"raw": "山形県山53市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "山形県",
+			"muni": "山53市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.15,
+			"lat": 35.0
+		},
+		{
+			"raw": "山梨県山53市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "山梨県",
+			"muni": "山53市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.16,
+			"lat": 35.0
+		},
+		{
+			"raw": "岐阜県岐16市4丁目1-4",
+			"span_starts": [0, 3, 7, 10],
+			"span_ends": [3, 7, 10, 13],
+			"span_tags": ["region", "locality", "street", "house_number"],
+			"pref": "岐阜県",
+			"muni": "岐16市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.17,
+			"lat": 35.0
+		},
+		{
+			"raw": "〒019-0003 岡山県岡127市4丁目1-4",
+			"span_starts": [1, 10, 13, 18, 21],
+			"span_ends": [9, 13, 18, 21, 24],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "岡山県",
+			"muni": "岡127市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.18,
+			"lat": 35.0
+		},
+		{
+			"raw": "〒020-0003 岩手県岩26市4丁目1-4",
+			"span_starts": [1, 10, 13, 17, 20],
+			"span_ends": [9, 13, 17, 20, 23],
+			"span_tags": ["postcode", "region", "locality", "street", "house_number"],
+			"pref": "岩手県",
+			"muni": "岩26市",
+			"street": "4丁目",
+			"number": "1-4",
+			"lon": 135.19,
+			"lat": 35.0
+		}
+	],
+	"report": {
+		"seed": 42,
+		"train_rows": 470,
+		"val_rows": 47,
+		"board_rows": 20,
+		"prefectures_train": 47,
+		"prefecture_min_max": [7, 11],
+		"board_municipalities": 18,
+		"kenall_join": {
+			"hit": 141,
+			"miss": 0
+		},
+		"char_vocab_size": 93,
+		"postcode_fraction": 0.3
+	},
+	"vocab": {
+		"<pad>": 0,
+		"<unk>": 1,
+		" ": 2,
+		"-": 3,
+		"0": 4,
+		"1": 5,
+		"2": 6,
+		"3": 7,
+		"4": 8,
+		"5": 9,
+		"6": 10,
+		"7": 11,
+		"8": 12,
+		"9": 13,
+		"〒": 14,
+		"丁": 15,
+		"三": 16,
+		"井": 17,
+		"京": 18,
+		"佐": 19,
+		"児": 20,
+		"兵": 21,
+		"分": 22,
+		"北": 23,
+		"千": 24,
+		"取": 25,
+		"口": 26,
+		"和": 27,
+		"城": 28,
+		"埼": 29,
+		"大": 30,
+		"奈": 31,
+		"媛": 32,
+		"宮": 33,
+		"富": 34,
+		"山": 35,
+		"岐": 36,
+		"岡": 37,
+		"岩": 38,
+		"島": 39,
+		"崎": 40,
+		"川": 41,
+		"市": 42,
+		"広": 43,
+		"府": 44,
+		"庫": 45,
+		"形": 46,
+		"徳": 47,
+		"愛": 48,
+		"手": 49,
+		"新": 50,
+		"木": 51,
+		"本": 52,
+		"東": 53,
+		"栃": 54,
+		"根": 55,
+		"梨": 56,
+		"森": 57,
+		"歌": 58,
+		"沖": 59,
+		"海": 60,
+		"滋": 61,
+		"潟": 62,
+		"熊": 63,
+		"玉": 64,
+		"田": 65,
+		"目": 66,
+		"県": 67,
+		"知": 68,
+		"石": 69,
+		"神": 70,
+		"福": 71,
+		"秋": 72,
+		"縄": 73,
+		"群": 74,
+		"良": 75,
+		"茨": 76,
+		"葉": 77,
+		"賀": 78,
+		"道": 79,
+		"都": 80,
+		"重": 81,
+		"野": 82,
+		"長": 83,
+		"阜": 84,
+		"阪": 85,
+		"青": 86,
+		"静": 87,
+		"香": 88,
+		"馬": 89,
+		"高": 90,
+		"鳥": 91,
+		"鹿": 92
+	}
+}

@@ -287,7 +287,7 @@ export class AncestrieBuilder {
 		const states = canonicalizeTrie(this.root)
 		const forest = labelForest(this.entriesByID)
 
-		// --- String interning: sorted unique tokens ---
+		// Intern the sorted unique edge tokens before writing the string table.
 		const tokenSet = new Set<string>()
 
 		for (const state of states) {
@@ -306,7 +306,7 @@ export class AncestrieBuilder {
 		const encodedStrings = strings.map((s) => UTF8_ENCODER.encode(s))
 		const stringBytes = encodedStrings.reduce((sum, b) => sum + b.length, 0)
 
-		// --- Counts ---
+		// Count every record and byte range before computing section offsets.
 		let edgeCount = 0
 		let entryRefCount = 0
 
@@ -352,7 +352,7 @@ export class AncestrieBuilder {
 
 		writeHeader(view, header)
 
-		// --- String table ---
+		// Write the string offsets followed by the UTF-8 token bytes.
 		let stringOffset = 0
 
 		for (let i = 0; i < encodedStrings.length; i++) {
@@ -363,7 +363,7 @@ export class AncestrieBuilder {
 
 		view.setUint32(sections.stringOffsets + encodedStrings.length * 4, stringOffset, true)
 
-		// --- State, edge, and entry-ref tables ---
+		// Write state records, their edge records, and their entry references in state order.
 		let edgeIdx = 0
 		let entryRefIdx = 0
 
@@ -400,7 +400,7 @@ export class AncestrieBuilder {
 			}
 		}
 
-		// --- Entry table, parent table, payload blob (all in pre-order) ---
+		// Write entries, parent IDs, and payload bytes in forest pre-order.
 		let parentIdx = 0
 		let payloadOffset = 0
 
@@ -442,7 +442,7 @@ export class AncestrieBuilder {
 			}
 		}
 
-		// --- ID index ---
+		// Write the ID index in ascending entry-ID order.
 		const sortedIDs = forest.ordinals.toSorted((a, b) => a - b)
 
 		for (let i = 0; i < sortedIDs.length; i++) {
@@ -451,7 +451,7 @@ export class AncestrieBuilder {
 			view.setUint32(indexPos + 4, forest.ordinalOf.get(sortedIDs[i]!)!, true)
 		}
 
-		// --- Metadata trailer ---
+		// Append optional metadata after all fixed-format sections.
 		if (metadataJSON) {
 			view.setUint32(sections.end, metadataJSON.length, true)
 			bytes.set(metadataJSON, sections.end + 4)

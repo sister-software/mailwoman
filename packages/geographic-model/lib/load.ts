@@ -25,10 +25,11 @@
  *   keys it uses are tables.
  */
 
-import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isPlainObject } from "@mailwoman/core/objects"
 import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
 import { resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import type { GeographicModelDocument } from "#schema"
 import { validateGeographicModelDocument } from "#validate"
@@ -39,7 +40,7 @@ import {
 	readString,
 	type ValidationIssue,
 	ValidationIssueCode,
-} from "#validation-issues"
+} from "#validation/issues"
 /**
  * The manifest every model directory carries: the document's `version`, and nothing else.
  */
@@ -362,7 +363,12 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
  * a link out of it is a record whose home nobody can state.
  */
 async function listSourceFiles(root: string, prefix = ""): Promise<string[]> {
-	const entries = await readDirectoryEntries(resolvePath(root, prefix))
+	const entries = await Globerator.from("*", {
+		cwd: resolvePath(root, prefix),
+		withFileTypes: true,
+		onlyFiles: false,
+	}).toArray()
+
 	const found: string[] = []
 
 	for (const entry of entries.toSorted((left, right) => compareIdentifiers(left.name, right.name))) {

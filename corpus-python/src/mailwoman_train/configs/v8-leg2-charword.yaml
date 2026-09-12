@@ -9,7 +9,7 @@
 # word units; the Latin char vocab (4,114 entries, min_count 2) was sealed from a 1M-row sample —
 # tail chars fall to UNK.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v8-leg2-charword.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-leg2-charword.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam

@@ -38,9 +38,9 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Navigate to the geocoder and wait until the classifier is loaded (submit enables). The navigation waits for the DOM
-	 * only: the gazetteer's warm-up range reads keep the network busy well past readiness, so "network idle" is not a
-	 * signal here, and the enabled submit button is.
+	 * Navigate to the geocoder and wait until the classifier is loaded (the address field enables). The navigation waits
+	 * for the DOM only: the gazetteer's warm-up range reads keep the network busy well past readiness, so "network idle"
+	 * is not a signal here, and the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {
 		const path = query ? `/?q=${encodeURIComponent(query)}` : "/"
@@ -49,11 +49,17 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Wait for the cold-load (~25 MB ONNX + map style + sqlite-wasm) to complete. The options are the THIRD argument:
+	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete. The options are the THIRD argument:
 	 * `waitForFunction` reads its second as the function's argument, and an options object passed there leaves the wait
 	 * on the 30 s action budget. Polling is on an interval, not on animation frames: a page the browser treats as hidden
 	 * fires no frames, and the default polling then never re-evaluates an already-true predicate. A load error the page
 	 * reports ends the wait at once, with that text, instead of running out the budget.
+	 *
+	 * Readiness is the ADDRESS FIELD being enabled, because `GeocoderControls` binds that field's `disabled` to
+	 * `runtime.ready` — the same state the search pill's submit button used to carry before the pill dropped it (a
+	 * `type="search"` field submits on Enter and brings its own clear control). Waiting on an element that the chrome is
+	 * free to restyle away turns "the classifier loaded" into "never true" with no error to report, which is how this
+	 * wait ran out its budget on every case for two days.
 	 */
 	async expectReady(): Promise<void> {
 		const outcome = await this.page.waitForFunction(
@@ -62,9 +68,9 @@ export class GeocoderFixture {
 
 				if (error) return { error }
 
-				const btn = document.querySelector("button[type='submit']")
+				const field = document.querySelector("#mw-pipeline-input")
 
-				return btn instanceof HTMLButtonElement && !btn.disabled ? { ready: true } : null
+				return field instanceof HTMLInputElement && !field.disabled ? { ready: true } : null
 			},
 			undefined,
 			{ timeout: 180_000, polling: 500 }
@@ -113,7 +119,9 @@ export class GeocoderFixture {
 	}
 
 	async submit(): Promise<void> {
-		await this.page.locator("button[type='submit']").click()
+		// Enter, not a button: the search pill carries no submit control, and a `type="search"` field submits its form on
+		// Enter. `Geocoder.test.tsx` drives the same control the same way.
+		await this.page.locator("#mw-pipeline-input").press("Enter")
 
 		// Block until the result panel renders so callers can immediately readResult(). The options are the third
 		// argument, as in `expectReady`.

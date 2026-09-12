@@ -15,13 +15,14 @@
  *   streams to stderr; the summary lands on stdout.
  */
 
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { allRows } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -36,7 +37,11 @@ export const spec = {
 			type: "string",
 			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/address-points",
 		},
-		release: { type: "string", default: "2026-05-20.0", description: "Overture release tag stamped into the manifest" },
+		release: {
+			type: "string",
+			default: OVERTURE_ADDRESSES_RELEASE,
+			description: "Overture release tag stamped into the manifest (the addresses-theme pin)",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -61,7 +66,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
 		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state database and the CLI never
 		// selects.
-		const databaseFiles = (await readDirectory(outDir))
+		const databaseFiles = (await Globerator.files("db", { cwd: outDir, absolute: false }).toArray())
 			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))
 			.toSorted()
 

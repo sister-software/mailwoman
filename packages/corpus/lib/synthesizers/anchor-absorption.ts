@@ -29,7 +29,7 @@
  *   ZIPs (anchor-fp) are 5-digit strings deliberately absent from the lookup.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
 
 import { pick } from "#synthesizers/utils"
 

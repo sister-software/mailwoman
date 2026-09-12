@@ -201,5 +201,5 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 
 export * from "#gazetteer-pipeline/postcode/binary"
 export * from "#gazetteer-pipeline/postcode/centroid-fills"
-export * from "#gazetteer-pipeline/postcode/geonames-tail"
+export * from "#gazetteer-pipeline/postcode/geonames/tail"
 export * from "#gazetteer-pipeline/postcode/zcta-centroids"

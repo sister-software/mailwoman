@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import { isLossless, losslessSegments, unknownSpans } from "@mailwoman/core/decoder/unknown-spans"
-import type { ComponentTag } from "@mailwoman/core/types/component"
 import { describe, expect, it } from "vitest"
 
 function node(tag: ComponentTag, start: number, end: number, value: string, children: AddressNode[] = []): AddressNode {

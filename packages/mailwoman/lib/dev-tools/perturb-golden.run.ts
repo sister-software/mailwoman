@@ -20,11 +20,12 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dirname, join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
@@ -64,7 +65,7 @@ async function main(): Promise<void> {
 	const out: string[] = []
 	let base = 0
 
-	for (const file of (await readDirectory(GOLDEN)).filter((f) => f.endsWith(".jsonl"))) {
+	for await (const file of Globerator.files("jsonl", { cwd: GOLDEN, absolute: false })) {
 		// The stride below needs the row COUNT before it can pick a row, then indexes them, so the whole
 		// set has to be resident either way — streaming would only move the materialization.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above

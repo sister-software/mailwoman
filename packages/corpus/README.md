@@ -27,6 +27,7 @@ The corpus pipeline assembles training data from multiple sources:
 | **libpostal**      | Multilingual street/place name dictionaries                              |
 | **Synthetic rows** | Generated address variations (boundary stress, order variants, all-caps) |
 | **Overture Maps**  | Address theme ingestion (alpha)                                          |
+| **OpenStreetMap**  | Pakistan, Bangladesh, Vietnam — ODbL, dropped by `--exclude-share-alike` |
 
 Output format: TSV rows with `raw<TAB>BIO_labels` consumed by the Python
 training pipeline (`corpus-python/`).
@@ -42,6 +43,21 @@ training pipeline (`corpus-python/`).
 | **`ingest/`**           | Overture Maps + NAD ingestion                                    |
 | **`slice-registry.ts`** | Subset metadata and composition                                  |
 | **`stats.ts`**          | Per-subset and per-tag statistics                                |
+
+## Layout
+
+The top-level ownership boundary is the address system, using ISO 3166-1 alpha-2 country
+directories. A directory owns its recipes, source adapters, acquisition tools, and tests together:
+`fr/{recipes,adapters,tools}`, `kr/{adapters,tools}`, and
+`us/{adapters,tools}` are representative. Regional and global work lives under `south-asia/` and
+`international/`; cross-locale primitives remain at the `recipes/` and `synthesizers/` roots.
+
+Sources that deliberately span countries (OpenAddresses, GeoNames, Overture, OSM, and WOF) remain
+under `adapters/`, with their common fetching and processing utilities under `tools/`. Source kind
+is therefore a nested concern inside a country directory, not the package's organizing principle.
+Tests live beside the module they cover: `fr/adapters/ban/adapter.test.ts` belongs with
+`fr/adapters/ban/adapter.ts`. Production compilation excludes `*.test.ts`; the test project includes
+the same pattern. Public subpaths use this same locale-first layout.
 
 ## Build-time tooling
 

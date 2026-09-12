@@ -9,9 +9,9 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
-import type { CandidateDatabase } from "#candidate-schema"
 import { isOwnNameVariant } from "#candidate/own-name"
 import type { PlaceAttrs } from "#candidate/place-attrs"
+import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
@@ -141,7 +141,7 @@ export function stampNameRoles(ctx: {
 			.run().changes
 	)
 
-	// --- variant detector (#1882): the alias surface is the holder's OWN primary name in another
+	// Detect aliases that are the holder's own primary name in another variant.
 	// orthography — romanization, spacing/diacritic variant, or abbreviation expansion. The verdict
 	// is per (alias key, primary key) pair, so it runs in JS over the still-unstamped alias rows;
 	// an uncovered script answers no-verdict and stamps nothing (own-name.ts owns the predicate and

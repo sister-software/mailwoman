@@ -24,9 +24,11 @@ export {
 	ADDRESS_SYSTEM_CONVENTIONS,
 	conventionsForSystem,
 	type AddressSystemConventions,
-} from "#address-system-conventions"
+} from "#address/system-conventions"
 
+export * from "#component"
 export * from "#normalize"
+export * from "#placetype-map"
 export * as au from "#au/index"
 export * as ca from "#ca/index"
 export * as de from "#de/index"
@@ -44,6 +46,6 @@ export {
 	SYSTEM_CODES,
 	type SystemCode,
 	UNIT_GRADE_POSTCODE,
-} from "#postcode-systems"
+} from "#postcode/systems"
 
 export * as us from "#us/index"

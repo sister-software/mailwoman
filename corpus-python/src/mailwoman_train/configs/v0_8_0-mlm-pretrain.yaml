@@ -19,14 +19,14 @@
 # <1.5pp vs the from-scratch baseline -> drop pretraining).
 #
 # Launch (Trackio debut):
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0_8_0-mlm-pretrain.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
   # v0.3.0 (674 train slices) NOT v0.4.0 (12 synth-overlay slices): MLM wants broad,
   # representative text coverage, and v0.4.0 is a thin synth overlay meant to be used WITH
-  # source-weighting (which we drop here). v0.3.0 is also the version train_remote.py
-  # verifies on the volume.
+  # source-weighting (which we drop here). No row in launch/corpora.py stages v0.3.0 any more —
+  # put it on the volume with `sync_assets --corpus-versions v0.3.0` before running this.
 data:
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

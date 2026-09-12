@@ -39,7 +39,7 @@
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { SubVenueHarvestRow } from "#tools/sub-venue-lexicon"
+import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
 
 /**
  * Overture Places category → the designator its rows attest.

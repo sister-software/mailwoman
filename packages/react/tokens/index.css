@@ -53,6 +53,7 @@
 	--safe-area-right: env(safe-area-inset-right, 0px);
 	--safe-area-bottom: env(safe-area-inset-bottom, 0px);
 	--safe-area-left: env(safe-area-inset-left, 0px);
+	--map-footer-height: 1.9rem;
 	--color-background-canvas: var(--neutral-50);
 	--color-background-raised: var(--neutral-0);
 	--color-background-sunken: var(--neutral-100);
@@ -107,7 +108,7 @@
 	--color-state-info: oklch(78% 0.12 230);
 	--color-state-info-background: oklch(78% 0.12 230 / 0.18);
 	--color-accent-background: oklch(65% 0.29 340 / 0.18);
-	--material-glass-background: oklch(18% 0.026 264 / 0.72);
+	--material-glass-background: oklch(18% 0.026 264 / 0.86);
 	--material-glass-border: oklch(100% 0 264 / 0.14);
 	--material-glass-shadow: 0 4px 28px oklch(0% 0 264 / 0.45);
 	--material-glass-highlight: oklch(100% 0 264 / 0.12);

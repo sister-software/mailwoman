@@ -10,7 +10,7 @@
  *   to do with this file.
  */
 
-import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"
 import { runMinimalPairs } from "@mailwoman/dev-mcp/minimal-pairs"
 import { describe, expect, it } from "vitest"
 

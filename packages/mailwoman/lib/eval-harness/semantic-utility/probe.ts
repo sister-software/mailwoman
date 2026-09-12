@@ -37,7 +37,7 @@ import {
 	type POIBoardExpect,
 	type POIBoardFixture,
 	type POIBoardOutcome,
-} from "#eval-harness/poi-board"
+} from "#eval-harness/poi/board"
 import {
 	canonicalJSON,
 	definitionContentHash,

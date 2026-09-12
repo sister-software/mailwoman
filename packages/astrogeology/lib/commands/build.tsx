@@ -148,7 +148,7 @@ export async function buildBody(
 			sources: [nomenclature.entry, dem.entry],
 			outputs: [
 				{ tileset: body, path: nomenclatureOut },
-				{ tileset: `${body}-hillshade`, path: hillshadeOut },
+				{ tileset: `${body}-terrain`, path: hillshadeOut },
 				{ tileset: `${body}-search`, path: searchOut },
 			],
 			transformations,

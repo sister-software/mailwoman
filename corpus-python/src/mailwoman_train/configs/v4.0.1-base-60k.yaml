@@ -23,7 +23,7 @@
 #
 # Launch checklist: the v0.15.0-venue overlay synced (R2 corpus/v0.15.0-venue/ -> /data/corpus/
 # versioned/v0.15.0-venue/; base slices resolve into v0.13.0-latam which persists on the volume).
-#   modal run -d corpus-python/modal/train_remote.py --config v4.0.1-base-60k.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v4.0.1-base-60k.yaml --resume none
 #
 data:
   corpus_dir: /data/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue # RUN-2 DELTA: the venue overlay.

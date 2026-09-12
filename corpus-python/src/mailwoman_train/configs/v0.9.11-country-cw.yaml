@@ -34,7 +34,7 @@
 #   unit-real-designators (fp32-to-fp32).
 #
 # CORPUS: v0.4.10-country-bal (v0.4.5-unit-v2 base + balanced country slice). Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.10-country-bal.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

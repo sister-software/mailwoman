@@ -367,16 +367,21 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
+	[
+		"packages/mailwoman/lib/eval-harness/gauntlet/cases/",
+		"board rows are register data and carry real building names verbatim: Kew Gate, Singapore",
+	],
 	["evals/", "the score ledger's rows are dated notes on committed board cases"],
 	["packages/corpus/data/", "the sub-venue lexicon: an airport gate is a real sub-venue token"],
-	["packages/corpus/lib/recipes/sub-venue", "sub-venue recipes name the physical gate"],
-	["packages/corpus/lib/tools/sub-venue", "sub-venue tooling names the physical gate"],
+	["packages/corpus/lib/recipes/sub/venue", "sub-venue recipes name the physical gate"],
+	["packages/corpus/lib/tools/sub/venue", "sub-venue tooling names the physical gate"],
 	["packages/corpus/test/unit/recipes/sub-venue", "sub-venue recipe tests name the physical gate"],
 	["packages/corpus/test/unit/tools/sub-venue", "sub-venue tooling tests name the physical gate"],
 	["packages/corpus/lib/tools/overture-subvenue.ts", "sub-venue extraction names the physical gate"],
 	["packages/corpus/lib/tools/fetch/", "sub-venue source fetchers name the physical gate"],
-	["packages/osm/lib/sdk/extract-subvenue.ts", "sub-venue extraction names the physical gate"],
-	["packages/osm/test/unit/sdk/extract-subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
+	["packages/osm/lib/sdk/extract/subvenue/index.ts", "sub-venue extraction names the physical gate"],
+	["packages/osm/lib/sdk/extract/subvenue/rules.ts", "the sub-venue tag rules name the physical gate"],
+	["packages/osm/test/unit/sdk/extract/subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
 	["packages/neural/lib/venue-structure.ts", "venue structure names the physical gate"],
 	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.ts", "span proposals name the physical gate"],
@@ -445,7 +450,7 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 
 		// Package tests intentionally import their own package name: that is the contract this repository's
 		// test layout verifies. Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
-		const countSelfPackageImports = !path.includes("/test/")
+		const countSelfPackageImports = !path.includes("/test/") && !/[.]test[.]tsx?$/.test(path)
 
 		visit(source, counters, workspacePackage?.name, countSelfPackageImports)
 

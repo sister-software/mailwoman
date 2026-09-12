@@ -82,10 +82,11 @@
 		"@mailwoman/ancestrie": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"ink": "^7.1.1",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
 		"react": "^19.2.8",
-		"spliterator": "^6.4.1",
+		"spliterator": "^7.5.1",
 		"wrangler": "^4.129.0",
 		"zod": "^4.5.4"
 	},

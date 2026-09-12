@@ -6,33 +6,6 @@
  * The theme is declared on `<html data-theme="dark">` in index.html, not inherited from a host.
  */
 
-/*
- * Earth's own panel modules still name Infima tokens, inherited from when this app lived inside Docusaurus. Rather
- * than 15 undefined names, each is defined here FROM the semantic layer, so those panels take the brand palette
- * instead of a hand-copied approximation of it and follow the theme like everything else.
- *
- * This block is temporary. It disappears when the panels are rewritten against the semantic names directly; it is
- * here so that step is a separate, reviewable change rather than a condition of this one. `--ifm-navbar-height` is
- * zero because the Docusaurus navbar these panels once sat below does not exist here.
- */
-:root {
-	--ifm-color-primary: var(--color-accent);
-	--ifm-color-primary-darkest: var(--color-accent);
-	--ifm-color-content: var(--color-text-primary);
-	--ifm-color-content-inverse: var(--color-background-canvas);
-	--ifm-background-surface-color: var(--color-background-raised);
-	--ifm-color-emphasis-100: var(--control-background);
-	--ifm-color-emphasis-200: var(--color-background-sunken);
-	--ifm-color-emphasis-300: var(--control-border);
-	--ifm-color-emphasis-500: var(--color-text-tertiary);
-	--ifm-color-emphasis-600: var(--color-text-secondary);
-	--ifm-color-emphasis-700: var(--color-text-secondary);
-	--ifm-color-emphasis-800: var(--color-text-primary);
-	--ifm-font-family-monospace: var(--font-family-code);
-	--ifm-hover-overlay: oklch(100% 0 264 / 0.08);
-	--ifm-navbar-height: 0px;
-}
-
 html,
 body,
 #root {
@@ -57,6 +30,37 @@ main[data-route] {
 	max-width: 960px;
 	margin: 0 auto;
 	padding: 1.5rem;
+}
+
+/*
+ * MapLibre's own control corners are not part of the chrome, so they have to be told where the chrome already is: the
+ * footer strip owns the bottom edge, and the control capsule owns the top right.
+ */
+main[data-route] .maplibregl-ctrl-bottom-right,
+main[data-route] .maplibregl-ctrl-bottom-left {
+	bottom: calc(var(--map-footer-height) + var(--safe-area-bottom));
+}
+
+main[data-route] .maplibregl-ctrl-top-right {
+	top: calc(6.5rem + var(--safe-area-top));
+	right: var(--safe-area-right);
+}
+
+/* MapLibre paints its controls white; every one of them belongs to the same glass the rest of the chrome is. */
+main[data-route] .maplibregl-ctrl-group {
+	background: var(--material-glass-background);
+	border: 1px solid var(--material-glass-border);
+	box-shadow: var(--material-glass-shadow);
+	border-radius: var(--radius-panel);
+	color: var(--color-text-primary);
+}
+
+/*
+ * MapLibre's own attribution control is hidden because the footer strip carries the same credits, and the licence
+ * obligation is discharged there. Two copies of "© OpenStreetMap" on one screen reads as a defect, not as diligence.
+ */
+main[data-route] .maplibregl-ctrl-attrib {
+	display: none;
 }
 
 .not-found {

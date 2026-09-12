@@ -19,7 +19,7 @@
 # German resolver coord holds. Revert if any existing locale drops > 1pp.
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py --config v0_8_0-german.yaml --resume auto
+#   cd corpus-python && modal run -d -m launch.train_remote --config v0_8_0-german.yaml --resume auto
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

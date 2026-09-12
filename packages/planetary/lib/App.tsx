@@ -12,13 +12,20 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/fonts.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
+import { MapChipRow } from "@mailwoman/react/map/MapChipRow"
+import { MapCompass } from "@mailwoman/react/map/MapCompass"
+import { MapControlButton, MapControlGroup, MapControlStack } from "@mailwoman/react/map/MapControlStack"
+import { MapSheet } from "@mailwoman/react/map/MapSheet"
+import { useMapBearing } from "@mailwoman/react/map/useMapBearing"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import type { MapInstance } from "react-map-gl/maplibre"
 
 import { BODY_CONFIGS } from "#bodies/index"
 import { assertHostMatchesBody, currentBody } from "#body"
 import type { SelectedFeature } from "#features/selected"
 import { PlanetaryMap } from "#map/PlanetaryMap"
 import { Attribution } from "#panels/Attribution"
+import { BodyAbout } from "#panels/BodyAbout"
 import { FeaturePanel } from "#panels/FeaturePanel"
 import { pathForRoute, type PlanetaryRoute, routeForPath } from "#routes"
 import type { SearchHit } from "#search/index"
@@ -46,13 +53,17 @@ function WrongBody({ message }: { message: string }) {
 }
 
 /**
- * A search hit as a selection: the artifact carries the name, type and position, and nothing else.
+ * A search hit as a selection. `diameterKm` rides along because the camera frames by it, and without it every search
+ * result and every deep link landed on the smallest-feature zoom — a 4,000 km canyon framed as tightly as a 3 km
+ * crater, past the resolution the terrain archive carries.
  */
 function featureFromHit(hit: SearchHit): SelectedFeature {
 	return {
 		id: hit.id,
 		name: hit.name,
 		featureType: hit.featureType,
+		featureTypeCode: hit.featureTypeCode,
+		diameterKm: hit.diameterKm,
 		centerLon: hit.centerLon,
 		centerLat: hit.centerLat,
 	}
@@ -67,6 +78,9 @@ export function App() {
 	// which the artifact does not, so it is kept beside the route rather than re-read from the artifact.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)
+	// The globe's handle, published by `<PlanetaryMap>` once it exists, so the compass can read the bearing.
+	const [map, setMap] = useState<MapInstance | null>(null)
+	const [aboutOpen, setAboutOpen] = useState(false)
 
 	useEffect(() => {
 		document.title = config.title
@@ -95,6 +109,22 @@ export function App() {
 
 	const close = useCallback(() => navigate({ kind: "map" }), [navigate])
 
+	// A chip carries a feature NAME, which is what the artifact indexes; the first hit for an exact name is that
+	// feature. A name the artifact does not carry selects nothing rather than framing the closest other feature.
+	const pickByName = useCallback(
+		(name: string) => {
+			const hit = search.index?.query(name, 1).find((candidate) => candidate.name === name)
+
+			if (hit) {
+				select(featureFromHit(hit))
+			}
+		},
+		[search.index, select]
+	)
+
+	const { bearing, resetNorth } = useMapBearing(map)
+	const closeAbout = useCallback(() => setAboutOpen(false), [setAboutOpen])
+
 	const selected = useMemo<SelectedFeature | null>(() => {
 		if (route?.kind !== "feature") return null
 
@@ -116,23 +146,52 @@ export function App() {
 	return (
 		<main data-route={route.kind} data-body={body} data-search={search.status}>
 			<h1 className="visually-hidden">{config.title}</h1>
-			<PlanetaryMap config={config} selected={selected} onSelect={select} />
+			<PlanetaryMap config={config} selected={selected} onSelect={select} onMapReady={setMap} />
 			<div className="search-slot">
 				<SearchBox
 					search={search.index}
-					placeholder={
-						search.status === "failed" ? "Search is unavailable" : `Search ${config.title.replace("Mailwoman ", "")}`
-					}
+					placeholder={search.status === "failed" ? "Search is unavailable" : `Search ${config.displayName}`}
 					onSelect={(hit) => select(featureFromHit(hit))}
 				/>
+
+				<MapChipRow
+					chips={config.exampleFeatures.map((name) => ({ label: name, value: name }))}
+					label={`Example features on ${config.displayName}`}
+					disabled={search.status !== "ready"}
+					onPick={pickByName}
+				/>
 			</div>
+
+			{/* Every floating control in one column, so nothing lands on top of anything else. */}
+			<MapControlStack label="Map controls">
+				<MapControlGroup>
+					<MapControlButton
+						label={`About ${config.displayName}`}
+						active={aboutOpen}
+						onPress={() => setAboutOpen((value) => !value)}
+					>
+						<span aria-hidden="true">i</span>
+					</MapControlButton>
+				</MapControlGroup>
+
+				<MapControlGroup className="mw-map-control-group--compass">
+					<MapCompass bearing={bearing} onResetNorth={resetNorth} />
+				</MapControlGroup>
+			</MapControlStack>
+
+			{aboutOpen ? (
+				<MapSheet title={`About ${config.displayName}`} onClose={closeAbout}>
+					<BodyAbout config={config} />
+				</MapSheet>
+			) : null}
+
 			{selected ? <FeaturePanel feature={selected} latitudeType={config.latitudeType} onClose={close} /> : null}
 			{route.kind === "feature" && !selected && search.status === "ready" ? (
-				<section className="feature-panel" data-testid="feature-missing">
-					<p>
+				<MapSheet title="Not in this archive" onClose={close} className="feature-panel">
+					<p data-testid="feature-missing">
 						No feature <code>{route.id}</code> in this archive. <a href="/">Go to the globe.</a>
 					</p>
-				</section>
+				</MapSheet>
 			) : null}
 			<Attribution config={config} />
 		</main>

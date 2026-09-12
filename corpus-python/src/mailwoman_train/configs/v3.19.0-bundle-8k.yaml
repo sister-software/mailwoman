@@ -26,7 +26,7 @@
 #   (the over-trust watch working as designed). G3 new-class ⇒ STOP: the Wall-A lock-in question
 #   reopens and the operator decides. No knob iteration inside this run.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.19.0-bundle-8k.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.19.0-bundle-8k.yaml --resume none
 #
 data:
   corpus_dir: /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc # FEED — v0.14.0-gb + synth-nz-v2 + synth-es-pedania (+synth-fr-lieudit if landed).

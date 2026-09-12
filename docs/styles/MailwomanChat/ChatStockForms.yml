@@ -20,7 +20,17 @@ tokens:
   - let me know if
   - happy to help
   - hope (?:this|that) helps
-  - worth (?:noting|mentioning|saying|calling out)
+  ## Every spelling of `worth`, not the four stock closers it used to list. The word grades the
+  ## reader's attention instead of reporting: "worth reporting", "worth knowing", "worth the
+  ## measurement" all announce that a fact matters rather than saying what it is. State the fact and
+  ## let it carry itself; when the cost of an action is the real subject, give the cost and its unit.
+  - worth
+  ## A trailing clause that comments on the report rather than continuing it: "…does not move alone,
+  ## and that is the first thing to report". The reply IS the report, so ranking its own parts is
+  ## filler. Causal prose starts a sentence — "That is why the loader refuses" — and is unaffected.
+  ## Quoted: a token opening with a comma and carrying an apostrophe is not a YAML scalar, and Vale
+  ## answers `did not find expected node content` with no report at all.
+  - ",\\s+and that(?:'s| is)\\b"
   ## Moved from Mailwoman/StockPhrases.yml: in a REPLY this is filler, but in published prose and in
   ## a code comment it is the plain verb — and banning it there contradicted AmbiguousShorthand,
   ## whose own message asks the writer to name the concrete thing.

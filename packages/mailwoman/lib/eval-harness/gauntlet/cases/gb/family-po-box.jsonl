@@ -1,0 +1,1 @@
+{"id":"gb-f9-po-box-123-london-sw1a-1aa","input":"PO Box 123, London SW1A 1AA","source":"family-board:2026-09-09","addressKind":"po_box_commonwealth","country":"GB","status":"pass","expectComponents":{"po_box":"PO Box 123","locality":"London","postcode":"SW1A 1AA"},"addedAt":"2026-09-09","bugRef":"#517","note":"F9 (#517): authored from the issue's attested set."}

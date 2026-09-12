@@ -13,7 +13,7 @@
 # pattern from OSM data instead of WOF bare-name frequency.
 #
 # Launch:
-#   modal run scripts/modal/train_remote.py --config v0_5_2-classifier-rebalanced.yaml
+#   cd corpus-python && modal run -m launch.train_remote --config v0_5_2-classifier-rebalanced.yaml
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

@@ -259,7 +259,7 @@ const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["packages/repo-health/test/unit/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
 	["packages/repo-health/lib/checks/debt.ts", "its banned-vocabulary constant has to spell the word it counts"],
 	[
-		"docs/scripts/check-vale-rules.ts",
+		"docs/scripts/check/vale-rules.ts",
 		"the rule fixtures' own harness; its docstring quotes the words the rules match",
 	],
 ]

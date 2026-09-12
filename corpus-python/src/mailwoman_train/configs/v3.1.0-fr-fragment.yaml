@@ -64,7 +64,7 @@
 # v264 itself used off v263. This is the documented init_from case: a finished, shipped checkpoint
 # fine-tuned on new data. (`resume` is for continuing a capability mid-emergence — the affix scar.)
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.1.0-fr-fragment.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.1.0-fr-fragment.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

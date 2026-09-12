@@ -24,7 +24,7 @@
 #     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).
 #
 # NOT A SHIP. A PASS justifies an 8k + the 5-digit range decision. Promotion is the operator's act.
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.5.0-numsplice-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.0-numsplice-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment

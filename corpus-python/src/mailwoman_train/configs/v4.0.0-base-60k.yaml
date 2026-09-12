@@ -56,7 +56,7 @@
 #
 # Launch checklist: locality-surface-lexicon-v7.json synced to the volume (R2 gazetteer/ -> /data/
 # gazetteer/); all other artifacts persist from the v3.24 run. Then:
-#   modal run -d corpus-python/modal/train_remote.py --config v4.0.0-base-60k.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v4.0.0-base-60k.yaml --resume none
 #
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam

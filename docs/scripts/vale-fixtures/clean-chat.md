@@ -33,5 +33,10 @@ decision keeps the marker reporting-only because routing would change ranking.
 The postcode index supplies a country candidate when the input contains a full
 UK postcode.
 
+The corpus overlay is v0.29.0 plus one parquet, and the overlay manifest
+declares 720 entries against an overlay base of v0.29.0. The en-GB weights
+overlay ships locale data and no model graph. The from-scratch run carries no
+`train.init_from`, so it starts from random initialization.
+
 The unit test passed. The trace records that the retry ran once. The following
 JSON object is the emitted artifact:

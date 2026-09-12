@@ -26,25 +26,25 @@ export {
 	createCandidateIntervalTable,
 	intervalContains,
 	MAX_ANCESTOR_DEPTH,
-} from "#candidate-ancestors-schema"
+} from "#candidate/ancestors/schema"
 
 export type {
 	CandidateAncestorsDatabase,
 	CandidateAncestorTable,
 	CandidateIntervalTable,
 	IntervalLabel,
-} from "#candidate-ancestors-schema"
+} from "#candidate/ancestors/schema"
 
-export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "#candidate-fts"
+export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "#candidate/fts"
 
 export {
 	ImportanceIndex,
 	IMPORTANCE_JOIN_RADIUS_KM,
 	type ImportanceIndexStats,
 	loadImportanceIndex,
-} from "#candidate-importance"
+} from "#candidate/importance"
 
-export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "#candidate-lookup"
+export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "#candidate/lookup"
 
 export {
 	COUNTRY_BBOX_TABLE,
@@ -58,33 +58,26 @@ export {
 export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "#coverage-manifest-schema"
 export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street/name-lookup"
 
-export {
-	GEONAMES_ID_BASE,
-	type GeonamesIngestProgress,
-	ingestGeonamesAliases,
-	purgeGeonamesAliasRange,
-} from "#geonames/aliases"
+export { type GeonamesIngestProgress, ingestGeonamesAliases, purgeGeonamesAliasRange } from "#geonames/aliases"
 
-export { GEONAMES_POSTAL_ID_BASE } from "#geonames/postal"
-
-export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address/point-schema"
-export type { AddressPointDatabase, AddressPointTable } from "#address/point-schema"
+export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address/point/schema"
+export type { AddressPointDatabase, AddressPointTable } from "#address/point/schema"
 
 export {
 	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
 	type WOFPostalCityAliasLookupOpts,
-} from "#postal/city-alias-lookup"
+} from "#postal/city/alias/lookup"
 
-export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city-alias-schema"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city/alias/schema"
 
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
 	POSTAL_CITY_CANDIDATE_TABLE,
 	createPostalCityCandidateTable,
-} from "#postal/city-candidate-schema"
+} from "#postal/city/candidate-schema"
 
-export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal/city-candidate-schema"
+export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal/city/candidate-schema"
 
 export {
 	ADDRESS_CONVENTION_TABLE,
@@ -100,7 +93,7 @@ export {
 	type Strategy,
 } from "#convention/index"
 
-export { SqliteConventionSource } from "#sqlite-convention-source"
+export { SqliteConventionSource } from "#sqlite/convention-source"
 
 export { WOFPostcodeLookup, type PostcodePlace } from "#postcode-point-lookup"
 
@@ -124,17 +117,17 @@ export {
 	type WOFReverseGeocoderOpts,
 } from "#reverse"
 
-export { AddressPointInterpolator } from "#address/point-interpolation"
-export { AddressPointSqliteLookup } from "#address/point"
+export { AddressPointInterpolator } from "#address/point/interpolation"
+export { AddressPointSqliteLookup } from "#address/point/index"
 
 export {
 	STREET_CENTROID_COLUMNS,
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
-} from "#street/centroid-schema"
+} from "#street/centroid/schema"
 
-export type { StreetCentroidDatabase, StreetCentroidTable } from "#street/centroid-schema"
-export { StreetCentroidSqliteLookup } from "#street/centroid"
+export type { StreetCentroidDatabase, StreetCentroidTable } from "#street/centroid/schema"
+export { StreetCentroidSqliteLookup } from "#street/centroid/index"
 
 export {
 	StreetInterpolator,

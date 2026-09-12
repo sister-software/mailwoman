@@ -106,9 +106,9 @@ const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
 	"packages/neural/lib/env.ts",
-	"packages/neural/lib/onnx-runner.ts",
+	"packages/neural/lib/onnx/runner/index.ts",
 	"packages/neural/lib/scorer.ts",
-	"packages/neural/lib/weights.ts",
+	"packages/neural/lib/weights/index.ts",
 	"packages/neural/lib/*.test.ts",
 	"packages/neural/vitest.config.ts",
 ]
@@ -217,7 +217,14 @@ export default {
 		{
 			// A test file imports the package under test through its public exports and a helper by relative path; the
 			// `#` map is the package's private naming and stays inside `lib/`.
-			files: ["packages/*/test/**/*.ts", "packages/*/test/**/*.tsx", "docs/test/**/*.ts", "docs/test/**/*.tsx"],
+			files: [
+				"packages/*/test/**/*.ts",
+				"packages/*/test/**/*.tsx",
+				"packages/corpus/lib/**/*.test.ts",
+				"packages/corpus/lib/**/*.test.tsx",
+				"docs/test/**/*.ts",
+				"docs/test/**/*.tsx",
+			],
 			rules: {
 				"mailwoman/no-private-import-in-test": "error",
 			},
@@ -254,25 +261,29 @@ export default {
 			},
 		},
 		{
+			// Corpus tests are co-located with the modules they cover. Test-only HTTP/TCP servers need Node builtins, while
+			// production corpus modules continue to use the package-wide builtin homes.
+			files: ["packages/corpus/lib/**/*.test.ts", "packages/corpus/lib/**/*.test.tsx"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
 			// Builtins with no idiom to wrap yet, each reached directly by the one file that needs it: a line reader over
 			// a fixed-width feed, a worker's `workerData`, the cluster primary, a test-local HTTP server and the two
 			// `https.get` downloads that predate `APIClient`.
 			files: [
-				"packages/corpus/test/unit/tools/fetch/download.test.ts",
-				"packages/corpus/test/unit/tools/fetch/geonames-dump.test.ts",
-				"packages/corpus/test/unit/tools/fetch/geonames-postal.test.ts",
-				"packages/corpus/test/unit/tools/fetch/state-hi-schools.test.ts",
-				"packages/filer/lib/sdk/form499.ts",
+				"packages/filer/lib/sdk/form499/index.ts",
 				"packages/filer/lib/sdk/provider-list.ts",
-				"packages/mailwoman/lib/cli-native/commands/geocode.ts",
+				"packages/mailwoman/lib/cli/native/commands/geocode.ts",
 				"packages/mailwoman/lib/commands/gazetteer/importance.tsx",
 				"packages/mailwoman/lib/commands/serve.tsx",
 				"packages/api-kit/test/fixtures/cluster-serve.ts",
-				"packages/mailwoman/lib/commands/situs/interpolation.tsx",
+				"packages/mailwoman/lib/commands/situs/interpolation/index.tsx",
 				"packages/mailwoman/lib/geocode/worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
-				"docs/plugins/runtime-assets/workspace-resolution.ts",
+				"docs/plugins/runtime-assets/workspace/resolution.ts",
 				"packages/map-tui/test/unit/tile-source.test.ts",
 				"packages/neural/test/integration/browser-slo.test.ts",
 				"packages/resolver-wof-sqlite/test/integration/lookup-readonly-open.test.ts",

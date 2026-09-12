@@ -212,7 +212,7 @@ optional, and the per-tag check below is in addition to them, not instead.
 **Before uploading a model artifact to HF, run the full per-tag error analysis and compare against the current default release:**
 
 ```bash
-node packages/mailwoman/out/cli.js eval error-analysis --golden data/eval/golden/v0.1.2 > /tmp/<version>-error-analysis.md
+node packages/mailwoman/out/cli/index.js eval error-analysis --golden data/eval/golden/v0.1.2 > /tmp/<version>-error-analysis.md
 ```
 
 Abort the upload if **any tag regresses >2pp from the default release**, unless:

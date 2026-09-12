@@ -47,7 +47,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { tryStat, pathExists, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { tryStat, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
@@ -76,6 +76,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { cellToParent } from "h3-js"
 import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Globerator } from "spliterator/node/fs"
 
 import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
@@ -523,14 +524,15 @@ interface UPRNAcquisitionSidecar {
  * Locate the acquired archive in an offline `sourceDir`.
  */
 async function resolveOfflineArchive(sourceDir: string): Promise<string> {
-	const entries = await readDirectory(sourceDir).catch(() => [] as string[])
-	const archive = entries.find((name) => /^osopenuprn_.*\.zip$/i.test(name))
+	const archive = await Globerator.from("*", { cwd: sourceDir, absolute: false, throwIfDirectoryMissing: false }).find(
+		(name) => /^osopenuprn_.*\.zip$/i.test(name)
+	)
 
 	if (!archive) {
 		throw new Error(`buildUPRNLayer: offline build found no osopenuprn_*.zip in ${sourceDir}`)
 	}
 
-	return String(join(sourceDir, archive))
+	return join(sourceDir, archive)
 }
 
 /**
@@ -545,7 +547,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const out = options.out ?? String(dataRootPath("uprn", "uprn.db"))
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
-	// --- Acquire. An offline rebuild recovers provenance from the acquisition.json sidecar; when even that
+	// Acquire the source; offline rebuilds recover provenance from acquisition.json, and when that
 	// is missing, the layer records the ABSENCE in words (the Code-Point discipline).
 	let archiveMD5: string
 	let osVersion: string
@@ -632,10 +634,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	for await (const rawLine of TextSpliterator.fromAsync(extracted.csvPath)) {
 		if (!headerSeen) {
-			// The header is BOM-prefixed (U+FEFF) and CRLF-terminated in the wild; strip both before the
-			// exact match. The BOM check is by char code so no invisible character hides in this source file.
-			const withoutBOM = rawLine.charCodeAt(0) === 0xfe_ff ? rawLine.slice(1) : rawLine
-			const header = withoutBOM.endsWith("\r") ? withoutBOM.slice(0, -1) : withoutBOM
+			const header = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine
 
 			if (header !== OPEN_UPRN_HEADER) {
 				kdb.exec("ROLLBACK")
@@ -690,7 +689,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	kdb.exec("COMMIT")
 	phase("ingest", `${inserted.toLocaleString()} UPRNs (${read.toLocaleString()} lines read)`)
 
-	// --- Checks. No upstream row-count manifest exists for this product (see the module docstring), so the
+	// Validate against the available product evidence; no upstream row-count manifest exists, so the
 	// checks are internal consistency plus the truncation floor.
 	const mismatches: string[] = []
 

@@ -27,7 +27,7 @@ measurement, and a consumer may not read it as one.
 The first two checks run inside this package (`auditActivityLexicon`, which `readActivityLexicon`
 refuses a failing lexicon on). The last two need artifacts this package does not depend on, and run
 where those artifacts are held —
-`packages/mailwoman/test/unit/eval-harness/activity-lexicon-attestation.test.ts`.
+`packages/mailwoman/test/unit/eval-harness/activity/lexicon-attestation.test.ts`.
 
 ### What an entry may not do
 

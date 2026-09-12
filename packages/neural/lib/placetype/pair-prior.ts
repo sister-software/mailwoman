@@ -299,10 +299,10 @@
  *   this locale) — the probe loop simply never finds a tag.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "@mailwoman/codex/component"
 
 import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
-import type { PairEdge, PairIndexLike } from "#pair/index-resolver"
+import type { PairEdge, PairIndexLike } from "#pair/index/resolver"
 import {
 	ANCHORED_CHILD_MAX_WORDS,
 	segmentParentPostcodeShape,

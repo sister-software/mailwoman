@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/api",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "The native Mailwoman HTTP API — engine-agnostic /v1 surface (parse, geocode, batch, resolve, format) with health, metrics, and an emitted OpenAPI document.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -52,9 +52,9 @@
 	"dependencies": {
 		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/api-kit": "workspace:*",
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
-		"@mailwoman/formatter": "workspace:*",
 		"hono": "^4.13.7",
 		"zod": "^4.5.4"
 	}

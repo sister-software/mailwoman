@@ -30,10 +30,10 @@
  *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
@@ -186,7 +186,7 @@ interface Options {
 	transitionBeta?: number
 	parentDelta?: number
 	holdoutFraction: number
-	pairsJsonl?: string
+	pairsJSONL?: string
 	boroughDB?: string
 	banDir?: string
 	holdoutSeed: number
@@ -199,7 +199,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// `pair-index-resolver` reaches only `core/types` — so neither load pulls the ONNX runtime.
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
-		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair-index")
+		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair/index/index")
 		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
 		const { extractBoroughPairs } = await import("#gazetteer-pipeline/borough-pairs")
 		const { extractLieuDitPairs } = await import("#gazetteer-pipeline/lieudit-pairs")
@@ -216,7 +216,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
 		}
 
-		if (!sourcePath && !options.boroughDB && !options.pairsJsonl && !options.banDir) {
+		if (!sourcePath && !options.boroughDB && !options.pairsJSONL && !options.banDir) {
 			throw new Error(
 				`pair-index: country "${country}" has no PPD default — pass --source, --borough-db, --pairs-jsonl or --ban-dir, ` +
 					`or the build would write an empty index.`
@@ -291,8 +291,8 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// R3: generic secondary pairs (ONSPD-derived London ward pairs; future NI/IE sources) — the
 		// same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
-		if (options.pairsJsonl) {
-			for (const path of splitPathList(options.pairsJsonl)) {
+		if (options.pairsJSONL) {
+			for (const path of splitPathList(options.pairsJSONL)) {
 				const before = builder.distinctCount
 
 				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
@@ -334,7 +334,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		const sourceMD5s = [
 			...(sourcePath ? [await md5File(sourcePath)] : []),
 			...(options.boroughDB ? [await md5File(options.boroughDB)] : []),
-			...(await Promise.all(splitPathList(options.pairsJsonl).map((path) => md5File(path)))),
+			...(await Promise.all(splitPathList(options.pairsJSONL).map((path) => md5File(path)))),
 		]
 
 		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted flag writes NO header key at

@@ -64,7 +64,7 @@
 #     means the slice's FR/DE shapes are fighting the native-order slices — STOP and re-audit.
 #
 # CORPUS PREREQUISITE: the slice JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
-# corpus is staged at /mnt/playpen/.../corpus/versioned/v0.6.0-boundary-stress/ — assembled via
+# corpus is staged at $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.6.0-boundary-stress/ — assembled via
 # scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched).
 #
 # #511 locality/street overlap — INVESTIGATED + RESOLVED (no longer a pre-retrain blocker). A targeted
@@ -75,9 +75,11 @@
 # shows Paris/Marseille/Lyon 95–99% locality in FR data) → familiar dept-diverse FR cities kept. DE dropped
 # (street-dominated too; synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
 # 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
-# Operator steps: (1) `modal volume put` the (regenerated) parquet + manifest, (2) `modal run`.
+# Operator steps: (1) upload the regenerated parquet + manifest with `mailwoman corpus upload
+# --corpus-version v0.6.1-boundary-stress` and stage them with `sync_assets --corpus-versions
+# v0.6.1-boundary-stress` — NOT `modal volume put`, which a mounted container cannot see; (2) launch.
 #
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.7.0-boundary-stress.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.7.0-boundary-stress.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

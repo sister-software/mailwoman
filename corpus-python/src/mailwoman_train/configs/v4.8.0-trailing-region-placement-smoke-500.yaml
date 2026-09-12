@@ -57,7 +57,7 @@
 # almost entirely in wof-admin, which is 1.155% of draws, so CN lands at 0.368%.
 #
 # 101 of the 134 codes have ZERO rows in the corpus. They admit nothing today and are declarations of
-# intent; train_remote.py's completeness audit reports them as "0 rows seen", which is correct and not
+# intent; `country_census_raw`'s completeness audit reports them as "0 rows seen", which is correct and not
 # a failure. The two that matter and are NOT inert: IN (this slice's 16,000 rows) and NZ (11,957).
 #
 # ADMITTED FOR THE FIRST TIME, with rows: CN 11,357,947 | JP 2,092,821 | KR 1,083,156 | TW 678,660 |

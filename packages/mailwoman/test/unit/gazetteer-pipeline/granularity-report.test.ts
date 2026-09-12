@@ -6,10 +6,10 @@
  *   the committed artifact's shape is asserted without touching a DB or a clock.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
-import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity"
-import { LADDER } from "mailwoman/gazetteer-pipeline/granularity"
-import { renderGranularityReport } from "mailwoman/gazetteer-pipeline/granularity-report"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity/index"
+import { LADDER } from "mailwoman/gazetteer-pipeline/granularity/index"
+import { renderGranularityReport } from "mailwoman/gazetteer-pipeline/granularity/report"
 import { TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 

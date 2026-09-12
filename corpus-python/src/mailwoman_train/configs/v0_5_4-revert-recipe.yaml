@@ -23,7 +23,7 @@
 # meaningful BIO labels instead of byte-fallback noise.
 #
 # Launch:
-#   modal run scripts/modal/train_remote.py --config v0_5_4-revert-recipe.yaml --detach
+#   cd corpus-python && modal run -m launch.train_remote --config v0_5_4-revert-recipe.yaml --detach
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

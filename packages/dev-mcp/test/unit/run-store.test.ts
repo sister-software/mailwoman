@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { getRun, listRuns, pruneRuns, putRun, RETENTION_DAYS } from "@mailwoman/dev-mcp/run-store"
 import type { StoredRun } from "@mailwoman/dev-mcp/run-store"
 import { join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -47,16 +47,16 @@ describe("putRun / getRun", () => {
 		expect((await getRun("r1", dir))?.payload).toEqual({ rows: 3 })
 	})
 
-	it("returns undefined for a run that is not there", async () => {
-		expect(await getRun("missing", await store())).toBeUndefined()
+	it("returns null for a run that is not there", async () => {
+		expect(await getRun("missing", await store())).toBeNull()
 	})
 
-	it("returns undefined rather than throwing on a corrupt file", async () => {
+	it("returns null rather than throwing on a corrupt file", async () => {
 		const dir = await store()
 
 		await writeLocalTextFile('{"run_id":"half"', join(dir, "half.json"))
 
-		expect(await getRun("half", dir)).toBeUndefined()
+		expect(await getRun("half", dir)).toBeNull()
 	})
 })
 
@@ -154,7 +154,7 @@ describe("pruneRuns — the retention rule", () => {
 		await putRun(run("stale", { created_at: daysAgo(RETENTION_DAYS + 1) }), dir)
 		await pruneRuns(NOW, dir)
 
-		expect(await readDirectory(dir)).toEqual([])
+		expect(await Globerator.from("*", { cwd: dir }).toArray()).toEqual([])
 	})
 
 	it("does NOT prune on a fingerprint mismatch", async () => {

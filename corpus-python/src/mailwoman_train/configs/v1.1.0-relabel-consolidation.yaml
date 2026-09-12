@@ -35,7 +35,7 @@
 # REQUIRES on the volume: relabel.py + config.py + data_loader.py (synced 2026-06-10), the relabel
 # lexicon at /data/gazetteer/affix-relabel-lexicon-v1.json, corpus v0.4.12-consolidation.
 # Launch:
-#   modal run -d scripts/modal/train_remote.py --config v1.1.0-relabel-consolidation.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v1.1.0-relabel-consolidation.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

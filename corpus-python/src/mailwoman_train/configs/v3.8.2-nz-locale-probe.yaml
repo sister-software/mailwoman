@@ -23,7 +23,7 @@
 #
 # ESCALATION: clean 2k -> 8k -> full promote battery -> ship as v7.1.0 (first post-v7 model). Promote = operator.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.8.2-nz-locale-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.2-nz-locale-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.12.0-nz/corpus-v0.12.0-nz

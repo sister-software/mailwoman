@@ -1,4 +1,4 @@
-import { rowsHaveTag, scorePerTagF1, type PerTagEvalRow } from "mailwoman/eval-harness/per-tag-f1"
+import { rowsHaveTag, scorePerTagF1, type PerTagEvalRow } from "mailwoman/eval-harness/per/tag-f1"
 import { describe, expect, it } from "vitest"
 
 const rows: PerTagEvalRow[] = [

@@ -25,6 +25,7 @@
  *   effect is measured; see the note there.
  */
 
+import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
@@ -35,7 +36,6 @@ import {
 import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 } from "@mailwoman/core/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
-import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
@@ -157,7 +157,7 @@ export const accentStrip: Augmentation = (row) => {
 	return withAugmentation(row, "accent-strip", stripped, newComponents)
 }
 
-// --- typo injection (#530) -------------------------------------------------
+// The typo-injection helpers below keep generated rows reproducible.
 // The Phase-1 deferral asked for a "seed-aware API" so the corpus stays reproducible. Resolution:
 // seed the PRNG from the row's own `source_id` — deterministic per row, no global state, fits the
 // existing `(row) => CanonicalRow | null` signature unchanged.

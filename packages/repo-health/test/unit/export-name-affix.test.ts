@@ -8,7 +8,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { collectRepoContext } from "@mailwoman/repo-health"
+import { DiagnosticSeverity } from "@mailwoman/repo-health"
 import { docLinkTargetsCheck, findDanglingLinks } from "@mailwoman/repo-health/checks/doc-link-targets"
 import { exportNameAffixCheck, findAffixPairs } from "@mailwoman/repo-health/checks/export-name-affix"
 import { join, resolvePath } from "path-ts"
@@ -79,11 +79,24 @@ describe("findAffixPairs", () => {
 		expect(await findAffixPairs(context)).toEqual([])
 	})
 
-	it("runs over the current tree and agrees with the check's own count", async () => {
-		const context = await collectRepoContext()
-		const pairs = await findAffixPairs(context)
+	it("gives the check one diagnostic per pair, carrying its file and line", async () => {
+		const context = await plant({
+			"packages/a/lib/workspaces.ts":
+				"export function workspaceDirectories(root: string): string[] { return [root] }\n",
+			"packages/b/lib/reader.ts":
+				"export function readWorkspaceDirectories(root: string): string[] { return [root] }\n",
+		})
 
-		expect(await exportNameAffixCheck.run(context)).toHaveLength(pairs.length)
+		const pairs = await findAffixPairs(context)
+		const diagnostics = await exportNameAffixCheck.run(context)
+
+		expect(pairs).toHaveLength(1)
+
+		expect(diagnostics).toEqual(
+			pairs.map((pair) =>
+				expect.objectContaining({ file: pair.file, line: pair.line, severity: DiagnosticSeverity.Warning })
+			)
+		)
 	})
 })
 
@@ -117,10 +130,20 @@ describe("findDanglingLinks", () => {
 		expect(await findDanglingLinks(context)).toEqual([])
 	})
 
-	it("runs over the current tree and agrees with the check's own count", async () => {
-		const context = await collectRepoContext()
-		const dangling = await findDanglingLinks(context)
+	it("gives the check one diagnostic per dangling link, carrying its file and line", async () => {
+		const context = await plant({
+			"packages/a/lib/x.ts": "/**\n * {@link missingOne}\n * {@link missingTwo}\n */\nexport function use(): void {}\n",
+		})
 
-		expect(await docLinkTargetsCheck.run(context)).toHaveLength(dangling.length)
+		const dangling = await findDanglingLinks(context)
+		const diagnostics = await docLinkTargetsCheck.run(context)
+
+		expect(dangling.map((link) => link.target)).toEqual(["missingOne", "missingTwo"])
+
+		expect(diagnostics).toEqual(
+			dangling.map((link) =>
+				expect.objectContaining({ file: link.file, line: link.line, severity: DiagnosticSeverity.Warning })
+			)
+		)
 	})
 })

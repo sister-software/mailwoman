@@ -94,14 +94,12 @@ export async function trainCoarsePlacer(
 	const classIdx = new Map<string, number>(COARSE_CLASSES.map((c, i): [string, number] => [c, i]))
 
 	async function load(split: string): Promise<Sample[]> {
-		const rows = await Array.fromAsync(
-			JSONSpliterator.fromAsync<{ raw: string; country: string }>(resolvePath(dataDir, `${split}.jsonl`))
-		)
-
 		// Precompute features once: Int32Array of active indices + label id per row.
 		const out: Sample[] = []
 
-		for (const r of rows) {
+		for await (const r of JSONSpliterator.fromAsync<{ raw: string; country: string }>(
+			resolvePath(dataDir, `${split}.jsonl`)
+		)) {
 			const y = classIdx.get(r.country)
 
 			if (y === undefined) continue
@@ -198,7 +196,7 @@ export async function trainCoarsePlacer(
 		)
 	}
 
-	// --- Temperature calibration: minimize val NLL over T by coarse-then-fine 1-D search. ---
+	// Calibrate temperature by minimizing validation NLL through coarse and fine one-dimensional search.
 	function valNLL(T: number): number {
 		let nll = 0
 

@@ -14,10 +14,10 @@
 // package holds two, and `export *` over two modules that both re-export `ResourceError` makes the
 // name ambiguous and drops it from the barrel entirely — silently.
 
-export * from "#sdk/census-client"
-export * from "#sdk/census-parser"
-export * from "#sdk/census-types"
-export * from "#sdk/google-client"
+export * from "#sdk/census/client"
+export * from "#sdk/census/parser"
+export * from "#sdk/census/types"
+export * from "#sdk/google/client"
 export * from "#sdk/map-link"
-export * from "#sdk/google-parser"
-export * from "#sdk/google-types"
+export * from "#sdk/google/parser"
+export * from "#sdk/google/types"

@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bundleAliases, configureRuntimeWebpack } from "@mailwoman/docs/plugins/runtime-assets/webpack-policy"
 import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/runtime-assets/workspace-aliases"
-import { join, resolvePath } from "path-ts"
+import { resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { describe, expect, test } from "vitest"
 
 const docsDir = resolvePackagePath("@mailwoman/docs")
@@ -24,16 +25,8 @@ const docsDir = resolvePackagePath("@mailwoman/docs")
  */
 const NODE_BACKED_BARRELS = ["@mailwoman/resolver-wof-sqlite/fst", "@mailwoman/resolver-wof-sqlite/street"]
 
-async function* browserSources(directory: string): AsyncGenerator<string> {
-	for (const entry of await readDirectory(directory)) {
-		const full = join(directory, entry)
-
-		if (entry.endsWith(".ts") || entry.endsWith(".tsx")) {
-			yield String(full)
-		} else if (!entry.includes(".")) {
-			yield* browserSources(String(full))
-		}
-	}
+function browserSources(directory: string): AsyncIterable<string> {
+	return Globerator.files(["ts", "tsx"], { cwd: directory, recursive: true })
 }
 
 describe("docs webpack policy", () => {
@@ -107,7 +100,7 @@ describe("docs webpack policy", () => {
 
 		const aliases = config.resolve?.alias as Record<string, string>
 
-		expect(aliases["#onnx-runner"]).toMatch(/onnx-runner-browser[.]ts$/)
+		expect(aliases["#onnx-runner"]).toMatch(/onnx\/runner\/browser[.]ts$/)
 		expect(aliases["@mailwoman/neural/onnx-runner"]).toBe(aliases["#onnx-runner"])
 	})
 })

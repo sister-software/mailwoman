@@ -81,12 +81,12 @@ export async function dedupCeiling(
 	const OUT_MD = options.outMd || ""
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
-	// --- Stream TX type-2 (org) providers; one primary record per NPI at its practice address. ---
+	// Stream Texas organization providers, retaining one primary practice-address record per NPI.
 	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
 	const { byAddr, kept, scanned } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
 
-	// --- Over co-located distinct-NPI pairs: the org-similarity distribution + collision rate. ---
+	// Measure organization similarity and collision rate for co-located distinct-NPI pairs.
 	let sharedAddresses = 0
 	let providersAtSharedAddr = 0
 	let pairs = 0
@@ -139,7 +139,7 @@ export async function dedupCeiling(
 		}
 	}
 
-	// --- Derive the precision ceiling. An address-aware matcher must, on co-located distinct-NPI
+	// Derive the precision ceiling from co-located distinct-NPI records.
 	// pairs, either merge (wrong) or hold them apart using name/org. It CAN separate the `separable`
 	// (and most `mid`) pairs but NOT the `collide` ones. So the irreducible false-merge rate among
 	// co-located distinct pairs is collide/pairs; an oracle's precision on the co-located decision is

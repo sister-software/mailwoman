@@ -1,62 +1,22 @@
 /**
- * The Geocoder's floating chrome. `@mailwoman/react/map`'s `<Geocoder>` ships a deliberately GENERIC panel
- * (`.mw-demo-controls`) for a host to restyle; these rules are Earth's.
+ * Earth's map shell. The chrome that floats over the map — the search pill, the chips, the control column, the
+ * result sheet — is `@mailwoman/react/map`'s and carries its own glass material from the tokens, so this file
+ * positions the shell and nothing else.
  *
- * The panel is a glass material, composed from tokens rather than declared as one background colour, with an opaque
- * fallback wherever `backdrop-filter` is unavailable or the viewer has asked for less transparency. No control may
- * depend on the blur to stay readable.
- *
- * There is no theme branch here any more. The dark rule used to be scoped `[data-theme="dark"]` — an attribute
- * Docusaurus set and this app never did, so the light rule won permanently and put #e6edf3 text on a white panel.
- * The tokens carry the theme now, and the app declares it on `<html>`.
- *
- * There is no navbar offset either: the two `--ifm-navbar-height` insets positioned this panel and the MapLibre
- * control stack below a Docusaurus navbar that does not exist outside the docs site.
+ * It used to restyle a 400px full-height control panel. That panel is gone: it carried every control at once and
+ * made the map the leftover third of the page.
  */
 
-.geocoderRoot :global(.mw-demo-controls) {
-	top: 1rem;
-	bottom: 1rem;
-	left: 1rem;
-	width: 400px;
-	max-width: calc(100vw - 2rem);
-	max-height: none;
-	padding: 1.25rem;
-	border-radius: var(--radius-panel);
-	border: 1px solid var(--material-glass-border);
-	background: var(--material-glass-background);
-	backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
-	-webkit-backdrop-filter: blur(var(--material-glass-blur)) saturate(var(--material-glass-saturation));
-	box-shadow: var(--material-glass-shadow);
-	color: var(--color-text-primary);
-	scrollbar-gutter: stable;
-	font-size: var(--font-size-body);
+.geocoderRoot {
+	position: absolute;
+	inset: 0;
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-	.geocoderRoot :global(.mw-demo-controls) {
-		background: var(--material-glass-fallback-background);
-	}
-}
-
-@media (prefers-reduced-transparency: reduce) {
-	.geocoderRoot :global(.mw-demo-controls) {
-		background: var(--material-glass-fallback-background);
-		backdrop-filter: none;
-		-webkit-backdrop-filter: none;
-	}
-}
-
-@media (max-width: 600px) {
-	.geocoderRoot :global(.mw-demo-controls) {
-		top: auto;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		width: auto;
-		max-width: none;
-		max-height: 55vh;
-		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
-		padding-bottom: calc(1.25rem + var(--safe-area-bottom));
-	}
+/* The footer spans the map's bottom edge, under the sheet that rises over it. */
+.geocoderRoot :global(.mw-map-footer) {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 2;
 }

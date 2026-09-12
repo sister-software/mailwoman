@@ -25,7 +25,7 @@
 # centroid flat. If AU is flat OR US/EU regress at 2-4k, KILL (overfit/dilution — the #148 failure mode).
 # NOT promoted without operator GO (model swap).
 # CORPUS: corpus-v0.9.1-multilocale (verbatim) + gnaf-AU 3-order overlay -> R2 -> sync. (#208)
-# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.2-multilocale-au.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.2-multilocale-au.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

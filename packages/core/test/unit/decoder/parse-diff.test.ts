@@ -11,8 +11,9 @@
  *   text of one of them.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { diffParse, isChange, renderParseDiff } from "@mailwoman/core/decoder/parse-diff"
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import { describe, expect, it } from "vitest"
 
 /**

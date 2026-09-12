@@ -1,24 +1,23 @@
-import type { IControl, Map as MapLibreMap } from "maplibre-gl"
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   The layer control: the per-group visibility checkboxes inside the chrome's Layers sheet.
+ *
+ *   Useful while debugging cartography — the protomaps basemap stacks ~70 layers, many of which (POI labels,
+ *   hillshade, building outlines) get in the way of seeing what's underneath. The sheet owns the disclosure, so this
+ *   renders the list and nothing that opens or closes it.
+ *
+ *   Groups come from the layer-ID prefix the protomaps theme uses (`roads_*`, `places_*`, `landuse_*`, `buildings_*`,
+ *   `boundaries`, …), so the control adapts to whatever layers the current style carries. A layer no pattern matches
+ *   falls into a catch-all "Other" group rather than disappearing.
+ */
+
+import { useCallback, useEffect, useState } from "react"
+import type { MapInstance } from "react-map-gl/maplibre"
 
 import styles from "./styles.module.css"
 
-// The control builds its DOM by hand, so the module's classes are read once; a name the sheet does not declare is a
-// defect the empty string makes visible as an unstyled panel rather than a type error at every assignment.
-const { layerToggleCtrl = "", layerToggleHeading = "", layerToggleLabel = "", layerToggleRow = "" } = styles
-
-/**
- * MapLibre custom control: per-group checkboxes that toggle layer visibility. Useful while debugging cartography
- * iterations — the protomaps basemap stacks ~70 layers, many of which (POI labels, hillshade, building outlines) get in
- * the way of seeing what's underneath.
- *
- * Groups are derived heuristically from the layer-ID prefix the protomaps theme uses (`roads_*`, `places_*`,
- * `landuse_*`, `buildings_*`, `boundaries`, …) so the control adapts to whatever layers the current style happens to
- * carry. Layers not matched by any prefix pattern fall into a catch-all "other" group rather than getting silently
- * dropped.
- *
- * Future-proofing for the dashboard: if/when TIGER tracts/blocks land in the map's style, their `tiger-tracts/*` and
- * `tiger-blocks/*` IDs get their own groups automatically.
- */
 // Order matters: first match wins. Labels go first so road-label / earth-label / address-label
 // don't get pulled into the Roads / Landuse buckets.
 /**
@@ -37,7 +36,7 @@ const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "TIGER (tracts)", match: /^tiger-tracts/ },
 	{ name: "TIGER (blocks)", match: /^tiger-blocks/ },
 	// Address-coverage fog overlay (#coverage). Two separate groups so each fog reading gets its own
-	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) OR "honest" (true fraction).
+	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) OR the measured fraction.
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
 	{ name: "Coverage · measured fog", match: /^coverage-honest/ },
 	// Race-by-dot-density overlay (#race-dots). Per-category default-off layers → one checkbox each, so
@@ -49,145 +48,118 @@ const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "Race · Other", match: /^race-dots-other/ },
 ]
 
-export class LayerToggleControl implements IControl {
-	private map: MapLibreMap | null = null
-	private container: HTMLDivElement | null = null
-	private styleListener: (() => void) | null = null
+const ORDERED_NAMES = [...LAYER_GROUP_PATTERNS.map((pattern) => pattern.name), "Other"]
 
-	onAdd(map: MapLibreMap): HTMLElement {
-		this.map = map
-		this.container = document.createElement("div")
-		this.container.className = `maplibregl-ctrl maplibregl-ctrl-group ${layerToggleCtrl}`
-		// Render a placeholder so the panel is visible immediately; replace once layers land.
-		this.renderPlaceholder()
+interface LayerGroup {
+	name: string
+	layerIDs: string[]
+	visible: boolean
+}
 
-		// Re-render whenever the style swaps (theme toggle, etc.) AND when sources finish
-		// loading — styledata can fire before any layers are populated. Guard against the
-		// empty-layers race by skipping renders that would produce 0 buckets.
-		this.styleListener = () => {
-			if (!this.map?.isStyleLoaded()) return
-			const layers = this.map.getStyle()?.layers ?? []
+/**
+ * Bucket the style's layers by prefix. The resolver's own output (`mailwoman-*`) is skipped: it is transient result
+ * geometry rather than part of the basemap, and a visitor switching it off would lose the marker for their answer.
+ */
+function readGroups(map: MapInstance): LayerGroup[] {
+	const layers = map.getStyle()?.layers ?? []
+	const buckets = new Map<string, LayerGroup>()
 
-			if (!layers.length) return
-			this.render()
+	for (const layer of layers) {
+		if (layer.id.startsWith("mailwoman-")) continue
+
+		const name = LAYER_GROUP_PATTERNS.find((pattern) => pattern.match.test(layer.id))?.name ?? "Other"
+		const bucket = buckets.get(name) ?? { name, layerIDs: [], visible: false }
+
+		bucket.layerIDs.push(layer.id)
+
+		// A group reads visible when ANY of its layers is: the per-layer default is "visible", stated only when a
+		// layer opts out.
+		if ((layer.layout && "visibility" in layer.layout ? layer.layout.visibility : "visible") !== "none") {
+			bucket.visible = true
 		}
 
-		map.on("styledata", this.styleListener)
-		map.on("idle", this.styleListener)
-
-		return this.container
+		buckets.set(name, bucket)
 	}
 
-	private renderPlaceholder(): void {
-		if (!this.container) return
-		this.container.replaceChildren()
-		const heading = document.createElement("div")
-		heading.className = layerToggleHeading
-		heading.textContent = "Layers"
-		this.container.appendChild(heading)
-		const spinner = document.createElement("div")
-		spinner.className = layerToggleLabel
-		spinner.textContent = "loading…"
-		this.container.appendChild(spinner)
-	}
+	return ORDERED_NAMES.map((name) => buckets.get(name)).filter((bucket) => bucket !== undefined)
+}
 
-	onRemove(): void {
-		if (this.map && this.styleListener) {
-			this.map.off("styledata", this.styleListener)
-			this.map.off("idle", this.styleListener)
-		}
+export interface LayerToggleControlProps {
+	/**
+	 * The live map. `null` before react-map-gl instantiates it, which is when the control renders nothing.
+	 */
+	map: MapInstance | null
+}
 
-		this.container?.remove()
-		this.container = null
-		this.map = null
-	}
+export function LayerToggleControl({ map }: LayerToggleControlProps) {
+	const [groups, setGroups] = useState<LayerGroup[]>([])
 
-	private render(): void {
-		if (!this.map || !this.container) return
-		const style = this.map.getStyle()
+	useEffect(() => {
+		if (!map) return
 
-		if (!style?.layers) return
+		// `styledata` fires before the layers are populated, so a render on that alone produces zero buckets and would
+		// replace a good reading with an empty one. Both events are subscribed and the empty answer is refused.
+		const sync = () => {
+			if (!map.isStyleLoaded()) return
 
-		// Bucket every layer into a group (catch-all → "Other"). Skip mailwoman-bbox + marker
-		// layers — they're transient resolver output, not part of the basemap.
-		interface Bucket {
-			name: string
-			layerIDs: string[]
-			visible: boolean
-		}
+			const next = readGroups(map)
 
-		const buckets = new Map<string, Bucket>()
-
-		for (const layer of style.layers) {
-			const id = layer.id
-
-			if (id.startsWith("mailwoman-")) continue
-			const group = LAYER_GROUP_PATTERNS.find((g) => g.match.test(id))?.name ?? "Other"
-
-			if (!buckets.has(group)) {
-				buckets.set(group, { name: group, layerIDs: [], visible: true })
-			}
-
-			const bucket = buckets.get(group)!
-			bucket.layerIDs.push(id)
-			// Group is "visible" if at least one of its layers is visible (default vs explicit none).
-			const vis = layer.layout && "visibility" in layer.layout ? layer.layout["visibility"] : "visible"
-
-			if (vis === "none") {
-				// keep bucket.visible if any other layer in the group is visible; flip later
-			} else {
-				bucket.visible = true
+			if (next.length) {
+				setGroups(next)
 			}
 		}
 
-		// Re-compute bucket.visible — a group is visible iff ANY of its layers is currently
-		// visible. (Above loop's logic was lossy on the no-layout-visibility case; redo cleanly.)
-		for (const bucket of buckets.values()) {
-			bucket.visible = bucket.layerIDs.some((id) => {
-				const lyr = style.layers.find((l) => l.id === id)
-				const v = lyr?.layout && "visibility" in lyr.layout ? lyr.layout["visibility"] : "visible"
+		map.on("styledata", sync)
+		map.on("idle", sync)
+		// The map is usually already idle when this control mounts, and an idle map sends nothing. Asking for one more
+		// frame produces the `idle` that reads the first set of groups, so the reading arrives from an event rather
+		// than from a write during the effect.
+		map.triggerRepaint()
 
-				return v !== "none"
-			})
+		return () => {
+			map.off("styledata", sync)
+			map.off("idle", sync)
 		}
+	}, [map])
 
-		this.container.replaceChildren()
-		const heading = document.createElement("div")
-		heading.className = layerToggleHeading
-		heading.textContent = "Layers"
-		this.container.appendChild(heading)
+	const toggle = useCallback(
+		(group: LayerGroup) => {
+			if (!map) return
 
-		// Stable display order: pattern order first, then "Other".
-		const orderedNames = [...LAYER_GROUP_PATTERNS.map((g) => g.name), "Other"]
+			const visibility = group.visible ? "none" : "visible"
 
-		for (const name of orderedNames) {
-			const bucket = buckets.get(name)
-
-			if (!bucket) continue
-			const row = document.createElement("label")
-			row.className = layerToggleRow
-			const cb = document.createElement("input")
-			cb.type = "checkbox"
-			cb.checked = bucket.visible
-
-			cb.addEventListener("change", () => {
-				const visibility = cb.checked ? "visible" : "none"
-
-				for (const layerID of bucket.layerIDs) {
-					try {
-						this.map?.setLayoutProperty(layerID, "visibility", visibility)
-					} catch {
-						// layer disappeared between render and toggle; ignore
-					}
+			for (const layerID of group.layerIDs) {
+				// A layer can leave the style between the read and the click; the group's other layers still switch.
+				try {
+					map.setLayoutProperty(layerID, "visibility", visibility)
+				} catch {
+					continue
 				}
-			})
+			}
 
-			row.appendChild(cb)
-			const label = document.createElement("span")
-			label.className = layerToggleLabel
-			label.textContent = `${name} (${bucket.layerIDs.length})`
-			row.appendChild(label)
-			this.container.appendChild(row)
-		}
-	}
+			setGroups((current) =>
+				current.map((entry) => (entry.name === group.name ? { ...entry, visible: !entry.visible } : entry))
+			)
+		},
+		[map]
+	)
+
+	if (!map) return null
+
+	return (
+		<div className={styles.layerTogglePanel}>
+			<p className="mw-map-sheet__hint">
+				Groups of the basemap's ~70 layers. Switching one off hides every layer in it; the resolver's own marker and
+				outline are not listed, because losing them would lose the answer.
+			</p>
+
+			{groups.map((group) => (
+				<label key={group.name} className={styles.layerToggleRow}>
+					<input type="checkbox" checked={group.visible} onChange={() => toggle(group)} />
+					<span className={styles.layerToggleLabel}>{group.name}</span>
+					<span className={styles.layerToggleCount}>{group.layerIDs.length}</span>
+				</label>
+			))}
+		</div>
+	)
 }

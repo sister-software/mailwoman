@@ -37,7 +37,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { $ } from "zx"
 
-import { oaResolverEval } from "#eval-harness/oa-resolver-eval"
+import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 
 /**
  * The PIP-containment metric runs as a child so its own `--json` sidecar contract is exercised unchanged.
@@ -110,7 +110,7 @@ async function main() {
 	const US_HELD_REGIONS = ["VT", "WY", "ND"] // corpus defaultHoldouts() for US
 	const TRUST_FLOOR = 1000
 
-	// --- build the US held-out slice (leakage-free: never in training) ---
+	// Build the leakage-free US held-out slice.
 	const US_SLICE = `${TMP}/us-heldout.jsonl`
 	await writeLocalTextFile("", US_SLICE)
 

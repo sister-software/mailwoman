@@ -31,7 +31,7 @@
 #   win ABSENT + guard HOLDS -> 3-digit too narrow; the win needs 4-digit (widen to 100-9999, re-probe).
 #
 # NOT A SHIP. A PASS justifies an 8k. Promotion is the operator's act.
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.5.2-numsplice3-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.2-numsplice3-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment

@@ -16,6 +16,7 @@ import { moduleSpecifiers } from "#ts-ast"
 
 const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const vitestSuites = new Set(["full", "integration", "unit"])
+const COLOCATED_TEST_WORKSPACES = new Set(["packages/corpus"])
 /**
  * A workspace that carries a `playwright.config.ts` runs Playwright suites too, and those live beside the vitest ones:
  * `browser` for page specs, `build` for a build-health project, `e2e` for the fixtures they share. Vitest's root
@@ -24,13 +25,14 @@ const vitestSuites = new Set(["full", "integration", "unit"])
 const playwrightSuites = new Set([...vitestSuites, "browser", "build", "e2e"])
 
 /**
- * The `test-contract` check: one error per test file outside `test/{unit,integration,full}/` and per relative import a
- * test makes.
+ * The `test-contract` check: one error per test file outside its workspace's declared test layout and per relative
+ * import a test makes. Corpus tests live next to their modules under `lib/`; other workspaces use
+ * `test/{unit,integration,full}/`.
  */
 export const testContractCheck: RepoCheck = {
 	id: "test-contract",
 	description:
-		"Every workspace test sits under test/{unit,integration,full}/ and imports the package by its contract; a relative import names a test helper only.",
+		"Workspace tests use their declared layout and import the package by its contract; a relative import names a test helper only.",
 	async run(context) {
 		const root = context.repoRoot
 		const diagnostics: Diagnostic[] = []
@@ -38,6 +40,7 @@ export const testContractCheck: RepoCheck = {
 
 		for (const workspace of await readWorkspaceDirectories(root)) {
 			const workspaceRoot = resolvePath(root, workspace)
+			const colocatedTests = COLOCATED_TEST_WORKSPACES.has(workspace)
 			const runsPlaywright = await pathExists(resolvePath(workspaceRoot, "playwright.config.ts"))
 			const allowedSuites = runsPlaywright ? playwrightSuites : vitestSuites
 
@@ -47,10 +50,16 @@ export const testContractCheck: RepoCheck = {
 				const workspaceRelative = relative(workspaceRoot, filePath).split(sep)
 				const file = relative(root, filePath)
 
-				if (workspaceRelative[0] !== "test" || !allowedSuites.has(workspaceRelative[1] ?? "")) {
+				const isInDeclaredLayout = colocatedTests
+					? workspaceRelative[0] === "lib"
+					: workspaceRelative[0] === "test" && allowedSuites.has(workspaceRelative[1] ?? "")
+
+				if (!isInDeclaredLayout) {
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
-						message: `tests belong under test/${runsPlaywright ? "{unit,integration,full,browser,build,e2e}" : "{unit,integration,full}"}/`,
+						message: colocatedTests
+							? "corpus tests belong beside their modules under lib/"
+							: `tests belong under test/${runsPlaywright ? "{unit,integration,full,browser,build,e2e}" : "{unit,integration,full}"}/`,
 						file,
 					})
 				}

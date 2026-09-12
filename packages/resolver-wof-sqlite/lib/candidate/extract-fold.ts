@@ -8,9 +8,9 @@
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
-import { CANDIDATE_ANCESTOR_COLUMNS, CANDIDATE_ANCESTOR_TABLE } from "#candidate-ancestors-schema"
-import type { CandidateDatabase } from "#candidate-schema"
+import { CANDIDATE_ANCESTOR_COLUMNS, CANDIDATE_ANCESTOR_TABLE } from "#candidate/ancestors/schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
+import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
@@ -172,7 +172,7 @@ export function foldExtract(ctx: {
 
 	out.exec("COMMIT")
 
-	// --- pass 4b: postcode ALIAS names (#1495) ---
+	// Fold postcode aliases into the staged candidate names.
 	//
 	// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
 	// the extract's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything

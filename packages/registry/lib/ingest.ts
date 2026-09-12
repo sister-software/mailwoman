@@ -69,10 +69,10 @@ export function streamRows(
 	opts: { delimiter?: Delimiter } = {}
 ): AsyncSequence<Record<string, string>> {
 	return CSVSpliterator.fromAsync<Record<string, string>>(source, {
-		mode: "object",
 		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(source)],
+		// A {@linkcode ColumnMapping} names columns in the PUBLISHER's spelling — `Facility Name`, not
+		// `facility_name` — so the keys must arrive as the file writes them. The reader's default normalizes.
 		normalizeKeys: false,
-		enableQuoteHandling: true,
 	})
 }
 

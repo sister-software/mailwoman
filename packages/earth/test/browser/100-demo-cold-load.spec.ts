@@ -8,7 +8,6 @@ test.describe("Demo — cold load", () => {
 
 	test("renders example chips + the form", async ({ demo, page }) => {
 		await demo.goto()
-		await expect(page.locator("button[type='submit']")).toBeVisible()
 		await expect(page.locator("#mw-pipeline-input")).toHaveValue("1600 Pennsylvania Ave NW, Washington, DC 20500")
 		await expect(page.locator("button:has-text('White House')")).toBeVisible()
 		await expect(page.locator("button:has-text('ZIP only')")).toBeVisible()

@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/codex",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "Per-address-system postal reference data + branded types (USPS street suffixes, US ZIP codes). Pure, zero-runtime-dep — the shared canonical home for postal-system primitives the parser, resolver, and synthesis layers all reach for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -23,6 +23,8 @@
 		"!**/*.test.tsx",
 		"lib/us/street-suffix.json",
 		"out/us/street-suffix.json",
+		"lib/postcode/shapes.json",
+		"out/postcode/shapes.json",
 		"!test/**"
 	],
 	"type": "module",
@@ -85,10 +87,45 @@
 			"node": "./lib/nz/index.ts",
 			"default": "./out/nz/index.js"
 		},
-		"./tools": {
-			"types": "./out/tools/index.d.ts",
-			"node": "./lib/tools/index.ts",
-			"default": "./out/tools/index.js"
+		"./address-layout": {
+			"types": "./out/address/layout.d.ts",
+			"node": "./lib/address/layout.ts",
+			"default": "./out/address/layout.js"
+		},
+		"./address-layouts": {
+			"types": "./out/address/layouts/index.d.ts",
+			"node": "./lib/address/layouts/index.ts",
+			"default": "./out/address/layouts/index.js"
+		},
+		"./address-layouts-generated": {
+			"types": "./out/address/layouts/generated.d.ts",
+			"node": "./lib/address/layouts/generated.ts",
+			"default": "./out/address/layouts/generated.js"
+		},
+		"./address-render": {
+			"types": "./out/address/render.d.ts",
+			"node": "./lib/address/render.ts",
+			"default": "./out/address/render.js"
+		},
+		"./address-format": {
+			"types": "./out/address/format.d.ts",
+			"node": "./lib/address/format.ts",
+			"default": "./out/address/format.js"
+		},
+		"./address-key": {
+			"types": "./out/address/key.d.ts",
+			"node": "./lib/address/key.ts",
+			"default": "./out/address/key.js"
+		},
+		"./component": {
+			"types": "./out/component.d.ts",
+			"node": "./lib/component.ts",
+			"default": "./out/component.js"
+		},
+		"./placetype-map": {
+			"types": "./out/placetype-map.d.ts",
+			"node": "./lib/placetype-map.ts",
+			"default": "./out/placetype-map.js"
 		},
 		"./normalize": {
 			"types": "./out/normalize.d.ts",
@@ -106,19 +143,24 @@
 			"default": "./out/it/index.js"
 		},
 		"./address-system-conventions": {
-			"types": "./out/address-system-conventions.d.ts",
-			"node": "./lib/address-system-conventions.ts",
-			"default": "./out/address-system-conventions.js"
+			"types": "./out/address/system-conventions.d.ts",
+			"node": "./lib/address/system-conventions.ts",
+			"default": "./out/address/system-conventions.js"
 		},
 		"./level-semantics": {
 			"types": "./out/level-semantics.d.ts",
 			"node": "./lib/level-semantics.ts",
 			"default": "./out/level-semantics.js"
 		},
+		"./postcode-shapes": {
+			"types": "./out/postcode/shapes.d.ts",
+			"node": "./lib/postcode/shapes.ts",
+			"default": "./out/postcode/shapes.js"
+		},
 		"./postcode-systems": {
-			"types": "./out/postcode-systems.d.ts",
-			"node": "./lib/postcode-systems.ts",
-			"default": "./out/postcode-systems.js"
+			"types": "./out/postcode/systems.d.ts",
+			"node": "./lib/postcode/systems.ts",
+			"default": "./out/postcode/systems.js"
 		},
 		"./us/floor-designator": {
 			"types": "./out/us/floor-designator.d.ts",
@@ -131,9 +173,9 @@
 			"default": "./out/us/state.js"
 		},
 		"./us/street-suffix": {
-			"types": "./out/us/street-suffix.d.ts",
-			"node": "./lib/us/street-suffix.ts",
-			"default": "./out/us/street-suffix.js"
+			"types": "./out/us/street/suffix.d.ts",
+			"node": "./lib/us/street/suffix.ts",
+			"default": "./out/us/street/suffix.js"
 		},
 		"./us/unit-designator": {
 			"types": "./out/us/unit-designator.d.ts",
@@ -153,8 +195,6 @@
 		"type-fest": "^5.9.0"
 	},
 	"devDependencies": {
-		"@mailwoman/annotations": "workspace:*",
-		"@mailwoman/core": "workspace:*",
-		"path-ts": "^2.3.0"
+		"@mailwoman/annotations": "workspace:*"
 	}
 }

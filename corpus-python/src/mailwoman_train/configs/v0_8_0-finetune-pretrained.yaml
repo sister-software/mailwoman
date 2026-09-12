@@ -16,7 +16,7 @@
 #     so the comparison reflects the parser the product actually uses.
 #
 # Launch:
-#   modal run -d scripts/modal/train_remote.py \
+#   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0_8_0-finetune-pretrained.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 

@@ -46,7 +46,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { isFile, pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { isFile, pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
@@ -57,6 +57,7 @@ import { $public } from "@mailwoman/neural/env"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { dirname, join } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -108,7 +109,7 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 // There is deliberately NO `haveGBWofDB` guard any more (2026-08-05): en-gb stopped building
 // postcode-gb.bin, so the GB WOF postcode extract is no longer a precondition for any test here — and
 // a guard that names a file nothing reads skips tests for a reason that no longer exists.
-const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
+const CLI_PATH = workspacePath("mailwoman", "out", "cli", "index.js")
 const haveCLI = await pathExists(CLI_PATH)
 
 // The en-gb smoke's link-dev-weights run ALSO shells out to `gazetteer pair-index` to build
@@ -597,7 +598,7 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
 			await makeDirectories(fakePackageDir)
 
-			for (const entry of await readDirectory(packageDir)) {
+			for await (const entry of Globerator.from("*", { cwd: packageDir, absolute: false })) {
 				const source = join(packageDir, entry)
 
 				// NEVER symlink the artifact this test is about to overwrite. `writeFileSync` FOLLOWS a symlink, so

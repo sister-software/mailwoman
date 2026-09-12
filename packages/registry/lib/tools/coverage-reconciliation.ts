@@ -95,7 +95,7 @@ export async function coverageReconciliation(
 	const OUT_GEOJSON = options.outGeojson || ""
 	const SPECS = buildSpecs(`${SOURCES}`, STATE)
 
-	// --- Ingest each source into one combined record set (geo-first resolve). ---
+	// Ingest every source into one combined, geo-resolved record set.
 	const rawBySource = new Map<string, Record<string, string>[]>()
 
 	for (const spec of SPECS) {
@@ -154,7 +154,7 @@ export async function coverageReconciliation(
 	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS baseline for this cross-dataset join.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
-	// --- Reconcile across sources via the shared @mailwoman/registry library — the SAME code path as
+	// Reconcile sources through the shared @mailwoman/registry code path.
 	// `mailwoman registry --reconcile`, so the script and the CLI can't drift. ---
 	const config: ReconcileConfig = { eligibilitySources: [...ELIGIBILITY], fundingSources: [...FUNDING] }
 	const result = reconcileCoverage(entities, config)

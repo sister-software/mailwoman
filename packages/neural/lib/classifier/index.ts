@@ -10,13 +10,13 @@
  */
 
 import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
+import type { ComponentTag } from "@mailwoman/codex/component"
 import {
 	buildAddressTree,
 	decodeAsJSON,
 	decodeAsTuples,
 	decodeAsXML,
 	type AddressTree,
-	type ComponentTag,
 	type DecoderToken,
 	type SerializeJSONOpts,
 	type SerializeTuplesOpts,

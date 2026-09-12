@@ -26,7 +26,7 @@
 #              MET — no further head iteration. Next moves are upstream (conventions loss-mask /
 #              collapse_to_active) or the locality-mapped fallback. Two variables, two zeros = stop.
 #
-# Launch: modal run -d corpus-python/modal/train_remote.py --config v3.10.1-gb-probe2.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.10.1-gb-probe2.yaml --resume none
 #
 # --- original v3.10.0-gb-probe header follows (provenance retained) ---
 # Clone of v3.8.5-latam-8k.yaml (the shipped v385/6.6.0 CA/MX Overture recipe) with EXACTLY the

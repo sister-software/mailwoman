@@ -124,7 +124,7 @@ Run for _every_ candidate, regardless of what you changed (this is what
 | Per-locale floors   | `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32                             |
 | German native order | `packages/mailwoman/lib/dev-tools/de-order-eval.run.ts`                                                    | NO-REGRESSION                                        |
 | Unit retention      | unit-real designators eval                                                                                 | ≥ 88                                                 |
-| Affix split         | `packages/mailwoman/lib/dev-tools/score-affix.run.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold the spec's floors                               |
+| Affix split         | `packages/mailwoman/lib/dev-tools/score/affix.run.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold the spec's floors                               |
 | Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                                                       | presets stable                                       |
 | Geographic accuracy | `packages/mailwoman/lib/dev-tools/honest-eval.run.ts`                                                      | region-match + coord p50/p90 + PIP hold              |
 | Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                                                    | no new drift; xfails tracked                         |

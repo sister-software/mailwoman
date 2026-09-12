@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/filer",
-	"version": "9.4.0",
+	"version": "10.0.0",
 	"description": "Identity-crosswalk infrastructure for FCC broadband filers — builds and reads filer.db, linking FRN/Form 499/BDC provider_id/holding & management company identifiers with provenance and temporal (asOf) scoping (Phase 3a)",
 	"keywords": [
 		"broadband",
@@ -78,19 +78,19 @@
 			"default": "./out/schema.js"
 		},
 		"./sdk/build-filer": {
-			"types": "./out/sdk/build-filer.d.ts",
-			"node": "./lib/sdk/build-filer.ts",
-			"default": "./out/sdk/build-filer.js"
+			"types": "./out/sdk/build/filer.d.ts",
+			"node": "./lib/sdk/build/filer.ts",
+			"default": "./out/sdk/build/filer.js"
 		},
 		"./sdk/form499-notes": {
-			"types": "./out/sdk/form499-notes.d.ts",
-			"node": "./lib/sdk/form499-notes.ts",
-			"default": "./out/sdk/form499-notes.js"
+			"types": "./out/sdk/form499/notes.d.ts",
+			"node": "./lib/sdk/form499/notes.ts",
+			"default": "./out/sdk/form499/notes.js"
 		},
 		"./sdk/form499": {
-			"types": "./out/sdk/form499.d.ts",
-			"node": "./lib/sdk/form499.ts",
-			"default": "./out/sdk/form499.js"
+			"types": "./out/sdk/form499/index.d.ts",
+			"node": "./lib/sdk/form499/index.ts",
+			"default": "./out/sdk/form499/index.js"
 		},
 		"./frn": {
 			"types": "./out/frn.d.ts",
@@ -108,9 +108,9 @@
 			"default": "./out/sdk/cik-corroboration.js"
 		},
 		"./sdk/edgar-filings": {
-			"types": "./out/sdk/edgar-filings.d.ts",
-			"node": "./lib/sdk/edgar-filings.ts",
-			"default": "./out/sdk/edgar-filings.js"
+			"types": "./out/sdk/edgar/filings/index.d.ts",
+			"node": "./lib/sdk/edgar/filings/index.ts",
+			"default": "./out/sdk/edgar/filings/index.js"
 		},
 		"./sdk/cluster-filers": {
 			"types": "./out/sdk/cluster-filers.d.ts",
@@ -118,19 +118,19 @@
 			"default": "./out/sdk/cluster-filers.js"
 		},
 		"./sdk/cores-client": {
-			"types": "./out/sdk/cores-client.d.ts",
-			"node": "./lib/sdk/cores-client.ts",
-			"default": "./out/sdk/cores-client.js"
+			"types": "./out/sdk/cores/client.d.ts",
+			"node": "./lib/sdk/cores/client.ts",
+			"default": "./out/sdk/cores/client.js"
 		},
 		"./sdk/exhibit21": {
-			"types": "./out/sdk/exhibit21.d.ts",
-			"node": "./lib/sdk/exhibit21.ts",
-			"default": "./out/sdk/exhibit21.js"
+			"types": "./out/sdk/exhibit21/index.d.ts",
+			"node": "./lib/sdk/exhibit21/index.ts",
+			"default": "./out/sdk/exhibit21/index.js"
 		},
 		"./sdk/edgar-ingest": {
-			"types": "./out/sdk/edgar-ingest.d.ts",
-			"node": "./lib/sdk/edgar-ingest.ts",
-			"default": "./out/sdk/edgar-ingest.js"
+			"types": "./out/sdk/edgar/ingest.d.ts",
+			"node": "./lib/sdk/edgar/ingest.ts",
+			"default": "./out/sdk/edgar/ingest.js"
 		},
 		"./sdk/family-id": {
 			"types": "./out/sdk/family-id.d.ts",
@@ -148,9 +148,9 @@
 			"default": "./out/filer-lookup.js"
 		},
 		"./sdk/form499-workbook": {
-			"types": "./out/sdk/form499-workbook.d.ts",
-			"node": "./lib/sdk/form499-workbook.ts",
-			"default": "./out/sdk/form499-workbook.js"
+			"types": "./out/sdk/form499/workbook.d.ts",
+			"node": "./lib/sdk/form499/workbook.ts",
+			"default": "./out/sdk/form499/workbook.js"
 		},
 		"./sdk/sec-client": {
 			"types": "./out/sdk/sec-client.d.ts",
@@ -158,24 +158,24 @@
 			"default": "./out/sdk/sec-client.js"
 		},
 		"./tools/linkage-corpus": {
-			"types": "./out/tools/linkage-corpus.d.ts",
-			"node": "./lib/tools/linkage-corpus.ts",
-			"default": "./out/tools/linkage-corpus.js"
+			"types": "./out/tools/linkage/corpus.d.ts",
+			"node": "./lib/tools/linkage/corpus.ts",
+			"default": "./out/tools/linkage/corpus.js"
 		},
 		"./tools/linkage-eval": {
-			"types": "./out/tools/linkage-eval.d.ts",
-			"node": "./lib/tools/linkage-eval.ts",
-			"default": "./out/tools/linkage-eval.js"
+			"types": "./out/tools/linkage/eval.d.ts",
+			"node": "./lib/tools/linkage/eval.ts",
+			"default": "./out/tools/linkage/eval.js"
 		},
 		"./tools/linkage-metrics": {
-			"types": "./out/tools/linkage-metrics.d.ts",
-			"node": "./lib/tools/linkage-metrics.ts",
-			"default": "./out/tools/linkage-metrics.js"
+			"types": "./out/tools/linkage/metrics.d.ts",
+			"node": "./lib/tools/linkage/metrics.ts",
+			"default": "./out/tools/linkage/metrics.js"
 		},
 		"./sdk/build/edgar-match": {
-			"types": "./out/sdk/build/edgar-match.d.ts",
-			"node": "./lib/sdk/build/edgar-match.ts",
-			"default": "./out/sdk/build/edgar-match.js"
+			"types": "./out/sdk/build/edgar/match.d.ts",
+			"node": "./lib/sdk/build/edgar/match.ts",
+			"default": "./out/sdk/build/edgar/match.js"
 		},
 		"./sdk/build/form499-rows": {
 			"types": "./out/sdk/build/form499-rows.d.ts",
@@ -203,7 +203,7 @@
 		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^6.4.1",
+		"spliterator": "^7.5.1",
 		"type-fest": "^5.9.0",
 		"zod": "^4.5.4"
 	},

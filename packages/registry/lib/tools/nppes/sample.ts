@@ -96,7 +96,7 @@ export async function buildNPPESStateSamples(
 ): Promise<{ byState: Map<string, NPPESStateSample>; addressFrequency: TermFrequencyTable }> {
 	const { registryPath, otherNamesPath, states, maxNpisPerState } = options
 
-	// --- Phase A: the variation set — NPIs that carry ≥1 alternate organization name. ---
+	// Select NPIs with at least one alternate organization name.
 	report?.("[A] streaming other-names…")
 	const altNames = new Map<string, string[]>()
 
@@ -117,7 +117,7 @@ export async function buildNPPESStateSamples(
 
 	report?.(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
-	// --- Phase B: ONE full registry pass — build the GLOBAL address-frequency table (every practice
+	// Make one full registry pass to build the global address-frequency table.
 	// address, so the sharing structure is corpus-wide, not sample-biased) AND collect every state's sample. ---
 	report?.(`[B] full registry pass: address-frequency table + ${maxNpisPerState} × ${states.join("/")} sample…`)
 

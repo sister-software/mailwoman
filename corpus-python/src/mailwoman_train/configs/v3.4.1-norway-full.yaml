@@ -17,7 +17,7 @@
 #     fix and the street->locality defect is deeper than the YAML bug. That would be a genuine finding.
 #
 # Promotion is the operator's act. Launch:
-#   modal run -d corpus-python/modal/train_remote.py --config v3.4.1-norway-full.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v3.4.1-norway-full.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment

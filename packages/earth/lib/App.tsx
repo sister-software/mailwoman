@@ -12,15 +12,16 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/fonts.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
-import { Geocoder } from "@mailwoman/react/map"
+import { Geocoder, type GeocoderPanels } from "@mailwoman/react/map"
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
+import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
 import { PRODUCTION_CONFIG } from "#config"
-import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch } from "#routes"
-import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use-browser-geolocation"
-import { useGeocoderRuntime } from "#runtime/use-geocoder-runtime"
+import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch, searchWithQuery } from "#routes"
+import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geolocation"
+import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
 
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
 import { useGeocoderPanels } from "./panels/GeocoderPanels.tsx"
@@ -70,14 +71,44 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 	}
 
 	return (
-		<Geocoder runtime={handle.runtime} panels={panels} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+		<Geocoder
+			runtime={handle.runtime}
+			panels={panels}
+			defaultAddress={query ?? DEFAULT_ADDRESS}
+			presets={PRESETS}
+			// `/debug` exists to show the model machinery, so it opens the disclosure the default view collapses.
+			developer={route === Route.Debug}
+			onSubmitQuery={writeQueryToURL}
+		/>
 	)
+}
+
+/**
+ * Put the submitted query in the address bar, so a result can be linked and a reload returns to it.
+ *
+ * `replaceState`, not `pushState`: a search refines the same view rather than opening a new one, and pushing would make
+ * the back button walk every keystroke-completed query a visitor tried before leaving the page.
+ */
+function writeQueryToURL(query: string): void {
+	history.replaceState(history.state, "", searchWithQuery(new URL(location.href), query))
+}
+
+/**
+ * The app's identity and source credits. They belong to the page rather than to the runtime, so the canned runtime the
+ * smoke and the stories mount shows the same footer the real one does.
+ */
+const IDENTITY_PANELS: GeocoderPanels = {
+	footer: (
+		<MapFooter identity={<strong>Mailwoman Earth</strong>} attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]} />
+	),
 }
 
 function FakeGeocoder({ query }: { query: string | null }) {
 	const runtime = useMemo(() => makeFakeGeocoderRuntime(), [])
 
-	return <Geocoder runtime={runtime} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+	return (
+		<Geocoder runtime={runtime} panels={IDENTITY_PANELS} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+	)
 }
 
 export function App() {

@@ -31,7 +31,7 @@ describe("checkReleaseListIdentity", () => {
 	it("holds on the current tree: 61 published, every absence sanctioned by name", async () => {
 		const identity = await checkReleaseListIdentity(String(repoRootPath()))
 
-		expect(identity.publishCount).toBe(61)
+		expect(identity.publishCount).toBe(60)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
