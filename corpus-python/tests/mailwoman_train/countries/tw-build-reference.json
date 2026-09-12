@@ -1,0 +1,580 @@
+{
+	"README": [
+		"Pins one seeded Taiwan build across a refactor.",
+		"Regenerate: uv run python -m tests.mailwoman_train.countries.test_tw_build_parity",
+		"Fixture: SOURCE_ROWS in the test beside this file — an Overture-TW-shaped parquet carrying the",
+		"  shapes the renderers branch on, not a sample of the source.",
+		"",
+		"train / val: every rendered row as raw + register + the span triple, in emission order.",
+		"  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole slice.",
+		"board: the held-out 鄉鎮市區 rows, each carrying its coordinate and routing fields.",
+		"centroids: the per-district means, which are what the board rows are scored against.",
+		"report: the build report with the source path removed, since that is the fixture's tmp dir."
+	],
+	"train": [
+		{
+			"raw": "台灣 臺中市 北區 三民路三段 129號",
+			"register": "spaced",
+			"span_starts": [0, 3, 7, 10, 16],
+			"span_ends": [2, 6, 9, 15, 20],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "中正區館前路8號",
+			"register": "no_region",
+			"span_starts": [0, 3, 6],
+			"span_ends": [3, 6, 8],
+			"span_tags": ["subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣桃園區復興路195號",
+			"register": "no_region",
+			"span_starts": [0, 2, 5, 8],
+			"span_ends": [2, 5, 8, 12],
+			"span_tags": ["country", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣臺中市西屯區何厝里臺灣大道三段３０１號",
+			"register": "official",
+			"span_starts": [0, 2, 5, 8, 11, 17],
+			"span_ends": [2, 5, 8, 11, 17, 21],
+			"span_tags": ["country", "region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "新北市三重區五谷里重新路五段６０９號",
+			"register": "official",
+			"span_starts": [0, 3, 6, 9, 14],
+			"span_ends": [3, 6, 9, 14, 18],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "新北市 板橋區 文化路一段 266號",
+			"register": "spaced",
+			"span_starts": [0, 4, 8, 14],
+			"span_ends": [3, 7, 13, 18],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "高雄市 前金區 中正四路 211號",
+			"register": "spaced",
+			"span_starts": [0, 4, 8, 13],
+			"span_ends": [3, 7, 12, 17],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "桃園市桃園區中路里復興路１９５號",
+			"register": "official",
+			"span_starts": [0, 3, 6, 9, 12],
+			"span_ends": [3, 6, 9, 12, 16],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "臺南市 中西區 民權路二段 30號",
+			"register": "spaced",
+			"span_starts": [0, 4, 8, 14],
+			"span_ends": [3, 7, 13, 17],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣新竹市東區光復里光復路一段８９號",
+			"register": "official",
+			"span_starts": [0, 2, 5, 7, 10, 15],
+			"span_ends": [2, 5, 7, 10, 15, 18],
+			"span_tags": ["country", "region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "高雄市前金區自強里中正四路２１１號",
+			"register": "official",
+			"span_starts": [0, 3, 6, 9, 13],
+			"span_ends": [3, 6, 9, 13, 17],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "中西區民權路二段30號",
+			"register": "no_region",
+			"span_starts": [0, 3, 8],
+			"span_ends": [3, 8, 11],
+			"span_tags": ["subregion", "street", "house_number"]
+		},
+		{
+			"raw": "臺北市大安區新生南路三段之2號",
+			"register": "no_village",
+			"span_starts": [0, 3, 6, 12],
+			"span_ends": [3, 6, 12, 15],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣桃園市桃園區中路里復興路１９５號",
+			"register": "official",
+			"span_starts": [0, 2, 5, 8, 11, 14],
+			"span_ends": [2, 5, 8, 11, 14, 18],
+			"span_tags": ["country", "region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "中西區民權路二段30號",
+			"register": "no_region",
+			"span_starts": [0, 3, 8],
+			"span_ends": [3, 8, 11],
+			"span_tags": ["subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣臺北市大安區龍泉里新生南路三段之２號",
+			"register": "official",
+			"span_starts": [0, 2, 5, 8, 11, 17],
+			"span_ends": [2, 5, 8, 11, 17, 20],
+			"span_tags": ["country", "region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "台灣新北市板橋區文化路一段266號",
+			"register": "no_village",
+			"span_starts": [0, 2, 5, 8, 13],
+			"span_ends": [2, 5, 8, 13, 17],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "臺中市 北區 三民路三段 129號",
+			"register": "spaced",
+			"span_starts": [0, 4, 7, 13],
+			"span_ends": [3, 6, 12, 17],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "中西區民權路二段30號",
+			"register": "no_region",
+			"span_starts": [0, 3, 8],
+			"span_ends": [3, 8, 11],
+			"span_tags": ["subregion", "street", "house_number"]
+		},
+		{
+			"raw": "臺南市中西區赤崁里民權路二段３０號",
+			"register": "official",
+			"span_starts": [0, 3, 6, 9, 14],
+			"span_ends": [3, 6, 9, 14, 17],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "台灣臺北市大安區新生南路三段之2號5樓",
+			"register": "with_unit",
+			"span_starts": [0, 2, 5, 8, 14, 17],
+			"span_ends": [2, 5, 8, 14, 17, 19],
+			"span_tags": ["country", "region", "subregion", "street", "house_number", "unit"]
+		},
+		{
+			"raw": "新竹市東區光復路一段89號",
+			"register": "no_village",
+			"span_starts": [0, 3, 5, 10],
+			"span_ends": [3, 5, 10, 13],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "新北市三重區重新路五段609號12樓",
+			"register": "with_unit",
+			"span_starts": [0, 3, 6, 11, 15],
+			"span_ends": [3, 6, 11, 15, 18],
+			"span_tags": ["region", "subregion", "street", "house_number", "unit"]
+		},
+		{
+			"raw": "桃園區復興路195號",
+			"register": "no_region",
+			"span_starts": [0, 3, 6],
+			"span_ends": [3, 6, 10],
+			"span_tags": ["subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣 臺中市 北區 三民路三段 129號",
+			"register": "spaced",
+			"span_starts": [0, 3, 7, 10, 16],
+			"span_ends": [2, 6, 9, 15, 20],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣 臺北市 大安區 新生南路三段 之2號",
+			"register": "spaced",
+			"span_starts": [0, 3, 7, 11, 18],
+			"span_ends": [2, 6, 10, 17, 21],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "板橋區文化路一段266號",
+			"register": "no_region",
+			"span_starts": [0, 3, 8],
+			"span_ends": [3, 8, 12],
+			"span_tags": ["subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣高雄市前金區自強里中正四路２１１號",
+			"register": "official",
+			"span_starts": [0, 2, 5, 8, 11, 15],
+			"span_ends": [2, 5, 8, 11, 15, 19],
+			"span_tags": ["country", "region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "新竹市東區光復里光復路一段８９號",
+			"register": "official",
+			"span_starts": [0, 3, 5, 8, 13],
+			"span_ends": [3, 5, 8, 13, 16],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "台灣臺北市中正區重慶南路一段122號",
+			"register": "no_village",
+			"span_starts": [0, 2, 5, 8, 14],
+			"span_ends": [2, 5, 8, 14, 18],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"]
+		}
+	],
+	"val": [
+		{
+			"raw": "台灣 高雄市 苓雅區 四維三路 6號",
+			"register": "spaced",
+			"span_starts": [0, 3, 7, 11, 16],
+			"span_ends": [2, 6, 10, 15, 18],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "台灣桃園市桃園區中路里復興路１９５號",
+			"register": "official",
+			"span_starts": [0, 2, 5, 8, 11, 14],
+			"span_ends": [2, 5, 8, 11, 14, 18],
+			"span_tags": ["country", "region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "臺中市西屯區臺灣大道三段301號",
+			"register": "no_village",
+			"span_starts": [0, 3, 6, 12],
+			"span_ends": [3, 6, 12, 16],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "新竹市東區光復里光復路一段８９號",
+			"register": "official",
+			"span_starts": [0, 3, 5, 8, 13],
+			"span_ends": [3, 5, 8, 13, 16],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"]
+		},
+		{
+			"raw": "高雄市苓雅區四維三路6號",
+			"register": "no_village",
+			"span_starts": [0, 3, 6, 10],
+			"span_ends": [3, 6, 10, 12],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"raw": "東區光復路一段89號",
+			"register": "no_region",
+			"span_starts": [0, 2, 7],
+			"span_ends": [2, 7, 10],
+			"span_tags": ["subregion", "street", "house_number"]
+		}
+	],
+	"board": [
+		{
+			"raw": "新北市中和區安平里中和路１００號",
+			"span_starts": [0, 3, 6, 9, 12],
+			"span_ends": [3, 6, 9, 12, 16],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"],
+			"register": "official",
+			"region": "新北市",
+			"city": "中和區",
+			"district": "安平里",
+			"street": "中和路",
+			"number": "100號",
+			"unit": "6樓",
+			"lon": 120.003,
+			"lat": 23.003
+		},
+		{
+			"raw": "台灣臺中市豐原區中正路45號",
+			"span_starts": [0, 2, 5, 8, 11],
+			"span_ends": [2, 5, 8, 11, 14],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"],
+			"register": "no_village",
+			"region": "臺中市",
+			"city": "豐原區",
+			"district": "北陽里",
+			"street": "中正路",
+			"number": "45號",
+			"unit": "",
+			"lon": 120.003,
+			"lat": 23.003
+		},
+		{
+			"raw": "台灣 新北市 中和區 中和路 100號",
+			"span_starts": [0, 3, 7, 11, 15],
+			"span_ends": [2, 6, 10, 14, 19],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"],
+			"register": "spaced",
+			"region": "新北市",
+			"city": "中和區",
+			"district": "安平里",
+			"street": "中和路",
+			"number": "100號",
+			"unit": "6樓",
+			"lon": 120.013,
+			"lat": 23.013
+		},
+		{
+			"raw": "臺中市豐原區中正路45號",
+			"span_starts": [0, 3, 6, 9],
+			"span_ends": [3, 6, 9, 12],
+			"span_tags": ["region", "subregion", "street", "house_number"],
+			"register": "no_village",
+			"region": "臺中市",
+			"city": "豐原區",
+			"district": "北陽里",
+			"street": "中正路",
+			"number": "45號",
+			"unit": "",
+			"lon": 120.013,
+			"lat": 23.013
+		},
+		{
+			"raw": "臺中市豐原區北陽里中正路４５號",
+			"span_starts": [0, 3, 6, 9, 12],
+			"span_ends": [3, 6, 9, 12, 15],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number"],
+			"register": "official",
+			"region": "臺中市",
+			"city": "豐原區",
+			"district": "北陽里",
+			"street": "中正路",
+			"number": "45號",
+			"unit": "",
+			"lon": 120.023,
+			"lat": 23.023
+		},
+		{
+			"raw": "台灣臺中市豐原區中正路45號",
+			"span_starts": [0, 2, 5, 8, 11],
+			"span_ends": [2, 5, 8, 11, 14],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"],
+			"register": "no_village",
+			"region": "臺中市",
+			"city": "豐原區",
+			"district": "北陽里",
+			"street": "中正路",
+			"number": "45號",
+			"unit": "",
+			"lon": 120.043,
+			"lat": 23.043
+		}
+	],
+	"centroids": {
+		"臺北市|中正區": [120.02799999999998, 23.029500000000002],
+		"臺北市|大安區": [120.028, 23.031000000000002],
+		"新北市|板橋區": [120.028, 23.029999999999998],
+		"新北市|三重區": [120.028, 23.029999999999998],
+		"臺中市|西屯區": [120.028, 23.031000000000002],
+		"臺中市|北區": [120.027, 23.029999999999998],
+		"高雄市|前金區": [120.028, 23.029],
+		"高雄市|苓雅區": [120.028, 23.029],
+		"臺南市|中西區": [120.028, 23.029999999999998],
+		"桃園市|桃園區": [120.028, 23.028000000000002],
+		"新竹市|東區": [120.027, 23.029999999999998],
+		"新北市|中和區": [120.028, 23.028000000000002],
+		"臺中市|豐原區": [120.028, 23.028000000000002]
+	},
+	"report": {
+		"seed": 42,
+		"label_set": "stage3-cjk",
+		"source": "overture-tw",
+		"license": "CDLA-Permissive-2.0 (Overture) over CC BY 4.0 per civil-affairs bureau; 政府資料開放授權條款 attribution required",
+		"attribution": {
+			"tw-civil-affairs": 84
+		},
+		"eligible_rows_scanned": 84,
+		"dropped_at_source": {},
+		"per_region_cap": 5,
+		"regions_train": 7,
+		"board_bucket_min": 90,
+		"board_districts": 2,
+		"board_rows": 6,
+		"registers": {
+			"official": 14,
+			"spaced": 9,
+			"no_village": 9,
+			"no_region": 8,
+			"with_unit": 2
+		},
+		"char_vocab_size": 63,
+		"centroid_units": 13,
+		"fractions": {
+			"country": 0.4
+		},
+		"register_weights": {
+			"official": 0.25,
+			"no_village": 0.35,
+			"spaced": 0.15,
+			"no_region": 0.1,
+			"with_unit": 0.15
+		},
+		"splits": {
+			"train": {
+				"rows": 30,
+				"parts": 3,
+				"coverage": {
+					"rows": 30,
+					"bio_char_coverage_all": 0.950515,
+					"bio_char_coverage_significant": 1.0,
+					"raw_len_min_median_max": [8, 17, 21],
+					"registers": {
+						"official": 10,
+						"spaced": 7,
+						"no_region": 7,
+						"no_village": 4,
+						"with_unit": 2
+					},
+					"per_tag_rows": {
+						"house_number": 30,
+						"street": 30,
+						"subregion": 30,
+						"region": 23,
+						"country": 12,
+						"dependent_locality": 10,
+						"unit": 2
+					},
+					"per_tag_spans": {
+						"subregion": 30,
+						"street": 30,
+						"house_number": 30,
+						"region": 23,
+						"country": 12,
+						"dependent_locality": 10,
+						"unit": 2
+					},
+					"per_tag_chars": {
+						"street": 143,
+						"house_number": 106,
+						"subregion": 84,
+						"region": 69,
+						"dependent_locality": 30,
+						"country": 24,
+						"unit": 5
+					},
+					"per_label_chars": {
+						"I-street": 113,
+						"I-house_number": 76,
+						"I-subregion": 54,
+						"I-region": 46,
+						"B-subregion": 30,
+						"B-street": 30,
+						"B-house_number": 30,
+						"O": 24,
+						"B-region": 23,
+						"I-dependent_locality": 20,
+						"B-country": 12,
+						"I-country": 12,
+						"B-dependent_locality": 10,
+						"I-unit": 3,
+						"B-unit": 2
+					}
+				}
+			},
+			"val": {
+				"rows": 6,
+				"parts": 1,
+				"coverage": {
+					"rows": 6,
+					"bio_char_coverage_all": 0.955556,
+					"bio_char_coverage_significant": 1.0,
+					"raw_len_min_median_max": [10, 16, 18],
+					"registers": {
+						"official": 2,
+						"no_village": 2,
+						"spaced": 1,
+						"no_region": 1
+					},
+					"per_tag_rows": {
+						"house_number": 6,
+						"street": 6,
+						"subregion": 6,
+						"region": 5,
+						"country": 2,
+						"dependent_locality": 2
+					},
+					"per_tag_spans": {
+						"subregion": 6,
+						"street": 6,
+						"house_number": 6,
+						"region": 5,
+						"country": 2,
+						"dependent_locality": 2
+					},
+					"per_tag_chars": {
+						"street": 27,
+						"house_number": 18,
+						"subregion": 16,
+						"region": 15,
+						"dependent_locality": 6,
+						"country": 4
+					},
+					"per_label_chars": {
+						"I-street": 21,
+						"I-house_number": 12,
+						"I-region": 10,
+						"I-subregion": 10,
+						"B-subregion": 6,
+						"B-street": 6,
+						"B-house_number": 6,
+						"B-region": 5,
+						"O": 4,
+						"I-dependent_locality": 4,
+						"B-country": 2,
+						"I-country": 2,
+						"B-dependent_locality": 2
+					}
+				}
+			}
+		},
+		"board_coverage": {
+			"rows": 6,
+			"bio_char_coverage_all": 0.955556,
+			"bio_char_coverage_significant": 1.0,
+			"raw_len_min_median_max": [12, 15, 19],
+			"registers": {
+				"no_village": 3,
+				"official": 2,
+				"spaced": 1
+			},
+			"per_tag_rows": {
+				"house_number": 6,
+				"street": 6,
+				"subregion": 6,
+				"region": 6,
+				"country": 3,
+				"dependent_locality": 2
+			},
+			"per_tag_spans": {
+				"region": 6,
+				"subregion": 6,
+				"street": 6,
+				"house_number": 6,
+				"country": 3,
+				"dependent_locality": 2
+			},
+			"per_tag_chars": {
+				"house_number": 20,
+				"region": 18,
+				"subregion": 18,
+				"street": 18,
+				"dependent_locality": 6,
+				"country": 6
+			},
+			"per_label_chars": {
+				"I-house_number": 14,
+				"I-region": 12,
+				"I-subregion": 12,
+				"I-street": 12,
+				"B-region": 6,
+				"B-subregion": 6,
+				"B-street": 6,
+				"B-house_number": 6,
+				"I-dependent_locality": 4,
+				"O": 4,
+				"B-country": 3,
+				"I-country": 3,
+				"B-dependent_locality": 2
+			}
+		}
+	}
+}

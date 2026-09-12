@@ -48,6 +48,7 @@ import re
 import sys
 from collections import Counter, defaultdict
 from collections.abc import Iterator, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -239,12 +240,43 @@ def iter_source_rows(
             yield (region, district, village, street, house_number, floor, float(row["lon"]), float(row["lat"]))
 
 
-def build(args: argparse.Namespace) -> dict[str, Any]:
-    rng = random.Random(args.seed)
-    tag_set = frozenset(resolve_label_set(LABEL_SET_NAME).tags)
-    parquet = Path(args.parquet)
+@dataclass(frozen=True)
+class SourceSurvey:
+    """Pass 1's answer: the quotas pass 2 selects under, plus the sums the centroids come from.
 
-    # --- Pass 1: exact eligible counts per 縣市 + board pool + per-district centroid sums + the agency list.
+    The centroid sums are taken over EVERY eligible row, not over the selected ones: a board row is
+    scored against its district's centre, and a centre computed from the handful of rows selection
+    happened to keep is a different place.
+    """
+
+    scanned: int
+    dropped: Counter[str]
+    agencies: Counter[str]
+    pool_counts: Counter[str]
+    board_count: int
+    cap: int
+    quotas: dict[str, int]
+    centroid_sums: dict[str, list[float]]
+
+    def centroids(self) -> dict[str, list[float]]:
+        return {key: [s[0] / s[2], s[1] / s[2]] for key, s in self.centroid_sums.items() if s[2]}
+
+
+@dataclass(frozen=True)
+class Selection:
+    """Pass 2's answer: the source rows each split will render, already shuffled."""
+
+    train: list[SourceRow]
+    val: list[SourceRow]
+    board: list[SourceRow]
+
+
+def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
+    """Pass 1: count eligible rows per 縣市, sum each district's coordinates, list the agencies.
+
+    Draws nothing. The agency list is not bookkeeping — the Taiwanese licence voids its grant on a
+    missing attribution, so the report carries the datasets the rows actually came from.
+    """
     pool_counts: Counter[str] = Counter()
     dropped: Counter[str] = Counter()
     agencies: Counter[str] = Counter()
@@ -282,10 +314,15 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             if shortfall <= 0:
                 break
     print(f"pass 1: per-region cap {cap:,}; quota total {sum(quotas.values()):,} of target {target:,}")
+    return SourceSurvey(scanned, dropped, agencies, pool_counts, board_count, cap, quotas, centroid_sums)
 
-    # --- Pass 2: exact selection, streamed.
-    selectors = {region: select_exact(pool_counts[region], quotas[region], rng) for region in pool_counts}
-    board_selector = select_exact(board_count, args.board_rows, rng)
+
+def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, survey: SourceSurvey) -> Selection:
+    """Pass 2: stream the exact selection under the quotas, then shuffle and divide into the splits."""
+    selectors = {
+        region: select_exact(survey.pool_counts[region], survey.quotas[region], rng) for region in survey.pool_counts
+    }
+    board_selector = select_exact(survey.board_count, args.board_rows, rng)
     selected: list[SourceRow] = []
     board: list[SourceRow] = []
     for row in iter_source_rows(parquet, args.max_row_groups, args.max_field_chars):
@@ -297,14 +334,30 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     print(f"pass 2: selected {len(selected):,} pool rows · {len(board):,} board rows")
 
     rng.shuffle(selected)
-    train_source = selected[: args.train_rows]
-    val_source = selected[args.train_rows : args.train_rows + args.val_rows]
-    register_counts: Counter[str] = Counter()
+    return Selection(
+        selected[: args.train_rows],
+        selected[args.train_rows : args.train_rows + args.val_rows],
+        board,
+    )
 
-    def encode_one(row: SourceRow) -> dict[str, Any]:
+
+class RowEncoder:
+    """Renders selected source rows, drawing the register and the country prefix off the shared `rng`.
+
+    The register tally it accumulates is read by the build report, so one encoder serves the splits
+    and the board rather than each keeping its own count.
+    """
+
+    def __init__(self, args: argparse.Namespace, rng: random.Random, tag_set: frozenset[str]) -> None:
+        self.args = args
+        self.rng = rng
+        self.tag_set = tag_set
+        self.register_counts: Counter[str] = Counter()
+
+    def encode(self, row: SourceRow) -> dict[str, Any]:
         region, district, village, street, house_number, unit, _lon, _lat = row
-        register = choose_register(rng, available_registers(village, unit))
-        register_counts[register] += 1
+        register = choose_register(self.rng, available_registers(village, unit))
+        self.register_counts[register] += 1
         record = render_row(
             region=region,
             district=district,
@@ -313,37 +366,39 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             house_number=house_number,
             unit=unit,
             register=register,
-            country=rng.random() < args.country_fraction,
+            country=self.rng.random() < self.args.country_fraction,
         )
-        verify_record(record, tag_set)
+        verify_record(record, self.tag_set)
         return record
 
-    out_dir = Path(args.out_dir)
-    if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
-        raise SystemExit(
-            f"{out_dir} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
-        )
 
+def write_splits(
+    out_dir: Path, args: argparse.Namespace, selection: Selection, encoder: RowEncoder
+) -> dict[str, dict[str, Any]]:
+    """Render and write train then val, in parts, keeping a bounded coverage sample per part."""
     splits: dict[str, dict[str, Any]] = {}
-    for split, source_rows in (("train", train_source), ("val", val_source)):
+    for split, source_rows in (("train", selection.train), ("val", selection.val)):
         (out_dir / split).mkdir(parents=True, exist_ok=True)
         stats_input: list[dict[str, Any]] = []
         part = written = 0
         for start in range(0, len(source_rows), args.rows_per_part):
-            chunk = [encode_one(row) for row in source_rows[start : start + args.rows_per_part]]
+            chunk = [encoder.encode(row) for row in source_rows[start : start + args.rows_per_part]]
             pq.write_table(pa.Table.from_pylist(chunk, schema=SCHEMA), out_dir / split / f"tw-part-{part:04d}.parquet")
             part += 1
             written += len(chunk)
             stats_input.extend(chunk[: args.stats_sample_per_part])
         splits[split] = {"rows": written, "parts": part, "coverage": coverage_stats(stats_input)}
         print(f"{split}: {written:,} rows in {part} parts")
+    return splits
 
-    # --- Held-out board: every row carries its coordinate and its routing fields.
+
+def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> list[dict[str, Any]]:
+    """Write the held-out board: every row carries its coordinate and its routing fields."""
     board_records: list[dict[str, Any]] = []
     with (out_dir / "tw-board.jsonl").open("w", encoding="utf-8") as handle:
-        for row in board:
+        for row in selection.board:
             region, district, village, street, house_number, unit, lon, lat = row
-            record = encode_one(row)
+            record = encoder.encode(row)
             board_records.append(record)
             handle.write(
                 json.dumps(
@@ -366,17 +421,41 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 )
                 + "\n"
             )
+    return board_records
 
-    # --- Sanity checks. Violations RAISE; a slice that fails one is not a slice.
-    pool_units = {normalize_text(f"{row[0]}|{row[1]}") for row in train_source} | {
-        normalize_text(f"{row[0]}|{row[1]}") for row in val_source
+
+def check_stratification(selection: Selection) -> set[str]:
+    """Violations RAISE; a slice that fails one is not a slice. Returns the board's 鄉鎮市區."""
+    pool_units = {normalize_text(f"{row[0]}|{row[1]}") for row in selection.train} | {
+        normalize_text(f"{row[0]}|{row[1]}") for row in selection.val
     }
-    board_units = {normalize_text(f"{row[0]}|{row[1]}") for row in board}
+    board_units = {normalize_text(f"{row[0]}|{row[1]}") for row in selection.board}
     overlap = pool_units & board_units
     if overlap:
         raise RuntimeError(f"board 鄉鎮市區 leak into train/val: {sorted(overlap)[:5]}")
+    return board_units
 
-    centroids = {key: [sums[0] / sums[2], sums[1] / sums[2]] for key, sums in centroid_sums.items() if sums[2]}
+
+def build(args: argparse.Namespace) -> dict[str, Any]:
+    rng = random.Random(args.seed)
+    tag_set = frozenset(resolve_label_set(LABEL_SET_NAME).tags)
+    parquet = Path(args.parquet)
+
+    survey = survey_source(parquet, args)
+    selection = select_rows(parquet, args, rng, survey)
+    encoder = RowEncoder(args, rng, tag_set)
+
+    out_dir = Path(args.out_dir)
+    if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
+        raise SystemExit(
+            f"{out_dir} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
+        )
+
+    splits = write_splits(out_dir, args, selection, encoder)
+    board_records = write_board(out_dir, selection, encoder)
+    board_units = check_stratification(selection)
+
+    centroids = survey.centroids()
     (out_dir / "tw-district-centroids.json").write_text(
         json.dumps(centroids, ensure_ascii=False) + "\n", encoding="utf-8"
     )
@@ -394,15 +473,15 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         "label_set": LABEL_SET_NAME,
         "source": SOURCE,
         "license": "CDLA-Permissive-2.0 (Overture) over CC BY 4.0 per civil-affairs bureau; 政府資料開放授權條款 attribution required",
-        "attribution": dict(agencies.most_common()),
-        "eligible_rows_scanned": scanned,
-        "dropped_at_source": dict(dropped.most_common()),
-        "per_region_cap": cap,
-        "regions_train": len({row[0] for row in train_source}),
+        "attribution": dict(survey.agencies.most_common()),
+        "eligible_rows_scanned": survey.scanned,
+        "dropped_at_source": dict(survey.dropped.most_common()),
+        "per_region_cap": survey.cap,
+        "regions_train": len({row[0] for row in selection.train}),
         "board_bucket_min": args.board_bucket_min,
         "board_districts": len(board_units),
         "board_rows": len(board_records),
-        "registers": dict(register_counts.most_common()),
+        "registers": dict(encoder.register_counts.most_common()),
         "char_vocab_size": len(vocab),
         "centroid_units": len(centroids),
         "fractions": {"country": args.country_fraction},
