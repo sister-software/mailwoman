@@ -52,7 +52,6 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		["a writer after a single ampersand", `true & sed -i 's/a/b/' AGENTS.md`],
 		["a writer in a conditional head", `if sed -i 's/a/b/' AGENTS.md; then echo ok; fi`],
 		["a writer after an apostrophe in prose", `echo "don't" && sed -i 's/a/b/' AGENTS.md`],
-		["git apply", `git apply /tmp/patch.diff`],
 		["git restoring a path", `git restore packages/core/lib/env.ts`],
 		["git checkout over a pathspec", `git checkout -- packages/core`],
 		["git config writing a manifest", `git config -f packages/core/package.json foo.bar baz`],
@@ -120,6 +119,10 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a probe writing to stdout", `node -e "process.stdout.write('hi')"`],
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
+		// A patch is an artifact the author produced and can dry-run; it fails rather than clobbering when the context
+		// does not match, and it is the only exact way to land a bulk deletion without retyping every removed line.
+		["applying a patch", `git apply /tmp/prune.patch`],
+		["dry-running a patch", `git apply --check /tmp/prune.patch`],
 		["a formatter over its own inputs", `npx oxfmt .`],
 		["the formatter writing its derivation", `yarn oxfmt --write packages/core/lib/env.ts`],
 		["the linter applying its own fixes", `yarn oxlint --fix packages/core/lib`],

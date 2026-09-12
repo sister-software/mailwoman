@@ -2484,88 +2484,6 @@ def versions():
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
-    secrets=[r2_secret],
-    timeout=1800,
-)
-def sync_nsplice():
-    """#912 setting 4 — Nordic splice staging. Pulls the v0.7.0-nsplice tokenizer (v0.6.0-bsplice's
-    58,582 pieces + 8,613 Nordic diacritic pieces from OA fi/se/no/dk/is; #900 overlap check PASS,
-    accepted set stamped in the report next to the local artifact) and refreshes the training code.
-    The mean-init input is models/bsplice-expanded — the SHIPPED v5.1.0 fp32 (the pure mean-init
-    artifact; the fine-tune washed, see tokenizer_splice.py's header) — already on the volume."""
-    import shutil
-    import subprocess
-
-    print("Syncing nsplice tokenizer + code from R2...")
-    vol.reload()
-    R = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
-    commands = [
-        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
-        f"rclone copy :s3:{BUCKET}/models/tokenizer/v0.7.0-nsplice/ {VOL_MOUNT}/models/tokenizer/v0.7.0-nsplice/ {R}",
-        f"rclone copy :s3:{BUCKET}/models/tokenizer/v0.7.1-nsplice/ {VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/ {R}",
-    ]
-    for i, cmd in enumerate(commands):
-        print(f"[{i + 1}/{len(commands)}] {cmd[:90]}...")
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        if result.returncode != 0:
-            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
-    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
-    if os.path.isdir(pyc):
-        shutil.rmtree(pyc)
-    vol.commit()
-    print(
-        "  nsplice tokenizer present:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.7.0-nsplice/tokenizer.model")
-    )
-    print("  base ckpt present:", os.path.isfile(f"{VOL_MOUNT}/models/bsplice-expanded/pytorch_model.bin"))
-
-
-@app.function(
-    image=training_image,
-    volumes={VOL_MOUNT: vol},
-    secrets=[r2_secret],
-    timeout=1800,
-)
-def sync_v210():
-    """#901 re-scoped: v2.1.0-boundary-family — the v0.10.0 overlay (v0.9.4 base VERBATIM + the
-    three new family slices si/no/cz; fr-bare-street already in the base) + code/configs. The
-    nsplice-v2-expanded init ckpt and the v0.7.1-nsplice tokenizer are already on the volume from
-    the v5.2.0 staging chain."""
-    import shutil
-    import subprocess
-
-    print("Syncing v0.10.0 overlay + code/configs from R2...")
-    vol.reload()
-    R = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
-    commands = [
-        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
-        f"rclone copy :s3:{BUCKET}/corpus/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/ "
-        f"{VOL_MOUNT}/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/ {R}",
-    ]
-    for i, cmd in enumerate(commands):
-        print(f"[{i + 1}/{len(commands)}] {cmd[:90]}...")
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        if result.returncode != 0:
-            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
-    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
-    if os.path.isdir(pyc):
-        shutil.rmtree(pyc)
-    vol.commit()
-    for check, path in [
-        ("v2.1.0 config", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.1.0-boundary-family.yaml"),
-        ("probe config", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.1.0-boundary-family-probe.yaml"),
-        (
-            "overlay MANIFEST",
-            f"{VOL_MOUNT}/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/MANIFEST.json",
-        ),
-        ("init ckpt", f"{VOL_MOUNT}/models/nsplice-v2-expanded/pytorch_model.bin"),
-        ("tokenizer", f"{VOL_MOUNT}/models/tokenizer/v0.7.1-nsplice/tokenizer.model"),
-    ]:
-        print(f"  {check} present:", os.path.isfile(path))
-
-
-@app.function(
-    image=training_image,
-    volumes={VOL_MOUNT: vol},
     timeout=1200,
 )
 def mean_init_nsplice():
@@ -3949,43 +3867,6 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
         print(f"{k:<24} {on_c / n:>7.3f} {off_c / n:>7.3f} {(on_c - off_c) / n:>+11.3f}")
     print(f"{'ALL':<24} {tot_on / tot_n:>7.3f} {tot_off / tot_n:>7.3f} {(tot_on - tot_off) / tot_n:>+11.3f}")
     print("\ndelta > 0 => street_type input evidence improves street<->locality discrimination (Option A live).")
-
-
-@app.function(
-    image=training_image,
-    volumes={VOL_MOUNT: vol},
-    secrets=[r2_secret],
-    timeout=3600,
-)
-def sync_gb_venue():
-    """#1366 GB venue increment: sync the v0.15.1-gb-venue overlay (manifest + the rebuilt
-    house-venue parquet; the 703 base slices resolve into v0.13.0-latam, already on the volume)
-    + latest training code (the v4.1.x configs) from R2. Clears stale pyc."""
-    import shutil
-    import subprocess
-
-    print("Syncing v0.15.1-gb-venue overlay + code from R2 (container-side)...")
-    vol.reload()
-    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
-    cmds = [
-        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
-        f"rclone copy :s3:{BUCKET}/corpus/v0.15.1-gb-venue/ {VOL_MOUNT}/corpus/versioned/v0.15.1-gb-venue/ {R}",
-        # Addendum 3: the country-tail overlay.
-        f"rclone copy :s3:{BUCKET}/corpus/v0.15.2-gb-venue-country/ {VOL_MOUNT}/corpus/versioned/v0.15.2-gb-venue-country/ {R}",
-    ]
-    for cmd in cmds:
-        print(f"  {cmd[:90]}...")
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        if result.returncode != 0:
-            print(f"STDERR: {result.stderr[:800]}")
-            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
-
-    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
-    if os.path.isdir(pyc):
-        shutil.rmtree(pyc)
-
-    vol.commit()
-    print("\nv0.15.1-gb-venue sync complete. Volume committed.")
 
 
 @app.function(

@@ -222,7 +222,14 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		head: "git",
 		// The reading forms of these subcommands are ordinary work: `stash list`, `stash show`, and a `checkout` that
 		// names a branch rather than a pathspec. Only the spellings that overwrite the working tree are refused.
-		pattern: /(?:^|\s)(?:apply\b|restore\b|stash\s+(?!list\b|show\b)|checkout\s+[^\n]*--\s)/u,
+		//
+		// `git apply` is NOT among them. The refusals here exist to route an edit through the symbol precheck, and to
+		// stop a command from discarding work the agent cannot see. A patch does neither: it is an artifact the author
+		// produced and can dry-run with `git apply --check`, it fails rather than clobbering when the context does not
+		// match, and it is the only exact way to land a mechanically generated change — a bulk deletion, a moved block
+		// — without retyping every line. Retyping a thousand lines to satisfy a guard is itself the correctness risk
+		// the guard is meant to reduce.
+		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b)|checkout\s+[^\n]*--\s)/u,
 		because: "this `git` subcommand overwrites the working tree",
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
