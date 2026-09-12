@@ -29,11 +29,9 @@ import hashlib
 import json
 import logging
 import random
-import re
 import subprocess  # nosec B404 — spawns external toolchain binaries by design (git for provenance stamps)
 import tempfile
 import time
-import unicodedata
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
@@ -43,147 +41,15 @@ from typing import Any
 import pyarrow.parquet as pq
 import sentencepiece as spm
 
-logger = logging.getLogger(__name__)
-
-# Byte-fallback pieces in a SentencePiece model are surface-form ``<0xNN>`` (one literal
-# token per byte). Matching the surface form is more reliable than matching piece id ranges:
-# the id range depends on where SP placed the byte block in the unigram vocab.
-_BYTE_FALLBACK_RE = re.compile(r"^<0x[0-9A-Fa-f]{2}>$")
-
-# Default user-defined symbols ("must keep whole"). SentencePiece UDS are literal strings
-# that bypass unigram inference and are always emitted as a single piece. We use them for
-# anchor patterns that should never fragment across sub-pieces:
-#
-# - **Country abbreviations** the corpus mentions but the unigram model might split.
-# - **US state codes** (50 + DC) — short two-letter chunks adjacent to postcodes; without
-#   UDS the unigram tokenizer can fragment ``NY 10001`` into ``N`` + ``Y`` + `` 10001``
-#   under some merges. Keeping state codes atomic preserves the region→postcode adjacency
-#   the classifier relies on.
-# - **Common postal markers** (PO Box, Cedex, BP) — fixed surface forms; cheaper to put in
-#   the vocab once than to learn them from frequency.
-# - **JP postcode hyphen anchor** (``-``) we don't include here because ``-`` already
-#   tokenizes as a single piece; the JP 100-0005 *whole-postcode* coverage comes from
-#   corpus-mined postcode literals (see ``mine_postcode_literals``).
-#
-# Callers can extend or replace this set via ``--user-defined-symbols-file`` (one literal
-# per line, blank lines + ``#``-comments ignored).
-DEFAULT_USER_DEFINED_SYMBOLS: tuple[str, ...] = (
-    # US states
-    "AL",
-    "AK",
-    "AZ",
-    "AR",
-    "CA",
-    "CO",
-    "CT",
-    "DE",
-    "FL",
-    "GA",
-    "HI",
-    "ID",
-    "IL",
-    "IN",
-    "IA",
-    "KS",
-    "KY",
-    "LA",
-    "ME",
-    "MD",
-    "MA",
-    "MI",
-    "MN",
-    "MS",
-    "MO",
-    "MT",
-    "NE",
-    "NV",
-    "NH",
-    "NJ",
-    "NM",
-    "NY",
-    "NC",
-    "ND",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "TX",
-    "UT",
-    "VT",
-    "VA",
-    "WA",
-    "WV",
-    "WI",
-    "WY",
-    "DC",
-    "PR",
-    "VI",
-    "GU",
-    "AS",
-    "MP",
-    # Country abbreviations / common names
-    "USA",
-    "US",
-    "U.S.",
-    "U.S.A.",
-    "FR",
-    "FRA",
-    "France",
-    "JP",
-    "JPN",
-    "Japan",
-    "GB",
-    "UK",
-    "U.K.",
-    "DE",
-    "DEU",
-    "Germany",
-    "IT",
-    "ITA",
-    "Italy",
-    "ES",
-    "ESP",
-    "Spain",
-    "NL",
-    "NLD",
-    "Netherlands",
-    "CA",
-    "CAN",
-    "Canada",
-    "AU",
-    "AUS",
-    "Australia",
-    "CH",
-    "CHE",
-    "Switzerland",
-    "BE",
-    "BEL",
-    "Belgium",
-    "AT",
-    "AUT",
-    "Austria",
-    "SE",
-    "SWE",
-    "Sweden",
-    "RU",
-    "RUS",
-    # Postal-form anchors
-    "PO Box",
-    "P.O. Box",
-    "P.O.Box",
-    "POB",
-    "Apt",
-    "Apt.",
-    "Suite",
-    "Ste",
-    "Cedex",
-    "CEDEX",
-    "BP",
+from .byte_fallback import detect_script, load_fixture_lines, measure_byte_fallback
+from .uds import (
+    DEFAULT_USER_DEFINED_SYMBOLS,
+    _dedupe_keep_order,
+    _normalize_uds_for_sp,
+    parse_user_defined_symbols_file,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -326,118 +192,6 @@ def mine_postcode_literals(
     return [w for w, _ in counter.most_common(top_k)]
 
 
-def detect_script(text: str) -> str:
-    """Return a coarse script tag for a string: ``latin``, ``cjk``, ``cyrillic``, ``armenian``,
-    ``arabic``, ``greek``, ``hebrew``, ``devanagari``, ``thai``, ``mixed``, or ``other``.
-
-    Used to bucket the byte-fallback eval into per-script rates so the model card surfaces
-    *where* the tokenizer hits byte fallback, not just the overall headline number.
-    """
-    blocks: Counter[str] = Counter()
-    for ch in text:
-        if ch.isspace() or unicodedata.category(ch).startswith(("N", "P", "Z", "S")):
-            continue
-        name = unicodedata.name(ch, "")
-        if not name:
-            blocks["other"] += 1
-            continue
-        if name.startswith(("LATIN", "FULLWIDTH LATIN")):
-            blocks["latin"] += 1
-        elif name.startswith(("CJK", "HIRAGANA", "KATAKANA", "HANGUL")):
-            blocks["cjk"] += 1
-        elif name.startswith("CYRILLIC"):
-            blocks["cyrillic"] += 1
-        elif name.startswith("ARMENIAN"):
-            blocks["armenian"] += 1
-        elif name.startswith("ARABIC"):
-            blocks["arabic"] += 1
-        elif name.startswith("GREEK"):
-            blocks["greek"] += 1
-        elif name.startswith("HEBREW"):
-            blocks["hebrew"] += 1
-        elif name.startswith("DEVANAGARI"):
-            blocks["devanagari"] += 1
-        elif name.startswith("THAI"):
-            blocks["thai"] += 1
-        else:
-            blocks["other"] += 1
-    if not blocks:
-        return "other"
-    if len(blocks) == 1:
-        return next(iter(blocks))
-    # If 90%+ of letter chars are in one block, call it that block (latin punctuation around
-    # a CJK address shouldn't make it ``mixed``). Otherwise call it ``mixed``.
-    total = sum(blocks.values())
-    top, n = blocks.most_common(1)[0]
-    return top if n / total >= 0.9 else "mixed"
-
-
-def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) -> dict[str, Any]:
-    """Encode each line and tally byte-fallback piece rate, overall + per script.
-
-    Returns a dict shaped::
-
-        {
-          "overall": {"lines": n, "pieces": p, "byte_fallback_pieces": b, "rate": b/p},
-          "per_script": {
-              "latin":   {"lines": ..., "pieces": ..., "byte_fallback_pieces": ..., "rate": ...},
-              "cjk":     {...},
-              ...
-          }
-        }
-
-    The "rate" denominator is piece count, not line count — a byte-fallback piece is a
-    *piece*, not a *line*, so the rate that matters for downstream model wastage is the
-    fraction of pieces that landed on the byte block.
-    """
-    overall = {"lines": 0, "pieces": 0, "byte_fallback_pieces": 0}
-    per_script: dict[str, dict[str, int]] = {}
-
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        script = detect_script(line)
-        bucket = per_script.setdefault(script, {"lines": 0, "pieces": 0, "byte_fallback_pieces": 0})
-        pieces = sp.encode_as_pieces(line)
-        npieces = len(pieces)
-        nfb = sum(1 for p in pieces if _BYTE_FALLBACK_RE.match(p))
-
-        overall["lines"] += 1
-        overall["pieces"] += npieces
-        overall["byte_fallback_pieces"] += nfb
-        bucket["lines"] += 1
-        bucket["pieces"] += npieces
-        bucket["byte_fallback_pieces"] += nfb
-
-    def _attach_rate(d: dict[str, int]) -> dict[str, float | int]:
-        rate = d["byte_fallback_pieces"] / d["pieces"] if d["pieces"] > 0 else 0.0
-        return {**d, "rate": rate}
-
-    return {
-        "overall": _attach_rate(overall),
-        "per_script": {k: _attach_rate(v) for k, v in per_script.items()},
-    }
-
-
-def load_fixture_lines(path: Path) -> list[str]:
-    """Load raws from a JSONL eval fixture, falling back to plain-text if not JSON."""
-    lines: list[str] = []
-    with path.open("r", encoding="utf-8") as fh:
-        for raw_line in fh:
-            raw_line = raw_line.rstrip("\n")
-            if not raw_line:
-                continue
-            if raw_line.lstrip().startswith("{"):
-                obj = json.loads(raw_line)
-                v = obj.get("raw") or obj.get("text") or obj.get("input")
-                if v:
-                    lines.append(str(v))
-            else:
-                lines.append(raw_line)
-    return lines
-
-
 def git_commit(workdir: Path | None = None) -> str | None:
     """Best-effort: return the current HEAD SHA, or None outside a git checkout."""
     try:
@@ -459,39 +213,78 @@ def sha256_of_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def parse_user_defined_symbols_file(path: Path) -> list[str]:
-    """One literal per line; blank lines + ``#``-comments ignored. Whitespace stripped only
-    at line ends (a UDS may itself contain spaces like ``PO Box``)."""
-    out: list[str] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        s = line.rstrip()
-        if not s or s.lstrip().startswith("#"):
-            continue
-        out.append(s)
-    return out
+def resolve_user_defined_symbols(cfg: TrainerConfig) -> tuple[list[str], list[str]]:
+    """The UDS list this run will train with, and the SentencePiece-normalized copy of it.
+
+    Two lists because two consumers: the model card records what a human asked for, and the
+    trainer needs ASCII spaces rewritten to ``▁`` or the literal never matches.
+    """
+    uds = list(cfg.user_defined_symbols)
+    if cfg.mine_postcode_literals > 0:
+        uds.extend(
+            mine_postcode_literals(
+                cfg.corpus_dir,
+                top_k=cfg.mine_postcode_literals,
+                countries=cfg.countries,
+            )
+        )
+    uds = _dedupe_keep_order(uds)
+    # SentencePiece's vocab budget MUST be > UDS count + reserved special-tokens — otherwise
+    # the trainer aborts. Cap UDS at min(uds, vocab_size // 4) defensively so a misconfigured
+    # caller (e.g. asking for 30K UDS with vocab=48K) doesn't poison the training pass.
+    uds_cap = max(0, cfg.vocab_size // 4)
+    if len(uds) > uds_cap:
+        logger.warning(
+            "user_defined_symbols (%d) exceeds vocab_size/4 cap (%d); truncating",
+            len(uds),
+            uds_cap,
+        )
+        uds = uds[:uds_cap]
+    return uds, [_normalize_uds_for_sp(s) for s in uds]
 
 
-# U+2581 LOWER ONE EIGHTH BLOCK is SentencePiece's whitespace placeholder. UDS literals
-# that contain ASCII spaces must use this codepoint instead — SP normalizes all whitespace
-# to ▁ before matching, so a UDS like ``"PO Box"`` would never fire (the encoder sees
-# ``"PO▁Box"`` internally but the UDS in the vocab is still ``"PO Box"``). We substitute
-# transparently so callers can write natural strings.
-_SP_WHITESPACE = "▁"
+def build_model_card(
+    cfg: TrainerConfig,
+    *,
+    sp: spm.SentencePieceProcessor,
+    sp_flags: dict[str, Any],
+    uds: list[str],
+    line_count: int,
+    elapsed: float,
+    model_path: Path,
+    vocab_path: Path,
+    byte_fb: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """The card that travels with the model, carrying what would otherwise be unrecoverable."""
+    # Drop the absolute ``input`` path from sp_flags before writing so the card stays portable
+    # across machines; keep everything else.
+    portable_flags = {k: v for k, v in sp_flags.items() if k not in ("input",)}
+    portable_flags["user_defined_symbols_count"] = len(uds)
+    # Keep a preview of the UDS list; the full list is mostly mined postcodes, redundant in
+    # the card. The full list is recoverable from ``tokenizer.vocab`` (UDS shows up as
+    # `<surface>\t0` entries adjacent to the special tokens).
+    portable_flags["user_defined_symbols_preview"] = uds[:64]
+    portable_flags.pop("user_defined_symbols", None)
 
-
-def _normalize_uds_for_sp(s: str) -> str:
-    """Convert ASCII spaces to SentencePiece's ``▁`` whitespace placeholder."""
-    return s.replace(" ", _SP_WHITESPACE)
-
-
-def _dedupe_keep_order(items: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for x in items:
-        if x and x not in seen:
-            seen.add(x)
-            out.append(x)
-    return out
+    return {
+        "tokenizer_version": cfg.output_dir.name,
+        "corpus_version": cfg.corpus_version,
+        "vocab_size": int(sp.get_piece_size()),
+        "training_lines": line_count,
+        "training_duration_seconds": round(elapsed, 3),
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "git_commit": git_commit(),
+        "model_sha256": sha256_of_file(model_path),
+        "model_path": str(model_path),
+        "vocab_path": str(vocab_path),
+        "sentencepiece_flags": portable_flags,
+        "sampling": {
+            "countries": list(cfg.countries),
+            "per_country": cfg.per_country_sample,
+            "seed": cfg.seed,
+        },
+        "byte_fallback_eval": byte_fb,
+    }
 
 
 def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
@@ -524,29 +317,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
         raise RuntimeError(f"sampled zero lines from corpus_dir={cfg.corpus_dir} countries={cfg.countries}")
 
     # 2. Resolve UDS: caller's list, deduped + intersected with sane limits.
-    uds = list(cfg.user_defined_symbols)
-    if cfg.mine_postcode_literals > 0:
-        mined = mine_postcode_literals(
-            cfg.corpus_dir,
-            top_k=cfg.mine_postcode_literals,
-            countries=cfg.countries,
-        )
-        uds.extend(mined)
-    uds = _dedupe_keep_order(uds)
-    # SentencePiece's vocab budget MUST be > UDS count + reserved special-tokens — otherwise
-    # the trainer aborts. Cap UDS at min(uds, vocab_size // 4) defensively so a misconfigured
-    # caller (e.g. asking for 30K UDS with vocab=48K) doesn't poison the training pass.
-    uds_cap = max(0, cfg.vocab_size // 4)
-    if len(uds) > uds_cap:
-        logger.warning(
-            "user_defined_symbols (%d) exceeds vocab_size/4 cap (%d); truncating",
-            len(uds),
-            uds_cap,
-        )
-        uds = uds[:uds_cap]
-    # SP needs ASCII spaces in UDS literals translated to its ``▁`` placeholder so they
-    # actually match user input. See ``_normalize_uds_for_sp`` for the rationale.
-    uds_for_sp = [_normalize_uds_for_sp(s) for s in uds]
+    uds, uds_for_sp = resolve_user_defined_symbols(cfg)
 
     # 3. Materialize sampled raws to a temp file (SP wants a path on disk).
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as tmp:
@@ -602,35 +373,18 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
         fixture_lines = load_fixture_lines(cfg.eval_fixture)
         byte_fb = measure_byte_fallback(sp, fixture_lines)
 
-    # 5. Persist model card. Drop the absolute ``input`` path from sp_flags before writing
-    # so the card stays portable across machines; keep everything else.
-    portable_flags = {k: v for k, v in sp_flags.items() if k not in ("input",)}
-    portable_flags["user_defined_symbols_count"] = len(uds)
-    # Keep a preview of the UDS list; the full list is mostly mined postcodes, redundant in
-    # the card. The full list is recoverable from ``tokenizer.vocab`` (UDS shows up as
-    # `<surface>\t0` entries adjacent to the special tokens).
-    portable_flags["user_defined_symbols_preview"] = uds[:64]
-    portable_flags.pop("user_defined_symbols", None)
-
-    card = {
-        "tokenizer_version": cfg.output_dir.name,
-        "corpus_version": cfg.corpus_version,
-        "vocab_size": int(sp.get_piece_size()),
-        "training_lines": len(raws),
-        "training_duration_seconds": round(elapsed, 3),
-        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "git_commit": git_commit(),
-        "model_sha256": sha256_of_file(model_path),
-        "model_path": str(model_path),
-        "vocab_path": str(vocab_path),
-        "sentencepiece_flags": portable_flags,
-        "sampling": {
-            "countries": list(cfg.countries),
-            "per_country": cfg.per_country_sample,
-            "seed": cfg.seed,
-        },
-        "byte_fallback_eval": byte_fb,
-    }
+    # 5. Persist model card.
+    card = build_model_card(
+        cfg,
+        sp=sp,
+        sp_flags=sp_flags,
+        uds=uds,
+        line_count=len(raws),
+        elapsed=elapsed,
+        model_path=model_path,
+        vocab_path=vocab_path,
+        byte_fb=byte_fb,
+    )
     card_path = cfg.output_dir / "model_card.json"
     card_path.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
     # Keep a META.json compatibility shim — older Phase 1 scripts looked for this name.
@@ -645,9 +399,13 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     return card
 
 
+#: The harness's surface. `detect_script`, `measure_byte_fallback`, `load_fixture_lines`,
+#: `DEFAULT_USER_DEFINED_SYMBOLS` and `parse_user_defined_symbols_file` are re-exported from
+#: `byte_fallback.py` and `uds.py`, because the CLI and the tests reach all of it through here.
 __all__ = [
     "DEFAULT_USER_DEFINED_SYMBOLS",
     "TrainerConfig",
+    "build_model_card",
     "detect_script",
     "iter_raws_by_country",
     "iter_train_slices",
@@ -656,6 +414,7 @@ __all__ = [
     "mine_postcode_literals",
     "parse_user_defined_symbols_file",
     "reservoir_sample",
+    "resolve_user_defined_symbols",
     "sample_balanced_raws",
     "train_tokenizer",
 ]
