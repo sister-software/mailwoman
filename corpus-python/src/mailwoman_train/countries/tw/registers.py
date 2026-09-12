@@ -26,7 +26,7 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from .text.normalize import ascii_digits, normalize_text
+from ...text.normalize import ascii_digits, normalize_text
 
 SOURCE = "gcis-tw"
 COUNTRY = "TW"

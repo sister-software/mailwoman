@@ -20,7 +20,7 @@ wrong (695/3,151 = 22.1% in that audit) — and v2 licenses the positional split
 
 Volume-side run (see ``train_remote.py::audit_suffix_feed``)::
 
-    python -m mailwoman_train.audit_suffix_feed \
+    python -m mailwoman_train.audits.suffix_feed \
       --config src/mailwoman_train/configs/v4.3.3-suffix-boundary-base-60k.yaml \
       --classify-lexicon /data/gazetteer/affix-relabel-lexicon-v2.json \
       --relabel-lexicon /data/gazetteer/affix-relabel-lexicon-v2.json \

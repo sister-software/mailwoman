@@ -26,7 +26,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
-from .kr_registry import KeyIndex
+from .registers import KeyIndex
 
 # The road-code file's columns (0-based).
 RC_CODE, RC_ROAD, RC_SERIAL, RC_REGION, RC_SIGUNGU, RC_EUPMYEONDONG, RC_KIND = 0, 1, 3, 4, 6, 8, 10

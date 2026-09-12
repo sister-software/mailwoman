@@ -1,6 +1,7 @@
 """Script-level text normalization, shared across countries.
 
-A corpus builder is not a home for a helper five modules need. These names lived in
-`build_jp_slice.py`, which is why a government-register reader imported a corpus builder to get
-`normalize_name`. Country-specific normalization stays with its country.
+`kana` folds half-width katakana and converts kanji numerals; `normalize` handles the cases every
+script meets. Normalization only one country needs stays with that country, in
+`countries/<code>/text.py` — a government-register reader should not have to import a corpus
+builder to normalize a name.
 """

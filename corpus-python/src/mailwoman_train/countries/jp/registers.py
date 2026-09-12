@@ -29,7 +29,7 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from .build_jp_slice import JP_PREFECTURES, normalize_name, split_street
+from .text import JP_PREFECTURES, normalize_name, split_street
 
 SOURCE = "houjin-jp"
 COUNTRY = "JP"

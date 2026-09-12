@@ -15,7 +15,7 @@ ASSAY TOOLING: if the assay confirms the data change, the production slice gradu
 holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the trained slice.
 
 Usage:
-    python -m mailwoman_train.build_fragment_slice \
+    python -m mailwoman_train.corpora.fragment \
         --oa-root "$MAILWOMAN_DATA_ROOT/openaddresses/extracted" \
         --corpus-parquet-glob "$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.5.0/**/train/part-000*.parquet" \
         --out-parquet out/part-fragment.parquet --out-dev out/fragment-dev.jsonl
@@ -33,6 +33,8 @@ from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+
+from ..paths import package_path
 
 # locale dir -> (ISO country, BCP locale, trailing-number?)
 OA_LOCALES: dict[str, tuple[str, str, bool]] = {
@@ -384,9 +386,9 @@ def render_admin_pair(locality: str, region: str) -> dict[str, Any]:
 # to word-forms (len ≥ 3) so an address TAIL is "USA" / "United States", never the bare "US" alpha-2
 # code (ambiguous with a US state code at the tail). Golden gold IS the surface, e.g.
 # "6220 SE Salmon St, Portland, OR 97215, USA" → country="USA".
-_COUNTRY_SURFACES_RAW = json.loads(
-    (Path(__file__).parent / "data" / "country-surfaces.json").read_text(encoding="utf-8")
-)["surfaces"]
+_COUNTRY_SURFACES_RAW = json.loads(package_path("data", "country-surfaces.json").read_text(encoding="utf-8"))[
+    "surfaces"
+]
 COUNTRY_SURFACES: dict[str, list[str]] = {
     iso2: [f for f in forms if len(f) >= 3] for iso2, forms in _COUNTRY_SURFACES_RAW.items()
 }

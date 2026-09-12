@@ -4948,7 +4948,7 @@ def sync_v8cjk_kana():
     overlay = f"{VOL_MOUNT}/corpus/versioned/v8-cjk-kana-2026-09-06"
     checks = {
         "v8-cjk-kana config": os.path.isfile(f"{package}/configs/v8-cjk-kana.yaml"),
-        "kana register in the renderer": _file_contains(f"{package}/build_jp_slice.py", "kana_municipality"),
+        "kana register in the renderer": _file_contains(f"{package}/countries/jp/corpora.py", "kana_municipality"),
         "JP kana train parts": all(os.path.isfile(f"{jp}/train/part-{index:04d}.parquet") for index in range(8)),
         "JP kana val part": os.path.isfile(f"{jp}/val/part-0000.parquet"),
         "JP kana board": os.path.isfile(f"{jp}/jp-board.jsonl"),
@@ -4999,7 +4999,7 @@ def sync_v8cjk_shi():
     overlay = f"{VOL_MOUNT}/corpus/versioned/v8-cjk-shi-2026-09-06"
     checks = {
         "v8-cjk-shi config": os.path.isfile(f"{package}/configs/v8-cjk-shi.yaml"),
-        "upweight option in the renderer": _file_contains(f"{package}/build_jp_slice.py", "upweight_pattern"),
+        "upweight option in the renderer": _file_contains(f"{package}/countries/jp/corpora.py", "upweight_pattern"),
         "JP train parts": all(os.path.isfile(f"{jp}/train/part-{index:04d}.parquet") for index in range(8)),
         "JP val part": os.path.isfile(f"{jp}/val/part-0000.parquet"),
         "JP board": os.path.isfile(f"{jp}/jp-board.jsonl"),
@@ -5052,7 +5052,7 @@ def sync_v8cjk_kr():
         "v8-cjk-kr configs": all(
             os.path.isfile(f"{package}/configs/{name}.yaml") for name in ("v8-cjk-kr-probe", "v8-cjk-kr")
         ),
-        "KR builder in the package": os.path.isfile(f"{package}/build_kr_slice.py"),
+        "KR builder in the package": os.path.isfile(f"{package}/countries/kr/corpora.py"),
         "KR train parts": all(os.path.isfile(f"{kr}/train/kr-part-{index:04d}.parquet") for index in range(8)),
         "KR val part": os.path.isfile(f"{kr}/val/kr-part-0000.parquet"),
         "KR board + centroids": os.path.isfile(f"{kr}/kr-board.jsonl")
@@ -5135,8 +5135,8 @@ def _verify_v8cjk_regs(package: str, versioned: str) -> None:
             os.path.isfile(f"{package}/configs/{name}.yaml") for name in ("v8-cjk-regs-probe", "v8-cjk-regs")
         ),
         "KR builder + registries in the package": all(
-            os.path.isfile(f"{package}/{name}.py")
-            for name in ("build_kr_slice", "kr_juso", "kr_registry", "build_tw_slice", "tw_registry", "jp_registry")
+            os.path.isfile(f"{package}/countries/{name}.py")
+            for name in ("kr/corpora", "kr/juso", "kr/registers", "tw/corpora", "tw/registers", "jp/registers")
         ),
         "KR train parts": all(
             os.path.isfile(f"{versioned}/v8-kr-2026-09-08/train/kr-part-{index:04d}.parquet") for index in range(8)

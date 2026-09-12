@@ -25,7 +25,7 @@ the active set, the array builds) are kept.
 
 Usage (local artifact; the manifest paths are written for the volume):
 
-    uv run python -m mailwoman_train.build_cjk_overlay \\
+    uv run python -m mailwoman_train.countries.cjk.overlay \\
         --jp-corpus $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04 \\
         --cn-train <cn-units-train.jsonl> --cn-val <cn-units-val.jsonl> --cn-test <cn-units-test.jsonl> \\
         --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-cjk-2026-09-05
@@ -43,10 +43,9 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from .corpora.builder import SCHEMA
-from .corpora.builder import verify_record as _verify_record
-from .labels import resolve_label_set
-from .tokenizer.char import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
+from ...corpora.builder import SCHEMA, verify_cjk_record
+from ...labels import resolve_label_set
+from ...tokenizer.char import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
 
 LABEL_SET_NAME = "stage3-cjk"
 CN_SOURCE = "coarse-placer-cn-units"
@@ -61,11 +60,6 @@ def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
             line = line.strip()
             if line:
                 yield json.loads(line)
-
-
-def verify_cn_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
-    """The shared verifier minus the whitespace rule (see the module docstring for why)."""
-    _verify_record(record, tag_set, label_set_name=LABEL_SET_NAME, forbid_whitespace=False)
 
 
 def to_cn_record(row: dict[str, Any]) -> dict[str, Any]:
@@ -124,7 +118,7 @@ def build(
     for split, source in (("train", cn_train), ("val", cn_val)):
         records = [to_cn_record(row) for row in read_jsonl(source)]
         for record in records:
-            verify_cn_record(record, tag_set)
+            verify_cjk_record(record, tag_set)
             tag_counts.update(record["span_tags"])
         if not records:
             raise RuntimeError(f"{source} holds no rows")
@@ -133,7 +127,7 @@ def build(
 
     board = [to_cn_record(row) for row in read_jsonl(cn_test)]
     for record in board:
-        verify_cn_record(record, tag_set)
+        verify_cjk_record(record, tag_set)
     with (out_dir / "cn-board.jsonl").open("w", encoding="utf-8") as handle:
         for record in board:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")

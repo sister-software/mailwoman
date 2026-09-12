@@ -11,8 +11,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train.build_cjk_overlay import build, merge_char_vocab, to_cn_record, verify_cn_record
-from mailwoman_train.corpora.builder import SCHEMA
+from mailwoman_train.corpora.builder import SCHEMA, verify_cjk_record
+from mailwoman_train.countries.cjk.overlay import build, merge_char_vocab, to_cn_record
 from mailwoman_train.labels import resolve_label_set
 from mailwoman_train.tokenizer.char import save_char_vocab
 
@@ -99,10 +99,10 @@ def test_cn_record_takes_the_jp_schema_and_a_cn_register() -> None:
 
 
 def test_verify_allows_the_inner_space_of_a_latin_region_and_refuses_a_foreign_tag() -> None:
-    verify_cn_record(to_cn_record(CN_ROW), TAGS)
+    verify_cjk_record(to_cn_record(CN_ROW), TAGS)
     bad = to_cn_record({**CN_ROW, "span_tags": ["dependent_locality", "farm", "region", "country"]})
     with pytest.raises(RuntimeError, match="outside stage3-cjk"):
-        verify_cn_record(bad, TAGS)
+        verify_cjk_record(bad, TAGS)
 
 
 def test_merged_vocab_keeps_every_jp_character_and_adds_every_cn_character_once() -> None:

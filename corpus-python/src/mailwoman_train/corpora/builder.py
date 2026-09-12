@@ -1,7 +1,8 @@
 """The row machinery every corpus builder shares: schema, renderer, sampling, verification, stats.
 
-These names lived in `build_jp_slice.py`, so four sibling builders and a register reader imported a
-978-line Japanese builder to get them.
+Nothing here is specific to one country. A name that four builders and a register reader all need
+has no business inside any one of them, because taking it from there makes every other country
+depend on that country's builder.
 """
 
 from __future__ import annotations
@@ -132,6 +133,22 @@ def verify_record(
         if forbid_whitespace and any(character.isspace() for character in raw[start:end]):
             raise RuntimeError(f"whitespace inside span {tag}@[{start},{end}): {raw[start:end]!r}")
     char_label_array_from_spans(raw, record["span_starts"], record["span_ends"], record["span_tags"])
+
+
+#: The head Korea, Taiwan and the Chinese organizational units share. Japan has its own
+#: (`stage3-jp`), so its rows never take the verifier below.
+CJK_LABEL_SET_NAME = "stage3-cjk"
+
+
+def verify_cjk_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
+    """`verify_record` for a row in the CJK head, where an interior space can be part of a span.
+
+    A Chinese row's Latin admin tail carries a real inner space — `Inner Mongolia`, `Xinjiang
+    Uyghur` — and in `char_mode: char` the space is its own unit, so the label array is well formed.
+    Korea and the register corpus need the same allowance, and reaching into the overlay builder to
+    get it made one country's corpus builder a dependency of another's.
+    """
+    verify_record(record, tag_set, label_set_name=CJK_LABEL_SET_NAME, forbid_whitespace=False)
 
 
 def coverage_stats(records: Iterable[dict[str, Any]]) -> dict[str, Any]:

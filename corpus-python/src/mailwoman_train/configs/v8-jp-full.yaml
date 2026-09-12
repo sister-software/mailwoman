@@ -7,7 +7,7 @@
 # the char vocab (1,918 -> 2,237 sealed from the train split).
 #
 # Corpus: `$MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04` (#1458), built by
-# `mailwoman_train.build_jp_slice` from Overture-JP 2026-06-17.0 + KEN_ALL — 2,000,000 train /
+# `mailwoman_train.countries.jp.corpora` from Overture-JP 2026-06-17.0 + KEN_ALL — 2,000,000 train /
 # 20,000 val / 20,000 board, 47 prefectures, per-prefecture cap 42,978, board municipalities held
 # out on the probe's bucket rule. BIO char coverage 1.0000 on every split.
 #

@@ -25,7 +25,7 @@ the rng identically and their counts are byte-equal (pinned by the test).
 
 Typical volume-side run (see ``train_remote.py::audit_epoch_mixture``)::
 
-    python -m mailwoman_train.audit_epoch_mixture \
+    python -m mailwoman_train.audits.epoch_mixture \
       --config src/mailwoman_train/configs/v4.3.3-suffix-boundary-base-60k.yaml \
       --json epoch-mixture-audit.json
 """

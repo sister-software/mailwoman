@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 
-from mailwoman_train.build_secondary_slice import _row_from_groups, _secondary_forms, generate
+from mailwoman_train.corpora.secondary import _row_from_groups, _secondary_forms, generate
 from mailwoman_train.labels import STAGE4_TAGS
 
 

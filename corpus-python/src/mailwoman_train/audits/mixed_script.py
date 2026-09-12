@@ -7,7 +7,7 @@ populations separate and reports the latter by component tag, country, and sourc
 
 Typical selectable-feed audit::
 
-    python -m mailwoman_train.audit_mixed_script \
+    python -m mailwoman_train.audits.mixed_script \
       --config src/mailwoman_train/configs/v4.3.1-suffix-boundary-target-dose-8k.yaml \
       --corpus-dir /data/corpus/versioned/v0.18.1-suffix-boundary/corpus-v0.18.1-suffix-boundary \
       --rows 250000 --seed 1569 --json mixed-script-feed.json

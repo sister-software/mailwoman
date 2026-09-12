@@ -26,11 +26,11 @@ subwords for a strong mean-init). It does NOT scale to CJK — thousands of logo
 and byte-fallback constituents make mean-init weak. CJK wants a char-level front-end instead.
 
 CLI:
-    python -m mailwoman_train.tokenizer_splice build-tokenizer \\
+    python -m mailwoman_train.tokenizer.splice build-tokenizer \\
         --oa-root $MAILWOMAN_DATA_ROOT/openaddresses/extracted --locales cz,pl,sk,si \\
         --base-tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \\
         --out-tokenizer out/tokenizer-bsplice.model --vocab-size 24000
-    python -m mailwoman_train.tokenizer_splice mean-init \\
+    python -m mailwoman_train.tokenizer.splice mean-init \\
         --checkpoint <v4.15.0 from_pretrained dir> \\
         --base-tokenizer <base.model> --spliced-tokenizer out/tokenizer-bsplice.model \\
         --out-dir out/bsplice-expanded

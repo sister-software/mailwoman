@@ -31,7 +31,7 @@ Matching is conservative by parity: case-insensitive, NO period stripping ("St."
 same as the builder).
 
 Audit mode (run before any training on a new corpus):
-    python -m mailwoman_train.relabel --lexicon <path> --corpus-dir <dir> --rows 10000
+    python -m mailwoman_train.data.relabel --lexicon <path> --corpus-dir <dir> --rows 10000
 prints split rate, per-rule counts, and a sample of relabeled rows for manual inspection.
 """
 

@@ -29,7 +29,7 @@ the JP scorer compares a resolved (region, subregion) pair against. Permit rows 
 registry board, so a typed address in a held-out district is read, not trained.
 
 Usage:
-    python -m mailwoman_train.build_kr_slice \\
+    python -m mailwoman_train.countries.kr.corpora \\
         --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-kr-<date> \\
         --registry-out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-kr-registry-<date>
 """
@@ -48,8 +48,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from .build_cjk_overlay import verify_cn_record as verify_record
-from .corpora.builder import (
+from ...corpora.builder import (
     MAX_FIELD_CHARS,
     MAX_RENDERED_CHARS,
     SCHEMA,
@@ -59,8 +58,13 @@ from .corpora.builder import (
     select_exact,
     water_fill,
 )
-from .kr_juso import REGION_ALIASES, LabelRow, alias_key_index, empty_key_index, index_label_row, iter_label_rows
-from .kr_registry import (
+from ...corpora.builder import verify_cjk_record as verify_record
+from ...labels import resolve_label_set
+from ...paths import resolve_data_root_default
+from ...text.normalize import normalize_text
+from ...tokenizer.char import build_char_vocab, save_char_vocab
+from .juso import REGION_ALIASES, LabelRow, alias_key_index, empty_key_index, index_label_row, iter_label_rows
+from .registers import (
     Aligned,
     KeyIndex,
     PermitRow,
@@ -70,10 +74,6 @@ from .kr_registry import (
     to_record,
     transform_coordinates,
 )
-from .labels import resolve_label_set
-from .paths import resolve_data_root_default
-from .text.normalize import normalize_text
-from .tokenizer.char import build_char_vocab, save_char_vocab
 
 #: Resolved after parsing, not here: reading the data root at import would raise for a caller who
 #: passes the flags and never needs it.

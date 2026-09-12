@@ -24,7 +24,7 @@ PRE-REGISTERED DEFINITION — written before any board inference was run (the ba
 --- Phase-3 additions (2026-08-05). The check above is UNCHANGED; both additions are diagnostic. ---
 
 **Per-register acceptability.** The full JP slice (#1458) writes a ``register`` column on every
-board row — which of the four surfaces ``build_jp_slice`` rendered it in (``native`` /
+board row — which of the four surfaces the JP corpus builder rendered it in (``native`` /
 ``arabic_chome`` / ``compact_folded`` / ``designator``). One blended number cannot tell "the model
 reads Japanese" from "the model reads the 68% of the board that is the source's own surface", and
 the two synthesized registers are exactly the ones the source never contains — so they are the ones

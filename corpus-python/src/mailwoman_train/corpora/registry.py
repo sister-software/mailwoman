@@ -11,8 +11,8 @@ trained: Taiwan holds out 鄉鎮市區 by the (縣市|鄉鎮市區) hash at the 
 by the municipality hash at the JP board's bucket.
 
 Usage:
-    python -m mailwoman_train.build_registry_corpus tw --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-tw-registry-<date>
-    python -m mailwoman_train.build_registry_corpus jp --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-registry-<date>
+    python -m mailwoman_train.corpora.registry tw --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-tw-registry-<date>
+    python -m mailwoman_train.corpora.registry jp --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-registry-<date>
 """
 
 from __future__ import annotations
@@ -29,15 +29,14 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from . import jp_registry, tw_registry
-from .build_cjk_overlay import verify_cn_record
-from .build_jp_slice import BOARD_BUCKET_MIN as JP_BOARD_BUCKET_MIN
-from .build_tw_slice import BOARD_BUCKET_MIN as TW_BOARD_BUCKET_MIN
-from .corpora.builder import SCHEMA, coverage_stats, muni_bucket, select_exact
-from .labels import resolve_label_set
-from .paths import data_root_path
-from .text.normalize import normalize_text
-from .tokenizer.char import build_char_vocab, save_char_vocab
+from ..countries import jp, tw
+from ..countries.jp import registers as jp_registry
+from ..countries.tw import registers as tw_registry
+from ..labels import resolve_label_set
+from ..paths import data_root_path
+from ..text.normalize import normalize_text
+from ..tokenizer.char import build_char_vocab, save_char_vocab
+from .builder import SCHEMA, coverage_stats, muni_bucket, select_exact, verify_cjk_record
 
 
 def sources_dir(*parts: str) -> Path:
@@ -84,14 +83,14 @@ def jp_candidates(
 LOCALES: dict[str, dict[str, Any]] = {
     "tw": {
         "source": tw_registry.SOURCE,
-        "bucket_min": TW_BOARD_BUCKET_MIN,
+        "bucket_min": tw.BOARD_BUCKET_MIN,
         "part": "tw-registry",
         "board": "tw-registry-board.jsonl",
         "vocab": "char-vocab-tw-registry.json",
     },
     "jp": {
         "source": jp_registry.SOURCE,
-        "bucket_min": JP_BOARD_BUCKET_MIN,
+        "bucket_min": jp.BOARD_BUCKET_MIN,
         "part": "jp-registry",
         "board": "jp-registry-board.jsonl",
         "vocab": "char-vocab-jp-registry.json",
@@ -156,7 +155,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                     }
                 )
         elif next(train_selector):
-            verify_cn_record(record, tag_set)
+            verify_cjk_record(record, tag_set)
             tags.update(record["span_tags"])
             rows.append(record)
     rng.shuffle(rows)

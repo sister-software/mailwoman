@@ -9,9 +9,12 @@ from __future__ import annotations
 import argparse
 import inspect
 
-from mailwoman_train import build_jp_slice, build_kr_slice, build_tw_slice, protocols
+from mailwoman_train import protocols
+from mailwoman_train.countries.jp import corpora as jp_corpora
+from mailwoman_train.countries.kr import corpora as kr_corpora
+from mailwoman_train.countries.tw import corpora as tw_corpora
 
-COUNTRY_BUILDERS = (build_jp_slice, build_kr_slice, build_tw_slice)
+COUNTRY_BUILDERS = (jp_corpora, kr_corpora, tw_corpora)
 
 
 def test_country_module_protocol_declares_the_expected_members() -> None:

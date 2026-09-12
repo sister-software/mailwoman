@@ -13,15 +13,15 @@ from typing import Any
 
 import pytest
 
-from mailwoman_train.build_cjk_overlay import verify_cn_record
-from mailwoman_train.build_kr_slice import (
+from mailwoman_train.corpora.builder import verify_cjk_record
+from mailwoman_train.countries.kr.corpora import (
     REGISTER_WEIGHTS,
     SHORT_REGIONS,
     available_registers,
     eligible,
     render_row,
 )
-from mailwoman_train.kr_juso import LabelRow, iter_label_rows
+from mailwoman_train.countries.kr.juso import LabelRow, iter_label_rows
 from mailwoman_train.labels import resolve_label_set
 
 TAGS = frozenset(resolve_label_set("stage3-cjk").tags)
@@ -64,14 +64,14 @@ def test_official_register_is_the_source_form_with_the_dong_in_parentheses() -> 
         ("house_number", "94"),
         ("dependent_locality", "청운동"),
     ]
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
 
 
 def test_building_register_adds_the_building_name_inside_the_parenthetical() -> None:
     record = render_row(label_row(), register="building")
     assert record["raw"] == "서울특별시 종로구 자하문로 94 (청운동, 청운빌딩)"
     assert spans(record)[-2:] == [("dependent_locality", "청운동"), ("venue", "청운빌딩")]
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
 
 
 @pytest.mark.parametrize(
@@ -86,7 +86,7 @@ def test_the_typed_registers(register: str, expected: str) -> None:
     record = render_row(label_row(), register=register)
     assert record["raw"] == expected
     assert "dependent_locality" not in record["span_tags"]
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
 
 
 def test_jibun_register_is_the_lot_form_with_the_dong_as_dependent_locality() -> None:
@@ -99,7 +99,7 @@ def test_jibun_register_is_the_lot_form_with_the_dong_as_dependent_locality() ->
         ("house_number", "52-1"),
         ("venue", "청운빌딩"),
     ]
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
 
 
 def test_an_eupmyeon_row_writes_the_myeon_before_the_road_and_the_ri_in_parentheses() -> None:
@@ -122,8 +122,8 @@ def test_an_eupmyeon_row_writes_the_myeon_before_the_road_and_the_ri_in_parenthe
     jibun = render_row(row, register="jibun")
     assert jibun["raw"] == "강원특별자치도 원주시 신림면 신림리 668-13"
     assert [surface for tag, surface in spans(jibun) if tag == "dependent_locality"] == ["신림면", "신림리"]
-    verify_cn_record(official, TAGS)
-    verify_cn_record(jibun, TAGS)
+    verify_cjk_record(official, TAGS)
+    verify_cjk_record(jibun, TAGS)
 
 
 def test_an_underground_number_keeps_지하_outside_the_house_number_span() -> None:
@@ -131,7 +131,7 @@ def test_an_underground_number_keeps_지하_outside_the_house_number_span() -> N
     assert record["raw"] == "서울특별시 종로구 자하문로 지하 94"
     assert ("house_number", "94") in spans(record)
     assert all("지하" not in surface for _, surface in spans(record))
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
 
 
 def test_short_region_replaces_the_region_span_only() -> None:
@@ -147,10 +147,10 @@ def test_a_compound_sigungu_is_two_subregion_spans_with_the_space_outside_both()
     record = render_row(row, register="no_dong")
     assert record["raw"] == "경기도 수원시 장안구 영동고속도로 31"
     assert spans(record)[1:3] == [("subregion", "수원시"), ("subregion", "장안구")]
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
     unspaced = render_row(row, register="unspaced")
     assert unspaced["raw"] == "경기도수원시장안구영동고속도로31"
-    verify_cn_record(unspaced, TAGS)
+    verify_cjk_record(unspaced, TAGS)
 
 
 def test_sejong_has_no_sigungu_span_and_still_renders() -> None:
@@ -159,14 +159,14 @@ def test_sejong_has_no_sigungu_span_and_still_renders() -> None:
     assert record["raw"] == "세종특별자치시 한누리대로 1843-10 (반곡동)"
     assert "subregion" not in record["span_tags"]
     assert eligible(row, 64) is None
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
 
 
 def test_the_country_token_leads_and_stays_a_span() -> None:
     record = render_row(label_row(), register="no_dong", country=True)
     assert record["raw"].startswith("대한민국 ")
     assert spans(record)[0] == ("country", "대한민국")
-    verify_cn_record(record, TAGS)
+    verify_cjk_record(record, TAGS)
 
 
 def test_available_registers_follow_the_row() -> None:

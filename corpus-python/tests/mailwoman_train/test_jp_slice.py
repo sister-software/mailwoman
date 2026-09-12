@@ -11,17 +11,15 @@ import random
 
 import pytest
 
-from mailwoman_train.build_jp_slice import (
+from mailwoman_train.corpora.builder import coverage_stats, select_exact, water_fill
+from mailwoman_train.countries.jp.corpora import (
     REGISTER_WEIGHTS,
     available_registers,
     load_kenall_postcodes,
-    normalize_name,
-    normalize_number,
     render_row,
-    split_street,
     verify_record,
 )
-from mailwoman_train.corpora.builder import coverage_stats, select_exact, water_fill
+from mailwoman_train.countries.jp.text import normalize_name, normalize_number, split_street
 from mailwoman_train.labels import resolve_label_set
 from mailwoman_train.text.kana import fold_halfwidth_kana, int_to_kanji, kanji_to_int
 
@@ -364,7 +362,7 @@ def test_water_fill_caps_the_dominant_bucket() -> None:
 
 
 def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic() -> None:
-    from mailwoman_train.jp_kana import kana_surface, pick_kana_stem
+    from mailwoman_train.countries.jp.kana import kana_surface, pick_kana_stem
 
     stem = pick_kana_stem("厚木市", ["あつぎ", "あつぎし", "厚木", "厚木町"])
     assert stem == "あつぎ"
@@ -379,7 +377,7 @@ def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic(
 
 
 def test_kana_lookup_strips_the_county_prefix_when_the_full_form_has_no_reading() -> None:
-    from mailwoman_train.jp_kana import municipality_kana_lookup
+    from mailwoman_train.countries.jp.kana import municipality_kana_lookup
 
     table = {"上市町": "かみいち町", "厚木市": "あつぎ市"}
     assert municipality_kana_lookup(table, "厚木市") == "あつぎ市"

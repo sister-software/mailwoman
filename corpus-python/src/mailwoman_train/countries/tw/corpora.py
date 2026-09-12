@@ -36,7 +36,7 @@ The board carries the row's own coordinate; a per-district centroid table (mean 
 beside it so the JP scorer reads the coordinate half with ``--resolve-tags region,subregion``.
 
 Usage:
-    python -m mailwoman_train.build_tw_slice --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-tw-<date>
+    python -m mailwoman_train.countries.tw.corpora --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-tw-<date>
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from .corpora.builder import (
+from ...corpora.builder import (
     MAX_FIELD_CHARS,
     SCHEMA,
     RowRenderer,
@@ -63,11 +63,11 @@ from .corpora.builder import (
     select_exact,
     water_fill,
 )
-from .corpora.builder import verify_record as _verify_record
-from .labels import resolve_label_set
-from .paths import resolve_data_root_default
-from .text.normalize import ascii_digits, fullwidth_digits, normalize_text
-from .tokenizer.char import build_char_vocab, save_char_vocab
+from ...corpora.builder import verify_record as _verify_record
+from ...labels import resolve_label_set
+from ...paths import resolve_data_root_default
+from ...text.normalize import ascii_digits, fullwidth_digits, normalize_text
+from ...tokenizer.char import build_char_vocab, save_char_vocab
 
 #: Resolved after parsing, not here: reading the data root at import would raise for a caller who
 #: passes `--parquet` and never needs it.
