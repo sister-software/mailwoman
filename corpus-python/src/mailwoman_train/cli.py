@@ -25,17 +25,25 @@ from typing import Any
 
 
 def _find_packages_root() -> Path:
-    """Find the workspace ``packages/`` directory by walking up from this file.
+    """The workspace ``packages/`` directory, found by walking up for the repo root.
 
-    ``cli.py`` lives at ``<repo>/packages/corpus-python/src/mailwoman_train/cli.py`` —
-    five ``parent`` hops reach the repo root, then we append ``packages``.
+    Searches for a parent holding both ``packages/`` and ``package.json`` rather than counting
+    hops. A hop count encodes this file's depth, so moving the module changes where the weights
+    bundles get written — and the previous count was one too high, which sent the search past the
+    repo root to a directory with no ``packages/`` at all.
+
+    RAISES when no parent qualifies. The fallback was a relative ``Path("packages")``, so a package
+    build outside a checkout wrote ``./packages/neural-weights-<locale>/`` under the working
+    directory and reported success.
     """
     here = Path(__file__).resolve()
-    repo_root = here.parent.parent.parent.parent.parent
-    pkgs = repo_root / "packages"
-    if pkgs.is_dir():
-        return pkgs
-    return Path("packages")
+    for candidate in here.parents:
+        if (candidate / "packages").is_dir() and (candidate / "package.json").is_file():
+            return candidate / "packages"
+    raise RuntimeError(
+        f"no repository root above {here}: looked for a parent holding both packages/ and "
+        "package.json. Packaging weights needs the checkout it writes into."
+    )
 
 
 def cmd_train(args: argparse.Namespace) -> int:
