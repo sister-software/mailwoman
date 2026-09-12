@@ -18,13 +18,21 @@ SOURCE_ROOT = CORPUS_PYTHON / "src" / "mailwoman_train"
 #: import `node:fs`: a funnel is only a funnel if everything goes through it.
 ENV_MODULE = SOURCE_ROOT / "env.py"
 
-#: Paths that exist on one machine. A literal matching any of these is refused wherever it appears,
-#: docstrings and usage examples included: an example a reader copies is a path they then have to
-#: debug. Write `$MAILWOMAN_DATA_ROOT` instead.
-MACHINE_PATHS = ("/mnt/playpen", "/home/lab", "/mnt/nexus")
+#: Filesystem namespaces whose contents differ per machine: mount points, removable media, and home
+#: directories. An absolute literal under one of these is somebody's particular setup, and a reader
+#: who copies it from a docstring gets a path they then have to debug. Write `$MAILWOMAN_DATA_ROOT`
+#: or a `paths.py` helper.
+#:
+#: Matched by SHAPE rather than by listing the developer paths this repository happened to contain.
+#: A list of those would have to name them, which is the thing being refused — and it would go stale
+#: the moment somebody with a different home directory writes one.
+#:
+#: Deliberately absent: `/tmp` and `/data`. Both are the same on every machine that runs this code
+#: (`/data` is the Modal volume mount), so neither identifies one.
+MACHINE_PATH_ROOTS = ("/mnt/", "/media/", "/home/", "/Users/")
 
-#: This file, which has to contain the patterns above to search for them. The only exemption, and it
-#: is structural rather than a suppression: a check cannot name what it refuses without writing it.
+#: This file, which has to spell the prefixes in order to search for them. The only exemption, and
+#: structural rather than a suppression: a check cannot name what it refuses without writing it.
 SELF = Path(__file__).resolve()
 
 #: Files still carrying a machine path, each with what replaces it. The list only shrinks; a new
@@ -95,7 +103,7 @@ def test_no_tracked_file_names_a_machine() -> None:
         hits = [
             number
             for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1)
-            if any(machine in line for machine in MACHINE_PATHS)
+            if any(root in line for root in MACHINE_PATH_ROOTS)
         ]
         if hits:
             offenders[str(path.relative_to(CORPUS_PYTHON))] = hits
