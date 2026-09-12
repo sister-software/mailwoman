@@ -7,7 +7,6 @@ what each register renders from it.
 
 from __future__ import annotations
 
-import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +22,8 @@ from mailwoman_train.countries.kr.corpora import (
 )
 from mailwoman_train.countries.kr.juso import LabelRow, iter_label_rows
 from mailwoman_train.labels import resolve_label_set
+
+from .kr_fixture import GANGWON, SEOUL, write_juso_zip
 
 TAGS = frozenset(resolve_label_set("stage3-cjk").tags)
 
@@ -192,45 +193,9 @@ def test_eligible_names_the_reason_a_row_is_dropped(overrides: dict[str, Any], r
     assert eligible(label_row(**overrides), 64) == reason
 
 
-def write_juso_zip(path: Path) -> None:
-    """A two-address edition of the 주소DB in the portal's shape: CP949 members named without the UTF-8 flag."""
-    road_codes = "\n".join(
-        [
-            "111104100001|자하문로|Jahamun-ro|01|서울특별시|Seoul|종로구|Jongno-gu|청운효자동|Cheongunhyoja-dong|1|1111010100|1",
-            "511304100002|신림황둔로|Sillimhwangdun-ro|02|강원특별자치도|Gangwon|원주시|Wonju-si|신림면|Sillim-myeon|0|5113035000|1",
-        ]
-    )
-    seoul_address = "11110000000001|111104100001|01|0|00094|00000|03047|0|20140101||1"
-    seoul_lot = "11110000000001|1|1111010100|서울특별시|종로구|청운동||0|0052|0001|1"
-    seoul_supplement = "11110000000001|1111051500|청운효자동|03047|001||청운빌딩||0"
-    gangwon_address = "51130000000002|511304100002|02|0|00011|00000|26301|0|20140101||1"
-    gangwon_lot = "51130000000002|1|5113035021|강원특별자치도|원주시|신림면|신림리|0|0668|0013|1"
-    gangwon_supplement = "51130000000002|5113035000|신림면|26301|001||||0"
-    members = {
-        "개선_도로명코드_전체분.txt": road_codes,
-        "주소_서울특별시.txt": seoul_address,
-        "지번_서울특별시.txt": seoul_lot,
-        "부가정보_서울특별시.txt": seoul_supplement,
-        "주소_강원특별자치도.txt": gangwon_address,
-        "지번_강원특별자치도.txt": gangwon_lot,
-        "부가정보_강원특별자치도.txt": gangwon_supplement,
-    }
-    with zipfile.ZipFile(path, "w") as archive:
-        for name, text in members.items():
-            archive.writestr(CP949MemberInfo(name), text.encode("cp949"))
-
-
-class CP949MemberInfo(zipfile.ZipInfo):
-    """A member whose name is stored as CP949 bytes WITHOUT the UTF-8 flag, the way the portal writes them. `zipfile`
-    itself always stores a non-ASCII name as UTF-8 with the flag, so a reader test needs this to meet the real shape."""
-
-    def _encodeFilenameFlags(self) -> tuple[bytes, int]:  # noqa: N802 — zipfile's own hook name
-        return self.filename.encode("cp949"), self.flag_bits
-
-
 def test_iter_label_rows_joins_the_four_files_and_recodes_the_member_names(tmp_path: Path) -> None:
     archive = tmp_path / "202608ALLMTCHG00.zip"
-    write_juso_zip(archive)
+    write_juso_zip(archive, [SEOUL, GANGWON])
     rows = sorted(iter_label_rows(archive), key=lambda row: row.region)
     assert [row.region for row in rows] == ["강원특별자치도", "서울특별시"]
     gangwon, seoul = rows
