@@ -2,7 +2,7 @@
 
 Walks every YAML in src/mailwoman_train/configs/ recursively against the
 dataclass field tree (Config -> data/model/train/eval), collecting EVERY
-unknown dotted key path (not just the first, which is all a raising _merge
+unknown dotted key path (every one, where a raising `merge_into` reports only the first
 reports). Also records non-unknown-key load errors separately (e.g. the YAML
 Norway guard) so the two failure classes don't blur.
 """

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from mailwoman_train.config import Config, _merge, load_config
+from mailwoman_train.config import Config, load_config, merge_into
 
 
 def _write(tmp_path, text: str):
@@ -37,10 +37,10 @@ def test_unknown_top_level_section_raises(tmp_path):
         load_config(path)
 
 
-def test_strict_is_the_default_for_merge():
+def test_strict_is_the_default_formerge_into():
     cfg = Config()
     with pytest.raises(KeyError) as excinfo:
-        _merge(cfg, {"train": {"classifier_learning_rates": 1e-4}})
+        merge_into(cfg, {"train": {"classifier_learning_rates": 1e-4}})
     assert "train.classifier_learning_rates" in str(excinfo.value)
 
 
@@ -133,7 +133,7 @@ def test_lenient_mode_preserves_the_silent_skip(tmp_path):
 
 def test_lenient_merge_skips_unknown_keys():
     cfg = Config()
-    _merge(cfg, {"model": {"future_knob": True, "hidden_size": 512}}, strict=False)
+    merge_into(cfg, {"model": {"future_knob": True, "hidden_size": 512}}, strict=False)
     assert cfg.model.hidden_size == 512
     assert not hasattr(cfg.model, "future_knob")
 

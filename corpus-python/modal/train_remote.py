@@ -1475,7 +1475,7 @@ def sync_src_gb():
     """SOURCE-ONLY sync for the v3.10.x dep-loc probes: pull `corpus-python/src/` from R2, clear
     pycache, and VERIFY the resurrection settings landed volume-side — commit 78adb380 added
     `reinit_label_rows` + `classifier_learning_rate` to train.py/config.py, and a volume-side
-    config.py predating them would silently drop both keys via the `_merge` hasattr check (#1248).
+    config schema predating them would silently drop both keys via the `merge_into` hasattr check (#1248).
     This sync asserts the marker string is present in BOTH files before returning, so a stale sync
     fails loud instead of silently launching a run with every setting inert. (Historical note: written mid-arc
     under a run-A "instrument failure" hypothesis that later checkpoint-cosine analysis SUPERSEDED —
