@@ -44,6 +44,27 @@ class CountryModule(Protocol):
 
 
 @runtime_checkable
+class CLICommand(Protocol):
+    """One subcommand of `python -m mailwoman_train`.
+
+    The implementer is a module under `cli/commands/`. A command declares its own flags, so its
+    body and its interface are read together instead of a hundred lines apart, and adding one
+    touches no other command's code.
+    """
+
+    NAME: str
+    """The subcommand as typed, which may be kebab-case where the module name cannot be."""
+
+    def add_parser(self, subparsers: Any) -> None:
+        """Register this command's parser and flags on the shared subparser action."""
+        ...
+
+    def run(self, args: argparse.Namespace) -> int:
+        """Do the work and answer a process exit code."""
+        ...
+
+
+@runtime_checkable
 class TrainCallback(Protocol):
     """One concern observed during a training run.
 

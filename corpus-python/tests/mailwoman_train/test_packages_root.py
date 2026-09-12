@@ -12,11 +12,11 @@ from pathlib import Path
 
 import pytest
 
-from mailwoman_train.cli import _find_packages_root
+from mailwoman_train.cli.packages_root import find_packages_root
 
 
 def test_it_finds_the_checkout_packages_directory() -> None:
-    found = _find_packages_root()
+    found = find_packages_root()
 
     assert found.is_absolute(), "a relative answer resolves against the working directory"
     assert found.is_dir()
@@ -25,7 +25,7 @@ def test_it_finds_the_checkout_packages_directory() -> None:
 
 
 def test_it_answers_the_root_that_holds_this_file() -> None:
-    found = _find_packages_root()
+    found = find_packages_root()
     here = Path(__file__).resolve()
 
     assert found.parent in here.parents, f"{found.parent} is not above {here}"
@@ -33,9 +33,9 @@ def test_it_answers_the_root_that_holds_this_file() -> None:
 
 def test_it_raises_rather_than_answering_a_relative_path(monkeypatch: pytest.MonkeyPatch) -> None:
     """With no qualifying parent the function must raise, not hand back somewhere writable."""
-    import mailwoman_train.cli as cli
+    from mailwoman_train.cli import packages_root
 
-    monkeypatch.setattr(cli, "__file__", "/nonexistent/src/mailwoman_train/cli.py")
+    monkeypatch.setattr(packages_root, "__file__", "/nonexistent/src/mailwoman_train/cli/packages_root.py")
 
     with pytest.raises(RuntimeError, match="no repository root"):
-        _find_packages_root()
+        find_packages_root()
