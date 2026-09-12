@@ -151,7 +151,10 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a log captured through tee outside the tree", `yarn compile 2>&1 | tee /tmp/compile.log`],
 		["a timeout around a test run", `timeout 600 yarn test`],
 		["this repository's operator CLI", `yarn mwops health all`],
-		["a short Modal command with no detach and no timeout", `modal run corpus-python/launch/train_remote.py::sync_v540`],
+		[
+			"a short Modal command with no detach and no timeout",
+			`modal run corpus-python/launch/train_remote.py::sync_v540`,
+		],
 		["a Modal volume read", `modal volume ls mailwoman-training /output-v540/checkpoints`],
 		[
 			"the detached launcher itself",

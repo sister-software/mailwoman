@@ -1,9 +1,7 @@
 {
 	"sync_assets": {
 		"check_paths": [],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": []
 	},
 	"sync_corpus": {
@@ -23,9 +21,7 @@
 			"/data/gazetteer/country-surface-lexicon-v1.json",
 			"/data/output-v261-span-boundary-full-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/gazetteer/ /data/gazetteer/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -38,9 +34,7 @@
 			"/data/gazetteer/country-surface-lexicon-v1.json",
 			"/data/output-v263-country-channel-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
@@ -56,9 +50,7 @@
 			"/data/models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 			"/data/output-v384-latam-probe-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.15.0-deploc/corpus-v0.15.0-deploc/ /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -69,9 +61,7 @@
 			"/data/corpus-python/src/mailwoman_train/configs/v3.14.0-deploc-head.yaml",
 			"/data/output-v384-latam-probe-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
@@ -83,9 +73,7 @@
 			"/data/gazetteer/street-type-lexicon-v1.json",
 			"/data/output-v384-latam-probe-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/gazetteer/locality-surface-lexicon-v1.json /data/gazetteer/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
@@ -117,9 +105,7 @@
 			"/data/models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 			"/data/output-v384-latam-probe-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.14.0-gb/corpus-v0.14.0-gb/ /data/corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -127,9 +113,7 @@
 	},
 	"sync_gb_venue": {
 		"check_paths": [],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.15.1-gb-venue/ /data/corpus/versioned/v0.15.1-gb-venue/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
@@ -151,9 +135,7 @@
 			"/data/corpus/versioned/v8-jp-full-2026-08-04/val/part-0000.parquet",
 			"/data/corpus/versioned/v8-jp-probe/jp-muni-centroids.json"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v8-jp-full-2026-08-04/ /data/corpus/versioned/v8-jp-full-2026-08-04/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
@@ -174,9 +156,7 @@
 			"/data/corpus/versioned/v8-jp-probe/val/part-0000.parquet",
 			"/data/corpus/versioned/v8-leg2/char-vocab-latin-v1.json"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v8-jp-probe/ /data/corpus/versioned/v8-jp-probe/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
@@ -202,9 +182,7 @@
 			"/data/models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 			"/data/output-v381-punct-fix-full-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.13.0-latam/corpus-v0.13.0-latam/ /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -220,9 +198,7 @@
 			"/data/models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 			"/data/output-v381-punct-fix-full-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.14.0-latam-br/corpus-v0.14.0-latam-br/ /data/corpus/versioned/v0.14.0-latam-br/corpus-v0.14.0-latam-br/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -236,9 +212,7 @@
 			"/data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/train/part-no-fragment.parquet",
 			"/data/models/tokenizer/v0.9.0-multisplice/tokenizer.model"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/ /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -249,9 +223,7 @@
 			"/data/models/bsplice-expanded/pytorch_model.bin",
 			"/data/models/tokenizer/v0.7.0-nsplice/tokenizer.model"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
 			"rclone copy :s3:mailwoman-assets/models/tokenizer/v0.7.0-nsplice/ /data/models/tokenizer/v0.7.0-nsplice/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
@@ -268,21 +240,15 @@
 			"/data/models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 			"/data/output-v381-punct-fix-full-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.12.0-nz/corpus-v0.12.0-nz/ /data/corpus/versioned/v0.12.0-nz/corpus-v0.12.0-nz/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
 	},
 	"sync_src_727": {
-		"check_paths": [
-			"/data/corpus-python/src/mailwoman_train/configs/v2.6.0-span-boundary-probe.yaml"
-		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"check_paths": ["/data/corpus-python/src/mailwoman_train/configs/v2.6.0-span-boundary-probe.yaml"],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
@@ -293,18 +259,14 @@
 			"/data/corpus-python/src/mailwoman_train/configs/v3.0.1-span-head-lr.yaml",
 			"/data/corpus-python/src/mailwoman_train/nn/span_scorer.py"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
 	},
 	"sync_src_gb": {
 		"check_paths": [],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
@@ -314,9 +276,7 @@
 			"/data/corpus-python/src/mailwoman_train/configs/v3.10.0-span-ship-probe.yaml",
 			"/data/corpus-python/src/mailwoman_train/nn/span_scorer.py"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
@@ -327,9 +287,7 @@
 			"/data/gazetteer/street-type-lexicon-v1.json",
 			"/data/output-v384-latam-probe-s42/checkpoints/step-008000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/gazetteer/street-type-lexicon-v1.json /data/gazetteer/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
@@ -363,9 +321,7 @@
 			"/data/corpus-python/src/mailwoman_train/configs/v1.4.0-charoffset.yaml",
 			"/data/corpus/versioned/v0.5.0/corpus-v0.5.0/train"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus/v0.5.0/corpus-v0.5.0/ /data/corpus/versioned/v0.5.0/corpus-v0.5.0/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -378,9 +334,7 @@
 			"/data/corpus/versioned/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress/MANIFEST.json",
 			"/data/corpus/versioned/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress/train/part-boundary-stress-train.parquet"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress/ /data/corpus/versioned/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -393,9 +347,7 @@
 			"/data/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress/MANIFEST.json",
 			"/data/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress/train/part-boundary-stress-train.parquet"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress/ /data/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -408,9 +360,7 @@
 			"/data/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/MANIFEST.json",
 			"/data/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/train/part-fr-admin-split-train.parquet"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/ /data/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -423,9 +373,7 @@
 			"/data/corpus/versioned/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/MANIFEST.json",
 			"/data/corpus/versioned/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/train/part-fr-admin-split-train.parquet"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/ /data/corpus/versioned/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -440,9 +388,7 @@
 			"/data/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale/train/part-overture-multilocale-train.parquet",
 			"/data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.0-multilocale/corpus-v0.9.0-multilocale/ /data/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -457,9 +403,7 @@
 			"/data/corpus/versioned/v0.9.1-multilocale/corpus-v0.9.1-multilocale/train/part-overture-multilocale-3order-train.parquet",
 			"/data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.1-multilocale/corpus-v0.9.1-multilocale/ /data/corpus/versioned/v0.9.1-multilocale/corpus-v0.9.1-multilocale/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -474,9 +418,7 @@
 			"/data/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet",
 			"/data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/ /data/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -490,9 +432,7 @@
 			"/data/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/train/part-fr-bare-street-train.parquet",
 			"/data/output-v194-fr-bare-street-s42/checkpoints/step-080000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/ /data/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -504,9 +444,7 @@
 			"/data/corpus-python/src/mailwoman_train/data/augment.py",
 			"/data/output-v195-surface-aug-s42/checkpoints/step-092000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
@@ -519,9 +457,7 @@
 			"/data/models/tokenizer/v0.6.0-a0/tokenizer.model",
 			"/data/output-v193-anchor-absorption-s42/checkpoints/step-040000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 		]
@@ -535,9 +471,7 @@
 			"/data/corpus/versioned/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/train/part-anchor-absorption-train.parquet",
 			"/data/output-v193a1-anchor-absorption-s42/checkpoints/step-040000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/ /data/corpus/versioned/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -552,9 +486,7 @@
 			"/data/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/train/part-anchor-absorption-train.parquet",
 			"/data/output-v193a2-anchor-absorption-s42/checkpoints/step-040000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/ /data/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -569,9 +501,7 @@
 			"/data/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/train/part-anchor-absorption-train.parquet",
 			"/data/output-v193a3-anchor-absorption-s42/checkpoints/step-040000"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/ /data/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -586,9 +516,7 @@
 			"/data/corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/train/part-oa-slavic-diacritic-train.parquet",
 			"/data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/ /data/corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -602,9 +530,7 @@
 			"/data/models/bsplice-expanded/pytorch_model.bin",
 			"/data/models/tokenizer/v0.6.0-bsplice/tokenizer.model"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/models/tokenizer/v0.6.0-bsplice/ /data/models/tokenizer/v0.6.0-bsplice/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16 --stats 30s --stats-log-level NOTICE",
@@ -613,9 +539,7 @@
 	},
 	"sync_v210": {
 		"check_paths": [],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/ /data/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
@@ -623,9 +547,7 @@
 	},
 	"sync_v241_fr_nsplice": {
 		"check_paths": [],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
 			"rclone copy :s3:mailwoman-assets/models/tokenizer/v0.8.0-fr-nsplice/ /data/models/tokenizer/v0.8.0-fr-nsplice/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
@@ -641,9 +563,7 @@
 			"/data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-gb.parquet",
 			"/data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.17.0-batch/ /data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
@@ -855,9 +775,7 @@
 			"/data/corpus/versioned/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6/train/part-fragment.parquet",
 			"/data/corpus/versioned/v0.5.0/corpus-v0.5.0/test/part-0000.parquet"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6/ /data/corpus/versioned/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
@@ -870,9 +788,7 @@
 			"/data/corpus/versioned/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/train/part-fragment.parquet",
 			"/data/corpus/versioned/v0.5.0/corpus-v0.5.0/test/part-0000.parquet"
 		],
-		"pycache_paths": [
-			"/data/corpus-python/src/mailwoman_train/__pycache__"
-		],
+		"pycache_paths": ["/data/corpus-python/src/mailwoman_train/__pycache__"],
 		"rclone_commands": [
 			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE",
 			"rclone copy :s3:mailwoman-assets/corpus/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/ /data/corpus/versioned/v0.10.8-fragment-v7/corpus-v0.10.8-fragment-v7/ --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
