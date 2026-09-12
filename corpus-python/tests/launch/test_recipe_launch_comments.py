@@ -24,9 +24,10 @@ from pathlib import Path
 import pytest
 from launch.corpora import CORPUS_VERSIONS
 
-PACKAGE = Path(__file__).resolve().parents[2]
-CONFIGS = PACKAGE / "src" / "mailwoman_train" / "configs"
-ENTRY_POINT = PACKAGE / "launch" / "train_remote.py"
+from tests import paths
+
+CONFIGS = paths.CONFIGS
+ENTRY_POINT = paths.PACKAGE_ROOT / "launch" / "train_remote.py"
 
 #: A shell line continued into the next comment line. Joined before matching, so a command split
 #: across `\` still reads as one command and its `--config` is not lost with the tail.

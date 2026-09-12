@@ -142,9 +142,9 @@ def test_shipped_configs_all_load_under_strict():
     # The #1248 audit: every historical config in the repo must pass strict mode —
     # no grandfathering allowlist exists, so a junk key landing in any shipped YAML
     # fails here instead of at a Modal launch.
-    from pathlib import Path
+    from tests import paths as roots
 
-    configs_dir = Path(__file__).resolve().parent.parent.parent / "src" / "mailwoman_train" / "configs"
+    configs_dir = roots.CONFIGS
     paths = sorted(configs_dir.glob("*.yaml"))
     assert paths, f"no configs found under {configs_dir}"
     for path in paths:

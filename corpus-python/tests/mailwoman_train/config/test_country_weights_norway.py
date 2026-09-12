@@ -24,14 +24,13 @@ These tests pin BOTH halves — the guard that rejects the retyped key, and the 
 must stay quoted. A config-only fix would rot the moment someone adds a country.
 """
 
-from pathlib import Path
-
 import pytest
 import yaml
 
 from mailwoman_train.config import DataConfig
+from tests import paths
 
-CONFIG_DIR = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
+CONFIG_DIR = paths.CONFIGS
 
 
 def test_yaml_really_does_retype_bare_no():

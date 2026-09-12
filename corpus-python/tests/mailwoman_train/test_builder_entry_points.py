@@ -17,7 +17,9 @@ from pathlib import Path
 
 import pytest
 
-SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train"
+from tests import paths
+
+SOURCE_ROOT = paths.SOURCE_ROOT
 
 
 def _module_name(path: Path) -> str:

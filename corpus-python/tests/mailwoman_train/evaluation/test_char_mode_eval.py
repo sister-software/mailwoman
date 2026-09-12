@@ -20,8 +20,9 @@ from mailwoman_train.corpora.builder import SCHEMA
 from mailwoman_train.nn.encoder import build_model
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train.trainer import _eval_val
+from tests import paths
 
-CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
+CONFIGS = paths.CONFIGS
 PROBE_2K = CONFIGS / "v8-cjk-full-2k.yaml"
 
 ROWS = [

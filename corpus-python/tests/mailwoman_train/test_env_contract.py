@@ -11,8 +11,10 @@ import ast
 import subprocess  # nosec B404 — reads the tracked file list from git, no user input
 from pathlib import Path
 
-CORPUS_PYTHON = Path(__file__).resolve().parents[2]
-SOURCE_ROOT = CORPUS_PYTHON / "src" / "mailwoman_train"
+from tests import paths
+
+CORPUS_PYTHON = paths.PACKAGE_ROOT
+SOURCE_ROOT = paths.SOURCE_ROOT
 
 #: The one module allowed to read `os.environ`, by the same logic that lets `@mailwoman/core/fs`
 #: import `node:fs`: a funnel is only a funnel if everything goes through it.

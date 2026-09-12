@@ -13,7 +13,6 @@ you-spend check for the self-conditioned retrain.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -234,9 +233,9 @@ def test_cross_pollution_empty_when_no_city_tokens():
 
 def test_pilot_config_loads_and_matches_scope():
     from mailwoman_train.config import load_config
+    from tests import paths
 
-    here = Path(__file__).resolve().parent.parent.parent
-    cfg = load_config(here / "src/mailwoman_train/configs/v0.9.0-pilot-selfcond.yaml")
+    cfg = load_config(paths.CONFIGS / "v0.9.0-pilot-selfcond.yaml")
     assert cfg.model.use_locale_conditioning is True
     assert cfg.model.locale_loss_weight > 0
     assert cfg.model.crf_loss_weight == 0.0  # CRF off — single variable

@@ -18,8 +18,6 @@ Covers:
     reading can't creep back in unnoticed)
 """
 
-from pathlib import Path
-
 import pytest
 import torch
 import yaml
@@ -28,8 +26,9 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from mailwoman_train.config import TrainConfig, load_config
 from mailwoman_train.optim.groups import build_optimizer
+from tests import paths
 
-CONFIG_DIR = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
+CONFIG_DIR = paths.CONFIGS
 
 
 class TinyModel(torch.nn.Module):

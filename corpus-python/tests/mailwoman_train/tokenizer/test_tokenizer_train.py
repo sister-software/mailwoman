@@ -303,10 +303,9 @@ def test_iter_train_slices_raises_when_neither_source_yields_slices(tmp_path: Pa
 
 def test_committed_multi_script_fixture_loads_and_has_balanced_scripts():
     """Sanity-check the in-tree multi-script eval fixture is wellformed."""
-    # Resolve relative to the repo root via the test file's own location.
-    fixture = (
-        Path(__file__).resolve().parent.parent.parent.parent / "data" / "eval" / "multi-script" / "v0.5.0-a0.jsonl"
-    )
+    from tests import paths
+
+    fixture = paths.REPO_ROOT / "data" / "eval" / "multi-script" / "v0.5.0-a0.jsonl"
     assert fixture.exists(), f"missing fixture: {fixture}"
     lines = load_fixture_lines(fixture)
     assert len(lines) >= 30

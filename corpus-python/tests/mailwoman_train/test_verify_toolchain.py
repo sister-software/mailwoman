@@ -10,9 +10,10 @@ local linter that disagrees with the one CI runs.
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 
-_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "verify_toolchain.py"
+from tests import paths
+
+_SCRIPT = paths.PACKAGE_ROOT / "scripts" / "verify_toolchain.py"
 
 
 def _load():

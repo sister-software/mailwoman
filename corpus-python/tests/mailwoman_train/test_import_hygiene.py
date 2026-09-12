@@ -12,8 +12,10 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-PACKAGE_ROOT = Path(__file__).resolve().parents[2]
-SOURCE_ROOT = PACKAGE_ROOT / "src" / "mailwoman_train"
+from tests import paths
+
+PACKAGE_ROOT = paths.PACKAGE_ROOT
+SOURCE_ROOT = paths.SOURCE_ROOT
 
 #: Cycles this tree still carries, each with the move that closes it. The list only ever shrinks: a
 #: new entry means a cycle was introduced, and an entry that stops matching means one was closed and

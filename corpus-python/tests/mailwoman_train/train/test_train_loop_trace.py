@@ -33,8 +33,9 @@ from mailwoman_train.config import Config, load_config
 from mailwoman_train.corpora.builder import SCHEMA
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train.trainer import train
+from tests import paths
 
-CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
+CONFIGS = paths.CONFIGS
 PROBE_2K = CONFIGS / "v8-cjk-full-2k.yaml"
 REFERENCE = Path(__file__).with_name("train-loop-reference.json")
 

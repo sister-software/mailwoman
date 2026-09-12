@@ -365,13 +365,12 @@ def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
       an intact prefix of the lineage, so every weight still names a live label)
     - constant-LR smoke per VERDICT_SMOKES.md (driven via CLI flag, not the YAML)
     """
-    from pathlib import Path
 
     from mailwoman_train.config import load_config
     from mailwoman_train.labels import STAGE2_BIO_LABELS
+    from tests import paths
 
-    here = Path(__file__).resolve().parent.parent.parent
-    cfg_path = here / "src/mailwoman_train/configs/v0_5_0-classifier-smoke.yaml"
+    cfg_path = paths.CONFIGS / "v0_5_0-classifier-smoke.yaml"
     cfg = load_config(cfg_path)
 
     assert cfg.model.use_phrase_priors is True

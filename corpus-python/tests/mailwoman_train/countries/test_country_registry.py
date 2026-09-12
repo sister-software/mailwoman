@@ -8,14 +8,14 @@ line in `COUNTRY_MODULES` enough: it fixes the four names every country answers 
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 
 import pytest
 
 from mailwoman_train import protocols
 from mailwoman_train.countries import COUNTRY_MODULES, REGIONS, SOURCE_ONLY, country_module
+from tests import paths
 
-COUNTRIES_ROOT = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "countries"
+COUNTRIES_ROOT = paths.SOURCE_ROOT / "countries"
 
 #: Alpha-2 codes as they appear in a module's own identifiers and string literals. A country
 #: directory naming another country's code is reaching across the boundary this layout draws.

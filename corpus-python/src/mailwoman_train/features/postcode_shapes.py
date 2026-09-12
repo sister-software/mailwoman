@@ -39,6 +39,10 @@ POSTCODE_PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
     ("NL", "alnum", re.compile(r"\b\d{4}\s?[A-Z]{2}\b")),  # 1234 AB / 1234AB
     # --- Numeric ---
     ("ZIP4", "numeric", re.compile(r"\b\d{5}-\d{4}\b")),  # US ZIP+4
+    # BR CEP: NNNNN-NNN (70390-100, 95090-020). Without it the generic NUM5 below matches the
+    # five-digit head of a CEP and the trailing-smear clip discards the sector suffix. The trailing
+    # `\b` keeps it off a ZIP+4's first nine characters; longest-match-wins settles the rest.
+    ("BR", "numeric", re.compile(r"\b\d{5}-\d{3}\b")),
     ("JP", "numeric", re.compile(r"\b\d{3}-\d{4}\b")),  # 100-0001
     ("PT", "numeric", re.compile(r"\b\d{4}-\d{3}\b")),  # 3060-187
     ("PL", "numeric", re.compile(r"\b\d{2}-\d{3}\b")),  # 47-400

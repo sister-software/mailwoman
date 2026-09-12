@@ -27,8 +27,10 @@ import pytest
 from launch.corpora import CORPUS_VERSIONS
 from launch.plan import corpus_versions, plan_sync
 
+from tests import paths
+
 FIXTURE = Path(__file__).with_name("sync-census.json")
-PACKAGE_SOURCE = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train"
+PACKAGE_SOURCE = paths.SOURCE_ROOT
 
 
 def _census() -> dict[str, dict[str, list[str]]]:

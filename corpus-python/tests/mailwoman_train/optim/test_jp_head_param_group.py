@@ -19,8 +19,6 @@ for a row-level setting that does not exist.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import torch
 
 from mailwoman_train.config import load_config
@@ -28,8 +26,9 @@ from mailwoman_train.labels import JP_FINE_TAGS, STAGE3_BIO_LABELS, resolve_labe
 from mailwoman_train.nn.encoder import build_model
 from mailwoman_train.optim.groups import build_optimizer
 from mailwoman_train.optim.schedules import build_scheduler
+from tests import paths
 
-CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
+CONFIGS = paths.CONFIGS
 FULL = CONFIGS / "v8-jp-full.yaml"
 PROBE_2K = CONFIGS / "v8-jp-full-2k.yaml"
 

@@ -433,17 +433,16 @@ class TestPositionalLicensing:
         The path is the AUTHORED one under ``lib/``, never ``out/``: the compiled copy is a build
         product, so comparing against it would let an authored change drift until someone rebuilds.
         """
-        from pathlib import Path
+        from tests import paths
 
-        repo = Path(__file__).resolve().parents[3]
-        codex_source = repo / "packages" / "codex" / "lib" / "us" / "street-suffix.json"
+        codex_source = paths.REPO_ROOT / "packages" / "codex" / "lib" / "us" / "street-suffix.json"
         assert codex_source.is_file(), (
             f"the authored codex source is not at {codex_source}; this guard reads a path no compiler "
             f"checks, so a workspace move breaks it silently"
         )
         codex = json.loads(codex_source.read_text())
-        artifact = json.loads((repo / "data" / "gazetteer" / "affix-relabel-lexicon-v2.json").read_text())
+        artifact = json.loads((paths.REPO_ROOT / "data" / "gazetteer" / "affix-relabel-lexicon-v2.json").read_text())
         assert artifact["version"] == "affix-relabel-v2"
         assert sorted(artifact["name_prone"]) == sorted(codex["nameProneCanonicals"])
-        loaded = AffixRelabelLexicon.load(repo / "data" / "gazetteer" / "affix-relabel-lexicon-v2.json")
+        loaded = AffixRelabelLexicon.load(paths.REPO_ROOT / "data" / "gazetteer" / "affix-relabel-lexicon-v2.json")
         assert loaded.name_prone == frozenset(codex["nameProneCanonicals"])

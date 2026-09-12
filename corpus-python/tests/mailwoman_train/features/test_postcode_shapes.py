@@ -21,14 +21,13 @@ here and a note saying why, not a loosened comparison.
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 import pytest
 
 from mailwoman_train.features.postcode_shapes import POSTCODE_PATTERNS, collect_matches
+from tests import paths
 
-# tests/mailwoman_train/<this file> -> tests/ -> corpus-python/ -> repo root.
-CANONICAL_TS = Path(__file__).resolve().parents[3] / "neural" / "postcode-repair.ts"
+CANONICAL_TS = paths.REPO_ROOT / "packages" / "neural" / "lib" / "postcode" / "repair.ts"
 
 # Matches one `{ label: "GB", kind: "alnum", re: /…/g }` entry. The body group is non-greedy and stops
 # at the first unescaped `/`, which is safe because no pattern in this table contains a literal slash.
