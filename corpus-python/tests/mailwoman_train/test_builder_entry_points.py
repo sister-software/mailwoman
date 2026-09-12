@@ -57,8 +57,12 @@ RUNNABLE = _runnable_modules()
 
 
 def test_the_discovery_found_the_builders() -> None:
-    """A discovery that silently found nothing would make every test below pass over an empty list."""
-    names = {_module_name(path) for path in RUNNABLE}
+    """A discovery that silently found nothing would make every test below pass over an empty list.
+
+    Compared by INVOCATION name, so a builder that grows into a package and moves its guard into a
+    `__main__.py` still answers to the command a person types.
+    """
+    names = {_invocation_name(path) for path in RUNNABLE}
     assert {"mailwoman_train.corpora.fragment", "mailwoman_train.countries.jp.corpora"} <= names
     assert len(RUNNABLE) >= 7
 
