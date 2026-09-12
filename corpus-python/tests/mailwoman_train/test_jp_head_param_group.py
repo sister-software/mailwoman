@@ -26,7 +26,8 @@ import torch
 from mailwoman_train.config import load_config
 from mailwoman_train.labels import JP_FINE_TAGS, STAGE3_BIO_LABELS, resolve_label_set
 from mailwoman_train.nn.encoder import build_model
-from mailwoman_train.train.trainer import _build_scheduler, build_optimizer
+from mailwoman_train.optim.groups import build_optimizer
+from mailwoman_train.optim.schedules import build_scheduler
 
 CONFIGS = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train" / "configs"
 FULL = CONFIGS / "v8-jp-full.yaml"
@@ -128,7 +129,7 @@ def test_the_scheduler_scales_both_groups_and_preserves_their_ratio():
     cfg = load_config(FULL)
     model = _model(cfg)
     optim, _ = _optimizer(cfg, model)
-    scheduler = _build_scheduler(optim, cfg.train)
+    scheduler = build_scheduler(optim, cfg.train)
 
     seen = []
     for _ in range(5):

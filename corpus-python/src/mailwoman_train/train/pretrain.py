@@ -6,12 +6,11 @@ small-encoder literature identifies as the root of mailwoman's two diagnosed pat
 pre-training on the corpus TEXT (BIO labels ignored), producing an encoder checkpoint that a later
 supervised run fine-tunes from via ``cfg.train.init_from``.
 
-Reuse-heavy by design: it borrows train.py's helpers (``_build_scheduler``, ``_precision_to_dtype``,
-``_to_tensor_batch``, ``save_checkpoint``, ``find_latest_checkpoint``, ``force_math_sdpa``,
-``model_param_count``), data_loader's ``iter_batches``, masking.py's BERT 80/10/10 masking, and
-trackio_logging's tracker. The only new model surface is ``MailwomanCoarseEncoder.forward_mlm`` (a
-tied-embedding head, no new params -> the saved state_dict is key-identical to a supervised model's
-and loads via ``from_pretrained``).
+Everything but the objective is shared with the supervised loop: the same schedules, parameter
+groups, batch preparation, checkpoint format and data loader. The only new model surface is
+``MailwomanCoarseEncoder.forward_mlm``, a tied-embedding head that adds no parameters — so the
+state dict this writes is key-identical to a supervised model's and loads through
+``from_pretrained`` without special handling.
 
 Mirrors the supervised loop's conventions: bf16 via explicit model cast (no autocast — the gfx1103
 fast-path hang documented in train.py), AdamW, grad-clip, crash-and-resume via optimizer.pt /
@@ -35,14 +34,10 @@ from ..data.loader import iter_batches
 from ..data.masking import mask_tokens
 from ..nn.encoder import build_model, force_math_sdpa, model_param_count
 from ..observability.trackio import init_tracker
+from ..optim.schedules import build_scheduler
 from ..tokenizer import Tokenizer
-from .trainer import (
-    _build_scheduler,
-    _precision_to_dtype,
-    _to_tensor_batch,
-    find_latest_checkpoint,
-    save_checkpoint,
-)
+from .batch import precision_to_dtype, to_tensor_batch
+from .checkpoint import find_latest_checkpoint, save_checkpoint
 
 
 @torch.no_grad()
@@ -54,7 +49,7 @@ def _mlm_eval(cfg: Config, model: Any, tokenizer: Tokenizer, device: Any, *, mas
     total, n = 0.0, 0
     max_batches = max(1, cfg.train.eval_every_steps // 50)  # cheap, bounded
     for batch in iter_batches(cfg, tokenizer, split="val", batch_size=cfg.train.batch_size, seed=cfg.train.seed):
-        tb = _to_tensor_batch(batch, device)
+        tb = to_tensor_batch(batch, device)
         masked, labels = mask_tokens(
             tb["input_ids"].cpu(),
             tb["attention_mask"].cpu(),
@@ -101,7 +96,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         model = build_model(cfg, vocab_size=tokenizer.vocab_size, pad_token_id=tokenizer.pad_id)
     model.to(device)
 
-    amp_dtype = _precision_to_dtype(cfg.train.precision, device)
+    amp_dtype = precision_to_dtype(cfg.train.precision, device)
     if amp_dtype is not None and device.type == "cuda":
         model.to(dtype=amp_dtype)  # explicit cast, not autocast (gfx1103 hang — see train.py)
 
@@ -111,7 +106,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     )
 
     optim = AdamW(model.parameters(), lr=cfg.train.learning_rate, weight_decay=cfg.train.weight_decay)
-    scheduler = _build_scheduler(optim, cfg.train)
+    scheduler = build_scheduler(optim, cfg.train)
 
     resume_step = 0
     if resume_from is not None:
@@ -159,7 +154,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 if step >= cfg.train.max_steps:
                     break
                 model.train()
-                tb = _to_tensor_batch(batch, device)
+                tb = to_tensor_batch(batch, device)
                 # Mask on CPU (cheap, keeps the RNG device-independent), then move to device.
                 masked, labels = mask_tokens(
                     tb["input_ids"].cpu(),

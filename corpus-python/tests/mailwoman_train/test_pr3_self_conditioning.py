@@ -19,6 +19,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
+from mailwoman_train.evaluation.metrics import cross_pollution  # noqa: E402
 from mailwoman_train.labels import (  # noqa: E402
     ACTIVE_BIO_LABELS,
     IGNORE_INDEX,
@@ -28,7 +29,6 @@ from mailwoman_train.labels import (  # noqa: E402
     locale_id,
 )
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
-from mailwoman_train.train.trainer import _cross_pollution  # noqa: E402
 
 NUM_LABELS = len(ACTIVE_BIO_LABELS)
 VOCAB_SIZE = 64
@@ -213,7 +213,7 @@ def test_cross_pollution_counts_city_start_as_postcode():
     labels = torch.tensor([[b_loc, o, b_reg, o], [b_loc, o, b_reg, o]])
     preds = torch.tensor([[b_pc, o, b_reg, o], [b_loc, o, b_reg, o]])
     row_locale = torch.tensor([LOCALE_TO_ID["US"], LOCALE_TO_ID["DE"]])
-    out = _cross_pollution(preds, labels, row_locale)
+    out = cross_pollution(preds, labels, row_locale)
     assert out["cross_pollution"] == pytest.approx(0.25)
     # Per-locale: the US row had the one pollution (2 starts, 1 polluted = 50%); DE clean.
     assert out["cross_pollution.US"] == pytest.approx(0.5)
@@ -224,7 +224,7 @@ def test_cross_pollution_empty_when_no_city_tokens():
     o = LABEL_TO_ID["O"]
     labels = torch.tensor([[o, o], [o, o]])
     preds = torch.tensor([[o, o], [o, o]])
-    assert _cross_pollution(preds, labels, None) == {}
+    assert cross_pollution(preds, labels, None) == {}
 
 
 # endregion

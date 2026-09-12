@@ -11,7 +11,8 @@ from types import SimpleNamespace
 
 import torch
 
-from mailwoman_train.train.trainer import _build_scheduler, _restamp_resume_lrs, build_optimizer
+from mailwoman_train.optim.groups import build_optimizer
+from mailwoman_train.optim.schedules import build_scheduler, restamp_resume_lrs
 
 
 class TinyModel(torch.nn.Module):
@@ -66,7 +67,7 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     reflect the live config's (changed) classifier LR, not the checkpoint's."""
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
-    sched1 = _build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
+    sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
     # Advance past warmup so the "checkpoint" reflects a real mid-training save (constant-post-
     # warmup LR), not the scheduler's step-0 zeroed value — a real checkpoint is always saved
     # after some training has happened.
@@ -83,7 +84,7 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     # reorder-proofing assertion this buys.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-4)
     live_lrs = [g["lr"] for g in optim2.param_groups]
-    sched2 = _build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
+    sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
     sched2.load_state_dict(torch.load(sched_state_path, weights_only=False))
@@ -100,7 +101,7 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     assert _classifier_group(optim2)["lr"] == 1e-3
 
     capsys.readouterr()  # discard build_optimizer's own [classifier_learning_rate] prints
-    _restamp_resume_lrs(optim2, sched2, live_lrs, labels)
+    restamp_resume_lrs(optim2, sched2, live_lrs, labels)
     out = capsys.readouterr().out
 
     classifier_group = _classifier_group(optim2)
@@ -119,7 +120,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     `_restamp_resume_lrs` prints nothing (the silent no-op path)."""
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
-    sched1 = _build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
+    sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
     for _ in range(5):  # past warmup — see the sibling test's comment for why this matters
         sched1.step()
     opt_state_path = tmp_path / "optimizer.pt"
@@ -131,7 +132,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     # SAME classifier_learning_rate as phase 1 — nothing should change on restamp.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     live_lrs = [g["lr"] for g in optim2.param_groups]
-    sched2 = _build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
+    sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
     sched2.load_state_dict(torch.load(sched_state_path, weights_only=False))
@@ -141,7 +142,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     before_initial_lrs = [g.get("initial_lr") for g in before]
 
     capsys.readouterr()
-    _restamp_resume_lrs(optim2, sched2, live_lrs, labels)
+    restamp_resume_lrs(optim2, sched2, live_lrs, labels)
     out = capsys.readouterr().out
 
     assert out == ""  # byte-identical silent path: nothing changed, nothing printed
@@ -181,7 +182,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     for label, group in zip(labels1, optim1.param_groups, strict=True):
         assert {id(p) for p in group["params"]} == expected_params_by_label[label]
 
-    sched1 = _build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
+    sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
     for _ in range(5):
         sched1.step()
     opt_state_path = tmp_path / "optimizer.pt"
@@ -204,13 +205,13 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     # zip below) tracks it automatically; nothing here hard-codes group index -> label.
     assert labels2 == labels1  # same overrides set => same label order, sourced fresh each time
     live_lrs = [g["lr"] for g in optim2.param_groups]
-    sched2 = _build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
+    sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
     sched2.load_state_dict(torch.load(sched_state_path, weights_only=False))
 
     capsys.readouterr()
-    _restamp_resume_lrs(optim2, sched2, live_lrs, labels2)
+    restamp_resume_lrs(optim2, sched2, live_lrs, labels2)
     out = capsys.readouterr().out
 
     for _label, group, live_lr in zip(labels2, optim2.param_groups, live_lrs, strict=True):

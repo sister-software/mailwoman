@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from mailwoman_train.train.trainer import find_latest_checkpoint, save_checkpoint
+from mailwoman_train.train.checkpoint import find_latest_checkpoint, save_checkpoint
 
 
 class _Tiny(torch.nn.Module):

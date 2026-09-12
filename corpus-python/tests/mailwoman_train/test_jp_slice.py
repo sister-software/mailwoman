@@ -14,20 +14,16 @@ import pytest
 from mailwoman_train.build_jp_slice import (
     REGISTER_WEIGHTS,
     available_registers,
-    coverage_stats,
-    fold_halfwidth_kana,
-    int_to_kanji,
-    kanji_to_int,
     load_kenall_postcodes,
     normalize_name,
     normalize_number,
     render_row,
-    select_exact,
     split_street,
     verify_record,
-    water_fill,
 )
+from mailwoman_train.corpora.builder import coverage_stats, select_exact, water_fill
 from mailwoman_train.labels import resolve_label_set
+from mailwoman_train.text.kana import fold_halfwidth_kana, int_to_kanji, kanji_to_int
 
 TAG_SET = frozenset(resolve_label_set("stage3-jp").tags)
 

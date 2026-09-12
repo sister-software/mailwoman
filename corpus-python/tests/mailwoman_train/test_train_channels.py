@@ -23,7 +23,7 @@ torch = pytest.importorskip("torch")  # training deps (torch) aren't installed i
 
 from mailwoman_train.data.loader import EncodedExample, collate  # noqa: E402
 from mailwoman_train.labels import IGNORE_INDEX  # noqa: E402
-from mailwoman_train.train.trainer import _to_tensor_batch  # noqa: E402
+from mailwoman_train.train.batch import to_tensor_batch  # noqa: E402
 
 SEQ = 4
 
@@ -58,7 +58,7 @@ def test_every_optional_channel_is_exercised_by_the_fixture() -> None:
 
 def test_to_tensor_batch_converts_every_collate_key() -> None:
     batch = collate([_full_example(), _full_example()])
-    tb = _to_tensor_batch(batch, torch.device("cpu"))
+    tb = to_tensor_batch(batch, torch.device("cpu"))
     assert set(tb.keys()) == set(batch.keys()), (
         f"collate/_to_tensor_batch key mismatch — dropped: {sorted(set(batch) - set(tb))}, "
         f"invented: {sorted(set(tb) - set(batch))}"
@@ -70,7 +70,7 @@ def test_to_tensor_batch_converts_every_collate_key() -> None:
 def test_locality_surface_tensors_reach_the_batch() -> None:
     """The #1349 regression pinned directly: the locality pair must survive the conversion."""
     batch = collate([_full_example()])
-    tb = _to_tensor_batch(batch, torch.device("cpu"))
+    tb = to_tensor_batch(batch, torch.device("cpu"))
     assert tb["locality_surface_features"].shape == (1, SEQ, 2)
     assert tb["locality_surface_confidence"].shape == (1, SEQ)
     assert float(tb["locality_surface_features"].abs().sum()) > 0.0

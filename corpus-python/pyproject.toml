@@ -114,6 +114,6 @@ follow_imports = "skip"
 [tool.bandit]
 exclude_dirs = ["modal", "scripts"]
 # B311: pseudo-random generators are used for corpus sampling/splits, seeded for
-# reproducibility (audit_epoch_mixture, build_*_slice, data_loader, tokenizer_train). They are
+# reproducibility (audits/, build_*_slice, data/loader.py, tokenizer/train.py). They are
 # data-generation randomness, never security/crypto — the CSPRNG rule does not apply.
 skips = ["B311"]

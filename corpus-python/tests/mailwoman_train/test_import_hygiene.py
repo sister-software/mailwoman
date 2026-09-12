@@ -12,19 +12,13 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train"
+PACKAGE_ROOT = Path(__file__).resolve().parents[2]
+SOURCE_ROOT = PACKAGE_ROOT / "src" / "mailwoman_train"
 
-#: Cycles this tree still carries, each with the move that closes it. The list only ever shrinks; a
-#: new entry means a cycle was introduced, which is what this test exists to refuse.
-#:
-#: `trainer` routes the MLM objective to `pretrain`, while `pretrain` takes five names back from
-#: `trainer`. Three of them belong to the scheduler and the checkpoint writer and one to batch/device
-#: preparation; once each sits in its own module, neither file imports the other.
-KNOWN_CYCLES = frozenset(
-    {
-        "train/trainer.py:664 defers mailwoman_train.train.pretrain, which imports back",
-    }
-)
+#: Cycles this tree still carries, each with the move that closes it. The list only ever shrinks: a
+#: new entry means a cycle was introduced, and an entry that stops matching means one was closed and
+#: the line should go. Both are assertions below, so neither can drift.
+KNOWN_CYCLES: frozenset[str] = frozenset()
 
 
 def _module_name(path: Path) -> str:
@@ -130,6 +124,71 @@ def test_every_deferred_import_names_a_module_that_exists() -> None:
                 offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which does not exist")
 
     assert offenders == [], "deferred imports naming a missing module:\n" + "\n".join(offenders)
+
+
+def _declared_names(tree: ast.Module) -> set[str]:
+    """Names a module DEFINES, plus whatever it re-exports on purpose through ``__all__``."""
+    declared: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            declared.add(node.name)
+        elif isinstance(node, ast.Assign):
+            declared.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            declared.add(node.target.id)
+        elif isinstance(node, ast.Assign | ast.AnnAssign):
+            continue
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "__all__" for t in node.targets):
+            declared.update(
+                element.value for element in getattr(node.value, "elts", []) if isinstance(element, ast.Constant)
+            )
+    return declared
+
+
+def test_an_import_names_the_module_that_declares_it() -> None:
+    """Importing a name from a module that only re-imported it pins the wrong file.
+
+    A plain module's import list is its own business, not a public surface: ``trainer`` imports
+    ``build_optimizer`` so it can call it, and a test that took the name from there kept passing
+    after the function moved to ``optim.groups`` — so the move looked complete while six call sites
+    still named the old file. A package ``__init__`` is the exception: re-exporting IS what it is
+    for, and so is an explicit ``__all__``.
+    """
+    modules: dict[str, ast.Module] = {}
+    packages: set[str] = set()
+    for path in SOURCE_ROOT.rglob("*.py"):
+        name = _module_name(path)
+        modules[name] = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        if path.name == "__init__.py":
+            packages.add(name)
+
+    declared = {name: _declared_names(tree) for name, tree in modules.items()}
+    submodules = {name.rsplit(".", 1)[0] for name in modules if "." in name}
+    offenders: list[str] = []
+    roots = [SOURCE_ROOT, PACKAGE_ROOT / "tests", PACKAGE_ROOT / "modal"]
+    assert all(root.is_dir() for root in roots), f"a root to scan is missing: {roots}"
+
+    for root in roots:
+        for path in sorted(root.rglob("*.py")):
+            holder = _module_name(path) if root is SOURCE_ROOT else str(path.relative_to(root.parent))
+            is_package = path.name == "__init__.py"
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ImportFrom):
+                    continue
+                anchor = holder if root is SOURCE_ROOT else ""
+                target = _resolve(node.module, node.level, anchor, is_package=is_package)
+                if target in packages or target not in modules:
+                    continue
+                for alias in node.names:
+                    if alias.name in declared[target] or f"{target}.{alias.name}" in submodules:
+                        continue
+                    offenders.append(
+                        f"{path.name}:{node.lineno} imports {alias.name} from {target}, which re-imports it"
+                    )
+
+    assert offenders == [], "imports naming a module that does not declare the name:\n" + "\n".join(offenders)
 
 
 def test_piece_span_is_declared_in_types() -> None:

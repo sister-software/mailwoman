@@ -423,7 +423,7 @@ def sync_v050():
 def sync_deploc_head():
     """P-B probe: sync ONLY the training code + configs from R2 (container-side). The corpus
     v0.15.0-deploc AND the init_from v385 checkpoint already persist on the volume from the v3.13 run,
-    so this pulls no ~30 GB corpus — just the nn/encoder.py deploc_head + train.py carveout + config.py flag
+    so this pulls no ~30 GB corpus — just the nn/encoder.py deploc_head + optim carveout + config flag
     + the v3.14.0-deploc-head.yaml. Clears stale pyc so the fresh loader imports (the night-3 failure mode)."""
     import shutil
     import subprocess
@@ -450,8 +450,8 @@ def sync_deploc_head():
     src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
     print("  v3.14.0-deploc-head config present:", os.path.isfile(f"{src}/configs/v3.14.0-deploc-head.yaml"))
     print("  nn/encoder.py has deploc_head:", "use_deploc_head" in open(f"{src}/nn/encoder.py").read())
-    print("  train.py carveout has deploc_head:", '"deploc_head."' in open(f"{src}/train.py").read())
-    print("  config.py has use_deploc_head:", "use_deploc_head" in open(f"{src}/config.py").read())
+    print("  optim carveout has deploc_head:", '"deploc_head."' in open(f"{src}/optim/groups.py").read())
+    print("  config has use_deploc_head:", "use_deploc_head" in open(f"{src}/config/schema.py").read())
     print(
         "  init_from checkpoint present:",
         os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
@@ -468,7 +468,7 @@ def sync_street_type():
     """P-A probe: sync the training code + configs AND the NEW street-type lexicon from R2 (container-
     side). The corpus v0.15.0-deploc + the init_from v385 checkpoint already persist on the volume from
     the v3.13/v3.14 runs, so this pulls no ~30 GB corpus — just the nn/encoder.py street_type channel +
-    train.py carveout + config.py flags + v3.15.0-street-type.yaml + data/gazetteer/street-type-lexicon-
+    optim carveout + config flags + v3.15.0-street-type.yaml + data/gazetteer/street-type-lexicon-
     v1.json (the ONE new data artifact — the config reads it at /data/gazetteer/). Clears stale pyc."""
     import shutil
     import subprocess
@@ -500,9 +500,12 @@ def sync_street_type():
     print("  v3.15.0-street-type config present:", os.path.isfile(f"{src}/configs/v3.15.0-street-type.yaml"))
     print("  street-type lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json"))
     print("  nn/encoder.py has street_type channel:", "use_street_type_anchor" in open(f"{src}/nn/encoder.py").read())
-    print("  train.py carveout has street_type:", "street_type_projection." in open(f"{src}/train.py").read())
-    print("  config.py has street_type fields:", "street_type_lexicon_path" in open(f"{src}/config.py").read())
-    print("  tokenizer.py encode_row paints street_type:", "street_type_lexicon" in open(f"{src}/tokenizer.py").read())
+    print("  optim carveout has street_type:", "street_type_projection." in open(f"{src}/optim/groups.py").read())
+    print("  config has street_type fields:", "street_type_lexicon_path" in open(f"{src}/config/schema.py").read())
+    print(
+        "  tokenizer encode_row paints street_type:",
+        "street_type_lexicon" in open(f"{src}/tokenizer/encode.py").read(),
+    )
     print(
         "  init_from checkpoint present:",
         os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
@@ -653,8 +656,8 @@ def sync_src_v3100():
     """SOURCE-ONLY sync for v3.10.0-span-ship-probe (#727 stage-2 STEP 4, plan #1134): pull
     `corpus-python/src/` from R2, clear pycache, and verify THIS launch's changes landed —
     the P3 upper-case augment (b3d741bd) + the v3.10.0 config. The span-scorer files were verified
-    by sync_src_727_stage2 (phase 1) and persist, but re-assert the train.py param-group here too:
-    a stale train.py silently trains the head at 1e-5 and wastes the probe (the v3.0.0 lesson).
+    by sync_src_727_stage2 (phase 1) and persist, but re-assert the optim param-group here too:
+    a stale `optim/groups.py` silently trains the head at 1e-5 and wastes the probe (the v3.0.0 lesson).
     No corpus/tokenizer pull — v3.10.0 is corpus+tokenizer-VERBATIM v3.8.1 (v381), which persists."""
     import shutil
     import subprocess
@@ -675,22 +678,22 @@ def sync_src_v3100():
     vol.commit()
 
     src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
-    augment_src = open(f"{src_dir}/augment.py").read()
+    augment_src = open(f"{src_dir}/data/augment.py").read()
     has_upper = "def upper_case_row" in augment_src
     loader_src = open(f"{src_dir}/data/loader.py").read()
     has_loader_thread = "augment_upper_case_prob" in loader_src
-    config_src = open(f"{src_dir}/config.py").read()
+    config_src = open(f"{src_dir}/config/schema.py").read()
     has_cfg = "augment_upper_case_prob" in config_src
     has_yaml = os.path.isfile(f"{src_dir}/configs/v3.10.0-span-ship-probe.yaml")
-    train_src = open(f"{src_dir}/train.py").read()
-    has_param_groups = "span_head_learning_rate" in train_src
-    has_scorer = os.path.isfile(f"{src_dir}/span_scorer.py")
+    optim_src = open(f"{src_dir}/optim/groups.py").read()
+    has_param_groups = "span_head_learning_rate" in optim_src
+    has_scorer = os.path.isfile(f"{src_dir}/nn/span_scorer.py")
     print(f"augment.upper_case_row:        {has_upper}")
-    print(f"data_loader threads upper:     {has_loader_thread}")
+    print(f"loader threads upper:          {has_loader_thread}")
     print(f"config.augment_upper_case:     {has_cfg}")
     print(f"configs/v3.10.0 yaml:          {has_yaml}")
-    print(f"train.py span param group:     {has_param_groups}")
-    print(f"span_scorer.py present:        {has_scorer}")
+    print(f"optim span param group:        {has_param_groups}")
+    print(f"nn/span_scorer.py present:     {has_scorer}")
     if not all([has_upper, has_loader_thread, has_cfg, has_yaml, has_param_groups, has_scorer]):
         raise RuntimeError("v3.10.0 sync verify FAILED — do not launch")
 
@@ -733,38 +736,38 @@ def sync_src_727_stage2():
 
     # Verify STAGE 2's architecture + config landed. A stale sync must fail loud, never train the old model.
     src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
-    scorer_path = f"{src_dir}/span_scorer.py"
+    scorer_path = f"{src_dir}/nn/span_scorer.py"
     cfg_path = f"{src_dir}/configs/v3.0.0-span-head.yaml"
     has_scorer_module = os.path.isfile(scorer_path)
     scorer_src = open(scorer_path).read() if has_scorer_module else ""
     has_semi_crf = "class SemiMarkovCRF" in scorer_src and "def log_partition" in scorer_src
     model_src = open(f"{src_dir}/nn/encoder.py").read()
     has_wiring = "use_span_scorer" in model_src and "self.semi_crf" in model_src
-    config_src = open(f"{src_dir}/config.py").read()
+    config_src = open(f"{src_dir}/config/schema.py").read()
     has_cfg_field = "use_span_scorer" in config_src
-    # The v3.0.1 re-probe's ONE variable lives in train.py's optimizer — a stale train.py would
+    # The v3.0.1 re-probe's ONE variable lives in the optimizer carve-out — a stale copy would
     # silently re-run v3.0.0's single-group LR and waste the whole probe.
-    train_src = open(f"{src_dir}/train.py").read()
-    has_param_groups = "def build_optimizer" in train_src and "span_head_learning_rate" in train_src
+    optim_src = open(f"{src_dir}/optim/groups.py").read()
+    has_param_groups = "def build_optimizer" in optim_src and "span_head_learning_rate" in optim_src
     # Phase 2: the export/package code must carry the span outputs, or a container-side export
     # silently produces a graph WITHOUT span_scores and Phase 3 has nothing to decode.
-    export_src = open(f"{src_dir}/export_onnx.py").read()
+    export_src = open(f"{src_dir}/export/onnx.py").read()
     has_span_export = "with_spans" in export_src and '"span_scores"' in export_src
-    pkg_src = open(f"{src_dir}/package_weights.py").read()
+    pkg_src = open(f"{src_dir}/export/package_weights.py").read()
     has_sidecar = "export_semi_crf_transitions" in pkg_src
     has_lr_cfg_field = "span_head_learning_rate" in config_src
     cfg_lr_path = f"{src_dir}/configs/v3.0.1-span-head-lr.yaml"
 
-    print("  span_scorer.py on volume         :", has_scorer_module)
+    print("  nn/span_scorer.py on volume      :", has_scorer_module)
     print("  SemiMarkovCRF + log_partition    :", has_semi_crf)
     print("  nn/encoder.py wiring (use_span_scorer):", has_wiring)
-    print("  config.py ModelConfig field      :", has_cfg_field)
+    print("  config ModelConfig field         :", has_cfg_field)
     print("  v3.0.0-span-head.yaml present    :", os.path.isfile(cfg_path))
-    print("  train.py build_optimizer + groups:", has_param_groups)
-    print("  config.py span_head_learning_rate:", has_lr_cfg_field)
+    print("  optim build_optimizer + groups   :", has_param_groups)
+    print("  config span_head_learning_rate   :", has_lr_cfg_field)
     print("  v3.0.1-span-head-lr.yaml present :", os.path.isfile(cfg_lr_path))
-    print("  export_onnx.py span output       :", has_span_export)
-    print("  package_weights sidecar          :", has_sidecar)
+    print("  export/onnx.py span output       :", has_span_export)
+    print("  export/package_weights sidecar   :", has_sidecar)
 
     if not (
         has_semi_crf
@@ -1474,7 +1477,7 @@ def sync_deploc():
 def sync_src_gb():
     """SOURCE-ONLY sync for the v3.10.x dep-loc probes: pull `corpus-python/src/` from R2, clear
     pycache, and VERIFY the resurrection settings landed volume-side — commit 78adb380 added
-    `reinit_label_rows` + `classifier_learning_rate` to train.py/config.py, and a volume-side
+    `reinit_label_rows` + `classifier_learning_rate` to the optimizer and the config schema, and a volume-side
     config schema predating them would silently drop both keys via the `merge_into` hasattr check (#1248).
     This sync asserts the marker string is present in BOTH files before returning, so a stale sync
     fails loud instead of silently launching a run with every setting inert. (Historical note: written mid-arc
@@ -1501,12 +1504,15 @@ def sync_src_gb():
     vol.commit()
 
     src_dir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
-    train_src = open(f"{src_dir}/train.py").read()
-    config_src = open(f"{src_dir}/config.py").read()
-    has_train_marker = "reinit_label_rows" in train_src
+    optim_src = open(f"{src_dir}/optim/groups.py").read()
+    trainer_src = open(f"{src_dir}/train/trainer.py").read()
+    config_src = open(f"{src_dir}/config/schema.py").read()
+    # Both halves, because either one alone is inert: the definition without the call never runs,
+    # and the call without the definition is an ImportError at launch.
+    has_train_marker = "def reinit_label_rows" in optim_src and "reinit_label_rows" in trainer_src
     has_config_marker = "reinit_label_rows" in config_src
-    print(f"train.py has reinit_label_rows:   {has_train_marker}")
-    print(f"config.py has reinit_label_rows:  {has_config_marker}")
+    print(f"optim + trainer reinit_label_rows: {has_train_marker}")
+    print(f"config has reinit_label_rows:      {has_config_marker}")
     if not has_train_marker or not has_config_marker:
         raise RuntimeError(
             "v3.10.0-gb-probe run-B sync verify FAILED — reinit_label_rows missing on volume; do not launch"
@@ -2072,9 +2078,9 @@ def sync_v095_case():
     print("\nv1.9.5 surface-aug sync + pre-seed complete. Volume committed.")
 
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.5-surface-aug.yaml"
-    aug = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/augment.py"
+    aug = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/data/augment.py"
     print("  v1.9.5 config present:", os.path.isfile(cfg))
-    print("  augment.py has case_prob:", "case_prob" in open(aug).read() if os.path.isfile(aug) else "MISSING")
+    print("  data/augment.py has case_prob:", "case_prob" in open(aug).read() if os.path.isfile(aug) else "MISSING")
     print("  v195 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
 
 
@@ -2204,7 +2210,7 @@ def _train_gpu(
     print("Starting training...\n")
 
     # Import and run training. load_config is the STRICT path (#1248): an unknown YAML
-    # key — e.g. a setting the volume-side config.py predates — raises here at launch,
+    # key — e.g. a setting the volume-side config schema predates — raises here at launch,
     # naming the dotted key + file, instead of silently running a fine-tune with every setting inert.
     from mailwoman_train.config import load_config
     from mailwoman_train.train.trainer import train as run_train
@@ -2950,10 +2956,10 @@ def eval_de(
     import torch
 
     from mailwoman_train.data.loader import load_anchor_lookup
+    from mailwoman_train.evaluation.metrics import token_f1
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
-    from mailwoman_train.train.trainer import _token_f1
 
     ck = Path(f"{output_dir}/checkpoints/step-{step}")
     tok = Tokenizer(Path(tokenizer_path))
@@ -2990,7 +2996,7 @@ def eval_de(
 
     preds = torch.cat(all_preds)
     labels = torch.cat(all_labels)
-    m = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
+    m = token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
 
     def g(t):
         return m.get(f"f1_tag.{t}", float("nan"))
@@ -3023,7 +3029,7 @@ def digit_prior(
     and the augmentations. Those are not decorations: `augment_glue_prob` alone rewrites token
     boundaries, which is the thing under investigation.
 
-    So this pulls rows through `iter_rows` — the same entry point `train.py` uses, with the config's
+    So this pulls rows through `iter_rows` — the same entry point the trainer uses, with the config's
     own weights — rather than reimplementing the sampler. Reimplementing it is how the first count
     went wrong.
 
@@ -3206,7 +3212,7 @@ def piece_prior(
     invert the token distribution — mechanically, by length.
 
     That is the hypothesis. This measures it, at the unit, through `iter_encoded` — the same call
-    `train.py` makes, so the tokenizer and the BIO expansion are the real ones rather than my
+    the trainer makes, so the tokenizer and the BIO expansion are the real ones rather than my
     arithmetic about them. (A hand-derivation predicted P(postcode | continuation) = 0.688 assuming
     fertility == digit count; multi-digit pieces like `16` exist, so the real number can differ.)
 
@@ -3235,7 +3241,8 @@ def piece_prior(
     cfg_path = Path("/data/corpus-python/src/mailwoman_train/configs") / config_name
     cfg = yaml.safe_load(cfg_path.read_text())
     data_cfg = DataConfig(**cfg["data"])
-    tok = Tokenizer(Path(data_cfg.tokenizer_dir) / "tokenizer.model")  # train.py:406 — the dir is not the model
+    # `tokenizer_dir` names the directory; the SentencePiece model is the file inside it.
+    tok = Tokenizer(Path(data_cfg.tokenizer_dir) / "tokenizer.model")
 
     print(f"config     : {cfg_path.name}")
     print(f"tokenizer  : {data_cfg.tokenizer_dir}")
@@ -3598,7 +3605,7 @@ def sync_evidence_bundle():
     print("  locality lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/locality-surface-lexicon-v1.json"))
     print("  street-type lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json"))
     print("  nn/encoder.py has locality channel:", "use_locality_surface_anchor" in open(f"{src}/nn/encoder.py").read())
-    print("  train.py has evidence_curriculum:", "evidence_curriculum" in open(f"{src}/train.py").read())
+    print("  trainer has evidence_curriculum:", "evidence_curriculum" in open(f"{src}/train/trainer.py").read())
     print(
         "  init_from checkpoint present:",
         os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
@@ -4281,13 +4288,15 @@ def sync_substrate_repairs():
             return needle in fh.read()
 
     checks = {
-        "epoch-mixture audit module": os.path.isfile(f"{package}/audit_epoch_mixture.py"),
+        "epoch-mixture audit module": os.path.isfile(f"{package}/audits/epoch_mixture.py"),
         "stationary sampler landed": _contains(f"{package}/data/loader.py", "STATIONARY mixture"),
         "val-policy guard landed": _contains(f"{package}/data/loader.py", "TRAIN-ONLY policy"),
-        "schedule-aware restamp landed": _contains(f"{package}/train.py", "SCHEDULE-AWARE"),
-        "atomic checkpoint save landed": _contains(f"{package}/train.py", "completeness marker"),
-        "linear_cooldown schedule landed": _contains(f"{package}/train.py", "_linear_cooldown"),
-        "positional licensing landed": _contains(f"{package}/relabel.py", "Positional licensing"),
+        # Markers are DEFINITIONS, not prose. A docstring phrase reads as "feature missing" the
+        # first time somebody rewords it, which blocks a launch over an edit that changed nothing.
+        "schedule-aware restamp landed": _contains(f"{package}/optim/schedules.py", "def restamp_resume_lrs"),
+        "atomic checkpoint save landed": _contains(f"{package}/train/checkpoint.py", "def save_checkpoint"),
+        "linear_cooldown schedule landed": _contains(f"{package}/optim/schedules.py", "def linear_cooldown"),
+        "positional licensing landed": _contains(f"{package}/data/relabel.py", "Positional licensing"),
         "cooldown branch config": os.path.isfile(f"{package}/configs/v4.3.3-cooldown46k.yaml"),
         "v2 affix lexicon": os.path.isfile(f"{VOL_MOUNT}/gazetteer/affix-relabel-lexicon-v2.json"),
     }
@@ -4816,7 +4825,7 @@ def sync_v540_target_families():
     checks = {
         "v5.4 run config": os.path.isfile(f"{package}/configs/v5.4.0-target-families-60k.yaml"),
         "v5.4 probe config": os.path.isfile(f"{package}/configs/v5.4.0-target-families-2k.yaml"),
-        "dose module": os.path.isfile(f"{package}/dose.py"),
+        "dose module": os.path.isfile(f"{package}/data/dose.py"),
         "overlay manifest": os.path.isfile(f"{corpus}/MANIFEST.json"),
         # The base tiers the manifest names. v0.5.0 carries 690 of the 719 slices, so its absence would be
         # the whole corpus missing; v0.28.0's own overlay slice is the nearest base and the easiest to lose.
@@ -4884,7 +4893,7 @@ def sync_v560_bare_postcode():
     checks = {
         "v5.6 run config": os.path.isfile(f"{package}/configs/v5.6.0-bare-postcode-60k.yaml"),
         "v5.5 control config": os.path.isfile(f"{package}/configs/v5.5.0-restored-generations-60k.yaml"),
-        "dose module": os.path.isfile(f"{package}/dose.py"),
+        "dose module": os.path.isfile(f"{package}/data/dose.py"),
         "overlay manifest": os.path.isfile(f"{corpus}/MANIFEST.json"),
         "bare-postcode slice": os.path.isfile(f"{corpus}/train/synth-bare-postcode-00000.parquet"),
         "v0.29.0 overlay slice": os.path.isfile(

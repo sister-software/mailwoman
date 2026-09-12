@@ -20,7 +20,8 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from mailwoman_train.train.trainer import _build_scheduler, _restamp_resume_lrs, build_optimizer
+from mailwoman_train.optim.groups import build_optimizer
+from mailwoman_train.optim.schedules import build_scheduler, restamp_resume_lrs
 
 PEAK_LR = 5e-4
 RESUME_STEP = 90  # deep in the cosine tail: multiplier ≈ 0.03, so a peak restamp is a ~33× spike
@@ -39,7 +40,7 @@ def _cosine_cfg() -> SimpleNamespace:
 def _train_to_resume_step(lr: float) -> tuple[torch.optim.AdamW, object]:
     model = _Tiny()
     optim, _labels = build_optimizer(model, learning_rate=lr, weight_decay=0.01)
-    sched = _build_scheduler(optim, _cosine_cfg())
+    sched = build_scheduler(optim, _cosine_cfg())
     for _ in range(RESUME_STEP):
         sched.step()
     return optim, sched
@@ -56,10 +57,10 @@ def _resume(tmp_path, live_lr: float) -> tuple[torch.optim.AdamW, object, float]
     model2 = _Tiny()
     optim2, labels = build_optimizer(model2, learning_rate=live_lr, weight_decay=0.01)
     live_lrs = [g["lr"] for g in optim2.param_groups]
-    sched2 = _build_scheduler(optim2, _cosine_cfg())
+    sched2 = build_scheduler(optim2, _cosine_cfg())
     optim2.load_state_dict(torch.load(tmp_path / "optimizer.pt", weights_only=False))
     sched2.load_state_dict(torch.load(tmp_path / "scheduler.pt", weights_only=False))
-    _restamp_resume_lrs(optim2, sched2, live_lrs, labels)
+    restamp_resume_lrs(optim2, sched2, live_lrs, labels)
     return optim2, sched2, checkpoint_lr
 
 

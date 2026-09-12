@@ -19,7 +19,8 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from mailwoman_train.train.trainer import _build_scheduler, _restamp_resume_lrs, build_optimizer
+from mailwoman_train.optim.groups import build_optimizer
+from mailwoman_train.optim.schedules import build_scheduler, restamp_resume_lrs
 
 PARENT_PEAK_LR = 5e-4
 PARENT_CFG = SimpleNamespace(lr_schedule="cosine", warmup_steps=1000, max_steps=60000)
@@ -45,7 +46,7 @@ def _branch_cfg() -> SimpleNamespace:
 def test_multiplier_is_unity_through_the_start_then_linear_to_zero() -> None:
     model = _Tiny()
     optim, _labels = build_optimizer(model, learning_rate=1e-4, weight_decay=0.01)
-    sched = _build_scheduler(optim, _branch_cfg())
+    sched = build_scheduler(optim, _branch_cfg())
     lambda_fn = sched.lr_lambdas[0]
 
     assert lambda_fn(0) == 1.0
@@ -61,7 +62,7 @@ def test_missing_cooldown_start_step_raises() -> None:
     cfg = _branch_cfg()
     cfg.cooldown_start_step = None
     with pytest.raises(ValueError, match="cooldown_start_step"):
-        _build_scheduler(optim, cfg)
+        build_scheduler(optim, cfg)
 
 
 def test_branch_resume_continues_the_parent_tail_exactly(tmp_path) -> None:
@@ -70,7 +71,7 @@ def test_branch_resume_continues_the_parent_tail_exactly(tmp_path) -> None:
     parent's 40k LR, then decay linearly to zero at 46k."""
     parent = _Tiny()
     optim1, _l1 = build_optimizer(parent, learning_rate=PARENT_PEAK_LR, weight_decay=0.01)
-    sched1 = _build_scheduler(optim1, PARENT_CFG)
+    sched1 = build_scheduler(optim1, PARENT_CFG)
     for _ in range(BRANCH_START):
         sched1.step()
     parent_tail_lr = optim1.param_groups[0]["lr"]
@@ -81,10 +82,10 @@ def test_branch_resume_continues_the_parent_tail_exactly(tmp_path) -> None:
     branch = _Tiny()
     optim2, labels = build_optimizer(branch, learning_rate=parent_tail_lr, weight_decay=0.01)
     live_lrs = [g["lr"] for g in optim2.param_groups]
-    sched2 = _build_scheduler(optim2, _branch_cfg())
+    sched2 = build_scheduler(optim2, _branch_cfg())
     optim2.load_state_dict(torch.load(tmp_path / "optimizer.pt", weights_only=False))
     sched2.load_state_dict(torch.load(tmp_path / "scheduler.pt", weights_only=False))
-    _restamp_resume_lrs(optim2, sched2, live_lrs, labels)
+    restamp_resume_lrs(optim2, sched2, live_lrs, labels)
 
     assert optim2.param_groups[0]["lr"] == pytest.approx(parent_tail_lr)
 

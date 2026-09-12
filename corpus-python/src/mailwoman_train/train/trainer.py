@@ -19,25 +19,24 @@ from __future__ import annotations
 
 import csv
 import json
-import math
 import random
-import shutil
 import time
-from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, cast
 
 import torch
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import LambdaLR
 
 from ..config import Config, csv_log_path
 from ..data.dose import format_derivation, resolve_config_doses
 from ..data.loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from ..labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
+from ..evaluation.metrics import cross_pollution, eval_csv_row, token_f1
 from ..nn.encoder import build_model, force_math_sdpa, model_param_count
+from ..optim.groups import build_optimizer, reinit_label_rows
+from ..optim.schedules import build_scheduler, restamp_resume_lrs
 from ..tokenizer import Tokenizer
+from .batch import precision_to_dtype, to_tensor_batch
+from .checkpoint import find_latest_checkpoint, save_checkpoint
+from .noise import perturb_anchor_confidence, perturb_evidence_noise, perturb_gazetteer_confidence
 
 
 def _set_seed(seed: int) -> None:
@@ -45,491 +44,6 @@ def _set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-
-
-def _to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
-    tb = {
-        "input_ids": torch.tensor(batch["input_ids"], dtype=torch.long, device=device),
-        "attention_mask": torch.tensor(batch["attention_mask"], dtype=torch.long, device=device),
-        "labels": torch.tensor(batch["labels"], dtype=torch.long, device=device),
-    }
-    # PR3: per-row locale target for the self-conditioning aux head. Present whenever the data
-    # loader emitted it (always, post-PR3); guarded so a pre-PR3 batch dict still works. The model
-    # ignores it unless built with use_locale_conditioning.
-    if "locale_ids" in batch:
-        tb["locale_ids"] = torch.tensor(batch["locale_ids"], dtype=torch.long, device=device)
-    # Postcode-anchor channel (#239/#240): per-piece features + confidence. Present only when an
-    # anchor lookup is configured; the model ignores them unless built with use_postcode_anchor.
-    if "anchor_features" in batch:
-        tb["anchor_features"] = torch.tensor(batch["anchor_features"], dtype=torch.float32, device=device)
-        tb["anchor_confidence"] = torch.tensor(batch["anchor_confidence"], dtype=torch.float32, device=device)
-    # Gazetteer-anchor channel (#464): same presence contract — only when a lexicon is configured.
-    if "gazetteer_features" in batch:
-        tb["gazetteer_features"] = torch.tensor(batch["gazetteer_features"], dtype=torch.float32, device=device)
-        tb["gazetteer_confidence"] = torch.tensor(batch["gazetteer_confidence"], dtype=torch.float32, device=device)
-    # Country-lexicon channel (#1104): same presence contract — only when a country lexicon is configured.
-    if "country_features" in batch:
-        tb["country_features"] = torch.tensor(batch["country_features"], dtype=torch.float32, device=device)
-        tb["country_confidence"] = torch.tensor(batch["country_confidence"], dtype=torch.float32, device=device)
-    # Street-type channel (P-A / Option A): same presence contract — only when a street-type lexicon is set.
-    if "street_type_features" in batch:
-        tb["street_type_features"] = torch.tensor(batch["street_type_features"], dtype=torch.float32, device=device)
-        tb["street_type_confidence"] = torch.tensor(batch["street_type_confidence"], dtype=torch.float32, device=device)
-    # Locality-surface channel (v3.16.0): same presence contract — only when a locality-surface lexicon
-    # is set. MISSING from v3.16.0 through v3.24.0 (#1349): the loader painted the features, collate
-    # emitted them, and this function dropped them — the forward's zero-fill ran on every batch, so the
-    # shipped bundle model's locality channel is frozen at xavier init. test_train_channels.py now
-    # asserts collate/_to_tensor_batch key parity so a future channel cannot silently vanish here.
-    if "locality_surface_features" in batch:
-        tb["locality_surface_features"] = torch.tensor(
-            batch["locality_surface_features"], dtype=torch.float32, device=device
-        )
-        tb["locality_surface_confidence"] = torch.tensor(
-            batch["locality_surface_confidence"], dtype=torch.float32, device=device
-        )
-    # CharCNN input path (#825 / v8 CJK): (B, S, W) long char IDs — present iff data.char_mode is on.
-    if "char_ids" in batch:
-        tb["char_ids"] = torch.tensor(batch["char_ids"], dtype=torch.long, device=device)
-    return tb
-
-
-# Anchor-confidence robustness curriculum (#239/#240, DeepSeek 2026-06-05): the model sees the full
-# anchor early (break the German collapse, build the basin), then a ramped perturbation so it can't
-# launder the anchor. No discrete [NO-ANCHOR] mode — "absent" is the c=0 tail of a continuum.
-ANCHOR_CURRICULUM_START_FRAC = 0.25  # ≤ this fraction of max_steps: no perturbation
-ANCHOR_CURRICULUM_RAMP_FRAC = 0.50  # by this fraction: full perturbation
-ANCHOR_ZERO_OUT_MAX = 0.15  # peak per-row zero-out probability
-
-
-def perturb_anchor_confidence(conf: torch.Tensor, step: int, max_steps: int) -> torch.Tensor:
-    """Curriculum-perturb the per-token anchor confidence ``(B, S)`` by training step.
-
-    0 → 25% of max_steps: untouched. 25% → 50%: ramp in per-token multiplicative noise α∼U(0.8,1.2)
-    and per-ROW zero-out (prob → ANCHOR_ZERO_OUT_MAX). 50%+: hold. Per-row (not per-token) zero-out
-    keeps an "absent anchor" coherent across a postcode's sub-tokens.
-    """
-    start = ANCHOR_CURRICULUM_START_FRAC * max_steps
-    if step < start:
-        return conf
-    ramp = min(1.0, (step - start) / max(1.0, (ANCHOR_CURRICULUM_RAMP_FRAC - ANCHOR_CURRICULUM_START_FRAC) * max_steps))
-    alpha = 0.8 + 0.4 * torch.rand_like(conf)  # per-token U(0.8, 1.2)
-    out = (conf * alpha).clamp(0.0, 1.0)
-    row_zero = (torch.rand(conf.shape[0], device=conf.device) < ANCHOR_ZERO_OUT_MAX * ramp).unsqueeze(1)
-    return out.masked_fill(row_zero, 0.0)
-
-
-def perturb_gazetteer_confidence(conf: torch.Tensor, step: int, max_steps: int) -> torch.Tensor:
-    """Curriculum-perturb the per-token gazetteer-anchor confidence ``(B, S)`` — the v0.9.12 fix.
-
-    Same shape as the postcode curriculum: untouched early (build the clue's basin), then a ramped
-    per-row zero-out so the model can't OVER-RELY on the lexicon. v0.9.12 lifted country/region/
-    locality but cost US postcode −3.7 — symptomatic of the model leaning on the always-on clue and
-    reallocating base competence. Dropping the clue on a growing fraction of rows forces the model to
-    keep its label competence with AND without the hint. Reuses the postcode curriculum schedule.
-    """
-    return perturb_anchor_confidence(conf, step, max_steps)
-
-
-def perturb_evidence_noise(
-    features: torch.Tensor, conf: torch.Tensor, step: int, max_steps: int, p_noise: float
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """FALSE-evidence curriculum (v3.21.0) — the collision-robustness leg the absence curriculum lacks.
-
-    The v3.19/v3.20 golden-US verdicts showed the ramped zero-out teaches presence/ABSENCE robustness
-    but never shows the model false presence: a real street-type word inside a street NAME ("Cider
-    Mill Rd") or a locality surface on a non-locality token still commands the parse, because in
-    training painted evidence was (near-)always truthful. With probability ``p_noise`` per row per
-    channel, this corrupts the painting while LABELS stay gold, so the gradient itself teaches
-    evidence-as-hint:
-
-    - rows that carry evidence: roll the (features, confidence) pair by a random offset along the
-      sequence — a real painted pattern lands on wrong tokens (the collision shape);
-    - evidence-free rows: paint a synthetic 1-token hit (all feature bits set, confidence 1) at a
-      random position — a false positive on a clean row.
-
-    Same schedule as the anchor curriculum (untouched until 25% of max_steps, ramp to 50%, hold) so
-    the clue's basin builds before the noise argues with it.
-    """
-    if p_noise <= 0.0:
-        return features, conf
-    start = ANCHOR_CURRICULUM_START_FRAC * max_steps
-    if step < start:
-        return features, conf
-    ramp = min(1.0, (step - start) / max(1.0, (ANCHOR_CURRICULUM_RAMP_FRAC - ANCHOR_CURRICULUM_START_FRAC) * max_steps))
-    bsz, seq = conf.shape
-    noised = torch.rand(bsz, device=conf.device) < p_noise * ramp
-    if not bool(noised.any()):
-        return features, conf
-    features = features.clone()
-    conf = conf.clone()
-    for i in torch.nonzero(noised).flatten().tolist():
-        if bool((conf[i] > 0).any()):
-            shift = int(torch.randint(1, seq, (1,), device=conf.device))
-            features[i] = torch.roll(features[i], shift, dims=0)
-            conf[i] = torch.roll(conf[i], shift, dims=0)
-        else:
-            pos = int(torch.randint(0, seq, (1,), device=conf.device))
-            features[i, pos] = 1.0
-            conf[i, pos] = 1.0
-    return features, conf
-
-
-def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> LambdaLR:
-    def lr_lambda(step: int) -> float:
-        if step < warmup_steps:
-            return float(step) / float(max(1, warmup_steps))
-        progress = float(step - warmup_steps) / float(max(1, max_steps - warmup_steps))
-        progress = min(1.0, progress)
-        return max(0.0, 0.5 * (1.0 + math.cos(math.pi * progress)))
-
-    return LambdaLR(optimizer, lr_lambda)
-
-
-def _linear_cooldown(optimizer: AdamW, cooldown_start: int, max_steps: int) -> LambdaLR:
-    """WSD-style decay branch (2026-08-10 recipe review, setting 11).
-
-    Resume a mid-schedule checkpoint at ``cooldown_start`` with the config's ``learning_rate``
-    set to that checkpoint's CURRENT (tail) LR: the multiplier holds 1.0 through the start, so
-    the schedule-aware restamp continues the parent's LR exactly, then decays linearly to zero
-    at ``max_steps``. Approximates the matched-schedule endpoint of a mid-cosine checkpoint
-    without a full rerun (Hägele et al. 2024, arXiv:2405.18392; MiniCPM, arXiv:2404.06395;
-    Chinchilla's schedule-matching finding).
-    """
-    span = max(1, max_steps - cooldown_start)
-
-    def lr_lambda(step: int) -> float:
-        if step <= cooldown_start:
-            return 1.0
-        return max(0.0, float(max_steps - step) / float(span))
-
-    return LambdaLR(optimizer, lr_lambda)
-
-
-def _constant_with_warmup(optimizer: AdamW, warmup_steps: int) -> LambdaLR:
-    # Linear warmup → constant. The verdict-smoke mode per v0.5.0 (see
-    # docs/articles/plan/reference/VERDICT_SMOKES.md): cosine decay over a short window
-    # collapses the LR before divergence shows in the loss curve.
-    def lr_lambda(step: int) -> float:
-        if step < warmup_steps:
-            return float(step) / float(max(1, warmup_steps))
-        return 1.0
-
-    return LambdaLR(optimizer, lr_lambda)
-
-
-def build_optimizer(
-    model: Any,
-    *,
-    learning_rate: float,
-    weight_decay: float,
-    span_head_learning_rate: float | None = None,
-    classifier_learning_rate: float | None = None,
-) -> tuple[AdamW, list[str]]:
-    """AdamW over the model's trainable params, optionally carving out named param groups.
-
-    Why the span-head override exists: a randomly-initialized head on a PRETRAINED encoder cannot
-    train at the encoder's fine-tuning LR. The v3.0.0 probe inherited `lr: 1e-5` from v2.6.4 (a
-    recipe that fine-tunes existing weights) and the fresh span head barely moved in 2k steps — loss
-    26.4 → 17.8, still falling, raw span NLL ~35 where a converged semi-CRF sits at O(1). A carved-out
-    group lets the head run at ~1e-3 while the encoder keeps its gentle 1e-5.
-
-    `classifier_learning_rate` carves the output head (`classifier.`) into its own group —
-    the dead-tag resurrection setting (#456/#1100): a re-initialized output row (see
-    `reinit_label_rows`) cannot climb out of a baked-negative neighborhood at the encoder's
-    fine-tune LR, and Adam's gradient scale-invariance rules out hook-based row scaling.
-
-    `LambdaLR` scales each group's OWN `initial_lr` by the same multiplier, so the existing
-    warmup/cosine schedule composes with this for free — every group keeps its shape and its ratio.
-
-    Frozen params (`requires_grad=False`, the `freeze_*` idioms) are excluded from every group.
-    Omitting both overrides yields exactly one group — byte-identical to every prior recipe.
-
-    Returns `(optim, labels)` — `labels[i]` names `optim.param_groups[i]` (`"base"` for the
-    untouched-LR group, else the override's config key). This is the SINGLE source of the
-    group-order-to-label mapping: a resume path that needs to re-stamp LRs by group (see
-    `_restamp_resume_lrs`) must read `labels` from here, not hand-build a parallel if-chain that
-    duplicates this function's carve-out order — a reorder here would silently desync a copy.
-    A group dict key (e.g. `pg["mailwoman_label"]`) was considered instead, but
-    `AdamW.load_state_dict()`'s `update_group()` returns the CHECKPOINT's saved group dict
-    verbatim (params/param_names aside), so a label stamped fresh at group-construction time
-    does not survive loading an older checkpoint that predates the label — same class of bug
-    `_restamp_resume_lrs` exists to fix, but for the label instead of the LR. The return tuple
-    sidesteps this: labels never touch the param-group dict, so `optim.load_state_dict()` can't
-    clobber them.
-
-    The "rest" (base) group is skipped entirely when empty — e.g. `train.trainable_only_prefixes`
-    (the cRT probe setting) freezes every param outside a carve-out prefix, so once that prefix is
-    also carved out here nothing remains for "rest". `AdamW`/`LambdaLR` both tolerate a
-    zero-params group fine (constructed, stepped, and state_dict-round-tripped clean in testing —
-    a single shared `lr_lambda` is applied per group regardless of param count), so this is a
-    shape choice, not a workaround for broken behavior: an all-carved-out run should read as a
-    clean 1-group optimizer, not a 2-group optimizer with a permanently-empty phantom "base".
-    """
-    trainable = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
-
-    carveouts: list[tuple[tuple[str, ...], float, str]] = []
-    if span_head_learning_rate is not None:
-        carveouts.append((("span_scorer.", "semi_crf."), span_head_learning_rate, "span_head_learning_rate"))
-    if classifier_learning_rate is not None:
-        # deploc_head (P-B probe) rides the classifier carveout: it is the output head for
-        # dependent_locality, so the fresh head resurrects at the same hot LR the reinit'd
-        # classifier rows used — one variable (separate head vs flat-head reinit), same LR.
-        # street_type_projection/cue (P-A probe) also ride it: the FRESH input channel (init_from
-        # v385 is strict=False → these load fresh) needs the hot LR to learn to use the street signal
-        # in a short probe, while the encoder fine-tunes at the base LR. Both extra prefixes are
-        # no-ops when their module is off (the tuple still matches `classifier.`, so no raise).
-        carveouts.append(
-            (
-                (
-                    "classifier.",
-                    "deploc_head.",
-                    "street_type_projection.",
-                    "street_type_token_embedding",
-                    "locality_surface_projection.",
-                    "locality_surface_token_embedding",
-                ),
-                classifier_learning_rate,
-                "classifier_learning_rate",
-            )
-        )
-
-    if not carveouts:
-        optim = AdamW([p for _, p in trainable], lr=learning_rate, weight_decay=weight_decay)
-        return optim, ["base"]
-
-    groups = []
-    labels = []
-    rest = trainable
-    for prefixes, lr, key in carveouts:
-        head = [p for n, p in rest if n.startswith(prefixes)]
-        rest = [(n, p) for n, p in rest if not n.startswith(prefixes)]
-        if not head:
-            raise RuntimeError(
-                f"train.{key} is set but no params match prefixes {prefixes} — "
-                "check the model config enables the corresponding module, or drop the override"
-            )
-        print(f"[{key}] {sum(p.numel() for p in head):,} params @ {lr}")
-        groups.append({"params": head, "lr": lr})
-        labels.append(key)
-
-    if rest:
-        groups.insert(0, {"params": [p for _, p in rest], "lr": learning_rate})
-        labels.insert(0, "base")
-    return AdamW(groups, lr=learning_rate, weight_decay=weight_decay), labels
-
-
-def reinit_label_rows(model: Any, labels: list[str]) -> None:
-    """Reset the named BIO labels' classifier rows (weight + bias) to the mean of the LIVE rows.
-
-    The dead-tag mechanism: init_from a checkpoint where a tag never fires leaves its output
-    row deeply negative; class weights only scale a vanishing gradient (v382/v383 no-ops).
-    Mean-of-live re-init (the FVT mean-init precedent) puts the row back on the decision
-    surface so the resurrection LR can steer it.
-    """
-    rows = [LABEL_TO_ID[label] for label in labels]
-    with torch.no_grad():
-        live = [i for i in range(model.classifier.out_features) if i not in rows]
-        mean_w = model.classifier.weight[live].mean(dim=0)
-        mean_b = model.classifier.bias[live].mean()
-        for i in rows:
-            model.classifier.weight[i] = mean_w
-            model.classifier.bias[i] = mean_b
-    print(f"[reinit_label_rows] rows {rows} ← live-row mean ({labels})")
-
-
-def _build_scheduler(optim: AdamW, cfg_train: Any) -> LambdaLR:
-    schedule = getattr(cfg_train, "lr_schedule", "cosine")
-    if schedule == "constant":
-        return _constant_with_warmup(optim, cfg_train.warmup_steps)
-    if schedule == "cosine":
-        return _cosine_with_warmup(optim, cfg_train.warmup_steps, cfg_train.max_steps)
-    if schedule == "linear_cooldown":
-        start = getattr(cfg_train, "cooldown_start_step", None)
-        if start is None:
-            raise ValueError("train.lr_schedule='linear_cooldown' requires train.cooldown_start_step")
-        return _linear_cooldown(optim, int(start), cfg_train.max_steps)
-    raise ValueError(f"unknown train.lr_schedule={schedule!r}; expected 'cosine', 'constant', or 'linear_cooldown'")
-
-
-def _restamp_resume_lrs(
-    optim: AdamW,
-    scheduler: LambdaLR,
-    live_lrs: list[float],
-    labels: list[str],
-) -> None:
-    """Re-stamp the LIVE config's per-group LR onto a resumed optimizer + scheduler.
-
-    `optim.load_state_dict()` overwrites every param-group key — `lr`/`initial_lr` included —
-    with the CHECKPOINT's saved values (`update_group()` in `torch.optim.optimizer.Optimizer`
-    returns the saved dict verbatim aside from `params`), so `build_optimizer`'s fresh
-    live-config groups are silently discarded the instant the state dict loads. `scheduler.
-    load_state_dict()` compounds this: it does `self.__dict__.update(state_dict)`, overwriting
-    `scheduler.base_lrs` with the checkpoint's values too. Left unfixed, a resumed run trains at
-    the CHECKPOINT's old LR forever while `[resume-drift]` loudly — and misleadingly — reports
-    the live config's new value as if it took effect. See
-    `.superpowers/sdd/fork-implementation-notes.md` Q1/Q3/Q5#1 for the full trace.
-
-    `live_lrs` must be captured from the FRESH optimizer's `param_groups` (pre-load); `labels`
-    must be `build_optimizer`'s own returned label list, unmodified — passing both straight
-    through from `build_optimizer`'s call site is what keeps them positionally aligned with
-    `optim.param_groups`. `build_optimizer` is the SINGLE source of the group-order-to-label
-    mapping; do not hand-build a parallel if-chain here or at the call site — that duplicates
-    its carve-out order and a reorder there would silently desync the labels (values stay
-    correct regardless, since they're sourced positionally from `optim.param_groups`, but the
-    printed `[resume-lr]` attribution would lie). A length mismatch here would mean that
-    contract was violated (not a real resume-drift case — a real group-count mismatch already
-    raised inside `optim.load_state_dict()` before this function is ever called), so
-    `zip(..., strict=True)` fails loud rather than silently truncating.
-
-    Prints one `[resume-lr]` line per group whose LR the checkpoint actually clobbered; prints
-    nothing when every group already matches (the checkpoint was saved with the same LRs the
-    live config specifies — a byte-identical no-op).
-
-    SCHEDULE-AWARE (2026-08-09 P0): `live_lrs` are the config's BASE (peak) values, but a
-    param group's `lr` is its CURRENT value — base × the schedule multiplier at the resumed
-    step. Stamping the raw base onto `pg["lr"]` hands the FIRST resumed optimizer step the
-    peak LR before the next `scheduler.step()` restores the tail: measured 8.808e-06 →
-    5.000e-04 → 8.805e-06 resuming v4.3.3 at step 55k — a 56.8× one-step spike into a
-    nearly-converged model. The constant schedule masked this (post-warmup multiplier is
-    1.0), which is why the original restamp tests never failed. So: `initial_lr` and
-    `scheduler.base_lrs` get the live BASE; `pg["lr"]` gets base × multiplier-at-step,
-    read from the scheduler's own `lr_lambdas` at its restored `last_epoch`.
-    """
-    lr_lambdas = getattr(scheduler, "lr_lambdas", None)
-    for i, (pg, live_lr, label) in enumerate(zip(optim.param_groups, live_lrs, labels, strict=True)):
-        mult = lr_lambdas[i](scheduler.last_epoch) if lr_lambdas is not None else 1.0
-        live_current_lr = live_lr * mult
-        checkpoint_lr = pg["lr"]
-        if checkpoint_lr != live_current_lr:
-            print(f"[resume-lr] group {i} ({label}): checkpoint {checkpoint_lr} -> config {live_current_lr}")
-        pg["lr"] = live_current_lr
-        if "initial_lr" in pg:
-            pg["initial_lr"] = live_lr
-    if hasattr(scheduler, "base_lrs"):
-        scheduler.base_lrs = list(live_lrs)
-
-
-def _precision_to_dtype(precision: str, device: torch.device) -> torch.dtype | None:
-    if precision == "fp16":
-        return torch.float16 if device.type == "cuda" else None
-    if precision == "bf16":
-        return torch.bfloat16
-    return None
-
-
-def _token_f1(
-    preds: torch.Tensor,
-    labels: torch.Tensor,
-    num_labels: int,
-    bio_labels: tuple[str, ...] = ACTIVE_BIO_LABELS,
-) -> dict[str, float]:
-    """Compute macro/per-class token-level F1 over a batch. Ignores ``IGNORE_INDEX`` positions.
-
-    Returns ``macro_f1`` plus per-BIO-label F1 (``f1.B-locality``, ``f1.I-locality``, …),
-    collapsed per-tag F1 (``f1_tag.locality``, …) computed as (B + I) / 2, AND per-tag support
-    (``support_tag.locality`` = # true B+I instances in the val sample). The per-tag F1 + support
-    columns are what the CSV log / dashboard write; the per-BIO columns are for fine-grained
-    debugging. ``macro_f1`` averages only component labels (excludes "O") that have support > 0,
-    so a tag absent from the val sample doesn't drag it down (see the support-aware comment below).
-    """
-    mask = labels != IGNORE_INDEX
-    p = preds[mask]
-    y = labels[mask]
-    tp = torch.zeros(num_labels, device=p.device)
-    fp = torch.zeros(num_labels, device=p.device)
-    fn = torch.zeros(num_labels, device=p.device)
-    for c in range(num_labels):
-        pred_c = p == c
-        true_c = y == c
-        tp[c] = (pred_c & true_c).sum().float()
-        fp[c] = (pred_c & ~true_c).sum().float()
-        fn[c] = (~pred_c & true_c).sum().float()
-    support = tp + fn  # number of true instances of each label in the val set
-    precision = tp / (tp + fp + 1e-9)
-    recall = tp / (tp + fn + 1e-9)
-    f1 = 2 * precision * recall / (precision + recall + 1e-9)
-    per_label = {bio_labels[c]: float(f1[c]) for c in range(num_labels)}
-    per_label_support = {bio_labels[c]: int(support[c]) for c in range(num_labels)}
-
-    # Support-aware macro: average F1 only over COMPONENT labels (exclude "O") that actually
-    # occur in the val sample. A zero-support label (a tag the val sample happens not to contain —
-    # e.g. po_box/cedex in a US-primary sample) otherwise pins F1 at 0 and drags the macro down;
-    # that's a val-coverage artifact, not model quality. Excluding "O" also stops its huge-support,
-    # ~1.0 F1 from inflating the average. See val-set stratification (Layer 2) for the coverage fix.
-    supported = [c for c in range(num_labels) if bio_labels[c] != "O" and support[c] > 0]
-    macro = sum(float(f1[c]) for c in supported) / len(supported) if supported else 0.0
-
-    result = {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
-    tags = tuple(dict.fromkeys(label.split("-", 1)[1] for label in bio_labels if "-" in label))
-    for tag in tags:
-        b_f1 = per_label.get(f"B-{tag}", 0.0)
-        i_f1 = per_label.get(f"I-{tag}", 0.0)
-        result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
-        # Per-tag support (B + I true instances). 0 ⇒ the tag is absent from the val sample, so its
-        # F1 is undefined — callers log it as a gap rather than a misleading flat-zero.
-        result[f"support_tag.{tag}"] = per_label_support.get(f"B-{tag}", 0) + per_label_support.get(f"I-{tag}", 0)
-    return result
-
-
-def _cross_pollution(
-    preds: torch.Tensor,
-    labels: torch.Tensor,
-    row_locale_ids: torch.Tensor | None,
-) -> dict[str, float]:
-    """The Saint-Albans collapse regression check: rate at which gold city/region-START tokens
-    (``B-locality`` / ``B-region``) are predicted as a POSTCODE label (``B-`` / ``I-postcode``).
-
-    Overall, plus per-locale when ``row_locale_ids`` (one id per sequence) is supplied. The
-    pre-registered PR3 check wants this under 1% per locale by 20k steps — it is the direct readout
-    of a city's lead token bleeding into the postcode span, the failure self-conditioning exists to
-    stop. Returns an empty dict when the val sample contains no city/region-start tokens.
-    """
-    start = torch.zeros_like(labels, dtype=torch.bool)
-    for name in ("B-locality", "B-region"):
-        start |= labels == LABEL_TO_ID[name]
-    pc = torch.zeros_like(preds, dtype=torch.bool)
-    for name in ("B-postcode", "I-postcode"):
-        pc |= preds == LABEL_TO_ID[name]
-    polluted = start & pc
-
-    def _rate(mask_start: torch.Tensor, mask_poll: torch.Tensor) -> float:
-        denom = int(mask_start.sum())
-        return float(int(mask_poll.sum()) / denom) if denom > 0 else 0.0
-
-    if int(start.sum()) == 0:
-        return {}
-    out: dict[str, float] = {"cross_pollution": _rate(start, polluted)}
-    if row_locale_ids is not None:
-        tok_locale = row_locale_ids.unsqueeze(1).expand_as(labels)
-        for lid in torch.unique(row_locale_ids).tolist():
-            if lid not in ID_TO_LOCALE:  # IGNORE_INDEX / unmapped country
-                continue
-            sel = tok_locale == lid
-            if int((start & sel).sum()) > 0:
-                out[f"cross_pollution.{ID_TO_LOCALE[lid]}"] = _rate(start & sel, polluted & sel)
-    return out
-
-
-def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequence[str]) -> list[str | int]:
-    """The train_log.csv eval row, one `f1.<tag>` cell per tag of the ACTIVE LABEL SET.
-
-    The header is written from the run's label set, so the row must be too: a row built from the
-    default 16-tag list against a 35-tag ``stage3-cjk`` header left every JP fine tag and
-    ``locality_unit`` unreadable and shifted the cells that were present under the wrong names. A tag
-    with no val support writes an empty cell so a chart draws a gap, not a zero.
-    """
-    cells: list[str | int] = [
-        step,
-        f"{elapsed:.1f}",
-        "",
-        "",
-        f"{val.get('val_loss', float('nan')):.6f}",
-        f"{val.get('macro_f1', 0.0):.6f}",
-    ]
-    for tag in tags:
-        supported = int(val.get(f"support_tag.{tag}", 0)) > 0
-        cells.append(f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" if supported else "")
-    return cells
 
 
 @torch.no_grad()
@@ -562,7 +76,7 @@ def _eval_val(
         seed=cfg.train.seed + 1,
         row_limit=max_rows,
     ):
-        tb = _to_tensor_batch(batch, device)
+        tb = to_tensor_batch(batch, device)
         out = model(**tb)
         loss_total += float(out.loss.detach().cpu())
         seen_batches += 1
@@ -580,80 +94,18 @@ def _eval_val(
     from ..labels import resolve_label_set
 
     label_set = resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
-    metrics = _token_f1(preds, labels, num_labels=len(label_set.bio_labels), bio_labels=label_set.bio_labels)
+    metrics = token_f1(preds, labels, num_labels=len(label_set.bio_labels), bio_labels=label_set.bio_labels)
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
     # PR3 regression check + aux-head accuracy.
     row_locale = torch.cat(all_locale_ids, dim=0) if all_locale_ids else None
-    metrics.update(_cross_pollution(preds, labels, row_locale))
+    metrics.update(cross_pollution(preds, labels, row_locale))
     if all_locale_preds and row_locale is not None:
         locale_pred = torch.cat(all_locale_preds, dim=0)
         valid = row_locale != IGNORE_INDEX
         if int(valid.sum()) > 0:
             metrics["locale_acc"] = float((locale_pred[valid] == row_locale[valid]).float().mean())
     return metrics
-
-
-def save_checkpoint(
-    model: torch.nn.Module,
-    output_dir: Path,
-    step: int,
-    extras: dict[str, Any],
-    *,
-    optim: torch.optim.Optimizer | None = None,
-    scheduler: Any = None,
-    rng_state: dict[str, Any] | None = None,
-) -> Path:
-    """Save model + optimizer + scheduler + RNG state into ``output_dir/step-XXXXX/``.
-
-    Resume capability for crash-and-resume loops (gfx1103 firmware GPU hangs; Modal
-    preemption). Model/optimizer/scheduler/step are restored exactly; the DATA stream is
-    not — sampler position is not saved, so a resumed run continues optimizer state over a
-    re-sampled stream (re-seeded per epoch), not the identical row sequence.
-
-    ATOMIC (2026-08-09 P1): everything is written into a temp directory the ``step-*``
-    discovery glob cannot see, ``training_state.json`` last, then renamed into place. A
-    mid-save interruption therefore leaves either the previous complete checkpoint set or
-    nothing — never a partial ``step-XXXXXX`` that ``--resume auto`` would load.
-    """
-    ck = output_dir / f"step-{step:06d}"
-    tmp = output_dir / f".tmp-step-{step:06d}"
-    if tmp.exists():
-        shutil.rmtree(tmp)
-    tmp.mkdir(parents=True)
-    try:
-        if hasattr(model, "save_pretrained"):
-            cast(Any, model).save_pretrained(tmp)
-        else:
-            torch.save(model.state_dict(), tmp / "pytorch_model.bin")
-        if optim is not None:
-            torch.save(optim.state_dict(), tmp / "optimizer.pt")
-        if scheduler is not None:
-            torch.save(scheduler.state_dict(), tmp / "scheduler.pt")
-        if rng_state is not None:
-            torch.save(rng_state, tmp / "rng_state.pt")
-        # Written LAST: its presence is the completeness marker find_latest_checkpoint trusts.
-        (tmp / "training_state.json").write_text(json.dumps(extras, indent=2) + "\n", encoding="utf-8")
-    except BaseException:
-        shutil.rmtree(tmp, ignore_errors=True)
-        raise
-    if ck.exists():
-        shutil.rmtree(ck)
-    tmp.rename(ck)
-    return ck
-
-
-def find_latest_checkpoint(output_dir: Path) -> Path | None:
-    """Return the highest-step COMPLETE ``step-XXXXXX`` checkpoint dir under ``output_dir``.
-
-    Complete = carries ``training_state.json``, which ``save_checkpoint`` writes last (and
-    every durable historical checkpoint already has). A partial directory from an
-    interrupted pre-atomic save is skipped, never resumed.
-    """
-    if not output_dir.is_dir():
-        return None
-    candidates = sorted(p for p in output_dir.glob("step-*") if (p / "training_state.json").is_file())
-    return candidates[-1] if candidates else None
 
 
 def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
@@ -811,11 +263,11 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     # overwrites every param-group's `lr`/`initial_lr` with the CHECKPOINT's saved values, so
     # these live-config LRs — plus `live_group_labels` above, both sourced directly from
     # `build_optimizer`'s own return — are the only place the live values (and their group
-    # attribution) survive resume. See `_restamp_resume_lrs`.
+    # attribution) survive resume. See `restamp_resume_lrs`.
     live_group_lrs = [g["lr"] for g in optim.param_groups]
-    scheduler = _build_scheduler(optim, cfg.train)
+    scheduler = build_scheduler(optim, cfg.train)
     print(f"lr_schedule={getattr(cfg.train, 'lr_schedule', 'cosine')}")
-    amp_dtype = _precision_to_dtype(cfg.train.precision, device)
+    amp_dtype = precision_to_dtype(cfg.train.precision, device)
     # On gfx1103 (Radeon 780M) autocast+bf16 has been observed to hang at batch≥64 with
     # nn.MultiheadAttention — the autocast fast-path picks a fused kernel that GPU hangs on.
     # Cast the whole model to bf16 explicitly instead: equivalent throughput, no fast-path.
@@ -868,8 +320,8 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 scheduler.step()
         # Re-stamp the live config's LRs — must run AFTER both loads above, since either one
         # (optim.load_state_dict or scheduler.load_state_dict) can clobber them back to the
-        # checkpoint's saved values. See `_restamp_resume_lrs`.
-        _restamp_resume_lrs(optim, scheduler, live_group_lrs, live_group_labels)
+        # checkpoint's saved values. See `restamp_resume_lrs`.
+        restamp_resume_lrs(optim, scheduler, live_group_lrs, live_group_labels)
         print(f"resumed at step={resume_step}")
 
     # Fisher capture + EWC (v8.3.0 Phase 1 — fisher.py has the design pointers). Capture is armed
@@ -950,7 +402,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 if step >= cfg.train.max_steps:
                     break
                 model.train()
-                tb = _to_tensor_batch(batch, device)
+                tb = to_tensor_batch(batch, device)
                 # Postcode-anchor confidence curriculum (#239/#240): perturb by optimizer step so the
                 # model can't launder the anchor (no-op until 25% of max_steps).
                 if "anchor_confidence" in tb:
