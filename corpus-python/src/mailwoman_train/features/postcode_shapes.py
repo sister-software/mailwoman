@@ -1,68 +1,79 @@
-"""Postcode-SHAPE detection — the train-side port of ``neural/postcode-repair.ts`` (#220/#723).
+"""Postcode-SHAPE detection at TRAIN time, on the spans inference detects.
 
-The postcode anchor is painted at INFERENCE on postcode-SHAPED spans (``neural/postcode-anchor.ts``
-runs ``collectMatches`` from ``neural/postcode-repair.ts`` over the raw text — it has no gold). But at
-TRAIN the anchor was painted only on GOLD ``B/I-postcode`` spans (``tokenizer.realign_anchor_to_pieces``).
-So the model trained with the anchor firing ONLY on real postcodes and NEVER on a house-number-that-
-looks-like-a-ZIP ("12345 Main St") — exactly the case it faceplants on at inference (#723). This module
-is the train-side mirror of the inference shape detector, so ``anchor_paint_mode="shaped"`` paints the
-anchor at TRAIN on the SAME spans inference does → train/inference congruent by construction.
+The postcode anchor is painted at INFERENCE on postcode-SHAPED spans — `@mailwoman/neural`'s postcode
+repair runs its shape table over the raw text, because it has no gold. At TRAIN the anchor was
+painted only on GOLD ``B/I-postcode`` spans, so the model trained with the anchor firing ONLY on real
+postcodes and NEVER on a house-number-that-looks-like-a-ZIP ("12345 Main St") — exactly the case it
+faceplants on at inference. This module reads the same table the inference side reads, so
+``anchor_paint_mode="shaped"`` paints at TRAIN on the SAME spans, congruent by construction.
 
-CANONICAL SOURCE: ``neural/postcode-repair.ts`` (``POSTCODE_PATTERNS`` + ``collectMatches``). Keep the
-two in lockstep. Do NOT diverge the regexes without changing both.
+THE TABLE IS DATA, NOT CODE. It lives in ``@mailwoman/codex``'s ``postcode-shapes.json``, and
+``postcode-shapes.json`` beside this file is a byte-identical copy of it. Two copies, because a Modal
+container receives only ``corpus-python/src`` and cannot read the repository's packages; one AUTHORED
+copy, because ``test_postcode_shapes`` fails on any byte of difference.
 
-"Keep the two in lockstep" was the whole enforcement until 2026-08-05, and it did not hold: the IE
-Eircode row landed on the TS side on 2026-07-06 and never reached here, so this table ran one row
-short for a month and ``anchor_paint_mode="shaped"`` painted nine of the ten shapes inference paints.
-``tests/mailwoman_train/test_postcode_shapes.py`` — which this docstring named for a month before the
-file existed — now READS the TS source and demands an exact match on label, kind, regex body and
-order. A row added on either side and not the other is a red test, not a silent incongruence.
+The arrangement replaces two hand-typed tables, one per language, kept in step by a comment reading
+"keep the two in lockstep". That did not hold twice: the IE Eircode row was TypeScript-only for a
+month and the BR CEP row for five weeks, and both times this side painted one fewer shape than
+inference with nothing failing.
+
+WHAT THIS SIDE READS. Every row except those the record marks ``javascriptOnly``. There is one: the
+〒-marked Japanese row, whose ``(?<=〒\\s?)`` is a variable-width lookbehind — legal in JavaScript,
+refused by Python's ``re``. The record says so in the row itself, so the omission is a stated
+constraint rather than a gap somebody has to rediscover; the tests assert both that the row is
+skipped and that every row the record does NOT mark compiles here.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from typing import NamedTuple
 
-# Per-country postcode shape patterns, ordered most-specific -> least (priority = index; lower wins an
-# overlap). Mirrors neural/postcode-repair.ts:POSTCODE_PATTERNS VERBATIM. Alphanumeric patterns require
-# UPPERCASE letters (postcodes are conventionally uppercase; keeps them off lowercase prose).
+from ..paths import package_path
+
+#: The field a row carries when its pattern is not valid Python, with the reason.
+JAVASCRIPT_ONLY = "javascriptOnly"
+
+#: The shared record, beside this file. `package_path` resolves it from the source tree, from an
+#: installed package and from the volume's copy alike, so no caller supplies a root.
+SHAPES_PATH = package_path("features", "postcode-shapes.json")
+
+_RECORD = json.loads(SHAPES_PATH.read_text(encoding="utf-8"))
+
+#: The record's revision, so a report can say which one it read.
+POSTCODE_SHAPES_VERSION: str = _RECORD["version"]
+
+#: Every shape in the record, readable here or not, in priority order — label, kind, pattern source.
+ALL_POSTCODE_SHAPES: list[tuple[str, str, str]] = [
+    (shape["label"], shape["kind"], shape["pattern"]) for shape in _RECORD["shapes"]
+]
+
+#: Labels the record marks as unreadable by Python, with the reason it gives.
+UNREADABLE_HERE: dict[str, str] = {
+    shape["label"]: shape[JAVASCRIPT_ONLY] for shape in _RECORD["shapes"] if JAVASCRIPT_ONLY in shape
+}
+
+#: The shapes this side paints, compiled. Priority is the INDEX, so the order of the record is part
+#: of the contract: a lower index wins an overlap, and dropping a row must not reorder the rest.
 POSTCODE_PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
-    # --- Alphanumeric ---
-    ("GB", "alnum", re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b")),  # SW1A 1AA, EH8 9YL
-    ("CA", "alnum", re.compile(r"\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b")),  # M5V 2T6 (space optional)
-    # IE Eircode: routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part. Space
-    # REQUIRED. No GB collision: a letter+2-digit GB outward always has a 3-char inward (B12 8QX),
-    # never 4.
-    ("IE", "alnum", re.compile(r"\b(?:[A-Z]\d{2}|D6W)\s+[A-Z\d]{4}\b")),  # D02 AF30, T12 X70A, F91 Y5CY
-    ("DE", "alnum", re.compile(r"\bD-\d{5}\b")),  # D-68161
-    ("NL", "alnum", re.compile(r"\b\d{4}\s?[A-Z]{2}\b")),  # 1234 AB / 1234AB
-    # --- Numeric ---
-    ("ZIP4", "numeric", re.compile(r"\b\d{5}-\d{4}\b")),  # US ZIP+4
-    # BR CEP: NNNNN-NNN (70390-100, 95090-020). Without it the generic NUM5 below matches the
-    # five-digit head of a CEP and the trailing-smear clip discards the sector suffix. The trailing
-    # `\b` keeps it off a ZIP+4's first nine characters; longest-match-wins settles the rest.
-    ("BR", "numeric", re.compile(r"\b\d{5}-\d{3}\b")),
-    ("JP", "numeric", re.compile(r"\b\d{3}-\d{4}\b")),  # 100-0001
-    ("PT", "numeric", re.compile(r"\b\d{4}-\d{3}\b")),  # 3060-187
-    ("PL", "numeric", re.compile(r"\b\d{2}-\d{3}\b")),  # 47-400
-    ("NUM5", "numeric", re.compile(r"\b\d{5}\b")),  # US/FR/DE/ES 5-digit
+    (label, kind, re.compile(pattern)) for label, kind, pattern in ALL_POSTCODE_SHAPES if label not in UNREADABLE_HERE
 ]
 
 
 class PostcodeMatch(NamedTuple):
     start: int
     end: int
-    kind: str  # "alnum" | "numeric"
+    kind: str  # the record's kind: "alnum", "numeric" or "designated"
     priority: int  # pattern index; lower = more specific
 
 
 def collect_matches(text: str) -> list[PostcodeMatch]:
     """Collect non-overlapping postcode-shaped substrings, longest-match-wins (then priority).
 
-    Mirrors ``neural/postcode-repair.ts::collectMatches`` EXACTLY: gather every pattern's matches, then
-    accept greedily by (length DESC, priority ASC), rejecting anything overlapping an accepted match —
-    so a US ZIP+4 ("94610-2737") claims its span before the shorter NL-shaped tail ("2737 CA") can.
+    Mirrors ``@mailwoman/neural``'s ``collectMatches``: gather every pattern's matches, then accept
+    greedily by (length DESC, priority ASC), rejecting anything overlapping an accepted match — so a
+    US ZIP+4 ("94610-2737") claims its span before the shorter NL-shaped tail ("2737 CA") can.
     Returned in start order (irrelevant to painting, but deterministic).
     """
     candidates: list[PostcodeMatch] = []

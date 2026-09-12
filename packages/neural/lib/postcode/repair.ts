@@ -42,6 +42,7 @@
  *   postcode is a model failure, re-parse it with `postcodeRepair: false`.
  */
 
+import { POSTCODE_SHAPES } from "@mailwoman/codex/postcode-shapes"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import {
@@ -69,46 +70,17 @@ export interface PostcodeMatch extends SpanMatch {
 }
 
 /**
- * Per-country postcode shape patterns, ordered most-specific → least. Alphanumeric patterns require uppercase letters
- * (postcodes are conventionally uppercase, and the eval data has them uppercase) — this keeps them from matching
- * ordinary lowercase prose.
+ * Per-country postcode shape patterns, ordered most-specific → least.
+ *
+ * The table itself is DATA, in `@mailwoman/codex/postcode-shapes`, because two runtimes read it: this module, and the
+ * Python trainer's `features/postcode_shapes.py`, which paints the train-side anchor on the spans this finds. Held as
+ * two typed copies they drifted twice, each time leaving the trainer painting one fewer shape than inference.
  */
-export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric" | "designated"; re: RegExp }> = [
-	// Postal-marker matches may overwrite any existing label.
-	// JP: the digits behind 〒, optionally spaced (〒506-0025, 〒 100-0001). The character path keeps the mark in the
-	// text (`NormalizeOpts.postalMark`), and on a venue-led line the model has read the digits as a house number.
-	{ label: "JP-marked", kind: "designated", re: /(?<=〒\s?)\d{3}-\d{4}\b/gu },
-	// Alphanumeric matches are eligible to add.
-	// GB: outward + space + inward, e.g. SW1A 1AA, EH8 9YL, W1J 9PN, IP13 6SU, B12 8QX
-	{ label: "GB", kind: "alnum", re: /\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b/g },
-	// CA: A1A 1A1 (space optional), e.g. M5V 2T6, H2X 2T6, H3B 1A3
-	{ label: "CA", kind: "alnum", re: /\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b/g },
-	// IE Eircode: routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part, e.g.
-	// D02 AF30, T12 X70A, F91 Y5CY. Space REQUIRED (glued Eircodes are rare and a 7-alnum blob is too
-	// forgeable for the ADD path). No GB collision: a letter+2-digit GB outward always has a 3-char
-	// inward (B12 8QX), never 4. The 2026-07-06 IE diagnostic showed the model fragments Eircodes
-	// (F91 Y5CY → postcode "91") — same class the GB/CA/NL patterns above were added for.
-	{ label: "IE", kind: "alnum", re: /\b(?:[A-Z]\d{2}|D6W)\s+[A-Z\d]{4}\b/g },
-	// DE-prefixed: D-68161
-	{ label: "DE", kind: "alnum", re: /\bD-\d{5}\b/g },
-	// NL: 1234 AB / 1234AB — space optional (glued is common). The US "2737 CA" (ZIP+4 tail +
-	// state) collision is resolved by longest-match-wins below, which lets the ZIP+4 claim it.
-	{ label: "NL", kind: "alnum", re: /\b\d{4}\s?[A-Z]{2}\b/g },
-	// Numeric matches are eligible only for snapping.
-	{ label: "ZIP4", kind: "numeric", re: /\b\d{5}-\d{4}\b/g }, // US ZIP+4
-	// BR CEP: NNNNN-NNN (70390-100, 95090-020). Without it the generic NUM5 below matched the five-digit
-	// head of a CEP, snapped the span to it, and the trailing-smear clip DISCARDED the sector suffix — so
-	// the repair pass truncated a parse the model had got right (measured 2026-08-10 on both BR
-	// world-structures rows: repair OFF "95090-020", repair ON "95090"). The trailing `\b` keeps it off a
-	// ZIP+4's first nine characters ("94610-2737" has a digit after "273"), and longest-match-wins in
-	// `selectNonOverlappingMatches` settles the rest. SNAP-only like every numeric shape, so it can never
-	// invent a postcode over a hyphenated house number.
-	{ label: "BR", kind: "numeric", re: /\b\d{5}-\d{3}\b/g },
-	{ label: "JP", kind: "numeric", re: /\b\d{3}-\d{4}\b/g }, // 100-0001
-	{ label: "PT", kind: "numeric", re: /\b\d{4}-\d{3}\b/g }, // 3060-187
-	{ label: "PL", kind: "numeric", re: /\b\d{2}-\d{3}\b/g }, // 47-400
-	{ label: "NUM5", kind: "numeric", re: /\b\d{5}\b/g }, // US/FR/DE/ES 5-digit
-]
+export const POSTCODE_PATTERNS: ReadonlyArray<{
+	label: string
+	kind: "alnum" | "numeric" | "designated"
+	re: RegExp
+}> = POSTCODE_SHAPES
 
 /**
  * Labels a postcode span is allowed to overwrite when the model emitted no postcode at all (ADD path). These are the

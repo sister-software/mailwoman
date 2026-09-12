@@ -1,0 +1,80 @@
+{
+	"version": "postcode-shapes-v1",
+	"note": "Postcode SHAPE patterns for detecting postcode-like spans in free text, ordered most-specific to least. Priority IS the array index: a lower index wins an overlap. This is a SHAPE test, not gazetteer membership — see postcode-systems.ts for the per-system membership question. Alphanumeric patterns require UPPERCASE letters, which keeps them off lowercase prose. The regex bodies are written in the subset both JavaScript RegExp and Python re accept, because two runtimes read this file; a row that needs different source text in the two dialects needs a second field and a stated reason, not a loosened comparison.",
+	"shapes": [
+		{
+			"label": "JP-marked",
+			"kind": "designated",
+			"pattern": "(?<=〒\\s?)\\d{3}-\\d{4}\\b",
+			"unicode": true,
+			"javascriptOnly": "Python's `re` refuses a variable-width lookbehind, and `\\s?` makes this one variable-width. Nothing on the Python side compiles this row.",
+			"note": "The digits behind 〒, optionally spaced (〒506-0025, 〒 100-0001). The character path keeps the mark in the text, and on a venue-led line the model has read the digits as a house number. A designated match may overwrite any existing label."
+		},
+		{
+			"label": "GB",
+			"kind": "alnum",
+			"pattern": "\\b[A-Z]{1,2}\\d[A-Z\\d]?\\s+\\d[A-Z]{2}\\b",
+			"note": "Outward + space + inward: SW1A 1AA, EH8 9YL, W1J 9PN, IP13 6SU, B12 8QX."
+		},
+		{
+			"label": "CA",
+			"kind": "alnum",
+			"pattern": "\\b[A-Z]\\d[A-Z]\\s?\\d[A-Z]\\d\\b",
+			"note": "A1A 1A1, space optional: M5V 2T6, H2X 2T6, H3B 1A3."
+		},
+		{
+			"label": "IE",
+			"kind": "alnum",
+			"pattern": "\\b(?:[A-Z]\\d{2}|D6W)\\s+[A-Z\\d]{4}\\b",
+			"note": "Eircode: routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part — D02 AF30, T12 X70A, F91 Y5CY. Space REQUIRED: a glued 7-alnum blob is too forgeable for the ADD path. No GB collision, because a letter+2-digit GB outward always has a 3-character inward (B12 8QX), never 4."
+		},
+		{
+			"label": "DE",
+			"kind": "alnum",
+			"pattern": "\\bD-\\d{5}\\b",
+			"note": "The D-prefixed form: D-68161."
+		},
+		{
+			"label": "NL",
+			"kind": "alnum",
+			"pattern": "\\b\\d{4}\\s?[A-Z]{2}\\b",
+			"note": "1234 AB / 1234AB — space optional, glued is common. The US \"2737 CA\" collision (a ZIP+4 tail followed by a state) is settled by longest-match-wins, which lets the ZIP+4 claim it."
+		},
+		{
+			"label": "ZIP4",
+			"kind": "numeric",
+			"pattern": "\\b\\d{5}-\\d{4}\\b",
+			"note": "US ZIP+4. A numeric match is eligible only for snapping, never for adding a postcode where the model emitted none."
+		},
+		{
+			"label": "BR",
+			"kind": "numeric",
+			"pattern": "\\b\\d{5}-\\d{3}\\b",
+			"note": "CEP: 70390-100, 95090-020. Without it the generic NUM5 below matched the five-digit head and the trailing-smear clip discarded the sector suffix, so the repair pass truncated a parse the model had got right (repair OFF \"95090-020\", repair ON \"95090\"). The trailing word boundary keeps it off a ZIP+4's first nine characters, since \"94610-2737\" has a digit after \"273\"."
+		},
+		{
+			"label": "JP",
+			"kind": "numeric",
+			"pattern": "\\b\\d{3}-\\d{4}\\b",
+			"note": "100-0001."
+		},
+		{
+			"label": "PT",
+			"kind": "numeric",
+			"pattern": "\\b\\d{4}-\\d{3}\\b",
+			"note": "3060-187."
+		},
+		{
+			"label": "PL",
+			"kind": "numeric",
+			"pattern": "\\b\\d{2}-\\d{3}\\b",
+			"note": "47-400."
+		},
+		{
+			"label": "NUM5",
+			"kind": "numeric",
+			"pattern": "\\b\\d{5}\\b",
+			"note": "The bare 5-digit shape US, FR, DE and ES all share. Last, so every more-specific row above claims its overlap first."
+		}
+	]
+}

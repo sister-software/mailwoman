@@ -8,7 +8,7 @@
 		"erasableSyntaxOnly": true,
 		"resolveJsonModule": true
 	},
-	"include": ["./lib/**/*", "./lib/us/street-suffix.json"],
+	"include": ["./lib/**/*", "./lib/us/street-suffix.json", "./lib/postcode-shapes.json"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{

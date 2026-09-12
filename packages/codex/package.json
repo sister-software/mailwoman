@@ -23,6 +23,8 @@
 		"!**/*.test.tsx",
 		"lib/us/street-suffix.json",
 		"out/us/street-suffix.json",
+		"lib/postcode-shapes.json",
+		"out/postcode-shapes.json",
 		"!test/**"
 	],
 	"type": "module",
@@ -149,6 +151,11 @@
 			"types": "./out/level-semantics.d.ts",
 			"node": "./lib/level-semantics.ts",
 			"default": "./out/level-semantics.js"
+		},
+		"./postcode-shapes": {
+			"types": "./out/postcode-shapes.d.ts",
+			"node": "./lib/postcode-shapes.ts",
+			"default": "./out/postcode-shapes.js"
 		},
 		"./postcode-systems": {
 			"types": "./out/postcode-systems.d.ts",
