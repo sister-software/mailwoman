@@ -34,7 +34,11 @@ REFERENCE_README = [
     "Regenerate: uv run python tests/mailwoman_train/test_encoder_split_parity.py",
     "Fixture: build_reference_encoder() in the test beside this file — every channel and head on.",
     "",
-    "logits: one forward pass over 8 tokens, flattened. A change means the forward path moved.",
+    "logits: one forward pass over 8 tokens with EVERY channel fed a seeded tensor, flattened.",
+    "  Feeding no channel features is what let a reordered channel pass unnoticed once already.",
+    "loss: the same call plus an all-O label row. forward computes the CRF, locale-aux,",
+    "  span-boundary and conventions-mask terms on the way to it and returns none of them in",
+    "  logits, so a split that drops one of those terms moves this and nothing else.",
     "state_dict_keys: what save_pretrained writes. A change invalidates existing checkpoints.",
     "parameter_checksums: each parameter's initial sum. Most are constants, not RNG state:",
     "  _init_weights zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0 (a zeroed",
@@ -107,13 +111,58 @@ def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
     return {name: round(float(p.detach().sum()), 6) for name, p in model.named_parameters()}
 
 
-def reference_logits(model: MailwomanCoarseEncoder) -> list[float]:
+def reference_inputs(model: MailwomanCoarseEncoder) -> dict[str, torch.Tensor]:
+    """A forward call that reaches EVERY channel, with seeded features.
+
+    Passing no channel features is what let a reordered channel pass a logit comparison: a
+    projection the forward never invokes cannot change a logit. Each channel gets a real tensor at
+    its own declared width, so splitting `forward` into stages has to preserve what each one does
+    with its input, not merely that it is skipped.
+    """
+    generator = torch.Generator().manual_seed(1)
+
+    def noise(*shape: int) -> torch.Tensor:
+        return torch.rand(*shape, generator=generator)
+
     input_ids = torch.arange(1, SEQ_LEN + 1, dtype=torch.long).unsqueeze(0)
-    attention_mask = torch.ones_like(input_ids)
+    return {
+        "input_ids": input_ids,
+        "attention_mask": torch.ones_like(input_ids),
+        "phrase_features": noise(1, SEQ_LEN, model.phrase_feature_dim),
+        "locale_ids": torch.zeros(1, dtype=torch.long),
+        "anchor_features": noise(1, SEQ_LEN, model.anchor_feature_dim),
+        "anchor_confidence": noise(1, SEQ_LEN),
+        "gazetteer_features": noise(1, SEQ_LEN, model.gazetteer_feature_dim),
+        "gazetteer_confidence": noise(1, SEQ_LEN),
+        "country_features": noise(1, SEQ_LEN, model.country_feature_dim),
+        "country_confidence": noise(1, SEQ_LEN),
+        "street_type_features": noise(1, SEQ_LEN, model.street_type_feature_dim),
+        "street_type_confidence": noise(1, SEQ_LEN),
+        "locality_surface_features": noise(1, SEQ_LEN, model.locality_surface_feature_dim),
+        "locality_surface_confidence": noise(1, SEQ_LEN),
+    }
+
+
+def reference_logits(model: MailwomanCoarseEncoder) -> list[float]:
     with torch.no_grad():
-        out = model(input_ids=input_ids, attention_mask=attention_mask)
+        out = model(**reference_inputs(model))
     logits = out["logits"] if isinstance(out, dict) else out.logits
     return [round(v, 6) for v in logits.flatten().tolist()]
+
+
+def reference_loss(model: MailwomanCoarseEncoder) -> float:
+    """The supervised loss for a fixed label row, which the logits alone do not cover.
+
+    `forward` computes the CRF term, the locale aux term, the span-boundary term and the conventions
+    mask on the way to a loss, and returns none of them in `logits`. A split that drops one of those
+    terms leaves the logits untouched.
+    """
+    inputs = reference_inputs(model)
+    inputs["labels"] = torch.zeros(1, SEQ_LEN, dtype=torch.long)
+    with torch.no_grad():
+        out = model(**inputs)
+    loss = out["loss"] if isinstance(out, dict) else out.loss
+    return round(float(loss), 6)
 
 
 def test_forward_is_deterministic_under_a_fixed_seed() -> None:
@@ -131,6 +180,19 @@ def test_logits_match_the_committed_reference() -> None:
 
     assert len(actual) == len(expected["logits"]), "logit count changed — the head geometry moved"
     assert actual == expected["logits"], "the split changed the forward pass"
+
+
+def test_loss_matches_the_committed_reference() -> None:
+    """The loss terms `forward` computes and does not return."""
+    if not REFERENCE.is_file():
+        pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
+    expected = json.loads(REFERENCE.read_text())
+    if "loss" not in expected:
+        pytest.skip("reference predates the loss capture; regenerate it")
+
+    assert reference_loss(build_reference_encoder()) == expected["loss"], (
+        "the split changed a loss term while leaving the logits intact"
+    )
 
 
 def test_a_checkpoint_round_trips_through_save_and_load(tmp_path: Path) -> None:
@@ -214,6 +276,7 @@ def write_reference() -> None:
     payload = {
         "README": REFERENCE_README,
         "logits": reference_logits(model),
+        "loss": reference_loss(model),
         "state_dict_keys": sorted(model.state_dict().keys()),
         "parameter_checksums": parameter_checksums(model),
     }

@@ -23,6 +23,10 @@ ENV_MODULE = SOURCE_ROOT / "env.py"
 #: debug. Write `$MAILWOMAN_DATA_ROOT` instead.
 MACHINE_PATHS = ("/mnt/playpen", "/home/lab", "/mnt/nexus")
 
+#: This file, which has to contain the patterns above to search for them. The only exemption, and it
+#: is structural rather than a suppression: a check cannot name what it refuses without writing it.
+SELF = Path(__file__).resolve()
+
 #: Files still carrying a machine path, each with what replaces it. The list only shrinks; a new
 #: entry means one was added, which is what this refuses.
 MACHINE_PATH_BASELINE: frozenset[str] = frozenset()
@@ -86,7 +90,7 @@ def test_only_the_env_module_reads_the_environment() -> None:
 def test_no_tracked_file_names_a_machine() -> None:
     offenders: dict[str, list[int]] = {}
     for path in _tracked_python_files():
-        if not path.is_file():
+        if not path.is_file() or path.resolve() == SELF:
             continue
         hits = [
             number

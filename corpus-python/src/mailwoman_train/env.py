@@ -6,9 +6,9 @@ variable declares it here, beside the reader, so the set of variables this code 
 list rather than a grep.
 
 Why a module instead of scattered `os.environ.get` calls: the nine call sites this replaced each
-wrote `os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data")`. A default turns "not
-configured" into "configured to a path that exists on one machine", and the failure surfaces as an
-empty corpus rather than as a missing setting.
+read `MAILWOMAN_DATA_ROOT` with a hard-coded fallback to one developer's data directory. A default
+turns "not configured" into "configured to a path that exists on one machine", and the failure then
+surfaces as an empty corpus rather than as a missing setting.
 """
 
 from __future__ import annotations
