@@ -26,7 +26,6 @@ replaced wholesale.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, cast
 
@@ -36,6 +35,9 @@ from torch import nn
 from ..config import Config
 from ..features.phrase_priors import PHRASE_FEATURE_DIM
 from ..labels import ID_TO_LABEL, IGNORE_INDEX, NUM_LOCALES
+from . import serialization
+from .blocks import EncoderBlock
+from .char_cnn import CharCNNEmbedding
 from .crf import LinearChainCRF, TopKPath
 from .span_scorer import SemiMarkovCRF, SpanScorer, gold_segments
 
@@ -79,117 +81,6 @@ class _CoarseEncoderOutput:
         # PR3 self-conditioning: ``(batch, num_locales)`` locale posterior logits from the aux
         # head, or None when the encoder was built without ``use_locale_conditioning``.
         self.locale_logits = locale_logits
-
-
-class EncoderBlock(nn.Module):
-    """One pre-norm transformer block. Hand-rolled (see module docstring for the why)."""
-
-    def __init__(
-        self,
-        hidden_size: int,
-        num_heads: int,
-        ff_intermediate: int,
-        dropout: float,
-    ) -> None:
-        super().__init__()
-        self.ln1 = nn.LayerNorm(hidden_size)
-        self.attn = nn.MultiheadAttention(
-            embed_dim=hidden_size,
-            num_heads=num_heads,
-            dropout=dropout,
-            batch_first=True,
-            bias=True,
-        )
-        self.ln2 = nn.LayerNorm(hidden_size)
-        self.ff = nn.Sequential(
-            nn.Linear(hidden_size, ff_intermediate),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(ff_intermediate, hidden_size),
-        )
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(
-        self,
-        x: torch.Tensor,
-        key_padding_mask: torch.Tensor | None,
-    ) -> torch.Tensor:
-        # Pre-norm attention.
-        h = self.ln1(x)
-        attn_out, _ = self.attn(
-            h,
-            h,
-            h,
-            key_padding_mask=key_padding_mask,
-            need_weights=False,
-        )
-        x = x + self.dropout(attn_out)
-        # Pre-norm FFN.
-        h = self.ln2(x)
-        x = x + self.dropout(self.ff(h))
-        return x
-
-
-class CharCNNEmbedding(nn.Module):
-    """Per-token embedding computed from a token's CHARACTERS via a multi-width 1D CNN.
-
-    A drop-in replacement for the SentencePiece token-ID lookup (``nn.Embedding``). The input is
-    char IDs per token: ``(B, S, W)`` where ``S`` is the WORD/token count (whitespace tokens for
-    space-delimited scripts, one char per token for CJK) and ``W`` is max chars per token. It
-    produces ``(B, S, hidden)`` — the exact shape the transformer body already consumes, so nothing
-    downstream (anchor/gazetteer/phrase channels, the blocks, CRF, classifier) changes.
-
-    Why this fixes the diacritic problem the SentencePiece path can't: the tokenizer is now
-    word-level, so "Čistá" is ONE token whose embedding is composed from its own characters — the
-    subword vocab never gets to isolate the diacritic into its own O-tagged piece (the 3.3x Slavic
-    fertility tax that broke span boundaries → wrong-city geocoding). The char vocab is small (the
-    Unicode chars seen in training, a few thousand), so the embedding table is a fraction of a 48k SP
-    vocab. Generalizes to any script — for CJK, one character is one token, no giant subword vocab.
-
-    ONNX-clean: Embedding + Conv1d + ReLU + masked max-pool + Linear are all standard ops the
-    onnxruntime-node and onnxruntime-web (WASM/WebGPU) runtimes accept.
-    """
-
-    def __init__(
-        self,
-        *,
-        char_vocab_size: int,
-        char_embed_dim: int,
-        hidden_size: int,
-        kernel_sizes: tuple[int, ...] = (3, 4, 5),
-        pad_char_id: int = 0,
-        dropout: float = 0.1,
-    ) -> None:
-        super().__init__()
-        self.pad_char_id = pad_char_id
-        self.char_embeddings = nn.Embedding(char_vocab_size, char_embed_dim, padding_idx=pad_char_id)
-        # Split the hidden width across the kernels; the projection absorbs any remainder so the
-        # output is exactly ``hidden_size`` regardless of divisibility.
-        per_kernel = max(1, hidden_size // len(kernel_sizes))
-        self.convs = nn.ModuleList(
-            [nn.Conv1d(char_embed_dim, per_kernel, kernel_size=k, padding=k // 2) for k in kernel_sizes]
-        )
-        self.proj = nn.Linear(per_kernel * len(kernel_sizes), hidden_size)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, char_ids: torch.Tensor) -> torch.Tensor:
-        # char_ids: (B, S, W) long. Fold (B, S) so the conv runs once over B*S tokens.
-        bsz, seq, width = char_ids.shape
-        flat = char_ids.reshape(bsz * seq, width)  # (B*S, W)
-        # (B*S, W, D) -> (B*S, D, W) for Conv1d (channels = char_embed_dim).
-        x = self.char_embeddings(flat).transpose(1, 2)
-        # Mask padded char positions out of the max-pool: after ReLU real activations are >= 0, so a
-        # padded column could otherwise win the max. Set padded columns to a large negative before pool.
-        pad_mask = (flat == self.pad_char_id).unsqueeze(1)  # (B*S, 1, W)
-        feats: list[torch.Tensor] = []
-        for conv in self.convs:
-            # Even kernels with symmetric padding emit W+1; trim to the input width so every kernel's
-            # output aligns to the char positions (and the pad mask), for any kernel-size mix.
-            c = torch.relu(conv(x))[..., :width]  # (B*S, per_kernel, W)
-            c = c.masked_fill(pad_mask, -1e4)
-            feats.append(c.max(dim=2).values)  # (B*S, per_kernel) — max over chars
-        h: torch.Tensor = self.dropout(self.proj(torch.cat(feats, dim=-1)))  # (B*S, hidden)
-        return h.reshape(bsz, seq, -1)  # (B, S, hidden)
 
 
 class MailwomanCoarseEncoder(nn.Module):
@@ -1158,173 +1049,11 @@ class MailwomanCoarseEncoder(nn.Module):
         return _CoarseEncoderOutput(lm_logits, loss)
 
     def save_pretrained(self, output_dir: Path | str) -> None:
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        torch.save(self.state_dict(), output_dir / "pytorch_model.bin")
-        cfg = {
-            "model_type": "mailwoman-coarse-encoder",
-            "vocab_size": int(self.token_embeddings.num_embeddings),
-            "hidden_size": int(self.token_embeddings.embedding_dim),
-            "num_hidden_layers": len(self.blocks),
-            "num_attention_heads": int(cast(Any, self.blocks[0]).attn.num_heads),
-            "intermediate_size": int(cast(Any, self.blocks[0]).ff[0].out_features),
-            "max_position_embeddings": int(self.max_position_embeddings),
-            "hidden_dropout_prob": float(self.input_dropout.p),
-            "num_labels": int(self.num_labels),
-            "pad_token_id": int(self.pad_token_id),
-            "use_crf": bool(self.use_crf),
-            "label_smoothing": float(self.label_smoothing),
-            "crf_loss_weight": float(self.crf_loss_weight),
-            "crf_normalization": str(self.crf_normalization),
-            # v0.4.0: class_weights persisted as a label→weight dict for human
-            # readability. None when uniform (no per-class biasing in effect).
-            "class_weights": (
-                {ID_TO_LABEL[i]: float(w) for i, w in enumerate(self.class_weights.tolist())}
-                if isinstance(self.class_weights, torch.Tensor)
-                else None
-            ),
-            # v0.5.0 thread C: phrase-prior conditioning. False on v0.4.0/v0.3.0 weights;
-            # True on v0.5.0+. Loaders branch on this flag to materialize the
-            # ``phrase_input_projection`` layer.
-            "use_phrase_priors": bool(self.use_phrase_priors),
-            "phrase_feature_dim": int(self.phrase_feature_dim),
-            # PR3 self-conditioning. False/0 on pre-PR3 weights; loaders branch on the flag to
-            # materialize locale_head / locale_film at the persisted num_locales width.
-            "use_locale_conditioning": bool(self.use_locale_conditioning),
-            "num_locales": int(self.num_locales),
-            "locale_loss_weight": float(self.locale_loss_weight),
-            # Postcode-anchor channel (#239/#240). False/0 on pre-anchor weights; loaders branch on
-            # the flag to materialize anchor_projection / anchor_token_embedding at the feature width.
-            "use_postcode_anchor": bool(self.use_postcode_anchor),
-            "anchor_feature_dim": int(self.anchor_feature_dim),
-            "inject_first_token": bool(self.inject_first_token),
-            # Gazetteer-anchor channel (#464). False/0 on pre-gazetteer weights.
-            "use_gazetteer_anchor": bool(self.use_gazetteer_anchor),
-            "gazetteer_feature_dim": int(self.gazetteer_feature_dim),
-            # Country-lexicon channel (#1104). False/0 on pre-country weights; loaders branch on the flag
-            # to materialize country_projection / country_token_embedding at the feature width.
-            "use_country_anchor": bool(self.use_country_anchor),
-            "country_feature_dim": int(self.country_feature_dim),
-            "use_street_type_anchor": bool(getattr(self, "use_street_type_anchor", False)),
-            "street_type_feature_dim": int(getattr(self, "street_type_feature_dim", 0)),
-            "use_locality_surface_anchor": bool(getattr(self, "use_locality_surface_anchor", False)),
-            "locality_surface_feature_dim": int(getattr(self, "locality_surface_feature_dim", 0)),
-            # #1104 homograph-guard scale — MUST serialize so export/reload rebuild with the same scale
-            # the checkpoint was trained at (else export defaults to 1.0 and the softening is silently lost).
-            "country_ambiguous_scale": float(self.country_ambiguous_scale),
-            "use_affix_head": bool(self.use_affix_head),
-            # Separate dep-loc head (P-B): MUST serialize so export/from_pretrained rebuild the head and
-            # load its trained weights — else the dep-loc columns silently fall back to the classifier.
-            "use_deploc_head": bool(getattr(self, "use_deploc_head", False)),
-            "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
-            # Span-boundary aux head (#727). Persisted so a resume rebuilds the head; the exported ONNX
-            # ignores it (training-only, off the logits path).
-            "use_span_boundary_head": bool(self.use_span_boundary_head),
-            "span_boundary_loss_weight": float(self.span_boundary_loss_weight),
-            "use_span_scorer": bool(self.use_span_scorer),
-            "span_loss_weight": float(self.span_loss_weight),
-            "span_dim": int(self.span_scorer.start_proj.out_features) if self.span_scorer else 128,
-            "max_span": int(self.span_scorer.max_span) if self.span_scorer else 8,
-            # CharCNN front-end (#825). False/0 on SentencePiece checkpoints; loaders branch on the flag
-            # to materialize the char_cnn module at the persisted char-vocab width + kernel geometry.
-            "use_char_embed": bool(self.use_char_embed),
-            "char_vocab_size": int(self.char_vocab_size),
-            "char_embed_dim": int(self.char_embed_dim),
-            "char_kernel_sizes": list(self.char_kernel_sizes),
-            "id2label": dict(self.id_to_label),
-            "label2id": {label: i for i, label in self.id_to_label.items()},
-        }
-        (output_dir / "config.json").write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+        serialization.save_pretrained(self, output_dir)
 
     @classmethod
     def from_pretrained(cls, model_dir: Path | str) -> MailwomanCoarseEncoder:
-        model_dir = Path(model_dir)
-        cfg = json.loads((model_dir / "config.json").read_text(encoding="utf-8"))
-        # v0.4.0: reconstruct the class_weights tensor in label-index order.
-        # Absent / None in config → uniform.
-        # v8 CJK Phase 2: restore THIS checkpoint's own label map (JSON stringifies int keys).
-        # Pre-Phase-2 checkpoints persisted the STAGE3 map, so the fallback is only for configs
-        # that predate the id2label key entirely.
-        persisted_id2label = cfg.get("id2label")
-        id_to_label = {int(k): v for k, v in persisted_id2label.items()} if persisted_id2label else dict(ID_TO_LABEL)
-        cw_dict = cfg.get("class_weights")
-        cw_tensor: torch.Tensor | None = None
-        if cw_dict:
-            cw_tensor = torch.tensor(
-                [float(cw_dict.get(id_to_label[i], 1.0)) for i in range(cfg["num_labels"])],
-                dtype=torch.float32,
-            )
-        model = cls(
-            vocab_size=cfg["vocab_size"],
-            hidden_size=cfg["hidden_size"],
-            num_hidden_layers=cfg["num_hidden_layers"],
-            num_attention_heads=cfg["num_attention_heads"],
-            intermediate_size=cfg["intermediate_size"],
-            max_position_embeddings=cfg["max_position_embeddings"],
-            hidden_dropout_prob=cfg["hidden_dropout_prob"],
-            num_labels=cfg["num_labels"],
-            pad_token_id=cfg["pad_token_id"],
-            # v0.3.0+ fields. Default to v0.2.0 behavior (no CRF, no label smoothing)
-            # for backwards-compat with pre-v0.3.0 checkpoints whose config.json predates
-            # these keys.
-            use_crf=cfg.get("use_crf", False),
-            label_smoothing=cfg.get("label_smoothing", 0.0),
-            crf_loss_weight=cfg.get("crf_loss_weight", 0.1),
-            # v0.4.0+ fields. Default to v0.3.0 behavior (per_sequence, uniform CE).
-            crf_normalization=cfg.get("crf_normalization", "per_sequence"),
-            # v0.6.2 diagnostic. Inference-time loading ignores crf_fp32 because the
-            # CRF call only fires when crf_loss_weight > 0 (training only).
-            crf_fp32=cfg.get("crf_fp32", False),
-            class_weights=cw_tensor,
-            # v0.5.0+ fields. Default to v0.4.0 behavior (no phrase priors).
-            use_phrase_priors=cfg.get("use_phrase_priors", False),
-            phrase_feature_dim=cfg.get("phrase_feature_dim", PHRASE_FEATURE_DIM),
-            # PR3 fields. Default off for back-compat with pre-PR3 checkpoints.
-            use_locale_conditioning=cfg.get("use_locale_conditioning", False),
-            num_locales=cfg.get("num_locales", NUM_LOCALES),
-            locale_loss_weight=cfg.get("locale_loss_weight", 0.0),
-            # Postcode-anchor fields. Default off for back-compat with pre-anchor checkpoints.
-            use_postcode_anchor=cfg.get("use_postcode_anchor", False),
-            anchor_feature_dim=cfg.get("anchor_feature_dim", NUM_LOCALES + 2),
-            inject_first_token=cfg.get("inject_first_token", False),
-            use_gazetteer_anchor=cfg.get("use_gazetteer_anchor", False),
-            # Country-lexicon channel (#1104). Default off for back-compat with pre-country checkpoints.
-            use_country_anchor=cfg.get("use_country_anchor", False),
-            country_feature_dim=cfg.get("country_feature_dim", 2),
-            use_street_type_anchor=cfg.get("use_street_type_anchor", False),
-            street_type_feature_dim=cfg.get("street_type_feature_dim", 1),
-            use_locality_surface_anchor=cfg.get("use_locality_surface_anchor", False),
-            locality_surface_feature_dim=cfg.get("locality_surface_feature_dim", 2),
-            country_ambiguous_scale=cfg.get("country_ambiguous_scale", 1.0),
-            use_affix_head=cfg.get("use_affix_head", False),
-            use_deploc_head=cfg.get("use_deploc_head", False),
-            use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
-            # Span-boundary aux head (#727). Default off for back-compat with pre-#727 checkpoints.
-            use_span_scorer=cfg.get("use_span_scorer", False),
-            span_loss_weight=cfg.get("span_loss_weight", 0.0),
-            span_dim=cfg.get("span_dim", 128),
-            max_span=cfg.get("max_span", 8),
-            use_span_boundary_head=cfg.get("use_span_boundary_head", False),
-            span_boundary_loss_weight=cfg.get("span_boundary_loss_weight", 0.0),
-            gazetteer_feature_dim=cfg.get("gazetteer_feature_dim", 5),
-            # CharCNN front-end (#825). Default off for back-compat with SentencePiece checkpoints.
-            use_char_embed=cfg.get("use_char_embed", False),
-            char_vocab_size=cfg.get("char_vocab_size", 0),
-            char_embed_dim=cfg.get("char_embed_dim", 64),
-            char_kernel_sizes=tuple(cfg.get("char_kernel_sizes", (3, 4, 5))),
-            id_to_label=id_to_label,
-        )
-        # map_location="cpu": checkpoints are written on an A100, and torch pickles the storage's
-        # device. Without this, loading a GPU-trained checkpoint on a CPU-only box raises
-        # "Attempting to deserialize object on a CUDA device" — which is every local grading run
-        # (the #727 phase-1 check hit exactly this). CPU is the safe landing spot; callers .to(device).
-        # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
-        try:
-            sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True, map_location="cpu")  # nosec B614 — weights_only=True; our own exported state_dict
-        except TypeError:  # pragma: no cover — older torch
-            sd = torch.load(model_dir / "pytorch_model.bin", map_location="cpu")  # nosec B614 — same trusted artifact; weights_only=True unavailable pre-2.4
-        model.load_state_dict(sd)
-        return model
+        return serialization.from_pretrained(cls, model_dir)
 
 
 def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size: int = 0) -> MailwomanCoarseEncoder:
