@@ -10,6 +10,7 @@
 
 import type { RepoCheck } from "#check"
 import { bundleGraphCheck } from "#checks/bundle-graph"
+import { cliFlagPropertiesCheck } from "#checks/cli-flag-properties"
 import { debtCheck } from "#checks/debt"
 import { docLinkTargetsCheck } from "#checks/doc-link-targets"
 import { exportNameAffixCheck } from "#checks/export-name-affix"
@@ -44,6 +45,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	moduleSurfaceCheck,
 	moduleCohesionCheck,
 	privateNameShadowsCheck,
+	cliFlagPropertiesCheck,
 	prefixDirectoriesCheck,
 	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,

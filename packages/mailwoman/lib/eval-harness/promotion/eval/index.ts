@@ -697,6 +697,11 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 					tokenizer: armTok,
 					anchorLookup: String(LK),
 					out: `${OUT_DIR}/${tag}-deorder`,
+					// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's `findPlace` calls
+					// repeat a key, and US resolve costs 25.5 ms/row without it against 7.4 with. The databases are
+					// sealed, so a query is a pure function of its arguments; the memo shares hit objects between
+					// callers, so a caller that mutated one would change this leg's report.
+					lookupMemo: true,
 				},
 				(line) => deorderOut.push(line),
 				(line) => deorderErr.push(line)

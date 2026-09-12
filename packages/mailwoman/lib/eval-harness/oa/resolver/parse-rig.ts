@@ -11,6 +11,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 
 import { buildLocalityMatcher } from "#eval-harness/oa/resolver/admin-match"
 import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
+import type { LookupCensus } from "#eval-harness/oa/resolver/profile"
 
 /**
  * Assemble the scorer, the gazetteer-backed resolver and the per-call option bags one run parses and resolves every row
@@ -103,7 +104,52 @@ export async function buildParseRig(
 		reportError(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
 	}
 
-	const resolver = createWOFResolver(backend)
+	// Under `profileJSON` only: count the gazetteer queries one row costs, and how many of them repeat a key an earlier
+	// row already asked. That separates "the resolver is called often" from "the resolver answers the same question
+	// often", which are different fixes. The proxy binds every method to the real backend — `WOFSQLitePlaceLookup` holds
+	// private fields, and a method invoked with the proxy as `this` cannot read them.
+	const lookupCensus: LookupCensus | null = options.profileJSON || "" ? { calls: 0, keys: new Set<string>() } : null
+	const lookupMemo = (options.lookupMemo ?? false) ? new Map<string, Promise<unknown>>() : null
+
+	const wrappedBackend =
+		lookupCensus || lookupMemo
+			? new Proxy(backend, {
+					get(target, property) {
+						const value = Reflect.get(target, property, target)
+
+						if (typeof value !== "function") return value
+
+						if (property !== "findPlace") return value.bind(target)
+
+						return async (...args: unknown[]) => {
+							const key = JSON.stringify(args[0])
+
+							if (lookupCensus) {
+								lookupCensus.calls++
+								lookupCensus.keys.add(key)
+							}
+
+							if (!lookupMemo) return value.apply(target, args)
+
+							// The in-flight promise is memoized, not its result: two rows can ask the same question before
+							// either answer lands, and caching the promise collapses those into one query.
+							let pending = lookupMemo.get(key)
+
+							if (!pending) {
+								pending = value.apply(target, args) as Promise<unknown>
+								lookupMemo.set(key, pending)
+							}
+
+							const hits = await pending
+
+							// A fresh array per caller: the hit objects are shared, but an in-place sort stays local.
+							return Array.isArray(hits) ? [...hits] : hits
+						}
+					},
+				})
+			: backend
+
+	const resolver = createWOFResolver(wrappedBackend)
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
@@ -151,5 +197,5 @@ export async function buildParseRig(
 		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
 	}
 
-	return { neural, resolver, localityMatches, parseOpts, defaultCountry: dc, resolveOpts }
+	return { neural, resolver, localityMatches, parseOpts, defaultCountry: dc, resolveOpts, lookupCensus }
 }
