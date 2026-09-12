@@ -31,6 +31,7 @@ What lives where:
 | `grade.py`     | scoring a checkpoint: per-tag readouts and feature ON/OFF contrasts        |
 | `audits.py`    | the training package's own audits, run on the volume, receipt committed    |
 | `census.py`    | counting what the corpus teaches, to settle an open question              |
+| `bucket.py`    | what the bucket holds against what the table stages                       |
 | `volume.py`    | what the container sees and what the image actually holds                 |
 
 This file defines nothing. It imports each module so that the one `app` carries every function,
@@ -43,6 +44,7 @@ from __future__ import annotations
 from .app import app
 from .artifacts import export_onnx, push_artifact_r2, quantize_onnx
 from .audits import audit_epoch_mixture, audit_suffix_feed, census_opening_token
+from .bucket import bucket_census
 from .census import country_census_raw, diagnose_corpus, digit_prior, piece_prior
 from .grade import diagnose_suffix_plasticity, eval_de, grade_evidence_bundle, grade_street_type_contrast
 from .mean_init import mean_init
@@ -60,6 +62,7 @@ __all__ = [
     "app",
     "audit_epoch_mixture",
     "audit_suffix_feed",
+    "bucket_census",
     "census_opening_token",
     "country_census_raw",
     "debug_volume",
