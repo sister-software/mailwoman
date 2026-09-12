@@ -48,13 +48,23 @@ train = [
 	"transformers==5.9.0",
 	"datasets>=5.0.1",
 	"onnx==1.22.0",
-	# The dynamo exporter itself, so it decides the graph. This read 0.7.1 against the Modal image's
-	# 0.7.0 and nothing noticed, because the consistency guard checked four of the five graph pins.
-	# Both now read 0.7.2. The byte-identity receipt the onnx 1.21.0 -> 1.22.0 bump carries is OWED
-	# here and not yet taken: it needs a re-export and re-quant on Modal, compared md5-for-md5
-	# against the shipped fp32 and int8 artifacts. Take it before the next bundle ships.
+	# The dynamo exporter itself, so it decides the graph. 0.7.0 -> 0.7.2 is NOT byte-neutral, unlike
+	# the onnx 1.21.0 -> 1.22.0 bump above it: 0.7.2's optimizer constant-folds twelve shape-plumbing
+	# nodes (1 Mul, 9 Concat, 2 Reshape) into six initializers, so fp32 grows 2,576 bytes and int8
+	# seven. Nothing a runtime executes differently — opset 17, ir_version 10, inputs, outputs and
+	# every weight tensor are identical, and both graphs answer bit-for-bit equal logits at sequence
+	# 8, 64 and 128, so the dynamic sequence axis survives the fold. A rebuild of an artifact exported
+	# before this pin will therefore differ in md5 and be correct; compare outputs, not bytes.
 	"onnxscript==0.7.2",
-	"onnxruntime==1.26.0",
+	# Matches the `onnxruntime-web` the browser runs (package.json, packages/neural/package.json), which
+	# is npm's current `latest`. It quantizes the graph that runtime executes, so a version gap means
+	# the artifact is validated by a runtime that is not the one serving it. Verified graph-neutral:
+	# 1.26.0 and 1.29.0 quantize one fixed fp32 to a BYTE-IDENTICAL int8 (same sha256, opset 17, same
+	# node, initializer and value_info counts), so this bump cannot move what ships. The two runtimes
+	# do differ numerically executing that graph — up to ~1e-1 on a logit — and agree on every
+	# decision: 0 argmax flips over 172 real tokens across ten addresses. `verify_toolchain.py`
+	# holds the two sides together.
+	"onnxruntime==1.29.0",
 	"tqdm>=4.70.0",
 	# Optional experiment tracking. Logging is best-effort and guarded at runtime
 	# (see mailwoman_train/trackio_logging.py) so its absence never breaks a train run.

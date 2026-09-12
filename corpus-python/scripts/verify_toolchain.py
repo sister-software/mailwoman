@@ -11,6 +11,12 @@ or a local export silently differs from the browser-shipped graph:
 3. ``corpus-python/src/mailwoman_train/export_onnx.py`` — the opset the graph is exported at
    (the ``<= 17`` invariant onnxruntime-web's native WebGPU EP needs).
 
+``onnxruntime`` has a fourth copy, and it is the one that bites: the browser executes the graph
+through ``onnxruntime-web`` while Python quantizes it through ``onnxruntime``, so a gap between them
+means the shipped artifact is validated by a runtime that is not the one serving it. Measured
+between 1.26.0 and 1.29.0 on the same bytes: logits move by up to ~1e-1, which changed no decision
+over a real-address probe but is not nothing. Both npm call sites are checked against the pin.
+
 The ruff pin has the same shape and one more copy: ``pyproject.toml``'s ``[dev]`` extra names the
 version a developer's venv installs, and three shell call sites (``package.json``'s ``lint:python``
 and ``fix:python``, ``.husky/pre-commit``) name the version ``uvx`` fetches. A bump that moves the
@@ -42,6 +48,14 @@ from pathlib import Path
 # guard, because the message is what a reader trusts.
 INVARIANT_DEPS = ("torch", "transformers", "onnx", "onnxruntime", "onnxscript")
 MAX_OPSET = 17
+
+# `onnxruntime` is the only guarded dep with a SECOND implementation outside this directory: the
+# browser executes the graph through `onnxruntime-web`, and Python quantizes it through
+# `onnxruntime`. A gap there means the artifact is validated by a runtime that is not the one
+# serving it — measured at up to ~1e-1 on a logit between 1.26.0 and 1.29.0 on the same bytes. The
+# two npm call sites must name the same version as the pyproject pin.
+ONNX_WEB_CALL_SITES = ("package.json", "packages/neural/package.json")
+ONNX_WEB_RE = re.compile(r'"onnxruntime-web"\s*:\s*"([0-9][^"]*)"')
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = REPO_ROOT / "corpus-python" / "pyproject.toml"
@@ -134,6 +148,23 @@ def _export_opset() -> int | None:
     return int(m.group(1)) if m else None
 
 
+def _onnxruntime_web_versions() -> dict[str, str | None]:
+    """The `onnxruntime-web` version each npm call site pins, or None where the file names none.
+
+    A file naming none is a finding rather than a skip: the dependency moved or was respelled, and
+    this check would then pass over a call site it no longer reads.
+    """
+    versions: dict[str, str | None] = {}
+    for relative in ONNX_WEB_CALL_SITES:
+        path = REPO_ROOT / relative
+        if not path.is_file():
+            versions[relative] = None
+            continue
+        found = ONNX_WEB_RE.search(path.read_text())
+        versions[relative] = found.group(1) if found else None
+    return versions
+
+
 def main() -> int:
     problems: list[str] = []
 
@@ -159,7 +190,21 @@ def main() -> int:
     elif opset > MAX_OPSET:
         problems.append(f"export opset is {opset} but the onnxruntime-web invariant requires <= {MAX_OPSET}")
 
-    # 4: the ruff pin and every `uvx ruff@` call site must name the same version.
+    # 4: the quantizer and the browser executor are two implementations of one runtime version.
+    web_versions = _onnxruntime_web_versions()
+    python_runtime = pyproject.get("onnxruntime")
+    for relative, version in web_versions.items():
+        if version is None:
+            problems.append(
+                f"{relative}: no `onnxruntime-web` version found — this check reads a file it no longer guards"
+            )
+        elif python_runtime and version != python_runtime:
+            problems.append(
+                f"{relative}: onnxruntime-web {version} but pyproject pins onnxruntime=={python_runtime} — "
+                "the graph would be quantized by one runtime and executed by another"
+            )
+
+    # 5: the ruff pin and every `uvx ruff@` call site must name the same version.
     ruff_pin = _ruff_dev_pin()
     ruff_sites = _ruff_call_site_versions()
     if ruff_pin is None:
@@ -189,6 +234,10 @@ def main() -> int:
     print(f"[verify-toolchain] modal pins:     {modal}")
     print(f"[verify-toolchain] export opset:   {opset}")
     print(
+        f"[verify-toolchain] onnxruntime:     python {python_runtime}, web "
+        + ", ".join(f"{name} {version or '(none)'}" for name, version in web_versions.items())
+    )
+    print(
         f"[verify-toolchain] ruff pin =={ruff_pin}, call sites: "
         + ", ".join(f"{p.relative_to(REPO_ROOT)} {sorted(v) or '(none)'}" for p, v in ruff_sites.items())
     )
@@ -203,7 +252,7 @@ def main() -> int:
             print(f"  - {p}", file=sys.stderr)
         return 1
 
-    print("[verify-toolchain] OK — pyproject, Modal image, export opset, and the ruff pin agree.")
+    print("[verify-toolchain] OK — pyproject, Modal image, export opset, the onnxruntime pair and the ruff pin agree.")
     return 0
 
 

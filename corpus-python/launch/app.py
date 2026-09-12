@@ -64,10 +64,19 @@ training_image = (
         # IDENTICAL to the 1.21.0-era export (md5 1c58b0a0) and int8 BYTE-IDENTICAL to the
         # shipped production artifact (md5 121162e6) — the bump provably does not touch the
         # graph. quantize.py's value_info strip stays (exercised in that run, harmless).
+        # onnxscript 0.7.0->0.7.2: NOT byte-neutral. Its optimizer constant-folds twelve shape-plumbing
+        # nodes (1 Mul, 9 Concat, 2 Reshape) into six initializers — fp32 +2,576 bytes, int8 +7 — while
+        # opset, ir_version, inputs, outputs and every weight tensor stay identical and both graphs
+        # answer bit-equal logits at sequence 8, 64 and 128. A rebuild of a pre-0.7.2 artifact differs
+        # in md5 and is correct.
+        # onnxruntime 1.26.0->1.29.0 (matching the `onnxruntime-web` the browser runs): graph-neutral,
+        # both quantize one fixed fp32 to a BYTE-IDENTICAL int8. The quantizer is now the same version
+        # as the executor, which is what the gap cost: the artifact was validated by a runtime three
+        # minors from the one serving it.
         "torch==2.12.0",
         "transformers==5.9.0",
         "onnx==1.22.0",
-        "onnxruntime==1.26.0",
+        "onnxruntime==1.29.0",
         "onnxscript==0.7.2",
         # --- non-graph deps
         # sentencepiece is PINNED, not floored (2026-08-01). It was `>=0.2.0` under a comment saying
