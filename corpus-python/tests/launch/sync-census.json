@@ -48,7 +48,7 @@
 		"check_paths": [
 			"/data/corpus-python/src/mailwoman_train/audits/epoch_mixture.py",
 			"/data/corpus-python/src/mailwoman_train/configs/v4.3.3-cooldown46k.yaml",
-			"/data/corpus-python/src/mailwoman_train/data/loader.py",
+			"/data/corpus-python/src/mailwoman_train/data/loader/__init__.py",
 			"/data/corpus-python/src/mailwoman_train/data/relabel.py",
 			"/data/corpus-python/src/mailwoman_train/optim/schedules.py",
 			"/data/corpus-python/src/mailwoman_train/train/checkpoint.py",
@@ -112,7 +112,7 @@
 	"sync_v440": {
 		"check_paths": [
 			"/data/corpus-python/src/mailwoman_train/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml",
-			"/data/corpus-python/src/mailwoman_train/data/loader.py",
+			"/data/corpus-python/src/mailwoman_train/data/loader/__init__.py",
 			"/data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet",
 			"/data/corpus/versioned/v0.19.0-suffix-boundary-v2/corpus-v0.19.0-suffix-boundary-v2/MANIFEST.json",
 			"/data/corpus/versioned/v0.19.0-suffix-boundary-v2/corpus-v0.19.0-suffix-boundary-v2/train/part-suffix-boundary-v2.parquet",

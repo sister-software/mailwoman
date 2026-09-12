@@ -19,7 +19,7 @@ import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.config import DataConfig
-from mailwoman_train.data import loader as data_loader
+from mailwoman_train.data.loader import encode as encode_module
 from mailwoman_train.data.loader import iter_encoded, iter_rows
 
 #: Stands in for the SentencePiece tokenizer in the tests below. Each of them replaces ``encode_row``,
@@ -242,7 +242,7 @@ def test_iter_encoded_hands_the_triple_to_encode_row(tmp_path: Path, monkeypatch
         captured.append({"raw": raw, **kwargs})
         return {"input_ids": [1], "attention_mask": [1], "labels": [0]}
 
-    monkeypatch.setattr(data_loader, "encode_row", fake_encode_row)
+    monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
     assert len(captured) == 1
@@ -259,7 +259,7 @@ def test_iter_encoded_legacy_path_passes_none(tmp_path: Path, monkeypatch) -> No
         captured.append(kwargs)
         return {"input_ids": [1], "attention_mask": [1], "labels": [0]}
 
-    monkeypatch.setattr(data_loader, "encode_row", fake_encode_row)
+    monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
     assert captured[0]["span_starts"] is None
@@ -285,7 +285,7 @@ def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch
         captured.append({"raw": raw, **kwargs})
         return {"input_ids": [1], "attention_mask": [1], "labels": [0]}
 
-    monkeypatch.setattr(data_loader, "encode_row", fake_encode_row)
+    monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
     # Only the BMP row reached encode_row; the astral row was skipped before it (no crash).

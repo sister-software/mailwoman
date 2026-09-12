@@ -91,7 +91,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         checks=(
             "corpus-python/src/mailwoman_train/audits/epoch_mixture.py",
             "corpus-python/src/mailwoman_train/configs/v4.3.3-cooldown46k.yaml",
-            "corpus-python/src/mailwoman_train/data/loader.py",
+            "corpus-python/src/mailwoman_train/data/loader/__init__.py",
             "corpus-python/src/mailwoman_train/data/relabel.py",
             "corpus-python/src/mailwoman_train/optim/schedules.py",
             "corpus-python/src/mailwoman_train/train/checkpoint.py",
@@ -147,7 +147,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         pycache=PACKAGE_AND_CONFIGS,
         checks=(
             "corpus-python/src/mailwoman_train/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml",
-            "corpus-python/src/mailwoman_train/data/loader.py",
+            "corpus-python/src/mailwoman_train/data/loader/__init__.py",
             "corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet",
             "corpus/versioned/v0.19.0-suffix-boundary-v2/corpus-v0.19.0-suffix-boundary-v2/MANIFEST.json",
             "corpus/versioned/v0.19.0-suffix-boundary-v2/corpus-v0.19.0-suffix-boundary-v2/train/part-suffix-boundary-v2.parquet",
