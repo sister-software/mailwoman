@@ -11,15 +11,15 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from mailwoman_train.crf import (  # noqa: E402  (after pytest.importorskip)
-    LinearChainCRF,
-    build_bio_start_mask,
-    build_bio_transition_mask,
-)
 from mailwoman_train.labels import (  # noqa: E402
     ACTIVE_BIO_LABELS,
     ID_TO_LABEL,
     LABEL_TO_ID,
+)
+from mailwoman_train.nn.crf import (  # noqa: E402  (after pytest.importorskip)
+    LinearChainCRF,
+    build_bio_start_mask,
+    build_bio_transition_mask,
 )
 
 

@@ -18,7 +18,7 @@ import pytest
 torch = pytest.importorskip("torch")  # training deps (torch) aren't installed in lint-only envs
 
 from mailwoman_train.labels import NUM_LOCALES  # noqa: E402
-from mailwoman_train.model import MailwomanCoarseEncoder  # noqa: E402
+from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 
 ANCHOR_DIM = NUM_LOCALES + 2
 _COMMON = dict(

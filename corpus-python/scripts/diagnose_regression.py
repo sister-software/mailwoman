@@ -85,7 +85,7 @@ from mailwoman_train.eval import (  # noqa: E402
     load_golden_dir,
 )
 from mailwoman_train.labels import ACTIVE_TAGS  # noqa: E402
-from mailwoman_train.model import MailwomanCoarseEncoder  # noqa: E402
+from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 from mailwoman_train.tokenizer import Tokenizer  # noqa: E402
 
 

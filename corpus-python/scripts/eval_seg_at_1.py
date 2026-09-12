@@ -26,8 +26,8 @@ import sentencepiece as spm
 import torch
 
 from mailwoman_train.labels import ID_TO_LABEL
-from mailwoman_train.model import MailwomanCoarseEncoder
-from mailwoman_train.span_scorer import SEGMENT_TYPES
+from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
+from mailwoman_train.nn.span_scorer import SEGMENT_TYPES
 
 # The street FAMILY, matching mailwoman/eval-harness/parity-corpus.ts PARITY_FLOORS.
 STREET_TYPES = {"street", "street_prefix", "street_prefix_particle", "street_suffix"}

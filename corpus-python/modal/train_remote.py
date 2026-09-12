@@ -423,7 +423,7 @@ def sync_v050():
 def sync_deploc_head():
     """P-B probe: sync ONLY the training code + configs from R2 (container-side). The corpus
     v0.15.0-deploc AND the init_from v385 checkpoint already persist on the volume from the v3.13 run,
-    so this pulls no ~30 GB corpus — just the model.py deploc_head + train.py carveout + config.py flag
+    so this pulls no ~30 GB corpus — just the nn/encoder.py deploc_head + train.py carveout + config.py flag
     + the v3.14.0-deploc-head.yaml. Clears stale pyc so the fresh loader imports (the night-3 failure mode)."""
     import shutil
     import subprocess
@@ -449,7 +449,7 @@ def sync_deploc_head():
 
     src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
     print("  v3.14.0-deploc-head config present:", os.path.isfile(f"{src}/configs/v3.14.0-deploc-head.yaml"))
-    print("  model.py has deploc_head:", "use_deploc_head" in open(f"{src}/model.py").read())
+    print("  nn/encoder.py has deploc_head:", "use_deploc_head" in open(f"{src}/nn/encoder.py").read())
     print("  train.py carveout has deploc_head:", '"deploc_head."' in open(f"{src}/train.py").read())
     print("  config.py has use_deploc_head:", "use_deploc_head" in open(f"{src}/config.py").read())
     print(
@@ -467,7 +467,7 @@ def sync_deploc_head():
 def sync_street_type():
     """P-A probe: sync the training code + configs AND the NEW street-type lexicon from R2 (container-
     side). The corpus v0.15.0-deploc + the init_from v385 checkpoint already persist on the volume from
-    the v3.13/v3.14 runs, so this pulls no ~30 GB corpus — just the model.py street_type channel +
+    the v3.13/v3.14 runs, so this pulls no ~30 GB corpus — just the nn/encoder.py street_type channel +
     train.py carveout + config.py flags + v3.15.0-street-type.yaml + data/gazetteer/street-type-lexicon-
     v1.json (the ONE new data artifact — the config reads it at /data/gazetteer/). Clears stale pyc."""
     import shutil
@@ -499,7 +499,7 @@ def sync_street_type():
     src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
     print("  v3.15.0-street-type config present:", os.path.isfile(f"{src}/configs/v3.15.0-street-type.yaml"))
     print("  street-type lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json"))
-    print("  model.py has street_type channel:", "use_street_type_anchor" in open(f"{src}/model.py").read())
+    print("  nn/encoder.py has street_type channel:", "use_street_type_anchor" in open(f"{src}/nn/encoder.py").read())
     print("  train.py carveout has street_type:", "street_type_projection." in open(f"{src}/train.py").read())
     print("  config.py has street_type fields:", "street_type_lexicon_path" in open(f"{src}/config.py").read())
     print("  tokenizer.py encode_row paints street_type:", "street_type_lexicon" in open(f"{src}/tokenizer.py").read())
@@ -613,7 +613,7 @@ def sync_src_727():
     """SOURCE-ONLY sync (#727 span-boundary probe): pull `corpus-python/src/` from R2 → volume and clear the
     stale `__pycache__` (the night-3 pyc failure mode — a container-side `.py` overwrite leaves a shadowing `.pyc`).
     No corpus pull — the v257 corpus + tokenizer already persist on the volume. Verifies the span-boundary head
-    actually landed in model.py before returning, so a stale sync can't silently train the OLD architecture."""
+    actually landed in nn/encoder.py before returning, so a stale sync can't silently train the OLD architecture."""
     import shutil
     import subprocess
 
@@ -633,10 +633,10 @@ def sync_src_727():
     vol.commit()
 
     # Verify the new architecture + config landed — a stale sync must fail loud, not train the old model.
-    model_src = open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/model.py").read()
+    model_src = open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/nn/encoder.py").read()
     cfg727 = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v2.6.0-span-boundary-probe.yaml"
     has_head = "use_span_boundary_head" in model_src and "span_boundary_head = nn.Linear" in model_src
-    print("  span-boundary head in model.py on volume:", has_head)
+    print("  span-boundary head in nn/encoder.py on volume:", has_head)
     print("  v2.6.0 config present:", os.path.isfile(cfg727))
     if not has_head or not os.path.isfile(cfg727):
         raise RuntimeError("sync verify FAILED — span head or config missing on volume; do NOT launch")
@@ -738,7 +738,7 @@ def sync_src_727_stage2():
     has_scorer_module = os.path.isfile(scorer_path)
     scorer_src = open(scorer_path).read() if has_scorer_module else ""
     has_semi_crf = "class SemiMarkovCRF" in scorer_src and "def log_partition" in scorer_src
-    model_src = open(f"{src_dir}/model.py").read()
+    model_src = open(f"{src_dir}/nn/encoder.py").read()
     has_wiring = "use_span_scorer" in model_src and "self.semi_crf" in model_src
     config_src = open(f"{src_dir}/config.py").read()
     has_cfg_field = "use_span_scorer" in config_src
@@ -757,7 +757,7 @@ def sync_src_727_stage2():
 
     print("  span_scorer.py on volume         :", has_scorer_module)
     print("  SemiMarkovCRF + log_partition    :", has_semi_crf)
-    print("  model.py wiring (use_span_scorer):", has_wiring)
+    print("  nn/encoder.py wiring (use_span_scorer):", has_wiring)
     print("  config.py ModelConfig field      :", has_cfg_field)
     print("  v3.0.0-span-head.yaml present    :", os.path.isfile(cfg_path))
     print("  train.py build_optimizer + groups:", has_param_groups)
@@ -934,7 +934,7 @@ def sync_country_channel():
     timeout=1200,
 )
 def sync_country_softguard():
-    """Pull the #1104 homograph-guard SOFTENER: latest src (the model.py country_ambiguous_scale knob +
+    """Pull the #1104 homograph-guard SOFTENER: latest src (the nn/encoder.py country_ambiguous_scale knob +
     the v2.6.4-country-softguard config). Corpus + country lexicon + the init_from checkpoint
     (output-v263-country-channel-s42/step-008000) all persist from the v263 run — the softener is a
     model-config scale, no data change. Clears pycache, commits, verifies the v264 config + v263 init
@@ -2730,7 +2730,7 @@ def export_onnx(
     import torch
 
     from mailwoman_train.export_onnx import export_to_onnx
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer
 
     output_dir = output_dir or os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", "/data/output-v054")
@@ -2951,7 +2951,7 @@ def eval_de(
 
     from mailwoman_train.data.loader import load_anchor_lookup
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
     from mailwoman_train.train import _token_f1
 
@@ -3597,7 +3597,7 @@ def sync_evidence_bundle():
     print("  v3.16.0 config present:", os.path.isfile(f"{src}/configs/v3.16.0-evidence-bundle.yaml"))
     print("  locality lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/locality-surface-lexicon-v1.json"))
     print("  street-type lexicon present:", os.path.isfile(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json"))
-    print("  model.py has locality channel:", "use_locality_surface_anchor" in open(f"{src}/model.py").read())
+    print("  nn/encoder.py has locality channel:", "use_locality_surface_anchor" in open(f"{src}/nn/encoder.py").read())
     print("  train.py has evidence_curriculum:", "evidence_curriculum" in open(f"{src}/train.py").read())
     print(
         "  init_from checkpoint present:",
@@ -3638,7 +3638,7 @@ def grade_evidence_bundle(
     from mailwoman_train.features.country_lexicon import load_country_lexicon
     from mailwoman_train.features.gazetteer_anchor import load_gazetteer_lexicon
     from mailwoman_train.labels import ID_TO_LABEL
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
 
     vol.reload()
@@ -3819,7 +3819,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     from mailwoman_train.features.country_lexicon import load_country_lexicon
     from mailwoman_train.features.gazetteer_anchor import load_gazetteer_lexicon
     from mailwoman_train.labels import ID_TO_LABEL
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
 
     vol.reload()

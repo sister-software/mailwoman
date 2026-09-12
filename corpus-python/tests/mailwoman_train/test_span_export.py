@@ -10,9 +10,9 @@ import pytest
 import torch
 
 from mailwoman_train.labels import ACTIVE_BIO_LABELS
-from mailwoman_train.model import MailwomanCoarseEncoder
+from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
+from mailwoman_train.nn.span_scorer import NUM_SEGMENT_TYPES, SEGMENT_TYPES
 from mailwoman_train.package_weights import export_semi_crf_transitions
-from mailwoman_train.span_scorer import NUM_SEGMENT_TYPES, SEGMENT_TYPES
 
 _GEOM = dict(
     vocab_size=64,

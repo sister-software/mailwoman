@@ -36,7 +36,7 @@ from .config import Config, csv_log_path
 from .data.dose import format_derivation, resolve_config_doses
 from .data.loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
 from .labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
-from .model import build_model, force_math_sdpa, model_param_count
+from .nn.encoder import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 
 
@@ -705,7 +705,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if resume_from is not None:
         # Use the checkpoint's saved model rather than a fresh from-scratch init.
-        from .model import MailwomanCoarseEncoder
+        from .nn.encoder import MailwomanCoarseEncoder
 
         print(f"resuming from {resume_from}")
         model = MailwomanCoarseEncoder.from_pretrained(resume_from)
@@ -877,14 +877,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     fisher_acc = None
     fisher_window_start = None
     if getattr(cfg.train, "fisher_capture", False):
-        from .fisher import FisherAccumulator
+        from .optim.fisher import FisherAccumulator
 
         fisher_acc = FisherAccumulator(model)
         fisher_window_start = cfg.train.max_steps - int(getattr(cfg.train, "fisher_capture_last_n_steps", 2000))
         print(f"[fisher] capture armed for steps >= {max(0, fisher_window_start)}")
     ewc = None
     if float(getattr(cfg.train, "ewc_lambda", 0.0)) > 0.0:
-        from .fisher import EWCPenalty
+        from .optim.fisher import EWCPenalty
 
         ewc_reference = getattr(cfg.train, "ewc_reference", None) or getattr(cfg.train, "init_from", "")
         ewc_fisher_path = getattr(cfg.train, "ewc_fisher_path", None)

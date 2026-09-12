@@ -19,7 +19,7 @@ from __future__ import annotations
 import torch
 from torch import nn
 
-from .labels import ACTIVE_BIO_LABELS, ID_TO_LABEL, IGNORE_INDEX
+from ..labels import ACTIVE_BIO_LABELS, ID_TO_LABEL, IGNORE_INDEX
 
 
 def _derive_segment_types() -> tuple[str, ...]:

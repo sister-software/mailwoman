@@ -31,7 +31,6 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from mailwoman_train.crf import TopKPath  # noqa: E402
 from mailwoman_train.features.phrase_priors import (  # noqa: E402
     PHRASE_BIE_DIM,
     PHRASE_FEATURE_DIM,
@@ -40,7 +39,8 @@ from mailwoman_train.features.phrase_priors import (  # noqa: E402
     PHRASE_KINDS,
 )
 from mailwoman_train.labels import ACTIVE_BIO_LABELS  # noqa: E402
-from mailwoman_train.model import MailwomanCoarseEncoder  # noqa: E402
+from mailwoman_train.nn.crf import TopKPath  # noqa: E402
+from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 
 NUM_LABELS = len(ACTIVE_BIO_LABELS)
 VOCAB_SIZE = 64  # tiny — embeddings are toy

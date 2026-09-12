@@ -146,7 +146,7 @@ def export_semi_crf_transitions(model: torch.nn.Module) -> dict[str, Any] | None
     semi_crf = getattr(model, "semi_crf", None)
     if semi_crf is None:
         return None
-    from .span_scorer import SEGMENT_TYPES
+    from .nn.span_scorer import SEGMENT_TYPES
 
     return {
         "segment_types": list(SEGMENT_TYPES),

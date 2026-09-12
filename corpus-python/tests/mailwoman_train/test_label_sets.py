@@ -101,7 +101,7 @@ def test_encode_row_units_maps_jp_labels_under_the_jp_set() -> None:
 
 def test_jp_headed_model_round_trips_its_label_map(tmp_path) -> None:
     pytest.importorskip("torch")
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
 
     model = MailwomanCoarseEncoder(
         vocab_size=2,
@@ -127,7 +127,7 @@ def test_jp_headed_model_round_trips_its_label_map(tmp_path) -> None:
 
 def test_wide_head_without_a_map_raises() -> None:
     pytest.importorskip("torch")
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
 
     with pytest.raises(ValueError, match="pass id_to_label"):
         MailwomanCoarseEncoder(

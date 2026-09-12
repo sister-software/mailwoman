@@ -22,7 +22,7 @@ torch = pytest.importorskip("torch")  # training deps (torch) aren't installed i
 
 import numpy as np  # noqa: E402
 
-from mailwoman_train.fisher import FISHER_ARTIFACT, FISHER_SIDECAR, EWCPenalty, FisherAccumulator  # noqa: E402
+from mailwoman_train.optim.fisher import FISHER_ARTIFACT, FISHER_SIDECAR, EWCPenalty, FisherAccumulator  # noqa: E402
 
 
 def _tiny(seed: int = 0) -> torch.nn.Sequential:

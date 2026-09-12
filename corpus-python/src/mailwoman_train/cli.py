@@ -90,7 +90,7 @@ def cmd_eval(args: argparse.Namespace) -> int:
         report_to_json,
         run_eval,
     )
-    from .model import MailwomanCoarseEncoder
+    from .nn.encoder import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
 
     cfg = load_config(args.config)
@@ -125,7 +125,7 @@ def cmd_export(args: argparse.Namespace) -> int:
     from .config import load_config
     from .data.loader import iter_batches
     from .export_onnx import export_to_onnx, verify_parity
-    from .model import MailwomanCoarseEncoder
+    from .nn.encoder import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
 
     cfg = load_config(args.config)
@@ -197,7 +197,7 @@ def cmd_quantize(args: argparse.Namespace) -> int:
 def cmd_package(args: argparse.Namespace) -> int:
     from .config import load_config
     from .eval import load_golden_dir, report_to_json, run_eval
-    from .model import MailwomanCoarseEncoder
+    from .nn.encoder import MailwomanCoarseEncoder
     from .package_weights import (
         build_model_card,
         render_package_json,
@@ -299,7 +299,7 @@ def cmd_smoke(args: argparse.Namespace) -> int:
         report_to_json,
         run_eval,
     )
-    from .model import MailwomanCoarseEncoder
+    from .nn.encoder import MailwomanCoarseEncoder
     from .tokenizer import Tokenizer
 
     tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
@@ -640,7 +640,7 @@ def main(argv: list[str] | None = None) -> Any:  # subcommand handlers return in
     # SDPA is the only kernel that runs stably on Radeon 780M (flash + mem-efficient hang).
     # Importing torch lazily inside main keeps the CLI fast for help-only invocations.
     try:
-        from .model import force_math_sdpa
+        from .nn.encoder import force_math_sdpa
 
         force_math_sdpa()
     except ImportError:  # pragma: no cover — torch/transformers may not be installed

@@ -33,10 +33,10 @@ from typing import Any, cast
 import torch
 from torch import nn
 
-from .config import Config
+from ..config import Config
+from ..features.phrase_priors import PHRASE_FEATURE_DIM
+from ..labels import ID_TO_LABEL, IGNORE_INDEX, NUM_LOCALES
 from .crf import LinearChainCRF, TopKPath
-from .features.phrase_priors import PHRASE_FEATURE_DIM
-from .labels import ID_TO_LABEL, IGNORE_INDEX, NUM_LOCALES
 from .span_scorer import SemiMarkovCRF, SpanScorer, gold_segments
 
 
@@ -510,8 +510,8 @@ class MailwomanCoarseEncoder(nn.Module):
         # CE input only (returned logits untouched — inference behavior is the codex mask's job).
         self.use_conventions_loss_mask = bool(use_conventions_loss_mask)
         if self.use_conventions_loss_mask:
-            from .features.conventions import build_forbidden_mask
-            from .labels import LABEL_TO_ID
+            from ..features.conventions import build_forbidden_mask
+            from ..labels import LABEL_TO_ID
 
             self.register_buffer(
                 "conventions_forbidden", build_forbidden_mask(LABEL_TO_ID, num_labels), persistent=False
@@ -526,7 +526,7 @@ class MailwomanCoarseEncoder(nn.Module):
                 nn.Dropout(0.1),
                 nn.Linear(256, 5),
             )
-            from .labels import LABEL_TO_ID
+            from ..labels import LABEL_TO_ID
 
             affix_ids = [
                 LABEL_TO_ID["B-street_prefix"],
@@ -556,7 +556,7 @@ class MailwomanCoarseEncoder(nn.Module):
                 nn.Dropout(0.1),
                 nn.Linear(256, 3),  # {O, B-dependent_locality, I-dependent_locality}
             )
-            from .labels import LABEL_TO_ID as _L2I
+            from ..labels import LABEL_TO_ID as _L2I
 
             deploc_ids = [_L2I["B-dependent_locality"], _L2I["I-dependent_locality"]]
             self.register_buffer("deploc_label_ids", torch.tensor(deploc_ids, dtype=torch.long), persistent=False)
@@ -1338,7 +1338,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
     # every existing recipe byte-identical). The internal consumers of the module-global 33-label
     # maps (CRF init aside — that one is threaded) are flag-restricted features that have never trained
     # against a non-default set; refuse the combination loudly rather than mislabel silently.
-    from .labels import resolve_label_set
+    from ..labels import resolve_label_set
 
     label_set = resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
     if label_set.name != "stage3":

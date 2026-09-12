@@ -17,7 +17,7 @@ import torch
 
 from mailwoman_train.build_jp_slice import SCHEMA
 from mailwoman_train.config import load_config
-from mailwoman_train.model import build_model
+from mailwoman_train.nn.encoder import build_model
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train import _eval_val
 

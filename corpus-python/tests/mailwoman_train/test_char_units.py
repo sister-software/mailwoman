@@ -263,7 +263,7 @@ def test_char_batch_trains_a_char_embed_model(tmp_path: Path) -> None:
 
     from mailwoman_train.data.loader import collate
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
-    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
 
     corpus = _write_corpus(tmp_path, [JP_ROW])
     cfg = _char_cfg(tmp_path, corpus)

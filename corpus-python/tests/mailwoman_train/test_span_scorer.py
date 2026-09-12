@@ -8,8 +8,8 @@ trains — it just trains toward the wrong thing — so the oracle is the point.
 import torch
 
 from mailwoman_train.labels import ACTIVE_BIO_LABELS, LABEL_TO_ID
-from mailwoman_train.model import MailwomanCoarseEncoder
-from mailwoman_train.span_scorer import (
+from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
+from mailwoman_train.nn.span_scorer import (
     NUM_SEGMENT_TYPES,
     O_TYPE_ID,
     SEGMENT_TYPES,

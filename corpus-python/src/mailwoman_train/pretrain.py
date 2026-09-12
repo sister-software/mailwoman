@@ -33,7 +33,7 @@ from torch.optim import AdamW
 from .config import Config
 from .data.loader import iter_batches
 from .data.masking import mask_tokens
-from .model import build_model, force_math_sdpa, model_param_count
+from .nn.encoder import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 from .trackio_logging import init_tracker
 from .train import (
@@ -93,7 +93,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if resume_from is not None:
-        from .model import MailwomanCoarseEncoder
+        from .nn.encoder import MailwomanCoarseEncoder
 
         print(f"[pretrain] resuming from {resume_from}")
         model = MailwomanCoarseEncoder.from_pretrained(resume_from)

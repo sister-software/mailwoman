@@ -8,7 +8,7 @@ import pytest
 import torch
 
 from mailwoman_train.labels import ACTIVE_BIO_LABELS
-from mailwoman_train.model import MailwomanCoarseEncoder
+from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
 
 ort = pytest.importorskip("onnxruntime")
 
