@@ -1772,7 +1772,7 @@ def sync_v193():
     print("\nv1.9.3 code+config sync + pre-seed complete. Volume committed.")
 
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3-anchor-absorption.yaml"
-    shapes = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/postcode_shapes.py"
+    shapes = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/features/postcode_shapes.py"
     cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au"
     print("  v1.9.3 config present:", os.path.isfile(cfg))
     print("  postcode_shapes.py present (the WHERE-fix code):", os.path.isfile(shapes))

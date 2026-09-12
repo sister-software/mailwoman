@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 #: The R2 bucket every source reads from, and the volume mount every destination writes to. Both
-#: appear once here rather than in 194 command strings.
+#: appear once here rather than in each of the 137 command strings.
 BUCKET = "mailwoman-assets"
 VOLUME_MOUNT = "/data"
 

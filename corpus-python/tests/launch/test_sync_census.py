@@ -23,6 +23,7 @@ import pytest
 from .extract_current import extract_sync_functions
 
 LAUNCHER = Path(__file__).resolve().parents[2] / "launch" / "train_remote.py"
+SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src" / "mailwoman_train"
 FIXTURE = Path(__file__).with_name("sync-census.json")
 
 #: Measured on the pre-collapse file. A table that generates fewer commands stages less corpus.
@@ -78,6 +79,29 @@ def test_the_census_is_the_measured_size() -> None:
     assert len(specs) == EXPECTED_FUNCTIONS
     assert sum(len(spec.rclone_commands) for spec in specs.values()) == EXPECTED_RCLONE_COMMANDS
     assert sum(len(spec.check_paths) for spec in specs.values()) == EXPECTED_CHECK_PATHS
+
+
+def test_every_verified_package_path_exists() -> None:
+    """A launcher check naming a file the tree no longer has blocks a launch forever.
+
+    The sync verifies the file landed and raises "sync incomplete" when it did not, so a path this
+    campaign moved turns into a permanent refusal for that corpus version. `sync_v193` verified
+    `postcode_shapes.py` after it became `features/postcode_shapes.py`.
+
+    Reading the census rather than the source is what makes this complete: the earlier sweep matched
+    `{src}`/`{package}`-prefixed f-strings and missed this one, which spells `{VOL_MOUNT}` and the
+    whole path inline. The census resolves every interpolation, so there is no spelling to miss.
+    """
+    package_root = SOURCE_ROOT
+    prefix = "/data/corpus-python/src/mailwoman_train/"
+    census = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    stale = {
+        f"{name}: {path.removeprefix(prefix)}"
+        for name, spec in census.items()
+        for path in spec["check_paths"]
+        if path.startswith(prefix) and not (package_root / path.removeprefix(prefix)).exists()
+    }
+    assert stale == set(), f"the launcher verifies paths that no longer exist: {sorted(stale)}"
 
 
 def _rclone_literals(node: ast.FunctionDef) -> int:

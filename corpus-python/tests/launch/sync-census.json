@@ -427,7 +427,7 @@
 	"sync_v193": {
 		"check_paths": [
 			"/data/corpus-python/src/mailwoman_train/configs/v1.9.3-anchor-absorption.yaml",
-			"/data/corpus-python/src/mailwoman_train/postcode_shapes.py",
+			"/data/corpus-python/src/mailwoman_train/features/postcode_shapes.py",
 			"/data/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/MANIFEST.json",
 			"/data/models/tokenizer/v0.6.0-a0/tokenizer.model",
 			"/data/output-v193-anchor-absorption-s42/checkpoints/step-040000"
