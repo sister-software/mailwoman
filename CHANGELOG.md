@@ -2,9 +2,10 @@
 
 All notable changes are recorded here at a high level. For the full,
 authoritative mapping of **which npm version shipped which model and which
-capabilities**, see [`docs/records/site-2026-08/releases.mdx`](./docs/records/site-2026-08/releases.mdx)
-(rendered at https://mailwoman.ai/releases). Per-release detail
-lives in the [GitHub releases](https://github.com/sister-software/mailwoman/releases)
+capabilities**, see [`docs/records/site-2026-08/releases.mdx`](./docs/records/site-2026-08/releases.mdx).
+That matrix is a maintainer record, not a page on the site: `docusaurus.config.ts` serves `articles/`
+and `research/`, and the August reorg left `records/` unpublished, so read it in the repository.
+Per-release detail lives in the [GitHub releases](https://github.com/sister-software/mailwoman/releases)
 and the per-step eval reports under `docs/records/evals/`.
 
 ## Versioning
