@@ -187,7 +187,7 @@ interface Options {
 	transitionBeta?: number
 	parentDelta?: number
 	holdoutFraction: number
-	pairsJsonl?: string
+	pairsJSONL?: string
 	boroughDB?: string
 	banDir?: string
 	holdoutSeed: number
@@ -217,7 +217,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
 		}
 
-		if (!sourcePath && !options.boroughDB && !options.pairsJsonl && !options.banDir) {
+		if (!sourcePath && !options.boroughDB && !options.pairsJSONL && !options.banDir) {
 			throw new Error(
 				`pair-index: country "${country}" has no PPD default — pass --source, --borough-db, --pairs-jsonl or --ban-dir, ` +
 					`or the build would write an empty index.`
@@ -292,8 +292,8 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// R3: generic secondary pairs (ONSPD-derived London ward pairs; future NI/IE sources) — the
 		// same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
-		if (options.pairsJsonl) {
-			for (const path of splitPathList(options.pairsJsonl)) {
+		if (options.pairsJSONL) {
+			for (const path of splitPathList(options.pairsJSONL)) {
 				const before = builder.distinctCount
 
 				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
@@ -335,7 +335,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		const sourceMD5s = [
 			...(sourcePath ? [await md5File(sourcePath)] : []),
 			...(options.boroughDB ? [await md5File(options.boroughDB)] : []),
-			...(await Promise.all(splitPathList(options.pairsJsonl).map((path) => md5File(path)))),
+			...(await Promise.all(splitPathList(options.pairsJSONL).map((path) => md5File(path)))),
 		]
 
 		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted flag writes NO header key at

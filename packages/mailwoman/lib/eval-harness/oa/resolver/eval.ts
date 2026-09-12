@@ -68,6 +68,7 @@ import {
 } from "#eval-harness/oa/resolver/coordinate-tiers"
 import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 import { buildParseRig } from "#eval-harness/oa/resolver/parse-rig"
+import { writeRunProfile } from "#eval-harness/oa/resolver/profile"
 import { renderOaResolverReport } from "#eval-harness/oa/resolver/report"
 import { scoreResolvedRow } from "#eval-harness/oa/resolver/row-score"
 import { readOARows } from "#eval-harness/oa/resolver/rows"
@@ -111,6 +112,7 @@ export async function oaResolverEval(
 		.map((s) => s.trim())
 
 	const rows = await readOARows(evalPath, limit)
+	const setupStartedAt = performance.now()
 
 	const {
 		neural,
@@ -119,6 +121,7 @@ export async function oaResolverEval(
 		parseOpts,
 		defaultCountry: dc,
 		resolveOpts,
+		lookupCensus,
 	} = await buildParseRig(options, wofPaths, reportError)
 
 	const {
@@ -133,6 +136,8 @@ export async function oaResolverEval(
 		postcodeLookup,
 		extractAnchors,
 	} = await buildCoordinateTiers(options)
+
+	const timing = { setupMs: performance.now() - setupStartedAt, loopStartedAt: performance.now(), parse: 0, resolve: 0 }
 
 	const anchorMinConf = options.anchorMinConf ?? 0.5
 
@@ -221,8 +226,13 @@ export async function oaResolverEval(
 		let nDecorated: AddressTree | null = null
 
 		try {
+			const parseStartedAt = performance.now()
 			const nTree = await neural.parse(row.input, parseOpts)
+			const resolveStartedAt = performance.now()
+
 			nDecorated = await resolver.resolveTree(nTree, nOpts)
+			timing.parse += resolveStartedAt - parseStartedAt
+			timing.resolve += performance.now() - resolveStartedAt
 			nResolved = collectResolved(nDecorated)
 		} catch {
 			/* unresolved */
@@ -343,6 +353,16 @@ export async function oaResolverEval(
 			})
 		}
 	}
+
+	await writeRunProfile(options.profileJSON || "", {
+		evalPath,
+		rows: rows.length,
+		defaultCountry: dc,
+		anchorOff: !!options.anchorOff,
+		lookupMemo: !!options.lookupMemo,
+		timing,
+		census: lookupCensus,
+	})
 
 	if (collectErrors) {
 		await writeLocalJSONFile(errorRows, options.errorsJSON || "")

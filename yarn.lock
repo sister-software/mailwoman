@@ -19619,7 +19619,6 @@ __metadata:
     "@mailwoman/variant-aliases": "workspace:*"
     "@mailwoman/zoning": "workspace:*"
     chalk: "npm:^6.0.0"
-    change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
     fast-glob: "npm:^3.3.3"
     h3-js: "npm:^4.5.0"
