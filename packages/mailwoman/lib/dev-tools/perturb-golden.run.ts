@@ -22,7 +22,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dirname, join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
 
 				// perturbation was a no-op (skip; keep lowercase always)
 				out.push(
-					JSON.stringify({
+					stringifyJSON({
 						input,
 						locale: row.locale ?? (row.country === "FR" ? "fr-FR" : "en-US"),
 						expected,

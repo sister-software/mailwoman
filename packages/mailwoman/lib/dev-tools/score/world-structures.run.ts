@@ -19,6 +19,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
@@ -66,7 +67,7 @@ for (const row of fixtures) {
 			bucket.hit++
 		} else {
 			allHit = false
-			misses.push(`    ${tag.padEnd(20)} expect=${JSON.stringify(expected)} got=${JSON.stringify(actual)}`)
+			misses.push(`    ${tag.padEnd(20)} expect=${stringifyJSON(expected)} got=${stringifyJSON(actual)}`)
 		}
 	}
 

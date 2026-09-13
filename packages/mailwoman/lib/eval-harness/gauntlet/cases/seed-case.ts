@@ -16,6 +16,7 @@
  *   parsed as "coordinate not asserted" is exactly the input-tail defect this file exists to make loud.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import zod from "zod"
 
 import type { AddressKind, CaseStatus, GauntletCaseTable, ResolutionTier } from "#eval-harness/gauntlet/schema"
@@ -204,8 +205,8 @@ export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {
 		address_kind: c.addressKind,
 		country: c.country,
 		status: c.status,
-		expect_components: c.expectComponents ? JSON.stringify(c.expectComponents) : null,
-		expect_component_renderings: c.expectComponentRenderings ? JSON.stringify(c.expectComponentRenderings) : null,
+		expect_components: c.expectComponents ? stringifyJSON(c.expectComponents) : null,
+		expect_component_renderings: c.expectComponentRenderings ? stringifyJSON(c.expectComponentRenderings) : null,
 		expect_place_id: c.expectPlaceID ?? null,
 		expect_place_name: c.expectPlaceName ?? null,
 		expect_lat: c.expectLat ?? null,
@@ -216,7 +217,7 @@ export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {
 		added_at: c.addedAt,
 		bug_ref: c.bugRef ?? null,
 		note: c.note ?? null,
-		ablation_expect: c.ablationExpect ? JSON.stringify(c.ablationExpect) : null,
+		ablation_expect: c.ablationExpect ? stringifyJSON(c.ablationExpect) : null,
 		locale: c.locale ?? null,
 		expect_abstain: c.expectAbstain ? 1 : null,
 	}

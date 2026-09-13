@@ -11,6 +11,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { spawnProcess } from "@mailwoman/core/process"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
@@ -70,7 +71,7 @@ try {
 	for (const query of queries) {
 		const res = await fetch(`${BASE}/search?q=${encodeURIComponent(query)}&format=jsonv2&addressdetails=1`)
 
-		rows.push(JSON.stringify({ query, status: res.status, body: await res.json() }))
+		rows.push(stringifyJSON({ query, status: res.status, body: await res.json() }))
 	}
 
 	await writeLocalTextFile(rows.join("\n") + "\n", OUT_PATH)

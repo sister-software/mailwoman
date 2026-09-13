@@ -8,6 +8,7 @@
  *   known to carry, and it says `recognized: false` for an identifier it does not know rather than guessing.
  */
 
+import { stringifyJSON } from "#json"
 import type { LicenseKeyVerification } from "#license/key/index"
 import type { LicenseKeyPublication } from "#license/publication"
 
@@ -183,7 +184,7 @@ export function assertAdmissibleLicenseExpression(expression: string, context = 
 		if (identifier === "NOASSERTION" || KNOWN_OBLIGATIONS.has(identifier) || LICENSE_REF.test(identifier)) continue
 
 		throw new Error(
-			`${context}: ${JSON.stringify(identifier)} is not an admissible license identifier. Use the SPDX identifier the obligations table knows (packages/core/lib/license/obligations.ts), a LicenseRef- this repository defines, or NOASSERTION.`
+			`${context}: ${stringifyJSON(identifier)} is not an admissible license identifier. Use the SPDX identifier the obligations table knows (packages/core/lib/license/obligations.ts), a LicenseRef- this repository defines, or NOASSERTION.`
 		)
 	}
 }

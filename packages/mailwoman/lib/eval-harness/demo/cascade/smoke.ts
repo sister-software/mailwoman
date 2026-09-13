@@ -41,6 +41,7 @@
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { mergeAnchorLookups } from "@mailwoman/neural/anchor-inference"
@@ -277,10 +278,10 @@ export async function demoCascadeSmoke(
 		results.push({ input: row.input, expected: row.expect, actual, pass, ...(row.note ? { note: row.note } : {}) })
 
 		if (EXPLAIN) {
-			reportError(`\n-- ${JSON.stringify(row.input)}`)
+			reportError(`\n-- ${stringifyJSON(row.input)}`)
 
 			reportError(
-				`   parse: postcode=${JSON.stringify(postcodeNode?.value)} localities=${JSON.stringify(localityNodes.map((n) => n.value))} region=${JSON.stringify(stateNode?.value)}`
+				`   parse: postcode=${stringifyJSON(postcodeNode?.value)} localities=${stringifyJSON(localityNodes.map((n) => n.value))} region=${stringifyJSON(stateNode?.value)}`
 			)
 
 			for (const h of hits.slice(0, 3)) {

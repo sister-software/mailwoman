@@ -23,7 +23,7 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { basename, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -170,7 +170,7 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 export function regressionCorpusHash(rows: readonly SeedCase[]): string {
 	return sha256Hex(
 		rows
-			.map((r) => JSON.stringify(canonicalizeSeedCase(r)))
+			.map((r) => stringifyJSON(canonicalizeSeedCase(r)))
 			.toSorted()
 			.join("\n")
 	)

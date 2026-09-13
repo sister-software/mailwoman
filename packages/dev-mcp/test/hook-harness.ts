@@ -7,7 +7,7 @@
  *   suites had typed this prelude separately, which is the shape the symbol precheck exists to catch.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 
@@ -29,7 +29,7 @@ export interface HookOutput {
 export function runHook(hookPath: string, payload: unknown): HookOutput {
 	const stdout = runFileSync("node", [hookPath], {
 		cwd: String(repoRootPath()),
-		input: typeof payload === "string" ? payload : JSON.stringify(payload),
+		input: typeof payload === "string" ? payload : stringifyJSON(payload),
 		encoding: "utf8",
 	})
 

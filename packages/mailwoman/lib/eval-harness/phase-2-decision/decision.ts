@@ -35,6 +35,8 @@
  *   the definition's `recordingNote` says so on the receipt.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import type { Phase2Comparability, Phase2Counts, Phase2Verdict } from "#eval-harness/phase-2-decision/outcomes"
 import { definitionContentHash, loadFrozenDefinition, preregistrationPath } from "#eval-harness/preregistration"
 
@@ -391,13 +393,13 @@ function auditLanes(definition: Phase2DecisionDefinition): string[] {
 
 	for (const lane of definition.lanes) {
 		if (seen.has(lane.id)) {
-			problems.push(`lane id ${JSON.stringify(lane.id)} is used twice — ids name lanes in output`)
+			problems.push(`lane id ${stringifyJSON(lane.id)} is used twice — ids name lanes in output`)
 		}
 
 		seen.add(lane.id)
 
 		if (!(PHASE2_LANE_STATUSES as readonly string[]).includes(lane.status)) {
-			problems.push(`lane ${lane.id}: status ${JSON.stringify(lane.status)} is not a registered lane status`)
+			problems.push(`lane ${lane.id}: status ${stringifyJSON(lane.status)} is not a registered lane status`)
 		}
 
 		if (!lane.claim.trim()) {
@@ -463,7 +465,7 @@ function auditLanes(definition: Phase2DecisionDefinition): string[] {
 
 	for (const check of definition.checks) {
 		if (!seen.has(check.lane)) {
-			problems.push(`check ${check.id}: lane ${JSON.stringify(check.lane)} is not a registered lane`)
+			problems.push(`check ${check.id}: lane ${stringifyJSON(check.lane)} is not a registered lane`)
 		}
 	}
 
@@ -476,13 +478,13 @@ function auditChecks(definition: Phase2DecisionDefinition): string[] {
 
 	for (const check of definition.checks) {
 		if (seen.has(check.id)) {
-			problems.push(`check id ${JSON.stringify(check.id)} is used twice — ids name checks in output`)
+			problems.push(`check id ${stringifyJSON(check.id)} is used twice — ids name checks in output`)
 		}
 
 		seen.add(check.id)
 
 		if (!(PHASE2_CHECK_ROLES as readonly string[]).includes(check.role)) {
-			problems.push(`check ${check.id}: role ${JSON.stringify(check.role)} is not a registered role`)
+			problems.push(`check ${check.id}: role ${stringifyJSON(check.role)} is not a registered role`)
 		}
 
 		if (check.role === "target" && !check.tier) {
@@ -491,28 +493,28 @@ function auditChecks(definition: Phase2DecisionDefinition): string[] {
 
 		if (check.role === "control" && check.tier) {
 			problems.push(
-				`check ${check.id}: a control check registers tier ${JSON.stringify(check.tier)} — tiers are targets`
+				`check ${check.id}: a control check registers tier ${stringifyJSON(check.tier)} — tiers are targets`
 			)
 		}
 
 		if (check.tier && !(PHASE2_TARGET_TIERS as readonly string[]).includes(check.tier)) {
-			problems.push(`check ${check.id}: tier ${JSON.stringify(check.tier)} is not a registered tier`)
+			problems.push(`check ${check.id}: tier ${stringifyJSON(check.tier)} is not a registered tier`)
 		}
 
 		if (!Object.hasOwn(PHASE2_MEASUREMENTS, check.measurement)) {
-			problems.push(`check ${check.id}: measurement ${JSON.stringify(check.measurement)} is not registered`)
+			problems.push(`check ${check.id}: measurement ${stringifyJSON(check.measurement)} is not registered`)
 		}
 
 		if (!Number.isInteger(check.denominator) || check.denominator <= 0) {
-			problems.push(`check ${check.id}: denominator ${JSON.stringify(check.denominator)} is not a positive row count`)
+			problems.push(`check ${check.id}: denominator ${stringifyJSON(check.denominator)} is not a positive row count`)
 		}
 
 		if (!(PHASE2_BAR_KINDS as readonly string[]).includes(check.bar.kind)) {
-			problems.push(`check ${check.id}: bar kind ${JSON.stringify(check.bar.kind)} is not registered`)
+			problems.push(`check ${check.id}: bar kind ${stringifyJSON(check.bar.kind)} is not registered`)
 		}
 
 		if (!Number.isInteger(check.bar.value) || check.bar.value < 0) {
-			problems.push(`check ${check.id}: bar value ${JSON.stringify(check.bar.value)} is not a whole row count`)
+			problems.push(`check ${check.id}: bar value ${stringifyJSON(check.bar.value)} is not a whole row count`)
 		}
 
 		if (check.bar.kind !== "at_most" && check.bar.value > check.denominator) {
@@ -522,7 +524,7 @@ function auditChecks(definition: Phase2DecisionDefinition): string[] {
 		}
 
 		if (!(PHASE2_BASELINE_SOURCES as readonly string[]).includes(check.baseline.source)) {
-			problems.push(`check ${check.id}: baseline source ${JSON.stringify(check.baseline.source)} is not registered`)
+			problems.push(`check ${check.id}: baseline source ${stringifyJSON(check.baseline.source)} is not registered`)
 		}
 
 		if (!check.baseline.reference.trim()) {
@@ -532,9 +534,7 @@ function auditChecks(definition: Phase2DecisionDefinition): string[] {
 		}
 
 		if (!Number.isInteger(check.baseline.value) || check.baseline.value < 0) {
-			problems.push(
-				`check ${check.id}: baseline value ${JSON.stringify(check.baseline.value)} is not a whole row count`
-			)
+			problems.push(`check ${check.id}: baseline value ${stringifyJSON(check.baseline.value)} is not a whole row count`)
 		}
 
 		if (!check.numerator.trim()) {
@@ -555,7 +555,7 @@ function auditThresholds(definition: Phase2DecisionDefinition): string[] {
 
 	for (const [key, value] of Object.entries(thresholds)) {
 		if (!Number.isInteger(value) || value < 0) {
-			problems.push(`thresholds.${key} is ${JSON.stringify(value)} — every threshold is a whole check count`)
+			problems.push(`thresholds.${key} is ${stringifyJSON(value)} — every threshold is a whole check count`)
 		}
 	}
 
@@ -609,7 +609,7 @@ function auditDefaultChangeBar(definition: Phase2DecisionDefinition): string[] {
 		}
 
 		if (!(PHASE2_DEFAULT_BAR_STATES as readonly string[]).includes(row.state)) {
-			problems.push(`defaultChangeBar row ${row.row}: state ${JSON.stringify(row.state)} is not registered`)
+			problems.push(`defaultChangeBar row ${row.row}: state ${stringifyJSON(row.state)} is not registered`)
 		}
 
 		if (!row.check.trim()) {
@@ -628,7 +628,7 @@ function auditDefaultChangeBar(definition: Phase2DecisionDefinition): string[] {
 
 		for (const id of row.satisfiedBy) {
 			if (!ids.has(id)) {
-				problems.push(`defaultChangeBar row ${row.row}: satisfiedBy names ${JSON.stringify(id)}, which is not a check`)
+				problems.push(`defaultChangeBar row ${row.row}: satisfiedBy names ${stringifyJSON(id)}, which is not a check`)
 			}
 		}
 	})
@@ -755,7 +755,7 @@ export function evaluatePhase2Checks(
 
 		if (!reading) {
 			throw new Error(
-				`phase-2 decision: check ${check.id} reads ${JSON.stringify(check.measurement)}, which no instrument answered — an unread measurement is a broken instrument, never a zero`
+				`phase-2 decision: check ${check.id} reads ${stringifyJSON(check.measurement)}, which no instrument answered — an unread measurement is a broken instrument, never a zero`
 			)
 		}
 

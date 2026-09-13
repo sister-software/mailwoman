@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { getAllBrands, getBrand, lookupPOIBrand, resolveBrandName } from "@mailwoman/poi-taxonomy/brands"
 import { describe, expect, it } from "vitest"
 
@@ -60,7 +61,7 @@ describe("getBrand / getAllBrands", () => {
 describe("brand table integrity", () => {
 	it("every brand carries a well-formed Wikidata QID and a non-empty name", () => {
 		for (const brand of getAllBrands()) {
-			expect(brand.wikidata, `malformed QID on ${JSON.stringify(brand)}`).toMatch(/^Q\d+$/)
+			expect(brand.wikidata, `malformed QID on ${stringifyJSON(brand)}`).toMatch(/^Q\d+$/)
 			expect(brand.name.length, `empty name on ${brand.wikidata}`).toBeGreaterThan(0)
 		}
 	})

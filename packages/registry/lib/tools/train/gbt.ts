@@ -20,6 +20,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { makeLcg } from "@mailwoman/core/random"
 import { isoDate } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
@@ -235,9 +236,9 @@ export async function trainDedupGBT(
 		` */\n\n` +
 		`import type { GBT } from "@mailwoman/match"\n\n` +
 		`/** Provenance for the bundled model — what it was trained on. */\n` +
-		`export const DEDUP_GBT_META = ${JSON.stringify(meta, null, 2)} as const\n\n` +
+		`export const DEDUP_GBT_META = ${prettyJSON(meta)} as const\n\n` +
 		`// prettier-ignore\n` +
-		`export const DEDUP_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
+		`export const DEDUP_GBT_MODEL: GBT = ${stringifyJSON(model)}\n`
 
 	await makeDirectories(dirname(OUT))
 	await writeLocalFile(moduleSource, OUT)

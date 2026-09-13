@@ -1,3 +1,5 @@
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -57,7 +59,7 @@ export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<st
 		const key = !present
 			? ABSENT_KEY
 			: typeof value === "object" && value !== null
-				? JSON.stringify(value)
+				? stringifyJSON(value)
 				: String(value)
 
 		counts[key] = (counts[key] ?? 0) + 1

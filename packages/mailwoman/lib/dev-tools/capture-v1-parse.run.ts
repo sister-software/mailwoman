@@ -10,6 +10,7 @@
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/capture-v1-parse.run.ts`
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { createNewlineWriter, JSONSpliterator, TextSpliterator } from "spliterator"
 
 import { createServeEngine } from "#api-engine"
@@ -48,7 +49,7 @@ for (const input of inputs) {
 	await using out = createNewlineWriter(OUT_PATH)
 
 	for (const row of rows) {
-		await out.write(JSON.stringify(row))
+		await out.write(stringifyJSON(row))
 	}
 }
 

@@ -12,6 +12,7 @@
  *   it too, and the provider's idempotency key is what closes that window where the provider honours one.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
 import type Stripe from "stripe"
 
@@ -207,7 +208,7 @@ export async function fulfilInvoice(
 		lid: license.lid,
 		issued,
 		expires,
-		payload_json: JSON.stringify(payload),
+		payload_json: stringifyJSON(payload),
 		token,
 	})
 

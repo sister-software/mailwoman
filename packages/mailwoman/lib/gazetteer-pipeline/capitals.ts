@@ -21,7 +21,7 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { dirname, join, type PathBuilderLike } from "path-ts"
@@ -263,8 +263,10 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 	}
 
 	// One entry per line: the header reads like JSON, the entry block diffs like a table.
+	// `false`: the head is SPLICED, not written — the regex below reopens its closing brace so the entries can be
+	// printed one per line. A trailing newline puts a character after that brace and the match silently fails.
 	const head = prettyJSON({ ...reference, entries: undefined }, false).replace(/\n\}$/, ",\n")
-	const body = reference.entries.map((e) => "\t\t" + JSON.stringify(e)).join(",\n")
+	const body = reference.entries.map((e) => "\t\t" + stringifyJSON(e)).join(",\n")
 
 	await makeDirectories(dirname(options.outPath))
 	await writeLocalTextFile(`${head}\t"entries": [\n${body}\n\t]\n}\n`, options.outPath)

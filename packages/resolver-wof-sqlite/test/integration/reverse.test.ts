@@ -16,6 +16,7 @@
  *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { $public } from "@mailwoman/resolver-wof-sqlite/env"
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -114,11 +115,11 @@ function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: Databas
 	polygons.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
 	const insert = polygons.prepare(`INSERT INTO polygons (id, geom) VALUES (?, ?)`)
 	// Region polygon: the whole fixture area.
-	insert.run(2, JSON.stringify({ type: "Polygon", coordinates: [square(-73.5, 42.7, -71.4, 45)] }))
+	insert.run(2, stringifyJSON({ type: "Polygon", coordinates: [square(-73.5, 42.7, -71.4, 45)] }))
 	// County A polygon CONTAINS the query point (44.0, -72.0)…
-	insert.run(3, JSON.stringify({ type: "Polygon", coordinates: [square(-72.5, 43.8, -71.8, 44.3)] }))
+	insert.run(3, stringifyJSON({ type: "Polygon", coordinates: [square(-72.5, 43.8, -71.8, 44.3)] }))
 	// …county B's polygon does NOT (its bbox row lies — DP-simplified bboxes overlap).
-	insert.run(6, JSON.stringify({ type: "Polygon", coordinates: [square(-72.45, 43.85, -71.85, 43.95)] }))
+	insert.run(6, stringifyJSON({ type: "Polygon", coordinates: [square(-72.45, 43.85, -71.85, 43.95)] }))
 
 	return { admin, polygons }
 }

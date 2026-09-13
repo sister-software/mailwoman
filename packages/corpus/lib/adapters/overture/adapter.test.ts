@@ -5,6 +5,7 @@
  */
 
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	OVERTURE_ADAPTER_ID,
 	OVERTURE_DEFAULT_LICENSE,
@@ -25,7 +26,7 @@ const loadRows = () => readCanonicalRows(scratch.path, OVERTURE_ADAPTER_ID)
  */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch.path, "overture-es.corpus.jsonl")
-	await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", p)
+	await writeLocalTextFile(rows.map((r) => stringifyJSON(r)).join("\n") + "\n", p)
 
 	return p
 }
@@ -184,8 +185,8 @@ describe("overture adapter", () => {
 				"",
 				"# comment",
 				"{not json}",
-				JSON.stringify({ postcode: "28013", locality: "Madrid" }), // no street → skip
-				JSON.stringify({ street: "PLAZA MAYOR", number: "1", postcode: "28012", locality: "Madrid" }),
+				stringifyJSON({ postcode: "28013", locality: "Madrid" }), // no street → skip
+				stringifyJSON({ street: "PLAZA MAYOR", number: "1", postcode: "28012", locality: "Madrid" }),
 				"",
 			].join("\n") + "\n",
 			p

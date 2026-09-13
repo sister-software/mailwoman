@@ -40,6 +40,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
@@ -196,7 +197,7 @@ async function fetchChunk(
 		}
 
 		for (const row of rows) {
-			lines.push(JSON.stringify(row))
+			lines.push(stringifyJSON(row))
 		}
 	}
 

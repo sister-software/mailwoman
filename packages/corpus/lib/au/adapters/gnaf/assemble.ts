@@ -27,7 +27,7 @@
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { PSVSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -211,7 +211,7 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 	const byState: Record<string, number> = {}
 
 	for (const t of reservoir) {
-		out.write(JSON.stringify(t) + "\n")
+		out.write(stringifyJSON(t) + "\n")
 		byState[t.region] = (byState[t.region] ?? 0) + 1
 	}
 

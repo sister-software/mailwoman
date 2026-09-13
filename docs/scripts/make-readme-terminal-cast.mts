@@ -20,6 +20,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/utils"
 
 // Deterministic stand-in for Math.random — reruns must be byte-identical.
@@ -85,7 +86,7 @@ emit(0.3, `${DIM}$${RESET} `)
 emit(3, "")
 
 const header = { version: 2, width: WIDTH, height: HEIGHT, title: "mailwoman parse" }
-const lines = [JSON.stringify(header), ...events.map((event) => JSON.stringify(event))]
+const lines = [stringifyJSON(header), ...events.map((event) => stringifyJSON(event))]
 
 await writeLocalTextFile(`${lines.join("\n")}\n`, "cast.json")
 

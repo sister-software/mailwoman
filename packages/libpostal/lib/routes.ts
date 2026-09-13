@@ -10,6 +10,7 @@
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { errorContent } from "@mailwoman/api-kit"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { Context, MiddlewareHandler } from "hono"
 
 import { type LibpostalEngine, toLibpostalComponents } from "#engine"
@@ -205,7 +206,7 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 		c.req.raw = new Request(c.req.raw.url, {
 			method: "POST",
 			headers,
-			body: JSON.stringify(fields),
+			body: stringifyJSON(fields),
 		})
 	}
 

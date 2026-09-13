@@ -30,6 +30,7 @@ import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-
 import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
+import { stringifyJSON } from "#json"
 import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
 import { dataRootPath } from "#utils"
 
@@ -188,7 +189,7 @@ export async function buildOutlierLatin(
 	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 
 	await writeLocalTextFile(
-		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
+		testRows.map((r) => stringifyJSON(r)).join("\n") + "\n",
 		resolvePath(dataDir, "test-latin-offmap-overture.jsonl")
 	)
 

@@ -21,6 +21,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import type { GeocodeSessionOptions } from "mailwoman/geocode"
@@ -295,7 +296,7 @@ export async function runCounterfactuals(
 		})
 
 		for (const flip of flips) {
-			const key = `${flip.setting}\0${JSON.stringify(flip.patch)}`
+			const key = `${flip.setting}\0${stringifyJSON(flip.patch)}`
 			const batch = batches.get(key)
 
 			if (batch) {

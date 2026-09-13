@@ -114,6 +114,7 @@
  *   read path calls it.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -600,7 +601,7 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
 
 	if (!node) {
 		throw new Error(
-			`filerLookup: filer_edge references node_id ${JSON.stringify(nodeID)} with no matching filer_node row — corrupted crosswalk`
+			`filerLookup: filer_edge references node_id ${stringifyJSON(nodeID)} with no matching filer_node row — corrupted crosswalk`
 		)
 	}
 
@@ -708,7 +709,7 @@ async function deriveClusterMembersAsOf(
 function assertFRNIdentifier(value: string): FRN {
 	if (!isFRN(value)) {
 		throw new Error(
-			`filerLookup: an frn-typed identifier carries ${JSON.stringify(value)}, which is not a valid FRN ` +
+			`filerLookup: an frn-typed identifier carries ${stringifyJSON(value)}, which is not a valid FRN ` +
 				`(expected a zero-padded 10-digit string) — corrupted crosswalk`
 		)
 	}
@@ -738,7 +739,7 @@ export async function filerLookup(
 	const node = await db.selectFrom("filer_node").selectAll().where("node_id", "=", nodeID).executeTakeFirst()
 
 	if (!node) {
-		throw new Error(`filerLookup: no ${type} node found for value ${JSON.stringify(value)}`)
+		throw new Error(`filerLookup: no ${type} node found for value ${stringifyJSON(value)}`)
 	}
 
 	// Criterion 4: temporal scoping. valid_from <= asOf AND (valid_to IS NULL OR asOf < valid_to) — see the module

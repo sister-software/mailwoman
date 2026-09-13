@@ -36,7 +36,7 @@
  *   than one.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { pointInEncodedRings, type H3Cell } from "@mailwoman/spatial"
 import { cellToChildren, cellToLatLng } from "h3-js"
 
@@ -312,7 +312,7 @@ function assembleRow(
 	return {
 		row: {
 			h3_cell: h3Cell,
-			class_shares: JSON.stringify(Object.fromEntries(kept.map(([code, share]) => [code, round(share)]))),
+			class_shares: stringifyJSON(Object.fromEntries(kept.map(([code, share]) => [code, round(share)]))),
 			unrated_share: round(unrated),
 			notrateable_share: round(notRateable),
 			nodata_share: round(noData),

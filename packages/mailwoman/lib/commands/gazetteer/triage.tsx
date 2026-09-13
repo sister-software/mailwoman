@@ -15,6 +15,7 @@
  */
 
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
@@ -67,7 +68,7 @@ const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 		const emitted = options.uncoveredOnly ? rows.filter((r) => r.coverage === CoverageVerdict.Uncovered) : rows
 
 		await makeDirectories(dirname(outPath))
-		await writeLocalTextFile(emitted.map((r) => JSON.stringify(r)).join("\n") + "\n", outPath)
+		await writeLocalTextFile(emitted.map((r) => stringifyJSON(r)).join("\n") + "\n", outPath)
 
 		// The review queue's head: uncovered AND independently attested, most populous first — the rows most likely to
 		// be an upstream mistake rather than a real cessation.

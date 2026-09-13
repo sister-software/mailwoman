@@ -11,6 +11,7 @@
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 
+import { stringifyJSON } from "#json"
 import type { LocaleProfile, LocaleRegistry } from "#locale/locale"
 
 const COMPONENT_TAG_SET = new Set<ComponentTag>(COMPONENT_TAGS)
@@ -49,7 +50,7 @@ function assertValidProfile(profile: LocaleProfile): void {
 	for (const tag of supported) {
 		if (!COMPONENT_TAG_SET.has(tag)) {
 			throw new RangeError(
-				`LocaleProfile ${profile.locale}: componentsSupported contains unknown ComponentTag ${JSON.stringify(tag)}`
+				`LocaleProfile ${profile.locale}: componentsSupported contains unknown ComponentTag ${stringifyJSON(tag)}`
 			)
 		}
 	}
@@ -57,7 +58,7 @@ function assertValidProfile(profile: LocaleProfile): void {
 	for (const policy of profile.policy) {
 		if (!COMPONENT_TAG_SET.has(policy.component)) {
 			throw new RangeError(
-				`LocaleProfile ${profile.locale}: policy targets unknown ComponentTag ${JSON.stringify(policy.component)}`
+				`LocaleProfile ${profile.locale}: policy targets unknown ComponentTag ${stringifyJSON(policy.component)}`
 			)
 		}
 

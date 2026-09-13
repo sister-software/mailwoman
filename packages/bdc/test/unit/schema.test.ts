@@ -12,6 +12,7 @@ import {
 	createBDCProviderTable,
 	type BDCDatabase,
 } from "@mailwoman/bdc/schema"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { createLayerCoverageTable, createLayerManifestTable, LayerTier } from "@mailwoman/core/layers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
@@ -44,7 +45,7 @@ describe("bdc schema", () => {
 				build_cmd: "mailwoman gazetteer build bdc",
 				build_sha: "deadbeef",
 				freshness_policy: "versioned-refresh",
-				spine_keys: JSON.stringify({ h3: { column: "h3_cell", resolution: BDC_H3_RESOLUTION } }),
+				spine_keys: stringifyJSON({ h3: { column: "h3_cell", resolution: BDC_H3_RESOLUTION } }),
 				created_at: "2026-07-30T00:00:00Z",
 			})
 			.execute()

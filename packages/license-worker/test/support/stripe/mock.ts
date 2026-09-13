@@ -1,3 +1,5 @@
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -17,7 +19,7 @@ export async function signedWebhook(
 	secret: string,
 	timestamp = Math.floor(Date.now() / 1000)
 ): Promise<{ body: string; signature: string }> {
-	const body = JSON.stringify(payload)
+	const body = stringifyJSON(payload)
 	const encoder = new TextEncoder()
 
 	const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, [

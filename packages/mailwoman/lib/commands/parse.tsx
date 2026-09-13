@@ -10,6 +10,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PolicyMode } from "@mailwoman/core/policy"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -367,11 +368,11 @@ async function serializeTree(
 		case "xml":
 			return decodeAsXML(tree, { includeAlternatives: opts.includeAlternatives })
 		case "tuple":
-			return JSON.stringify(decodeAsTuples(tree), null, 2)
+			return prettyJSON(decodeAsTuples(tree))
 		default:
 			// JSON: when --candidates is requested, dump the full AddressTree (carries alternatives
 			// on each node). Otherwise stay libpostal-compat (flat tag→value).
-			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJSON(tree), null, 2)
+			return opts.includeAlternatives ? prettyJSON(tree) : prettyJSON(decodeAsJSON(tree))
 	}
 }
 
@@ -418,7 +419,7 @@ async function runStructuralPipeline(input: string, options: ParseOptions): Prom
 	emitFaultWarnings(result)
 
 	return options.debug
-		? JSON.stringify(await serializeResult(result, options.format), null, 2)
+		? prettyJSON(await serializeResult(result, options.format))
 		: await serializeTree(result.tree, options.format, { includeAlternatives: false })
 }
 
@@ -539,7 +540,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 			emitFaultWarnings(result)
 
 			return options.debug
-				? JSON.stringify(await serializeResult(result, options.format), null, 2)
+				? prettyJSON(await serializeResult(result, options.format))
 				: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 		})
 	}
@@ -550,7 +551,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	emitFaultWarnings(result)
 
 	return options.debug
-		? JSON.stringify(await serializeResult(result, options.format), null, 2)
+		? prettyJSON(await serializeResult(result, options.format))
 		: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 }
 
@@ -640,7 +641,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 
 	const lines: string[] = [
 		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,
-		`input: ${JSON.stringify(input)}`,
+		`input: ${stringifyJSON(input)}`,
 		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`,
 	]
 
@@ -763,9 +764,9 @@ async function runNeural(
 			case "xml":
 				return neural.parseXML(input, { inputMode: options.inputMode })
 			case "tuple":
-				return JSON.stringify(await neural.parseTuples(input, { inputMode: options.inputMode }), null, 2)
+				return prettyJSON(await neural.parseTuples(input, { inputMode: options.inputMode }))
 			default:
-				return JSON.stringify(await neural.parseJSON(input, { inputMode: options.inputMode }), null, 2)
+				return prettyJSON(await neural.parseJSON(input, { inputMode: options.inputMode }))
 		}
 	}
 

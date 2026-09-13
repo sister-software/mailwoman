@@ -34,6 +34,7 @@
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	nearestRingEdgeMetres,
 	pointInEncodedRings,
@@ -349,7 +350,7 @@ export function sampleAgreementPoints(
 				| undefined,
 		gridSteps: 17,
 		toPoint: (area, interior) => ({
-			label: `${area.jurisdiction_id} ${JSON.stringify(area.local_code)} polygon ${area.area_id}`,
+			label: `${area.jurisdiction_id} ${stringifyJSON(area.local_code)} polygon ${area.area_id}`,
 			localCode: area.local_code,
 			...interior,
 		}),

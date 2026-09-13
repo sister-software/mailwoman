@@ -16,6 +16,7 @@
  *   result it was holding.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
@@ -42,7 +43,7 @@ export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 		address_kind: seed.addressKind,
 		country: seed.country,
 		status: seed.status,
-		expect_components: seed.expectComponents ? JSON.stringify(seed.expectComponents) : null,
+		expect_components: seed.expectComponents ? stringifyJSON(seed.expectComponents) : null,
 		expect_place_id: seed.expectPlaceID ?? null,
 		expect_place_name: seed.expectPlaceName ?? null,
 		expect_lat: seed.expectLat ?? null,
@@ -53,8 +54,8 @@ export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 		added_at: seed.addedAt,
 		bug_ref: seed.bugRef ?? null,
 		note: seed.note ?? null,
-		ablation_expect: seed.ablationExpect ? JSON.stringify(seed.ablationExpect) : null,
-		expect_component_renderings: seed.expectComponentRenderings ? JSON.stringify(seed.expectComponentRenderings) : null,
+		ablation_expect: seed.ablationExpect ? stringifyJSON(seed.ablationExpect) : null,
+		expect_component_renderings: seed.expectComponentRenderings ? stringifyJSON(seed.expectComponentRenderings) : null,
 		locale: seed.locale ?? null,
 		expect_abstain: seed.expectAbstain ? 1 : null,
 	}

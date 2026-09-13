@@ -9,6 +9,7 @@
  *   on the half that makes their numbers comparable.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -157,8 +158,8 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first ${spec.missSampleSize}) ---`)
 
 		for (const miss of bucket.misses.slice(0, spec.missSampleSize)) {
-			console.log(`    ${JSON.stringify(miss.input)}`)
-			console.log(`        want=${JSON.stringify(spec.describeWant(miss))}  got=${JSON.stringify(miss.got)}`)
+			console.log(`    ${stringifyJSON(miss.input)}`)
+			console.log(`        want=${stringifyJSON(spec.describeWant(miss))}  got=${stringifyJSON(miss.got)}`)
 		}
 	}
 

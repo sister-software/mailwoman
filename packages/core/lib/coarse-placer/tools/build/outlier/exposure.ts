@@ -23,6 +23,7 @@ import { scriptOf } from "#coarse-placer/featurize"
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { appendLocalTextFile } from "#fs/writers"
+import { stringifyJSON } from "#json"
 import { dataRootPath } from "#utils"
 
 /**
@@ -198,7 +199,7 @@ export async function buildOutlierExposure(
 	}
 
 	for (const [split, names] of Object.entries(splits)) {
-		const lines = names.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
+		const lines = names.map((raw) => stringifyJSON({ raw, country: "OTHER" })).join("\n") + "\n"
 		await appendLocalTextFile(lines, resolvePath(dataDir, `${split}.jsonl`))
 		report?.(`appended ${names.length} OTHER → ${split}.jsonl`)
 	}

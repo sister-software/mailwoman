@@ -7,6 +7,7 @@
  *   The census itself lives in `../source-census.ts`; this file is the CONTRACT.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { z } from "zod"
 
 import { censusArtifact, gazetteerArtifacts, type SourceCensusRow } from "#source-census"
@@ -72,7 +73,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 				n_artifacts: 0,
 				rows: [],
 				summary: filter
-					? `No gazetteer artifact under the data root matches ${JSON.stringify(filter)}. That is an ABSENCE of files, not of data — check the filter before concluding anything about coverage.`
+					? `No gazetteer artifact under the data root matches ${stringifyJSON(filter)}. That is an ABSENCE of files, not of data — check the filter before concluding anything about coverage.`
 					: "No gazetteer artifacts found under the data root at all. The data root is probably not what you think it is.",
 			}
 		}

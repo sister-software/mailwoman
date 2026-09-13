@@ -1,3 +1,5 @@
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -93,7 +95,7 @@ export function emitOverpassQL(intent: OverpassIntentLike, opts: EmitOverpassOpt
 				const parts = osmTag.split("=")
 
 				if (parts.length !== 2 || !parts[0] || !parts[1]) {
-					throw new Error(`emitOverpassQL: malformed osmTag ${JSON.stringify(osmTag)} — expected key=value`)
+					throw new Error(`emitOverpassQL: malformed osmTag ${stringifyJSON(osmTag)} — expected key=value`)
 				}
 
 				return `nwr["${escapeQL(parts[0])}"="${escapeQL(parts[1])}"]`

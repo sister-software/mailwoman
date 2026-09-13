@@ -29,6 +29,7 @@ import { formatAddress } from "@mailwoman/codex/address-format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -39,6 +40,7 @@ import type { CorpusRecipe } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
+
 /**
  * Matches the `ban` adapter's Tier-B election for BAN data.
  */
@@ -262,7 +264,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: source, synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_base_id: null }) + "\n")
 
 			emitted++
 		}

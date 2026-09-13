@@ -58,6 +58,7 @@
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
@@ -365,7 +366,7 @@ export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Pr
 			row.country = options.country
 		}
 
-		if (!stream.write(JSON.stringify(row) + "\n")) {
+		if (!stream.write(stringifyJSON(row) + "\n")) {
 			await once(stream, "drain")
 		}
 

@@ -18,6 +18,7 @@
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -246,7 +247,7 @@ export async function runLookup(
 		}
 
 		default: {
-			throw new Error(`mwdev_lookup: unknown source ${JSON.stringify(source)}.`)
+			throw new Error(`mwdev_lookup: unknown source ${stringifyJSON(source)}.`)
 		}
 	}
 }

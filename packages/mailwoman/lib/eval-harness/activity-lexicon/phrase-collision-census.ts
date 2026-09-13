@@ -32,7 +32,7 @@
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
 import { join, type PathBuilderLike } from "path-ts"
@@ -555,7 +555,7 @@ export function printPhraseCollisionCensus(census: PhraseCollisionCensus): void 
 
 	for (const collision of census.categoryLexicon.collisions) {
 		console.log(
-			`  ${JSON.stringify(collision.probe)} [${collision.locale ?? "no locale"}] → ${collision.match.kind ?? "category"} ${collision.match.categoryID} (${collision.match.matchedPhrase})`
+			`  ${stringifyJSON(collision.probe)} [${collision.locale ?? "no locale"}] → ${collision.match.kind ?? "category"} ${collision.match.categoryID} (${collision.match.matchedPhrase})`
 		)
 	}
 
@@ -567,7 +567,7 @@ export function printPhraseCollisionCensus(census: PhraseCollisionCensus): void 
 
 	for (const collision of exactCollisions) {
 		console.log(
-			`  ${JSON.stringify(collision.probe)} = ${JSON.stringify(collision.name)} [${collision.country}${collision.categoryID ? ` ${collision.categoryID}` : ""}] → ${collision.verdict.class}/${collision.verdict.tell}${collision.reachedByShippedRung ? " · CLAIMS" : ""}`
+			`  ${stringifyJSON(collision.probe)} = ${stringifyJSON(collision.name)} [${collision.country}${collision.categoryID ? ` ${collision.categoryID}` : ""}] → ${collision.verdict.class}/${collision.verdict.tell}${collision.reachedByShippedRung ? " · CLAIMS" : ""}`
 		)
 	}
 
@@ -577,7 +577,7 @@ export function printPhraseCollisionCensus(census: PhraseCollisionCensus): void 
 
 	for (const row of containment.slice(0, PRINTED_CONTAINMENT_ROWS)) {
 		console.log(
-			`  ${JSON.stringify(row.probe)} ⊂ ${JSON.stringify(row.name)} [${row.country}${row.categoryID ? ` ${row.categoryID}` : ""}] → ${row.verdict.class}/${row.verdict.tell}`
+			`  ${stringifyJSON(row.probe)} ⊂ ${stringifyJSON(row.name)} [${row.country}${row.categoryID ? ` ${row.categoryID}` : ""}] → ${row.verdict.class}/${row.verdict.tell}`
 		)
 	}
 

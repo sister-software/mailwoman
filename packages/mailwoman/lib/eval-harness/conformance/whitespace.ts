@@ -47,6 +47,7 @@
  */
 
 import { candidateSystemsForPostcode, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 import {
@@ -351,7 +352,7 @@ export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): s
 				`${label}: variant is not a named whitespace transformation of base — ` +
 					(whitespaceBlindKey(fixture.base) === whitespaceBlindKey(fixture.variant)
 						? `the pair differs by whitespace but by no member of ${WHITESPACE_TRANSFORMATIONS.join(" / ")}, so the change is not reproducible from its own name`
-						: `the pair differs by more than whitespace (blind keys ${JSON.stringify(whitespaceBlindKey(fixture.base))} ≠ ${JSON.stringify(whitespaceBlindKey(fixture.variant))}), which is a different law`)
+						: `the pair differs by more than whitespace (blind keys ${stringifyJSON(whitespaceBlindKey(fixture.base))} ≠ ${stringifyJSON(whitespaceBlindKey(fixture.variant))}), which is a different law`)
 			)
 		}
 	})

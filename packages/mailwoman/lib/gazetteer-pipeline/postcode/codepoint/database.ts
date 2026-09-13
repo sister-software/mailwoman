@@ -41,6 +41,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -419,7 +420,7 @@ async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: Databas
 		],
 		[
 			"quality_drops",
-			JSON.stringify({
+			stringifyJSON({
 				read: input.stats.read,
 				yielded: input.stats.yielded,
 				skippedNoCoordinate: input.stats.skippedNoCoordinate,
@@ -429,7 +430,7 @@ async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: Databas
 		["builder", "mailwoman gazetteer build postcode-codepoint"],
 		[
 			"source_files",
-			JSON.stringify({ count: input.extracted.csvPaths.length, uncompressedBytes: input.extracted.totalBytes }),
+			stringifyJSON({ count: input.extracted.csvPaths.length, uncompressedBytes: input.extracted.totalBytes }),
 		],
 	]
 

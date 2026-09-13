@@ -34,6 +34,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { join } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
@@ -317,7 +318,7 @@ export async function promoteGolden(
 			await using out = createNewlineWriter(path)
 
 			for (const entry of entries) {
-				await out.write(JSON.stringify(entry))
+				await out.write(stringifyJSON(entry))
 			}
 		}
 

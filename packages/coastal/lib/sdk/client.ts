@@ -37,6 +37,7 @@ import {
 	assertNoOGCServiceException,
 } from "@mailwoman/core/api"
 import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_SERVICE_SLUG } from "#vocabulary"
 
@@ -151,7 +152,7 @@ export function parseAttributionStatement(text: string): string {
 
 	if (!dated.length) {
 		throw new Error(
-			`coastal client: no attribution statement in the record carries a year (found ${statements.length}: ${JSON.stringify(statements)}) — ` +
+			`coastal client: no attribution statement in the record carries a year (found ${statements.length}: ${stringifyJSON(statements)}) — ` +
 				"the abstract's first copy is inherited from the superseded record and carries none, so a yearless statement is refused rather than shipped as the licence condition"
 		)
 	}
@@ -250,7 +251,7 @@ export function assertAttributionUnchanged(live: string): void {
 	if (live === NCERM_ATTRIBUTION) return
 
 	throw new Error(
-		`coastal client: the published attribution statement is ${JSON.stringify(live)}, and this build ships ${JSON.stringify(NCERM_ATTRIBUTION)} — ` +
+		`coastal client: the published attribution statement is ${stringifyJSON(live)}, and this build ships ${stringifyJSON(NCERM_ATTRIBUTION)} — ` +
 			"OGL v3.0 makes the statement a licence condition, so a change in it changes what a re-user has to publish"
 	)
 }

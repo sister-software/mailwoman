@@ -11,6 +11,7 @@
  *   host panels (about / release / compare / debug drawer / permalink) to exercise the injection point.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useMemo, useState } from "react"
 
@@ -86,7 +87,7 @@ export const WithPanels: Story = {
 			extras: (result) => (
 				<details style={{ margin: "0.5rem 0" }}>
 					<summary>Raw nodes ({result.nodes.length})</summary>
-					<pre style={{ fontSize: 12 }}>{JSON.stringify(result.nodes, null, 2)}</pre>
+					<pre style={{ fontSize: 12 }}>{prettyJSON(result.nodes)}</pre>
 				</details>
 			),
 			compare: ({ compareMode, compareVersion }) =>

@@ -42,6 +42,7 @@
  *   ride on every observation.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	ZoningLookup,
 	ZoningReadingKind,
@@ -199,7 +200,7 @@ export function zoningAssignmentClause(observation: ZoningDesignationObservation
 	const first = observation.designations[0]
 
 	return first
-		? `${first.jurisdiction.name} zones the location ${JSON.stringify(first.localCode)}` +
+		? `${first.jurisdiction.name} zones the location ${stringifyJSON(first.localCode)}` +
 				(first.crosswalk ? ` (${first.crosswalk.scheme} ${first.crosswalk.code})` : "") +
 				` under ${first.plan.name}` +
 				(observation.designations.length > 1 ? ` (and ${observation.designations.length - 1} more plan(s) here)` : "")

@@ -35,6 +35,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { md5File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -345,7 +346,7 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 			"#920 laws: `name` stored in the sanitized-query token shape (every non-letter/number stripped) with the display form as an alt `names` row; centroid is the MEDOID member point (never the mean) of the (postcode, settlement) rows",
 		],
 		["builder", "mailwoman gazetteer build postcode-geonames --countries " + input.countries.join(",")],
-		["source_files", JSON.stringify(input.sources)],
+		["source_files", stringifyJSON(input.sources)],
 	]
 
 	writeMetaRows(db, rows)

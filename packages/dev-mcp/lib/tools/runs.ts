@@ -8,6 +8,7 @@
  *   required half of it.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { z } from "zod"
 
 import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "#run-store"
@@ -38,7 +39,7 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 
 			if (!run) {
 				throw new Error(
-					`No stored run ${JSON.stringify(runID)}. It was pruned or never existed — those are not ` +
+					`No stored run ${stringifyJSON(runID)}. It was pruned or never existed — those are not ` +
 						"distinguishable after the fact, so re-measure."
 				)
 			}

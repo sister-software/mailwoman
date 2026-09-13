@@ -30,6 +30,7 @@ import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -77,7 +78,7 @@ async function postJSON(path: string, body: unknown): Promise<{ status: number; 
 	const res = await app.request(path, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify(body),
+		body: stringifyJSON(body),
 	})
 
 	return { status: res.status, body: (await res.json()) as Record<string, unknown> }

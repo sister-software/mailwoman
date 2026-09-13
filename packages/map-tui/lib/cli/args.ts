@@ -1,5 +1,7 @@
 import { errorMessage } from "@mailwoman/core/errors/schema"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+
 /**
  * @copyright Sister Software.
  * @license AGPL-3.0
@@ -124,7 +126,7 @@ function numericFlag(name: string, raw: string | undefined, fallback: number, mi
 	const value = Number(raw.trim())
 
 	if (!Number.isFinite(value) || !raw.trim().length) {
-		throw new CLIArgsError(`--${name} expects a number, got ${JSON.stringify(raw)}`)
+		throw new CLIArgsError(`--${name} expects a number, got ${stringifyJSON(raw)}`)
 	}
 
 	if (value < min || value > max) {

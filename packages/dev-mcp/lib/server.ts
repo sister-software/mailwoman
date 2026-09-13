@@ -11,6 +11,7 @@
  *   block stays for clients that cannot read structured output.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
@@ -28,7 +29,7 @@ export async function createDevMCPServer(deps: DevToolDeps): Promise<McpServer> 
 					const result = (await tool.handler(args as Record<string, unknown>)) as Record<string, unknown>
 
 					return {
-						content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+						content: [{ type: "text", text: prettyJSON(result) }],
 						structuredContent: result,
 					}
 				} catch (error) {

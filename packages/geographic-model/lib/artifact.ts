@@ -27,7 +27,7 @@
  *   Boundary record: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` (#1917).
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { isPlainObject } from "@mailwoman/core/objects"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
@@ -162,7 +162,7 @@ function artifactProblem(value: unknown): string | undefined {
 	if (!isPlainObject(value)) return "a compiled geographic model must be an object"
 
 	if (value.schemaVersion !== ARTIFACT_SCHEMA_VERSION) {
-		return `this reader understands artifact schema version ${ARTIFACT_SCHEMA_VERSION}; the artifact declares ${JSON.stringify(value.schemaVersion)}`
+		return `this reader understands artifact schema version ${ARTIFACT_SCHEMA_VERSION}; the artifact declares ${stringifyJSON(value.schemaVersion)}`
 	}
 
 	if (typeof value.modelVersion !== "string" || !value.modelVersion.trim().length) {

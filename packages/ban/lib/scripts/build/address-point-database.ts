@@ -32,6 +32,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import {
 	ADDRESS_POINT_COLUMNS,
@@ -230,23 +231,19 @@ async function main(): Promise<void> {
 		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")
 
 		await writeLocalTextFile(
-			JSON.stringify(
-				{
-					artifact: `address-points-${args.country}.db`,
-					source,
-					sourceURL: BAN_CSV_BASE,
-					license: BAN_LICENSE,
-					attribution: BAN_ATTRIBUTION,
-					release: args.release,
-					departements: deptList.length,
-					totalPoints: written,
-					bytes,
-					md5,
-					builtAt: new Date().toISOString(),
-				},
-				null,
-				2
-			) + "\n",
+			prettyJSON({
+				artifact: `address-points-${args.country}.db`,
+				source,
+				sourceURL: BAN_CSV_BASE,
+				license: BAN_LICENSE,
+				attribution: BAN_ATTRIBUTION,
+				release: args.release,
+				departements: deptList.length,
+				totalPoints: written,
+				bytes,
+				md5,
+				builtAt: new Date().toISOString(),
+			}),
 			attributionPath
 		)
 

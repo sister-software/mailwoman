@@ -8,6 +8,7 @@
  *   definitions are the part worth reading top to bottom, and this is the part they all repeat.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
@@ -366,7 +367,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 			record.placetype,
 			record.query.country ? `country=${record.query.country}` : null,
 			record.query.parentID !== undefined ? `parent=${record.query.parentID}` : null,
-			record.query.regionQualifier ? `qualifier=${JSON.stringify(record.query.regionQualifier)}` : null,
+			record.query.regionQualifier ? `qualifier=${stringifyJSON(record.query.regionQualifier)}` : null,
 			`limit=${record.query.limit}`,
 		]
 			.filter((part) => part !== null)
@@ -396,7 +397,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 		})
 
 		const head =
-			`resolver ${JSON.stringify(record.value)} → ${query}` +
+			`resolver ${stringifyJSON(record.value)} → ${query}` +
 			(record.checks.length ? ` checks=[${record.checks.join(",")}]` : "") +
 			(record.picked
 				? record.picked.source === "ranked"
@@ -497,7 +498,7 @@ const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status"
 export function assertStratumKey(by: string): asserts by is StratumKey {
 	if (!STRATUM_KEYS.includes(by as StratumKey)) {
 		throw new Error(
-			`stratify_by ${JSON.stringify(by)} is not a stratum. Known: ${STRATUM_KEYS.join(", ")}. Bucketing an ` +
+			`stratify_by ${stringifyJSON(by)} is not a stratum. Known: ${STRATUM_KEYS.join(", ")}. Bucketing an ` +
 				"unrecognised key would report one `unknown` bucket, which reads as a stratified result and is not one."
 		)
 	}

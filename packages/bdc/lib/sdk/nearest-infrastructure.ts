@@ -34,6 +34,7 @@
  *   spines agree without this module hardcoding a resolution of its own.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, type CoverageCell, type LayerContractHandle } from "@mailwoman/core/layers"
 import { POI_H3_RESOLUTION, type POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
@@ -108,7 +109,7 @@ export async function nearestInfrastructure(
 			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category ids (see
 			// POILookup#searchKRing), so a hit here always carries the category it was found under — this
 			// can't happen without a corrupted poi.db. Guard rather than silently coerce to "".
-			throw new Error(`nearestInfrastructure: hit ${JSON.stringify(hit.name)} has no categoryID`)
+			throw new Error(`nearestInfrastructure: hit ${stringifyJSON(hit.name)} has no categoryID`)
 		}
 
 		const h3Cell = shortCellToInt(latLngToCell(hit.latitude, hit.longitude, POI_H3_RESOLUTION) as H3Cell)

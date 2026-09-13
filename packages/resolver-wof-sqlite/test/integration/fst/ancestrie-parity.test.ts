@@ -30,6 +30,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type {
 	AutocompleteOpts,
 	AutocompleteResult,
@@ -195,7 +196,7 @@ function expectParity(matcher: FSTMatcher, queries: readonly string[]): void {
 			const legacy = legacyAutocomplete(matcher, query, opts)
 			const migrated = autocomplete(matcher, query, opts)
 
-			expect(migrated, `query ${JSON.stringify(query)} opts ${JSON.stringify(opts)}`).toStrictEqual(legacy)
+			expect(migrated, `query ${stringifyJSON(query)} opts ${stringifyJSON(opts)}`).toStrictEqual(legacy)
 		}
 	}
 }

@@ -5,6 +5,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { isFRN, type FRN } from "#frn"
 import { parseCORESRegistration, type CORESRegistration } from "#sdk/cores/registration"
@@ -33,7 +34,7 @@ export function coresDetailURL(frn: FRN): string {
  */
 export async function fetchCORESRegistration(client: CORESDocumentClient, frn: FRN): Promise<CORESRegistration | null> {
 	if (!isFRN(frn)) {
-		throw ResourceError.from(400, `fetchCORESRegistration: invalid FRN ${JSON.stringify(frn)}`, "cores", "request")
+		throw ResourceError.from(400, `fetchCORESRegistration: invalid FRN ${stringifyJSON(frn)}`, "cores", "request")
 	}
 
 	return parseCORESRegistration(frn, await client.getDocument(coresDetailURL(frn)))

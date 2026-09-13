@@ -34,6 +34,7 @@
  *   delimiters only; splitting on anything else is not a streaming shape and stays silent.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 
 interface RuleContext {
@@ -431,7 +432,7 @@ const noRelativeDynamicImportRule: Rule = {
 				context.report({
 					node,
 					message:
-						`import(${JSON.stringify(specifier)}) names a module by the importer's location. Use the package's ` +
+						`import(${stringifyJSON(specifier)}) names a module by the importer's location. Use the package's ` +
 						"`imports` map instead (`#<path-from-package-root>`, no extension) — it resolves `.ts` under `node` and " +
 						"`out/*.js` everywhere else, and moves with the file.",
 				})
@@ -457,7 +458,7 @@ const noPrivateImportInTestRule: Rule = {
 			context.report({
 				node,
 				message:
-					`${JSON.stringify(specifier)} is the package's private \`imports\` map. A test imports the package under ` +
+					`${stringifyJSON(specifier)} is the package's private \`imports\` map. A test imports the package under ` +
 					"test through its public exports (`@mailwoman/<pkg>/<subpath>`); a module no export names gets an " +
 					"`exports` entry, and only a helper under `test/` is imported by relative path.",
 			})
@@ -571,7 +572,7 @@ const noImportMetaDirnameWalkRule: Rule = {
 				context.report({
 					node,
 					message:
-						`${JSON.stringify(text)} counts directories up from this module. Use ` +
+						`${stringifyJSON(text)} counts directories up from this module. Use ` +
 						'`resolvePackagePath("<package>", …)` from `@mailwoman/core/module/resolvers` for a file in this ' +
 						"package, or `repoRootPath(…)` from `@mailwoman/core/utils` for a repository file.",
 				})
@@ -784,7 +785,7 @@ const noCrossPackageReexportRule: Rule = {
 			context.report({
 				node,
 				message:
-					`Re-exporting from ${JSON.stringify(specifier)} gives its names a second public home. Consumers import ` +
+					`Re-exporting from ${stringifyJSON(specifier)} gives its names a second public home. Consumers import ` +
 					"them from the package that declares them; delete the re-export and repoint the importers.",
 			})
 		}

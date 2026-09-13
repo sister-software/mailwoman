@@ -8,6 +8,7 @@
  *   `CallToolResult` envelope. `cli.ts` owns building the real `MCPToolDeps` and connecting a transport.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
@@ -39,7 +40,7 @@ export function createMCPServer(deps: MCPToolDeps): McpServer {
 				try {
 					const result = await tool.handler(args)
 
-					return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] }
+					return { content: [{ type: "text", text: prettyJSON(result) }] }
 				} catch (error) {
 					const message = error instanceof Error ? error.message : String(error)
 

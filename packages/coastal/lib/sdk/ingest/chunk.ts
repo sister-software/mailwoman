@@ -25,6 +25,7 @@
  *   and no locking to reason about.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	addCoverageCells,
 	encodeRings,
@@ -295,8 +296,8 @@ function assertDeclaredDomains(feature: CoastalSourceFeature): void {
 	] as Array<[string, string | null]>) {
 		if (value !== null && !NCERM_POLICY_VALUES.has(value)) {
 			throw new Error(
-				`coastal build: ${feature.areaID} carries ${field} ${JSON.stringify(value)}, which is not in the authority's ` +
-					`declared policy domain (${[...NCERM_POLICY_VALUES].map((entry) => JSON.stringify(entry)).join(", ")}) — ` +
+				`coastal build: ${feature.areaID} carries ${field} ${stringifyJSON(value)}, which is not in the authority's ` +
+					`declared policy domain (${[...NCERM_POLICY_VALUES].map((entry) => stringifyJSON(entry)).join(", ")}) — ` +
 					'an unknown value is a source-schema change, and coercing it would turn "the source changed" into "there is nothing here"'
 			)
 		}
@@ -308,15 +309,15 @@ function assertDeclaredDomains(feature: CoastalSourceFeature): void {
 	] as Array<[string, string | null]>) {
 		if (value !== null && !NCERM_POLICY_INTERPRETATION_VALUES.has(value)) {
 			throw new Error(
-				`coastal build: ${feature.areaID} carries ${field} ${JSON.stringify(value)}, which is not in the authority's ` +
-					`declared interpretation domain (${[...NCERM_POLICY_INTERPRETATION_VALUES].map((entry) => JSON.stringify(entry)).join(", ")})`
+				`coastal build: ${feature.areaID} carries ${field} ${stringifyJSON(value)}, which is not in the authority's ` +
+					`declared interpretation domain (${[...NCERM_POLICY_INTERPRETATION_VALUES].map((entry) => stringifyJSON(entry)).join(", ")})`
 			)
 		}
 	}
 
 	if (feature.defenceType !== null && !NCERM_DEFENCE_TYPES_FOLDED.has(foldDefenceType(feature.defenceType))) {
 		throw new Error(
-			`coastal build: ${feature.areaID} carries def_type ${JSON.stringify(feature.defenceType)}, which is not in the ` +
+			`coastal build: ${feature.areaID} carries def_type ${stringifyJSON(feature.defenceType)}, which is not in the ` +
 				"authority's declared defence domain even case-folded — the fold exists for the source's own inconsistent " +
 				"capitalization, not to absorb a new defence type"
 		)

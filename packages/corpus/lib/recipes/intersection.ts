@@ -39,6 +39,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
@@ -529,7 +530,7 @@ export const intersectionRecipe: CorpusRecipe = {
 
 			if (opts.golden) {
 				seenRaw.add(raw)
-				write(JSON.stringify({ raw, components, country: "US", form: formID }) + "\n")
+				write(stringifyJSON({ raw, components, country: "US", form: formID }) + "\n")
 				formCounts[formID] = (formCounts[formID] ?? 0) + 1
 				tailCounts[tailID] = (tailCounts[tailID] ?? 0) + 1
 				caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1
@@ -571,7 +572,7 @@ export const intersectionRecipe: CorpusRecipe = {
 			}
 
 			seenRaw.add(raw)
-			write(JSON.stringify({ ...aligned.row, synth_method: "intersection", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "intersection", synth_base_id: null }) + "\n")
 			formCounts[formID] = (formCounts[formID] ?? 0) + 1
 			tailCounts[tailID] = (tailCounts[tailID] ?? 0) + 1
 			caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1
@@ -604,14 +605,14 @@ export const intersectionRecipe: CorpusRecipe = {
 
 		console.error(
 			`Done: emitted ${emitted} rows (skipped ${skipped}) from ${usedCrossings.size}/${pool.length} real crossings. → ${opts.output}\n` +
-				`  forms: ${JSON.stringify(formCounts)}\n` +
-				`  tails: ${JSON.stringify(tailCounts)}\n` +
-				`  cases: ${JSON.stringify(caseCounts)}\n` +
+				`  forms: ${stringifyJSON(formCounts)}\n` +
+				`  tails: ${stringifyJSON(tailCounts)}\n` +
+				`  cases: ${stringifyJSON(caseCounts)}\n` +
 				`  audit: ${auditErrors.length} violation(s)`
 		)
 
 		if (auditErrors.length) {
-			throw new Error(`AUDIT FAILED — first violation: ${JSON.stringify(auditErrors[0])}`)
+			throw new Error(`AUDIT FAILED — first violation: ${stringifyJSON(auditErrors[0])}`)
 		}
 
 		return { emitted, skipped }

@@ -30,6 +30,7 @@
  *   taxonomy grows with the suites, and each suite owns the names it uses. Blank is still refused.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPlainObject } from "@mailwoman/core/objects"
 import { JSONSpliterator } from "spliterator"
 
@@ -228,7 +229,7 @@ function requireNonEmptyString(record: Record<string, unknown>, key: string, lab
 	const value = record[key]
 
 	if (typeof value !== "string" || !value.trim()) {
-		throw new Error(`${label}: "${key}" must be a non-empty string (got ${JSON.stringify(value)})`)
+		throw new Error(`${label}: "${key}" must be a non-empty string (got ${stringifyJSON(value)})`)
 	}
 
 	return value
@@ -238,7 +239,7 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
 	if (raw === undefined) return undefined
 
 	if (!isPlainObject(raw)) {
-		throw new Error(`${label}: "context" must be an object (got ${JSON.stringify(raw)})`)
+		throw new Error(`${label}: "context" must be an object (got ${stringifyJSON(raw)})`)
 	}
 
 	const context: ConformanceContext = {}
@@ -249,7 +250,7 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
 		}
 
 		if (typeof value !== "string" || !value.trim()) {
-			throw new Error(`${label}: context.${key} must be a non-empty string (got ${JSON.stringify(value)})`)
+			throw new Error(`${label}: context.${key} must be a non-empty string (got ${stringifyJSON(value)})`)
 		}
 
 		context[key] = value
@@ -266,7 +267,7 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
  */
 export function parseConformanceFixture(raw: unknown, origin: string): ConformanceFixture {
 	if (!isPlainObject(raw)) {
-		throw new Error(`${origin}: conformance fixture must be an object (got ${JSON.stringify(raw)})`)
+		throw new Error(`${origin}: conformance fixture must be an object (got ${stringifyJSON(raw)})`)
 	}
 
 	const record = raw
@@ -295,7 +296,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 
 	if (!isOutcomeComparator(comparator)) {
 		throw new Error(
-			`${label}: unknown outcomeComparator ${JSON.stringify(comparator)} — known: ${OUTCOME_COMPARATORS.join(", ")}`
+			`${label}: unknown outcomeComparator ${stringifyJSON(comparator)} — known: ${OUTCOME_COMPARATORS.join(", ")}`
 		)
 	}
 
@@ -307,7 +308,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	}
 
 	if (!isConformanceRelation(expected)) {
-		throw new Error(`${label}: unknown expect ${JSON.stringify(expected)} — known: ${CONFORMANCE_RELATIONS.join(", ")}`)
+		throw new Error(`${label}: unknown expect ${stringifyJSON(expected)} — known: ${CONFORMANCE_RELATIONS.join(", ")}`)
 	}
 
 	const expect = expected
@@ -323,7 +324,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	const rawStatus = record["status"]
 
 	if (rawStatus !== undefined && !isConformanceStatus(rawStatus)) {
-		throw new Error(`${label}: unknown status ${JSON.stringify(rawStatus)} — known: ${CONFORMANCE_STATUSES.join(", ")}`)
+		throw new Error(`${label}: unknown status ${stringifyJSON(rawStatus)} — known: ${CONFORMANCE_STATUSES.join(", ")}`)
 	}
 
 	const status = rawStatus
@@ -331,7 +332,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	const bugRef = record["bugRef"]
 
 	if (bugRef !== undefined && (typeof bugRef !== "string" || !bugRef.trim())) {
-		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${JSON.stringify(bugRef)})`)
+		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${stringifyJSON(bugRef)})`)
 	}
 
 	// A `bugRef` on a enforcing row points at a diagnosis for a row that is expected to hold, which reads as a tracked
@@ -354,20 +355,20 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		}
 
 		if (typeof tolerance !== "number" || !Number.isFinite(tolerance) || tolerance <= 0) {
-			throw new Error(`${label}: "toleranceM" must be a positive finite number (got ${JSON.stringify(tolerance)})`)
+			throw new Error(`${label}: "toleranceM" must be a positive finite number (got ${stringifyJSON(tolerance)})`)
 		}
 	}
 
 	const rowRef = record["rowRef"]
 
 	if (rowRef !== undefined && (typeof rowRef !== "string" || !rowRef.trim())) {
-		throw new Error(`${label}: "rowRef" must be a non-empty string when present (got ${JSON.stringify(rowRef)})`)
+		throw new Error(`${label}: "rowRef" must be a non-empty string when present (got ${stringifyJSON(rowRef)})`)
 	}
 
 	const note = record["note"]
 
 	if (note !== undefined && typeof note !== "string") {
-		throw new Error(`${label}: "note" must be a string when present (got ${JSON.stringify(note)})`)
+		throw new Error(`${label}: "note" must be a string when present (got ${stringifyJSON(note)})`)
 	}
 
 	const context = readContext(record["context"], label)

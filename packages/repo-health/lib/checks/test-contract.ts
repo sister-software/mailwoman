@@ -6,6 +6,7 @@
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, relative, resolvePath, sep } from "path-ts"
 import ts from "typescript"
@@ -82,7 +83,7 @@ export const testContractCheck: RepoCheck = {
 
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
-						message: `relative module import ${JSON.stringify(specifier)} leaves test/ and bypasses the package contract`,
+						message: `relative module import ${stringifyJSON(specifier)} leaves test/ and bypasses the package contract`,
 						file,
 					})
 				}

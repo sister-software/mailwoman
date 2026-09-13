@@ -35,6 +35,7 @@
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,
 	assertAreaAgreement,
@@ -72,6 +73,7 @@ import {
 	NCERM_SCENARIOS_BY_KEY,
 	NCERM_DATASET_URL,
 } from "#vocabulary"
+
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
  * ignore.
@@ -448,7 +450,7 @@ async function runBatchedIngest(
 		const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)
 
 		if (!scenario) {
-			throw new Error(`coastal build: ${JSON.stringify(scenarioKey)} is not one of the twelve published scenarios`)
+			throw new Error(`coastal build: ${stringifyJSON(scenarioKey)} is not one of the twelve published scenarios`)
 		}
 
 		// Each layer numbers its own `OBJECTID` from 1, so the range is per layer. The upper bound is deliberately open —

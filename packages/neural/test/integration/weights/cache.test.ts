@@ -14,6 +14,7 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { cacheRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "@mailwoman/neural/weights"
 import { join } from "path-ts"
@@ -38,7 +39,7 @@ async function layoutCachedPackage(files: string[]): Promise<string> {
 
 	for (const file of files) {
 		await writeLocalFile(
-			file === "model-card.json" ? JSON.stringify({ version: "0.0.0" }) : "stub",
+			file === "model-card.json" ? stringifyJSON({ version: "0.0.0" }) : "stub",
 			join(packageDir, file)
 		)
 	}

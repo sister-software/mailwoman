@@ -50,6 +50,7 @@
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -239,7 +240,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	let excludedByLicense = 0
 
 	const writeQuarantine = (row: CanonicalRow, reason: string): void => {
-		quarantineStream.write(`${JSON.stringify({ row, reason })}\n`)
+		quarantineStream.write(`${stringifyJSON({ row, reason })}\n`)
 	}
 
 	for (const adapterRun of adapterRuns) {
@@ -285,7 +286,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 				if (result.kind === "labeled") {
 					const split = splitForRow(result.row, holdouts)
-					labeledStreams[split].write(`${JSON.stringify(result.row)}\n`)
+					labeledStreams[split].write(`${stringifyJSON(result.row)}\n`)
 
 					counts[split]++
 

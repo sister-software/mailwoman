@@ -22,6 +22,7 @@
  *   survives the relay; a refusal only helps if the agent stays inside the tool.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
 
 import { effectiveKeyFor } from "#engine/registry"
@@ -80,7 +81,7 @@ export interface ConfoundReading {
 function differingKeys(a: Record<string, unknown>, b: Record<string, unknown>): string[] {
 	const keys = new Set([...Object.keys(a), ...Object.keys(b)])
 
-	return [...keys].filter((key) => JSON.stringify(a[key]) !== JSON.stringify(b[key])).toSorted()
+	return [...keys].filter((key) => stringifyJSON(a[key]) !== stringifyJSON(b[key])).toSorted()
 }
 
 /**
@@ -230,7 +231,7 @@ const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])
 export function assertComparableField(field: string): void {
 	if (INCOMPARABLE_FIELDS.has(field)) {
 		throw new Error(
-			`Field ${JSON.stringify(field)} is not comparable. It is scored on different scales by different backends ` +
+			`Field ${stringifyJSON(field)} is not comparable. It is scored on different scales by different backends ` +
 				`(bm25 ≈19–41 on FTS, population ≈5–7 on candidate), and within either backend the wrong answers' range ` +
 				`sits inside the correct answers' range with a higher mean. There is no threshold on it that means anything.`
 		)

@@ -23,6 +23,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
@@ -134,7 +135,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		const ins = kdb.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 
 		for (const r of rows) {
-			ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
+			ins.run(r.wof_id, stringifyJSON(r.convention), r.source)
 		}
 
 		// Freeze into the read-only distributable asset — same discipline as our other WOF tables.

@@ -5,6 +5,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp } from "@mailwoman/core/license"
 import {
 	COMPONENT_TO_LIBPOSTAL,
@@ -85,7 +86,7 @@ test("POST /parse accepts a JSON body (native now — the express CLI never moun
 	const res = await app.request("/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ query: "1600 pennsylvania ave" }),
+		body: stringifyJSON({ query: "1600 pennsylvania ave" }),
 	})
 
 	expect(res.status).toBe(200)
@@ -100,7 +101,7 @@ test("parse without a query answers the exact legacy 400 body", async () => {
 		await app.request("/parse", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify({}),
+			body: stringifyJSON({}),
 		}),
 	]) {
 		expect(res.status).toBe(400)
@@ -118,7 +119,7 @@ test("an empty higher-precedence query param wins precedence and 400s (legacy pa
 	const viaBody = await app.request("/parse?address=1600+pennsylvania+ave", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ query: "" }),
+		body: stringifyJSON({ query: "" }),
 	})
 
 	expect(viaBody.status).toBe(400)
@@ -171,7 +172,7 @@ test("POST /expand accepts a JSON body", async () => {
 	const res = await app.request("/expand", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "1600 penn" }),
+		body: stringifyJSON({ address: "1600 penn" }),
 	})
 
 	expect(res.status).toBe(200)
@@ -184,7 +185,7 @@ test("POST /expand: a `query` field is inert (expand has no query alias) — `ad
 	const res = await app.request("/expand", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ query: "ignored", address: "1600 penn" }),
+		body: stringifyJSON({ query: "ignored", address: "1600 penn" }),
 	})
 
 	expect(res.status).toBe(200)
@@ -193,7 +194,7 @@ test("POST /expand: a `query` field is inert (expand has no query alias) — `ad
 
 test("POST with a body over the 100 KiB cap answers 413, not a buffered crash", async () => {
 	const app = createLibpostalApp(fixtureEngine)
-	const oversized = JSON.stringify({ query: "x".repeat(103_000) })
+	const oversized = stringifyJSON({ query: "x".repeat(103_000) })
 
 	const res = await app.request("/parse", {
 		method: "POST",
@@ -281,7 +282,7 @@ test("POST with a non-string body field is treated as absent (never-contract: ol
 	const alone = await app.request("/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ query: 42 }),
+		body: stringifyJSON({ query: 42 }),
 	})
 
 	expect(alone.status).toBe(400)
@@ -290,7 +291,7 @@ test("POST with a non-string body field is treated as absent (never-contract: ol
 	const withFallback = await app.request("/parse?address=1600+pennsylvania+ave", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ query: 42 }),
+		body: stringifyJSON({ query: 42 }),
 	})
 
 	expect(withFallback.status).toBe(200)
@@ -372,7 +373,7 @@ test("engine option: headers only — the /parse body is byte-identical with and
 		app.request("/parse", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ query: "1600 pennsylvania ave" }),
+			body: stringifyJSON({ query: "1600 pennsylvania ave" }),
 		})
 
 	const stamped = await request(createLibpostalApp(fixtureEngine, { engine: stamp }))

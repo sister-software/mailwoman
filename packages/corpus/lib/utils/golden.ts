@@ -21,7 +21,7 @@
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -84,11 +84,11 @@ export function parseGoldenLine(line: string): GoldenEntry {
 	}
 
 	if (typeof obj.country !== "string" || !/^[A-Z]{2}$/u.test(obj.country)) {
-		throw new Error(`country must be ISO 3166-1 alpha-2 (got ${JSON.stringify(obj.country)})`)
+		throw new Error(`country must be ISO 3166-1 alpha-2 (got ${stringifyJSON(obj.country)})`)
 	}
 
 	if (obj.source !== "golden") {
-		throw new Error(`source must be "golden" (got ${JSON.stringify(obj.source)})`)
+		throw new Error(`source must be "golden" (got ${stringifyJSON(obj.source)})`)
 	}
 
 	const components = (obj.components ?? {}) as Record<string, unknown>

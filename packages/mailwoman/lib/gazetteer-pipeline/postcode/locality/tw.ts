@@ -52,7 +52,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
@@ -631,7 +631,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			["country", "TW"],
 			["postcodes_total", String(districts.length)],
 			["postcodes_matched", String(matched)],
-			["postcodes_by_tier", JSON.stringify(tierCounts)],
+			["postcodes_by_tier", stringifyJSON(tierCounts)],
 			["match_rate", matchRate],
 			["unmatched", unmatched.join("|") || "(none)"],
 			["built_at", isoSecondsUTC()],
@@ -648,7 +648,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	await sealDatabase(args.output)
 
 	console.log(
-		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${JSON.stringify(tierCounts)}), ` +
+		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${stringifyJSON(tierCounts)}), ` +
 			`${rows.length} rows -> ${args.output}` +
 			(unmatched.length ? `\n  unmatched: ${unmatched.join(", ")}` : "")
 	)

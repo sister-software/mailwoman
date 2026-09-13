@@ -23,6 +23,7 @@ import { dirname, resolve } from "node:path"
 import { parseArgs } from "node:util"
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { chromium, type Page } from "@playwright/test"
 
 // oxlint-disable-next-line sister-software/no-process-globals
@@ -169,7 +170,7 @@ async function cmdEval(path: string, js: string) {
 		return await page.evaluate(`(async () => { ${js} })()`)
 	})
 
-	console.log(JSON.stringify(result, null, 2))
+	console.log(prettyJSON(result, false))
 }
 
 const { values, positionals } = parseArgs({

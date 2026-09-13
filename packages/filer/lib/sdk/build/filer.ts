@@ -184,6 +184,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, movePath, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { countRows } from "@mailwoman/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -475,7 +476,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			// always be ISO-sortable — see assertISODate's docstring.
 			const lastFiledAt = assertISODate(
 				assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex),
-				`form499 row #${form499RowIndex} (form499ID=${JSON.stringify(row.form499ID)}) lastFiledAt`
+				`form499 row #${form499RowIndex} (form499ID=${stringifyJSON(row.form499ID)}) lastFiledAt`
 			)
 
 			// Attributes attach to the form499ID node — the only identifier guaranteed present on every row

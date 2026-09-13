@@ -11,6 +11,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, Interpretation, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsXML, walkNodes } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type {
 	Ancestor,
 	AddressPointLookup,
@@ -198,9 +199,9 @@ describe("resolveTree", () => {
 		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5, [], "rule", "whos_on_first")])
-		const before = JSON.stringify(input)
+		const before = stringifyJSON(input)
 		await resolver.resolveTree(input)
-		expect(JSON.stringify(input)).toBe(before)
+		expect(stringifyJSON(input)).toBe(before)
 	})
 
 	test("skips nodes whose tag isn't in the placetype map (street / house_number / etc)", async () => {
@@ -1115,7 +1116,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const viaArtifact = await resolver.resolveTree(addrTree(), { interpolation: artifactInterp })
 
 		// Byte-identical: the full serialized trees match, not just the headline fields.
-		expect(JSON.stringify(viaArtifact)).toBe(JSON.stringify(viaCaller))
+		expect(stringifyJSON(viaArtifact)).toBe(stringifyJSON(viaCaller))
 		const street = viaArtifact.roots.find((n) => n.tag === "street")
 
 		expect(street?.metadata).toMatchObject({

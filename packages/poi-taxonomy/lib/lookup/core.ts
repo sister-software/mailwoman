@@ -8,6 +8,8 @@
  *   node imports, so it stays bundler-safe. Not exported via a subpath of its own.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import { createPhraseIndex } from "#phrase-index"
 import type { CategoryRecord, POITaxonomyTable, SynonymEntry } from "#types"
 
@@ -79,7 +81,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 			if (!category) {
 				throw new Error(
-					`poi-taxonomy: synonym ${JSON.stringify(synonym.phrase)} points at unknown category ${synonym.categoryID}`
+					`poi-taxonomy: synonym ${stringifyJSON(synonym.phrase)} points at unknown category ${synonym.categoryID}`
 				)
 			}
 

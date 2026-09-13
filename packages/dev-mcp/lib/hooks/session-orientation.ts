@@ -17,6 +17,7 @@
  *   a worse trade than a session that starts without orientation.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
@@ -76,7 +77,7 @@ async function main(): Promise<void> {
 
 	if (!additionalContext) return
 
-	process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext } }))
+	process.stdout.write(stringifyJSON({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext } }))
 }
 
 try {

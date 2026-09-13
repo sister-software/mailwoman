@@ -28,6 +28,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, join } from "path-ts"
@@ -161,7 +162,7 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
 				land_area_sqm: Number(p.land_area_sqm ?? 0),
 				water_area_sqm: Number(p.water_area_sqm ?? 0),
 				population: Number(p.population ?? 0),
-				geometry: JSON.stringify(geometry),
+				geometry: stringifyJSON(geometry),
 			}
 	}
 }

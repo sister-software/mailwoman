@@ -19,6 +19,7 @@
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { dirname, type PathBuilderLike } from "path-ts"
 
 import { extractAddrPoints, type OSMAddrRecord } from "#sdk/extract"
@@ -97,7 +98,7 @@ export async function writeOSMCorpusJSONL(pbfPath: string, outPath: PathBuilderL
 				continue
 			}
 
-			if (!stream.write(JSON.stringify(row) + "\n")) {
+			if (!stream.write(stringifyJSON(row) + "\n")) {
 				await new Promise<void>((resolve) => {
 					stream.once("drain", resolve)
 				})

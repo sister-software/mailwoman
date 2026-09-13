@@ -1,4 +1,5 @@
 import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -47,7 +48,7 @@ export async function alignCanonicalSlice(args: AlignSliceOptions): Promise<void
 		const result = alignRow(canonical)
 
 		if (result.kind === "labeled") {
-			outStream.write(JSON.stringify(result.row) + "\n")
+			outStream.write(stringifyJSON(result.row) + "\n")
 
 			labeled++
 		} else {
@@ -63,6 +64,6 @@ export async function alignCanonicalSlice(args: AlignSliceOptions): Promise<void
 
 	console.error(
 		`align-canonical-slice: ${labeled} labeled, ${quarantined} quarantined → ${args.output}\n` +
-			`  quarantine reasons: ${JSON.stringify(quarantineReasons)}`
+			`  quarantine reasons: ${stringifyJSON(quarantineReasons)}`
 	)
 }

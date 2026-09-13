@@ -34,6 +34,7 @@
 import { createInterface } from "node:readline"
 
 import { openReadStream } from "@mailwoman/core/fs/streams"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { toFRN, type FRN } from "#frn"
 
@@ -124,7 +125,7 @@ function assertRequiredProviderListColumns(header: readonly string[], csvPath: s
 	for (const column of REQUIRED_PROVIDER_LIST_COLUMNS) {
 		if (!header.includes(column)) {
 			throw new Error(
-				`parseProviderList: malformed header at ${csvPath} — missing required column ${JSON.stringify(column)}`
+				`parseProviderList: malformed header at ${csvPath} — missing required column ${stringifyJSON(column)}`
 			)
 		}
 	}
@@ -155,7 +156,7 @@ function toProviderListRow(
 	if (!Number.isSafeInteger(providerID)) {
 		throw new TypeError(
 			`parseProviderList: malformed row at ${csvPath}:${lineNumber} (line ${lineNumber}) — provider_id did not ` +
-				`parse to a safe integer, got ${JSON.stringify(providerIDField)}`
+				`parse to a safe integer, got ${stringifyJSON(providerIDField)}`
 		)
 	}
 
@@ -164,7 +165,7 @@ function toProviderListRow(
 	if (frn === null) {
 		throw new Error(
 			`parseProviderList: malformed row at ${csvPath}:${lineNumber} (line ${lineNumber}) — frn ` +
-				`${JSON.stringify(raw.frn)} did not parse to a valid FRN`
+				`${stringifyJSON(raw.frn)} did not parse to a valid FRN`
 		)
 	}
 

@@ -22,6 +22,7 @@
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 
 import type {
@@ -85,7 +86,7 @@ async function listMonthlyFiles(sn: string, year: number, month: number): Promis
 	const res = await fetch(LIST_URL, {
 		method: "POST",
 		headers: { ...BROWSER_HEADERS, accept: "application/json", "content-type": "application/json;charset=UTF-8" },
-		body: JSON.stringify({ rtlDtaDtlSn: sn, year, month, expand: "Y" }),
+		body: stringifyJSON({ rtlDtaDtlSn: sn, year, month, expand: "Y" }),
 	})
 
 	if (!res.ok) throw new Error(`juso-kr: listing product ${sn} answered HTTP ${res.status}`)

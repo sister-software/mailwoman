@@ -62,6 +62,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
@@ -669,7 +670,7 @@ function emitRow(
 		return false
 	}
 
-	context.write(JSON.stringify({ ...aligned.row, synth_method: synthMethod, synth_base_id: null }) + "\n")
+	context.write(stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: null }) + "\n")
 
 	context.counters.emitted++
 	bump(stats.byRegister, register)
@@ -984,9 +985,9 @@ export const subVenueRecipe: CorpusRecipe = {
 		for (const stats of legStats.values()) {
 			console.error(
 				`  ${stats.locale}: +${stats.positives} positives / -${stats.negatives} negatives ` +
-					`forms=${JSON.stringify(stats.byForm)} designators=${JSON.stringify(stats.byDesignator)} ` +
-					`negclasses=${JSON.stringify(stats.byNegativeClass)} registers=${JSON.stringify(stats.byRegister)} ` +
-					`pools=${JSON.stringify(stats.poolSizes)}`
+					`forms=${stringifyJSON(stats.byForm)} designators=${stringifyJSON(stats.byDesignator)} ` +
+					`negclasses=${stringifyJSON(stats.byNegativeClass)} registers=${stringifyJSON(stats.byRegister)} ` +
+					`pools=${stringifyJSON(stats.poolSizes)}`
 			)
 		}
 

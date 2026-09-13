@@ -32,6 +32,7 @@
  *   native sessions are actually released on restart.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -82,7 +83,7 @@ const RESTART_TOOL = {
 function asResult(value: unknown): CallToolResult {
 	const record = value as Record<string, unknown>
 
-	return { content: [{ type: "text", text: JSON.stringify(record, null, 2) }], structuredContent: record }
+	return { content: [{ type: "text", text: prettyJSON(record) }], structuredContent: record }
 }
 
 function asError(error: unknown): CallToolResult {

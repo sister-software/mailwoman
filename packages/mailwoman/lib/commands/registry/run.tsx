@@ -24,7 +24,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -475,7 +475,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
+	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
 //#endregion
@@ -519,7 +519,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 	const written = await writeOutputs(geojson, options)
 
-	return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
+	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
 //#endregion

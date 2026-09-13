@@ -14,6 +14,7 @@ import { readActivityLexicon } from "@mailwoman/activity-lexicon"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import {
 	candidateSubjects,
@@ -43,8 +44,8 @@ afterAll(() => scratchRoot[Symbol.asyncDispose]())
 await makeDirectories(scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures"))
 
 await writeLocalTextFile(
-	`${JSON.stringify({ id: "sem-act-fr-01", query: "somewhere to fill a prescription near Toulouse" })}\n` +
-		`${JSON.stringify({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`,
+	`${stringifyJSON({ id: "sem-act-fr-01", query: "somewhere to fill a prescription near Toulouse" })}\n` +
+		`${stringifyJSON({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`,
 	scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures/rows.jsonl")
 )
 

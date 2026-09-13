@@ -23,7 +23,7 @@ import { fromBase64URL, toBase64URL, utf8Bytes, utf8Text } from "#crypto/base64u
 import { hexOf, sha256Bytes } from "#crypto/digest"
 import { generateEd25519KeyPair, publicKeyDER, signEd25519, verifyEd25519 } from "#crypto/ed25519"
 import { errorMessage } from "#errors/schema"
-import { parseJSONStrict } from "#json"
+import { parseJSONStrict, stringifyJSON } from "#json"
 
 /**
  * The format prefix, bumped only when the payload schema or signing scheme changes incompatibly.
@@ -128,7 +128,7 @@ export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): 
  */
 export async function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM: string): Promise<string> {
 	const checked = LicenseKeyPayloadSchema.parse(payload)
-	const body = `${LICENSE_KEY_PREFIX}.${toBase64URL(utf8Bytes(JSON.stringify(checked)))}`
+	const body = `${LICENSE_KEY_PREFIX}.${toBase64URL(utf8Bytes(stringifyJSON(checked)))}`
 	const signature = await signEd25519(utf8Bytes(body), privateKeyPEM)
 
 	return `${body}.${toBase64URL(signature)}`

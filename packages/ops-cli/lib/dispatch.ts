@@ -14,6 +14,7 @@
  *   type admits nothing that writes; this is the only caller of either.
  */
 
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { shopOperations } from "@mailwoman/license-worker/shop"
 import { operations, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"
 import {
@@ -115,7 +116,7 @@ async function runOperation(
 
 	if (!operation) {
 		io.stderr(
-			`mwops ${verb}: no operation ${JSON.stringify(id)}; registered: ${registry.map((o) => o.id).join(", ") || "(none)"}\n`
+			`mwops ${verb}: no operation ${stringifyJSON(id)}; registered: ${registry.map((o) => o.id).join(", ") || "(none)"}\n`
 		)
 
 		return 2
@@ -140,9 +141,7 @@ async function runOperation(
 
 	const output = await operation.run(parsed.data, context)
 
-	io.stdout(
-		json ? `${JSON.stringify(output, null, 2)}\n` : `${String(output === undefined ? "ok" : JSON.stringify(output))}\n`
-	)
+	io.stdout(json ? prettyJSON(output) : `${String(output === undefined ? "ok" : stringifyJSON(output))}\n`)
 
 	return 0
 }
@@ -159,7 +158,7 @@ async function runBaseline(
 	const target = targets[0]
 
 	if (target !== "debt") {
-		io.stderr(`mwops health baseline: no baseline ${JSON.stringify(target ?? "")}; the one that exists is "debt"\n`)
+		io.stderr(`mwops health baseline: no baseline ${stringifyJSON(target ?? "")}; the one that exists is "debt"\n`)
 
 		return 2
 	}
@@ -168,7 +167,7 @@ async function runBaseline(
 	const written = await writeBaseline(context)
 
 	if (options.json === true) {
-		io.stdout(`${JSON.stringify(written, null, 2)}\n`)
+		io.stdout(prettyJSON(written))
 	} else {
 		for (const [name, count] of Object.entries(written.counters)) {
 			io.stdout(`${name}: ${count}\n`)
@@ -197,7 +196,7 @@ async function runFix(
 
 	if (!fix) {
 		io.stderr(
-			`mwops health fix: no fix for ${JSON.stringify(id ?? "")}; registered: ${fixes.map((entry) => entry.id).join(", ") || "(none)"}\n`
+			`mwops health fix: no fix for ${stringifyJSON(id ?? "")}; registered: ${fixes.map((entry) => entry.id).join(", ") || "(none)"}\n`
 		)
 
 		return 2
@@ -246,7 +245,7 @@ async function runFix(
 	}
 
 	if (options.json === true) {
-		io.stdout(`${JSON.stringify({ id: fix.id, dryRun, passes }, null, 2)}\n`)
+		io.stdout(prettyJSON({ id: fix.id, dryRun, passes }))
 
 		return 0
 	}
@@ -288,7 +287,7 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 
 	if (!selected.length) {
 		io.stderr(
-			`mwops health: no check ${JSON.stringify(id)}; registered: ${checks.map((c) => c.id).join(", ") || "(none)"}\n`
+			`mwops health: no check ${stringifyJSON(id)}; registered: ${checks.map((c) => c.id).join(", ") || "(none)"}\n`
 		)
 
 		return 2
@@ -304,7 +303,7 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 	}
 
 	if (options.json === true) {
-		io.stdout(`${JSON.stringify(results, null, 2)}\n`)
+		io.stdout(prettyJSON(results))
 	} else {
 		for (const result of results) {
 			io.stdout(`${result.passed ? "✓" : "✗"} ${result.id}\n`)

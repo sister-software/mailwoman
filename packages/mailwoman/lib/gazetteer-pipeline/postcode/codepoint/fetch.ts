@@ -38,6 +38,7 @@ import { APIClient } from "@mailwoman/core/api"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { prettyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 
 /**
@@ -376,7 +377,7 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 	await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
 
 	await writeLocalTextFile(
-		`${JSON.stringify({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }, null, 2)}\n`,
+		prettyJSON({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }),
 		String(join(destDir, "acquisition.json"))
 	)
 

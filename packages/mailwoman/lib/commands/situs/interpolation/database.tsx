@@ -26,6 +26,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -37,6 +38,7 @@ import { Globerator } from "spliterator/node/fs"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+
 /**
  * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
  * selects its multiplier from (`docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`). Bump
@@ -277,7 +279,7 @@ const SitusInterpolationDatabase: ParsedCommandComponent<Options> = ({ options }
 					if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
 
 					// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
-					const polyline = JSON.stringify(
+					const polyline = stringifyJSON(
 						geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
 					)
 

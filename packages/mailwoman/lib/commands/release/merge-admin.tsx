@@ -13,7 +13,7 @@
  */
 
 import { gitHead } from "@mailwoman/core/git"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
@@ -67,11 +67,11 @@ interface MergeAdminResult {
 
 async function mergeAdmin(prNumber: string, method: string): Promise<MergeAdminResult> {
 	if (!/^\d+$/.test(prNumber)) {
-		throw new CLIUsageError(`the pull request must be a number, got ${JSON.stringify(prNumber)}`)
+		throw new CLIUsageError(`the pull request must be a number, got ${stringifyJSON(prNumber)}`)
 	}
 
 	if (!MERGE_METHODS.includes(method as (typeof MERGE_METHODS)[number])) {
-		throw new CLIUsageError(`--method ${JSON.stringify(method)} is not one of ${MERGE_METHODS.join("|")}`)
+		throw new CLIUsageError(`--method ${stringifyJSON(method)} is not one of ${MERGE_METHODS.join("|")}`)
 	}
 
 	const prView = await $`gh pr view ${prNumber} --json state,title,headRefOid,files`.quiet()

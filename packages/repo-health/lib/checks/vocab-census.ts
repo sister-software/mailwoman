@@ -16,6 +16,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isProcessError, runFile } from "@mailwoman/core/process"
 import { valeCommand } from "@mailwoman/core/vale"
 import { relative, resolvePath } from "path-ts"
@@ -323,7 +324,7 @@ export const vocabCensusCheck: RepoCheck = {
 
 		const diagnostics: Diagnostic[] = counted.map((hit) => ({
 			severity: DiagnosticSeverity.Error,
-			message: `${JSON.stringify(hit.word)} (${wordFamily(hit.word)}) needs the ${hit.remedy} remedy${hit.modifier ? `; modifier ${JSON.stringify(hit.modifier)}` : ""}`,
+			message: `${stringifyJSON(hit.word)} (${wordFamily(hit.word)}) needs the ${hit.remedy} remedy${hit.modifier ? `; modifier ${stringifyJSON(hit.modifier)}` : ""}`,
 			file: hit.path,
 			line: hit.line,
 		}))

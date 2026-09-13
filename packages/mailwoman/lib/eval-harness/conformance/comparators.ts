@@ -31,6 +31,7 @@
  *   empty lookup list apart from a null one.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -473,7 +474,7 @@ export function compareOutcomes(
 		default: {
 			const unknown: never = fixture.outcomeComparator
 
-			throw new Error(`fixture "${fixture.id}": unknown outcomeComparator ${JSON.stringify(unknown)}`)
+			throw new Error(`fixture "${fixture.id}": unknown outcomeComparator ${stringifyJSON(unknown)}`)
 		}
 	}
 }

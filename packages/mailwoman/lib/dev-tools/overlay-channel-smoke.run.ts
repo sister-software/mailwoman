@@ -22,6 +22,7 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/overlay-channel-smoke.run.ts --locale en-gb [--cache-root <dir>]
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
@@ -69,9 +70,9 @@ const channels = buildSoftFeatures(text, pieces, {
 	...(cfg.suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode: true } : {}),
 })
 
-console.log(`\ninput (normalizeCase=${normalizeCase})  ${JSON.stringify(text)}`)
+console.log(`\ninput (normalizeCase=${normalizeCase})  ${stringifyJSON(text)}`)
 console.log(`pieces            ${pieces.length}`)
-console.log(`spanMode          ${JSON.stringify(cfg.postcodeAnchorSpanMode ?? null)}`)
+console.log(`spanMode          ${stringifyJSON(cfg.postcodeAnchorSpanMode ?? null)}`)
 console.log("\nchannel           lexicon?  pieces with a non-zero clue")
 
 for (const name of ["anchor", "gazetteer", "country", "streetType", "localitySurface"] as const) {

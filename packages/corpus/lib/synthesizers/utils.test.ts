@@ -5,6 +5,7 @@
  */
 
 import { BIO_LABELS, type ComponentTag } from "@mailwoman/codex/component"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	AUGMENTATIONS,
 	accentStrip,
@@ -543,7 +544,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		const out = AUGMENTATIONS[id]!(row)
 		expect(out, `${id} should apply to its fixture`).not.toBeNull()
 		const aligned = alignRow(out!)
-		expect(aligned.kind, `${id} copy should align (got ${JSON.stringify(aligned.row)})`).toBe("labeled")
+		expect(aligned.kind, `${id} copy should align (got ${stringifyJSON(aligned.row)})`).toBe("labeled")
 
 		if (aligned.kind !== "labeled") throw new Error("unreachable")
 		// Every span must address the augmented raw exactly: its slice IS the component surface.
@@ -1097,7 +1098,7 @@ describe("typoInject (#530)", () => {
 	it("the augmented row still aligns — every span addresses raw exactly (end-to-end substring contract)", () => {
 		const out = typoInject(row)!
 		const aligned = alignRow(out)
-		expect(aligned.kind, `typo'd row should align (got ${JSON.stringify(aligned.row)})`).toBe("labeled")
+		expect(aligned.kind, `typo'd row should align (got ${stringifyJSON(aligned.row)})`).toBe("labeled")
 
 		if (aligned.kind !== "labeled") throw new Error("unreachable")
 		const { raw, span_starts, span_ends, span_tags } = aligned.row

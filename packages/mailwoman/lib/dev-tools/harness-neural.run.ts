@@ -32,7 +32,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import type { ClassificationRecord } from "@mailwoman/core/types"
@@ -677,8 +677,8 @@ function printReport(results: AssertionResult[]): void {
 
 		for (const r of failures) {
 			console.log(`- \`${r.input}\` (${r.locale})`)
-			console.log(`  - expected: \`${JSON.stringify(r.expected[0])}\``)
-			console.log(`  - neural: \`${JSON.stringify(r.neural_actual)}\``)
+			console.log(`  - expected: \`${stringifyJSON(r.expected[0])}\``)
+			console.log(`  - neural: \`${stringifyJSON(r.neural_actual)}\``)
 		}
 
 		console.log("")

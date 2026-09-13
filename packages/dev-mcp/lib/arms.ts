@@ -16,6 +16,7 @@
  *   through to the shorthand, including the unknown one, which is refused by name.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { z } from "zod"
 
 import type { EngineConfig } from "#engine/registry"
@@ -146,7 +147,7 @@ const RECORDED_ARM_SCHEMA = z.object({
 	arm: z
 		.string()
 		.optional()
-		.describe(`Which side of that run to replay. Default ${JSON.stringify(DEFAULT_RECORDED_ARM)}.`),
+		.describe(`Which side of that run to replay. Default ${stringifyJSON(DEFAULT_RECORDED_ARM)}.`),
 })
 
 const WORKTREE_ARM_SCHEMA = z.object({
@@ -154,7 +155,7 @@ const WORKTREE_ARM_SCHEMA = z.object({
 	ref: z
 		.string()
 		.describe(
-			`A git ref to check out and run in its own process, or ${JSON.stringify(WORKING_TREE_REF)} for the ` +
+			`A git ref to check out and run in its own process, or ${stringifyJSON(WORKING_TREE_REF)} for the ` +
 				"UNCOMMITTED working tree. This is the only arm that can measure a SOURCE change: one process cannot hold " +
 				"two versions of a module, so a second process is not an optimization here, it is the mechanism."
 		),
@@ -180,7 +181,7 @@ export const ARM_SPEC_SCHEMA = z
 		'A mailwoman configuration ({kind:"mailwoman", config}, or the bare config as shorthand), an external endpoint ' +
 			'({kind:"external", engine, endpoint}), a reference geocoder ({kind:"oracle", provider}), a stored past run ' +
 			'({kind:"recorded", run_id}), or ANOTHER VERSION OF THE SOURCE run in its own process ' +
-			`({kind:"worktree", ref}) — ref ${JSON.stringify(WORKING_TREE_REF)} being your uncommitted edits.`
+			`({kind:"worktree", ref}) — ref ${stringifyJSON(WORKING_TREE_REF)} being your uncommitted edits.`
 	)
 
 /**
@@ -211,7 +212,7 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 		if (typeof engine !== "string" || !Object.values(ExternalEngine).includes(engine as ExternalEngine)) {
 			throw new Error(
 				`Arm ${label}: external \`engine\` must be one of ${Object.values(ExternalEngine).join(", ")}, got ` +
-					`${JSON.stringify(engine)}.`
+					`${stringifyJSON(engine)}.`
 			)
 		}
 
@@ -237,7 +238,7 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 		if (!Object.values(OracleProviderName).includes(provider as OracleProviderName)) {
 			throw new Error(
 				`Arm ${label}: oracle \`provider\` must be one of ${Object.values(OracleProviderName).join(", ")}, got ` +
-					`${JSON.stringify(provider)}.`
+					`${stringifyJSON(provider)}.`
 			)
 		}
 
@@ -269,7 +270,7 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 		if (typeof ref !== "string" || !ref.trim()) {
 			throw new Error(
 				`Arm ${label}: a worktree arm needs a \`ref\` — a git ref to check out, or ` +
-					`${JSON.stringify(WORKING_TREE_REF)} for the uncommitted working tree. There is no default, because ` +
+					`${stringifyJSON(WORKING_TREE_REF)} for the uncommitted working tree. There is no default, because ` +
 					"the two plausible ones mean opposite things: HEAD would silently discard the edits a caller is trying " +
 					"to measure."
 			)
@@ -279,7 +280,7 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 	}
 
 	throw new Error(
-		`Arm ${label}: unknown kind ${JSON.stringify(kind)}. Expected "mailwoman", "external", "oracle", "recorded" ` +
+		`Arm ${label}: unknown kind ${stringifyJSON(kind)}. Expected "mailwoman", "external", "oracle", "recorded" ` +
 			'or "worktree".'
 	)
 }

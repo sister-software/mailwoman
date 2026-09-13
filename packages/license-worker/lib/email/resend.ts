@@ -7,6 +7,8 @@
  *   the invoice id, so a retried send is one message.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import type { EmailProvider } from "#email/provider"
 import { licenseEmailSubject, renderLicenseEmail, renderLicenseEmailHTML } from "#email/render"
 import type { LicenseWorkerEnv } from "#env"
@@ -23,7 +25,7 @@ export function resendProvider(env: LicenseWorkerEnv): EmailProvider {
 					"content-type": "application/json",
 					"idempotency-key": idempotencyKey,
 				},
-				body: JSON.stringify({
+				body: stringifyJSON({
 					from: env.EMAIL_FROM,
 					to: [message.to],
 					subject: licenseEmailSubject(message),

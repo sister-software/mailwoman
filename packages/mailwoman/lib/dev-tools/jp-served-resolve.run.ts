@@ -18,6 +18,7 @@
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/random"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -114,7 +115,7 @@ async function main(): Promise<void> {
 			console.log(`TRACE ${row.raw}`)
 
 			for (const record of traces) {
-				console.log(`  ${JSON.stringify(record).slice(0, 600)}`)
+				console.log(`  ${stringifyJSON(record).slice(0, 600)}`)
 			}
 		}
 

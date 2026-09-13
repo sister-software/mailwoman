@@ -29,6 +29,7 @@
  *   the whole chain corpus-attested rather than merely self-consistent.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 import {
@@ -323,8 +324,8 @@ export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): s
 
 			if (!classifyRefinementStep(fixture.base, fixture.variant)) {
 				fixtureProblems.push(
-					`${label}: base is not a named coarsening of variant — ${JSON.stringify(fixture.base)} is not what any of ` +
-						`${REFINEMENT_STEPS.join(" / ")} produces from ${JSON.stringify(fixture.variant)}, so the pair's direction ` +
+					`${label}: base is not a named coarsening of variant — ${stringifyJSON(fixture.base)} is not what any of ` +
+						`${REFINEMENT_STEPS.join(" / ")} produces from ${stringifyJSON(fixture.variant)}, so the pair's direction ` +
 						`is not reproducible from its own name`
 				)
 			}
@@ -349,7 +350,7 @@ export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): s
 			)
 		}
 
-		const contexts = new Set(group.map((fixture) => JSON.stringify(fixture.context ?? null)))
+		const contexts = new Set(group.map((fixture) => stringifyJSON(fixture.context ?? null)))
 
 		if (contexts.size > 1) {
 			problems.push(

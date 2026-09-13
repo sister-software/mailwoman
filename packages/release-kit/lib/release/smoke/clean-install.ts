@@ -13,7 +13,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { join, resolvePath as resolve } from "path-ts"
@@ -306,7 +306,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 
 	const send = (obj: unknown) => {
 		if (!child.stdin.destroyed) {
-			child.stdin.write(`${JSON.stringify(obj)}\n`)
+			child.stdin.write(`${stringifyJSON(obj)}\n`)
 		}
 	}
 
@@ -324,19 +324,19 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 
 		const initResp = await waitFor(1)
 
-		if (initResp.error) throw new Error(`initialize failed: ${JSON.stringify(initResp.error)}`)
+		if (initResp.error) throw new Error(`initialize failed: ${stringifyJSON(initResp.error)}`)
 
 		send({ jsonrpc: "2.0", method: "notifications/initialized" })
 		send({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} })
 		const listResp = await waitFor(2)
 
-		if (listResp.error) throw new Error(`tools/list failed: ${JSON.stringify(listResp.error)}`)
+		if (listResp.error) throw new Error(`tools/list failed: ${stringifyJSON(listResp.error)}`)
 		const tools = listResp.result?.tools ?? []
 
 		const names = tools.map((t) => (t as { name?: string }).name ?? "?").toSorted()
 		const expected = MCP_EXPECTED_TOOLS.toSorted()
 
-		if (JSON.stringify(names) !== JSON.stringify(expected)) {
+		if (stringifyJSON(names) !== stringifyJSON(expected)) {
 			const missing = expected.filter((n) => !names.includes(n))
 			const surplus = names.filter((n) => !expected.includes(n))
 

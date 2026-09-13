@@ -15,6 +15,7 @@
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 
 // Merge: rich surface forms where the codex curates them, else the canonical English name for every
@@ -34,15 +35,11 @@ for (const [iso2, name] of ISO2_TO_NAME) {
 const out = repoRootPath("corpus-python", "src", "mailwoman_train", "data", "country-surfaces.json")
 
 await writeLocalTextFile(
-	JSON.stringify(
-		{
-			_generated:
-				"packages/mailwoman/lib/dev-tools/codex/export-country-surfaces.ts from @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME",
-			surfaces,
-		},
-		null,
-		2
-	) + "\n",
+	prettyJSON({
+		_generated:
+			"packages/mailwoman/lib/dev-tools/codex/export-country-surfaces.ts from @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME",
+		surfaces,
+	}),
 	out
 )
 

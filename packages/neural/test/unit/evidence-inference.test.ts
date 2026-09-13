@@ -16,6 +16,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { buildGazetteerFeatures, parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
@@ -50,7 +51,7 @@ describe("evidence-channel painter parity (TS ↔ corpus-python)", () => {
 	})
 
 	for (const c of fixture.cases) {
-		it(`paints ${JSON.stringify(c.raw)} identically on both channels`, () => {
+		it(`paints ${stringifyJSON(c.raw)} identically on both channels`, () => {
 			const pieces = toPieces(c)
 			const s = buildGazetteerFeatures(c.raw, pieces, street)
 			const l = buildGazetteerFeatures(c.raw, pieces, locality)

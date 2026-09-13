@@ -154,6 +154,7 @@
  *   invisible to the inferred pass — a real, documented gap, not an oversight.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { cluster, exactKey, scorePair, type ScoredLink } from "@mailwoman/match"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import { buildDefaultModel, resolveEntities, type SourceRecord } from "@mailwoman/registry"
@@ -670,7 +671,7 @@ export async function clusterInferredLinks(
 						valid_from: validFrom,
 						valid_to: null,
 						match_score: entity.cohesion,
-						evidence: JSON.stringify({ memberNodeIDs }),
+						evidence: stringifyJSON({ memberNodeIDs }),
 					})
 					// Both the same-vintage-rebuild and earlier-vintage-supersession cases are handled ABOVE, before
 					// this loop runs (see the module docstring's "cross-vintage supersession" section), so this

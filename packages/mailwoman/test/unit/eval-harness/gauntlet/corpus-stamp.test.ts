@@ -13,6 +13,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build/regression-db"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
@@ -34,7 +35,7 @@ afterEach(async () => {
 })
 
 function row(id: string, input: string): string {
-	return JSON.stringify({
+	return stringifyJSON({
 		id,
 		input,
 		source: "manual",

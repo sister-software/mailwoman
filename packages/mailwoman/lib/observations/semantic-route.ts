@@ -76,6 +76,7 @@ import {
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
 } from "@mailwoman/activity-lexicon"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import type {
 	CompiledGeographicModel,
@@ -312,7 +313,7 @@ function auditRoute(
 
 		if (!concept) {
 			problems.push(
-				`phrase ${JSON.stringify(entry.phrase)} names activity ${JSON.stringify(entry.activity)}, which the compiled model does not carry`
+				`phrase ${stringifyJSON(entry.phrase)} names activity ${stringifyJSON(entry.activity)}, which the compiled model does not carry`
 			)
 
 			continue
@@ -320,7 +321,7 @@ function auditRoute(
 
 		if (String(concept.kind) !== "activity") {
 			problems.push(
-				`phrase ${JSON.stringify(entry.phrase)} names ${JSON.stringify(entry.activity)}, whose concept kind is ${JSON.stringify(String(concept.kind))} rather than \`activity\``
+				`phrase ${stringifyJSON(entry.phrase)} names ${stringifyJSON(entry.activity)}, whose concept kind is ${stringifyJSON(String(concept.kind))} rather than \`activity\``
 			)
 
 			continue
@@ -328,7 +329,7 @@ function auditRoute(
 
 		if (!reached.length) {
 			problems.push(
-				`phrase ${JSON.stringify(entry.phrase)} names activity ${JSON.stringify(entry.activity)}, which no concept both affords and maps into \`${POI_TAXONOMY_VOCABULARY}\` — the phrase would match and answer nothing`
+				`phrase ${stringifyJSON(entry.phrase)} names activity ${stringifyJSON(entry.activity)}, which no concept both affords and maps into \`${POI_TAXONOMY_VOCABULARY}\` — the phrase would match and answer nothing`
 			)
 		}
 	}

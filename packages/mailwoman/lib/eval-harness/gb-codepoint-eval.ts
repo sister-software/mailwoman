@@ -32,6 +32,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
@@ -199,7 +200,7 @@ for (const locale of ["en-US", "en-GB"]) {
 
 const outPath = values.out ?? String(dataRootPath("eval", `gb-codepoint-${values.stamp}-seed${seed}.jsonl`))
 
-await writeLocalTextFile(results.map((r) => JSON.stringify(r)).join("\n") + "\n", outPath)
+await writeLocalTextFile(results.map((r) => stringifyJSON(r)).join("\n") + "\n", outPath)
 
 for (const locale of ["en-US", "en-GB"]) {
 	console.log(`\n=== ${locale} ===`)

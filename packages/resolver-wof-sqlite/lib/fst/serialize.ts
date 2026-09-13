@@ -33,7 +33,7 @@
  *   V4-and-below artifact as format-stale for exactly this reason: its single float is unattributable.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 
 import {
 	EDGE_ENTRY_SIZE,
@@ -120,7 +120,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const stateTableSize = nodes.length * WIDE_STATE_ENTRY_SIZE
 	const edgeTableSize = totalEdges * EDGE_ENTRY_SIZE
 	const placeTableSize = totalPlaces * SPLIT_PLACE_ENTRY_SIZE
-	const provenanceJson = provenance ? Buffer.from(JSON.stringify(provenance), "utf8") : null
+	const provenanceJson = provenance ? Buffer.from(stringifyJSON(provenance), "utf8") : null
 	const provenanceSize = provenanceJson ? 4 + provenanceJson.length : 0
 	const binarySize = HEADER_SIZE + stringTableSize + stateTableSize + edgeTableSize + placeTableSize
 	const totalSize = binarySize + provenanceSize

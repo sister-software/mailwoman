@@ -13,6 +13,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwoman/release-kit"
 import Stripe from "stripe"
@@ -66,7 +67,7 @@ async function recordShopIDs(mode: ShopMode, report: ProvisionReport): Promise<s
 		...(report.portal.url ? { portalURL: report.portal.url } : {}),
 	})
 
-	if (JSON.stringify(next) === JSON.stringify(current)) return undefined
+	if (stringifyJSON(next) === stringifyJSON(current)) return undefined
 
 	await writeLocalJSONFile(next, idsPath)
 

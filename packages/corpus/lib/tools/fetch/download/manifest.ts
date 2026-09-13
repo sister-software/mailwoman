@@ -8,7 +8,7 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 
 import { HTTPStatusError, type SourceManifest } from "#tools/fetch/download/network"
 
@@ -43,7 +43,7 @@ export async function loadManifestEntries<T>(path: string, key: (entry: T) => st
  * Write a MANIFEST.json in the house shape: pretty-printed, trailing newline.
  */
 export async function writeManifest(path: string, manifest: unknown): Promise<void> {
-	await writeLocalTextFile(JSON.stringify(manifest, null, 2) + "\n", path)
+	await writeLocalTextFile(prettyJSON(manifest), path)
 }
 
 /**

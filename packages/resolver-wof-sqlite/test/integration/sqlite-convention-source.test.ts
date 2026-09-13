@@ -1,3 +1,4 @@
+import { stringifyJSON } from "@mailwoman/core/json"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { SqliteConventionSource } from "@mailwoman/resolver-wof-sqlite/sqlite-convention-source"
@@ -44,7 +45,7 @@ function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []
 	const ins = db.prepare(`INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)`)
 
 	for (const c of conventions) {
-		ins.run(c.wof_id, JSON.stringify(c.convention), "test")
+		ins.run(c.wof_id, stringifyJSON(c.convention), "test")
 	}
 
 	return db

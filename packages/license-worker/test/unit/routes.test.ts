@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { createLicenseWorkerApp } from "@mailwoman/license-worker/app"
 import { readEnv } from "@mailwoman/license-worker/env"
 import { openLedger } from "@mailwoman/license-worker/ledger/client"
@@ -116,7 +117,7 @@ async function app(suffix: string, options: { issuance?: boolean; signing?: "ok"
 		return hono.request(path, {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify(body),
+			body: stringifyJSON(body),
 		})
 	}
 

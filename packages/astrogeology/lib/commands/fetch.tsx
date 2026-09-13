@@ -8,6 +8,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
@@ -39,7 +40,7 @@ function parseKinds(value: string | undefined): readonly PlanetarySourceKind[] {
 
 	if (KINDS.includes(value as PlanetarySourceKind)) return [value as PlanetarySourceKind]
 
-	throw new CommandError(`--kind must be one of ${KINDS.join(", ")}, got ${JSON.stringify(value)}`)
+	throw new CommandError(`--kind must be one of ${KINDS.join(", ")}, got ${stringifyJSON(value)}`)
 }
 
 async function fetchSources(options: Options, report: (line: string) => void): Promise<string> {

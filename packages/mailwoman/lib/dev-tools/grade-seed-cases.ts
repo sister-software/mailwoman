@@ -14,6 +14,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
 import {
@@ -84,7 +85,7 @@ export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBu
 	const lines = sorted.map((seed) => {
 		const canonical = canonicalizeSeedCase(seed)
 
-		return JSON.stringify(canonical, [...SEED_CASE_KEY_ORDER, ...Object.keys(canonical.expectComponents ?? {})])
+		return stringifyJSON(canonical, [...SEED_CASE_KEY_ORDER, ...Object.keys(canonical.expectComponents ?? {})])
 	})
 
 	await writeLocalTextFile(lines.join("\n") + "\n", path)

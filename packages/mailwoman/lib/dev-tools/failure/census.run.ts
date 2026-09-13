@@ -8,6 +8,7 @@ import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/failure/census.run.ts`
  */
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"
@@ -77,7 +78,7 @@ for await (const fixture of JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXT
 		const got = foldCaseWhitespace(STREET_FAMILY_TAGS.flatMap((t) => byTag.get(t) ?? []).join(" "))
 
 		if (got !== gold) {
-			const sample = `[${fixture.country}] ${JSON.stringify(fixture.input)} gold=${JSON.stringify(gold)} got=${JSON.stringify(got)}`
+			const sample = `[${fixture.country}] ${stringifyJSON(fixture.input)} gold=${stringifyJSON(gold)} got=${stringifyJSON(got)}`
 			const goldHasDiacritic = /\P{ASCII}/u.test(gold)
 
 			if (got === "") {
@@ -107,7 +108,7 @@ for await (const fixture of JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXT
 		const got = foldCaseWhitespace((byTag.get("house_number") ?? []).join(" "))
 
 		if (got !== gold) {
-			const sample = `[${fixture.country}] ${JSON.stringify(fixture.input)} gold=${JSON.stringify(gold)} got=${JSON.stringify(got)}`
+			const sample = `[${fixture.country}] ${stringifyJSON(fixture.input)} gold=${stringifyJSON(gold)} got=${stringifyJSON(got)}`
 
 			if (got === "") {
 				put(hnBuckets, "empty (number went elsewhere)", sample)

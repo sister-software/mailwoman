@@ -1,3 +1,5 @@
+import { prettyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -39,5 +41,5 @@ export function commitURL(commit: BuildInfo["commit"]): string {
 }
 
 export function renderBuildInfo(info: BuildInfo): string {
-	return `${JSON.stringify(info, null, "\t")}\n`
+	return prettyJSON(info)
 }

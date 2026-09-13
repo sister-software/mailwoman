@@ -10,7 +10,7 @@
 
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 
-import { parseJSONStrict } from "#json"
+import { parseJSONStrict, stringifyJSON } from "#json"
 import { LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
 import { assertAdmissibleLicenseExpression } from "#license/obligations"
 
@@ -86,7 +86,7 @@ function assertCoverageCellInvariants(cell: CoverageCell): void {
 	}
 
 	if (cell.basis !== undefined && !BASES.has(cell.basis)) {
-		throw new Error(`layer coverage: unknown basis ${JSON.stringify(cell.basis)}`)
+		throw new Error(`layer coverage: unknown basis ${stringifyJSON(cell.basis)}`)
 	}
 
 	if (!Number.isSafeInteger(cell.observedRows) || cell.observedRows < 0) {
@@ -107,11 +107,11 @@ function assertManifestInvariants(
 	assertAdmissibleLicenseExpression(manifest.license, "layer manifest")
 
 	if (!TIERS.has(manifest.tier)) {
-		throw new Error(`layer manifest: unknown tier ${JSON.stringify(manifest.tier)}`)
+		throw new Error(`layer manifest: unknown tier ${stringifyJSON(manifest.tier)}`)
 	}
 
 	if (!POLICIES.has(manifest.freshnessPolicy)) {
-		throw new Error(`layer manifest: unknown freshness_policy ${JSON.stringify(manifest.freshnessPolicy)}`)
+		throw new Error(`layer manifest: unknown freshness_policy ${stringifyJSON(manifest.freshnessPolicy)}`)
 	}
 
 	if (
@@ -231,7 +231,7 @@ export function parseManifestRows(
 
 	if (String(row.name) !== expectedName) {
 		throw new Error(
-			`${context} is layer ${JSON.stringify(row.name)}, not ${JSON.stringify(expectedName)} — one publisher, one product, one vocabulary per artifact`
+			`${context} is layer ${stringifyJSON(row.name)}, not ${stringifyJSON(expectedName)} — one publisher, one product, one vocabulary per artifact`
 		)
 	}
 
@@ -266,7 +266,7 @@ export function assertCoverageLicensesNoExclusion(
 
 		if (supportsExclusion({ basis })) {
 			throw new Error(
-				`${context} carries a coverage row on basis ${JSON.stringify(basis)}, which supports an EXCLUSION. ` +
+				`${context} carries a coverage row on basis ${stringifyJSON(basis)}, which supports an EXCLUSION. ` +
 					`${reason} Until a mapped-footprint source is settled, every row must read ${CoverageBasis.SourcePresent}`
 			)
 		}
@@ -355,7 +355,7 @@ export async function writeLayerManifest(db: LayerContractHandle, manifest: Laye
 			build_cmd: manifest.buildCmd,
 			build_sha: manifest.buildSHA,
 			freshness_policy: manifest.freshnessPolicy,
-			spine_keys: JSON.stringify(manifest.spineKeys),
+			spine_keys: stringifyJSON(manifest.spineKeys),
 			created_at: manifest.createdAt,
 		})
 		.execute()

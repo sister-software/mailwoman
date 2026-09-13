@@ -11,6 +11,7 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isoSeconds } from "@mailwoman/core/utils"
 
 import type { BuildableBodyID } from "#bodies"
@@ -35,7 +36,7 @@ export interface EmitManifestOptions {
  * One tool invocation as the manifest records it: the argument vector joined the way a shell would show it.
  */
 export function formatTransformation(command: readonly string[]): string {
-	return command.map((argument) => (/[\s"']/u.test(argument) ? JSON.stringify(argument) : argument)).join(" ")
+	return command.map((argument) => (/[\s"']/u.test(argument) ? stringifyJSON(argument) : argument)).join(" ")
 }
 
 /**

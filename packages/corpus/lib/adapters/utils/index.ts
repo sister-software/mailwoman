@@ -27,6 +27,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex, createHash, type Hash } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { TextSpliterator } from "spliterator"
@@ -71,7 +72,7 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 
 	register(adapter: CorpusAdapter): void {
 		if (this.#byID.has(adapter.id)) {
-			throw new Error(`AdapterRegistry: id ${JSON.stringify(adapter.id)} already registered`)
+			throw new Error(`AdapterRegistry: id ${stringifyJSON(adapter.id)} already registered`)
 		}
 
 		this.#byID.set(adapter.id, adapter)

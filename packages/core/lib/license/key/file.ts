@@ -14,6 +14,7 @@ import { configRootPath } from "#data-root"
 import { $public } from "#env"
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "#fs/readers"
 import { writeLocalTextFile, writePrivateTextFile } from "#fs/writers"
+import { prettyJSON } from "#json"
 
 const LICENSE_KEY_FILE = "key"
 const LICENSE_REFRESH_FILE = "refresh.json"
@@ -85,7 +86,7 @@ export async function readRefreshCredentials(): Promise<RefreshCredentials | und
 export async function writeRefreshCredentials(credentials: RefreshCredentials): Promise<string> {
 	const path = licenseRefreshFilePath()
 
-	await writePrivateTextFile(`${JSON.stringify(credentials, null, "\t")}\n`, path)
+	await writePrivateTextFile(prettyJSON(credentials), path)
 
 	return path
 }

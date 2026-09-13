@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
+
 import { CloudflareWorkerPMTiles } from "#protomaps/index"
 import { WorkerRoute } from "#routing"
 
@@ -12,15 +14,11 @@ import { WorkerRoute } from "#routing"
  */
 export const HomeRoute = WorkerRoute.GET("/", () => {
 	return new Response(
-		JSON.stringify(
-			{
-				id: "nexus-api",
-				timestamp: new Date().toISOString(),
-				count: CloudflareWorkerPMTiles.SharedResolvedValueCache.counter,
-			},
-			null,
-			"\t"
-		),
+		prettyJSON({
+			id: "nexus-api",
+			timestamp: new Date().toISOString(),
+			count: CloudflareWorkerPMTiles.SharedResolvedValueCache.counter,
+		}),
 		{
 			headers: {
 				"Content-Type": "application/json",

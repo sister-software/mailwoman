@@ -12,6 +12,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -23,7 +24,7 @@ const ROOT = await temporaryDirectory("mw-ingest-wof-")
 const DATA_DIR = ROOT.resolve("whosonfirst-data-admin-xx", "data", "000", "000")
 
 function feature(id: number, props: Record<string, unknown>): string {
-	return JSON.stringify({
+	return stringifyJSON({
 		type: "Feature",
 		properties: {
 			"wof:id": id,

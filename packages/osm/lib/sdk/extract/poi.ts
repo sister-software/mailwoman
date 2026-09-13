@@ -45,6 +45,7 @@
  *   before the rows reach `buildPOIDatabase`.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 import { representativePoint } from "#sdk/representative-point"
@@ -125,7 +126,7 @@ export function tagRuleFromOSMTag(categoryID: string, osmTag: string): OSMPOITag
 	const parts = osmTag.split("=")
 
 	if (parts.length !== 2 || !parts[0] || !parts[1]) {
-		throw new Error(`tagRuleFromOSMTag: malformed osmTag ${JSON.stringify(osmTag)} — expected key=value`)
+		throw new Error(`tagRuleFromOSMTag: malformed osmTag ${stringifyJSON(osmTag)} — expected key=value`)
 	}
 
 	return { categoryID, all: [[parts[0], parts[1]]] }

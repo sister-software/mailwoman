@@ -37,6 +37,7 @@ import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-
 import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
+import { stringifyJSON } from "#json"
 import { dataRootPath } from "#utils"
 
 interface OaTestRow {
@@ -217,7 +218,7 @@ export async function buildOutlierOA(
 	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 
 	await writeLocalTextFile(
-		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
+		testRows.map((r) => stringifyJSON(r)).join("\n") + "\n",
 		resolvePath(dataDir, "test-latin-offmap-oa.jsonl")
 	)
 

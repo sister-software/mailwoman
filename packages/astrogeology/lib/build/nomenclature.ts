@@ -15,6 +15,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -100,11 +101,11 @@ export const NOMENCLATURE_LAYER = "nomenclature"
 export function nomenclatureNDJSONLine(feature: PlanetaryNomenclatureFeature): string {
 	const { centerLon, centerLat, ...properties } = feature
 
-	return JSON.stringify({
+	return stringifyJSON({
 		type: "Feature",
 		tippecanoe: { layer: NOMENCLATURE_LAYER, minzoom: minZoomForDiameter(feature.diameterKm) },
 		geometry: { type: "Point", coordinates: [centerLon, centerLat] },
-		properties: { ...properties, bbox: properties.bbox ? JSON.stringify(properties.bbox) : undefined },
+		properties: { ...properties, bbox: properties.bbox ? stringifyJSON(properties.bbox) : undefined },
 	})
 }
 

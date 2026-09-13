@@ -20,6 +20,7 @@
  *   concurrent writer and no locking to reason about.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	addCoverageCells,
 	encodeRings,
@@ -107,7 +108,7 @@ export async function ingestFloodChunk(
 		for await (const feature of options.source.features()) {
 			if (!EA_FLOOD_ZONE_CODES.has(feature.zoneCode)) {
 				throw new Error(
-					`flood build: feature ${feature.areaID} carries zone code ${JSON.stringify(feature.zoneCode)}, which is not in the authority's declared domain (${[...EA_FLOOD_ZONE_CODES].join(", ")}) — an unknown code is a source-schema change, and coercing it would turn "the source changed" into "there is nothing here"`
+					`flood build: feature ${feature.areaID} carries zone code ${stringifyJSON(feature.zoneCode)}, which is not in the authority's declared domain (${[...EA_FLOOD_ZONE_CODES].join(", ")}) — an unknown code is a source-schema change, and coercing it would turn "the source changed" into "there is nothing here"`
 				)
 			}
 

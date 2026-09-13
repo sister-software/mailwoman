@@ -40,6 +40,7 @@ import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer, writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
 import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
@@ -347,7 +348,7 @@ async function writeStagedParquet(stagePath: string, outputPath: string): Promis
 }
 
 async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void> {
-	if (!stage.write(JSON.stringify(row) + "\n")) {
+	if (!stage.write(stringifyJSON(row) + "\n")) {
 		await once(stage, "drain")
 	}
 }

@@ -39,6 +39,7 @@ import {
 	NAME_PRONE_US_SUFFIXES,
 } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
@@ -514,7 +515,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(JSON.stringify({ raw, components, country: "US" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "US" }) + "\n")
 
 				emitted++
 
@@ -540,7 +541,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: "affix", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "affix", synth_base_id: null }) + "\n")
 
 			emitted++
 		}
@@ -586,7 +587,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 				const locale = `${t.iso2.toLowerCase()}-${t.iso2}`
 
 				if (opts.golden) {
-					write(JSON.stringify({ raw, components, country: t.iso2 }) + "\n")
+					write(stringifyJSON({ raw, components, country: t.iso2 }) + "\n")
 
 					balanceEmitted++
 
@@ -612,7 +613,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 					continue
 				}
 
-				write(JSON.stringify({ ...aligned.row, synth_method: "affix-balance", synth_base_id: null }) + "\n")
+				write(stringifyJSON({ ...aligned.row, synth_method: "affix-balance", synth_base_id: null }) + "\n")
 
 				balanceEmitted++
 			}
@@ -620,10 +621,10 @@ export const streetAffixRecipe: CorpusRecipe = {
 
 		console.error(
 			`Done: emitted ${emitted} affix rows, skipped ${skipped}, no-affix ${noAffix} (pool ${pool.length}).\n` +
-				`  formats: ${JSON.stringify(formatCounts)}\n` +
-				`  affix mix: ${JSON.stringify(affixCounts)}` +
+				`  formats: ${stringifyJSON(formatCounts)}\n` +
+				`  affix mix: ${stringifyJSON(affixCounts)}` +
 				(multilocaleCount > 0
-					? `\n  balance: emitted ${balanceEmitted}, skipped ${balanceSkipped}, iso ${JSON.stringify(balanceISO)}`
+					? `\n  balance: emitted ${balanceEmitted}, skipped ${balanceSkipped}, iso ${stringifyJSON(balanceISO)}`
 					: "")
 		)
 
@@ -736,7 +737,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 				return false
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: method, synth_base_id: base.base_source_id }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: method, synth_base_id: base.base_source_id }) + "\n")
 
 			classCounts[rowClass]++
 			formatCounts[fmt] = (formatCounts[fmt] ?? 0) + 1
@@ -795,11 +796,11 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 		}
 
 		console.error(
-			`Done: emitted ${emitted}, skipped ${skipped}; source pools ${JSON.stringify({
+			`Done: emitted ${emitted}, skipped ${skipped}; source pools ${stringifyJSON({
 				terminalOnly: pool["terminal-only"].length,
 				terminalContrast: pool["terminal-contrast"].length,
-			})}; classes ${JSON.stringify(classCounts)}; stem pairs ${stemPairs}; ` +
-				`venue pool ${venuePool.length}; formats ${JSON.stringify(formatCounts)}`
+			})}; classes ${stringifyJSON(classCounts)}; stem pairs ${stemPairs}; ` +
+				`venue pool ${venuePool.length}; formats ${stringifyJSON(formatCounts)}`
 		)
 
 		return { emitted, skipped }

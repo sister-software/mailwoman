@@ -20,6 +20,7 @@
  */
 
 import type { APIClientConfig } from "#api/APIClient"
+import { stringifyJSON } from "#json"
 
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
@@ -159,7 +160,7 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 			data:
 				typeof outcome.body === "string" || Buffer.isBuffer(outcome.body)
 					? outcome.body
-					: JSON.stringify(outcome.body ?? defaultBody),
+					: stringifyJSON(outcome.body ?? defaultBody),
 			status,
 			statusText: outcome.statusText ?? "OK",
 			headers: outcome.headers ?? {},

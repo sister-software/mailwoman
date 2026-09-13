@@ -31,6 +31,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { join } from "path-ts"
@@ -185,7 +186,7 @@ export function renderDefault(value: unknown): string {
 		return value === "" ? '`""`' : `\`${value}\``
 	}
 
-	if (Array.isArray(value)) return `\`${JSON.stringify(value)}\``
+	if (Array.isArray(value)) return `\`${stringifyJSON(value)}\``
 
 	return `\`${String(value)}\``
 }

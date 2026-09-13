@@ -36,7 +36,7 @@
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { pyRound } from "@mailwoman/core/numeric"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
@@ -209,7 +209,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 			.map((c) => {
 				const s = summary.get(c)!
 
-				return `${JSON.stringify(c)}: {"containing": ${s.containing}, "rows": ${s.rows}}`
+				return `${stringifyJSON(c)}: {"containing": ${s.containing}, "rows": ${s.rows}}`
 			})
 			.join(", ") +
 		"}"

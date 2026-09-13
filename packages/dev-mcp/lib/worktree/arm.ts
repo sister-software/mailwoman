@@ -35,7 +35,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
@@ -275,7 +275,7 @@ export async function runWorktreeArm(args: {
 	try {
 		const stdout = runFileSync(process.execPath, [runnerPath], {
 			cwd: worktree,
-			input: JSON.stringify({ inputs, options }),
+			input: stringifyJSON({ inputs, options }),
 			encoding: "utf8",
 			// A full board through a cold engine is minutes, and the payload is megabytes; both defaults are far
 			// too small and both failures look like a crash rather than a limit.

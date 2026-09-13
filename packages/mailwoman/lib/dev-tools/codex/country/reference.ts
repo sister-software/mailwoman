@@ -16,6 +16,7 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
@@ -82,7 +83,7 @@ function callingCode(country: MledozeCountry): number | undefined {
 }
 
 const serialize = (o: CountryReferenceEntry): string =>
-	JSON.stringify(o, null, 0)
+	prettyJSON(o)
 		.replaceAll('"isoCode"', "isoCode")
 		.replaceAll('"callingCode"', "callingCode")
 		.replaceAll('"currency"', "currency")

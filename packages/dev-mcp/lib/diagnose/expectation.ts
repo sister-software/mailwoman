@@ -4,6 +4,7 @@
  * @file Diagnosed-row expectation grading.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
@@ -50,7 +51,7 @@ export function expectationCase(
 			address_kind: item.addressKind ?? "unknown",
 			country: item.country ?? "",
 			status: "pass",
-			expect_components: item.expectComponents ? JSON.stringify(item.expectComponents) : null,
+			expect_components: item.expectComponents ? stringifyJSON(item.expectComponents) : null,
 			expect_component_renderings: null,
 			expect_place_id: null,
 			expect_place_name: null,

@@ -39,6 +39,7 @@
  *   else under its own name.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 import {
@@ -374,7 +375,7 @@ export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): 
 				`${label}: variant is not a named punctuation transformation of base — ` +
 					(punctuationBlindKey(fixture.base) === punctuationBlindKey(fixture.variant)
 						? `the pair differs by punctuation but by no member of ${PUNCTUATION_TRANSFORMATIONS.join(" / ")}, so the change is not reproducible from its own name`
-						: `the pair differs by more than punctuation (blind keys ${JSON.stringify(punctuationBlindKey(fixture.base))} ≠ ${JSON.stringify(punctuationBlindKey(fixture.variant))}), which is a different law`)
+						: `the pair differs by more than punctuation (blind keys ${stringifyJSON(punctuationBlindKey(fixture.base))} ≠ ${stringifyJSON(punctuationBlindKey(fixture.variant))}), which is a different law`)
 			)
 
 			return

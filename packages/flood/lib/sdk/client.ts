@@ -30,6 +30,7 @@ import {
 	type CKANPackageRecord,
 } from "@mailwoman/core/api"
 import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { EA_FLOOD_DATASET_ID, EA_FLOOD_LAYER } from "#vocabulary"
 
@@ -221,14 +222,14 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 
 		if (features.length !== 1) {
 			throw new Error(
-				`flood client: the ONS boundary service returned ${features.length} features for ${JSON.stringify(countryName)}, expected exactly 1`
+				`flood client: the ONS boundary service returned ${features.length} features for ${stringifyJSON(countryName)}, expected exactly 1`
 			)
 		}
 
 		const feature = features[0]!
 
 		if (!feature.geometry) {
-			throw new Error(`flood client: the ONS boundary feature for ${JSON.stringify(countryName)} carries no geometry`)
+			throw new Error(`flood client: the ONS boundary feature for ${stringifyJSON(countryName)} carries no geometry`)
 		}
 
 		return {

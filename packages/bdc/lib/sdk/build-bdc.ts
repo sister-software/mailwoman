@@ -52,6 +52,7 @@
 
 import { pathExists, readFileRange } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -289,7 +290,7 @@ export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID 
 
 	if (!Number.isSafeInteger(providerID)) {
 		throw new TypeError(
-			`peekProviderID: provider_id column (1) did not parse to a safe integer — got ${JSON.stringify(providerIDField)}` +
+			`peekProviderID: provider_id column (1) did not parse to a safe integer — got ${stringifyJSON(providerIDField)}` +
 				`${fileSuffix}. Refusing to silently drop this file's rows: an unguarded NaN binds to bdc_stage.provider_id ` +
 				`(INTEGER NOT NULL) as SQLite NULL, and INSERT OR IGNORE would then discard every row uncounted as ordinary dedup.`
 		)

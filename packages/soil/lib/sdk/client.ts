@@ -34,7 +34,7 @@
 import { APIClient, type APIClientConfig, type ClockLike, assertNoOGCServiceException } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 
 import { saverestToISODate } from "#sdk/tabular"
 
@@ -132,7 +132,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 
 		if (!rows.length) {
 			throw new Error(
-				`soil data access: the catalogue holds no survey area whose symbol starts with ${JSON.stringify(prefix)} — a build over an empty set would report success having written nothing`
+				`soil data access: the catalogue holds no survey area whose symbol starts with ${stringifyJSON(prefix)} — a build over an empty set would report success having written nothing`
 			)
 		}
 

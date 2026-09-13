@@ -10,6 +10,7 @@
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
@@ -86,7 +87,7 @@ for (const row of rows) {
 			entry.where.set(went, (entry.where.get(went) ?? 0) + 1)
 
 			if (entry.samples.length < MIN_REPORTABLE_SAMPLES) {
-				entry.samples.push(`${JSON.stringify(row.raw)} gold ${tag}=${JSON.stringify(gold)} -> ${went}`)
+				entry.samples.push(`${stringifyJSON(row.raw)} gold ${tag}=${stringifyJSON(gold)} -> ${went}`)
 			}
 
 			flips.set(tag, entry)

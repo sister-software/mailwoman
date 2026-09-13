@@ -44,6 +44,7 @@ import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { wordNorm, wordNormLower } from "@mailwoman/codex/normalize"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us/state"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { dirname } from "path-ts"
 
@@ -167,7 +168,7 @@ const lexicon = {
 }
 
 await makeDirectories(dirname(OUTPUT))
-await writeLocalTextFile(JSON.stringify(lexicon, null, 1) + "\n", OUTPUT)
+await writeLocalTextFile(prettyJSON(lexicon), OUTPUT)
 
 process.stderr.write(
 	`wrote ${OUTPUT}: ${entries.size} entries + ${codeEntries.size} code_entries, ` +

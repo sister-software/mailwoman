@@ -1,5 +1,6 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { resolvePath } from "path-ts"
@@ -115,5 +116,5 @@ runIfScript(import.meta, async () => {
 
 	const stats = await runPPDExtract(values.input!, values.output!)
 
-	console.log(`[ppd] ${JSON.stringify(stats)}`)
+	console.log(`[ppd] ${stringifyJSON(stats)}`)
 })

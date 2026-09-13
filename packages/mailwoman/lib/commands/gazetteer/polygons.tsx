@@ -31,6 +31,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, getRow } from "@mailwoman/core/utils"
@@ -46,6 +47,7 @@ import {
 	splitUpperList,
 	useCommandTask,
 } from "#cli-kit"
+
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
  */
@@ -269,7 +271,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 					continue
 				}
 
-				insert.run(r.id, JSON.stringify(simp))
+				insert.run(r.id, stringifyJSON(simp))
 
 				done++
 			} catch {

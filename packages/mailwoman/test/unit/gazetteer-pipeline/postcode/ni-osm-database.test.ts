@@ -19,7 +19,7 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -76,7 +76,7 @@ beforeAll(async () => {
 		],
 	}
 
-	await writeLocalTextFile(`${JSON.stringify(response)}\n`, join(sourceDir, "response.json"))
+	await writeLocalTextFile(`${stringifyJSON(response)}\n`, join(sourceDir, "response.json"))
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
@@ -192,7 +192,7 @@ test("buildPostcodeNIOSM: a response modified since acquisition is refused, not 
 	await makeDirectories(dir)
 
 	await writeLocalTextFile(
-		`${JSON.stringify({ elements: [node(1, "BT1 5GS", 54.6, -5.93)] })}\n`,
+		`${stringifyJSON({ elements: [node(1, "BT1 5GS", 54.6, -5.93)] })}\n`,
 		join(dir, "response.json")
 	)
 

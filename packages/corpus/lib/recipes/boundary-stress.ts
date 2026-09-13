@@ -12,6 +12,7 @@
  *   `synthesizeBoundaryStressRow` is NOT re-exported from the corpus index — imported directly here.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
@@ -91,7 +92,7 @@ export const boundaryStressRecipe: CorpusRecipe = {
 
 			// Match the base corpus parquet schema: flat synth_method / synth_base_id, not a nested `synth`.
 			write(
-				JSON.stringify({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }) + "\n"
+				stringifyJSON({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }) + "\n"
 			)
 
 			emitted++

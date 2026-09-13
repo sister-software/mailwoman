@@ -11,7 +11,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
@@ -291,7 +291,7 @@ export function alignAndWrite(
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 	if (!aligned.row) return false
-	write(JSON.stringify({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseID }) + "\n")
+	write(stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseID }) + "\n")
 
 	return true
 }

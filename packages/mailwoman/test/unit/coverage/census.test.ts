@@ -22,6 +22,7 @@ import {
 } from "mailwoman/coverage"
 import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { stringifyJSON } from "@mailwoman/core/json";
 
 const fixtures = new AsyncDisposableStack()
 
@@ -117,9 +118,9 @@ describe("readBoardCoverage", () => {
 
 		await writeLocalTextFile(
 			[
-				JSON.stringify({ id: "a", country: "GB", status: "pass" }),
-				JSON.stringify({ id: "b", country: "GB", status: "improvement_target" }),
-				JSON.stringify({ id: "c", country: "IE", status: "pass" }),
+				stringifyJSON({ id: "a", country: "GB", status: "pass" }),
+				stringifyJSON({ id: "b", country: "GB", status: "improvement_target" }),
+				stringifyJSON({ id: "c", country: "IE", status: "pass" }),
 			].join("\n") + "\n",
 			join(cases, "gb", "regression.jsonl")
 		)

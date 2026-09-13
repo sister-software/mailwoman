@@ -20,6 +20,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { Box, Text } from "ink"
 
 import {
@@ -65,7 +66,7 @@ const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options 
 		const pct = ((result.inserted / NI_LIVE_POSTCODES) * 100).toFixed(1)
 
 		const malformed = Object.entries(stats.malformedValues)
-			.map(([value, n]) => `${JSON.stringify(value)}×${n}`)
+			.map(([value, n]) => `${stringifyJSON(value)}×${n}`)
 			.join(", ")
 
 		return [

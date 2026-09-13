@@ -17,6 +17,8 @@ import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, wr
 
 import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
+import { prettyJSON, stringifyJSON } from "#json"
+
 // #region Directories
 
 /**
@@ -89,7 +91,7 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 	content: T,
 	...pathSegments: S
 ): Promise<void> {
-	const normalized = typeof content === "string" ? content : JSON.stringify(content, null, "\t") + "\n"
+	const normalized = typeof content === "string" ? content : prettyJSON(content)
 
 	return writeLocalTextFile(normalized, ...pathSegments)
 }
@@ -107,7 +109,7 @@ export function writeLocalJSONLFile<T, S extends PathBuilderLike[] = PathBuilder
 	rows: ReadonlyArray<T>,
 	...pathSegments: S
 ): Promise<void> {
-	return writeLocalTextFile(`${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, ...pathSegments)
+	return writeLocalTextFile(`${rows.map((row) => stringifyJSON(row)).join("\n")}\n`, ...pathSegments)
 }
 
 /**

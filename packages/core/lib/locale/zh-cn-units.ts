@@ -1,3 +1,5 @@
+import { stringifyJSON } from "#json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -109,7 +111,7 @@ export function isCNUnitChain(span: string): boolean {
  */
 export function readCNUnits(span: string): CNUnit[] {
 	if (!isCNUnitChain(span)) {
-		throw new Error(`readCNUnits: ${JSON.stringify(span)} is not an organizational-unit chain`)
+		throw new Error(`readCNUnits: ${stringifyJSON(span)} is not an organizational-unit chain`)
 	}
 
 	const units: CNUnit[] = []

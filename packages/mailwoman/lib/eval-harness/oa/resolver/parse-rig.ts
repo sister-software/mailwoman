@@ -6,6 +6,7 @@
  *   resolver, and the parse/resolve options the flags pin.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ScorerOverrides } from "@mailwoman/neural/scorer"
 import { createWOFResolver } from "@mailwoman/resolver"
 
@@ -122,7 +123,7 @@ export async function buildParseRig(
 						if (property !== "findPlace") return value.bind(target)
 
 						return async (...args: unknown[]) => {
-							const key = JSON.stringify(args[0])
+							const key = stringifyJSON(args[0])
 
 							if (lookupCensus) {
 								lookupCensus.calls++

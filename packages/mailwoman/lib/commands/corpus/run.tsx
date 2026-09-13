@@ -11,6 +11,7 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { useState } from "react"
@@ -71,7 +72,7 @@ const CorpusRun: ParsedCommandComponent<Options, [string]> = ({ options, args })
 		if (!adapter) {
 			const ids = defaultAdapterRegistry.ids()
 			const hint = !ids.length ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
-			throw new CommandError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
+			throw new CommandError(`unknown adapter id ${stringifyJSON(adapterID)}; ${hint}`)
 		}
 
 		const ac = new AbortController()

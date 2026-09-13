@@ -22,6 +22,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagedDataPath } from "@mailwoman/core/module/packaged-data"
 import { resolveLocaleScope } from "@mailwoman/variant-aliases"
 
@@ -87,7 +88,7 @@ export function auditActivityLexicon(lexicon: ActivityPhraseLexicon): string[] {
 
 	for (const entry of lexicon.phrases) {
 		const normalized = normalizeActivityPhrase(entry.phrase)
-		const named = JSON.stringify(entry.phrase)
+		const named = stringifyJSON(entry.phrase)
 
 		if (!normalized) {
 			problems.push(`phrase ${named} normalizes to nothing`)
@@ -105,7 +106,7 @@ export function auditActivityLexicon(lexicon: ActivityPhraseLexicon): string[] {
 
 		if (entry.source !== "curated") {
 			problems.push(
-				`phrase ${named} declares source ${JSON.stringify(entry.source)} — the only reviewed source is \`curated\``
+				`phrase ${named} declares source ${stringifyJSON(entry.source)} — the only reviewed source is \`curated\``
 			)
 		}
 
@@ -129,7 +130,7 @@ export function auditActivityLexicon(lexicon: ActivityPhraseLexicon): string[] {
  * The attestation half of the audit: whatever an entry's attestation points at inside this lexicon has to be there.
  */
 function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<string, ActivityPhraseEntry>): string[] {
-	const named = JSON.stringify(entry.phrase)
+	const named = stringifyJSON(entry.phrase)
 	const { attestation } = entry
 
 	switch (attestation.kind) {
@@ -139,7 +140,7 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 
 			if (query !== phrase && !query.includes(` ${phrase} `) && !query.startsWith(`${phrase} `)) {
 				return [
-					`phrase ${named} cites committed query ${JSON.stringify(attestation.detail)}, which does not contain it as a subject`,
+					`phrase ${named} cites committed query ${stringifyJSON(attestation.detail)}, which does not contain it as a subject`,
 				]
 			}
 
@@ -149,7 +150,7 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 		case "concept-description": {
 			if (attestation.reference !== entry.activity) {
 				return [
-					`phrase ${named} cites the description of ${JSON.stringify(attestation.reference)} while naming activity ${JSON.stringify(entry.activity)}`,
+					`phrase ${named} cites the description of ${stringifyJSON(attestation.reference)} while naming activity ${stringifyJSON(entry.activity)}`,
 				]
 			}
 
@@ -162,7 +163,7 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 
 			if (!base) {
 				return [
-					`phrase ${named} is attested against base ${JSON.stringify(attestation.base)}, which the lexicon does not declare`,
+					`phrase ${named} is attested against base ${stringifyJSON(attestation.base)}, which the lexicon does not declare`,
 				]
 			}
 
@@ -170,24 +171,24 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 
 			if (base.attestation.kind === "derived-form") {
 				problems.push(
-					`phrase ${named} is derived from ${JSON.stringify(attestation.base)}, which is itself derived — an attestation chain that never reaches a committed record attests nothing`
+					`phrase ${named} is derived from ${stringifyJSON(attestation.base)}, which is itself derived — an attestation chain that never reaches a committed record attests nothing`
 				)
 			}
 
 			if (base.activity !== entry.activity) {
 				problems.push(
-					`phrase ${named} names activity ${JSON.stringify(entry.activity)} while its base names ${JSON.stringify(base.activity)}`
+					`phrase ${named} names activity ${stringifyJSON(entry.activity)} while its base names ${stringifyJSON(base.activity)}`
 				)
 			}
 
 			if (attestation.kind === "derived-form") {
 				if (!DERIVATIONS.includes(attestation.derivation)) {
 					problems.push(
-						`phrase ${named} declares derivation ${JSON.stringify(attestation.derivation)}, which is not a known one`
+						`phrase ${named} declares derivation ${stringifyJSON(attestation.derivation)}, which is not a known one`
 					)
 				}
 
-				if (JSON.stringify(entry.locales ?? null) !== JSON.stringify(base.locales ?? null)) {
+				if (stringifyJSON(entry.locales ?? null) !== stringifyJSON(base.locales ?? null)) {
 					problems.push(
 						`phrase ${named} is a derived form whose locale scope differs from its base — a regular transformation does not change where a phrasing is used`
 					)

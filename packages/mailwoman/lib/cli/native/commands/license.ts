@@ -16,6 +16,7 @@
 import { configRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, writePrivateTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
 	decodeLicenseKeyPayload,
 	docsSiteURL,
@@ -149,8 +150,7 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 	const majorOption = stringValue(parsed.values, "major")
 	const major = majorOption === undefined ? await thisMajorVersion() : Number.parseInt(majorOption, 10)
 
-	if (!Number.isFinite(major))
-		throw new CLIUsageError(`--major must be an integer, got ${JSON.stringify(majorOption)}.`)
+	if (!Number.isFinite(major)) throw new CLIUsageError(`--major must be an integer, got ${stringifyJSON(majorOption)}.`)
 
 	const pair = await generateLicenseSigningKeyPair()
 	const kid = await licenseKeyID(pair.publicKeyPEM, major)
@@ -159,9 +159,7 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 	await writeLocalTextFile(pair.publicKeyPEM, publicPath)
 
 	if (booleanValue(parsed.values, "json")) {
-		process.stdout.write(
-			`${JSON.stringify({ kid, publicKeyPEM: pair.publicKeyPEM, privateKeyPath: privatePath }, null, 2)}\n`
-		)
+		process.stdout.write(prettyJSON({ kid, publicKeyPEM: pair.publicKeyPEM, privateKeyPath: privatePath }))
 	} else {
 		process.stdout.write(
 			[
@@ -233,9 +231,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 
 	const token = await encodeLicenseKey(payload, privateKeyPEM)
 
-	process.stdout.write(
-		booleanValue(parsed.values, "json") ? `${JSON.stringify({ token, payload }, null, 2)}\n` : `${token}\n`
-	)
+	process.stdout.write(booleanValue(parsed.values, "json") ? prettyJSON({ token, payload }) : `${token}\n`)
 
 	return 0
 }
@@ -292,7 +288,7 @@ async function adopt(parsed: ParsedCommand): Promise<number> {
 
 	if (booleanValue(parsed.values, "json")) {
 		process.stdout.write(
-			`${JSON.stringify({ keyPath, ...(refreshPath ? { refreshPath } : {}), payload: verification.payload }, null, 2)}\n`
+			prettyJSON({ keyPath, ...(refreshPath ? { refreshPath } : {}), payload: verification.payload })
 		)
 	} else {
 		process.stdout.write(
@@ -340,7 +336,7 @@ async function refresh(parsed: ParsedCommand): Promise<number> {
 
 		process.stdout.write(
 			json
-				? `${JSON.stringify({ ...answer, keyPath }, null, 2)}\n`
+				? prettyJSON({ ...answer, keyPath })
 				: `status: active\nexpires: ${answer.expires}\nkey written: ${keyPath}\n`
 		)
 
@@ -348,7 +344,7 @@ async function refresh(parsed: ParsedCommand): Promise<number> {
 	}
 
 	if (json) {
-		process.stdout.write(`${JSON.stringify(answer, null, 2)}\n`)
+		process.stdout.write(prettyJSON(answer))
 	}
 
 	switch (answer.status) {
@@ -392,11 +388,11 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 
 	if (booleanValue(parsed.values, "json")) {
 		process.stdout.write(
-			`${JSON.stringify(
-				{ ...verification, ...(publication ? { publication } : {}), ...(lidStatus ? { lid_status: lidStatus } : {}) },
-				null,
-				2
-			)}\n`
+			prettyJSON({
+				...verification,
+				...(publication ? { publication } : {}),
+				...(lidStatus ? { lid_status: lidStatus } : {}),
+			})
 		)
 	} else {
 		const lines = [`status: ${verification.status}`]
@@ -430,7 +426,7 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 }
 
 async function registerCommand(parsed: ParsedCommand): Promise<number> {
-	const document = `${JSON.stringify(publishedLicenseKeys(), null, "\t")}\n`
+	const document = prettyJSON(publishedLicenseKeys())
 
 	if (booleanValue(parsed.values, "write")) {
 		const target = repoRootPath("docs", "static", ".well-known", "mailwoman", "license-keys.json")
@@ -465,7 +461,7 @@ export async function run(args: readonly string[]): Promise<number> {
 				return await refresh(parsed)
 			default:
 				throw new CLIUsageError(
-					`Unknown action ${JSON.stringify(action)}. Expected keygen, issue, verify, register, adopt or refresh.`
+					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, verify, register, adopt or refresh.`
 				)
 		}
 	})

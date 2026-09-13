@@ -27,6 +27,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
@@ -474,7 +475,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 			const localeTag = rowISO2 === "US" ? "en-US" : `${rowISO2.toLowerCase()}-${rowISO2}`
 
 			if (opts.golden) {
-				write(JSON.stringify({ raw, components, country: rowISO2 }) + "\n")
+				write(stringifyJSON({ raw, components, country: rowISO2 }) + "\n")
 
 				emitted++
 
@@ -500,7 +501,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: "country", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "country", synth_base_id: null }) + "\n")
 
 			emitted++
 		}

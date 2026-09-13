@@ -15,6 +15,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
@@ -35,7 +36,7 @@ export function preregistrationPath(directory: string, name: string): string {
  * past it. Array order is meaningful — row order is reported order — so it is never sorted.
  */
 export function canonicalJSON(value: unknown): string {
-	if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null"
+	if (value === null || typeof value !== "object") return stringifyJSON(value) ?? "null"
 
 	if (Array.isArray(value)) return `[${value.map((entry) => canonicalJSON(entry)).join(",")}]`
 
@@ -43,7 +44,7 @@ export function canonicalJSON(value: unknown): string {
 		.filter(([, entryValue]) => entryValue !== undefined)
 		.toSorted(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
 
-	return `{${entries.map(([key, entryValue]) => `${JSON.stringify(key)}:${canonicalJSON(entryValue)}`).join(",")}}`
+	return `{${entries.map(([key, entryValue]) => `${stringifyJSON(key)}:${canonicalJSON(entryValue)}`).join(",")}}`
 }
 
 /**
@@ -100,7 +101,7 @@ export async function loadFrozenDefinition<T extends { version: string }>(
 
 	if (freeze[idField] !== definitionID) {
 		throw new Error(
-			`${label}: freeze record names ${noun} ${JSON.stringify(freeze[idField])}, definition is ${JSON.stringify(definitionID)}`
+			`${label}: freeze record names ${noun} ${stringifyJSON(freeze[idField])}, definition is ${stringifyJSON(definitionID)}`
 		)
 	}
 
@@ -138,7 +139,7 @@ export function duplicateRowIDProblems(rows: ReadonlyArray<{ id: string }>): str
 
 	for (const row of rows) {
 		if (seen.has(row.id)) {
-			problems.push(`row id ${JSON.stringify(row.id)} is used twice — ids name rows in output`)
+			problems.push(`row id ${stringifyJSON(row.id)} is used twice — ids name rows in output`)
 		}
 
 		seen.add(row.id)

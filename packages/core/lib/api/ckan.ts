@@ -13,7 +13,7 @@
  */
 
 import type { APIClient } from "#api/APIClient"
-import { parseJSONArray } from "#json"
+import { parseJSONArray, stringifyJSON } from "#json"
 
 /**
  * The catalogue API a package entry is read from.
@@ -101,7 +101,7 @@ export async function readCKANPackageRecord(
 
 	if (datasetID !== options.expectDatasetID) {
 		throw new Error(
-			`${options.context}: catalogue entry ${options.packageID} names dataset ${JSON.stringify(datasetID)}, expected ${options.expectDatasetID}`
+			`${options.context}: catalogue entry ${options.packageID} names dataset ${stringifyJSON(datasetID)}, expected ${options.expectDatasetID}`
 		)
 	}
 
@@ -118,7 +118,7 @@ export async function readCKANPackageRecord(
 
 	if (!licences.includes(options.expectLicence)) {
 		throw new Error(
-			`${options.context}: the catalogue entry names licence ${JSON.stringify(licences)}, expected ${JSON.stringify(options.expectLicence)} — a licence change decides whether this layer may be redistributed at all`
+			`${options.context}: the catalogue entry names licence ${stringifyJSON(licences)}, expected ${stringifyJSON(options.expectLicence)} — a licence change decides whether this layer may be redistributed at all`
 		)
 	}
 

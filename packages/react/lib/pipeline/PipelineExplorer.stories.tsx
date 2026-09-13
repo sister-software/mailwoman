@@ -7,6 +7,7 @@
  *   story returns a fixed parse; `Loading` shows the bundle-load state.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
 import { makePipelineRuntime } from "#map/fake-runtime"
@@ -41,7 +42,7 @@ export const WithExtras: Story = {
 			extras: (result) => (
 				<details>
 					<summary>Raw nodes ({result.nodes.length})</summary>
-					<pre>{JSON.stringify(result.nodes, null, 2)}</pre>
+					<pre>{prettyJSON(result.nodes)}</pre>
 				</details>
 			),
 		},

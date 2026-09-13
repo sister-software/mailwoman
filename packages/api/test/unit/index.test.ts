@@ -7,6 +7,7 @@
 import { createMailwomanAPI, type MailwomanAPIEngine, type ParsedAddressResult } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
 import { type GeocodeOutcomeLike, MAX_ADDRESS_LENGTH } from "@mailwoman/api/schema"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { beforeEach, expect, test } from "vitest"
 
@@ -62,7 +63,7 @@ test("POST /v1/parse: happy path returns the components + decoded tree", async (
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW" }),
+		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW" }),
 	})
 
 	expect(res.status).toBe(200)
@@ -79,7 +80,7 @@ test("POST /v1/parse: debug:true reaches the engine and rides back in the respon
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW", debug: true }),
+		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW", debug: true }),
 	})
 
 	const body = (await res.json()) as ParsedAddressResult
@@ -102,7 +103,7 @@ test('POST /v1/parse: missing address body key -> 400 { error: "address is requi
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({}),
+		body: stringifyJSON({}),
 	})
 
 	expect(res.status).toBe(400)
@@ -115,7 +116,7 @@ test('POST /v1/parse: empty-string address -> 400 { error: "address is required"
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "   " }),
+		body: stringifyJSON({ address: "   " }),
 	})
 
 	expect(res.status).toBe(400)
@@ -136,7 +137,7 @@ test("POST /v1/parse: engine.parse absent -> 501", async () => {
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW" }),
+		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW" }),
 	})
 
 	expect(res.status).toBe(501)
@@ -159,7 +160,7 @@ test("POST /v1/geocode: happy path passes the GeocodeOutcome through verbatim", 
 	const res = await app.request("/v1/geocode", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW" }),
+		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW" }),
 	})
 
 	expect(res.status).toBe(200)
@@ -172,7 +173,7 @@ test('POST /v1/geocode: missing address -> 400 { error: "address is required" }'
 	const res = await app.request("/v1/geocode", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({}),
+		body: stringifyJSON({}),
 	})
 
 	expect(res.status).toBe(400)
@@ -185,7 +186,7 @@ test("POST /v1/geocode: engine.geocode absent -> 503 (deps missing in production
 	const res = await app.request("/v1/geocode", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "x" }),
+		body: stringifyJSON({ address: "x" }),
 	})
 
 	expect(res.status).toBe(503)
@@ -202,7 +203,7 @@ test("POST /v1/geocode: a thrown engine error is recorded as an error tier, then
 	const res = await app.request("/v1/geocode", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "x" }),
+		body: stringifyJSON({ address: "x" }),
 	})
 
 	expect(res.status).toBe(500)
@@ -221,7 +222,7 @@ test("POST /v1/batch: happy path returns one row per address, in order, per-row 
 	const res = await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: ["1600 Pennsylvania Ave NW", "bad"] }),
+		body: stringifyJSON({ addresses: ["1600 Pennsylvania Ave NW", "bad"] }),
 	})
 
 	expect(res.status).toBe(200)
@@ -235,7 +236,7 @@ test("POST /v1/batch: empty addresses array -> 200 { results: [] }, even with no
 	const res = await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: [] }),
+		body: stringifyJSON({ addresses: [] }),
 	})
 
 	expect(res.status).toBe(200)
@@ -248,7 +249,7 @@ test('POST /v1/batch: wrong body shape -> 400 { error: "body must be { addresses
 	const res = await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: ["ok", 42] }),
+		body: stringifyJSON({ addresses: ["ok", 42] }),
 	})
 
 	expect(res.status).toBe(400)
@@ -261,7 +262,7 @@ test("POST /v1/batch: over batchMax -> 413", async () => {
 	const res = await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: ["a", "b", "c"] }),
+		body: stringifyJSON({ addresses: ["a", "b", "c"] }),
 	})
 
 	expect(res.status).toBe(413)
@@ -274,7 +275,7 @@ test("POST /v1/batch: engine.batch absent -> 503", async () => {
 	const res = await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: ["a"] }),
+		body: stringifyJSON({ addresses: ["a"] }),
 	})
 
 	expect(res.status).toBe(503)
@@ -288,7 +289,7 @@ test("/v1/batch records whole-call latency under the batch tier", async () => {
 	await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: ["x"] }),
+		body: stringifyJSON({ addresses: ["x"] }),
 	})
 
 	const snapshot = metricsSnapshot()
@@ -304,7 +305,7 @@ test("POST /v1/resolve: happy path returns { tree } passed through the engine", 
 	const res = await app.request("/v1/resolve", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ tree }),
+		body: stringifyJSON({ tree }),
 	})
 
 	expect(res.status).toBe(200)
@@ -317,7 +318,7 @@ test('POST /v1/resolve: wrong body shape -> 400 { error: "body must be { tree: A
 	const res = await app.request("/v1/resolve", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({}),
+		body: stringifyJSON({}),
 	})
 
 	expect(res.status).toBe(400)
@@ -330,7 +331,7 @@ test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
 	const res = await app.request("/v1/resolve", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ tree: { raw: "x", roots: [] } }),
+		body: stringifyJSON({ tree: { raw: "x", roots: [] } }),
 	})
 
 	expect(res.status).toBe(503)
@@ -363,7 +364,7 @@ test("POST /v1/format: round-trips components into a formatted string + a non-em
 	const res = await app.request("/v1/format", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({
+		body: stringifyJSON({
 			components: { house_number: "1600", road: "Pennsylvania Ave NW", city: "Washington" },
 			country: "US",
 		}),
@@ -382,7 +383,7 @@ test("POST /v1/format: a multi-span component value collapses to its first span"
 	const res = await app.request("/v1/format", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({
+		body: stringifyJSON({
 			components: { house_number: ["1600", "1601"], road: "Pennsylvania Ave NW" },
 			country: "US",
 		}),
@@ -400,7 +401,7 @@ test("POST /v1/format: a missing required field -> 400 in the api-kit envelope, 
 	const res = await app.request("/v1/format", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ country: "US" }), // components missing
+		body: stringifyJSON({ country: "US" }), // components missing
 	})
 
 	expect(res.status).toBe(400)
@@ -446,7 +447,7 @@ test("GET /metrics: reflects a recorded /v1/geocode call", async () => {
 	await app.request("/v1/geocode", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW" }),
+		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW" }),
 	})
 
 	const after = (await (await app.request("/metrics")).json()) as {
@@ -539,7 +540,7 @@ test("bodyLimitBytes: an oversized /v1/* POST answers 413, not a buffered crash"
 	const res = await app.request("/v1/geocode", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "well over sixteen bytes" }),
+		body: stringifyJSON({ address: "well over sixteen bytes" }),
 	})
 
 	expect(res.status).toBe(413)
@@ -577,7 +578,7 @@ test(`POST /v1/parse: an address past ${MAX_ADDRESS_LENGTH} chars -> 400`, async
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "a".repeat(MAX_ADDRESS_LENGTH + 1) }),
+		body: stringifyJSON({ address: "a".repeat(MAX_ADDRESS_LENGTH + 1) }),
 	})
 
 	expect(res.status).toBe(400)
@@ -589,7 +590,7 @@ test(`POST /v1/parse: an address exactly at ${MAX_ADDRESS_LENGTH} chars is accep
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "a".repeat(MAX_ADDRESS_LENGTH) }),
+		body: stringifyJSON({ address: "a".repeat(MAX_ADDRESS_LENGTH) }),
 	})
 
 	expect(res.status).toBe(200)
@@ -603,7 +604,7 @@ test("POST /v1/batch: the length bound applies PER ROW, not just to the request"
 	const res = await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: ["350 5th Ave", "a".repeat(MAX_ADDRESS_LENGTH + 1)] }),
+		body: stringifyJSON({ addresses: ["350 5th Ave", "a".repeat(MAX_ADDRESS_LENGTH + 1)] }),
 	})
 
 	expect(res.status).toBe(400)
@@ -617,7 +618,7 @@ test("engine option: every /v1 body carries `engine` and every response carries 
 	const app = createMailwomanAPI(fullEngine, { engine: stamp })
 
 	const post = (path: string, body: unknown) =>
-		app.request(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
+		app.request(path, { method: "POST", headers: { "content-type": "application/json" }, body: stringifyJSON(body) })
 
 	for (const res of [
 		await post("/v1/parse", { address: "1600 Pennsylvania Ave NW" }),
@@ -643,7 +644,7 @@ test("engine option: /v1/batch stamps the envelope once, not the rows", async ()
 	const res = await app.request("/v1/batch", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ addresses: ["a", "b"] }),
+		body: stringifyJSON({ addresses: ["a", "b"] }),
 	})
 
 	const body = (await res.json()) as { engine: EngineStamp; results: object[] }
@@ -662,7 +663,7 @@ test("no engine option: no `engine` field and no headers", async () => {
 	const res = await app.request("/v1/parse", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW" }),
+		body: stringifyJSON({ address: "1600 Pennsylvania Ave NW" }),
 	})
 
 	expect(res.headers.get("server")).toBeNull()

@@ -1,3 +1,5 @@
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -335,7 +337,7 @@ export function assertTierMatchesLicense(tier: string, license: string): void {
 
 	if (license === GZT_LICENSE) {
 		throw new Error(
-			`zoning build: tier "shipped" was asked for while the licence reads ${JSON.stringify(GZT_LICENSE)}. ` +
+			`zoning build: tier "shipped" was asked for while the licence reads ${stringifyJSON(GZT_LICENSE)}. ` +
 				`${GZT_LICENSE_CONTRADICTION} Resolve the grant in writing first, then change both this guard and the tier.`
 		)
 	}

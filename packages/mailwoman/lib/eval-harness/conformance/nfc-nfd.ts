@@ -36,6 +36,7 @@
  *   first place to look is whichever stage received the two forms still distinct.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 import {
@@ -324,7 +325,7 @@ export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[])
 				`${label}: variant is not a named canonical transformation of base — ` +
 					(canonicalFormKey(fixture.base) === canonicalFormKey(fixture.variant)
 						? `the pair is canonically equivalent but is neither of ${CANONICAL_FORMS.join(" / ")}, so the change is not reproducible from its own name`
-						: `the pair is NOT canonically equivalent (decompositions ${JSON.stringify(canonicalFormKey(fixture.base))} ≠ ${JSON.stringify(canonicalFormKey(fixture.variant))}) — a compatibility rewrite, a removed accent or a case change is a different law`)
+						: `the pair is NOT canonically equivalent (decompositions ${stringifyJSON(canonicalFormKey(fixture.base))} ≠ ${stringifyJSON(canonicalFormKey(fixture.variant))}) — a compatibility rewrite, a removed accent or a case change is a different law`)
 			)
 		}
 	})

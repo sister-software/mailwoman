@@ -13,7 +13,7 @@
  *   a source arrives that does.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 
 import { assertDatumTransformationAvailable } from "#projection/transform"
@@ -127,12 +127,12 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		throw new Error(
 			options.layer === undefined
 				? `${options.context}: ${options.path} carries no readable layer`
-				: `${options.context}: ${options.path} does not carry a layer named ${JSON.stringify(options.layer)}`
+				: `${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`
 		)
 	}
 
 	if (options.layer !== undefined && described.name !== options.layer) {
-		throw new Error(`${options.context}: ${options.path} does not carry a layer named ${JSON.stringify(options.layer)}`)
+		throw new Error(`${options.context}: ${options.path} does not carry a layer named ${stringifyJSON(options.layer)}`)
 	}
 
 	// The subject a refusal names: the layer where one was asked for, the dataset itself where the source's own first

@@ -37,6 +37,7 @@
  *   counting them apart would report one pool as two.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/resolver"
 
 /**
@@ -264,7 +265,7 @@ function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 	}
 
 	if (variant.regionQualifier && variant.regionQualifier !== base.regionQualifier) {
-		parts.push(`region qualifier ${JSON.stringify(variant.regionQualifier)}`)
+		parts.push(`region qualifier ${stringifyJSON(variant.regionQualifier)}`)
 	}
 
 	if (variant.postcode && variant.postcode !== base.postcode) {
@@ -327,7 +328,7 @@ function describeScope(scope: LookupScope): string {
 	}
 
 	if (scope.regionQualifier) {
-		parts.push(`qualifier=${JSON.stringify(scope.regionQualifier)}`)
+		parts.push(`qualifier=${stringifyJSON(scope.regionQualifier)}`)
 	}
 
 	if (scope.postcode) {

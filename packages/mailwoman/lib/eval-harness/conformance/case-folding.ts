@@ -27,6 +27,7 @@
  *   something else under its own name.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 import {
@@ -249,7 +250,7 @@ export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): 
 				`${label}: variant is not a named case transformation of base — ` +
 					(caseFoldKey(fixture.base) === caseFoldKey(fixture.variant)
 						? `the pair differs by case but by no member of ${CASE_TRANSFORMATIONS.join(" / ")}, so the change is not reproducible from its own name`
-						: `the pair differs by more than case (fold keys ${JSON.stringify(caseFoldKey(fixture.base))} ≠ ${JSON.stringify(caseFoldKey(fixture.variant))}), which is a different law`)
+						: `the pair differs by more than case (fold keys ${stringifyJSON(caseFoldKey(fixture.base))} ≠ ${stringifyJSON(caseFoldKey(fixture.variant))}), which is a different law`)
 			)
 
 			return
