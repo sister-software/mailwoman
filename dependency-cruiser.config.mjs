@@ -6,10 +6,45 @@
  * @import { IConfiguration } from 'dependency-cruiser'
  */
 
+// oxlint-disable no-restricted-imports -- No workspace imports in the linter itself.
+
+/// <reference types="node" />
+
+/**
+ * Generated trees, excluded from the cruise and never followed into. `out/` is tsc's emit and `dist/` an app's Vite
+ * output — bundled chunks whose cycles are the bundler's, not the source graph's. `public/sqljs/` is the sql.js-httpvfs
+ * runtime staged by `@mailwoman/site-kit/vite/stage-sqljs`; it is gitignored, and the readers load it by URL.
+ */
+const GENERATED_TREES = "(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepiece[.]mjs)(?:/|$)"
+
+/**
+ * Modules an external runner, a bundler, or an export condition loads BY PATH, so no import names them and `no-orphans`
+ * cannot see the edge. Each entry states who does the loading.
+ */
+const LOADED_WITHOUT_AN_IMPORT = [
+	// Test-runner and build-tool configs. The preset exempts babel and webpack by name; these are the ones this
+	// repository runs. `.storybook/main.ts` sits under a dotted DIRECTORY, which the preset's dotfile pattern
+	// (`(^|/)\.[^/]+\.(js|cjs|mjs|ts|json)$`) matches only as a dotted FILE.
+	"(^|/)(?:vitest|vitest[.]node|vite|playwright|styleframe)[.]config[.](?:js|cjs|mjs|ts)$",
+	"(^|/)[.]storybook/",
+	// Playwright specs: the runner collects them from disk by glob.
+	"(^|/)test/browser/[^/]+[.]spec[.]ts$",
+	// A worker script must be a real file on disk for the runtime to spawn by path —
+	// `packages/mailwoman/test/unit/geocode/stream.test.ts` hands this one to a worker, and
+	// `@mailwoman/site-kit/vite/pwa` names `lib/service-worker.ts` as the `injectManifest` entry.
+	"(^|/)lib/test-fixtures/[^/]+-worker[.](?:js|ts)$",
+	"(^|/)lib/service-worker[.]ts$",
+	// The `browser` condition's target for a subpath whose `node` condition resolves elsewhere. This cruise
+	// declares `conditionNames: ["node", "import", "default"]`, so the browser half is a real entry point that
+	// nothing in the Node graph can reach — `@mailwoman/neural`'s `./onnx-runner` is the case.
+	"(^|/)lib/onnx/runner/browser[.]ts$",
+]
+
 /**
  * @type {IConfiguration}
  */
 const config = {
+	extends: ["dependency-cruiser/configs/recommended-strict"],
 	forbidden: [
 		{
 			name: "no-cross-workspace-relative-import",
@@ -65,28 +100,56 @@ const config = {
 			to: { path: "^packages/mailwoman/" },
 		},
 		{
-			name: "no-circular-dependencies",
+			name: "no-circular",
 			comment:
 				"Keep the workspace dependency graph acyclic. A cycle that closes only through a dynamic `import()` or a " +
 				"type-only edge is not an evaluation cycle — a lazy import is how a module keeps a Node-only loader out of " +
-				"the browser graph while still offering a one-call factory — so those edges do not count.",
+				"the browser graph while still offering a one-call factory — so those edges do not count. " +
+				"`type-only` and `type-import` are SEPARATE dependency types and both are needed: `type-only` is " +
+				'`import type { X } from "y"`, `type-import` is a type-position `typeof import("y").f`. ' +
+				"`classifier/index.ts` reaches its loader through the second form to type a re-exported factory's " +
+				"parameters, so naming only `type-only` leaves that cycle reported.",
 			severity: "error",
 			from: { path: "^packages/" },
-			to: { circular: true, viaOnly: { dependencyTypesNot: ["dynamic-import", "type-only"] } },
+			to: { circular: true, viaOnly: { dependencyTypesNot: ["dynamic-import", "type-only", "type-import"] } },
+		},
+		{
+			name: "no-orphans",
+			comment:
+				"An orphan module is unreachable: nothing imports it and it imports nothing. Either it is dead and can " +
+				"go, or something loads it by path rather than by import — and then this config says who, by name, in " +
+				"`LOADED_WITHOUT_AN_IMPORT`. This rule REPLACES the preset's by name; the first four patterns below " +
+				"are the preset's own, carried forward because a replacement does not inherit them.",
+			severity: "error",
+			from: {
+				orphan: true,
+				pathNot: [
+					"(^|/)[.][^/]+[.](js|cjs|mjs|ts|json)$",
+					"[.]d[.](c|m)?ts$",
+					"(^|/)tsconfig[.]json$",
+					"(^|/)(?:babel|webpack)[.]config[.](?:js|cjs|mjs|ts|json)$",
+					...LOADED_WITHOUT_AN_IMPORT,
+				],
+			},
+			to: {},
 		},
 	],
 	options: {
-		doNotFollow: { path: "(?:^|/)(?:out|dist|node_modules|sentencepiece[.]mjs)(?:/|$)" },
+		doNotFollow: { path: GENERATED_TREES },
 		enhancedResolveOptions: {
 			conditionNames: ["node", "import", "default"],
 			exportsFields: ["exports"],
 		},
-		// `dist/` is an app's Vite output: bundled chunks whose cycles are the bundler's, not the source graph's.
-		exclude: "(?:^|/)(?:out|dist|node_modules|sentencepiece[.]mjs)(?:/|$)",
+		exclude: GENERATED_TREES,
 		includeOnly: "^packages/",
 		preserveSymlinks: false,
 		progress: { type: "none" },
 		tsConfig: { fileName: "tsconfig.json" },
+		// Type-only imports are erased at compile time, so the default (false) hides every edge into a
+		// `types.ts` and reports it as an orphan. It also makes `no-circular`'s `dependencyTypesNot:
+		// ["type-only"]` inert, since no type-only edge exists to exclude. 48 modules / 63 dependencies
+		// -> 76 / 138 across locale-hint, query-shape, normalize and variant-aliases alone.
+		tsPreCompilationDeps: true,
 	},
 }
 
