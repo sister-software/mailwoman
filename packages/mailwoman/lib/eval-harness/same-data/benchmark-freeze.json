@@ -1,0 +1,8 @@
+{
+	"definition": "packages/mailwoman/lib/eval-harness/same-data/benchmark-definition.json",
+	"benchmarkID": "same-data-resolver-v1",
+	"version": "1.0.0",
+	"sha256": "2e7e63f5dbdaf42d4354854f5563ae99c18b311553cdce1440e6b11dd6ef1367",
+	"frozenAt": "2026-09-13",
+	"note": "Content hash over the definition, keys sorted at every depth. The loader refuses a definition whose hash has moved. What is frozen here is the SELECTION RULES, the sampling seed and the decision rule — a rule that can be edited after a result is visible asserts nothing, because the rule that produced the losing panel can be rewritten into the rule that produces the winning one. Changing the definition bumps BOTH the version and this hash, and the change is a reviewed one."
+}
