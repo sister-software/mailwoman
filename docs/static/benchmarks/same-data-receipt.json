@@ -1,0 +1,19 @@
+{
+	"benchmarkID": "same-data-resolver-v1",
+	"definitionVersion": "1.2.0",
+	"recordedAt": "2026-09-13T04:23:58Z",
+	"gitHead": "ad3c399d68cf1976f2f0c57b92d79b5bcf7d6de7",
+	"weights": {
+		"weightsLocale": "en-US",
+		"weightsModelPath": "/mnt/playpen/mailwoman-data/weights/en-us/model.onnx",
+		"weightsVersion": "9.1.0"
+	},
+	"backendPath": "/mnt/playpen/mailwoman-data/wof/candidate.db",
+	"gazetteerPath": "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
+	"rows": 453,
+	"fixtureDigest": "8f99d8adcffe5bfc3709bade68eff8604feac88dbc02d8bc1671923e5236da84",
+	"lookupsTotal": 1319,
+	"candidatesTotal": 1626,
+	"goldCandidatesRemoved": 180,
+	"rowsWithRecordingError": 0
+}

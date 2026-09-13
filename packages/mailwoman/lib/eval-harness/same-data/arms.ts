@@ -189,14 +189,33 @@ export async function runResolverArm(
 ): Promise<ArmRowResult> {
 	const evidence = observeEvidence(arm, row)
 	const traces: ResolveNodeTrace[] = []
+	const misses: string[] = []
 
 	try {
-		const resolver = createWOFResolver(replayBackend(row))
+		const resolver = createWOFResolver(replayBackend(row, misses))
 
 		const decorated = await resolver.resolveTree(row.tree, {
 			...opts,
 			traceSink: (record) => traces.push(record),
 		})
+
+		// Read BEFORE the result is built. `resolveTree` catches a backend throw by design, so a replay miss reaches this
+		// point looking exactly like a resolver that refused — the one confusion the abstention strata exist to measure.
+		if (misses.length) {
+			return {
+				arm,
+				rowID: panel.id,
+				stratum: panel.stratum,
+				selection: null,
+				correct: false,
+				wrongArea: null,
+				distanceKm: null,
+				confidence: 0,
+				mechanism: null,
+				evidence,
+				error: `replay miss on ${misses.length} question(s): ${misses[0]}`,
+			}
+		}
 
 		const node = deepestResolvedAdmin(decorated)
 		const selection = node?.placeID ? placeIDValue(node.placeID) : null

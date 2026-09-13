@@ -12,17 +12,16 @@
  *   to be decided by distance — and distance is not identity: two same-named places a kilometre apart are
  *   different entities, and a correct selection 30 km from a large city's centroid is still correct.
  *
- *   THE GOLD IS A SET, NOT AN ID, AND THAT IS A MEASURED NECESSITY. Of the 13,465 `cities15000.txt` rows
- *   the shipped `admin-global-priority.db` concords at all, 4,304 concord to MORE THAN ONE city-tier WOF
- *   row — the gazetteer carries the same place twice. Grading against one arbitrary member would measure
- *   which duplicate an arm happened to return. So the gold is every city-tier row the concordance reaches,
- *   and a selection is correct when it names any member.
+ *   THE GOLD IS A SET, NOT AN ID. 21 of the 10,738 coherent sets hold more than one DISTINCT city-tier WOF
+ *   id — the gazetteer carries that place twice — and grading against one arbitrary member would measure
+ *   which duplicate an arm happened to return. Count distinct IDS, not rows: the table writes the same link
+ *   more than once (2,057,196 rows over 1,775,438 distinct pairs), and the row-wise count says 4,304.
  *
- *   A SET IS ADMITTED ONLY WHEN IT IS COHERENT. Every member's folded name must agree with the register's
- *   name, every member must sit in the register's country, and every member must lie within
- *   {@link GOLD_COHERENCE_KM} of the register's coordinate. Without the guard the set stops being one
- *   place: 1,152 geonameids reach only a neighbourhood or a region — grading a locality selection against
- *   a region's id marks a correct answer wrong — and 1,492 reach a differently-named row.
+ *   THE COHERENCE GUARD IS WHERE THE EXCLUSIONS ACTUALLY COME FROM. Every member's folded name must agree
+ *   with the register's name, every member must sit in the register's country, and every member must lie
+ *   within {@link GOLD_COHERENCE_KM} of the register's coordinate. 1,152 geonameids reach only a
+ *   neighbourhood or a region — grading a locality selection against a region's id marks a correct answer
+ *   wrong — and 1,492 reach a differently-named row.
  *
  *   EVERY REJECTION IS COUNTED. A geonameid the join cannot resolve is UNGRADEABLE and never enters the
  *   panel, and {@link GoldCensus} carries why. The counts are properties of the gazetteer, not choices the
@@ -205,9 +204,11 @@ export async function readGoldSets(databasePath: string, subjects: readonly Gold
 
 		census.coherent++
 
+		// Deduplicated: the shipped table holds 2,057,196 `gn:id` rows over 1,775,438 distinct (id, other_id) pairs, so
+		// the same link is written more than once and a naive map would put one WOF id in the gold set twice.
 		byGeonameID.set(
 			subject.geonameid,
-			tier.map((row) => row.id).toSorted((left, right) => left - right)
+			[...new Set(tier.map((row) => row.id))].toSorted((left, right) => left - right)
 		)
 	}
 

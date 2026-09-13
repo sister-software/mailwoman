@@ -76,9 +76,9 @@ export interface SameDataLookup {
 export interface SameDataGold {
 	geonameid: string
 	/**
-	 * The WOF ids that denote this place, ascending — a SET because the gazetteer carries 4,304 of its 13,465 concorded
-	 * `cities15000.txt` places twice. A selection naming any member is correct; grading against one arbitrary member
-	 * would measure which duplicate an arm returned.
+	 * The distinct WOF ids that denote this place, ascending — a SET because the gazetteer carries 21 of its 10,738
+	 * coherently-joined `cities15000.txt` places twice. A selection naming any member is correct; grading against one
+	 * arbitrary member would measure which duplicate an arm returned.
 	 */
 	placeIDs: number[]
 	name: string
@@ -102,8 +102,9 @@ export interface SameDataPanelRow {
 	query: string
 	gold: SameDataGold
 	/**
-	 * False in the withheld-gold stratum, where every candidate concording to the gold was removed after recording.
-	 * Drives which denominator the row counts in, and is never inferred from an empty pool.
+	 * False in the withheld-gold stratum, where the recorder filtered every member of the gold identity set out of the
+	 * backend's answers as it recorded. Drives which denominator the row counts in, and is never inferred from an empty
+	 * pool — a pool can be empty because the gazetteer holds nothing, which is a different fact.
 	 */
 	goldPresent: boolean
 	source: {
@@ -357,10 +358,14 @@ export function observeEvidence(arm: string, row: SameDataFixtureRow): ArmEviden
 /**
  * A backend that answers only from the fixture.
  *
- * A key the fixture does not hold RAISES. Answering `[]` would be indistinguishable from a real empty answer, and the
- * resolver absorbs an empty answer silently — the arm would then report an abstention the fixture produced.
+ * A key the fixture does not hold RAISES **and** is appended to `misses`. Both are needed, and the second is the one
+ * that matters: `resolveTree` catches a backend throw on purpose — "a backend failure should not abort the whole tree
+ * walk" — records `backend_error` on the trace and emits `picked: null`. So a raise alone reaches the arm as an
+ * ABSTENTION, and the arm would report the resolver refusing when it was the fixture that refused. The caller reads
+ * `misses` after the walk and turns a non-empty list into a harness error, which the scorer excludes from every
+ * metric.
  */
-export function replayBackend(row: SameDataFixtureRow): ResolverBackend {
+export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): ResolverBackend {
 	const byKey = new Map(row.lookups.map((lookup) => [lookup.key, lookup.candidates]))
 
 	return {
@@ -369,14 +374,19 @@ export function replayBackend(row: SameDataFixtureRow): ResolverBackend {
 			const hit = byKey.get(key)
 
 			if (!hit) {
+				misses.push(key)
+
 				throw new Error(
 					`same-data fixture: row ${row.id} holds no answer for ${key} — the recording is not a superset of this arm's questions, so re-record with this arm's options included`
 				)
 			}
 
-			// A fresh array per caller: the candidate objects are shared, and an in-place sort inside the walk would
-			// otherwise reorder the frozen evidence for every arm that runs after it.
-			return [...hit]
+			// A fresh array AND a fresh object per candidate. The array copy stops an in-place sort inside the walk from
+			// reordering the frozen evidence; the per-candidate copy stops the walk WRITING to it. The resolver stamps
+			// verdict fields onto the candidates it is handed — `containedByQualifier`, `mismatch` — so a shared object
+			// leaves arm two reading evidence arm one edited. Measured: one row of 453 differed, which is exactly the
+			// density at which a shared reference survives review.
+			return hit.map((candidate) => ({ ...candidate }))
 		},
 	}
 }

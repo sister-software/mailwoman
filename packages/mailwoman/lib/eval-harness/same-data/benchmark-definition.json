@@ -1,6 +1,6 @@
 {
 	"benchmarkID": "same-data-resolver-v1",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"issue": "https://github.com/sister-software/mailwoman/issues/2261",
 	"claim": "Given the same frozen candidate fixture, Mailwoman selects the correct admin candidate more often and makes fewer wrong-area selections than the registered baseline resolver.",
 	"claimBoundary": "The benchmark says nothing about global coverage, index quality, retrieval, rooftop accuracy, or performance against any third-party geocoder. Those claims belong to the end-to-end record at docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md, which this work does not alter.",
@@ -14,8 +14,8 @@
 		"identity": "geonameid",
 		"postalRegister": "GeoNames allCountries-postal.txt",
 		"concordance": "The gn:id rows of the concordances table in the WOF admin gazetteer, joined to spr so the guard below can read each linked row's placetype, name, country and coordinate. The gold ENTITY and its coordinate come from GeoNames; only the identity join is WOF's, and it is a published concordance a reader can check.",
-		"identitySetRule": "The gold is the SET of city-tier WOF rows (placetype locality or localadmin) the concordance reaches, not one id. Measured on the shipped admin-global-priority.db: of the 13,465 cities15000.txt rows it concords at all, 4,304 concord to more than one city-tier row — the gazetteer carries the same place twice — so grading against one arbitrary member would measure which duplicate an arm returned.",
-		"coherenceGuard": "A set is admitted only when every member's folded name equals the register's name or its ASCII transliteration, every member sits in the register's country, and every member lies within 25 km of the register's coordinate. Without the guard the set stops being one place: 1,152 geonameids reach only a neighbourhood or a region, and grading a locality selection against a region's id marks a correct answer wrong.",
+		"identitySetRule": "The gold is the SET of DISTINCT city-tier WOF ids (placetype locality or localadmin) the concordance reaches, not one id. Measured on the shipped admin-global-priority.db: 21 of the 10,738 coherent sets hold more than one distinct id — the gazetteer carries that place twice — and grading against one arbitrary member would measure which duplicate an arm returned. The ids are deduplicated before the count: the table holds 2,057,196 gn:id rows over 1,775,438 distinct (id, other_id) pairs, so the same link is written more than once, and a count taken over rows rather than distinct ids reports 4,304 instead of 21.",
+		"coherenceGuard": "A set is admitted only when every member's folded name equals the register's name or its ASCII transliteration, every member sits in the register's country, and every member lies within 25 km of the register's coordinate. This guard, not the set rule, is what most of the exclusions rest on: 1,152 geonameids reach only a neighbourhood or a region, and grading a locality selection against a region's id marks a correct answer wrong; 1,492 more reach a differently-named row.",
 		"excludedRowsNote": "A geonameid whose join fails any part of the guard is UNGRADEABLE and is excluded before sampling, under the count that names the reason: no concordance, no city-tier row, name disagrees, country split, or too far apart. Measured on the shipped artifact: 20,406 / 1,152 / 1,492 / 11 / 72 of 33,871, leaving 10,738 coherent. These are properties of the gazetteer, not choices the panel made."
 	},
 	"sampling": {
