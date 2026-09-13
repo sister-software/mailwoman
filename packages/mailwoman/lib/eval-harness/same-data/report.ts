@@ -29,11 +29,12 @@ import {
 	type Ratio,
 	type ReliabilityBin,
 } from "#eval-harness/same-data/score"
+import type { ThresholdDecision, ThresholdPoint } from "#eval-harness/same-data/threshold"
 
 /**
  * A rate as a percentage with the two counts that produced it, or the word that says nobody could measure it.
  */
-function rate({ numerator, denominator, value }: Ratio): string {
+export function renderRatio({ numerator, denominator, value }: Ratio): string {
 	if (value === null) return "unmeasured"
 
 	return `${(100 * value).toFixed(1)}% (${numerator}/${denominator})`
@@ -58,8 +59,8 @@ export function renderMetricsTable(
 		String(metrics.errors),
 		String(metrics.selections),
 		String(metrics.abstentions),
-		rate(metrics.selectionAccuracy),
-		rate(metrics.wrongArea),
+		renderRatio(metrics.selectionAccuracy),
+		renderRatio(metrics.wrongArea),
 		`${(100 * (metrics.mechanismCoverage.value ?? 0)).toFixed(1)}%`,
 	]
 
@@ -117,7 +118,7 @@ export function renderAbstentionTable(
 		const scoped = results.filter((result) => result.arm === arm && result.stratum === stratum)
 		const metrics = armMetrics(arm, stratum, panelByID, scoped)
 
-		return [arm, String(metrics.n), rate(metrics.abstentionPrecision), rate(metrics.falseSelection)]
+		return [arm, String(metrics.n), renderRatio(metrics.abstentionPrecision), renderRatio(metrics.falseSelection)]
 	})
 
 	return renderMarkdownTable(["arm", "n", "abstention precision", "false-selection rate"], rows)
@@ -188,6 +189,48 @@ export function renderDecisionTable(verdict: BenchmarkVerdict): string[] {
 		"",
 		`**Verdict: ${verdict.passed ? "the registered claim holds" : "the registered claim does NOT hold"}.**`,
 	]
+}
+
+/**
+ * One arm's abstention-threshold curve, with both sides of the trade in the same row: what withholding buys on the
+ * withheld-gold rows and what it costs on the rows that hold a gold.
+ */
+export function renderThresholdCurve(arm: string, curve: readonly ThresholdPoint[]): string[] {
+	const rows = curve.map((point) => [
+		point.threshold.toFixed(2),
+		String(point.withheld),
+		String(point.metrics.selections),
+		renderRatio(point.metrics.selectionAccuracy),
+		renderRatio(point.metrics.wrongArea),
+		renderRatio(point.metrics.falseSelection),
+	])
+
+	return [
+		`**${arm}**`,
+		"",
+		...renderMarkdownTable(
+			["threshold", "withheld", "selections", "selection accuracy", "wrong-area rate", "false-selection rate"],
+			rows
+		),
+	]
+}
+
+/**
+ * The registered rule re-read at each threshold, with the quantity that decided each row beside it.
+ */
+export function renderThresholdDecisions(decisions: readonly ThresholdDecision[]): string[] {
+	const rows = decisions.map(({ threshold, verdict }) => [
+		threshold.toFixed(2),
+		`${verdict.marginPoints.toFixed(1)} points`,
+		verdict.pValue.toExponential(3),
+		!verdict.regressions.length ? "none" : verdict.regressions.join("; "),
+		verdict.passed ? "yes" : "no",
+	])
+
+	return renderMarkdownTable(
+		["threshold", "pooled margin", "exact McNemar p", "per-stratum regressions", "rule would read"],
+		rows.length ? rows : [["—", "—", "—", "—", "no threshold dominates the baseline"]]
+	)
 }
 
 /**
