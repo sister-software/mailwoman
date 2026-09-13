@@ -14,7 +14,7 @@
  *   descendant that speaks for itself (`veterinary_pharmacy`).
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	ARTIFACT_SCHEMA_VERSION,
 	type CompiledGeographicModel,
@@ -239,11 +239,11 @@ describe("the inheritance closure", () => {
 
 	it("leaves the authored document untouched", () => {
 		const document = slice()
-		const before = JSON.stringify(document)
+		const before = stringifyJSON(document)
 
 		compileGeographicModel(document)
 
-		expect(JSON.stringify(document)).toBe(before)
+		expect(stringifyJSON(document)).toBe(before)
 	})
 })
 
@@ -400,7 +400,7 @@ describe("the artifact's bytes", () => {
 
 	it("are identical for a document whose tables and keys are permuted", () => {
 		// Without this the test would pass on two identical inputs and prove nothing about ordering.
-		expect(JSON.stringify(permuted(slice()))).not.toBe(JSON.stringify(slice()))
+		expect(stringifyJSON(permuted(slice()))).not.toBe(stringifyJSON(slice()))
 
 		expect(compiledBytes(permuted(slice()))).toBe(compiledBytes(slice()))
 	})

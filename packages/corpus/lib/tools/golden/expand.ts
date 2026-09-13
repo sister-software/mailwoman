@@ -49,7 +49,7 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON, prettyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
@@ -325,7 +325,7 @@ OUTPUT a JSON array of N objects, each shaped {"raw": "...", "dropped": ["..."]}
 
 function buildUserPrompt(seed: Seed, n: number): string {
 	return `INPUT:
-${JSON.stringify({ raw: seed.raw, components: seed.components, country: seed.country }, null, 2)}
+${prettyJSON({ raw: seed.raw, components: seed.components, country: seed.country })}
 
 N: ${n}`
 }
@@ -558,7 +558,7 @@ export async function expandGolden(
 		await using out = createNewlineWriter(outputPath)
 
 		for (const row of outRows) {
-			await out.write(JSON.stringify(row))
+			await out.write(stringifyJSON(row))
 		}
 	}
 

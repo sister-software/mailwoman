@@ -11,6 +11,7 @@
  *   artifact afterwards.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -55,7 +56,7 @@ export async function freezeAdmin(
 		const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
 
 		if (checkpoint.busy !== 0) {
-			throw new Error(`freezeAdmin: WAL checkpoint did not finish: ${JSON.stringify(checkpoint)}`)
+			throw new Error(`freezeAdmin: WAL checkpoint did not finish: ${stringifyJSON(checkpoint)}`)
 		}
 
 		phase("journal", "delete")

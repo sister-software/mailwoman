@@ -45,6 +45,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { md5File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -481,7 +482,7 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		],
 		[
 			"quality_drops",
-			JSON.stringify({
+			stringifyJSON({
 				elements: input.stats.elements,
 				tagged: input.stats.tagged,
 				points: input.stats.points,

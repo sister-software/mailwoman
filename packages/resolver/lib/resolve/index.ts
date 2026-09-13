@@ -147,6 +147,7 @@ class WOFResolver implements Resolver {
 			// than replace should spread DEFAULT_PLACETYPE_MAP themselves.
 			placetypeMap: opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP,
 			minWinningScore: opts.minWinningScore ?? 0,
+			minScoreRefusals: 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
 			defaultCountry: opts.defaultCountry,
 			defaultCountryIsInferred: opts.defaultCountryIsInferred === true,
@@ -324,7 +325,12 @@ class WOFResolver implements Resolver {
 		// zero regressions: CZ 90→95, AT 70→73, PL 88→90, IT/PT/FR/AU flat, no-result 4→3%; fires last
 		// so it only runs when every other tier left the tree unresolved, hence inert on the well-resolved
 		// US path). Explicit opt-OUT via `spanRescore: false`; byte-stable then.
-		if (opts.spanRescore !== false) {
+		//
+		// A refused node is skipped too. `applySpanRescore` returns early only on a tree that already holds a resolved
+		// place, so a `minWinningScore` refusal leaves exactly the state it treats as its invitation, and the recovery
+		// re-answers the lookup the floor just declined. Refusing and resolving nothing are different intents; only one
+		// of them wants recovery.
+		if (opts.spanRescore !== false && state.minScoreRefusals === 0) {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
 		}
 
@@ -903,6 +909,7 @@ class WOFResolver implements Resolver {
 		const top = ranked[0]!
 
 		if (top.score < state.minWinningScore) {
+			state.minScoreRefusals++
 			rec.check("min_score_reject")
 			rec.emit(null)
 

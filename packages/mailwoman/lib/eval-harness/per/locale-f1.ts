@@ -61,6 +61,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import {
 	NeuralAddressClassifier,
@@ -526,7 +527,7 @@ export async function perLocaleF1(
 
 				if (gold && gold !== pred[dumpTag]) {
 					reportError(
-						`MISS[${dumpTag}] ${basename(file, ".jsonl")} raw=${JSON.stringify(row.raw)} gold=${JSON.stringify(gold)} pred=${JSON.stringify(pred[dumpTag] ?? null)} all=${JSON.stringify(pred)}`
+						`MISS[${dumpTag}] ${basename(file, ".jsonl")} raw=${stringifyJSON(row.raw)} gold=${stringifyJSON(gold)} pred=${stringifyJSON(pred[dumpTag] ?? null)} all=${stringifyJSON(pred)}`
 					)
 				}
 			}

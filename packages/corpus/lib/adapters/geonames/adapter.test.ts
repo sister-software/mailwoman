@@ -53,18 +53,18 @@ function gnRow(o: {
 
 async function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boolean }): Promise<string> {
 	const country = join(scratch, "US.txt")
-	await writeLocalTextFile(rows.join("\n") + "\n", country)
+	await writeLocalTextFile(rows, country)
 
 	if (opts?.admin1 !== false) {
 		await writeLocalTextFile(
-			["US.VT\tVermont\tVermont\t5242283", "US.CA\tCalifornia\tCalifornia\t5332921"].join("\n") + "\n",
+			["US.VT\tVermont\tVermont\t5242283", "US.CA\tCalifornia\tCalifornia\t5332921"],
 			join(scratch, "admin1CodesASCII.txt")
 		)
 	}
 
 	if (opts?.countries !== false) {
 		await writeLocalTextFile(
-			["# ISO\tISO3\tnum\tfips\tCountry\trest", "US\tUSA\t840\tUS\tUnited States\t"].join("\n") + "\n",
+			["# ISO\tISO3\tnum\tfips\tCountry\trest", "US\tUSA\t840\tUS\tUnited States\t"],
 			join(scratch, "countryInfo.txt")
 		)
 	}

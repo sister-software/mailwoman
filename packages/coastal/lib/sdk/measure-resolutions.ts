@@ -22,6 +22,7 @@
  *   that runs out of headroom runs the candidates in separate invocations.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
 import { classifyFeatureCells } from "@mailwoman/spatial"
 
@@ -67,7 +68,7 @@ export async function measureCoastalCellResolutions(
 		const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)
 
 		if (!scenario) {
-			throw new Error(`coastal measure: ${JSON.stringify(scenarioKey)} is not one of the twelve published scenarios`)
+			throw new Error(`coastal measure: ${stringifyJSON(scenarioKey)} is not one of the twelve published scenarios`)
 		}
 
 		const identity = await readCoastalSourceIdentity(scenario.layer, options)

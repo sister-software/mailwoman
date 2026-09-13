@@ -35,6 +35,7 @@
 import { APIClient, type APIClientConfig, assertNoArcGISError } from "@mailwoman/core/api"
 import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
 import { htmlToText } from "@mailwoman/core/html/text"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
@@ -129,7 +130,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 
 		if (data.id !== GZT_ITEM_ID) {
 			throw new Error(
-				`zoning client: the item endpoint answered for ${JSON.stringify(data.id)}, expected ${GZT_ITEM_ID}`
+				`zoning client: the item endpoint answered for ${stringifyJSON(data.id)}, expected ${GZT_ITEM_ID}`
 			)
 		}
 
@@ -148,7 +149,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 		const bbox: [number, number, number, number] = [extent[0][0]!, extent[0][1]!, extent[1][0]!, extent[1][1]!]
 
 		if (bbox.some((ordinate) => !Number.isFinite(ordinate)) || bbox.length !== BBOX_ORDINATES) {
-			throw new TypeError(`zoning client: the item's extent is not a 2D bounding box (${JSON.stringify(extent)})`)
+			throw new TypeError(`zoning client: the item's extent is not a 2D bounding box (${stringifyJSON(extent)})`)
 		}
 
 		return {
@@ -212,7 +213,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			url: `${GZT_SERVICE_URL}/query`,
 			params: {
 				where: "1=1",
-				outStatistics: JSON.stringify([
+				outStatistics: stringifyJSON([
 					{ statisticType: "sum", onStatisticField: "Shape__Area", outStatisticFieldName: "area_sum" },
 				]),
 				f: "json",
@@ -252,7 +253,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 
 		if (data.status !== "Completed" || !data.resultUrl) {
 			throw new Error(
-				`zoning client: the Hub download job answered status ${JSON.stringify(data.status)} with ${
+				`zoning client: the Hub download job answered status ${stringifyJSON(data.status)} with ${
 					data.resultUrl ? "a" : "no"
 				} result URL${data.message ? ` (${data.message})` : ""}`
 			)
@@ -279,7 +280,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			method: "GET",
 			url: `${GZT_SERVICE_URL}/query`,
 			params: {
-				geometry: JSON.stringify({
+				geometry: stringifyJSON({
 					xmin: longitude - halfWidthDegrees,
 					ymin: latitude - halfWidthDegrees,
 					xmax: longitude + halfWidthDegrees,
@@ -316,8 +317,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 export function assertAttributionUnchanged(record: Pick<ZoningItemRecord, "accessInformation" | "licenseInfo">): void {
 	if (!GZT_ATTRIBUTION.includes(record.accessInformation.trim()) || !record.accessInformation.trim()) {
 		throw new Error(
-			`zoning client: the item's accessInformation reads ${JSON.stringify(record.accessInformation)}, and this build ships ` +
-				`${JSON.stringify(GZT_ATTRIBUTION)} — the credit line is what a re-user has to publish, so a change in it is a change in the terms`
+			`zoning client: the item's accessInformation reads ${stringifyJSON(record.accessInformation)}, and this build ships ` +
+				`${stringifyJSON(GZT_ATTRIBUTION)} — the credit line is what a re-user has to publish, so a change in it is a change in the terms`
 		)
 	}
 

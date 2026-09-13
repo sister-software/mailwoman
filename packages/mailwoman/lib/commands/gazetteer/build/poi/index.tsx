@@ -22,6 +22,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 
@@ -83,9 +84,7 @@ function parseBBoxFlag(raw: string): BBox {
 	const parts = raw.split(",").map((s) => Number(s.trim()))
 
 	if (parts.length !== BBOX_FIELD_COUNT || parts.some((n) => !Number.isFinite(n))) {
-		throw new Error(
-			`--bbox must be 4 comma-separated numbers "minLon,minLat,maxLon,maxLat", got ${JSON.stringify(raw)}`
-		)
+		throw new Error(`--bbox must be 4 comma-separated numbers "minLon,minLat,maxLon,maxLat", got ${stringifyJSON(raw)}`)
 	}
 
 	const [minLon, minLat, maxLon, maxLat] = parts as [number, number, number, number]

@@ -12,7 +12,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 
 import type { SliceRecipeOpts } from "#recipes/scaffold"
@@ -57,7 +57,7 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 	const input = dir.resolve("tuples.jsonl")
 	const exclude = dir.resolve("surfaces.txt")
 
-	await writeLocalTextFile(tuples.map((t) => JSON.stringify(t)).join("\n") + "\n", input)
+	await writeLocalJSONLFile(tuples, input)
 	await writeLocalTextFile("# reserved\n" + surfaces.join("\n") + "\n", exclude)
 
 	return dir.moveWith({ input, exclude })

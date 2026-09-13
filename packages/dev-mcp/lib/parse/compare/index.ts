@@ -29,6 +29,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { COMPONENT_TO_LIBPOSTAL, toLibpostalComponents, treeToParseMatches } from "@mailwoman/libpostal"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 
@@ -142,7 +143,7 @@ export async function libpostalSpans(client: APIClient, input: string): Promise<
 	const body = response.data
 
 	if (!Array.isArray(body)) {
-		throw new TypeError(`/parse did not answer with an array; got ${JSON.stringify(body).slice(0, 120)}`)
+		throw new TypeError(`/parse did not answer with an array; got ${stringifyJSON(body).slice(0, 120)}`)
 	}
 
 	return body

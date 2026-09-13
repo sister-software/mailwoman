@@ -1,3 +1,5 @@
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -129,7 +131,7 @@ export function parseCharVocabulary(parsed: unknown, source: string): CharVocabu
 
 	for (const [character, id] of Object.entries(parsed as Record<string, unknown>)) {
 		if (typeof id !== "number" || !Number.isInteger(id)) {
-			throw new TypeError(`char vocabulary ${source}: entry ${JSON.stringify(character)} has a non-integer id`)
+			throw new TypeError(`char vocabulary ${source}: entry ${stringifyJSON(character)} has a non-integer id`)
 		}
 
 		vocabulary.set(character, id)
@@ -174,7 +176,7 @@ export function encoderDescriptorFromCard(
 	if (encoder === undefined || encoder === "sentencepiece") return { kind: "sentencepiece" }
 
 	if (encoder !== "char") {
-		throw new Error(`model-card at ${source} declares an unknown \`encoder\` ${JSON.stringify(encoder)}`)
+		throw new Error(`model-card at ${source} declares an unknown \`encoder\` ${stringifyJSON(encoder)}`)
 	}
 
 	const charVocab = card?.char_vocab

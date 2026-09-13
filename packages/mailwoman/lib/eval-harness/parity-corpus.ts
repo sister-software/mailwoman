@@ -15,6 +15,7 @@
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
@@ -229,7 +230,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				bucket.spurious++
 
 				if (bucket.examples.length < MIN_BUCKET_EXAMPLES) {
-					bucket.examples.push(`${JSON.stringify(fixture.input)} -> ${label}=${JSON.stringify(emitted)}`)
+					bucket.examples.push(`${stringifyJSON(fixture.input)} -> ${label}=${stringifyJSON(emitted)}`)
 				}
 			}
 		}
@@ -250,7 +251,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				caseAgrees = false
 
 				tally.failing.push(
-					`${fixture.id} ${JSON.stringify(fixture.input)} gold=${JSON.stringify(goldValues)} got=${JSON.stringify(actual)}`
+					`${fixture.id} ${stringifyJSON(fixture.input)} gold=${stringifyJSON(goldValues)} got=${stringifyJSON(actual)}`
 				)
 			}
 		}

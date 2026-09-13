@@ -1,3 +1,5 @@
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -32,7 +34,7 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
 
 	if (!promoted) {
 		throw new Error(
-			`tagSelectExpr: no promoted-key list for OSM layer ${JSON.stringify(layer)} — known layers are ` +
+			`tagSelectExpr: no promoted-key list for OSM layer ${stringifyJSON(layer)} — known layers are ` +
 				`${Object.keys(promotedKeysByLayer).join(", ")}`
 		)
 	}
@@ -71,7 +73,7 @@ export function assertSafeTagRules(rules: readonly TagRuleLike[], label: string)
 			] as const) {
 				if (!SAFE_TAG_TOKEN.test(token)) {
 					throw new Error(
-						`${label}: rule ${kind} ${JSON.stringify(token)} contains characters outside the OSM tag-token ` +
+						`${label}: rule ${kind} ${stringifyJSON(token)} contains characters outside the OSM tag-token ` +
 							`allowlist ${SAFE_TAG_TOKEN} — refusing to interpolate it into OGRSQL`
 					)
 				}

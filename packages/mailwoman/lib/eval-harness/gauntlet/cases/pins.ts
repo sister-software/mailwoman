@@ -16,6 +16,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { resolvePath } from "path-ts"
 
@@ -87,8 +88,8 @@ export function writeCommittedPins(testText: string, pins: BoardPins): string {
 
 	return testText
 		.replace(PIN_PATTERNS.CORPUS_SIZE, `const CORPUS_SIZE = ${pins.CORPUS_SIZE}`)
-		.replace(PIN_PATTERNS.CORPUS_HASH, `const CORPUS_HASH = ${JSON.stringify(pins.CORPUS_HASH)}`)
-		.replace(PIN_PATTERNS.BOARD_ID, `const BOARD_ID = ${JSON.stringify(pins.BOARD_ID)}`)
+		.replace(PIN_PATTERNS.CORPUS_HASH, `const CORPUS_HASH = ${stringifyJSON(pins.CORPUS_HASH)}`)
+		.replace(PIN_PATTERNS.BOARD_ID, `const BOARD_ID = ${stringifyJSON(pins.BOARD_ID)}`)
 }
 
 export interface PinCheck {

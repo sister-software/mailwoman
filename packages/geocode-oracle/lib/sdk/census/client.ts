@@ -40,6 +40,7 @@ import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import type { OracleGeocodeResult } from "#result"
 import { parseCensusAddressMatch } from "#sdk/census/parser"
@@ -262,7 +263,7 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 		if (!matches.length) {
 			throw ResourceError.from(
 				HTTP_NOT_FOUND,
-				`The US Census geocoder returned no match for ${JSON.stringify(params)}. It covers the United States and ` +
+				`The US Census geocoder returned no match for ${stringifyJSON(params)}. It covers the United States and ` +
 					"its territories only, geocodes against TIGER address RANGES (so a genuinely new or rural address can " +
 					"be absent from an otherwise-correct street), and does not match PO Boxes at all.",
 				"census",

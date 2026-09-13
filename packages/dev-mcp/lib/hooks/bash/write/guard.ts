@@ -18,6 +18,7 @@
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 
 import { judgeCommand } from "#hooks/bash/write/rules"
@@ -41,7 +42,7 @@ async function main(): Promise<void> {
 	if (!refusal) return
 
 	process.stdout.write(
-		JSON.stringify({
+		stringifyJSON({
 			hookSpecificOutput: {
 				hookEventName: "PreToolUse",
 				permissionDecision: "deny",

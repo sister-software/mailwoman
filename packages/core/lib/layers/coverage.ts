@@ -7,6 +7,7 @@
 
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 
+import { stringifyJSON } from "#json"
 import type { CoverageCell } from "#layers/manifest"
 
 /**
@@ -75,7 +76,7 @@ export function assertNoNegativeClaim(scope: string, cells: ReadonlyArray<Covera
 	for (const cell of cells) {
 		if (supportsExclusion(cell)) {
 			throw new Error(
-				`${scope}: coverage cell ${cell.h3Cell} carries basis ${JSON.stringify(cell.basis)}, which supports an EXCLUSION. ` +
+				`${scope}: coverage cell ${cell.h3Cell} carries basis ${stringifyJSON(cell.basis)}, which supports an EXCLUSION. ` +
 					`${limitSentence} Until a mapped-footprint source is settled, every row must read ${CoverageBasis.SourcePresent}`
 			)
 		}

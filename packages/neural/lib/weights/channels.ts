@@ -8,7 +8,7 @@
  */
 
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
@@ -270,7 +270,7 @@ export async function readRequiredChannels(
 	if (typeof requires !== "object" || requires === null || Array.isArray(requires)) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires\` field — ` +
-				`expected an object, got ${JSON.stringify(requires)}.`
+				`expected an object, got ${stringifyJSON(requires)}.`
 		)
 	}
 
@@ -297,7 +297,7 @@ export async function readRequiredChannels(
 		) {
 			throw new Error(
 				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}\` entry — ` +
-					`expected { required: boolean }, got ${JSON.stringify(entry)}.`
+					`expected { required: boolean }, got ${stringifyJSON(entry)}.`
 			)
 		}
 	}
@@ -311,7 +311,7 @@ export async function readRequiredChannels(
 		if (lexicon !== undefined && typeof lexicon !== "string") {
 			throw new Error(
 				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}.lexicon\` — ` +
-					`expected a filename string, got ${JSON.stringify(lexicon)}.`
+					`expected a filename string, got ${stringifyJSON(lexicon)}.`
 			)
 		}
 	}
@@ -323,14 +323,14 @@ export async function readRequiredChannels(
 	if (anchorSpanMode !== undefined && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
-				`expected "alnum-run" or "shaped", got ${JSON.stringify(anchorSpanMode)}.`
+				`expected "alnum-run" or "shaped", got ${stringifyJSON(anchorSpanMode)}.`
 		)
 	}
 
 	if (obj.suppress_gazetteer_near_postcode !== undefined && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.suppress_gazetteer_near_postcode\` ` +
-				`field — expected a boolean, got ${JSON.stringify(obj.suppress_gazetteer_near_postcode)}.`
+				`field — expected a boolean, got ${stringifyJSON(obj.suppress_gazetteer_near_postcode)}.`
 		)
 	}
 
@@ -385,7 +385,7 @@ export async function readCapabilityManifest(
 	if (typeof capabilities !== "object" || capabilities === null || Array.isArray(capabilities)) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`capabilities\` field — ` +
-				`expected an object, got ${JSON.stringify(capabilities)}.`
+				`expected an object, got ${stringifyJSON(capabilities)}.`
 		)
 	}
 
@@ -478,7 +478,7 @@ export async function readLabelsFromModelCard(
 	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`labels\` field — ` +
-				`expected a non-empty array of strings, got ${JSON.stringify(labels)}.`
+				`expected a non-empty array of strings, got ${stringifyJSON(labels)}.`
 		)
 	}
 

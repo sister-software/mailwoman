@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	makeTimezoneAnnotator,
@@ -45,14 +46,7 @@ async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {
 	const db = DatabaseClient.temp<TimezoneDatabase>()
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
 
-	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(
-		"Test/Zone",
-		0,
-		10,
-		0,
-		10,
-		JSON.stringify(SQUARE)
-	)
+	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run("Test/Zone", 0, 10, 0, 10, stringifyJSON(SQUARE))
 
 	return db
 }

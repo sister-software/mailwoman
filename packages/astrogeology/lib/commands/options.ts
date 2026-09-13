@@ -7,6 +7,7 @@
  *   command only compiled; nothing a command imports may be another command.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import { BODIES, type BuildableBodyID } from "#bodies"
@@ -17,7 +18,7 @@ import { BODIES, type BuildableBodyID } from "#bodies"
 export function parseBody(value: string): BuildableBodyID {
 	if (value in BODIES) return value as BuildableBodyID
 
-	throw new CommandError(`--body must be one of ${Object.keys(BODIES).join(", ")}, got ${JSON.stringify(value)}`)
+	throw new CommandError(`--body must be one of ${Object.keys(BODIES).join(", ")}, got ${stringifyJSON(value)}`)
 }
 
 /**

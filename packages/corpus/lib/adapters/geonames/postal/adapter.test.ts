@@ -41,7 +41,7 @@ function row(country: string, postcode: string, place: string, admin1: string): 
 
 async function writeFixture(...rows: string[]): Promise<string> {
 	const p = join(scratch, "XX.txt")
-	await writeLocalTextFile(rows.join("\n") + "\n", p)
+	await writeLocalTextFile(rows, p)
 
 	return p
 }

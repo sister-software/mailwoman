@@ -24,6 +24,7 @@
  *   Run: mailwoman corpus slice pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
@@ -151,7 +152,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 				}
 
 				if (opts.golden) {
-					write(JSON.stringify({ raw: rendering.raw, components: rendering.components, country, locale }) + "\n")
+					write(stringifyJSON({ raw: rendering.raw, components: rendering.components, country, locale }))
 
 					emitted++
 					registers[rendering.register] = (registers[rendering.register] ?? 0) + 1

@@ -7,6 +7,7 @@
  * Parsing never imports the help renderer; `@isaacs/cliui` is reached only from {@link renderCommandHelp}.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type * as React from "react"
@@ -125,7 +126,7 @@ function parseNumber(raw: string, name: string, spec: NumberOptionSpec): number 
 	const value = Number(raw)
 
 	if (!Number.isFinite(value)) {
-		throw new CLIUsageError(`--${name} expects a finite number (received ${JSON.stringify(raw)}).`)
+		throw new CLIUsageError(`--${name} expects a finite number (received ${stringifyJSON(raw)}).`)
 	}
 
 	if (spec.validate && !spec.validate(value)) {

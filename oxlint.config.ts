@@ -7,6 +7,8 @@
 
 import { createOxlintConfig, DefaultIgnorePatterns } from "@sister.software/oxlint-config"
 
+import { JSON_PARSE, JSON_STRINGIFY, restrictedPropertiesExcept } from "./config/oxlint/restricted-properties.ts"
+
 const config = createOxlintConfig({
 	spdxLicenseIdentifier: "AGPL-3.0",
 	// Mailwoman ships React (ink) UIs, so keep the React rules the prior shared config applied.
@@ -190,6 +192,38 @@ export default {
 			},
 		},
 		{
+			// `packages/core/lib/json.ts` IS what both redirects point at — the printers and the parsers are where the
+			// builtin is named, and each call inside them is the wrapper the rule recommends.
+			files: ["packages/core/lib/json.ts"],
+			rules: {
+				"no-restricted-properties": restrictedPropertiesExcept(JSON_PARSE, JSON_STRINGIFY),
+			},
+		},
+		{
+			// A redirect to `@mailwoman/core` is only actionable where the import is, and these files cannot take it.
+			// The reason is structural rather than per-call, so it is stated once here instead of as a disable comment
+			// on every line — which is what these files carried before, each repeating this paragraph in miniature.
+			//
+			// `docs/static/**` ships standalone: the benchmark harnesses and the published server example run on node
+			// builtins with no monorepo install, which is what lets a reader copy them. `ancestrie`, `annotations` and
+			// `un-locode-lookup` are leaf packages that declare no `@mailwoman/core` dependency, and taking one drags
+			// core's ~11 MB of shipped data behind it — the same trade that keeps `un-locode-lookup` re-implementing
+			// the ray cast rather than importing `@mailwoman/spatial`.
+			//
+			// ONLY the printer entry is lifted. `JSON.parse` still binds, because these files already answer it per
+			// site with something this override cannot say — whether a throw on corrupt input is the contract there.
+			// Lifting both would leave those six disable comments dead while reading as though they still did work.
+			files: [
+				"docs/static/**/*.mjs",
+				"packages/ancestrie/**/*.ts",
+				"packages/annotations/**/*.ts",
+				"packages/un-locode-lookup/**/*.ts",
+			],
+			rules: {
+				"no-restricted-properties": restrictedPropertiesExcept(JSON_STRINGIFY),
+			},
+		},
+		{
 			// `packages/core/lib/module/*` owns ESM plumbing — package-directory resolution and `file:` URL conversion — and
 			// is the one place `node:url` is reached for it.
 			files: ["packages/core/lib/module/**/*.ts"],
@@ -348,16 +382,10 @@ export default {
 		// bulk loaders that must fail loudly with position info — keep `JSON.parse` behind a scoped
 		// disable stating why. Note the wrapper returns the fallback for non-string input, so a
 		// `JSON.parse(buffer)` site converts with an explicit `.toString()` or not at all.
-		"no-restricted-properties": [
-			"error",
-			{
-				object: "JSON",
-				property: "parse",
-				message:
-					'Prefer `tryParsingJSON` from "@mailwoman/core/objects" — typed, non-throwing, explicit fallback. ' +
-					"If a throw on corrupt input is the contract here, import and use `parseJSONStrict` instead.",
-			},
-		],
+		//
+		// The entries are named in `config/oxlint/restricted-properties.ts` so an override can lift ONE of
+		// them by subtraction; `"off"` there would drop the other, and every entry added later.
+		"no-restricted-properties": restrictedPropertiesExcept(),
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",
 		// Several suites assert through helpers that throw rather than calling `expect` inline —

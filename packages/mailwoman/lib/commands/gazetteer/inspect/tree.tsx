@@ -14,6 +14,7 @@
 import { Spinner } from "@inkjs/ui"
 import type { PlacetypeRole } from "@mailwoman/core"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { availableParallelism } from "@mailwoman/core/utils/system"
@@ -68,7 +69,7 @@ const WOFTree: ParsedCommandComponent<Options, [string, string]> = ({ args, opti
 		}
 
 		const tree = generatePlacetypeTree(placetype, roles)
-		const serialized = options.compact ? JSON.stringify(tree) : JSON.stringify(tree, null, 2)
+		const serialized = options.compact ? stringifyJSON(tree) : prettyJSON(tree)
 
 		if (options.output) {
 			await writeLocalFile(serialized + "\n", options.output)

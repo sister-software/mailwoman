@@ -9,6 +9,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -36,7 +37,7 @@ for (const entry of await Globerator.files("test.ts", { cwd: TEST_DIR, absolute:
 	await using out = createNewlineWriter(OUT_PATH)
 
 	for (const parityCase of cases) {
-		await out.write(JSON.stringify(parityCase))
+		await out.write(stringifyJSON(parityCase))
 	}
 }
 

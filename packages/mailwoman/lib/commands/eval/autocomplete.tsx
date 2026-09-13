@@ -9,6 +9,7 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -75,7 +76,7 @@ const EvalAutocomplete: ParsedCommandComponent<Options> = ({ options }) => {
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (options.json) {
-		return <Text>{JSON.stringify(state.result.report, null, 2)}</Text>
+		return <Text>{prettyJSON(state.result.report)}</Text>
 	}
 
 	return null

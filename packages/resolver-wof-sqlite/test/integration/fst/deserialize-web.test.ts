@@ -11,6 +11,7 @@
  *   — using the v1/v2 layout (12-byte state entries, u16 per-state counts), per fst-serialize.ts.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { deserializeFSTWeb, readFSTProvenanceWeb } from "@mailwoman/resolver-wof-sqlite/fst"
 import { describe, expect, test } from "vitest"
 
@@ -107,7 +108,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	const edgeTableSize = totalEdges * EDGE_ENTRY_SIZE
 	const placeTableSize = totalPlaces * PLACE_ENTRY_SIZE
 
-	const provJson = opts.provenance ? enc.encode(JSON.stringify(opts.provenance)) : null
+	const provJson = opts.provenance ? enc.encode(stringifyJSON(opts.provenance)) : null
 	const provSize = provJson ? 4 + provJson.length : 0
 	const binarySize = HEADER_SIZE + stringTableSize + stateTableSize + edgeTableSize + placeTableSize
 	const totalSize = binarySize + provSize

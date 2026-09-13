@@ -34,7 +34,7 @@ async function fixtureBanDir(files: Record<string, string[]>): Promise<string> {
 	const dir = resolvePath(fixtures.use(await temporaryDirectory("mw-fr-lieudit-")).path)
 
 	for (const [dept, rows] of Object.entries(files)) {
-		await writeLocalTextFile([HEADER, ...rows].join("\n") + "\n", join(dir, `adresses-${dept}.csv`))
+		await writeLocalTextFile([HEADER, ...rows], join(dir, `adresses-${dept}.csv`))
 	}
 
 	return dir

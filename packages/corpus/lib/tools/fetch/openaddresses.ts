@@ -55,12 +55,13 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { openReadStream, openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
+import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
 import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { runFile, spawnProcess } from "@mailwoman/core/process"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { join } from "path-ts"
+import { AsyncSpliterator } from "spliterator"
 
 import { $private } from "#env"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
@@ -85,6 +86,8 @@ const OA_BASE = "https://batch.openaddresses.io"
 /**
  * Collection IDs known as of 2026-05-18 (discovered via `GET /api/collections`). OA assigns stable integer IDs to each
  * country collection; re-check `GET /api/collections` if a new country is needed and the ID is unknown.
+ *
+ * TODO: Move this to a config file or the OA adapter
  */
 const OA_COLLECTION_IDS: Record<string, number> = {
 	ca: 6,
@@ -110,24 +113,9 @@ interface OaCollection {
 }
 
 /**
- * Stream-count newlines, matching `wc -l` (memory-safe for the multi-GB collection).
- */
-async function countLines(path: string): Promise<number> {
-	let count = 0
-
-	for await (const chunk of openReadStream(path) as AsyncIterable<Buffer>) {
-		for (const byte of chunk) {
-			if (byte === 0x0a) {
-				count++
-			}
-		}
-	}
-
-	return count
-}
-
-/**
  * Decompress `src` → `dest` with the same deprioritized subprocess the old fetcher used.
+ *
+ * TODO: Move to our own zip utils.
  */
 async function gunzipToFile(src: string, dest: string): Promise<void> {
 	const child = spawnProcess("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
@@ -316,7 +304,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 	}
 
 	const sha = await sha256File(outputFile)
-	const rowCount = await countLines(outputFile)
+	const rowCount = await AsyncSpliterator.count(outputFile)
 	const downloadedAt = isoSeconds()
 
 	const manifest = {

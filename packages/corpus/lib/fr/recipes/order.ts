@@ -32,6 +32,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
@@ -196,7 +197,7 @@ export const frOrderRecipe: CorpusRecipe = {
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components, country:"FR"}).
 			if (opts.golden) {
-				write(JSON.stringify({ raw, components, country: "FR" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "FR" }))
 
 				emitted++
 
@@ -230,12 +231,12 @@ export const frOrderRecipe: CorpusRecipe = {
 			}
 
 			write(
-				JSON.stringify({
+				stringifyJSON({
 					...aligned.row,
 					synth_method: "fr-order",
 					synth_order: isReversed ? "reversed" : "canonical",
 					synth_base_id: null,
-				}) + "\n"
+				})
 			)
 
 			emitted++

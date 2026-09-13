@@ -24,6 +24,7 @@ import { isAlternation, isLayout, isSlot, type AddressAtom, type AddressLayout }
 import { ADDRESS_LAYOUTS, layoutForCountry } from "@mailwoman/codex/address-layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "@mailwoman/codex/address-layouts-generated"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -122,11 +123,11 @@ describe("the generated layout table matches libaddressinput", () => {
 			}
 
 			const source = skeletonOfFormat(fmt)
-			const expected = JSON.stringify(source)
-			const actual = JSON.stringify(skeletonOfLayout(layout, source))
+			const expected = stringifyJSON(source)
+			const actual = stringifyJSON(skeletonOfLayout(layout, source))
 
 			if (expected !== actual) {
-				mismatches.push(`${country}: fmt ${JSON.stringify(fmt)} reads ${expected}, layout prints ${actual}`)
+				mismatches.push(`${country}: fmt ${stringifyJSON(fmt)} reads ${expected}, layout prints ${actual}`)
 			}
 		}
 
@@ -140,7 +141,7 @@ describe("the generated layout table matches libaddressinput", () => {
 			if (!fmt || !skeletonOfFormat(fmt).length) continue
 
 			if (!layoutForCountry(country)) {
-				missing.push(`${country}: fmt ${JSON.stringify(fmt)}`)
+				missing.push(`${country}: fmt ${stringifyJSON(fmt)}`)
 			}
 		}
 

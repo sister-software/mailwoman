@@ -24,6 +24,7 @@
  *   behind it, so the receipt states on whose authority each answered row's category was chosen.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { JSONSpliterator } from "spliterator"
@@ -262,7 +263,7 @@ export function printProbeReceipt(receipt: ProbeReceipt): void {
 
 		for (const observation of receipt.semanticObservations) {
 			console.log(
-				`  ${observation.rowID.padEnd(16)} ${JSON.stringify(observation.matchedPhrase)} → ${observation.activity} → ${observation.concept} → ${observation.mapping.vocabulary}:${observation.categoryID}`
+				`  ${observation.rowID.padEnd(16)} ${stringifyJSON(observation.matchedPhrase)} → ${observation.activity} → ${observation.concept} → ${observation.mapping.vocabulary}:${observation.categoryID}`
 			)
 
 			console.log(

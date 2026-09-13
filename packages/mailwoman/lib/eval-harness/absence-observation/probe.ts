@@ -29,6 +29,7 @@
  *   only fail one way is not a control set.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 // The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
@@ -156,16 +157,16 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 
 	for (const row of definition.rows) {
 		if (!(ABSENCE_ROW_GROUPS as readonly string[]).includes(row.group)) {
-			problems.push(`row ${row.id}: group ${JSON.stringify(row.group)} is not a registered group`)
+			problems.push(`row ${row.id}: group ${stringifyJSON(row.group)} is not a registered group`)
 		}
 
 		if (!(ABSENCE_EXPECTED_OUTCOMES as readonly string[]).includes(row.expectedOutcome)) {
-			problems.push(`row ${row.id}: expectedOutcome ${JSON.stringify(row.expectedOutcome)} is not a registered outcome`)
+			problems.push(`row ${row.id}: expectedOutcome ${stringifyJSON(row.expectedOutcome)} is not a registered outcome`)
 		}
 
 		if (row.group === "target" && row.expectedOutcome !== "absence_observation") {
 			problems.push(
-				`row ${row.id}: a target row expects ${JSON.stringify(row.expectedOutcome)} — a target that does not expect the observation measures nothing about the route firing`
+				`row ${row.id}: a target row expects ${stringifyJSON(row.expectedOutcome)} — a target that does not expect the observation measures nothing about the route firing`
 			)
 		}
 
@@ -180,7 +181,7 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 
 			if (!row.searchedCategories.length || sorted.join("\u0000") !== row.searchedCategories.join("\u0000")) {
 				problems.push(
-					`row ${row.id}: searchedCategories must be a non-empty, deduplicated, code-point-ordered list — got ${JSON.stringify(row.searchedCategories)}`
+					`row ${row.id}: searchedCategories must be a non-empty, deduplicated, code-point-ordered list — got ${stringifyJSON(row.searchedCategories)}`
 				)
 			}
 		}
@@ -197,7 +198,7 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 	for (const group of ABSENCE_ROW_GROUPS) {
 		if (!definition.rows.some((row) => row.group === group)) {
 			problems.push(
-				`group ${JSON.stringify(group)} has no rows — see the module header for why a one-sided control set decides nothing`
+				`group ${stringifyJSON(group)} has no rows — see the module header for why a one-sided control set decides nothing`
 			)
 		}
 	}

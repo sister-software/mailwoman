@@ -51,6 +51,7 @@
  *   so the interval/distance math is tested against synthetic outcomes.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -154,7 +155,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 	const seen = new Set<string>()
 
 	for (const fixture of fixtures) {
-		const label = `poi board fixture ${JSON.stringify(fixture.id)}`
+		const label = `poi board fixture ${stringifyJSON(fixture.id)}`
 
 		if (seen.has(fixture.id)) {
 			problems.push(`${label}: id is used twice — ids name rows in output`)
@@ -164,14 +165,14 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 
 		for (const key of Object.keys(fixture)) {
 			if (!FIXTURE_KEYS.has(key)) {
-				problems.push(`${label}: unknown key ${JSON.stringify(key)} — known: ${[...FIXTURE_KEYS].join(", ")}`)
+				problems.push(`${label}: unknown key ${stringifyJSON(key)} — known: ${[...FIXTURE_KEYS].join(", ")}`)
 			}
 		}
 
 		const rawStatus: unknown = fixture.status
 
 		if (rawStatus !== undefined && !(POI_BOARD_STATUSES as readonly unknown[]).includes(rawStatus)) {
-			problems.push(`${label}: unknown status ${JSON.stringify(rawStatus)} — known: ${POI_BOARD_STATUSES.join(", ")}`)
+			problems.push(`${label}: unknown status ${stringifyJSON(rawStatus)} — known: ${POI_BOARD_STATUSES.join(", ")}`)
 
 			continue
 		}
@@ -392,7 +393,7 @@ export function partitionCases(fixtures: readonly POIBoardFixture[], grades: rea
 		const fixture = byID.get(grade.id)
 
 		if (!fixture) {
-			throw new Error(`poi board: graded case ${JSON.stringify(grade.id)} names no committed fixture`)
+			throw new Error(`poi board: graded case ${stringifyJSON(grade.id)} names no committed fixture`)
 		}
 
 		if (isCountedFixture(fixture)) {
@@ -782,7 +783,7 @@ function printReport(report: POIBoardReport): void {
 
 			console.log(
 				`  ${mark} [${entry.grade.expectKind}] ${entry.grade.id} [${entry.status} ${entry.bugRef}]${rowRef}: ` +
-					JSON.stringify(entry.grade.query)
+					stringifyJSON(entry.grade.query)
 			)
 
 			console.log(`      ${entry.grade.detail}`)
@@ -812,7 +813,7 @@ function printFailures(failures: readonly CaseGrade[]): void {
 	console.log(`\n--- ${failures.length} failing cases ---`)
 
 	for (const f of failures) {
-		console.log(`  [${f.expectKind}] ${f.id}: ${JSON.stringify(f.query)}`)
+		console.log(`  [${f.expectKind}] ${f.id}: ${stringifyJSON(f.query)}`)
 		console.log(`      ${f.detail}`)
 	}
 }

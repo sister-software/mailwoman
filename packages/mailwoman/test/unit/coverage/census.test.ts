@@ -22,6 +22,7 @@ import {
 } from "mailwoman/coverage"
 import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { stringifyJSON } from "@mailwoman/core/json";
 
 const fixtures = new AsyncDisposableStack()
 
@@ -115,14 +116,11 @@ describe("readBoardCoverage", () => {
 		await makeDirectories(join(cases, "gb"))
 		await makeDirectories(join(cases, "generalization"))
 
-		await writeLocalTextFile(
-			[
-				JSON.stringify({ id: "a", country: "GB", status: "pass" }),
-				JSON.stringify({ id: "b", country: "GB", status: "improvement_target" }),
-				JSON.stringify({ id: "c", country: "IE", status: "pass" }),
-			].join("\n") + "\n",
-			join(cases, "gb", "regression.jsonl")
-		)
+		await writeLocalTextFile([
+        				stringifyJSON({ id: "a", country: "GB", status: "pass" }),
+        				stringifyJSON({ id: "b", country: "GB", status: "improvement_target" }),
+        				stringifyJSON({ id: "c", country: "IE", status: "pass" }),
+        			], join(cases, "gb", "regression.jsonl"))
 
 		// The loader's /^[a-z]{2}$/ filter excludes this directory. A glob would include it and overstate the board.
 		await writeLocalJSONFile({ id: "z", country: "ZZ", status: "pass" }, cases, "generalization", "passes.jsonl")

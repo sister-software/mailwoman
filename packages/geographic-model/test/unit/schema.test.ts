@@ -17,7 +17,7 @@
  *   drifts.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	type ConceptID,
 	ConceptKind,
@@ -178,7 +178,7 @@ interface DraftDocument {
  * A JSON round-trip of a fixture, loosely typed so a case can introduce exactly the defect it is about.
  */
 function draft(base: GeographicModelDocument, mutate: (document: DraftDocument) => void): unknown {
-	const document = parseJSONStrict<DraftDocument>(JSON.stringify(base))
+	const document = parseJSONStrict<DraftDocument>(stringifyJSON(base))
 
 	mutate(document)
 
@@ -236,7 +236,7 @@ describe("branded identifiers", () => {
 		expect(toMappingID("m1")).toBe("m1")
 		expect(toObservationID("o1")).toBe("o1")
 		expect(toDerivedFactID("d1")).toBe("d1")
-		expect(JSON.stringify({ id: toConceptID("pharmacy") })).toBe('{"id":"pharmacy"}')
+		expect(stringifyJSON({ id: toConceptID("pharmacy") })).toBe('{"id":"pharmacy"}')
 	})
 
 	it("refuses a relation identifier where a concept identifier belongs", () => {
@@ -293,11 +293,11 @@ describe("the frozen pharmacy slice", () => {
 	})
 
 	it("round-trips through JSON without losing a record", () => {
-		const encoded = JSON.stringify(pharmacySlice)
+		const encoded = stringifyJSON(pharmacySlice)
 		const document = parseGeographicModelDocument(parseJSONStrict<unknown>(encoded))
 
 		expect(document).toEqual(pharmacySlice)
-		expect(JSON.stringify(document)).toBe(encoded)
+		expect(stringifyJSON(document)).toBe(encoded)
 	})
 })
 

@@ -179,7 +179,7 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 	for (const name of ["train", "val", "test"] as const) {
 		const sorted = [...manifest[name]].toSorted()
 
-		await writeLocalTextFile(sorted.join("\n") + (sorted.length ? "\n" : ""), outputDir, `${name}.txt`)
+		await writeLocalTextFile(sorted, outputDir, `${name}.txt`)
 	}
 
 	const summary = {

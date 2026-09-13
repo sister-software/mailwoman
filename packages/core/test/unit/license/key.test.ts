@@ -5,6 +5,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	decodeLicenseKeyPayload,
 	encodeLicenseKey,
@@ -81,7 +82,7 @@ describe("license key", () => {
 	it("refuses a tampered payload — the signature covers the prefix and the payload", async () => {
 		const token = await encodeLicenseKey(payload, pair.privateKeyPEM)
 		const [prefix, , signature] = token.split(".") as [string, string, string]
-		const forged = Buffer.from(JSON.stringify({ ...payload, licensee: "Someone Else" })).toString("base64url")
+		const forged = Buffer.from(stringifyJSON({ ...payload, licensee: "Someone Else" })).toString("base64url")
 
 		expect(await verifyLicenseKey(`${prefix}.${forged}.${signature}`, { trustedKeys })).toMatchObject({
 			status: "invalid",

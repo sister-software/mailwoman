@@ -21,7 +21,7 @@
  */
 
 import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
 import { lintReply, renderVerdict } from "#hooks/vale/check-core"
@@ -81,12 +81,12 @@ async function main(): Promise<void> {
 	if (!verdict) return
 
 	if (verdict.kind === "block") {
-		process.stdout.write(JSON.stringify({ decision: "block", reason: verdict.text }))
+		process.stdout.write(stringifyJSON({ decision: "block", reason: verdict.text }))
 
 		return
 	}
 
-	process.stdout.write(JSON.stringify({ systemMessage: verdict.text }))
+	process.stdout.write(stringifyJSON({ systemMessage: verdict.text }))
 }
 
 await main().catch(() => void 0)

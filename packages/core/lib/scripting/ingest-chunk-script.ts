@@ -18,6 +18,7 @@
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { stringifyJSON } from "#json"
 import { parseArguments, requiredArgument, type ParseArgsConfig } from "#scripting/arguments"
 
 /**
@@ -86,5 +87,5 @@ export async function runIngestChunkScript<
 		onProgress: (message) => console.error(`  [chunk] ${message}`),
 	})
 
-	console.log(JSON.stringify(result))
+	console.log(stringifyJSON(result))
 }

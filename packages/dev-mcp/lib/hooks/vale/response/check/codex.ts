@@ -30,6 +30,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { lintReply, renderVerdict } from "#hooks/vale/check-core"
 
@@ -64,12 +65,12 @@ async function main(): Promise<void> {
 			await writeLocalTextFile("", marker)
 		}
 
-		process.stdout.write(JSON.stringify({ decision: "block", reason: verdict.text }))
+		process.stdout.write(stringifyJSON({ decision: "block", reason: verdict.text }))
 
 		return
 	}
 
-	process.stdout.write(JSON.stringify({ systemMessage: verdict.text }))
+	process.stdout.write(stringifyJSON({ systemMessage: verdict.text }))
 }
 
 await main().catch(() => void 0)

@@ -24,6 +24,7 @@
  *   so it lands with the retrain that widened the lookup, not before.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
@@ -254,7 +255,7 @@ export function shapedKeyerObligationViolation(
 		`the loaded anchor lookup${anchorSourcePath ? ` (${anchorSourcePath})` : ""} carries ${magnitude} GB unit keys, ` +
 		`which the DEFAULT alnum-run scan can never produce — a GB unit is written with a space, so the scan probes ` +
 		`"SW1A" and "2AA", never "SW1A2AA". The model-card declares \`requires.anchor.span_mode\` = ` +
-		`${JSON.stringify(spanMode ?? null)}, so those keys are dead and the channel feeds zeros on exactly the rows ` +
+		`${stringifyJSON(spanMode ?? null)}, so those keys are dead and the channel feeds zeros on exactly the rows ` +
 		`the lookup exists for. Declare "requires": { "anchor": { "required": true, "span_mode": "shaped" } } on a ` +
 		`card whose model TRAINED that way (the v4.2.0-base-anchor-v2 recipe's SHIP OBLIGATION), or ship a lookup ` +
 		`without unit keys.`

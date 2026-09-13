@@ -28,6 +28,7 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	createGeocodeCommandOptions,
 	createGeocodeSession,
@@ -233,7 +234,7 @@ export async function assertWeightsCacheStaged(cacheRoot: string, locale = "en-u
 }
 
 export function engineID(effective: EffectiveConfig, fingerprint: TreeFingerprint): string {
-	const canonical = JSON.stringify(
+	const canonical = stringifyJSON(
 		Object.fromEntries(Object.entries(effective).toSorted(([a], [b]) => a.localeCompare(b)))
 	)
 

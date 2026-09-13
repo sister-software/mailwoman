@@ -10,6 +10,7 @@
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 
 type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
@@ -123,7 +124,7 @@ export async function printOpenAPIDocument(
 	const { v31, v30 } = emitOpenAPIDocuments(app, info)
 	// Compact JSON, one line, the same bytes to a file and to stdout — a consumer piping either into a diff or a
 	// generator sees one form.
-	const json = `${JSON.stringify(opts.flavor === "3.0" ? v30 : v31)}\n`
+	const json = `${stringifyJSON(opts.flavor === "3.0" ? v30 : v31)}\n`
 
 	if (opts.out) {
 		await writeLocalTextFile(json, opts.out)

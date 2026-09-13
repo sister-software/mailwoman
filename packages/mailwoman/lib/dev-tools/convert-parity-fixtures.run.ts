@@ -14,6 +14,7 @@
 
 import type { Classification } from "@mailwoman/core"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { legacyClassificationToComponentTag } from "@mailwoman/core/types"
 import { dirname } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
@@ -82,7 +83,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 	}
 
 	if (typeof gold !== "object" || gold === null || Array.isArray(gold)) {
-		fixtures.push({ ...fixture, dropped: `non-record gold expectation: ${JSON.stringify(gold).slice(0, 80)}` })
+		fixtures.push({ ...fixture, dropped: `non-record gold expectation: ${stringifyJSON(gold).slice(0, 80)}` })
 
 		continue
 	}
@@ -132,7 +133,7 @@ await makeDirectories(dirname(PARITY_FIXTURES_V1_PATH))
 	await using out = createNewlineWriter(PARITY_FIXTURES_V1_PATH)
 
 	for (const fixture of fixtures) {
-		await out.write(JSON.stringify(fixture))
+		await out.write(stringifyJSON(fixture))
 	}
 }
 

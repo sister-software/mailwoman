@@ -17,6 +17,7 @@
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { TSVSpliterator } from "spliterator"
 
 import { inTXBBOX } from "#tools/shared"
@@ -94,7 +95,7 @@ export async function convertTXHHSC(
 		}
 
 		records.push(
-			JSON.stringify({
+			stringifyJSON({
 				input: `${addr}, ${city}, TX ${zip}`,
 				lat,
 				lon,
@@ -105,7 +106,7 @@ export async function convertTXHHSC(
 		)
 	}
 
-	await writeLocalTextFile(records.join("\n") + "\n", out)
+	await writeLocalTextFile(records, out)
 	report?.(`wrote ${records.length} rows (skipped ${skipped}) → ${out}`)
 
 	return { written: records.length, skipped, out }

@@ -17,6 +17,7 @@
  *   fetch recorded per URL, nothing else mocked.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
@@ -66,7 +67,7 @@ function makeRecordingFetch(card: object | null, requested: string[]): typeof fe
 		if (url.endsWith("model-card.json")) {
 			if (card === null) return new Response(null, { status: 404, statusText: "Not Found" })
 
-			return new Response(JSON.stringify(card), { headers: { "content-type": "application/json" } })
+			return new Response(stringifyJSON(card), { headers: { "content-type": "application/json" } })
 		}
 
 		// Every other JSON asset 404s: the loader fetches lexicons TOLERANTLY, and the assertion

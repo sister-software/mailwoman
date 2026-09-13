@@ -20,7 +20,7 @@
  *   when a `wof-hot.db` was present, which is why nothing surfaced it for four weeks.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 
 export interface SmokeRowExpect {
 	/**
@@ -113,7 +113,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 
 		for (const key of Object.keys(row)) {
 			if (!ROW_KEYS.has(key)) {
-				throw new SmokeRowError(sourceLabel, rowNumber, `unknown key ${JSON.stringify(key)}`, line)
+				throw new SmokeRowError(sourceLabel, rowNumber, `unknown key ${stringifyJSON(key)}`, line)
 			}
 		}
 
@@ -132,7 +132,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 				throw new SmokeRowError(
 					sourceLabel,
 					rowNumber,
-					`unknown \`expect\` key ${JSON.stringify(key)} (allowed: ${[...EXPECT_KEYS].join(", ")})`,
+					`unknown \`expect\` key ${stringifyJSON(key)} (allowed: ${[...EXPECT_KEYS].join(", ")})`,
 					line
 				)
 			}

@@ -28,6 +28,7 @@ import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 
 import { open } from "#fs/readers"
+import { stringifyJSON } from "#json"
 import { resourceDictionaryPath, workspacePath } from "#utils/index"
 
 /**
@@ -167,7 +168,7 @@ export const Alpha2LabelMap: ReadonlyMap<Alpha2LanguageCode, string[]> = new Map
 `)
 
 	for (const [alpha2, labels] of alpha2Entries) {
-		await writeLine(`["${alpha2}", ${JSON.stringify(labels)}],`)
+		await writeLine(`["${alpha2}", ${stringifyJSON(labels)}],`)
 	}
 
 	await writeLine(`])`)
@@ -180,7 +181,7 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 `)
 
 	for (const [alpha3b, labels] of alpha3bEntries) {
-		await writeLine(`["${alpha3b}", ${JSON.stringify(labels)}],`)
+		await writeLine(`["${alpha3b}", ${stringifyJSON(labels)}],`)
 	}
 
 	await writeLine(`])`)

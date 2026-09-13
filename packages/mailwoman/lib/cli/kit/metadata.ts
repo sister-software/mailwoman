@@ -1,3 +1,5 @@
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -17,7 +19,7 @@ export interface CommandArgumentMetadata {
  * directly in `CommandSpec` and do not need this helper.
  */
 export function argument(config: CommandArgumentMetadata): string {
-	return `__mailwoman_argument_config__${JSON.stringify(config)}`
+	return `__mailwoman_argument_config__${stringifyJSON(config)}`
 }
 
 /**

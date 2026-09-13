@@ -29,6 +29,7 @@
  */
 
 import { APIClient, type APIClientConfig, isTransientResourceError } from "@mailwoman/core/api"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isRecordLike } from "@mailwoman/core/objects"
 import { type GeoFeatureCollection, isPointLiteral, isValidLatitude, isValidLongitude } from "@mailwoman/spatial"
 
@@ -336,12 +337,12 @@ export function assertScorableEndpoint(endpoint: string): string {
 		url = new URL(endpoint)
 	} catch {
 		throw new Error(
-			`External arm endpoint ${JSON.stringify(endpoint)} is not a URL. Pass an origin, e.g. http://127.0.0.1:4000.`
+			`External arm endpoint ${stringifyJSON(endpoint)} is not a URL. Pass an origin, e.g. http://127.0.0.1:4000.`
 		)
 	}
 
 	if (url.protocol !== "http:" && url.protocol !== "https:") {
-		throw new Error(`External arm endpoint ${JSON.stringify(endpoint)} must be http or https.`)
+		throw new Error(`External arm endpoint ${stringifyJSON(endpoint)} must be http or https.`)
 	}
 
 	if (REFUSED_ENDPOINT_HOSTS.has(url.hostname)) {
@@ -460,7 +461,7 @@ export class ExternalGeocoderClient extends APIClient {
 
 		if (read.version === null && declaredVersion) {
 			warnings.push(
-				`Version ${JSON.stringify(declaredVersion)} is CALLER-DECLARED — the endpoint did not confirm it. Recorded ` +
+				`Version ${stringifyJSON(declaredVersion)} is CALLER-DECLARED — the endpoint did not confirm it. Recorded ` +
 					"as the caller's claim about what is running, not as an observation."
 			)
 		}

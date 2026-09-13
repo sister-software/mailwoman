@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, writeLayerCoverage } from "@mailwoman/core/layers/manifest"
 import {
 	createLayerCoverageTable,
@@ -39,7 +40,7 @@ describe("layer contract DDL", () => {
 				build_cmd: "mailwoman gazetteer build poi",
 				build_sha: "deadbeef",
 				freshness_policy: "sealed",
-				spine_keys: JSON.stringify({ h3: { column: "h3_cell", resolution: 13 } }),
+				spine_keys: stringifyJSON({ h3: { column: "h3_cell", resolution: 13 } }),
 				created_at: "2026-07-18T00:00:00Z",
 			})
 			.execute()

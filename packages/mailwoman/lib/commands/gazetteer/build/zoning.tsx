@@ -25,6 +25,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 
@@ -292,7 +293,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		if (result.crosswalk.worst.length) {
 			for (const pair of result.crosswalk.worst) {
 				console.error(
-					`  [zoning] ${pair.authorityCode} ${JSON.stringify(pair.localCode)} → ${pair.crosswalkCodes.length} generic types (${pair.crosswalkCodes.join(", ")})`
+					`  [zoning] ${pair.authorityCode} ${stringifyJSON(pair.localCode)} → ${pair.crosswalkCodes.length} generic types (${pair.crosswalkCodes.join(", ")})`
 				)
 			}
 		}

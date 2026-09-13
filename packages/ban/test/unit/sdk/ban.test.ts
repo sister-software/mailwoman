@@ -33,7 +33,7 @@ function lieuDitRow(id: string, nomLd: string, commune = "Altier"): string {
 async function fixtureCSV(rows: string[]): Promise<string> {
 	const dir = fixtures.use(await temporaryDirectory("ban-test-")).path
 	const path = join(dir, "adresses-48.csv")
-	await writeLocalTextFile([HEADER, ...rows].join("\n") + "\n", path)
+	await writeLocalTextFile([HEADER, ...rows], path)
 
 	return path
 }

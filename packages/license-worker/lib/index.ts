@@ -9,6 +9,7 @@
  */
 
 import type { ExportedHandler } from "@cloudflare/workers-types"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { type AppDependencies, createLicenseWorkerApp } from "#app"
 import { cloudflareEmailProvider } from "#email/cloudflare"
@@ -20,7 +21,7 @@ import type { SigningStatusReport } from "#routes/health"
 import { type SigningSelfTest, signingSelfTest } from "#signing"
 import { stripeClient } from "#stripe/client"
 
-const MISCONFIGURED = JSON.stringify({ error: "worker misconfigured" })
+const MISCONFIGURED = stringifyJSON({ error: "worker misconfigured" })
 
 /**
  * How far back each reconciliation pass lists paid invoices by creation time: the bound on recovering a subscription
@@ -97,7 +98,7 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 
 		// A worker that would refuse to mint over HTTP refuses to mint on a schedule too; the report says why.
 		if (selfTest.status !== "ok") {
-			console.error(JSON.stringify({ reconcile: "skipped", reason: selfTest.reason }))
+			console.error(stringifyJSON({ reconcile: "skipped", reason: selfTest.reason }))
 
 			return
 		}
@@ -107,7 +108,7 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 				env,
 				{ stripe: stripeClient(env), ledger: state.deps.ledger, email: state.deps.email },
 				{ sinceSeconds: RECONCILE_WINDOW_SECONDS }
-			).then((report) => console.log(JSON.stringify({ reconcile: report })))
+			).then((report) => console.log(stringifyJSON({ reconcile: report })))
 		)
 	},
 }

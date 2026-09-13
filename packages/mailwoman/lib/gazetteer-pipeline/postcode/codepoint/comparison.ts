@@ -25,6 +25,7 @@
  *      explicitly rather than left inside the general "only in incumbent" bucket.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { percentile } from "@mailwoman/core/stats"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
@@ -417,7 +418,7 @@ export function formatCodePointCheckReport(report: CodePointCheckReport): string
 		`  p50 ${report.delta.p50.toFixed(1)} · p90 ${report.delta.p90.toFixed(1)} · p99 ${report.delta.p99.toFixed(1)} · max ${report.delta.max.toFixed(1)} · mean ${report.delta.mean.toFixed(1)}`,
 		`  over 1 km: ${report.delta.over1km.toLocaleString()} · over 10 km: ${report.delta.over10km.toLocaleString()}`,
 		`Northern Ireland: incumbent ${report.northernIreland.incumbentBTRows.toLocaleString()} BT rows · codepoint ${report.northernIreland.codepointBTRows.toLocaleString()}`,
-		`Crown dependencies: incumbent ${JSON.stringify(report.crownDependencies.incumbentRows)} · codepoint ${JSON.stringify(report.crownDependencies.codepointRows)}`,
+		`Crown dependencies: incumbent ${stringifyJSON(report.crownDependencies.incumbentRows)} · codepoint ${stringifyJSON(report.crownDependencies.codepointRows)}`,
 		"probes (metres from the independently-known landmark position):",
 	]
 

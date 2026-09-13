@@ -14,6 +14,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { tryStat } from "#fs/readers"
+import { stringifyJSON } from "#json"
 import { readPackageJSON } from "#module/resolve-from"
 
 const TRAILING_STAR = /^(?<parent>[^*]+)\/\*$/u
@@ -63,7 +64,7 @@ export async function readWorkspaceDirectories(
 
 		const parent = TRAILING_STAR.exec(entry)?.groups?.["parent"]
 
-		if (!parent) throw new Error(`workspace pattern ${JSON.stringify(entry)} is not a single trailing "*" segment`)
+		if (!parent) throw new Error(`workspace pattern ${stringifyJSON(entry)} is not a single trailing "*" segment`)
 
 		// Only a directory can be a workspace; a file beside them (a README) is skipped before anything is stat-ed under it.
 		const children = (
@@ -88,7 +89,7 @@ export async function readWorkspaceDirectories(
 		}
 
 		if (!matched.length)
-			throw new Error(`workspace pattern ${JSON.stringify(entry)} matched no directory with a package.json`)
+			throw new Error(`workspace pattern ${stringifyJSON(entry)} matched no directory with a package.json`)
 
 		directories.push(...matched)
 	}

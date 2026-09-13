@@ -10,6 +10,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -76,7 +77,7 @@ export async function buildTimezoneDB(geojsonPath: string, dbPath: string): Prom
 			}
 		}
 
-		insert.run(feature.properties.tzid, minLat, maxLat, minLon, maxLon, JSON.stringify(polygons))
+		insert.run(feature.properties.tzid, minLat, maxLat, minLon, maxLon, stringifyJSON(polygons))
 	}
 
 	db.exec("COMMIT")

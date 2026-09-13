@@ -10,7 +10,7 @@
  */
 
 import { COMPONENT_TAGS } from "@mailwoman/codex/component"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	PairIndexResolver,
 	peekPairIndexHeader,
@@ -49,7 +49,7 @@ function buildRawIndex(
 	records: Array<[child: string, parent: string, tagIdx: number, parentTagIdx?: number]>
 ): Uint8Array {
 	const enc = new TextEncoder()
-	const headerBytes = enc.encode(JSON.stringify(headerObj))
+	const headerBytes = enc.encode(stringifyJSON(headerObj))
 
 	const encoded = records.map(([child, parent, tagIdx, parentTagIdx]) => ({
 		child: enc.encode(child),
@@ -161,7 +161,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		// Rewrite the header JSON with a schemaVersion the reader doesn't know, re-serializing the whole
 		// buffer so the length prefix stays correct.
 		const bumped = { ...headerJSON, schemaVersion: 4 }
-		const bumpedBytes = new TextEncoder().encode(JSON.stringify(bumped))
+		const bumpedBytes = new TextEncoder().encode(stringifyJSON(bumped))
 		const rest = bytes.subarray(8 + headerLen)
 		const out = new Uint8Array(4 + 4 + bumpedBytes.length + rest.length)
 		const outView = new DataView(out.buffer)

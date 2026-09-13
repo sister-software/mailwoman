@@ -25,6 +25,7 @@
  */
 
 import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"
@@ -232,7 +233,7 @@ export function lookupCandidate<DB>(
 
 		if (exactKey !== query) {
 			notes.push(
-				`Probed as name_key ${JSON.stringify(exactKey)}, not the string you typed — the fold is applied at build ` +
+				`Probed as name_key ${stringifyJSON(exactKey)}, not the string you typed — the fold is applied at build ` +
 					"AND at query time, and probing `name` instead is the miss that reads as absence."
 			)
 		}
@@ -258,7 +259,7 @@ export function lookupCandidate<DB>(
 					found = fused
 
 					notes.push(
-						`Reached only through the whitespace-stripped key ${JSON.stringify(fusedKey)} — the fold postcode rows ` +
+						`Reached only through the whitespace-stripped key ${stringifyJSON(fusedKey)} — the fold postcode rows ` +
 							"are BUILT under, so a spaced code misses under its own spelling."
 					)
 				}
@@ -279,7 +280,7 @@ export function lookupCandidate<DB>(
 					found = { total: primary.length, totalUnscoped: stripped.totalUnscoped, rows: primary }
 
 					notes.push(
-						`Reached only through the qualifier-strip retry on ${JSON.stringify(strippedKey)} — the runtime's ` +
+						`Reached only through the qualifier-strip retry on ${stringifyJSON(strippedKey)} — the runtime's ` +
 							"own fallback, restricted (as there) to primary-name rows. The base name is a DIFFERENT place " +
 							"from the one queried; the runtime disambiguates it downstream with a region bbox this probe has no."
 					)
@@ -293,7 +294,7 @@ export function lookupCandidate<DB>(
 				hit: false,
 				entries: null,
 				note:
-					`Absent under key ${JSON.stringify(exactKey)}` +
+					`Absent under key ${stringifyJSON(exactKey)}` +
 					(wantCountry ? ` in ${wantCountry}` : "") +
 					(found.totalUnscoped && wantCountry
 						? ` — though the key reaches ${found.totalUnscoped} row(s) in other countries, so this is a FILTER miss.`
@@ -309,7 +310,7 @@ export function lookupCandidate<DB>(
 				hit: true,
 				entries: [],
 				note:
-					`The key ${JSON.stringify(key)} exists (${found.totalUnscoped} row(s)) but none in ${wantCountry}. ` +
+					`The key ${stringifyJSON(key)} exists (${found.totalUnscoped} row(s)) but none in ${wantCountry}. ` +
 					"A filter miss, which is neither absence nor a zero.",
 			}
 		}
@@ -336,7 +337,7 @@ export function lookupCandidate<DB>(
 		const top = entries[0]!
 
 		if (top.name && normalizeLocalityForKey(top.name) !== normalizeLocalityForKey(query)) {
-			notes.push(`Top row's stored name is ${JSON.stringify(top.name)}, not the surface queried.`)
+			notes.push(`Top row's stored name is ${stringifyJSON(top.name)}, not the surface queried.`)
 		}
 
 		if (top.is_primary === 0) {
@@ -361,7 +362,7 @@ export function lookupCandidate<DB>(
 			hit: true,
 			entries,
 			note:
-				`${found.total} row(s) under key ${JSON.stringify(key)}` +
+				`${found.total} row(s) under key ${stringifyJSON(key)}` +
 				(wantCountry ? ` in ${wantCountry}` : "") +
 				`; the ${entries.length} above are the first by neg_rank (population-first). ` +
 				notes.join(" "),
@@ -603,7 +604,7 @@ export function lookupWOF<DB>(
 					entries.push({ route, extract: extract.name, ...record, ...placeIDProvenance(record.id) })
 				} else {
 					suppressed.push(
-						`${extract.name}#${record.id} ${JSON.stringify(record.name)}` +
+						`${extract.name}#${record.id} ${stringifyJSON(record.name)}` +
 							` (is_current=${is_current}, is_deprecated=${is_deprecated})`
 					)
 				}
@@ -633,7 +634,7 @@ export function lookupWOF<DB>(
 
 		const checked =
 			`Checked ${extracts.length} extract(s) on two routes: the FTS5 index the resolver reads ` +
-			(match ? `(matching ${JSON.stringify(match)}, token-AND over name + alt_names)` : "(skipped — sanitizes empty)") +
+			(match ? `(matching ${stringifyJSON(match)}, token-AND over name + alt_names)` : "(skipped — sanitizes empty)") +
 			" and a byte-exact probe on the indexed `names` table, which is case- and punctuation-sensitive."
 
 		if (!entries.length && !suppressed.length) {
@@ -724,7 +725,7 @@ export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options
 				hit: false,
 				entries: null,
 				note:
-					`No POI is keyed ${JSON.stringify(key)}. ABSENCE. This probe is the exact-key path only; the runtime ` +
+					`No POI is keyed ${stringifyJSON(key)}. ABSENCE. This probe is the exact-key path only; the runtime ` +
 					"also has an FTS5 name path that can reach a row through a different tokenization.",
 			}
 		}
@@ -735,7 +736,7 @@ export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options
 				hit: true,
 				entries: [],
 				note:
-					`The key ${JSON.stringify(key)} exists (${totalUnscoped} row(s)) but none in ${wantCountry}. ` +
+					`The key ${stringifyJSON(key)} exists (${totalUnscoped} row(s)) but none in ${wantCountry}. ` +
 					"A filter miss, which is neither absence nor a zero.",
 			}
 		}
@@ -751,10 +752,10 @@ export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options
 			hit: true,
 			entries,
 			note:
-				`${total} POI row(s) under key ${JSON.stringify(key)}` +
+				`${total} POI row(s) under key ${stringifyJSON(key)}` +
 				(wantCountry ? ` in ${wantCountry}` : "") +
 				`; the ${entries.length} above are the first by neg_rank.` +
-				(key === query ? "" : ` Probed as ${JSON.stringify(key)}, not the string you typed.`),
+				(key === query ? "" : ` Probed as ${stringifyJSON(key)}, not the string you typed.`),
 		}
 	})
 }
@@ -888,7 +889,7 @@ export function lookupPostcodeAnchor(
 				hit: false,
 				entries: null,
 				note:
-					`No record under key ${JSON.stringify(key)}. ABSENCE from this locale's anchor artifact — which is a ` +
+					`No record under key ${stringifyJSON(key)}. ABSENCE from this locale's anchor artifact — which is a ` +
 					"claim about one weights package, not about postcodes: a US bundle holds no GB codes.",
 			}
 		}
@@ -903,7 +904,7 @@ export function lookupPostcodeAnchor(
 		const notes: string[] = []
 
 		if (key !== query) {
-			notes.push(`Keyed as ${JSON.stringify(key)} — space-stripped and upper-cased, the train painter's own key.`)
+			notes.push(`Keyed as ${stringifyJSON(key)} — space-stripped and upper-cased, the train painter's own key.`)
 		}
 
 		if (!entries.some((entry) => entry.has_centroid)) {

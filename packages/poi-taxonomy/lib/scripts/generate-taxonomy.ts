@@ -48,6 +48,7 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -113,7 +114,7 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 		const [rawCode, rawPath, ...rest] = fields
 
 		if (rawCode === undefined || rawPath === undefined || rest.length) {
-			throw new Error(`generate-taxonomy: malformed CSV row ${rowNumber}: ${JSON.stringify(fields.join(";"))}`)
+			throw new Error(`generate-taxonomy: malformed CSV row ${rowNumber}: ${stringifyJSON(fields.join(";"))}`)
 		}
 
 		const code = rawCode.trim()
@@ -122,11 +123,11 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 
 		if (!code || !path.length || path.some((p) => !p)) {
 			throw new Error(
-				`generate-taxonomy: malformed CSV row ${rowNumber}: code ${JSON.stringify(code)} path ${JSON.stringify(pathText)}`
+				`generate-taxonomy: malformed CSV row ${rowNumber}: code ${stringifyJSON(code)} path ${stringifyJSON(pathText)}`
 			)
 		}
 
-		if (seen.has(code)) throw new Error(`generate-taxonomy: duplicate Overture code ${JSON.stringify(code)}`)
+		if (seen.has(code)) throw new Error(`generate-taxonomy: duplicate Overture code ${stringifyJSON(code)}`)
 
 		// Normalize the leaf to the category code — the db stores the code, and `hierarchy.at(-1) === id` must hold.
 		if (path.at(-1) !== code) {

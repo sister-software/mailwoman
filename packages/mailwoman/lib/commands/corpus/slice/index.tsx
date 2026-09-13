@@ -14,6 +14,7 @@
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { SliceRecipeOpts } from "@mailwoman/corpus"
+import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
 import { Box, Text } from "ink"
 
 import {
@@ -173,9 +174,7 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 
 		const stream = openWriteStream(options.output, { encoding: "utf8" })
 
-		const write = (line: string): void => {
-			stream.write(line)
-		}
+		const write = createRecipeLineWriter(stream)
 
 		const stats = await recipe.run(opts, write)
 		stream.end()

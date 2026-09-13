@@ -14,6 +14,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolveNodeTrace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
@@ -89,7 +90,7 @@ describe("resolver-interior trace (#1721)", () => {
 		})
 
 		// Identical resolution either way — the sink observes, never participates.
-		expect(JSON.stringify(plain)).toBe(JSON.stringify(traced))
+		expect(stringifyJSON(plain)).toBe(stringifyJSON(traced))
 		expect(records.length).toBeGreaterThan(0)
 	})
 

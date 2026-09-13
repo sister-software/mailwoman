@@ -39,6 +39,7 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { Globerator } from "spliterator/node/fs"
 
 import { accumulateCooccurrences, createCooccurrenceStats, streamTokenLabelRows } from "#utils/slice-stats"
@@ -128,7 +129,7 @@ export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> 
 	}
 
 	await writeLocalJSONFile(out, args.outputPath)
-	const formattedSize = ByteFormatter.formatIEC(Buffer.byteLength(JSON.stringify(out)))
+	const formattedSize = ByteFormatter.formatIEC(Buffer.byteLength(stringifyJSON(out)))
 
 	console.error(
 		`Wrote ${args.outputPath} (${formattedSize}) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`

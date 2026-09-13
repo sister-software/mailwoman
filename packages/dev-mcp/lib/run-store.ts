@@ -29,7 +29,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { tryReadLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -176,7 +176,7 @@ export function replayIndex(run: StoredRun, arm: string): Map<string, RecordedAn
 		const available = Object.keys(run.answers ?? {})
 
 		throw new Error(
-			`Run ${run.run_id} has no recorded arm ${JSON.stringify(arm)}. ` +
+			`Run ${run.run_id} has no recorded arm ${stringifyJSON(arm)}. ` +
 				(available.length
 					? `It recorded: ${available.join(", ")}.`
 					: "It recorded no replayable arms at all — it is stored evidence, not a usable recorded arm.")

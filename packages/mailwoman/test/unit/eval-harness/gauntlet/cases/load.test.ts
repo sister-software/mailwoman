@@ -23,6 +23,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { ablationBoardID } from "mailwoman/eval-harness/gauntlet/ablation"
 import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { canonicalizeSeedCase, SeedCaseSchema } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
@@ -354,7 +355,7 @@ describe("the row schema", () => {
 describe("a malformed row names its file and line", () => {
 	it("on invalid JSON", async () => {
 		const root = scratchCorpus({
-			"xx/regression.jsonl": `${JSON.stringify(SAMPLE)}\n{ not json\n`,
+			"xx/regression.jsonl": `${stringifyJSON(SAMPLE)}\n{ not json\n`,
 		})
 
 		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:2 — not valid JSON/)
@@ -362,7 +363,7 @@ describe("a malformed row names its file and line", () => {
 
 	it("on a schema violation, naming the field", async () => {
 		const root = scratchCorpus({
-			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectLat: "48.8" })}\n`,
+			"xx/regression.jsonl": `${stringifyJSON({ ...SAMPLE, expectLat: "48.8" })}\n`,
 		})
 
 		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:1 — .*expectLat/)
@@ -370,7 +371,7 @@ describe("a malformed row names its file and line", () => {
 
 	it("on a malformed rendering contract, naming the field", async () => {
 		const root = scratchCorpus({
-			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } })}\n`,
+			"xx/regression.jsonl": `${stringifyJSON({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } })}\n`,
 		})
 
 		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:1 — .*expectComponentRenderings/)
@@ -378,7 +379,7 @@ describe("a malformed row names its file and line", () => {
 
 	it("counts blank lines, so the number matches the editor's", async () => {
 		const root = scratchCorpus({
-			"xx/regression.jsonl": `${JSON.stringify(SAMPLE)}\n\n\n{ not json\n`,
+			"xx/regression.jsonl": `${stringifyJSON(SAMPLE)}\n\n\n{ not json\n`,
 		})
 
 		await expect(loadRegressionCases(await root)).rejects.toThrow(CorpusRowError)
@@ -387,7 +388,7 @@ describe("a malformed row names its file and line", () => {
 
 	it("on a country that disagrees with its directory", async () => {
 		const root = scratchCorpus({
-			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, country: "FR" })}\n`,
+			"xx/regression.jsonl": `${stringifyJSON({ ...SAMPLE, country: "FR" })}\n`,
 		})
 
 		await expect(loadRegressionCases(await root)).rejects.toThrow(/does not match its directory "xx"/)
@@ -395,8 +396,8 @@ describe("a malformed row names its file and line", () => {
 
 	it("on a duplicate id across two files in the same dir", async () => {
 		const root = scratchCorpus({
-			"xx/regression.jsonl": `${JSON.stringify(SAMPLE)}\n`,
-			"xx/extra.jsonl": `${JSON.stringify(SAMPLE)}\n`,
+			"xx/regression.jsonl": `${stringifyJSON(SAMPLE)}\n`,
+			"xx/extra.jsonl": `${stringifyJSON(SAMPLE)}\n`,
 		})
 
 		await expect(loadRegressionCases(await root)).rejects.toThrow(/duplicate case id "xx-sample"/)

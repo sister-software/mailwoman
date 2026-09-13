@@ -23,7 +23,7 @@
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { TIGERDatabase } from "#sdk/schema"
@@ -200,7 +200,7 @@ export async function raceDots(
 				}
 
 				out.write(
-					JSON.stringify({
+					stringifyJSON({
 						type: "Feature",
 						tippecanoe: { layer: LAYER },
 						properties: { cat },

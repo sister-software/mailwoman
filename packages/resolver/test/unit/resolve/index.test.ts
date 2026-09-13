@@ -11,6 +11,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, Interpretation, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsXML, walkNodes } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type {
 	Ancestor,
 	AddressPointLookup,
@@ -198,9 +199,9 @@ describe("resolveTree", () => {
 		const resolver = createWOFResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5, [], "rule", "whos_on_first")])
-		const before = JSON.stringify(input)
+		const before = stringifyJSON(input)
 		await resolver.resolveTree(input)
-		expect(JSON.stringify(input)).toBe(before)
+		expect(stringifyJSON(input)).toBe(before)
 	})
 
 	test("skips nodes whose tag isn't in the placetype map (street / house_number / etc)", async () => {
@@ -319,6 +320,36 @@ describe("resolveTree", () => {
 		expect(result.roots[0]?.source).toBe("rule")
 		expect(result.roots[0]?.sourceID).toBe("whos_on_first")
 		expect(result.roots[0]?.placeID).toBeUndefined()
+	})
+
+	test("a minWinningScore refusal is not reopened by span-rescore", async () => {
+		const backend = new FakeResolverBackend(FIXTURE_PLACES)
+		const resolver = createWOFResolver(backend)
+
+		const input = tree("Paris", [node("locality", "Paris", 0, 5, [], "rule", "whos_on_first")])
+
+		// Paris scores 8, so a floor of 9 refuses it. Span-rescore recovers any tree holding no resolved place, and a
+		// refusal leaves exactly that — so it used to re-issue the byte-identical locality lookup the floor had just
+		// declined, and the refusal could never reach the caller.
+		const result = await resolver.resolveTree(input, { minWinningScore: 9 })
+
+		expect(result.roots[0]?.placeID).toBeUndefined()
+		expect(result.roots[0]?.source).toBe("rule")
+		expect(backend.calls.filter((call) => call.placetype === "locality")).toHaveLength(1)
+	})
+
+	test("span-rescore still runs when a tree is unresolved without any refusal", async () => {
+		const backend = new FakeResolverBackend(FIXTURE_PLACES)
+		const resolver = createWOFResolver(backend)
+
+		// No candidate at all, so nothing refuses and the recovery pass is the wanted behaviour. Asserted on the
+		// lookup it issues rather than on a recovered node, because the fixture has no place under this name to find —
+		// what must hold is that the refusal check did not disable the pass in general.
+		const input = tree("Nowhere", [node("locality", "Nowhere", 0, 7)])
+
+		await resolver.resolveTree(input)
+
+		expect(backend.calls.filter((call) => call.placetype === "locality")).toHaveLength(2)
 	})
 
 	test("placetypeMap override can disable a default mapping", async () => {
@@ -1115,7 +1146,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const viaArtifact = await resolver.resolveTree(addrTree(), { interpolation: artifactInterp })
 
 		// Byte-identical: the full serialized trees match, not just the headline fields.
-		expect(JSON.stringify(viaArtifact)).toBe(JSON.stringify(viaCaller))
+		expect(stringifyJSON(viaArtifact)).toBe(stringifyJSON(viaCaller))
 		const street = viaArtifact.roots.find((n) => n.tag === "street")
 
 		expect(street?.metadata).toMatchObject({

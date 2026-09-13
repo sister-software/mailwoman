@@ -19,6 +19,7 @@
  */
 
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
@@ -54,7 +55,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 
 				if (failures.length < MAX_REPORTED) {
 					failures.push(
-						`raw=${JSON.stringify(raw)}\n  expected pieces=${JSON.stringify(expectedPieces)}\n  TS pieces=${JSON.stringify(tsPieces)}\n  expected ids=${JSON.stringify(expectedIDs)}\n  TS ids=${JSON.stringify(result.ids)}`
+						`raw=${stringifyJSON(raw)}\n  expected pieces=${stringifyJSON(expectedPieces)}\n  TS pieces=${stringifyJSON(tsPieces)}\n  expected ids=${stringifyJSON(expectedIDs)}\n  TS ids=${stringifyJSON(result.ids)}`
 					)
 				}
 			}
@@ -100,7 +101,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 
 					if (failures.length < MAX_REPORTED) {
 						failures.push(
-							`raw=${JSON.stringify(raw)}\n  piece=${JSON.stringify(p.piece)} literal=${JSON.stringify(literal)} start=${p.start} end=${p.end}\n  raw.slice=${JSON.stringify(raw.slice(p.start, p.end))}`
+							`raw=${stringifyJSON(raw)}\n  piece=${stringifyJSON(p.piece)} literal=${stringifyJSON(literal)} start=${p.start} end=${p.end}\n  raw.slice=${stringifyJSON(raw.slice(p.start, p.end))}`
 						)
 					}
 

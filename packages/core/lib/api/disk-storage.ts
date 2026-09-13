@@ -30,7 +30,7 @@ import { errorMessage } from "#errors/schema"
 import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
 import { sha256Hex } from "#hash"
-import { tryParsingJSON } from "#json"
+import { tryParsingJSON, stringifyJSON } from "#json"
 import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
 
 /**
@@ -136,7 +136,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				return null
 			}
 
-			return JSON.stringify(value)
+			return stringifyJSON(value)
 		} catch (error) {
 			logger.warn(`Refusing to cache ${key}: ${errorMessage(error)}`)
 

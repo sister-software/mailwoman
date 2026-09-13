@@ -17,6 +17,7 @@
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { formatPercent } from "@mailwoman/core/stats"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
@@ -250,7 +251,7 @@ async function compareMailwomanArms(
 			country: item.country,
 			address_kind: item.addressKind,
 			status: item.status,
-			differed: JSON.stringify(a) !== JSON.stringify(b),
+			differed: stringifyJSON(a) !== stringifyJSON(b),
 			grade,
 			a,
 			b,
@@ -475,7 +476,7 @@ async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: Pat
 
 	if (!run) {
 		throw new Error(
-			`Arm: no stored run ${JSON.stringify(spec.runID)}. It was pruned or never existed — the store keeps runs for ` +
+			`Arm: no stored run ${stringifyJSON(spec.runID)}. It was pruned or never existed — the store keeps runs for ` +
 				`${RETENTION_DAYS} days and at most ${RETENTION_MAX_RUNS} of them. Those two are indistinguishable after ` +
 				"the fact, so re-measure. mwdev_runs lists what is still there."
 		)

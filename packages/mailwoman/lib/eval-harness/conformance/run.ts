@@ -28,6 +28,8 @@
  *   false` for the same reason an empty suite does.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import { type ComparatorReading, compareOutcomes, type ConformanceOutcome } from "#eval-harness/conformance/comparators"
 import type { ConformanceContext, ConformanceFixture } from "#eval-harness/conformance/fixture"
 import type { GauntletDeps } from "#eval-harness/gauntlet/harness"
@@ -203,13 +205,13 @@ export function formatConformanceFinding(finding: ConformanceFinding): string {
 
 	const lines = [
 		head,
-		`    base    : ${JSON.stringify(fixture.base)}`,
-		`    variant : ${JSON.stringify(fixture.variant)}`,
+		`    base    : ${stringifyJSON(fixture.base)}`,
+		`    variant : ${stringifyJSON(fixture.variant)}`,
 		`    basis   : ${reading.basis}`,
 	]
 
 	if (fixture.context) {
-		lines.push(`    context : ${JSON.stringify(fixture.context)}`)
+		lines.push(`    context : ${stringifyJSON(fixture.context)}`)
 	}
 
 	for (const difference of reading.differences) {

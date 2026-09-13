@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
+
 import { booleanValue, type CommandSpec, runNativeCommand } from "#cli/native/spec"
 
 /**
@@ -41,7 +43,7 @@ export async function run(args: readonly string[]): Promise<number> {
 
 		process.stdout.write(
 			booleanValue(parsed.values, "json")
-				? `${JSON.stringify(environment ? { ...report, environment } : report, null, 2)}\n`
+				? prettyJSON(environment ? { ...report, environment } : report)
 				: `${renderDoctorReport(report, environment)}\n`
 		)
 

@@ -11,6 +11,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -29,7 +30,7 @@ const BETA_ID = 9_800_000_000_001
  * Two unit squares, side by side. `alpha` spans lon [0,2), `beta` spans lon [2,4), both lat [0,2).
  */
 const square = (minLon: number): string =>
-	JSON.stringify({
+	stringifyJSON({
 		type: "Polygon",
 		coordinates: [
 			[

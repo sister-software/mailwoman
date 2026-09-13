@@ -10,7 +10,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -31,7 +31,7 @@ export interface PromotionOutputComparison {
 }
 
 function describe(value: JSONValue | undefined): string {
-	return value === undefined ? "<missing>" : JSON.stringify(value)
+	return value === undefined ? "<missing>" : stringifyJSON(value)
 }
 
 function normalizeProvenance(text: string): string {

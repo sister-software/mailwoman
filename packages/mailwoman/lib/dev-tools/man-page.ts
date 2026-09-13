@@ -17,7 +17,7 @@
  *   run).
  */
 
-import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { makeDirectories, toLinesText, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runFile } from "@mailwoman/core/process"
 import { dirname } from "path-ts"
@@ -122,7 +122,7 @@ export async function renderManPage(cliPath: string = CLI_PATH): Promise<string>
 		"Issues: https://github.com/sister-software/mailwoman"
 	)
 
-	return sections.join("\n") + "\n"
+	return toLinesText(sections)
 }
 
 /**

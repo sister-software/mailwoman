@@ -53,6 +53,7 @@ import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -81,6 +82,7 @@ import { Globerator } from "spliterator/node/fs"
 
 import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
+
 /**
  * The OS Data Hub product id for Open UPRN.
  */
@@ -295,7 +297,7 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 		await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
 
 		await writeLocalTextFile(
-			`${JSON.stringify({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }, null, 2)}\n`,
+			prettyJSON({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }),
 			String(join(destDir, "acquisition.json"))
 		)
 	}
@@ -641,7 +643,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 				kdb.exec("ROLLBACK")
 				await kdb.destroy()
 				throw new Error(
-					`buildUPRNLayer: header drift — expected ${JSON.stringify(OPEN_UPRN_HEADER)}, found ${JSON.stringify(header)}`
+					`buildUPRNLayer: header drift — expected ${stringifyJSON(OPEN_UPRN_HEADER)}, found ${stringifyJSON(header)}`
 				)
 			}
 
@@ -766,7 +768,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		["source_extraction_date", extracted.versions.extractionDate || UNKNOWN_PROVENANCE],
 		["source_archive_md5", archiveMD5],
 		["header_as_found", OPEN_UPRN_HEADER],
-		["quality_drops", JSON.stringify({ read, inserted, skippedMalformed, skippedDuplicate })],
+		["quality_drops", stringifyJSON({ read, inserted, skippedMalformed, skippedDuplicate })],
 		["license", OPEN_UPRN_LICENSE],
 		["license_url", OPEN_UPRN_LICENSE_URL],
 		["license_text_upstream", extracted.licenseText.trim()],

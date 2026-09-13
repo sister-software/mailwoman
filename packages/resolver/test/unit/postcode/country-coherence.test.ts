@@ -26,6 +26,7 @@
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import {
 	findPostcodeCountryScope,
@@ -1125,7 +1126,7 @@ describe("resolveTree + postcode-country coherence", () => {
 			postcodeCountryCoherence: true,
 		})
 
-		expect(JSON.stringify(on)).toBe(JSON.stringify(off))
+		expect(stringifyJSON(on)).toBe(stringifyJSON(off))
 	})
 
 	it("fires WITHOUT a default country when exactly one country makes the pair coherent (the browser-cascade arm)", async () => {

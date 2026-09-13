@@ -20,6 +20,7 @@ import type { ProviderID } from "@mailwoman/bdc/sdk/common"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
 import { pathExists, statPath, readLocalBuffer, isFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -775,7 +776,7 @@ describe("buildBDCDatabase — malformed provider_id via csvPaths (the productio
 
 describe("geometryCentroid", () => {
 	it("averages a Polygon's exterior ring vertices", () => {
-		const polygon = JSON.stringify({
+		const polygon = stringifyJSON({
 			type: "Polygon",
 			coordinates: [
 				[
@@ -795,7 +796,7 @@ describe("geometryCentroid", () => {
 	})
 
 	it("averages a MultiPolygon's exterior rings across all polygons", () => {
-		const multiPolygon = JSON.stringify({
+		const multiPolygon = stringifyJSON({
 			type: "MultiPolygon",
 			coordinates: [
 				[
@@ -822,6 +823,6 @@ describe("geometryCentroid", () => {
 	it("returns undefined for null or unparseable geometry", () => {
 		expect(geometryCentroid(null)).toBeUndefined()
 		expect(geometryCentroid("not json")).toBeUndefined()
-		expect(geometryCentroid(JSON.stringify({ type: "Point", coordinates: [0, 0] }))).toBeUndefined()
+		expect(geometryCentroid(stringifyJSON({ type: "Point", coordinates: [0, 0] }))).toBeUndefined()
 	})
 })

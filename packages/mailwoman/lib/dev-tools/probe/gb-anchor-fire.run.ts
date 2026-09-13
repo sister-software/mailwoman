@@ -27,6 +27,7 @@
 // (#690, default-ON in `parse`). Re-implementing either is the one thing that must not drift, so this
 // repo-local diagnostic imports the modules directly.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
 import { PostcodeBinaryResolver, collectMatches } from "@mailwoman/neural/postcode"
@@ -121,6 +122,6 @@ for (const register of ["asis", "lower", "upper"] as const) {
 	)
 
 	if (missed.length) {
-		console.log(`       span-but-no-key: ${JSON.stringify(missed.slice(0, 6))}`)
+		console.log(`       span-but-no-key: ${stringifyJSON(missed.slice(0, 6))}`)
 	}
 }

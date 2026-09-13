@@ -11,6 +11,7 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isoSeconds } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
@@ -36,9 +37,7 @@ export interface EmitManifestOptions {
  * One tool invocation as the manifest records it: the argument vector joined the way a shell would show it.
  */
 export function formatTransformation(command: readonly PathBuilderLike[]): string {
-	return command
-		.map((argument) => (/[\s"']/u.test(argument.toString()) ? JSON.stringify(argument) : argument))
-		.join(" ")
+	return command.map((argument) => (/[\s"']/u.test(argument.toString()) ? stringifyJSON(argument) : argument)).join(" ")
 }
 
 /**

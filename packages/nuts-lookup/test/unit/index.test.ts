@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { makeNUTSAnnotator, nutsFromID, NUTSLookup, pointInMultiPolygon } from "@mailwoman/nuts-lookup"
 import type { NUTSDatabase } from "@mailwoman/nuts-lookup/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -41,7 +42,7 @@ async function fixtureDB(): Promise<DatabaseClient<NUTSDatabase>> {
 
 	const ins = db.prepare("INSERT INTO nuts_regions VALUES (?,?,?,?,?,?,?)")
 
-	const square = JSON.stringify([
+	const square = stringifyJSON([
 		[
 			[
 				[0, 0],

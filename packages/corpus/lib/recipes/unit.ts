@@ -24,6 +24,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
@@ -32,6 +33,7 @@ import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
+
 /**
  * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
  */
@@ -268,7 +270,7 @@ export const unitRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(JSON.stringify({ raw, components, country: "US" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "US" }))
 
 				emitted++
 
@@ -294,7 +296,7 @@ export const unitRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: "unit", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "unit", synth_base_id: null }))
 
 			emitted++
 		}

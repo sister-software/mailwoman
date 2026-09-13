@@ -14,12 +14,14 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { makeLcg } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
 import { alignRow } from "#utils"
+
 /**
  * The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through the data-root
  * helper (the lab default is `$MAILWOMAN_DATA_ROOT`), never re-hardcoded.
@@ -85,16 +87,14 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(
-				JSON.stringify({ ...aligned.row, synth_method: "anchor-absorption", synth_template: synth.template }) + "\n"
-			)
+			write(stringifyJSON({ ...aligned.row, synth_method: "anchor-absorption", synth_template: synth.template }))
 
 			written++
 			byTemplate[synth.template] = (byTemplate[synth.template] ?? 0) + 1
 		}
 
 		console.error(`\nwrote ${written} rows (${quarantined} quarantined)`)
-		console.error("  by slice:", JSON.stringify(byTemplate))
+		console.error("  by slice:", stringifyJSON(byTemplate))
 
 		return { emitted: written, skipped: quarantined }
 	},

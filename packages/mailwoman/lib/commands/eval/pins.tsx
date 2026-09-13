@@ -15,7 +15,7 @@
  */
 
 import { gitHead } from "@mailwoman/core/git"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
@@ -71,7 +71,7 @@ async function reportStalePins(drift: string, testPath: string): Promise<string>
 		`The board-pin audit found the committed constants stale at ${commit}:\n\n${drift}\n\n` +
 		`Run \`mailwoman eval pins --update\`, commit ${testPath}, and this issue closes on the next green audit.`
 
-	const search = `in:title ${JSON.stringify(STALE_PIN_ISSUE_TITLE)}`
+	const search = `in:title ${stringifyJSON(STALE_PIN_ISSUE_TITLE)}`
 	const issueList = await $`gh issue list --state open --search ${search} --json number`.quiet()
 	const existing = parseJSONStrict<Array<{ number: number }>>(issueList.stdout)
 	const first = existing[0]

@@ -14,7 +14,7 @@ import { serveNode } from "@mailwoman/api-kit"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
@@ -165,7 +165,7 @@ describe("mailwoman license", () => {
 		const env = { MAILWOMAN_CONFIG_ROOT: String(scratch.path), MAILWOMAN_LICENSE_URL: worker.url }
 
 		await writePrivateTextFile(
-			JSON.stringify({ lid: LID, secret: SECRET }),
+			stringifyJSON({ lid: LID, secret: SECRET }),
 			resolvePath(scratch.path, "license", "refresh.json")
 		)
 

@@ -11,6 +11,7 @@
  *   pins the exact confusion that would make this whole check decorative.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { checkCase, componentOf, scriptRenderings } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
@@ -99,7 +100,7 @@ describe("the coordinate / tier / component checks", () => {
 	})
 
 	it("compares components case-insensitively", () => {
-		const c = storedCase({ expect_components: JSON.stringify({ locality: "gaborone" }) })
+		const c = storedCase({ expect_components: stringifyJSON({ locality: "gaborone" }) })
 
 		expect(checkCase(c, result({ locality: "Gaborone" }))).toEqual([])
 	})
@@ -111,7 +112,7 @@ describe("the coordinate / tier / component checks", () => {
 	})
 
 	it("throws on an expect_components key with no result mapping", () => {
-		const c = storedCase({ expect_components: JSON.stringify({ borough: "Brooklyn" }) })
+		const c = storedCase({ expect_components: stringifyJSON({ borough: "Brooklyn" }) })
 
 		expect(() => checkCase(c, result())).toThrow(/extend componentOf/)
 	})
@@ -149,7 +150,7 @@ describe("the place-identity check (#1507)", () => {
 		// returned an Austrian hamlet. `expect_components.locality` is green on this result; only the place
 		// check can see the failure — which is what makes reading `hierarchy[0].name` required.
 		const c = storedCase({
-			expect_components: JSON.stringify({ locality: "Gaborone" }),
+			expect_components: stringifyJSON({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",
 		})
 
@@ -208,7 +209,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
 		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue next door
 		// graded as a pass. With no rendering contract on the row, this must FAIL again.
-		const c = storedCase({ expect_components: JSON.stringify({ locality: "Manchester" }) })
+		const c = storedCase({ expect_components: stringifyJSON({ locality: "Manchester" }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([
 			`locality "四季酒家 Manchester" ≠ "Manchester"`,
@@ -216,14 +217,14 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("no longer accepts a dual-script span against a truth freezing one rendering — that is the opt-in's job", () => {
-		const c = storedCase({ expect_components: JSON.stringify({ venue: "Gandantegchinlen Monastery" }) })
+		const c = storedCase({ expect_components: stringifyJSON({ venue: "Gandantegchinlen Monastery" }) })
 
 		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд" }))).toHaveLength(1)
 	})
 
 	it("passes a rendering contract when the span carries every listed rendering", () => {
 		const c = storedCase({
-			expect_component_renderings: JSON.stringify({
+			expect_component_renderings: stringifyJSON({
 				venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"],
 			}),
 		})
@@ -232,14 +233,14 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("passes the bleed-shaped got too, once a contract SAYS both elements belong — explicit, not global", () => {
-		const c = storedCase({ expect_component_renderings: JSON.stringify({ locality: ["四季酒家", "Manchester"] }) })
+		const c = storedCase({ expect_component_renderings: stringifyJSON({ locality: ["四季酒家", "Manchester"] }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([])
 	})
 
 	it("fails a span carrying only ONE of two required renderings, naming the missing one", () => {
 		const c = storedCase({
-			expect_component_renderings: JSON.stringify({
+			expect_component_renderings: stringifyJSON({
 				venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"],
 			}),
 		})
@@ -251,7 +252,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 
 	it("folds case inside the contract, exactly as the exact path does", () => {
 		const c = storedCase({
-			expect_component_renderings: JSON.stringify({ locality: ["ulaanbaatar", "улаанбаатар"] }),
+			expect_component_renderings: stringifyJSON({ locality: ["ulaanbaatar", "улаанбаатар"] }),
 		})
 
 		expect(checkCase(c, result({ locality: "Улаанбаатар, Ulaanbaatar" }))).toEqual([])
@@ -259,7 +260,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 
 	it("asserts nothing beyond the listed renderings — an extra rendering rides along free", () => {
 		const c = storedCase({
-			expect_component_renderings: JSON.stringify({ locality: ["Ulaanbaatar", "Улаанбаатар"] }),
+			expect_component_renderings: stringifyJSON({ locality: ["Ulaanbaatar", "Улаанбаатар"] }),
 		})
 
 		expect(checkCase(c, result({ locality: "Улаанбаатар / Ulaanbaatar / ウランバートル" }))).toEqual([])
@@ -270,8 +271,8 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		// superseded exact comparison would have failed it), the frozen half alone fails (the contract owns
 		// the key), and an unrelated exact key on the same row still grades through expect_components.
 		const c = storedCase({
-			expect_components: JSON.stringify({ venue: "Gandantegchinlen Monastery", postcode: "16040" }),
-			expect_component_renderings: JSON.stringify({
+			expect_components: stringifyJSON({ venue: "Gandantegchinlen Monastery", postcode: "16040" }),
+			expect_component_renderings: stringifyJSON({
 				venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"],
 			}),
 		})
@@ -295,13 +296,13 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("throws on an empty rendering list — an authoring bug the seed schema refuses upstream", () => {
-		const c = storedCase({ expect_component_renderings: JSON.stringify({ venue: [] }) })
+		const c = storedCase({ expect_component_renderings: stringifyJSON({ venue: [] }) })
 
 		expect(() => checkCase(c, result())).toThrow(/non-empty string array/)
 	})
 
 	it("throws on a non-array contract value for the same reason", () => {
-		const c = storedCase({ expect_component_renderings: JSON.stringify({ venue: "Гандантэгчинлэн хийд" }) })
+		const c = storedCase({ expect_component_renderings: stringifyJSON({ venue: "Гандантэгчинлэн хийд" }) })
 
 		expect(() => checkCase(c, result())).toThrow(/non-empty string array/)
 	})
@@ -310,13 +311,13 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		// mn-ws-national-university-pluscode-sbd-6-khoroo: a model that types the Open Location Code as
 		// `postcode` emits two postcode spans next to the real 14200. No contract lists them, so the exact
 		// comparison keeps failing (that visibility is the row's point).
-		const c = storedCase({ expect_components: JSON.stringify({ postcode: "14200" }) })
+		const c = storedCase({ expect_components: stringifyJSON({ postcode: "14200" }) })
 
 		expect(checkCase(c, result({ postcode: "WWF9+6H6 14200" }))).toEqual([`postcode "WWF9+6H6 14200" ≠ "14200"`])
 	})
 
 	it("does not let a mono-script multi-word truth be satisfied by one of its words", () => {
-		const c = storedCase({ expect_components: JSON.stringify({ locality: "Chicago" }) })
+		const c = storedCase({ expect_components: stringifyJSON({ locality: "Chicago" }) })
 
 		expect(checkCase(c, result({ locality: "Springfield Chicago" }))).toHaveLength(1)
 	})

@@ -7,6 +7,7 @@
  *   invariant that makes `other_share` required rather than decorative.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { SoilCapabilityCellTable } from "@mailwoman/soil/schema"
 import { mapUnitProfile, shareTotal } from "@mailwoman/soil/sdk/reduce"
 import { describe, expect, it } from "vitest"
@@ -83,7 +84,7 @@ describe("shareTotal", () => {
 	it("sums to one across the class shares and the four absences", () => {
 		const row: SoilCapabilityCellTable = {
 			h3_cell: 1,
-			class_shares: JSON.stringify({ "2": 0.5, "3": 0.2 }),
+			class_shares: stringifyJSON({ "2": 0.5, "3": 0.2 }),
 			unrated_share: 0.1,
 			notrateable_share: 0.05,
 			nodata_share: 0.1,

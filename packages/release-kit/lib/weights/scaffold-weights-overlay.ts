@@ -35,6 +35,7 @@
 
 import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
@@ -297,7 +298,7 @@ await materializeDevOverlay({
 
 		if (!(family.overlays ??= []).includes(slug)) {
 			family.overlays.push(slug)
-			await writeLocalTextFile(`${JSON.stringify(cfg, null, "\t")}\n`, cfgPath)
+			await writeLocalTextFile(prettyJSON(cfg), cfgPath)
 			registered.push(`release.config.json charWeights.${base}.overlays`)
 		}
 	} else if (!cfgText.includes(`"${slug}"`)) {

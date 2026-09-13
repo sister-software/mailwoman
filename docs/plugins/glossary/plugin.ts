@@ -26,6 +26,7 @@
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type {
 	GlossaryData,
 	GlossaryPluginOptions as BaseGlossaryPluginOptions,
@@ -243,7 +244,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 				}))
 
 			// Upstream also writes this file; preserved in case a future package version reads it back.
-			await createData("remark-glossary-data.json", JSON.stringify({ terms: glossary.terms ?? [], routePath }))
+			await createData("remark-glossary-data.json", stringifyJSON({ terms: glossary.terms ?? [], routePath }))
 
 			// Same shape upstream publishes — the tooltip theme component reads it via usePluginData.
 			setGlobalData({ terms: glossary.terms ?? [], routePath })
@@ -301,9 +302,9 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 				entry.refs = entry.refs.slice(0, MAX_BACKLINKS_PER_TERM)
 			}
 
-			const glossaryDataPath = await createData("glossary-data.json", JSON.stringify(glossary))
-			const tagMetaPath = await createData("glossary-tag-meta.json", JSON.stringify(tagMeta))
-			const backlinksPath = await createData("glossary-backlinks.json", JSON.stringify(backlinks))
+			const glossaryDataPath = await createData("glossary-data.json", stringifyJSON(glossary))
+			const tagMetaPath = await createData("glossary-tag-meta.json", stringifyJSON(tagMeta))
+			const backlinksPath = await createData("glossary-backlinks.json", stringifyJSON(backlinks))
 
 			addRoute({
 				path: routePath,

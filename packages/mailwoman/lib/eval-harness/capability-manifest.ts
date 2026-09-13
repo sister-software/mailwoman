@@ -250,7 +250,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		}
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above, not reading anything.
-		const block = prettyJSON(capabilities, false)
+		const block = prettyJSON(capabilities)
 			.split("\n")
 			.map((line) => "\t" + line)
 			.join("\n")

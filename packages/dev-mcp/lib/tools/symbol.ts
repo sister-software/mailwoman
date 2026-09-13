@@ -15,6 +15,7 @@
  *   the intended name shares no substring with the existing one.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { z } from "zod"
 
@@ -96,9 +97,9 @@ export const symbolTool = (_deps: DevToolDeps): DevTool => ({
 				described,
 				not_covered: [...NOT_COVERED, ...DESCRIBES_NOT_COVERED],
 				summary: described.length
-					? `${described.length} declaration(s) whose stated purpose matches ${JSON.stringify(describes)}. Read ` +
+					? `${described.length} declaration(s) whose stated purpose matches ${stringifyJSON(describes)}. Read ` +
 						"the sentence and the signature before reusing one."
-					: `No declaration describes ${JSON.stringify(describes)} in the covered set. See not_covered — a ` +
+					: `No declaration describes ${stringifyJSON(describes)} in the covered set. See not_covered — a ` +
 						"declaration with no docstring is invisible to this half, so try `query` with a name fragment too.",
 			}
 		}
@@ -121,10 +122,10 @@ export const symbolTool = (_deps: DevToolDeps): DevTool => ({
 			...(describes ? { describes, n_described: described.length, described } : {}),
 			not_covered: describes ? [...NOT_COVERED, ...DESCRIBES_NOT_COVERED] : [...NOT_COVERED],
 			summary: findings.length
-				? `${findings.length} name(s) matching ${JSON.stringify(query)} across ${nSites} declaration site(s); ` +
+				? `${findings.length} name(s) matching ${stringifyJSON(query)} across ${nSites} declaration site(s); ` +
 					`${withHome.length} have at least one exported declaration you could import. ` +
 					`${all.length - findings.length} further name(s) not listed.`
-				: `No declaration matching ${JSON.stringify(query)} in the covered set. See not_covered — this is not ` +
+				: `No declaration matching ${stringifyJSON(query)} in the covered set. See not_covered — this is not ` +
 					"proof the symbol is absent from the repository.",
 		}
 	},

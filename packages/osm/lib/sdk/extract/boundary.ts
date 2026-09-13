@@ -20,6 +20,7 @@
  *   the driver happened to emit first — indistinguishable downstream from the region the caller meant.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
@@ -70,14 +71,14 @@ export interface OSMBoundary extends OSMBoundaryQuery {
 export function buildBoundarySQL(query: OSMBoundaryQuery): string {
 	if (!SAFE_NAME.test(query.name)) {
 		throw new Error(
-			`buildBoundarySQL: name ${JSON.stringify(query.name)} contains characters outside the place-name allowlist ` +
+			`buildBoundarySQL: name ${stringifyJSON(query.name)} contains characters outside the place-name allowlist ` +
 				`${SAFE_NAME} — refusing to interpolate it into OGRSQL`
 		)
 	}
 
 	if (!SAFE_ADMIN_LEVEL.test(query.adminLevel)) {
 		throw new Error(
-			`buildBoundarySQL: adminLevel ${JSON.stringify(query.adminLevel)} must be 1-2 digits, got a value outside ` +
+			`buildBoundarySQL: adminLevel ${stringifyJSON(query.adminLevel)} must be 1-2 digits, got a value outside ` +
 				`${SAFE_ADMIN_LEVEL}`
 		)
 	}
@@ -113,7 +114,7 @@ export async function extractOSMBoundary(pbfPath: string, query: OSMBoundaryQuer
 
 	if (matches.length !== 1) {
 		throw new Error(
-			`extractOSMBoundary: expected exactly 1 boundary named ${JSON.stringify(query.name)} at admin_level ` +
+			`extractOSMBoundary: expected exactly 1 boundary named ${stringifyJSON(query.name)} at admin_level ` +
 				`${query.adminLevel} in ${pbfPath}, found ${matches.length}`
 		)
 	}

@@ -6,7 +6,7 @@
 
 import type { AxiosRequestConfig } from "axios"
 
-import { prettyJSON } from "#json"
+import { prettyJSON, stringifyJSON } from "#json"
 
 /**
  * Derived from React Router, this type helper is used to extract the parameters from a path pattern.
@@ -173,7 +173,7 @@ export class URLRoutePattern<I extends URLPatternPathnameInit | string = string>
 
 		if (!spec.test(href)) {
 			throw new Error(
-				`Insufficient parameters to compile URL route: ${this.pathname} (${JSON.stringify(params)}) -> ${pathname}`
+				`Insufficient parameters to compile URL route: ${this.pathname} (${stringifyJSON(params)}) -> ${pathname}`
 			)
 		}
 

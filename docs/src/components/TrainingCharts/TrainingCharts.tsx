@@ -17,10 +17,12 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { LoadingIndicator } from "@mailwoman/react"
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import "@mailwoman/react/styles.css"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
 import styles from "./styles.module.css"
 
 // ── Constants ───────────────────────────────────────────────────────────
@@ -142,7 +144,7 @@ async function apiPost<T = unknown>(path: string, body: Record<string, unknown>)
 	const res = await fetch(`${TRACKIO_BASE}${path}`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
+		body: stringifyJSON(body),
 	})
 
 	if (!res.ok) {

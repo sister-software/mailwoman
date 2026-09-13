@@ -8,6 +8,7 @@
  *   There is no server side; every output is a static asset Cloudflare serves without invoking a Worker.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { buildInfoPlugin } from "@mailwoman/site-kit/vite/build-info"
 import { installablePWA } from "@mailwoman/site-kit/vite/pwa"
 import react from "@vitejs/plugin-react"
@@ -23,7 +24,7 @@ const body = $public.PLANETARY_BODY
 const config = BODY_CONFIGS[body]
 
 export default defineConfig({
-	define: { __PLANETARY_BODY__: JSON.stringify(body) },
+	define: { __PLANETARY_BODY__: stringifyJSON(body) },
 	publicDir: `public/icons/${body}`,
 	plugins: [react(), VitePWA(installablePWA(config.identity)), buildInfoPlugin({ app: `mailwoman-${body}` })],
 	build: {

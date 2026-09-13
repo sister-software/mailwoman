@@ -27,6 +27,7 @@
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
 import { basename } from "path-ts"
@@ -313,7 +314,7 @@ async function measure(
 			scoped,
 			`${scoped} entries carry a locale scope: ${lexicon.phrases
 				.filter((entry) => entry.locales?.length)
-				.map((entry) => `${JSON.stringify(entry.phrase)} ${entry.locales?.join("/")}`)
+				.map((entry) => `${stringifyJSON(entry.phrase)} ${entry.locales?.join("/")}`)
 				.join(", ")}`
 		)
 	}
@@ -523,7 +524,7 @@ async function measure(
 
 		instruments.push({
 			instrument: "observation_marker",
-			identity: `${JSON.stringify(definition.markerProbe.query)} → ${markers.detail}`,
+			identity: `${stringifyJSON(definition.markerProbe.query)} → ${markers.detail}`,
 		})
 
 		record(readings, "observation_marker.semantic_marker_reaches_caller", markers.observed, markers.detail)
@@ -562,7 +563,7 @@ function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts
 		if (observed === "not measured") return
 
 		if (observed !== pins[field]) {
-			deviations.push(`${field}: observed ${JSON.stringify(observed)}, pinned ${JSON.stringify(pins[field])}`)
+			deviations.push(`${field}: observed ${stringifyJSON(observed)}, pinned ${stringifyJSON(pins[field])}`)
 		}
 	}
 

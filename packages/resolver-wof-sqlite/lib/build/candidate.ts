@@ -42,6 +42,7 @@
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { explodeAliasBags } from "#candidate/alias-bags"
@@ -596,7 +597,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 					latitude: entry.latitude,
 					longitude: entry.longitude,
 					level: entry.level,
-					keys: JSON.stringify(entry.k),
+					keys: stringifyJSON(entry.k),
 				}))
 			)
 			.execute()

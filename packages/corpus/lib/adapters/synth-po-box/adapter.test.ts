@@ -5,13 +5,13 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
 import { describe, expect, it } from "vitest"
 
 async function writeFixture(rows: Array<Record<string, unknown>>): Promise<string> {
 	const path = tempRootPath(`synth-po-box-fixture-${Math.random().toString(36).slice(2)}.jsonl`)
-	await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", path)
+	await writeLocalJSONLFile(rows, path)
 
 	return path
 }

@@ -27,6 +27,7 @@
  *   MCP channel. All protocol traffic rides the IPC channel via `process.send`.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { z } from "zod"
 
@@ -111,7 +112,7 @@ process.on("message", (message: WorkerInbound) => {
 		const tool = byName.get(message.name)
 
 		if (!tool) {
-			send({ type: "result", id: message.id, ok: false, error: `Unknown tool ${JSON.stringify(message.name)}.` })
+			send({ type: "result", id: message.id, ok: false, error: `Unknown tool ${stringifyJSON(message.name)}.` })
 
 			return
 		}

@@ -13,6 +13,7 @@
  *   read some other class's rows under this class's name, which no downstream check could catch.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -60,7 +61,7 @@ export async function readReferenceInventory(query: ReferenceInventoryQuery): Pr
 
 	if (!code) {
 		throw new Error(
-			`readReferenceInventory: ${query.databasePath} holds no category ${JSON.stringify(query.category)} — ` +
+			`readReferenceInventory: ${query.databasePath} holds no category ${stringifyJSON(query.category)} — ` +
 				`the reference layer cannot answer for a class it never ingested`
 		)
 	}

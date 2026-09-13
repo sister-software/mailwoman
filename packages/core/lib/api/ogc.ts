@@ -12,6 +12,7 @@ import { decodeXML } from "entities"
 
 import type { APIClient } from "#api/APIClient"
 import { rootAttribute } from "#html/document"
+import { stringifyJSON } from "#json"
 
 /**
  * The error an OGC `ServiceExceptionReport` becomes. The report arrives on an HTTP 200, so nothing upstream maps it: a
@@ -218,7 +219,7 @@ export async function readWFSFeatureCount(
 	// zero. Reporting it as "no attribute" would name the wrong fact, and returning 0 would invent one.
 	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(
-			`${options.context}: the WFS hits response${subject} reported numberMatched=${JSON.stringify(numberMatched)} rather than a count — the server declined to count the matches, which is not the same as matching none`
+			`${options.context}: the WFS hits response${subject} reported numberMatched=${stringifyJSON(numberMatched)} rather than a count — the server declined to count the matches, which is not the same as matching none`
 		)
 	}
 

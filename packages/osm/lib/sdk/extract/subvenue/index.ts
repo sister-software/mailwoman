@@ -57,9 +57,9 @@
  *   is a property of the invocation, not of a feature. Rows carry `country: ""` and the caller stamps it.
  */
 
-import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { once } from "@mailwoman/core/utils/events"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
+import { createNewlineWriter } from "spliterator"
 
 import {
 	buildSubVenueSQL,
@@ -357,7 +357,7 @@ export interface WriteSubVenueJSONLOptions {
  * Returns the row count.
  */
 export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Promise<number> {
-	const stream = openWriteStream(options.outPath)
+	await using out = createNewlineWriter(options.outPath)
 	let rows = 0
 
 	for await (const row of extractOSMSubVenues(options.pbfPath, options.rules)) {
@@ -365,16 +365,10 @@ export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Pr
 			row.country = options.country
 		}
 
-		if (!stream.write(JSON.stringify(row) + "\n")) {
-			await once(stream, "drain")
-		}
+		await out.write(stringifyJSON(row))
 
 		rows++
 	}
-
-	await new Promise<void>((resolve, reject) => {
-		stream.end((error?: Error | null) => (error ? reject(error) : resolve()))
-	})
 
 	return rows
 }

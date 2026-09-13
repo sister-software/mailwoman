@@ -39,7 +39,7 @@
  *   shape. The DDL that created these tables IS Kysely — see `schema.ts`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	assertCoverageNotEmpty,
 	singleManifestRow,
@@ -373,7 +373,7 @@ function readIdentity(
 
 	if (!name.startsWith(SOIL_LAYER_NAME_PREFIX)) {
 		throw new Error(
-			`soil reader: ${databasePath} is layer ${JSON.stringify(name)}, which is not a ${JSON.stringify(SOIL_LAYER_NAME_PREFIX)} layer — one authority, one product, one rating vocabulary per artifact`
+			`soil reader: ${databasePath} is layer ${stringifyJSON(name)}, which is not a ${stringifyJSON(SOIL_LAYER_NAME_PREFIX)} layer — one authority, one product, one rating vocabulary per artifact`
 		)
 	}
 

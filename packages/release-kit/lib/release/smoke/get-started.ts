@@ -22,6 +22,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
 import { join } from "path-ts"
 
@@ -110,7 +111,7 @@ function assertNeedles(output: string, needles: readonly string[], page: string)
 	for (const needle of needles) {
 		if (!output.includes(needle)) {
 			throw new Error(
-				`${page}: output is missing ${JSON.stringify(needle)}; the page's transcript no longer matches:\n${output.slice(0, 1200)}`
+				`${page}: output is missing ${stringifyJSON(needle)}; the page's transcript no longer matches:\n${output.slice(0, 1200)}`
 			)
 		}
 	}

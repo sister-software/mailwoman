@@ -30,7 +30,7 @@ import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/read
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { md5File } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -293,29 +293,25 @@ async function main(): Promise<void> {
 	const attributionPath = dataRootPath("ban", `street-centroids-${args.country}.ATTRIBUTION.json`)
 
 	await writeLocalTextFile(
-		JSON.stringify(
-			{
-				artifact: `street-centroids-${args.country}.db`,
-				derivedFrom: {
-					artifact: `address-points-${args.country}.db`,
-					source,
-					release: args.release,
-					md5: srcMD5,
-					note: `derived from ${source} release=${args.release}${srcMD5 ? ` (md5 ${srcMD5.slice(0, 8)})` : ""}`,
-				},
+		prettyJSON({
+			artifact: `street-centroids-${args.country}.db`,
+			derivedFrom: {
+				artifact: `address-points-${args.country}.db`,
 				source,
-				sourceURL: BAN_CSV_BASE,
-				license: BAN_LICENSE,
-				attribution: BAN_ATTRIBUTION,
 				release: args.release,
-				streets: written,
-				bytes,
-				md5,
-				builtAt: new Date().toISOString(),
+				md5: srcMD5,
+				note: `derived from ${source} release=${args.release}${srcMD5 ? ` (md5 ${srcMD5.slice(0, 8)})` : ""}`,
 			},
-			null,
-			2
-		) + "\n",
+			source,
+			sourceURL: BAN_CSV_BASE,
+			license: BAN_LICENSE,
+			attribution: BAN_ATTRIBUTION,
+			release: args.release,
+			streets: written,
+			bytes,
+			md5,
+			builtAt: new Date().toISOString(),
+		}),
 		attributionPath
 	)
 

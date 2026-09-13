@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { expect } from "vitest"
 
 /**
@@ -18,7 +19,7 @@ export function assertDeepSerialized(
 	expected: unknown,
 	message = "Items are deeply equally after serialization"
 ): void {
-	expect(JSON.stringify(actual), message).toStrictEqual(JSON.stringify(expected))
+	expect(stringifyJSON(actual), message).toStrictEqual(stringifyJSON(expected))
 }
 
 /**

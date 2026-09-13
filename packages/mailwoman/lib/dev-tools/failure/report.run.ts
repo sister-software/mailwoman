@@ -24,6 +24,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -423,7 +424,7 @@ ${diffTable}
 
 	process.stderr.write(
 		`\nfailure-report: ${fixtures.length} fixtures, ${beyondReach.length} beyond-reach, ${diffs.length} model-specific.\n` +
-			`  per-model label-failures: ${JSON.stringify(summary.perModelFailCount)}\n` +
+			`  per-model label-failures: ${stringifyJSON(summary.perModelFailCount)}\n` +
 			`  wrote ${outPath} + ${jsonPath}\n`
 	)
 }

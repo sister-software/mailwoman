@@ -26,6 +26,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { prettyJSON } from "@mailwoman/core/json"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -233,7 +234,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 		const result = await pipeline(input, { locale: options.locale })
 
 		if (options.json) {
-			return JSON.stringify(result.poiIntent ?? null, null, 2)
+			return prettyJSON(result.poiIntent ?? null)
 		}
 
 		if (result.path !== "poi" || !result.poiIntent) {

@@ -30,6 +30,7 @@
  *   [--refuse-country de,es,gb,in,it,nz] [--dry-run]
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { join } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
@@ -55,7 +56,7 @@ if (!idsPath) throw new Error("--ids <file> is required: one board row id per li
 const status = values.to
 
 if (status !== "pass" && status !== "improvement_target" && status !== "known_fail") {
-	throw new Error(`--to must be pass | improvement_target | known_fail, got ${JSON.stringify(status)}`)
+	throw new Error(`--to must be pass | improvement_target | known_fail, got ${stringifyJSON(status)}`)
 }
 
 const refused = new Set(

@@ -13,6 +13,8 @@
  *   files; for a static deploy, copy them into the public bundle and pass the resulting URLs.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier/index"
@@ -639,7 +641,7 @@ function labelsFromModelCard(card: Record<string, unknown>, url: string): readon
 	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(
 			`model-card at ${url} has a malformed \`labels\` field — ` +
-				`expected a non-empty array of strings, got ${JSON.stringify(labels)}.`
+				`expected a non-empty array of strings, got ${stringifyJSON(labels)}.`
 		)
 	}
 

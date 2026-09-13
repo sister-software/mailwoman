@@ -10,7 +10,7 @@
  *   browser runtime loads the same artifacts.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 
 /**
  * Sequential little-endian reader over a byte buffer. Reads advance `offset`; an out-of-bounds fixed-width read throws
@@ -83,7 +83,7 @@ export class ByteCursor {
  * hand-rolled writes this replaces.
  */
 export function writeFramedHeader(magic: number, header: unknown): Uint8Array {
-	const headerBytes = new TextEncoder().encode(JSON.stringify(header))
+	const headerBytes = new TextEncoder().encode(stringifyJSON(header))
 	const out = new Uint8Array(8 + headerBytes.length)
 	const view = new DataView(out.buffer)
 

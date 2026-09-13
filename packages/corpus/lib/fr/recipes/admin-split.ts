@@ -33,6 +33,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import { tempRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
@@ -194,7 +195,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 
 			if (opts.golden) {
 				// Held-out eval slice for the centroid check — carries the truth coordinate.
-				write(JSON.stringify({ raw, components, country: "FR", lat: Number(base.lat), lon: Number(base.lon) }) + "\n")
+				write(stringifyJSON({ raw, components, country: "FR", lat: Number(base.lat), lon: Number(base.lon) }))
 
 				emitted++
 				orderCounts[order] = (orderCounts[order] ?? 0) + 1
@@ -227,16 +228,13 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(
-				JSON.stringify({ ...aligned.row, synth_method: "fr-admin-split", synth_order: order, synth_base_id: null }) +
-					"\n"
-			)
+			write(stringifyJSON({ ...aligned.row, synth_method: "fr-admin-split", synth_order: order, synth_base_id: null }))
 
 			emitted++
 			orderCounts[order] = (orderCounts[order] ?? 0) + 1
 		}
 
-		console.error(`  emitted=${emitted} skipped=${skipped} order-mix=${JSON.stringify(orderCounts)}`)
+		console.error(`  emitted=${emitted} skipped=${skipped} order-mix=${stringifyJSON(orderCounts)}`)
 
 		return { emitted, skipped }
 	},

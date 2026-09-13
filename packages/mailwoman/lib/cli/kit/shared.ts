@@ -12,7 +12,7 @@
 
 // Never the `@mailwoman/core` barrel: this is shared by every interactive command, and the barrel needlessly widens
 // each selected command's import graph.
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
@@ -311,7 +311,7 @@ export function countOption(raw: string | undefined, fallback: number): number {
 	const parsed = raw.trim() === "" ? Number.NaN : Number(raw)
 
 	if (!Number.isInteger(parsed) || parsed < 0) {
-		throw new CommandError(`expected a non-negative integer, got ${JSON.stringify(raw)}`)
+		throw new CommandError(`expected a non-negative integer, got ${stringifyJSON(raw)}`)
 	}
 
 	return parsed

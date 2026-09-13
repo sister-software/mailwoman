@@ -442,6 +442,8 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: false })
 
+		// `false`: the committed fixture ends at the closing brace, and this test exists so that drift is a conscious
+		// decision. Letting the printer's default newline move the pin would make a lint migration into that decision.
 		await expect(prettyJSON(trace, false)).toMatchFileSnapshot("../fixtures/trace-schema.snap.json")
 	})
 })

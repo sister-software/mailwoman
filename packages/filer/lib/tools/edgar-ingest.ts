@@ -11,6 +11,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { parseCIKLookupData, type CompanyTickerEntry } from "#sdk/edgar/filings/index"
 import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "#sdk/edgar/ingest"
@@ -83,9 +84,9 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 	await makeDirectories(options.outDir)
 
 	const jsonlPath = join(options.outDir, "edgar-subsidiaries.jsonl")
-	const lines = rows.map((row) => JSON.stringify(row))
+	const lines = rows.map((row) => stringifyJSON(row))
 
-	await writeLocalTextFile(lines.join("\n") + "\n", jsonlPath)
+	await writeLocalTextFile(lines, jsonlPath)
 
 	return { report, jsonlPath, lookupEntries: tickers.length }
 }

@@ -22,6 +22,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import {
@@ -384,7 +385,7 @@ describe("§7-3a criteria", () => {
 					valid_from: "2026-01-01",
 					valid_to: null,
 					match_score: -5,
-					evidence: JSON.stringify({ memberNodeIDs: [FORM_A, FORM_B] }),
+					evidence: stringifyJSON({ memberNodeIDs: [FORM_A, FORM_B] }),
 				})
 				.execute()
 

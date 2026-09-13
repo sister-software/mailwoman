@@ -25,6 +25,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { stripCombiningMarks } from "@mailwoman/normalize"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
@@ -116,7 +117,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 
 		if (!category?.osmTag) {
 			throw new Error(
-				`gazetteer build poi-coverage: taxonomy category ${JSON.stringify(options.category)} ` +
+				`gazetteer build poi-coverage: taxonomy category ${stringifyJSON(options.category)} ` +
 					`${category ? "carries no osmTag, so it cannot be extracted from OSM" : "does not exist"}`
 			)
 		}
@@ -125,7 +126,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 		const resolution = Number.parseInt(options.resolution, 10)
 
 		if (!Number.isInteger(resolution) || resolution < 0 || resolution > H3_MAX_RESOLUTION) {
-			throw new Error(`--resolution must be an H3 resolution in [0, 15], got ${JSON.stringify(options.resolution)}`)
+			throw new Error(`--resolution must be an H3 resolution in [0, 15], got ${stringifyJSON(options.resolution)}`)
 		}
 
 		const referencePath = options.reference ?? dataRootPath("poi", "poi.db")

@@ -571,6 +571,11 @@
 			"node": "./lib/hash.ts",
 			"default": "./out/hash.js"
 		},
+		"./promises": {
+			"types": "./out/promises.d.ts",
+			"node": "./lib/promises.ts",
+			"default": "./out/promises.js"
+		},
 		"./stats": {
 			"types": "./out/stats.d.ts",
 			"node": "./lib/stats.ts",
@@ -619,7 +624,7 @@
 		"path-ts": "^2.3.0",
 		"pino": "^10.3.1",
 		"regenerate": "^1.4.2",
-		"spliterator": "^7.5.1",
+		"spliterator": "^7.7.1",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.9.0",
 		"yauzl-promise": "^4.0.0",

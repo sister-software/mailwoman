@@ -8,6 +8,7 @@
 
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
@@ -46,11 +47,11 @@ for (const row of fixtures) {
 		score.hit++
 	} else {
 		const decomposition = STREET_FAMILY_TAGS.flatMap((tag) =>
-			(emitted.get(tag) ?? []).map((value) => `${tag}=${JSON.stringify(value)}`)
+			(emitted.get(tag) ?? []).map((value) => `${tag}=${stringifyJSON(value)}`)
 		).join(" · ")
 
 		failures.push(
-			`${row.id}\texpect=${JSON.stringify(expected)}\tassembled=${JSON.stringify(actual)}\t${decomposition || "no street-family output"}`
+			`${row.id}\texpect=${stringifyJSON(expected)}\tassembled=${stringifyJSON(actual)}\t${decomposition || "no street-family output"}`
 		)
 	}
 }

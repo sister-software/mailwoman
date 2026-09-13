@@ -17,9 +17,10 @@
  *   drops these rows at ingest and only the open weights learn from them.
  */
 
-import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { dirname, type PathBuilderLike } from "path-ts"
+import { createNewlineWriter } from "spliterator"
 
 import { extractAddrPoints, type OSMAddrRecord } from "#sdk/extract"
 
@@ -82,34 +83,23 @@ export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow | null {
 export async function writeOSMCorpusJSONL(pbfPath: string, outPath: PathBuilderLike): Promise<OSMCorpusJSONLStats> {
 	await makeDirectories(dirname(outPath))
 
-	const stream = openWriteStream(outPath, { encoding: "utf8" })
+	await using out = createNewlineWriter(outPath)
 	const stats: OSMCorpusJSONLStats = { read: 0, written: 0, noStreet: 0 }
 
-	try {
-		for await (const record of extractAddrPoints(pbfPath)) {
-			stats.read++
+	for await (const record of extractAddrPoints(pbfPath)) {
+		stats.read++
 
-			const row = toCorpusRow(record)
+		const row = toCorpusRow(record)
 
-			if (!row) {
-				stats.noStreet++
+		if (!row) {
+			stats.noStreet++
 
-				continue
-			}
-
-			if (!stream.write(JSON.stringify(row) + "\n")) {
-				await new Promise<void>((resolve) => {
-					stream.once("drain", resolve)
-				})
-			}
-
-			stats.written++
+			continue
 		}
-	} finally {
-		await new Promise<void>((resolve, reject) => {
-			stream.once("error", reject)
-			stream.end(resolve)
-		})
+
+		await out.write(stringifyJSON(row))
+
+		stats.written++
 	}
 
 	return stats

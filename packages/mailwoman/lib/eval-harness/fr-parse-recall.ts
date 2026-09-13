@@ -24,7 +24,7 @@ import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
@@ -306,18 +306,14 @@ export async function frParseRecall(
 		// snake_case wire keys, 2-space indent, trailing newline — the sidecar shape is a contract with
 		// whatever reads it next; the migration keeps it byte-for-byte.
 		await writeLocalTextFile(
-			`${JSON.stringify(
-				{
-					bare_intact: bareOk,
-					anchored_intact: anchoredOk,
-					n: rows.length,
-					bare_rate: Number(bareRate.toFixed(1)),
-					anchored_rate: Number(anchoredRate.toFixed(1)),
-					source,
-				},
-				null,
-				2
-			)}\n`,
+			prettyJSON({
+				bare_intact: bareOk,
+				anchored_intact: anchoredOk,
+				n: rows.length,
+				bare_rate: Number(bareRate.toFixed(1)),
+				anchored_rate: Number(anchoredRate.toFixed(1)),
+				source,
+			}),
 			args.json
 		)
 	}

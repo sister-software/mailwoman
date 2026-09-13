@@ -15,6 +15,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
 
 import type { ManifestRewrite } from "#move/types"
@@ -69,7 +70,7 @@ export function manifestRewritesIn(file: string, text: string, moves: readonly M
 
 			if (!replacement) continue
 
-			const quoted = JSON.stringify(target)
+			const quoted = stringifyJSON(target)
 
 			for (let at = text.indexOf(quoted); at !== -1; at = text.indexOf(quoted, at + 1)) {
 				rewrites.push({

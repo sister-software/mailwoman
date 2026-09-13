@@ -29,6 +29,7 @@
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import {
@@ -104,7 +105,7 @@ function makePiecesWithCommas(text: string): Array<{ piece: string; start: numbe
 function asComponentTag(value: string | undefined): ComponentTag {
 	const tag = COMPONENT_TAGS.find((candidate) => candidate === value)
 
-	if (!tag) throw new Error(`fixture names ${JSON.stringify(value)}, which is not a ComponentTag`)
+	if (!tag) throw new Error(`fixture names ${stringifyJSON(value)}, which is not a ComponentTag`)
 
 	return tag
 }

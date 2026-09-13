@@ -14,6 +14,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
 import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree/arm"
 import { join } from "path-ts"
@@ -50,7 +51,7 @@ async function fakeRepo(marker: string): Promise<string> {
 	await writeLocalTextFile(
 		`export async function createGeocodeSession() {
 			return {
-				geocode: async (input) => ({ result: { lat: 1, lon: 2, resolution_tier: ${JSON.stringify(marker)}, components: { locality: input } } }),
+				geocode: async (input) => ({ result: { lat: 1, lon: 2, resolution_tier: ${stringifyJSON(marker)}, components: { locality: input } } }),
 				[Symbol.dispose]: () => {},
 			}
 		}\n`,

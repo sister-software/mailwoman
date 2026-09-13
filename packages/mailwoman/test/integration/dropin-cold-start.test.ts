@@ -40,7 +40,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"
 import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/process"
@@ -254,7 +254,7 @@ async function mcpRoundTrip(
 
 		return new Promise((resolve, reject) => {
 			pending.set(id, resolve)
-			server.child.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`)
+			server.child.stdin?.write(`${stringifyJSON({ jsonrpc: "2.0", id, method, params })}\n`)
 
 			setTimeout(() => {
 				reject(new Error(`MCP ${method} timed out\nstderr:\n${server.stderr}`))
@@ -268,7 +268,7 @@ async function mcpRoundTrip(
 		clientInfo: { name: "dropin-cold-start", version: "0.0.0" },
 	})
 
-	server.child.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`)
+	server.child.stdin?.write(`${stringifyJSON({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`)
 
 	const results: Array<Record<string, unknown>> = []
 

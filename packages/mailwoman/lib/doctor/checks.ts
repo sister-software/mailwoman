@@ -15,6 +15,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	docsSiteURL,
 	isSelfServicePayload,
@@ -677,7 +678,7 @@ export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 		return {
 			...base,
 			status: CheckStatus.Degraded,
-			detail: `${o.manifest.name} records license ${JSON.stringify(o.manifest.license)}, which the doctor does not recognize`,
+			detail: `${o.manifest.name} records license ${stringifyJSON(o.manifest.license)}, which the doctor does not recognize`,
 			consequence:
 				"An unrecognized license expression carries obligations the doctor cannot summarize. Read the source's own terms before redistributing results derived from this layer.",
 			license,

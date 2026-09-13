@@ -27,6 +27,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { join, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
@@ -169,13 +170,13 @@ export async function readTable(
 	const file = dictionary.files.get(table)
 
 	if (!file) {
-		throw new Error(`soil tabular: the archive's mstab.txt declares no file for table ${JSON.stringify(table)}`)
+		throw new Error(`soil tabular: the archive's mstab.txt declares no file for table ${stringifyJSON(table)}`)
 	}
 
 	const positions = dictionary.columns.get(table)
 
 	if (!positions) {
-		throw new Error(`soil tabular: the archive's mstabcol.txt declares no columns for table ${JSON.stringify(table)}`)
+		throw new Error(`soil tabular: the archive's mstabcol.txt declares no columns for table ${stringifyJSON(table)}`)
 	}
 
 	const projection: Array<[string, number]> = []
@@ -185,7 +186,7 @@ export async function readTable(
 
 		if (position === undefined) {
 			throw new Error(
-				`soil tabular: table ${table} declares no column ${JSON.stringify(column)} — the shipped dictionary names ${positions.size} columns, and projecting away a column a caller asked for would read downstream as an absence`
+				`soil tabular: table ${table} declares no column ${stringifyJSON(column)} — the shipped dictionary names ${positions.size} columns, and projecting away a column a caller asked for would read downstream as an absence`
 			)
 		}
 
@@ -281,7 +282,7 @@ export function saverestToISODate(value: string): string {
 
 	if (!matched) {
 		throw new Error(
-			`soil tabular: cannot read ${JSON.stringify(value)} as a saverest date — expected M/D/YYYY, which is what both Soil Data Access and the shipped sacatlog.txt write`
+			`soil tabular: cannot read ${stringifyJSON(value)} as a saverest date — expected M/D/YYYY, which is what both Soil Data Access and the shipped sacatlog.txt write`
 		)
 	}
 

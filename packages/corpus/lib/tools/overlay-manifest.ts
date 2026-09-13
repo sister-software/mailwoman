@@ -28,6 +28,7 @@
 import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, join } from "path-ts"
 
 import { connectDuckDB, escapeSQLString } from "#utils/parquet"
@@ -207,7 +208,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	console.log(`wrote ${out}`)
 	console.log(`  slices: ${manifest.slices.length} (${kept.length} base kept, +${added.length} added)`)
-	console.log(`  counts: ${JSON.stringify(manifest.counts)}  total: ${manifest.total_rows}`)
+	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
 	for (const slice of added) {
 		console.log(`  ${slice.source} train: ${slice.rows} rows (${slice.bytes} bytes)`)

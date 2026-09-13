@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -165,7 +166,7 @@ describe("filer schema", () => {
 				assertion: FilerEdgeAssertion.Inferred,
 				source: "bdc-provider-list",
 				match_score: 0.92,
-				evidence: JSON.stringify({ nameSimilarity: 0.92 }),
+				evidence: stringifyJSON({ nameSimilarity: 0.92 }),
 			})
 			.execute()
 

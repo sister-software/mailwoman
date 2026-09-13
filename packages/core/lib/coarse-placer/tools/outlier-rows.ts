@@ -10,6 +10,8 @@
  */
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
+import { toLinesText } from "#fs/writers"
+import { stringifyJSON } from "#json"
 
 /**
  * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
@@ -87,5 +89,5 @@ export function collectOutlierRows(candidates: Iterable<string | null>, cap = In
  * Encode rows as `{raw, country: "OTHER"}` JSONL (trailing newline included).
  */
 export function otherRowsJSONL(rows: string[]): string {
-	return rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
+	return toLinesText(rows.map((raw) => stringifyJSON({ raw, country: "OTHER" })))
 }

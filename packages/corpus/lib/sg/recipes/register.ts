@@ -23,6 +23,7 @@
  *   Run: mailwoman corpus slice sg-register --input <overture-sg.corpus.jsonl> --count N --seed S
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { titlecase } from "#au/adapters/gnaf/assemble"
@@ -227,7 +228,7 @@ export const sgRegisterRecipe: CorpusRecipe = {
 			if (opts.golden) {
 				const golden = { raw: rendering.raw, components: rendering.components, country: "SG", locale: "en-SG" }
 
-				write(JSON.stringify(golden) + "\n")
+				write(stringifyJSON(golden))
 
 				emitted++
 				registers[rendering.register] = (registers[rendering.register] ?? 0) + 1

@@ -24,7 +24,7 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { COUNTRIES, IN_MAP_EU, NEW_EU } from "#coarse-placer/tools/country-sets"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
-import { writeLocalTextFile, makeDirectories } from "#fs/writers"
+import { makeDirectories, writeLocalJSONLFile } from "#fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
 import { dataRootPath } from "#utils"
 
@@ -231,7 +231,7 @@ export async function buildDataset(
 		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country)) // deterministic class-interleave
 		const p = resolvePath(OUT_DIR, `${name}.jsonl`)
 
-		await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", p)
+		await writeLocalJSONLFile(rows, p)
 		report?.(`→ ${p}  (${rows.length} rows)`)
 	}
 

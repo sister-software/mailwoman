@@ -27,6 +27,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -299,7 +300,7 @@ export const germanRecipe: CorpusRecipe = {
 			// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO. `order`
 			// rides along so the eval can stratify native vs international.
 			if (opts.golden) {
-				write(JSON.stringify({ raw: synth.raw, components: synth.components, country: "DE", order }) + "\n")
+				write(stringifyJSON({ raw: synth.raw, components: synth.components, country: "DE", order }))
 
 				emitted++
 
@@ -333,13 +334,13 @@ export const germanRecipe: CorpusRecipe = {
 			}
 
 			write(
-				JSON.stringify({
+				stringifyJSON({
 					...aligned.row,
 					synth_method: "german",
 					synth_order: order,
 					synth_separator: separator === " " ? "space" : "comma",
 					synth_base_id: null,
-				}) + "\n"
+				})
 			)
 
 			emitted++

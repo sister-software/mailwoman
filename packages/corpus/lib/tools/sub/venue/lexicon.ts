@@ -40,6 +40,7 @@
 
 import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
 import { basename, join } from "path-ts"
 
@@ -302,7 +303,7 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
  * result before committing — repo law is that committed JSON is oxfmt-clean, which `JSON.stringify` cannot reproduce.
  */
 export function serializeSubVenueLexicon(table: SubVenueLexiconTable): string {
-	return JSON.stringify(table, null, 2) + "\n"
+	return prettyJSON(table)
 }
 
 /**

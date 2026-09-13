@@ -9,6 +9,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -85,7 +86,7 @@ export async function buildNUTSDB(geojsonPath: string, dbPath: string): Promise<
 			maxLat,
 			minLon,
 			maxLon,
-			JSON.stringify(polygons)
+			stringifyJSON(polygons)
 		)
 	}
 

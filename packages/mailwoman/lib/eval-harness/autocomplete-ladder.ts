@@ -18,6 +18,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { percentile } from "@mailwoman/core/stats"
 import { autocomplete, deserializeFST, type FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -536,7 +537,7 @@ export function printAutocompleteLadder(report: AutocompleteLadderReport): void 
 
 		for (const row of report.disagreements.slice(0, 20)) {
 			console.log(
-				`    ${row.id.padEnd(44)} ${JSON.stringify(row.input)}  parse→resolve ${row.parse_resolve ?? "never"} · fst ${row.fst ?? "never"}`
+				`    ${row.id.padEnd(44)} ${stringifyJSON(row.input)}  parse→resolve ${row.parse_resolve ?? "never"} · fst ${row.fst ?? "never"}`
 			)
 		}
 	}

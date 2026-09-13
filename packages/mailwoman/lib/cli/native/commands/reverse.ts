@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate-bounds"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
@@ -53,7 +54,7 @@ function coordinate(raw: string, kind: "latitude" | "longitude"): number {
 	if (!valid) {
 		const range = kind === "latitude" ? "[-90, 90]" : "[-180, 180]"
 
-		throw new CLIUsageError(`Invalid ${kind} ${JSON.stringify(raw)} — must be a number in ${range}.`)
+		throw new CLIUsageError(`Invalid ${kind} ${stringifyJSON(raw)} — must be a number in ${range}.`)
 	}
 
 	return value
@@ -115,25 +116,21 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 			process.stdout.write(`${lines.join("\n")}\n`)
 		} else {
 			process.stdout.write(
-				`${JSON.stringify(
-					{
-						lat,
-						lon,
-						containment: result.containment,
-						hierarchy: result.hierarchy.map((place) => ({
-							id: place.id,
-							name: place.name,
-							placetype: place.placetype,
-							country: place.country,
-							lat: place.lat,
-							lon: place.lon,
-							...(place.distanceKm === undefined ? {} : { distanceKm: place.distanceKm }),
-						})),
-						engine: stamp,
-					},
-					null,
-					2
-				)}\n`
+				prettyJSON({
+					lat,
+					lon,
+					containment: result.containment,
+					hierarchy: result.hierarchy.map((place) => ({
+						id: place.id,
+						name: place.name,
+						placetype: place.placetype,
+						country: place.country,
+						lat: place.lat,
+						lon: place.lon,
+						...(place.distanceKm === undefined ? {} : { distanceKm: place.distanceKm }),
+					})),
+					engine: stamp,
+				})
 			)
 		}
 

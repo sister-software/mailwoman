@@ -28,7 +28,7 @@
  *   repeated across SSURGO, which is why asserting it is cheap and why a change in it is loud.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import type { PathBuilderLike } from "path-ts"
@@ -253,7 +253,7 @@ function assertDeclared(declared: ReadonlySet<string>, value: string | undefined
 	if (declared.has(value)) return
 
 	throw new Error(
-		`soil survey area: ${where} holds ${JSON.stringify(value)}, which is not in the authority's declared ${domain} domain (${declared.size} members, read from the archive's own msdomdet.txt) — an unknown code is a source-schema change, and coercing it would turn "the source changed" into "there is nothing here"`
+		`soil survey area: ${where} holds ${stringifyJSON(value)}, which is not in the authority's declared ${domain} domain (${declared.size} members, read from the archive's own msdomdet.txt) — an unknown code is a source-schema change, and coercing it would turn "the source changed" into "there is nothing here"`
 	)
 }
 
@@ -329,7 +329,7 @@ export function readFGDCMetadata(xml: string, areaSymbol: string): FGDCMetadata 
 
 	if (!useConstraints?.includes(SSURGO_PUBLIC_INFORMATION_SENTENCE)) {
 		throw new Error(
-			`soil survey area: ${areaSymbol}'s FGDC use constraints do not carry ${JSON.stringify(SSURGO_PUBLIC_INFORMATION_SENTENCE)} — that sentence is the grant this layer ships on, so a survey area without it must not be built into a distributable artifact`
+			`soil survey area: ${areaSymbol}'s FGDC use constraints do not carry ${stringifyJSON(SSURGO_PUBLIC_INFORMATION_SENTENCE)} — that sentence is the grant this layer ships on, so a survey area without it must not be built into a distributable artifact`
 		)
 	}
 

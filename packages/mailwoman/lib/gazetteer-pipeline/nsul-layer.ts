@@ -57,7 +57,7 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -578,7 +578,7 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 
 				if (drift !== null) {
 					throw new Error(
-						`buildNSULLayer: header drift in ${source.label} — expected ${JSON.stringify(NSUL_HEADER)}, found ${JSON.stringify(drift)}`
+						`buildNSULLayer: header drift in ${source.label} — expected ${stringifyJSON(NSUL_HEADER)}, found ${stringifyJSON(drift)}`
 					)
 				}
 
@@ -883,9 +883,9 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 		["coordinate_source", `OS Open UPRN uprn.db, layer_manifest.version ${uprnLayerVersion}`],
 		[
 			"quality_drops",
-			JSON.stringify({ read, inserted, skippedMalformed, skippedDuplicate, skippedNoPostcode, skippedNoCoordinate }),
+			stringifyJSON({ read, inserted, skippedMalformed, skippedDuplicate, skippedNoPostcode, skippedNoCoordinate }),
 		],
-		["read_by_region", JSON.stringify(readByRegion)],
+		["read_by_region", stringifyJSON(readByRegion)],
 		["license", NSUL_LICENSE],
 		["license_url", NSUL_LICENSE_URL],
 		["license_info_url", NSUL_LICENSE_INFO_URL],

@@ -44,7 +44,7 @@ beforeAll(async () => {
 			row("CZ", "110 00", "Stare Mesto", 50.2, 14.2),
 			row("CZ", "110 00", "Josefov", 50.4, 14.4),
 			row("CZ", "120 00", "Vinohrady", 50.07, 14.44),
-		].join("\n") + "\n",
+		],
 		join(postalDir, "CZ.txt")
 	)
 

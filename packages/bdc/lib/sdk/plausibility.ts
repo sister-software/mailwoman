@@ -112,6 +112,7 @@
  *   — that gap needs the schema addition, not a runtime assertion.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest, type LayerContractHandle } from "@mailwoman/core/layers"
 import type { Evidence } from "@mailwoman/evidence"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
@@ -418,7 +419,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		const geocoded = await deps.geocode(claim.address)
 
 		if (geocoded.lat == null || geocoded.lon == null) {
-			throw new Error(`plausibilityCheck: geocode could not resolve a coordinate for ${JSON.stringify(claim.address)}`)
+			throw new Error(`plausibilityCheck: geocode could not resolve a coordinate for ${stringifyJSON(claim.address)}`)
 		}
 
 		point = { type: "Point", coordinates: [geocoded.lon, geocoded.lat] }

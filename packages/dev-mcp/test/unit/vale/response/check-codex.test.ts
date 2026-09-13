@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
@@ -13,7 +13,7 @@ const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "vale
 
 function runHook(lastAssistantMessage: string): string {
 	const result = spawnProcessSync(process.execPath, [HOOK_PATH], {
-		input: JSON.stringify({ last_assistant_message: lastAssistantMessage }),
+		input: stringifyJSON({ last_assistant_message: lastAssistantMessage }),
 		encoding: "utf8",
 	})
 

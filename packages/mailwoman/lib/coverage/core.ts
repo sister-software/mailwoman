@@ -37,6 +37,7 @@ import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers
 import { dirname, join } from "path-ts"
 import { $ } from "zx"
 import { Globerator } from "spliterator/node/fs"
+import { stringifyJSON } from "@mailwoman/core/json";
 
 /**
  * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely wrap more than half the
@@ -374,7 +375,7 @@ export async function buildCoverageTiles(
 					res,
 				}
 
-				sink.write(`${prefix}${JSON.stringify(props)},"geometry":${String(r.geom)}}\n`)
+				sink.write(`${prefix}${stringifyJSON(props)},"geometry":${String(r.geom)}}\n`)
 
 				featureCount++
 			}

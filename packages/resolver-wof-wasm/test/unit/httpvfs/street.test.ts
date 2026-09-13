@@ -11,6 +11,7 @@
  *   spec.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import {
 	HTTPVFSAddressPointLookup,
@@ -59,7 +60,7 @@ function interpDB(): DatabaseClient<AddressPointDatabase> {
 			200,
 			"even",
 			"10001",
-			JSON.stringify([
+			stringifyJSON([
 				[-73.99, 40.75],
 				[-73.98, 40.75],
 			]),

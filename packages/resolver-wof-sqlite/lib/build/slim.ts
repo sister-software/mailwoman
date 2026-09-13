@@ -38,6 +38,7 @@
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo, removePath } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { countRows } from "@mailwoman/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -254,7 +255,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			placePopulation: countRows(out, PLACE_POPULATION_TABLE),
 		}
 
-		progress("done", JSON.stringify(rowCounts))
+		progress("done", stringifyJSON(rowCounts))
 
 		result = {
 			outputPath: opts.output,

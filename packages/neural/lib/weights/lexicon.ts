@@ -10,6 +10,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilder, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -128,10 +129,10 @@ export async function resolveEvidenceLexicon(
 
 	throw new LexiconVersionMismatchError(
 		`[resolveWeights] ${channel} lexicon MISMATCH between the model-card and the weights package. The card ` +
-			`at ${modelCardPath} declares \`requires.${channel}.lexicon\` = ${JSON.stringify(declared)} — the ` +
+			`at ${modelCardPath} declares \`requires.${channel}.lexicon\` = ${stringifyJSON(declared)} — the ` +
 			`generation the model TRAINED against — but the package at ${packageDir} ships ` +
-			`${shipped.map((name) => JSON.stringify(name)).join(", ")}. Serving a different lexicon generation than ` +
+			`${shipped.map((name) => stringifyJSON(name)).join(", ")}. Serving a different lexicon generation than ` +
 			`training painted is a silent train/serve incongruence (#1510), so this refuses rather than downgrading. ` +
-			`Stage ${JSON.stringify(declared)} into the package, or correct the card to name what it actually ships.`
+			`Stage ${stringifyJSON(declared)} into the package, or correct the card to name what it actually ships.`
 	)
 }

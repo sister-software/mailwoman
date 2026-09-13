@@ -12,6 +12,7 @@
  *   support that no ladder could grade. A consumer that needs to tell them apart still can, in the JSON.
  */
 
+import { toLinesText } from "@mailwoman/core/fs/writers"
 import { formatPercent } from "@mailwoman/core/stats"
 
 import { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation/expectation"
@@ -206,5 +207,5 @@ export function renderAblationMarkdown(
 		}
 	}
 
-	return lines.join("\n") + "\n"
+	return toLinesText(lines)
 }

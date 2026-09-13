@@ -14,6 +14,7 @@
  *   The `--` separates flags from coordinates so negative longitudes parse as positionals.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { buildTimezoneDB } from "#build"
@@ -52,5 +53,5 @@ if (positionals[0] === "build") {
 	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 	const tzid = lookup.explore(lat, lon)
 
-	console.log(JSON.stringify({ timezone: tzid, offsetSec: tzid ? offsetSecForTimezone(tzid) : null }))
+	console.log(stringifyJSON({ timezone: tzid, offsetSec: tzid ? offsetSecForTimezone(tzid) : null }))
 }

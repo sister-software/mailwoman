@@ -30,6 +30,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
@@ -227,7 +228,7 @@ async function main(): Promise<void> {
 		}
 
 		if (extended.edge?.child !== "locality" || extended.edge?.parent !== "region") {
-			fail(`header edge ${JSON.stringify(extended.edge)} != locality→region`)
+			fail(`header edge ${stringifyJSON(extended.edge)} != locality→region`)
 		}
 
 		if (extended.source?.kind !== "wof-ancestors") {

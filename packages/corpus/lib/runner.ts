@@ -29,6 +29,7 @@
 
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
@@ -192,7 +193,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				}
 			}
 
-			const line = `${JSON.stringify(stamped)}\n`
+			const line = `${stringifyJSON(stamped)}\n`
 			hasher.update(line)
 			bytes += Buffer.byteLength(line, "utf8")
 
@@ -269,7 +270,7 @@ export async function runAllAdapters(
  */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	if (row.source !== adapter.id) {
-		throw new Error(`adapter ${adapter.id}: row.source must equal adapter.id (got ${JSON.stringify(row.source)})`)
+		throw new Error(`adapter ${adapter.id}: row.source must equal adapter.id (got ${stringifyJSON(row.source)})`)
 	}
 
 	if (!row.source_id) {

@@ -10,6 +10,7 @@
  */
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { makeLcg } from "@mailwoman/core/random"
 import { block, gbtScore, trainGBT, type TermFrequencyTable } from "@mailwoman/match"
@@ -749,9 +750,9 @@ export async function trainCrossSourceModel(
 		options.moduleDoc +
 		` */\n\n` +
 		`import type { GBT } from "@mailwoman/match"\n\n` +
-		`export const ${options.exportPrefix}_META = ${JSON.stringify(meta)} as const\n\n` +
+		`export const ${options.exportPrefix}_META = ${stringifyJSON(meta)} as const\n\n` +
 		`// prettier-ignore\n` +
-		`export const ${options.exportPrefix}_MODEL: GBT = ${JSON.stringify(model)}\n`
+		`export const ${options.exportPrefix}_MODEL: GBT = ${stringifyJSON(model)}\n`
 
 	await makeDirectories(dirname(out))
 	await writeLocalFile(moduleSource, out)

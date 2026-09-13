@@ -19,6 +19,7 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { componentMatches } from "mailwoman/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
 
@@ -259,7 +260,7 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 	// before the first prediction runs.
 	for await (const row of JSONSpliterator.fromAsync<{ raw?: string; country?: string }>(corpusPath)) {
 		if (!row?.raw || !row.country) {
-			unusable.push(JSON.stringify(row).slice(0, 60))
+			unusable.push(stringifyJSON(row).slice(0, 60))
 
 			continue
 		}

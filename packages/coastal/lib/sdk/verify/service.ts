@@ -6,6 +6,7 @@
  */
 
 import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "#sdk/client"
 import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
@@ -57,7 +58,7 @@ export function createEAServiceReader(client: Pick<EANCERMClient, "fetch">): Ser
 		const scenario = NCERM_SCENARIOS_BY_KEY.get(scenarioKey)
 
 		if (!scenario) {
-			throw new Error(`coastal verify: ${JSON.stringify(scenarioKey)} is not one of the twelve published scenarios`)
+			throw new Error(`coastal verify: ${stringifyJSON(scenarioKey)} is not one of the twelve published scenarios`)
 		}
 
 		return createOGCFeaturesBBoxReader<ServiceFeature>({

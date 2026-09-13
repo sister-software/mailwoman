@@ -6,6 +6,7 @@
  * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
  */
 
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
@@ -303,12 +304,12 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 			countryCode: result.countryCode ?? undefined,
 		})
 
-		return JSON.stringify(value, null, compact ? 0 : 2)
+		return compact ? stringifyJSON(value) : prettyJSON(value, false, 2)
 	}
 
 	const { stamp } = await resolveEngineStamp()
 
-	return JSON.stringify({ ...result, engine: stamp }, null, compact ? 0 : 2)
+	return compact ? stringifyJSON({ ...result, engine: stamp }) : prettyJSON({ ...result, engine: stamp }, false, 2)
 }
 
 async function openSession(options: GeocodeOptions) {

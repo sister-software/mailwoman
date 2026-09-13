@@ -34,7 +34,7 @@
 
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -236,13 +236,13 @@ if (board === "gb") {
 }
 
 if (values["dump-spans"]) {
-	await writeLocalTextFile(spans.join("\n") + "\n", values["dump-spans"])
+	await writeLocalTextFile(spans, values["dump-spans"])
 
 	console.log(`spans → ${values["dump-spans"]} (${spans.length} parses, sha256 ` + `${sha256Hex(spans.join("\n"))})`)
 }
 
 if (values["dump-misses"]) {
-	await writeLocalTextFile(misses.map((m) => JSON.stringify(m)).join("\n") + "\n", values["dump-misses"])
+	await writeLocalJSONLFile(misses, values["dump-misses"])
 
 	console.log(`misses → ${values["dump-misses"]} (${misses.length})`)
 }

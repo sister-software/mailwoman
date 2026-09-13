@@ -16,6 +16,7 @@
 
 import { countryDisplayNames } from "@mailwoman/codex/country"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
@@ -98,7 +99,7 @@ const CorpusTuples: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		await writeLocalTextFile(
-			kept.map((triple) => JSON.stringify(triple)).join("\n") + (kept.length ? "\n" : ""),
+			kept.map((triple) => stringifyJSON(triple)).join("\n") + (kept.length ? "\n" : ""),
 			options.output
 		)
 

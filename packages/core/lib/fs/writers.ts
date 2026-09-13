@@ -19,6 +19,7 @@ import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { Stats } from "#fs/readers"
 import { statPath } from "#fs/readers/stat"
+import { prettyJSON, stringifyJSON } from "#json"
 
 // #region Directories
 
@@ -62,11 +63,26 @@ export type BufferLike =
 /**
  * Write a local text file, creating its parent directory first.
  *
+ * A string is written verbatim. Any other iterable of strings — an array, a `Set`, a generator — is written one element
+ * per LINE, every line terminated including the last: an unterminated final line appends badly and is not what
+ * `TextSpliterator` round-trips. An empty iterable writes an empty file rather than a lone newline, because "no lines"
+ * and "one blank line" are different files and a bare `join` produces the second.
+ *
  * @category Files
  * @runtime node
  */
 export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 	content: string | Promise<string>,
+	...pathSegments: S
+): Promise<void>
+
+export async function writeLocalTextFile<S extends PathBuilderLike[]>(
+	lines: Iterable<string> | AsyncIterable<string>,
+	...pathSegments: S
+): Promise<void>
+
+export async function writeLocalTextFile<S extends PathBuilderLike[]>(
+	content: string | Promise<string> | Iterable<string> | AsyncIterable<string>,
 	...pathSegments: S
 ): Promise<void> {
 	if (!pathSegments.length) {
@@ -77,9 +93,23 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 
 	await mkdir(dirname(filePath), { recursive: true })
 
-	const data = await content
+	// A string is itself an `Iterable<string>` over its characters, so it has to be settled before the iterable branch
+	// or every file would be written one character per line.
+	const resolved = await content
+	const data = typeof resolved === "string" ? resolved : toLinesText(await Array.fromAsync(resolved))
 
 	return writeFile(filePath, data, "utf8")
+}
+
+/**
+ * One line per element, every line terminated; no elements produces the empty string.
+ *
+ * The same shape {@linkcode writeLocalTextFile} applies to an iterable, for the sites that build a document and hand it
+ * somewhere else. `lines.join("\n")` leaves the last line unterminated, and `lines.join("\n") + "\n"` turns an empty
+ * list into a file containing one blank line.
+ */
+export function toLinesText(lines: readonly string[]): string {
+	return lines.length ? `${lines.join("\n")}\n` : ""
 }
 
 /**
@@ -92,9 +122,28 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 	content: T,
 	...pathSegments: S
 ): Promise<void> {
-	const normalized = typeof content === "string" ? content : JSON.stringify(content, null, "\t") + "\n"
+	const normalized = typeof content === "string" ? content : prettyJSON(content)
 
 	return writeLocalTextFile(normalized, ...pathSegments)
+}
+
+/**
+ * Write one JSON value per line, newline-terminated — the JSONL shape every panel, fixture and result file in this
+ * repository is read back with by `JSONSpliterator.fromAsync`.
+ *
+ * The trailing newline is part of the contract: a file whose last line has none appends badly and diffs noisily.
+ *
+ * @category Files
+ * @runtime node
+ */
+export function writeLocalJSONLFile<T, S extends PathBuilderLike[] = PathBuilderLike[]>(
+	rows: ReadonlyArray<T>,
+	...pathSegments: S
+): Promise<void> {
+	return writeLocalTextFile(
+		rows.map((row) => stringifyJSON(row)),
+		...pathSegments
+	)
 }
 
 /**

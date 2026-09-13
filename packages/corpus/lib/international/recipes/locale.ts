@@ -29,6 +29,7 @@ import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
@@ -555,7 +556,7 @@ export const localeRecipe: CorpusRecipe = {
 					continue
 				}
 
-				write(JSON.stringify({ raw: synth.raw, components: synth.components, country, order }) + "\n")
+				write(stringifyJSON({ raw: synth.raw, components: synth.components, country, order }))
 
 				emitted++
 
@@ -588,7 +589,7 @@ export const localeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: source, synth_order: order, synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_order: order, synth_base_id: null }))
 
 			emitted++
 		}
