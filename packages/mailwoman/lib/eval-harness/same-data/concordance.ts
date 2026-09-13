@@ -32,6 +32,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/n
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * The concordance source key WOF writes for a GeoNames identifier.
@@ -130,7 +131,7 @@ export interface GoldSets {
  * The concordance is queried in chunks and joined to `spr` so the guard can read the other side's placetype, name,
  * country and coordinate — a join that returned ids alone could not tell a locality from the region above it.
  */
-export async function readGoldSets(databasePath: string, subjects: readonly GoldSubject[]): Promise<GoldSets> {
+export async function readGoldSets(databasePath: PathBuilderLike, subjects: readonly GoldSubject[]): Promise<GoldSets> {
 	using db = new DatabaseClient<WOFGazetteerDatabase>(databasePath, { readOnly: true })
 
 	const identifiers = subjects.map((subject) => subject.geonameid)

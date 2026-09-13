@@ -9,6 +9,44 @@
  */
 
 import type { PathBuilderLike } from "path-ts"
+import type { Tagged } from "type-fest"
+
+/**
+ * A branded type representing a string that is known to be valid JSON.
+ */
+export type StringifiedJSON = Tagged<"StringifiedJSON", string>
+
+/**
+ * Pretty-print an object as JSON with tabs for indentation.
+ *
+ * This is effectively a wrapper around `JSON.stringify` that returns a branded type to indicate that the output is
+ * valid JSON. It also allows for optional newline and indentation settings.
+ *
+ * @param input The object to be pretty-printed.
+ * @param newline Whether to append a newline character at the end of the output. Defaults to `true`.
+ * @param space The string to use for indentation. Defaults to a tab character (`"\t"`).
+ *
+ * @returns A string containing the pretty-printed JSON representation of the input object.
+ * @see {@linkcode stringifyJSON} for a JSONL-compatible version that returns a branded type.
+ */
+export function prettyJSON(input: unknown, newline = true, space = "\t"): StringifiedJSON {
+	return (JSON.stringify(input, null, space) + (newline ? "\n" : "")) as StringifiedJSON
+}
+
+/**
+ * Stringify an object as JSON.
+ *
+ * This is effectively a wrapper around `JSON.stringify` that returns a branded type to indicate that the output is
+ * valid JSON. It is also one of two places in the codebase that is allowed to use `JSON.stringify`
+ *
+ * @param input The object to be stringified.
+ *
+ * @returns A string containing the JSON representation of the input object.
+ * @see {@linkcode prettyJSON} for human-friendly JSON output.
+ */
+export function stringifyJSON<T>(input: T): StringifiedJSON {
+	return JSON.stringify(input) as StringifiedJSON
+}
 
 /**
  * Given serialized JSON, attempt to parse it.
@@ -75,11 +113,4 @@ export function parseJSONArray<T>(raw: string | undefined, scope: string): T[] {
 	}
 
 	return parsed as T[]
-}
-
-/**
- * Pretty-print an object as JSON with tabs for indentation.
- */
-export function prettyJSON(input: unknown, newline = true, space = "\t"): string {
-	return JSON.stringify(input, null, space) + (newline ? "\n" : "")
 }

@@ -23,7 +23,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { allKeyed } from "@mailwoman/core/promises"
@@ -61,7 +61,7 @@ import {
 	type ArmMetrics,
 } from "#eval-harness/same-data/score"
 
-const { values: rawValues, positionals } = parseArguments({
+const { values, positionals } = parseArguments({
 	options: {
 		geonames: { type: "string" },
 		gazetteer: { type: "string" },
@@ -69,24 +69,15 @@ const { values: rawValues, positionals } = parseArguments({
 		out: { type: "string" },
 		limit: { type: "string" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 
-const values = rawValues as {
-	geonames?: string
-	gazetteer?: string
-	backend?: string
-	out?: string
-	limit?: string
-}
-
-const GEONAMES = values.geonames || dataRootPath("geonames").toString()
+const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
  * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join. The candidate backend below
  * carries no concordance table, which is why the two are separate flags rather than one.
  */
-const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority.db").toString()
+const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority.db")
 /**
  * The backend the recording drives. Defaults to the promoted candidate table, which is what the shipped geocoder reads.
  */
@@ -98,10 +89,6 @@ const FIXTURE_PATH = `${OUT}/same-data-candidates.jsonl`
 const RESULTS_PATH = `${OUT}/same-data-results.jsonl`
 const RECEIPT_PATH = `${OUT}/same-data-receipt.json`
 const SCORE_PATH = `${OUT}/same-data-report.md`
-
-async function readJSONL<T>(path: string): Promise<T[]> {
-	return Array.fromAsync(JSONSpliterator.fromAsync<T>(path))
-}
 
 async function panelPhase(): Promise<void> {
 	const { definition, cities, countryNames, postcodeByAdmin } = await allKeyed({
@@ -123,14 +110,22 @@ async function panelPhase(): Promise<void> {
 }
 
 async function recordPhase(): Promise<void> {
-	const definition = await loadSameDataDefinition()
-	const panel = await readJSONL<SameDataPanelRow>(PANEL_PATH)
+	const panel = await JSONSpliterator.fromAsync<SameDataPanelRow>(PANEL_PATH).toArray()
+
 	const limit = values.limit ? Number(values.limit) : panel.length
 	const rows = panel.slice(0, limit)
 
-	const weights = await readWeightsIdentity({})
-	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WOFCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		definition,
+		weights,
+		scorer: { createScorer },
+		resolver: { WOFCandidateTableLookup },
+	} = await allKeyed({
+		definition: loadSameDataDefinition(),
+		weights: readWeightsIdentity({}),
+		scorer: import("@mailwoman/neural/scorer"),
+		resolver: import("@mailwoman/resolver-wof-sqlite"),
+	})
 
 	const scorer = await createScorer({
 		modelPath: weights.weightsModelPath,
@@ -165,26 +160,22 @@ async function recordPhase(): Promise<void> {
 
 	const errors = census.filter((entry) => entry.error)
 
-	await writeLocalTextFile(
-		`${JSON.stringify(
-			{
-				benchmarkID: definition.benchmarkID,
-				definitionVersion: definition.version,
-				recordedAt: isoSeconds(),
-				gitHead: await gitHead(repoRootPath()),
-				weights,
-				backendPath: BACKEND,
-				gazetteerPath: GAZETTEER,
-				rows: fixture.length,
-				fixtureDigest: fixtureDigest(fixture),
-				lookupsTotal: census.reduce((total, entry) => total + entry.lookups, 0),
-				candidatesTotal: census.reduce((total, entry) => total + entry.candidates, 0),
-				goldCandidatesRemoved: census.reduce((total, entry) => total + entry.removedGold, 0),
-				rowsWithRecordingError: errors.length,
-			},
-			null,
-			"\t"
-		)}\n`,
+	await writeLocalJSONFile(
+		{
+			benchmarkID: definition.benchmarkID,
+			definitionVersion: definition.version,
+			recordedAt: isoSeconds(),
+			gitHead: await gitHead(repoRootPath()),
+			weights,
+			backendPath: BACKEND,
+			gazetteerPath: GAZETTEER,
+			rows: fixture.length,
+			fixtureDigest: fixtureDigest(fixture),
+			lookupsTotal: census.reduce((total, entry) => total + entry.lookups, 0),
+			candidatesTotal: census.reduce((total, entry) => total + entry.candidates, 0),
+			goldCandidatesRemoved: census.reduce((total, entry) => total + entry.removedGold, 0),
+			rowsWithRecordingError: errors.length,
+		},
 		RECEIPT_PATH
 	)
 
@@ -202,8 +193,9 @@ function armOptionSets(): ResolveOpts[] {
 }
 
 async function runPhase(): Promise<void> {
-	const panel = await readJSONL<SameDataPanelRow>(PANEL_PATH)
-	const fixture = await readJSONL<SameDataFixtureRow>(FIXTURE_PATH)
+	const panel = await JSONSpliterator.fromAsync<SameDataPanelRow>(PANEL_PATH).toArray()
+	const fixture = await JSONSpliterator.fromAsync<SameDataFixtureRow>(FIXTURE_PATH).toArray()
+
 	const fixtureByID = new Map(fixture.map((row) => [row.id, row]))
 	const rows = panel.filter((row) => fixtureByID.has(row.id))
 
@@ -244,9 +236,12 @@ const BOOTSTRAP = { resamples: 10_000, seed: 20_260_913 } as const
 const REQUIRED_MARGIN_POINTS = 8
 
 async function scorePhase(): Promise<void> {
-	const definition = await loadSameDataDefinition()
-	const panel = await readJSONL<SameDataPanelRow>(PANEL_PATH)
-	const results = await readJSONL<ArmRowResult>(RESULTS_PATH)
+	const { definition, panel, results } = await allKeyed({
+		definition: loadSameDataDefinition(),
+		panel: JSONSpliterator.fromAsync<SameDataPanelRow>(PANEL_PATH).toArray(),
+		results: JSONSpliterator.fromAsync<ArmRowResult>(RESULTS_PATH).toArray(),
+	})
+
 	const panelByID = new Map(panel.map((row) => [row.id, row]))
 	const arms = definition.arms.map((arm) => arm.id)
 
