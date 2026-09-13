@@ -195,14 +195,26 @@ the same state, and the recovery pass answers both.**
 
 ### The 8% is this panel's construction, and cannot be read as a setting
 
-The gold entities come from GeoNames `cities15000.txt`, so every one has population at least 15,000
-and a log-population score of at least 4.18. A floor of 4.0 therefore admits essentially every gold
-place in this panel and rejects essentially everything smaller — it is tuned to the panel by
-accident of how the panel was built. A user asking for a village of 800 people meets the same floor.
+A floor of 4.0 on a log-population score is a population floor of 10,000. **Zero of the 453 gold
+entities fall below it**, and it is not close:
 
-So the magnitude here says nothing about what a floor should be. What survives the confound is the
-mechanism: a refusal in one pass is silently answered by another, and no choice of floor can show
-through while that holds. That part is a property of the code, not of the panel.
+| stratum                | rows | smallest gold | log10 |
+| ---------------------- | ---: | ------------: | ----: |
+| unambiguous            |  100 |        50,923 |  4.71 |
+| homograph_qualified    |   53 |        15,151 |  4.18 |
+| reordered              |  100 |        50,017 |  4.70 |
+| contradictory_postcode |  100 |        50,171 |  4.70 |
+| gold_absent            |  100 |        50,467 |  4.70 |
+
+The gold comes from GeoNames `cities15000.txt` and the panel's own rule sets a 50,000 floor on the
+three strata that share its pool. So a floor at 4.0 admits every correct answer this panel contains
+and rejects the smaller namesakes around them — it is calibrated to the panel by accident of how the
+panel was built, and a user asking for a village of 800 people meets the same floor.
+
+The magnitude therefore says nothing about what a floor should be, and this panel cannot be used to
+choose one. What survives the confound is the mechanism: a refusal in one pass is answered by
+another, and no choice of floor can show through while that holds. That part is read from the code
+and confirmed by the mechanism counts, neither of which depends on the panel.
 
 ## What this supports, and what comes next
 
@@ -221,9 +233,9 @@ Four next measurements, in order of what they would settle:
    [#2265](https://github.com/sister-software/mailwoman/issues/2265). Until a refusal can survive the
    walk, no abstention rule can be measured end to end: every one of them will be answered by the
    recovery pass.
-2. Register a threshold and a fit-based abstention signal ahead of a fresh panel whose gold is not
-   drawn from a population-filtered register. The margin caps at 28% false selection, and this
-   panel cannot separate a prominence floor's effect from its own construction.
+2. Register a threshold and a fit-based abstention signal ahead of a fresh panel whose gold spans
+   population strata rather than sitting entirely above 15,151. The margin caps at 28% false
+   selection, and no panel whose every gold answer clears a floor can measure that floor.
 3. Measure the bare-toponym race against a matched arm. Withheld-gold rows carrying `bare_race` select
    on 82.6% against 58.1% for the rest of the stratum, but the check also fires on 69 of the 100 rows,
    so the comparison needs rows matched on query shape before that gap means anything.
