@@ -12,7 +12,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import {
 	CONFORMANCE_RELATIONS,
@@ -52,7 +52,7 @@ async function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): Promise
 	const dir = scratchDirectories.use(await temporaryDirectory("mw-conformance-")).path
 	const path = join(dir, "suite.jsonl")
 
-	await writeLocalTextFile(`${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, path)
+	await writeLocalJSONLFile(rows, path)
 
 	return path
 }

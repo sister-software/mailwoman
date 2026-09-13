@@ -1,8 +1,8 @@
 {
 	"benchmarkID": "same-data-resolver-v1",
 	"definitionVersion": "1.2.0",
-	"recordedAt": "2026-09-13T04:23:58Z",
-	"gitHead": "ad3c399d68cf1976f2f0c57b92d79b5bcf7d6de7",
+	"recordedAt": "2026-09-13T04:27:45Z",
+	"gitHead": "ac6b7a966e9259a642552198163984d765d8b44f",
 	"weights": {
 		"weightsLocale": "en-US",
 		"weightsModelPath": "/mnt/playpen/mailwoman-data/weights/en-us/model.onnx",

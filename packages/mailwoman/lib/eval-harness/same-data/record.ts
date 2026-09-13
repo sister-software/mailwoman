@@ -39,18 +39,20 @@ import {
 	type SameDataLookup,
 	type SameDataPanelRow,
 	type SameDataQuery,
-	WITHHELD_CANDIDATE_FIELDS,
 } from "#eval-harness/same-data/fixture"
 
 /**
  * Drop the query-verdict fields a fixture may never carry.
+ *
+ * Destructured rather than filtered by key, so the compiler checks the result: the return type is derived from
+ * `WITHHELD_CANDIDATE_FIELDS`, so a field added to that tuple and not named here is a type error rather than a verdict
+ * that quietly reaches the fixture.
  */
 function stripWithheld(place: ResolvedPlace): SameDataCandidate {
-	const withheld = new Set<string>(WITHHELD_CANDIDATE_FIELDS)
+	const { containedByQualifier, mismatch, regionScopeMiss, resolutionQuality, variantAliasExempted, ...candidate } =
+		place
 
-	return Object.fromEntries(
-		Object.entries(place).filter(([field]) => !withheld.has(field))
-	) as unknown as SameDataCandidate
+	return candidate
 }
 
 /**

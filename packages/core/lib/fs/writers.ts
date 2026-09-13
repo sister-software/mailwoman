@@ -95,6 +95,22 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 }
 
 /**
+ * Write one JSON value per line, newline-terminated — the JSONL shape every panel, fixture and result file in this
+ * repository is read back with by `JSONSpliterator.fromAsync`.
+ *
+ * The trailing newline is part of the contract: a file whose last line has none appends badly and diffs noisily.
+ *
+ * @category Files
+ * @runtime node
+ */
+export function writeLocalJSONLFile<T, S extends PathBuilderLike[] = PathBuilderLike[]>(
+	rows: ReadonlyArray<T>,
+	...pathSegments: S
+): Promise<void> {
+	return writeLocalTextFile(`${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, ...pathSegments)
+}
+
+/**
  * Write a local file's bytes, creating its parent directory first.
  *
  * @category Files

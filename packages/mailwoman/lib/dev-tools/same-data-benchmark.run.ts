@@ -23,7 +23,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
@@ -98,10 +98,6 @@ const RESULTS_PATH = `${OUT}/same-data-results.jsonl`
 const RECEIPT_PATH = `${OUT}/same-data-receipt.json`
 const SCORE_PATH = `${OUT}/same-data-report.md`
 
-function toJSONL(rows: ReadonlyArray<unknown>): string {
-	return `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`
-}
-
 async function readJSONL<T>(path: string): Promise<T[]> {
 	return Array.fromAsync(JSONSpliterator.fromAsync<T>(path))
 }
@@ -115,7 +111,7 @@ async function panelPhase(): Promise<void> {
 
 	const { rows, census } = buildPanel({ definition, cities, countryNames, postcodeByAdmin, goldSets })
 
-	await writeLocalTextFile(toJSONL(rows), PANEL_PATH)
+	await writeLocalJSONLFile(rows, PANEL_PATH)
 
 	console.log(`panel: ${rows.length} rows → ${PANEL_PATH}`)
 	console.table([goldCensus])
@@ -161,7 +157,7 @@ async function recordPhase(): Promise<void> {
 		throw new Error(`same-data record: the fixture is not equal-evidence (${problems.length} problems)`)
 	}
 
-	await writeLocalTextFile(toJSONL(fixture), FIXTURE_PATH)
+	await writeLocalJSONLFile(fixture, FIXTURE_PATH)
 
 	const errors = census.filter((entry) => entry.error)
 
@@ -227,7 +223,7 @@ async function runPhase(): Promise<void> {
 		throw new Error(`same-data run: the arms did not read equal evidence (${unequal.length} problems)`)
 	}
 
-	await writeLocalTextFile(toJSONL(results), RESULTS_PATH)
+	await writeLocalJSONLFile(results, RESULTS_PATH)
 
 	console.log(`results: ${results.length} rows → ${RESULTS_PATH}`)
 	console.log(`equal evidence over ${rows.length} rows: confirmed`)
@@ -298,9 +294,11 @@ async function scorePhase(): Promise<void> {
 		"## Rows the baseline won and Mailwoman did not",
 		"",
 		...renderLosses(panel, results, 25),
-		"",
 	]
 
+	// Exactly one trailing newline. A blank line at the end is what `oxfmt` strips, so a generated file that carries one
+	// leaves the tree failing `yarn lint` the moment it is committed — and "regenerate and commit" stops being a
+	// complete instruction.
 	await writeLocalTextFile(`${lines.join("\n")}\n`, SCORE_PATH)
 
 	console.log(lines.join("\n"))
