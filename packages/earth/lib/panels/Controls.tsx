@@ -11,11 +11,29 @@
 
 import type React from "react"
 
+import type { GeoBiasError } from "#runtime/use/geo-bias"
+
+import styles from "./panels.module.css"
+
+/**
+ * What each failure says. Short enough to sit beside the chip, and each one tells the visitor what to do next rather
+ * than restating that something went wrong.
+ */
+const GEO_BIAS_MESSAGE: Record<GeoBiasError, string> = {
+	denied: "Location is blocked for this site — allow it in your browser's site settings, then press again.",
+	unavailable: "Your device could not get a location right now. The map view is still biasing results.",
+	unsupported: "This browser does not offer a device location. The map view is still biasing results.",
+}
+
 export interface GeoBiasRowProps {
 	/**
 	 * Whether a device location is currently applied as a bias.
 	 */
 	active: boolean
+	/**
+	 * Why the last attempt failed, or `null`.
+	 */
+	error: GeoBiasError | null
 	/**
 	 * Toggle the device-location bias.
 	 */
@@ -25,11 +43,15 @@ export interface GeoBiasRowProps {
 /**
  * The device-location bias, as one chip in the map chrome.
  *
- * The explanation rides the button's title rather than the map surface: prose laid over a map reads as a caption on the
- * world beneath it, and the chip's pressed state already says whether the hint is on.
+ * The chip's own row is NOT `.mw-map-chiprow`: that class carries an overflow-scroll and an edge-fade mask built for a
+ * dozen example chips, and inheriting it here faded the right edge of a single button for no reason.
+ *
+ * A failure gets a line of its own. The pressed state cannot carry it — a denial turns the chip back off, which looks
+ * identical to the visitor turning it off, and the browser will not prompt a second time, so pressing again appeared
+ * to do nothing at all.
  */
-export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, onToggle }) => (
-	<div className="mw-map-chiprow">
+export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, error, onToggle }) => (
+	<div className={styles.biasRow}>
 		<button
 			type="button"
 			className="mw-map-chip"
@@ -39,6 +61,12 @@ export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, onToggle }) => (
 		>
 			{active ? "Using your location" : "Use my location"}
 		</button>
+
+		{error ? (
+			<p className={styles.biasError} role="status">
+				{GEO_BIAS_MESSAGE[error]}
+			</p>
+		) : null}
 	</div>
 )
 

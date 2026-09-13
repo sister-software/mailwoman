@@ -49,6 +49,15 @@ export interface GeocoderProps {
 	 */
 	defaultAddress?: string
 	/**
+	 * A query that arrived with the page — a permalink's `?q=`, say — to run once as soon as the runtime is ready.
+	 *
+	 * Distinct from {@link GeocoderProps.defaultAddress}, and deliberately so: a cold visit pre-fills the demo address
+	 * but must NOT spend a visitor's first seconds resolving an address they did not ask for, while a link someone was
+	 * sent has to answer on arrival. Without this, a permalink pre-filled the field and then sat on a world view with
+	 * the address never run, which made "Copy link" produce a link that did not reproduce the result.
+	 */
+	initialQuery?: string | null
+	/**
 	 * Example chips. @default the empty set (host supplies its own).
 	 */
 	presets?: ReadonlyArray<Preset>
@@ -80,6 +89,7 @@ interface GeocoderInnerProps extends Required<
 > {
 	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
+	initialQuery: string | null
 	onSubmitQuery?: (query: string) => void
 }
 
@@ -91,6 +101,7 @@ function GeocoderInner({
 	minBiasZoom,
 	applyResultCamera,
 	developer,
+	initialQuery,
 	onSubmitQuery,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
@@ -183,6 +194,7 @@ function GeocoderInner({
 				panels={panels}
 				presets={presets}
 				placeholder={defaultAddress}
+				initialQuery={initialQuery}
 				map={map}
 				onSubmitQuery={onSubmitQuery}
 				onSelectVersion={onSelectVersion}
@@ -212,6 +224,7 @@ export function Geocoder({
 	minBiasZoom = 4,
 	applyResultCamera = true,
 	developer = false,
+	initialQuery = null,
 	onSubmitQuery,
 }: GeocoderProps): ReactNode {
 	return (
@@ -231,6 +244,7 @@ export function Geocoder({
 					minBiasZoom={minBiasZoom}
 					applyResultCamera={applyResultCamera}
 					developer={developer}
+					initialQuery={initialQuery}
 					onSubmitQuery={onSubmitQuery}
 				/>
 			)}

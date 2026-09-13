@@ -17,9 +17,22 @@ import { commitURL } from "@mailwoman/site-kit/build-info"
 import type { ReactNode } from "react"
 
 /**
- * The sources Earth draws, each a licence obligation rather than a courtesy.
+ * The sources Earth draws, each a licence obligation rather than a courtesy — so each one links to the licence it
+ * discharges. Three bare strings were the weakest form this could take: ODbL asks for attribution a reader can follow
+ * back, and "© OpenStreetMap" with nowhere to go does not give them that. The OSM entry also names contributors, which
+ * is who the copyright belongs to.
  */
-const ATTRIBUTION = ["© OpenStreetMap", "Protomaps", "MapLibre"]
+const ATTRIBUTION = [
+	<a key="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+		© OpenStreetMap contributors
+	</a>,
+	<a key="protomaps" href="https://protomaps.com" target="_blank" rel="noreferrer">
+		Protomaps
+	</a>,
+	<a key="maplibre" href="https://maplibre.org" target="_blank" rel="noreferrer">
+		MapLibre
+	</a>,
+]
 
 export interface EarthFooterProps {
 	/**

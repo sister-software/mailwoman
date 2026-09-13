@@ -626,7 +626,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		runtime,
 		releases: rt.manifest?.releases ?? [],
 		forceWASM: rt.forceWASM,
-		geoBias: { active: geoBias.active, toggle: geoBias.toggle },
+		geoBias: { active: geoBias.active, error: geoBias.error, toggle: geoBias.toggle },
 		calibrator,
 		traceParse,
 		supportsTrace: rt.assets?.classifier?.traceParse != null,

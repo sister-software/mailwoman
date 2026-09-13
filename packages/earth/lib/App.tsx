@@ -76,6 +76,11 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			runtime={handle.runtime}
 			panels={panels}
 			defaultAddress={query ?? DEFAULT_ADDRESS}
+			// A permalink answers on arrival. `defaultAddress` only pre-fills the field, so a link carrying `?q=` used to
+			// land on the world view with the address sitting in the box, unrun — the one thing a shared link must not do.
+			// Only the URL's query goes here: a cold visit still pre-fills the demo address without spending the visitor's
+			// first seconds resolving an address they never asked for.
+			initialQuery={query}
 			presets={PRESETS}
 			// `/debug` exists to show the model machinery, so it opens the disclosure the default view collapses.
 			developer={route === Route.Debug}

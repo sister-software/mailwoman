@@ -1017,8 +1017,15 @@
 		white-space: pre;
 	}
 
+	/*
+	 * Each segment is a column sized to max(text, tag), so a long tag under a short span widens the segment — which is
+	 * why `350 5th Ave` renders spread out. What it did NOT have was any space BETWEEN neighbouring tags, so the row
+	 * read as one run-on word: `house_numberstreetstreet_suffix locality regionpostcode`. The padding separates the
+	 * tags and, because the segment sizes to the tag, spreads the text above them to match.
+	 */
 	.mw-spans__tag {
 		margin-top: 0.15rem;
+		padding-inline: 0.3rem;
 		font-size: 0.6rem;
 		line-height: 1;
 		text-align: center;
@@ -1512,6 +1519,28 @@
 		outline-offset: 1px;
 	}
 
+	/*
+	 * The result sheet has no header row to hang a close button in — its content is host-injected — so this one rides a
+	 * zero-height sticky row pinned to the top of the sheet's scroll container. Sticky rather than absolute: the sheet
+	 * scrolls its own content, and an absolute child would scroll away with it.
+	 */
+	.mw-map-sheet__dismiss {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		display: flex;
+		justify-content: flex-end;
+		height: 0;
+	}
+
+	/* A full 44px target: on a phone the sheet is the whole panel and this is the only way out of it. */
+	.mw-map-sheet__close--floating {
+		width: 2.75rem;
+		height: 2.75rem;
+		background: var(--color-background-raised);
+		box-shadow: var(--material-glass-shadow);
+	}
+
 	.mw-map-sheet__row {
 		display: grid;
 		gap: 0.3rem;
@@ -1901,13 +1930,26 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 2.5rem;
-		height: 2.5rem;
+		/* 2.5rem = 40px, under the 44px minimum for a touch target, and these three are the only way into the about,
+		   layers and developer sheets. */
+		width: 2.75rem;
+		height: 2.75rem;
 		border: 0;
 		background: transparent;
 		color: var(--color-text-primary);
 		font-family: var(--font-family-glyph);
 		cursor: pointer;
+	}
+
+	/*
+	 * This rail was the one control group in the app with no focus ring — every sibling has one (.mw-map-chip,
+	 * .mw-map-compass, .mw-map-sheet__close, .mw-map-footer__attribution-button). An `outline` alone would not have
+	 * shown anyway: the parent capsule clips with `overflow: hidden`, which cuts an outline drawn outside the button's
+	 * box. An inset ring is drawn inside it, so the capsule cannot clip it.
+	 */
+	.mw-map-control:focus-visible {
+		outline: none;
+		box-shadow: inset 0 0 0 2px var(--color-selection);
 	}
 
 	.mw-map-control:hover:not(:disabled) {
@@ -2070,6 +2112,30 @@
 	.mw-map-footer__attribution-button:focus-visible {
 		outline: 2px solid var(--color-selection);
 		outline-offset: 1px;
+	}
+
+	/*
+	 * One credit line. `MapFooter` has always rendered this class and `styles.css` never defined it, so the credits
+	 * inherited whatever the popover gave them — which was fine while they were bare strings and not once they became
+	 * links that have to look like links.
+	 */
+	.mw-map-footer__credit {
+		line-height: 1.5;
+	}
+
+	.mw-map-footer__credit a {
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.mw-map-footer__credit a:hover {
+		color: var(--color-text-primary);
+	}
+
+	.mw-map-footer__credit a:focus-visible {
+		outline: 2px solid var(--color-selection);
+		outline-offset: 2px;
 	}
 
 	/* The credits open UPWARD from the strip, because the strip is already against the bottom of the viewport. */

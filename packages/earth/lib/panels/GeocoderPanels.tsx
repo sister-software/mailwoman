@@ -83,7 +83,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 					{selectedRelease.tokenizerVocab.toLocaleString()} vocab, {selectedRelease.steps.toLocaleString()} steps)
 				</p>
 			) : undefined,
-			bias: <GeoBiasRow active={geoBias.active} onToggle={geoBias.toggle} />,
+			bias: <GeoBiasRow active={geoBias.active} error={geoBias.error} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
 			// The two display toggles read on the MODEL, not on an address, so they live behind the Developer capsule
 			// rather than above every result — at the top of the result sheet they were the first thing a visitor met,
