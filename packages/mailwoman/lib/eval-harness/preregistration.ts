@@ -17,6 +17,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"
@@ -146,6 +147,57 @@ export function duplicateRowIDProblems(rows: ReadonlyArray<{ id: string }>): str
 	}
 
 	return problems
+}
+
+/**
+ * The sampling clauses every stratified pre-registration carries.
+ */
+export interface SamplingRegistration {
+	seed: number
+	rowsPerStratum: number
+	minimumRowsPerStratum: number
+}
+
+/**
+ * The sampling half of a definition audit, shared because every stratified ruler registers the same three quantities
+ * and each has one way to be unexecutable: a target too small for the power the record will claim, a floor sitting
+ * above the target it is a floor for, and a seed the generator cannot take.
+ */
+export function samplingProblems(sampling: SamplingRegistration, minimumTarget: number): string[] {
+	const problems: string[] = []
+
+	if (sampling.rowsPerStratum < minimumTarget) {
+		problems.push(
+			`rowsPerStratum is ${sampling.rowsPerStratum} — the registered power arithmetic needs at least ${minimumTarget}`
+		)
+	}
+
+	if (sampling.minimumRowsPerStratum > sampling.rowsPerStratum) {
+		problems.push(
+			`minimumRowsPerStratum ${sampling.minimumRowsPerStratum} exceeds the target ${sampling.rowsPerStratum} — the floor cannot sit above the target it is a floor for`
+		)
+	}
+
+	if (!Number.isInteger(sampling.seed)) {
+		problems.push("the sampling seed is not an integer — mulberry32 takes an integer stream position")
+	}
+
+	return problems
+}
+
+/**
+ * The withheld-fields half of a definition audit: the ruler's list and the fixture type's list must name the same
+ * fields, or "equal evidence" means one thing in the record and another in the file.
+ */
+export function withheldFieldProblems(registered: readonly string[], enforced: readonly string[]): string[] {
+	const left = [...registered].toSorted(compareByCodePoint).join(",")
+	const right = [...enforced].toSorted(compareByCodePoint).join(",")
+
+	if (left === right) return []
+
+	return [
+		`the ruler withholds ${left} and the fixture type withholds ${right} — the two must name the same fields, or "equal evidence" means one thing in the record and another in the file`,
+	]
 }
 
 interface ModelCard {

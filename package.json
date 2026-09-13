@@ -35,7 +35,7 @@
 		"fix:python": "uvx ruff@0.16.5 check --fix corpus-python && uvx ruff@0.16.5 format corpus-python",
 		"format": "oxfmt .",
 		"health": "run-s health:debt health:architecture health:manifests health:knip health:exports health:test-contract health:bundles health:duplicates",
-		"health:architecture": "depcruise packages --config dependency-cruiser.config.cjs",
+		"health:architecture": "depcruise packages --config dependency-cruiser.config.mjs",
 		"health:bundles": "yarn mwops health bundle-graph",
 		"health:debt": "yarn mwops health debt",
 		"health:debt:update": "yarn mwops health baseline debt",

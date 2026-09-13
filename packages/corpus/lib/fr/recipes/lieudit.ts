@@ -143,6 +143,7 @@ function composeHouseNumber(numero: string, rep: string | null): string {
  * Fisher-Yates shuffle, in place, with the recipe's seeded PRNG — reproducible sampling without replacement.
  */
 function shuffleInPlace<T>(arr: T[], random: () => number): void {
+	// oxlint-disable-next-line mailwoman/prefer-home -- the recipe shares ONE mulberry32 stream between this shuffle and its country-fraction draw, so a separate SeededRandom would move every later draw and the committed rows with it.
 	for (let i = arr.length - 1; i > 0; i--) {
 		const j = Math.floor(random() * (i + 1))
 		;[arr[i], arr[j]] = [arr[j]!, arr[i]!]

@@ -131,6 +131,7 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
 	let state = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff
 
+	// oxlint-disable-next-line mailwoman/prefer-home -- SeededRandom.shuffle draws from mulberry32; this loop's stream is the glibc LCG above, which the published conformal thresholds were selected under.
 	for (let i = out.length - 1; i > 0; i--) {
 		state = (state * 1_103_515_245 + 12_345) & 0x7f_ff_ff_ff
 

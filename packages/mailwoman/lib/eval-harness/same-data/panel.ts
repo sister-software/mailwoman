@@ -20,12 +20,12 @@
  *   largest bearer would be satisfied by a population prior alone, and that prior is under test.
  */
 
-import { SeededRandom } from "@mailwoman/core/random"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { GEONAMES_MAIN_COLUMNS } from "@mailwoman/corpus/adapters/geonames/adapter"
 import { GEONAMES_POSTAL_COLUMNS } from "@mailwoman/corpus/adapters/geonames/postal/adapter"
 import { TSVSpliterator } from "spliterator"
 
+import { fillStratum, padRowIndex, type StratumFillCensus, type StratumOutcome } from "#eval-harness/panel-fill"
 import type { SameDataBenchmarkDefinition } from "#eval-harness/same-data/definition"
 import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 
@@ -144,40 +144,9 @@ export async function readPostcodeByAdmin(path: string): Promise<Map<string, str
 }
 
 /**
- * A seeded Fisher-Yates over a copy, so the caller's array is untouched and two runs draw identically.
- *
- * The ORDER this returns is load-bearing: it selects which rows entered the frozen panel, whose digest the published
- * record names. `SeededRandom.shuffle` reproduces it exactly — verified identical over sizes 24, 1,000, 10,932 (the
- * panel's own eligible-pool size) and 100,000, at seeds 1, 7, 20260913 and 4294967295 — so this wraps the shared home
- * rather than re-typing the loop beside it.
- */
-function seededShuffle<T>(items: readonly T[], seed: number): T[] {
-	const shuffled = [...items]
-
-	new SeededRandom(seed).shuffle(shuffled)
-
-	return shuffled
-}
-
-/**
  * What the build dropped and why — reported beside the panel, never folded into it.
  */
-export interface PanelBuildCensus {
-	stratum: string
-	eligible: number
-	selected: number
-	/**
-	 * Rows skipped because the identity join produced no coherent gold set. `readGoldSets`'s own census says WHICH part
-	 * of the guard refused them.
-	 */
-	droppedUngradeableGold: number
-	/**
-	 * Rows the stratum's own rule could not render: no admin1 code, no country name, or no conflicting postcode in the
-	 * register. Counted apart from the gold drop because the two name different holes — one in the gazetteer, one in the
-	 * source register.
-	 */
-	droppedUnbuildable: number
-}
+export type PanelBuildCensus = StratumFillCensus
 
 export interface PanelBuildInputs {
 	definition: SameDataBenchmarkDefinition
@@ -243,50 +212,23 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 			.filter((city) => !used.has(city.geonameid))
 			.toSorted((left, right) => compareByCodePoint(left.geonameid, right.geonameid))
 
-	/**
-	 * What a stratum's own rule made of one eligible row. A stratum decides for itself whether its gold is gradeable,
-	 * because the gold is not always the row being iterated — the homograph rule alternates between two bearers, and a
-	 * check against the iterated one refuses rows whose actual gold is fine.
-	 */
-	type BuildOutcome =
-		| { readonly outcome: "row"; readonly row: SameDataPanelRow }
-		| { readonly outcome: "ungradeable" }
-		| { readonly outcome: "unbuildable" }
-
 	const take = (
 		stratum: string,
 		eligible: readonly GeoNamesCity[],
-		build: (city: GeoNamesCity, index: number) => BuildOutcome
+		build: (city: GeoNamesCity, index: number) => StratumOutcome<SameDataPanelRow>
 	): void => {
-		const shuffled = seededShuffle(eligible, seed)
-		let selected = 0
-		let droppedUngradeableGold = 0
-		let droppedUnbuildable = 0
+		const filled = fillStratum({
+			stratum,
+			eligible,
+			seed,
+			target: rowsPerStratum,
+			identify: (city) => city.geonameid,
+			used,
+			build,
+		})
 
-		for (const city of shuffled) {
-			if (selected >= rowsPerStratum) break
-
-			const built = build(city, selected)
-
-			if (built.outcome === "ungradeable") {
-				droppedUngradeableGold++
-
-				continue
-			}
-
-			if (built.outcome === "unbuildable") {
-				droppedUnbuildable++
-
-				continue
-			}
-
-			rows.push(built.row)
-			used.add(city.geonameid)
-
-			selected++
-		}
-
-		census.push({ stratum, eligible: eligible.length, selected, droppedUngradeableGold, droppedUnbuildable })
+		rows.push(...filled.rows)
+		census.push(filled.census)
 	}
 
 	/**
@@ -294,7 +236,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	 */
 	const goldFor = (city: GeoNamesCity): number[] | null => goldSets.get(city.geonameid) ?? null
 
-	const pad = (index: number): string => String(index + 1).padStart(3, "0")
+	const pad = padRowIndex
 
 	// Stratum 1 — the bare toponym, one bearer.
 	take("unambiguous", uniqueEligible(), (city, index) => {

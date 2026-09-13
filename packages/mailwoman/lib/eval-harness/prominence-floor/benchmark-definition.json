@@ -1,0 +1,124 @@
+{
+	"benchmarkID": "prominence-floor-v1",
+	"version": "1.0.0",
+	"issue": "https://github.com/sister-software/mailwoman/issues/2264",
+	"claim": "A minWinningScore floor reduces the withheld-gold false-selection rate against the default arm in EVERY population band, without costing more than the registered margin of selection accuracy in any band.",
+	"claimBoundary": "The benchmark measures one option's effect on admin candidate selection over one frozen fixture. It says nothing about retrieval, rooftop accuracy, coverage, or any third-party geocoder, and it does not re-decide the frozen same-data benchmark (same-data-resolver-v1), whose verdict stands as recorded.",
+	"whyThisPanel": "The same-data benchmark measured this floor and could not interpret the result. All 453 of its gold entities carry population above 15,151 and four of its five strata sit above 50,000, because its gold comes from cities15000.txt under a 50,000 rule. A floor of 4.0 on a log-population score is a population floor of 10,000, so it admits every correct answer that panel contains, by construction rather than by merit. A panel whose gold all clears a floor cannot measure that floor. This panel draws gold across population bands so the floor meets small places as well as large ones.",
+	"whyAdminOnly": "resolveTree picks a place per node, and the rooftop tier returns one hit or null with no candidate set. ResolverBackend.findPlace is the only interface in the resolution ladder that selects from a candidate set.",
+	"selectedCandidateRule": "An arm's selection for a row is the place id decorating the resolved node of the deepest admin tag in the returned tree, deepest-first over locality, dependent_locality, municipality, district, subregion, region, prefecture, country. A row where no admin node resolved is an abstention. A selection is CORRECT when its id is a MEMBER of the row's gold identity set.",
+	"goldSource": {
+		"register": "GeoNames per-country main-table dumps",
+		"countries": ["FR", "DE", "GB", "JP"],
+		"whyTheseCountries": "Four registers with different gazetteer maturity and two scripts, each small enough to read whole. The country list is a confound in its own right — WOF concordance coverage differs by country — so the record reports every rate per country as well as per band, and the claim is not extended beyond these four.",
+		"license": "CC-BY-4.0",
+		"attribution": "GeoNames",
+		"baseURL": "https://download.geonames.org/export/dump",
+		"identity": "geonameid",
+		"concordance": "The gn:id rows of the concordances table in the WOF admin gazetteer, joined to spr so the guard can read each linked row's placetype, name, country and coordinate.",
+		"identitySetRule": "The gold is the SET of DISTINCT city-tier WOF ids (placetype locality or localadmin) the concordance reaches, not one id, so a place the gazetteer carries twice is not graded on which duplicate an arm returned.",
+		"coherenceGuard": "A set is admitted only when every member's folded name equals the register's name or its ASCII transliteration, every member sits in the register's country, and every member lies within 25 km of the register's coordinate.",
+		"excludedRowsNote": "A geonameid whose join fails any part of the guard is UNGRADEABLE and is excluded before sampling, under the count that names the reason. Coverage was measured per band before this definition was frozen, over a 400-row stride sample per band: 301, 282, 231, 208 and 195 coherent of 400, from the smallest band to the largest. Coverage is therefore BETTER at the small end, the opposite of the expectation that motivated measuring it, and no band is short of eligible rows."
+	},
+	"populationBands": [
+		{ "id": "pop_1_999", "min": 1, "max": 999 },
+		{ "id": "pop_1k_4999", "min": 1000, "max": 4999 },
+		{ "id": "pop_5k_14999", "min": 5000, "max": 14999 },
+		{ "id": "pop_15k_49999", "min": 15000, "max": 49999 },
+		{ "id": "pop_50k_up", "min": 50000, "max": 0 }
+	],
+	"bandRule": "A band's max of 0 means unbounded. The bands were chosen before any arm ran, to measure concordance coverage below the cities15000 floor; they were not adjusted after a rate was seen. A row with no recorded population is excluded from every band — absence of a population is not a population of zero, and a row the register never counted cannot be placed in a band.",
+	"sampling": {
+		"generator": "mulberry32",
+		"seed": 20260913,
+		"order": "Eligible rows are sorted by geonameid ascending, then shuffled once with the seeded generator, then taken in order until the stratum reaches its target. Strata are filled in the order listed below and draw from disjoint geonameid pools, so no geonameid appears in two strata or two bands.",
+		"rowsPerStratum": 100,
+		"minimumRowsPerStratum": 50,
+		"underfillRule": "rowsPerStratum is a TARGET per band. A stratum-band whose eligible pool cannot reach it is reported at its achieved n with the census that explains the shortfall. A stratum-band below minimumRowsPerStratum is reported and EXCLUDED from the decision, because the claim is stated per band and a band too thin to measure cannot support one."
+	},
+	"strata": [
+		{
+			"id": "unambiguous",
+			"purpose": "Measure selection accuracy when the correct candidate is in the pool, at every population band.",
+			"eligibility": "The lowercased asciiname is borne by exactly one row across the registered countries; the row's population falls in the band; the row has a coherent gold identity set.",
+			"query": "The row's name field, verbatim — the bare-toponym form.",
+			"gold": "That row's geonameid.",
+			"correctIsAbstention": false
+		},
+		{
+			"id": "gold_absent",
+			"purpose": "Measure false selection when no correct candidate is in the pool, at every population band. This is the stratum the floor is meant to help, and the one the previous panel could not interpret.",
+			"eligibility": "The unambiguous-stratum eligibility rule, over rows not drawn by that stratum.",
+			"query": "The row's name field, verbatim.",
+			"gold": "That row's geonameid, withheld from the fixture: every candidate whose id is a member of the gold set is removed after recording and before any arm reads it.",
+			"correctIsAbstention": true
+		}
+	],
+	"arms": [
+		{ "id": "default", "description": "The production resolver path, library defaults." },
+		{
+			"id": "floor_1",
+			"description": "minWinningScore 1 — a population floor of 10.",
+			"resolveOpts": { "minWinningScore": 1 }
+		},
+		{
+			"id": "floor_2",
+			"description": "minWinningScore 2 — a population floor of 100.",
+			"resolveOpts": { "minWinningScore": 2 }
+		},
+		{
+			"id": "floor_3",
+			"description": "minWinningScore 3 — a population floor of 1,000.",
+			"resolveOpts": { "minWinningScore": 3 }
+		},
+		{
+			"id": "floor_4",
+			"description": "minWinningScore 4 — a population floor of 10,000.",
+			"resolveOpts": { "minWinningScore": 4 }
+		}
+	],
+	"armNote": "Every floor is a log10 population rank on the candidate backend's score, so floor F admits a candidate of population 10^F and rejects one below it. The floors span the bands deliberately: floor_4 sits ABOVE three of the five bands, and the claim is what happens to the small-population gold when it does.",
+	"withheldFixtureFields": {
+		"fields": ["containedByQualifier", "mismatch", "regionScopeMiss", "resolutionQuality", "variantAliasExempted"],
+		"reason": "Each is a verdict the resolver stamps about the QUERY, not a fact about the place. A fixture carrying one would hand a later arm the earlier arm's conclusion.",
+		"carriedAnyway": {
+			"fields": ["score", "prominence", "population", "referential", "importance", "exactMatch", "bbox"],
+			"reason": "Facts about the place, identical for every arm, and the floor reads `score` — withholding it would make the benchmark unrunnable."
+		}
+	},
+	"metrics": [
+		{
+			"id": "candidate_selection_accuracy",
+			"denominator": "rows in the band whose gold is present and which every arm scored without a replay miss",
+			"definition": "the selected candidate id is a member of the gold identity set"
+		},
+		{
+			"id": "false_selection_rate",
+			"denominator": "rows in the band whose gold is withheld and which every arm scored without a replay miss",
+			"definition": "the arm selected any candidate"
+		},
+		{
+			"id": "wrong_area_rate",
+			"denominator": "gold-present selections in the band carrying a coordinate",
+			"definition": "the selected candidate lies more than 25 km from the gold coordinate"
+		},
+		{
+			"id": "replay_misses",
+			"denominator": "rows the arm attempted",
+			"definition": "the walk asked a question the recording never answered. Reported per arm and EXCLUDED from every rate above, never read as an abstention."
+		}
+	],
+	"decisionRule": {
+		"primary": "The claim holds when at least one registered floor reduces the false-selection rate by at least 10 percentage points against the default arm in EVERY band that clears minimumRowsPerStratum.",
+		"secondary": "Under that same floor, selection accuracy must not fall more than 5 percentage points below the default arm's in ANY band that clears minimumRowsPerStratum.",
+		"perBandIsDecisive": "Per-band is the DECISION here, not a description. The previous panel's pooled figure was the thing its construction made uninterpretable, so a floor that wins pooled while losing a band fails this claim.",
+		"comparability": "Every rate is measured over the rows EVERY arm scored without a replay miss. A raised floor changes what the walk asks next, so each arm loses a different set of rows; scoring each arm over its own survivors would compare rates whose denominators moved.",
+		"interval": "The exact McNemar test over discordant pairs, and the paired bootstrap at 10,000 resamples with seed 20260913, are reported pooled as the significance check. Per-band n is 100 at target, which is too thin for five independent significance decisions.",
+		"nondeterminism": "Each arm is run twice from the same fixture and the results compared. A difference is reported as a harness failure rather than resolved by choosing a run."
+	},
+	"standingConstraints": [
+		"No model training, no data build, and no change to a shipped default belongs in this benchmark.",
+		"The frozen same-data fixture and its published record are immutable; this benchmark builds its own panel and does not rewrite either.",
+		"A floor that wins here is not thereby a recommended default: this panel is four countries, and a default binds every country."
+	]
+}

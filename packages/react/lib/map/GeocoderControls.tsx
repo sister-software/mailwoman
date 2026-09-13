@@ -151,7 +151,7 @@ export function GeocoderControls({
 		[onSubmitQuery, geocode]
 	)
 
-	// A permalink answers on arrival. `runtime.ready` gates it — the parse pipeline drops a submit made before the
+	// A permalink answers on arrival. `runtime.ready` holds it back — the parse pipeline drops a submit made before the
 	// model is loaded, which is exactly the window a cold permalink lands in — and the ref makes it once-only, so a
 	// later re-render (or the visitor clearing the field) cannot re-run the URL's query over their own work.
 	const autoRanInitialQuery = useRef(false)
