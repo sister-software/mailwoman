@@ -84,10 +84,14 @@ export function pathExists(path: PathBuilderLike | URL): Promise<boolean> {
 	return tryStat(path).then((stats) => stats !== null)
 }
 
+// #endregion
+
+// #region Assertions
+
 /**
  * Assert that a path exists, throwing an error if it does not.
  */
-export function assertPathExists(path: PathBuilderLike | URL, message?: string): Promise<void> {
+export function assertPathExists(path: PathBuilderLike | URL, message?: string | null): Promise<void> {
 	return pathExists(path).then((exists) => {
 		if (exists) return void 0
 
@@ -110,13 +114,34 @@ export function isDirectory(path: PathBuilderLike | URL): Promise<boolean> {
  * Assert that a path exists and is a directory, throwing an error if it does not.
  *
  * @category Files
- * @throws AssertionError if the path does not exist or is not a directory.
- * @runtime node
+ * @throws {AssertionError} If the path does not exist or is not a directory.
  */
-export function assertIsDirectory(path: PathBuilderLike | URL, message?: string): Promise<void> {
-	return statPath(path).then((stats) => {
+export function assertIsDirectory(
+	path: PathBuilderLike | URL,
+	message?: string | null,
+	cachedStats?: Stats
+): Promise<void> {
+	const resolved = cachedStats ? Promise.resolve(cachedStats) : statPath(path)
+
+	return resolved.then((stats) => {
 		if (stats.isDirectory()) {
 			return void 0
+		}
+
+		if (stats.isFile()) {
+			throw new AssertionError({
+				message: message ?? `Path appears to be a file, not a directory: ${path.toString()}`,
+				expected: "directory",
+				actual: "file",
+			})
+		}
+
+		if (stats.isSymbolicLink()) {
+			throw new AssertionError({
+				message: message ?? `Path appears to be a symbolic link, not a directory: ${path.toString()}`,
+				expected: "directory",
+				actual: "symbolic link",
+			})
 		}
 
 		throw new AssertionError({
@@ -126,6 +151,48 @@ export function assertIsDirectory(path: PathBuilderLike | URL, message?: string)
 		})
 	})
 }
+
+/**
+ * Assert that a path exists and is a file, throwing an error if it does not.
+ *
+ * @category Files
+ * @throws {AssertionError} If the path does not exist or is not a file.
+ */
+export function assertIsFile(path: PathBuilderLike | URL, message?: string | null, cachedStats?: Stats): Promise<void> {
+	const resolved = cachedStats ? Promise.resolve(cachedStats) : statPath(path)
+
+	return resolved.then((stats) => {
+		if (stats.isFile()) {
+			return void 0
+		}
+
+		if (stats.isDirectory()) {
+			throw new AssertionError({
+				message: message ?? `Path appears to be a directory, not a file: ${path.toString()}`,
+				expected: "file",
+				actual: "directory",
+			})
+		}
+
+		if (stats.isSymbolicLink()) {
+			throw new AssertionError({
+				message: message ?? `Path appears to be a symbolic link, not a file: ${path.toString()}`,
+				expected: "file",
+				actual: "symbolic link",
+			})
+		}
+
+		throw new AssertionError({
+			message: message ?? `Expected path to be a file`,
+			expected: path.toString(),
+			actual: "not a file",
+		})
+	})
+}
+
+// #endregion
+
+// #region Predicates
 
 /**
  * Whether a path exists and is a file.
@@ -140,6 +207,32 @@ export function isFile(path: PathBuilderLike | URL): Promise<boolean> {
 export function isSymbolicLink(path: PathBuilderLike | URL): Promise<boolean> {
 	return tryStatLink(path).then((stats) => stats?.isSymbolicLink() ?? false)
 }
+
+/**
+ * Whether the process may WRITE to a path.
+ *
+ * A permission question, not an existence one: `access` answers about the caller's credentials against the file as it
+ * stands, where a stat answers about the file. Absence reads as `false` here, which is what a caller checking "can I
+ * write here" means by it.
+ */
+export function isWritable(path: PathBuilderLike): Promise<boolean> {
+	return access(path.toString(), constants.W_OK).then(
+		() => true,
+		() => false
+	)
+}
+
+/**
+ * Whether the process may EXECUTE a path.
+ */
+export function isExecutable(path: PathBuilderLike): Promise<boolean> {
+	return access(path.toString(), constants.X_OK).then(
+		() => true,
+		() => false
+	)
+}
+
+// #endregion
 
 /**
  * Whether a directory entry leads to a directory, symbolic links included.
@@ -208,30 +301,6 @@ export function open(path: PathBuilderLike | URL, flags?: string | number, mode?
  */
 export function readLink(path: PathBuilderLike): Promise<string> {
 	return readlink(path.toString())
-}
-
-/**
- * Whether the process may WRITE to a path.
- *
- * A permission question, not an existence one: `access` answers about the caller's credentials against the file as it
- * stands, where a stat answers about the file. Absence reads as `false` here, which is what a caller checking "can I
- * write here" means by it.
- */
-export function isWritable(path: PathBuilderLike): Promise<boolean> {
-	return access(path.toString(), constants.W_OK).then(
-		() => true,
-		() => false
-	)
-}
-
-/**
- * Whether the process may EXECUTE a path.
- */
-export function isExecutable(path: PathBuilderLike): Promise<boolean> {
-	return access(path.toString(), constants.X_OK).then(
-		() => true,
-		() => false
-	)
 }
 
 /**

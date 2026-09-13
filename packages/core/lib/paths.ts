@@ -9,16 +9,12 @@
  *   ~540 consumer references through that door — 68% of everything `@mailwoman/core/utils` was asked for.
  *   `repo` and `data-root` also reference each other, which made them the shelf's only internal edge.
  */
-import {
-	createPathBuilderResolver,
-	createPathResolver,
-	dirname,
-	type Join,
-	type PathBuilder,
-	resolvePath,
-} from "path-ts"
+import { createPathBuilderResolver, createPathResolver, dirname, resolvePath, type Join } from "path-ts"
 
 import { fileURLToPath } from "#module/file-url"
+
+// #region Constants
+
 /**
  * Aliased path to the root of the repository.
  *
@@ -32,9 +28,12 @@ export const OutDirectoryName = "out"
 
 export type OutDirectoryName = typeof OutDirectoryName
 
-const RepoRootAlias = "mailwoman" as const
+/**
+ * The alias used to refer to the root of the repository in path builders.
+ */
+export const RepoRootAlias = "mailwoman" as const
 
-type RepoRootAlias = typeof RepoRootAlias
+export type RepoRootAlias = typeof RepoRootAlias
 
 // Depth shared by BOTH trees: this file sits at `core/lib/paths.ts` and its emit at
 // `core/out/paths.js`, so "lib" here is the sibling of "out". Count from repo root to the FILE'S
@@ -86,6 +85,10 @@ const PackagesAbsolutePath = resolvePath(RepoRootAbsolutePath, "packages")
 
 type RepoRootAbsolutePath = RepoRootAlias
 
+// #endregion
+
+// #region Repo Path Builders
+
 /**
  * Path builder relative to the repo root.
  */
@@ -107,6 +110,8 @@ export const workspacePathBuilder = createPathBuilderResolver<RepoRootAlias>(Pac
  */
 export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsolutePath)
 
+// #endregion
+
 /**
  * Path builder relative to the `@mailwoman/core` workspace root (the directory containing `package.json` for this
  * package).
@@ -116,7 +121,8 @@ export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsoluteP
  * See the note on {@link RepoRootAbsolutePath} for why that branch is gone.
  *
  * Used to locate package-bundled assets (dictionary data) that live under the workspace root, NOT the repo root — so
- * that `npm install @mailwoman/core` ships those assets alongside the JS without any post-install copy step.
+ * that `npm install @mailwoman/core` ships those assets alongside the JS without any post-install copy step. TODO:
+ * Deprecate this
  */
 const CorePackageAbsolutePath = resolvePath(__dirname, "..")
 /**
@@ -127,19 +133,9 @@ export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(C
 
 /**
  * Absolute-path-string resolver relative to the `@mailwoman/core` workspace root — the string-returning sibling of
- * {@link corePackagePathBuilder}.
+ * {@link corePackagePathBuilder}. TODO: Deprecate this
  */
 export const corePackagePath = createPathResolver<RepoRootAlias>(CorePackageAbsolutePath)
-
-/**
- * Path builder relative to a specific package's output directory.
- */
-export function tsOutPathBuilder<S extends string[]>(
-	...pathSegments: S
-): PathBuilder<Join<[RepoRootAlias, OutDirectoryName, ...S], "/">> {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return repoRootPathBuilder(OutDirectoryName, ...pathSegments) as any
-}
 
 export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal"
 

@@ -17,6 +17,9 @@ import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, wr
 
 import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
+import type { Stats } from "#fs/readers"
+import { statPath } from "#fs/readers/stat"
+
 // #region Directories
 
 /**
@@ -192,12 +195,47 @@ export async function appendLocalTextFile<S extends PathBuilderLike[]>(
 /**
  * Remove a file, or a directory and everything under it.
  *
- * Raises ENOENT when nothing is there. That is the whole difference from {@linkcode removePathIfPresent}, and it is the
- * difference worth spelling in the name: a caller that knows the path exists learns when it does not, and a caller for
- * whom absence is already the desired end state says so.
+ * @throws {Error} If the path does not exist.
+ * @see {@linkcode removePathIfPresent} to not throw if the path does not exist.
  */
 export function removePath(path: PathBuilderLike): Promise<void> {
 	return rm(path.toString(), { recursive: true })
+}
+
+/**
+ * Remove a directory and everything under it.
+ *
+ * @param path The directory to remove.
+ * @param cachedStats Optional pre-fetched stats for the directory.
+ */
+export function removeDirectory(path: PathBuilderLike, cachedStats?: Stats): Promise<void> {
+	const resolved = cachedStats ? Promise.resolve(cachedStats) : statPath(path)
+
+	return resolved.then((stats) => {
+		if (!stats.isDirectory()) {
+			throw new Error(`Path is not a directory: ${path.toString()}`)
+		}
+
+		return rm(path.toString(), { recursive: true })
+	})
+}
+
+/**
+ * Remove a file.
+ *
+ * @param path The file to remove.
+ * @param cachedStats Optional pre-fetched stats for the file.
+ */
+export function removeFile(path: PathBuilderLike, cachedStats?: Stats): Promise<void> {
+	const resolved = cachedStats ? Promise.resolve(cachedStats) : statPath(path)
+
+	return resolved.then((stats) => {
+		if (!stats.isFile()) {
+			throw new Error(`Path is not a file: ${path.toString()}`)
+		}
+
+		return rm(path.toString(), { recursive: true })
+	})
 }
 
 /**

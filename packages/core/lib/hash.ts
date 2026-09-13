@@ -8,12 +8,14 @@
 
 import { createHash } from "node:crypto"
 
+import type { PathBuilderLike } from "path-ts"
+
 import { openReadStream } from "#fs/streams"
 
 /**
  * Streaming SHA-256 of a file, hex-encoded.
  */
-export async function sha256File(path: string): Promise<string> {
+export async function sha256File(path: PathBuilderLike): Promise<string> {
 	const hash = createHash("sha256")
 
 	for await (const chunk of openReadStream(path)) {
@@ -39,7 +41,7 @@ export function sha256Hex(data: string | NodeJS.ArrayBufferView | string[]): str
  * checksum matches the surrounding provenance chain rather than mixing algorithms. Not a security primitive; only ever
  * used for accidental-corruption / drift detection.
  */
-export async function md5File(path: string): Promise<string> {
+export async function md5File(path: PathBuilderLike): Promise<string> {
 	const hash = createHash("md5")
 
 	for await (const chunk of openReadStream(path)) {
