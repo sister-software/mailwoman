@@ -12,7 +12,6 @@
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { About } from "@mailwoman/react/common/About"
 import type { GeocoderPanels } from "@mailwoman/react/map"
-import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { ResultPanel } from "@mailwoman/react/map/ResultPanel"
 import { FailureDiagnostic } from "@mailwoman/react/pipeline/FailureDiagnostic"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
@@ -23,6 +22,7 @@ import type { GeocoderRuntimeHandle } from "#runtime/use/geocoder-runtime"
 import { Compare } from "./Compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./Controls.tsx"
 import { DebugDrawer } from "./DebugDrawer.tsx"
+import { EarthFooter } from "./EarthFooter.tsx"
 import { LayerToggleControl } from "./LayerToggleControl/LayerToggleControl.tsx"
 import { MapControls } from "./MapControls.tsx"
 import { PermalinkButton } from "./PermalinkButton/PermalinkButton.tsx"
@@ -127,15 +127,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			),
 			mapControls: <MapControls />,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
-			footer: (
-				<MapFooter
-					identity={<strong>Mailwoman Earth</strong>}
-					// What is loading, beside the identity. The bar across the top of the viewport says how far along it
-					// is; this says which artifact it is fetching, which is the part a number cannot carry.
-					status={loadStatus}
-					attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]}
-				/>
-			),
+			// The identity, the docs link, the commit and the credits live in `EarthFooter` so this footer and the canned
+			// runtime's cannot differ. `status` is the one thing only this path has: what is being fetched right now.
+			footer: <EarthFooter status={loadStatus} />,
 			compare: (ctx) => (
 				<Compare
 					primary={ctx.result}

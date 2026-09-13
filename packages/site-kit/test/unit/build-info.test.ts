@@ -45,5 +45,5 @@ test("revision and commit are the same revision at two lengths", () => {
 })
 
 test("commitURL names the repository's commit page", () => {
-	expect(commitURL({ commit: COMMIT })).toBe(`https://github.com/sister-software/mailwoman/commit/${COMMIT}`)
+	expect(commitURL(COMMIT)).toBe(`https://github.com/sister-software/mailwoman/commit/${COMMIT}`)
 })

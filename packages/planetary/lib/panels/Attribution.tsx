@@ -15,12 +15,6 @@ import { commitURL } from "@mailwoman/site-kit/build-info"
 import type { PlanetaryMapConfig } from "#bodies/config"
 import { useBuildManifest } from "#panels/useBuildManifest"
 
-/**
- * The repository's commit page for a revision. Passed in rather than imported by the component: `@mailwoman/react`
- * publishes to npm and `@mailwoman/site-kit` is private, so the URL keeps one home and the component takes it.
- */
-const commitHrefFor = (commit: string): string => commitURL({ commit })
-
 export interface AttributionProps {
 	config: PlanetaryMapConfig
 }
@@ -59,9 +53,7 @@ export function Attribution({ config }: AttributionProps) {
 	return (
 		<div className="attribution" data-manifest={state.status}>
 			<MapFooter
-				identity={
-					<AppIdentity name={config.displayName} docsURL="https://mailwoman.ai/docs" commitHref={commitHrefFor} />
-				}
+				identity={<AppIdentity name={config.displayName} docsURL="https://mailwoman.ai/docs" commitHref={commitURL} />}
 				attribution={lines}
 			/>
 		</div>

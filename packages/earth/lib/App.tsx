@@ -14,10 +14,7 @@ import "@mailwoman/react/fonts.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
 import { Geocoder, type GeocoderPanels } from "@mailwoman/react/map"
-import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
-import { MapFooter } from "@mailwoman/react/map/MapFooter"
-import { commitURL } from "@mailwoman/site-kit/build-info"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
@@ -27,18 +24,13 @@ import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geol
 import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
 
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
+import { EarthFooter } from "./panels/EarthFooter.tsx"
 import { useGeocoderPanels } from "./panels/GeocoderPanels.tsx"
 
 import geocoderStyles from "./panels/geocoder.module.css"
 import panelStyles from "./panels/panels.module.css"
 
 const PRESETS = EXAMPLE_ADDRESSES.map((example) => ({ label: example.label, value: example.address }))
-
-/**
- * The repository's commit page for a revision. `@mailwoman/react` publishes to npm and `@mailwoman/site-kit` is
- * private, so the component takes this rather than importing it; the URL still has one home.
- */
-const commitHrefFor = (commit: string): string => commitURL({ commit })
 
 function NotFound({ pathname }: { pathname: string }) {
 	return (
@@ -104,18 +96,11 @@ function writeQueryToURL(query: string): void {
 
 /**
  * The app's identity and source credits. They belong to the page rather than to the runtime, so the canned runtime the
- * smoke and the stories mount shows the same footer the real one does.
- *
- * `<AppIdentity>` is shared with Moon and Mars — the three differ in a display name and their credits, and a commit
- * link written here would be a copy the other two either lack or grow apart from.
+ * smoke and the stories mount shows the same footer the real one does — the SAME component the real panels use, not a
+ * second copy of it, which is how the commit link came to render here and nowhere a visitor could see it.
  */
 const IDENTITY_PANELS: GeocoderPanels = {
-	footer: (
-		<MapFooter
-			identity={<AppIdentity name="Mailwoman Earth" docsURL="https://mailwoman.ai/docs" commitHref={commitHrefFor} />}
-			attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]}
-		/>
-	),
+	footer: <EarthFooter />,
 }
 
 function FakeGeocoder({ query }: { query: string | null }) {

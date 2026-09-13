@@ -48,8 +48,9 @@ export interface AppIdentityProps {
 	/**
 	 * Build the href for a commit. INJECTED rather than written here: the repository's URL belongs to the deployment, and
 	 * `@mailwoman/react` publishes to npm while `@mailwoman/site-kit` — which owns `commitURL` beside the record that
-	 * carries the sha — is private, so this package cannot import it. Every caller passes that one function, so the URL
-	 * still has a single home. Without it the revision renders as text rather than a link.
+	 * carries the sha — is private, so this package cannot import it. `commitURL` takes the sha for this reason: every
+	 * caller passes it directly, so no app writes an adapter and the URL keeps a single home. Without this prop the
+	 * revision renders as text rather than a link.
 	 */
 	commitHref?: (commit: string) => string
 }

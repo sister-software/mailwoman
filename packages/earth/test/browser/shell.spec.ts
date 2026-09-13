@@ -23,6 +23,38 @@ test.describe("Mailwoman Earth shell", () => {
 		await expect(page.getByText("New York").first()).toBeVisible()
 	})
 
+	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
+		// The REAL runtime's footer, not the canned one's. The app mounts two, and when each built its own the commit
+		// link went into the fake path and rendered nowhere a visitor could see it — a smoke that checked the canned
+		// footer would have passed the whole time. `?runtime=fake` is absent here for that reason.
+		//
+		// The data origin is refused for the whole page so no model or gazetteer byte is fetched: the origin throttles
+		// on download count and the rest of this suite spends that budget on results. Refusing it also states the
+		// requirement more sharply than a successful load would — the identity strip is the page's own chrome, so it
+		// must render before, during and after a load that never finishes.
+		await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
+
+		await page.goto("/")
+
+		const footer = page.locator("footer, .mw-map-footer").first()
+
+		await expect(footer.getByRole("link", { name: "Developer Documentation" })).toHaveAttribute(
+			"href",
+			"https://mailwoman.ai/docs"
+		)
+
+		// The commit link resolves against build.json, which only a built deployment serves — so this asserts the shape
+		// rather than a particular sha.
+		const commit = footer.locator("a[href*='/commit/']")
+
+		await expect(commit).toBeVisible()
+
+		await expect(commit).toHaveAttribute(
+			"href",
+			/^https:\/\/github\.com\/sister-software\/mailwoman\/commit\/[0-9a-f]{40}$/
+		)
+	})
+
 	test("/debug and /trace serve the app", async ({ page }) => {
 		await page.goto("/debug?runtime=fake")
 		await expect(page.locator("main[data-route='debug']")).toBeVisible()

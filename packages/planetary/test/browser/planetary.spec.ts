@@ -52,6 +52,33 @@ test("an unknown path is the not-found view, not the globe", async ({ page }) =>
 	await expect(page.getByTestId("not-found")).toBeVisible()
 })
 
+test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
+	// Both archive origins are refused for the whole page: the identity strip is the app's own chrome, so it must
+	// render before, during and after a load that never finishes, and asserting it that way costs no archive fetch.
+	await page.route("https://tiles.mailwoman.ai/**", (route) => route.abort())
+	await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
+
+	await page.goto("/")
+
+	const footer = page.locator(".attribution").first()
+
+	await expect(footer.getByRole("link", { name: "Developer Documentation" })).toHaveAttribute(
+		"href",
+		"https://mailwoman.ai/docs"
+	)
+
+	// The commit link resolves against build.json, which only a built deployment serves — so this asserts the shape
+	// rather than a particular sha.
+	const commit = footer.locator("a[href*='/commit/']")
+
+	await expect(commit).toBeVisible()
+
+	await expect(commit).toHaveAttribute(
+		"href",
+		/^https:\/\/github\.com\/sister-software\/mailwoman\/commit\/[0-9a-f]{40}$/
+	)
+})
+
 /**
  * MapLibre parses vector tiles and rasterizes glyph ranges inside a web worker; only raster tiles decode on the main
  * thread. So a worker that never runs leaves the hillshade drawing and every label missing, and it says nothing: the
