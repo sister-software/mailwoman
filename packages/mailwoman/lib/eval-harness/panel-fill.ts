@@ -44,21 +44,6 @@ export interface StratumFillCensus {
 	droppedUnbuildable: number
 }
 
-/**
- * A seeded Fisher-Yates over a copy, so the caller's array is untouched and two runs draw identically.
- *
- * The ORDER this returns is what selects the rows a frozen panel contains, and a published record names that panel's
- * digest. `SeededRandom.shuffle` reproduces the loop this used to spell out — verified identical over sizes 24, 1,000,
- * 10,932 and 100,000, at seeds 1, 7, 20260913 and 4294967295.
- */
-function seededShuffle<T>(items: readonly T[], seed: number): T[] {
-	const shuffled = [...items]
-
-	new SeededRandom(seed).shuffle(shuffled)
-
-	return shuffled
-}
-
 export interface FillStratumOptions<Item, Row> {
 	stratum: string
 	eligible: readonly Item[]
@@ -89,7 +74,14 @@ export function fillStratum<Item, Row>(
 	let droppedUngradeableGold = 0
 	let droppedUnbuildable = 0
 
-	for (const item of seededShuffle(eligible, seed)) {
+	// A copy, so the caller's array is untouched. The ORDER this walk produces is what selects the rows a frozen panel
+	// contains, and a published record names that panel's digest — so the generator is `SeededRandom`'s, seeded the way
+	// `SeededRandom` seeds it, rather than a normalisation re-typed here.
+	const shuffled = [...eligible]
+
+	new SeededRandom(seed).shuffle(shuffled)
+
+	for (const item of shuffled) {
 		if (rows.length >= target) break
 
 		const built = build(item, rows.length)

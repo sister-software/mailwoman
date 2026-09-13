@@ -664,11 +664,18 @@ const HELPER_HOMES: readonly HelperHome[] = [
 		reason: "the linear congruential stream baked into shipped corpus rows",
 	},
 	{
+		id: "glibc-lcg",
+		signature: { kind: "numeric-literal", values: new Set([1_103_515_245]) },
+		specifier: "@mailwoman/core/random",
+		symbol: "makeGlibcLcgInt32 or makeGlibcLcgFloat64 — read their docstrings, the two are NOT the same sequence",
+		reason: "glibc's LCG multiplier, which three files had each re-typed under the same name for two different streams",
+	},
+	{
 		id: "fisher-yates",
 		signature: { kind: "descending-swap-loop" },
 		specifier: "@mailwoman/core/random",
-		symbol: "SeededRandom.shuffle (or sample, for k without replacement)",
-		reason: "the Fisher-Yates shuffle, whose draw order decides which rows a seeded panel selects",
+		symbol: "shuffleWith (or shuffleBy, when the sampler is not a scaled float)",
+		reason: "the Fisher-Yates walk, whose draw order decides which rows a seeded panel selects",
 	},
 ]
 
@@ -708,10 +715,28 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 }
 
 /**
- * Whether a `for` header counts DOWN from a length to 1: `for (let i = xs.length - 1; i > 0; i--)`.
+ * Whether a computed index is a VARIABLE rather than a constant — `xs[i]`, not `xs[0]`.
  *
- * All three clauses are required. The descent is what separates a shuffle from a forward scan, and stopping at 1 rather
- * than 0 is the shuffle's own arithmetic — the last swap would be an element with itself.
+ * Heapsort's extraction phase counts down from the last index, stops at 1, and swaps two computed indices of one array,
+ * so it satisfies every other clause of the shuffle shape. What separates it is that one of its indices is the literal
+ * 0: a shuffle swaps the loop variable with a DRAWN index, and neither is a constant.
+ */
+function isVariableIndex(node: AstNode | undefined): boolean {
+	if (node?.type !== "MemberExpression" || node.computed !== true) return false
+
+	return node.property?.type === "Identifier"
+}
+
+/**
+ * Whether a `for` header counts DOWN from a length to 1: `for (let i = xs.length - 1; i > 0; i--)`, or the same written
+ * `i >= 1`.
+ *
+ * All three clauses are required, and they are not sufficient on their own — heapsort's extraction phase satisfies
+ * every one of them. What the body check adds is that both swapped indices are variables; see {@link isVariableIndex}.
+ *
+ * Known miss: a loop whose bound is hoisted (`const n = xs.length; for (let i = n - 1; …)`) reads as a plain descent
+ * and is not reported. Widening the init clause to any identifier would report every backwards loop in the repository,
+ * which is a worse trade for a suggestion rule.
  */
 function isDescendingFromLength(node: AstNode): boolean {
 	const declaration = node.init?.declarations?.[0]?.init
@@ -723,10 +748,10 @@ function isDescendingFromLength(node: AstNode): boolean {
 		declaration.left?.type === "MemberExpression" &&
 		declaration.left.property?.name === "length"
 
-	const toOne =
-		node.test?.type === "BinaryExpression" &&
-		node.test.operator === ">" &&
-		numericLiteralValue(node.test.right as AstNode) === 0
+	// `i > 0` and `i >= 1` are the same stopping point, and both are written.
+	const bound = node.test?.type === "BinaryExpression" ? numericLiteralValue(node.test.right as AstNode) : null
+
+	const toOne = (node.test?.operator === ">" && bound === 0) || (node.test?.operator === ">=" && bound === 1)
 
 	return (
 		Boolean(fromLength) && Boolean(toOne) && node.update?.type === "UpdateExpression" && node.update.operator === "--"
@@ -755,12 +780,16 @@ function swapsTwoIndices(body: AstNode): boolean {
 
 		if (left?.type !== "ArrayPattern" && left?.type !== "ArrayExpression") continue
 
-		const bases = ((left.elements as AstNode[]) ?? []).map((element) => indexedBaseName(element))
+		const elements = (left.elements as AstNode[]) ?? []
+		const bases = elements.map((element) => indexedBaseName(element))
 
-		if (bases.length === 2 && bases[0] !== null && bases[0] === bases[1]) return true
+		if (bases.length === 2 && bases[0] !== null && bases[0] === bases[1] && elements.every(isVariableIndex)) {
+			return true
+		}
 	}
 
 	const writtenBases = assignments
+		.filter((assignment) => isVariableIndex(assignment.left as AstNode))
 		.map((assignment) => indexedBaseName(assignment.left as AstNode))
 		.filter((name): name is string => name !== null)
 

@@ -19,6 +19,7 @@ import { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize
 import { logsumexp, softmaxInto } from "#coarse-placer/math"
 import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
+import { makeGlibcLcgInt32, shuffleWith } from "#random"
 
 /**
  * Lowest calibration temperature swept.
@@ -118,20 +119,12 @@ export async function trainCoarsePlacer(
 	const W = new Float32Array(C * D)
 	const b = new Float32Array(C)
 
-	// Deterministic LCG shuffle (no Math.random → reproducible runs).
-	// NOTE(phase4b): deliberately NOT `SeededRandom.shuffle` — that's mulberry32; this LCG stream is
-	// what every shipped model was trained on, and swapping the RNG changes the shuffle order (a
-	// silent retrain-reproducibility break).
-	let rng = 1_234_567
-	const rand = (): number => (rng = (Math.imul(rng, 1_103_515_245) + 12_345) & 0x7f_ff_ff_ff) / 0x7f_ff_ff_ff
-
-	function shuffle(arr: Sample[]): void {
-		// oxlint-disable-next-line mailwoman/prefer-home -- see the NOTE above: this LCG stream is what every shipped model was trained on, and SeededRandom.shuffle draws from mulberry32.
-		for (let i = arr.length - 1; i > 0; i--) {
-			const j = Math.floor(rand() * (i + 1))
-			;[arr[i], arr[j]] = [arr[j]!, arr[i]!]
-		}
-	}
+	// Deterministic, so a rerun splits the same way. The stream is the INT32 glibc LCG and not mulberry32, because every
+	// shipped model was trained on the order it produces; `makeGlibcLcgFloat64` shares its constants and is a different
+	// sequence, so the two are not interchangeable. Swapping either for mulberry32 is a retrain, not a refactor.
+	const step = makeGlibcLcgInt32(1_234_567)
+	const rand = (): number => step() / 0x7f_ff_ff_ff
+	const shuffle = (arr: Sample[]): void => shuffleWith(arr, rand)
 
 	const logits = new Float32Array(C)
 	const probs = new Float32Array(C)

@@ -236,8 +236,6 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	 */
 	const goldFor = (city: GeoNamesCity): number[] | null => goldSets.get(city.geonameid) ?? null
 
-	const pad = padRowIndex
-
 	// Stratum 1 — the bare toponym, one bearer.
 	take("unambiguous", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
@@ -247,7 +245,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		return {
 			outcome: "row",
 			row: {
-				id: `unambiguous-${pad(index)}`,
+				id: `unambiguous-${padRowIndex(index)}`,
 				stratum: "unambiguous",
 				query: city.name,
 				goldPresent: true,
@@ -306,7 +304,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		return {
 			outcome: "row",
 			row: {
-				id: `homograph_qualified-${pad(index)}`,
+				id: `homograph_qualified-${padRowIndex(index)}`,
 				stratum: "homograph_qualified",
 				query: `${target.name}, ${qualifier}`,
 				goldPresent: true,
@@ -327,7 +325,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		return {
 			outcome: "row",
 			row: {
-				id: `reordered-${pad(index)}`,
+				id: `reordered-${padRowIndex(index)}`,
 				stratum: "reordered",
 				query: `${city.admin1} ${city.name}`,
 				goldPresent: true,
@@ -364,7 +362,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		return {
 			outcome: "row",
 			row: {
-				id: `contradictory_postcode-${pad(index)}`,
+				id: `contradictory_postcode-${padRowIndex(index)}`,
 				stratum: "contradictory_postcode",
 				query: `${city.name}, ${conflicting}`,
 				goldPresent: true,
@@ -384,7 +382,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		return {
 			outcome: "row",
 			row: {
-				id: `gold_absent-${pad(index)}`,
+				id: `gold_absent-${padRowIndex(index)}`,
 				stratum: "gold_absent",
 				query: city.name,
 				goldPresent: false,

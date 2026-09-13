@@ -50,6 +50,7 @@
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { makeGlibcLcgFloat64, shuffleBy } from "@mailwoman/core/random"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { median } from "@mailwoman/core/stats"
@@ -129,15 +130,12 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
-	let state = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff
+	const step = makeGlibcLcgFloat64((seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff)
 
-	// oxlint-disable-next-line mailwoman/prefer-home -- SeededRandom.shuffle draws from mulberry32; this loop's stream is the glibc LCG above, which the published conformal thresholds were selected under.
-	for (let i = out.length - 1; i > 0; i--) {
-		state = (state * 1_103_515_245 + 12_345) & 0x7f_ff_ff_ff
-
-		const j = state % (i + 1)
-		;[out[i], out[j]] = [out[j]!, out[i]!]
-	}
+	// The sampler takes the raw state MODULO the bound rather than scaling a float, which is why this reaches for
+	// `shuffleBy` and not `shuffleWith`. Both are the same walk; the published conformal thresholds were selected under
+	// this sampler, so it stays exactly as it is.
+	shuffleBy(out, (bound) => step() % bound)
 
 	return out
 }

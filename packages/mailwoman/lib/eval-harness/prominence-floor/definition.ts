@@ -198,6 +198,15 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 	const ordered = [...definition.populationBands].toSorted((left, right) => left.min - right.min)
 
 	for (const [index, band] of ordered.entries()) {
+		// `bandRule` registers that a row with no recorded population is in NO band. `bandFor` enforces that by refusing
+		// `undefined`, but a band starting at 0 would admit a row the register counted as zero, which is the same
+		// absence wearing a number — and the reader `readCities` supplies turns an empty column into exactly that.
+		if (band.min < 1) {
+			problems.push(
+				`band ${band.id} starts at ${band.min} — a band must start at 1 or above, or an uncounted population enters it as a zero`
+			)
+		}
+
 		if (band.max !== 0 && band.max < band.min) {
 			problems.push(`band ${band.id} runs from ${band.min} to ${band.max} — its ceiling sits below its floor`)
 		}
@@ -206,6 +215,14 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 
 		if (next && band.max !== 0 && next.min <= band.max) {
 			problems.push(`bands ${band.id} and ${next.id} overlap at ${next.min} — a row would be counted in both`)
+		}
+
+		// A gap is as wrong as an overlap and is harder to see: the rows falling in it are filtered out before a stratum
+		// counts its eligible pool, so the census reports nothing missing.
+		if (next && band.max !== 0 && next.min > band.max + 1) {
+			problems.push(
+				`bands ${band.id} and ${next.id} leave ${band.max + 1} to ${next.min - 1} in no band — those rows would vanish before the census could report them`
+			)
 		}
 
 		if (next && band.max === 0) {
