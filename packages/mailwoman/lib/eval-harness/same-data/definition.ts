@@ -20,7 +20,13 @@
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
-import { duplicateRowIDProblems, loadFrozenDefinition, preregistrationPath } from "#eval-harness/preregistration"
+import {
+	duplicateRowIDProblems,
+	loadFrozenDefinition,
+	preregistrationPath,
+	samplingProblems,
+	withheldFieldProblems,
+} from "#eval-harness/preregistration"
 import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
@@ -175,21 +181,7 @@ export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition)
 		}
 	}
 
-	if (definition.sampling.rowsPerStratum < 100) {
-		problems.push(
-			`rowsPerStratum is ${definition.sampling.rowsPerStratum} — the registered power arithmetic needs at least 100`
-		)
-	}
-
-	if (definition.sampling.minimumRowsPerStratum > definition.sampling.rowsPerStratum) {
-		problems.push(
-			`minimumRowsPerStratum ${definition.sampling.minimumRowsPerStratum} exceeds the target ${definition.sampling.rowsPerStratum} — the floor cannot sit above the target it is a floor for`
-		)
-	}
-
-	if (!Number.isInteger(definition.sampling.seed)) {
-		problems.push("the sampling seed is not an integer — mulberry32 takes an integer stream position")
-	}
+	problems.push(...samplingProblems(definition.sampling, 100))
 
 	const abstentionStrata = definition.strata.filter((stratum) => stratum.correctIsAbstention)
 
@@ -203,14 +195,7 @@ export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition)
 		problems.push("no candidate_selection_accuracy metric — it is the decision rule's primary quantity")
 	}
 
-	const registered = definition.withheldFixtureFields.fields.toSorted(compareByCodePoint).join(",")
-	const enforced = [...WITHHELD_CANDIDATE_FIELDS].toSorted(compareByCodePoint).join(",")
-
-	if (registered !== enforced) {
-		problems.push(
-			`the ruler withholds ${registered} and the fixture type withholds ${enforced} — the two must name the same fields, or "equal evidence" means one thing in the record and another in the file`
-		)
-	}
+	problems.push(...withheldFieldProblems(definition.withheldFixtureFields.fields, WITHHELD_CANDIDATE_FIELDS))
 
 	return problems
 }
