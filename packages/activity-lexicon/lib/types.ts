@@ -138,7 +138,7 @@ export interface ActivityPhraseEntry {
 	 * ABSENT MEANS UNSCOPED, and is not the same as an empty list: a phrase used everywhere carries no tags, while a
 	 * phrase scoped to nowhere is a record that can never fire, which the audit refuses.
 	 */
-	locales?: ReadonlyArray<string>
+	locales?: ReadonlyArray<Intl.UnicodeBCP47LocaleIdentifier>
 	/**
 	 * How the entry was produced. `curated` is the only admissible value: a phrase mined from traffic would be a
 	 * measurement, and this vocabulary carries none.
