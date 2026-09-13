@@ -51,10 +51,10 @@ export interface GeocoderProps {
 	/**
 	 * A query that arrived with the page — a permalink's `?q=`, say — to run once as soon as the runtime is ready.
 	 *
-	 * Distinct from {@link GeocoderProps.defaultAddress}, and deliberately so: a cold visit pre-fills the demo address
-	 * but must NOT spend a visitor's first seconds resolving an address they did not ask for, while a link someone was
-	 * sent has to answer on arrival. Without this, a permalink pre-filled the field and then sat on a world view with
-	 * the address never run, which made "Copy link" produce a link that did not reproduce the result.
+	 * Distinct from {@link GeocoderProps.defaultAddress}, and deliberately so: a cold visit pre-fills the demo address but
+	 * must NOT spend a visitor's first seconds resolving an address they did not ask for, while a link someone was sent
+	 * has to answer on arrival. Without this, a permalink pre-filled the field and then sat on a world view with the
+	 * address never run, which made "Copy link" produce a link that did not reproduce the result.
 	 */
 	initialQuery?: string | null
 	/**

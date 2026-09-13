@@ -44,17 +44,17 @@ run the Earth dev server. Left as the top open item.
 prints a raw `Error.message` in monospace with no `role="alert"` / `aria-live`. Everything below fails
 with nothing on screen:
 
-| Failure | Where | What the user sees |
-|---|---|---|
-| Geolocation permission denied | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),` | Chip flips back off. Pressing it again does nothing, forever. |
-| IP-geolocate fetch fails | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centred on the US. |
-| Autocomplete throws | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }` | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
-| Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)` | Console only. User gets a city centroid with no precision downgrade notice. |
-| Crisp polygon unavailable | `geocoder-runtime.ts:509` — `console.error(...)` | Console only. |
-| Decode-path trace fails | `geocoder-runtime.ts:534` → `packages/earth/lib/panels/DebugDrawer.tsx:64` | Tick "Trace the decode path", drawer never opens, no reason given. |
-| `loadManifest` resolves `null` | `packages/react/lib/runtime/useReleaseRuntime.ts:227` | `ready` never true, `errorMessage` stays null, footer pinned to "Loading releases…" permanently. |
-| Any load error | `useReleaseRuntime.ts:283` sets the message but leaves `assets` null | `bundleLoading` stays true → the progress bar sweeps *forever underneath the error*, footer stuck on "Loading…". |
-| Any of the above | — | No retry control anywhere, and `GeocoderControls.tsx:194` `disabled={!runtime.ready}` leaves the search box permanently dead. |
+| Failure                           | Where                                                                                   | What the user sees                                                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. Pressing it again does nothing, forever.                                                                                      |
+| IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centred on the US.                                                                                                                        |
+| Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
+| Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                        |
+| Crisp polygon unavailable         | `geocoder-runtime.ts:509` — `console.error(...)`                                        | Console only.                                                                                                                                      |
+| Decode-path trace fails           | `geocoder-runtime.ts:534` → `packages/earth/lib/panels/DebugDrawer.tsx:64`              | Tick "Trace the decode path", drawer never opens, no reason given.                                                                                 |
+| `loadManifest` resolves `null`    | `packages/react/lib/runtime/useReleaseRuntime.ts:227`                                   | `ready` never true, `errorMessage` stays null, footer pinned to "Loading releases…" permanently.                                                   |
+| Any load error                    | `useReleaseRuntime.ts:283` sets the message but leaves `assets` null                    | `bundleLoading` stays true → the progress bar sweeps _forever underneath the error_, footer stuck on "Loading…".                                   |
+| Any of the above                  | —                                                                                       | No retry control anywhere, and `GeocoderControls.tsx:194` `disabled={!runtime.ready}` leaves the search box permanently dead.                      |
 
 Also: `packages/earth/lib/main.tsx:19` calls `registerSW()` with no `onNeedRefresh` / `onOfflineReady`,
 and `packages/react/lib/map/MapCanvas.tsx` has no `onError` — a dead tile worker renders a blank canvas
@@ -83,7 +83,7 @@ The two halves of the money path never reference each other:
   plan cards carry **no price** — only "Renews every month; the key follows the paid period plus 14 days."
   A buyer has to hold the $250 figure in their head from another page.
 - Nothing in the navbar or the footer links to `/license`. Its only inbound links are from
-  `IssuedLicense.tsx:176` and the terms page — both of which you reach *after* buying.
+  `IssuedLicense.tsx:176` and the terms page — both of which you reach _after_ buying.
 - `docs/src/components/PricingTiers/` — the tier cards with price + CTA — is dead code. Its own docblock
   says so: `index.tsx:11` "UNMOUNTED as of the docs-reorg Task 5 skeleton cutover."
 - `/pricing` (no `/docs`) **404s**, despite the navbar item being labelled "Pricing".
@@ -119,8 +119,8 @@ a real "what happens next" state.
 
 ### 8. The 404 tells the visitor to contact the site owner
 
-Stock Docusaurus copy: *"Please contact the owner of the site that linked you to the original URL and let
-them know their link is broken."* On `/pricing` — a URL your own navbar label invites people to guess —
+Stock Docusaurus copy: _"Please contact the owner of the site that linked you to the original URL and let
+them know their link is broken."_ On `/pricing` — a URL your own navbar label invites people to guess —
 that reads as a bug report addressed to the wrong person. No home link, no search, no suggestions.
 
 ### 9. Two internal review docs are published to `/docs/reviews/…`
@@ -128,8 +128,8 @@ that reads as a bug report addressed to the wrong person. No home link, no searc
 `docs/articles/reviews/2026-08-02-mailfail-robustness.md` and
 `docs/articles/reviews/2026-08-04-resolver-score-abstention.md` publish live (`routeBasePath: "docs"`
 with no exclusion), with **no frontmatter at all** — no title, no description — no sidebar entry and no
-inbound link. The second one's second paragraph reads *"This is a characterization only. No scoring code
-was changed, and none of the designs at the end were implemented."* Move them to `docs/records/reviews/`
+inbound link. The second one's second paragraph reads _"This is a characterization only. No scoring code
+was changed, and none of the designs at the end were implemented."_ Move them to `docs/records/reviews/`
 where the rest of this genre already lives.
 
 ---
@@ -167,6 +167,7 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
 ## P2 — Earth UI polish
 
 **Search input**
+
 - `packages/earth/lib/App.tsx:78` — `defaultAddress={query ?? DEFAULT_ADDRESS}` pre-fills the field with
   the full White House address. There is **no `autoFocus`, no `onFocus`, no `.select()`** anywhere in
   `packages/earth/lib` or `packages/react/lib`. Clicking the field drops a caret mid-string: typing an
@@ -180,7 +181,8 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   the whole wait.
 
 **Model download (~38 MB)**
-- Real byte progress *is* computed (`packages/mailwoman/lib/browser-runtime/load-assets.ts:127`) and
+
+- Real byte progress _is_ computed (`packages/mailwoman/lib/browser-runtime/load-assets.ts:127`) and
   reaches `aria-valuenow` (`packages/react/lib/map/MapProgressBar.tsx:50`) — so a screen reader gets a
   percentage that no sighted user can see.
 - Visually it is a **3px hairline at the top of the viewport** (`packages/react/styles.css:2100`), with no
@@ -190,11 +192,12 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   transfer is compressed into the first `1/steps` (≈ the first third) of the bar.
 
 **Example chips**
+
 - 12 chips (`packages/mailwoman/lib/browser-runtime/classify.ts:63-89`) inside a `max-width: 34rem`
   container (`packages/react/styles.css:1389`) — roughly 3–4× the available width. The only affordance is
   a 2rem mask fade (`styles.css:1802`); scrollbars are hidden on both engines (`:1814`), there are no
   arrows, no snap points, no wheel shim. Without a trackpad the row is unreachable past chip 3. The
-  mobile rule *shrinks* the fade to 1.25rem (`:1654`).
+  mobile rule _shrinks_ the fade to 1.25rem (`:1654`).
 - Chip labels leak internal vocabulary at demo visitors: `Berlin city-state (int'l order)`,
   `Paris (street fall-through)`, `Macclesfield (GB dependent_locality)`,
   `Plimmerton (NZ dependent_locality)`.
@@ -202,6 +205,7 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   "Use my location" gets an overflow-scroll edge fade for no reason.
 
 **Result panel**
+
 - Component labels run together with no separator: the strip reads
   `house_numberstreetstreet_suffix locality regionpostcode`. Unreadable, and it is the first thing a
   visitor looks at.
@@ -213,9 +217,10 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   handler, no `role`**. It covers 52vh and can only be removed by running another query. Its header
   (title + Copy JSON) scrolls away with the content instead of sticking.
 - While a new query resolves, the previous result stays pinned on the map undimmed — during the
-  "Resolving in gazetteer…" step the map still showed the *last* address.
+  "Resolving in gazetteer…" step the map still showed the _last_ address.
 
 **Controls and chrome**
+
 - Top-right rail (`packages/react/styles.css:1904`): 2.5rem = **40px targets**, under the 44px minimum,
   unchanged on touch. It defines `:hover`, `:active`, `--active`, `:disabled` but **no `:focus-visible`**,
   and the parent's `overflow: hidden` (`:1892`) clips even the UA outline. Every sibling control has a
@@ -242,6 +247,7 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   with no `aria-modal`, so a screen reader keeps reading the map behind it.
 
 **Responsive / tokens**
+
 - Six `@media` rules total across both packages, at three unshared breakpoints (600 / 640 / 768). Nothing
   between 601px and desktop; no tablet or landscape case.
 - 601–615px: `.mw-map-chrome--top` and `.mw-map-control-stack` overlap and the rail (higher z-index)

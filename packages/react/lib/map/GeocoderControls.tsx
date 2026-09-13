@@ -158,6 +158,7 @@ export function GeocoderControls({
 
 	useEffect(() => {
 		if (autoRanInitialQuery.current) return
+
 		if (!initialQuery || !runtime.ready) return
 
 		autoRanInitialQuery.current = true
@@ -169,7 +170,9 @@ export function GeocoderControls({
 	// Escape dismisses the result sheet, matching `MapSheet`.
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") setResultDismissed(true)
+			if (event.key === "Escape") {
+				setResultDismissed(true)
+			}
 		}
 
 		document.addEventListener("keydown", onKeyDown)
@@ -234,7 +237,9 @@ export function GeocoderControls({
 							// middle of it and the visitor typed into someone else's address. Select the seed on focus so one
 							// keystroke replaces it — and only while it IS the untouched seed, so this never eats real work.
 							onFocus={(event) => {
-								if (placeholder && event.currentTarget.value === placeholder) event.currentTarget.select()
+								if (placeholder && event.currentTarget.value === placeholder) {
+									event.currentTarget.select()
+								}
 							}}
 							disabled={!runtime.ready}
 							placeholder={placeholder}
