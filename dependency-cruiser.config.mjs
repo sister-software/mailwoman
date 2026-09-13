@@ -3,9 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Executable dependency boundaries for the Mailwoman monorepo.
+ * @import { IConfiguration } from 'dependency-cruiser'
  */
 
-module.exports = {
+/**
+ * @type {IConfiguration}
+ */
+const config = {
 	forbidden: [
 		{
 			name: "no-cross-workspace-relative-import",
@@ -85,3 +89,5 @@ module.exports = {
 		tsConfig: { fileName: "tsconfig.json" },
 	},
 }
+
+export default config
