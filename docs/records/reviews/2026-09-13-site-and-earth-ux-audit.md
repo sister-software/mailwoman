@@ -12,18 +12,18 @@ Everything below was checked against the Docusaurus build output and a `docusaur
 docs build is the check that matters, because `onBrokenLinks` and `onBrokenAnchors` are both `"throw"`
 — it passing means every link added here resolves.
 
-| Check | Result |
-|---|---|
-| `/pricing`, `/licensing`, `/licenses` | 200, each a redirect page to its target |
-| `/nope-not-a-page` | 404, carrying the new body; upstream's "contact the owner of the site" is gone |
-| `/docs/reviews/2026-08-02-mailfail-robustness` | 404 — the orphan is off the published site |
-| Font preloads in `index.html` | 4, all `rel=preload as=font type=font/woff2 crossorigin=anonymous` |
-| Buy cards | `$250`, `$2,400`, "Works out to $200 a month", both billing-basis lines |
-| `/docs/pricing` | "Buying one" + "Buy a commercial license" CTA |
-| Footer | `href=/license>License` |
-| `rebeccapurple` | absent from the built CSS |
-| Card example lines | `white-space:normal; overflow-wrap:anywhere` shipped |
-| Long `alt` strings | gone; replaced by the short forms |
+| Check                                          | Result                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| `/pricing`, `/licensing`, `/licenses`          | 200, each a redirect page to its target                                        |
+| `/nope-not-a-page`                             | 404, carrying the new body; upstream's "contact the owner of the site" is gone |
+| `/docs/reviews/2026-08-02-mailfail-robustness` | 404 — the orphan is off the published site                                     |
+| Font preloads in `index.html`                  | 4, all `rel=preload as=font type=font/woff2 crossorigin=anonymous`             |
+| Buy cards                                      | `$250`, `$2,400`, "Works out to $200 a month", both billing-basis lines        |
+| `/docs/pricing`                                | "Buying one" + "Buy a commercial license" CTA                                  |
+| Footer                                         | `href=/license>License`                                                        |
+| `rebeccapurple`                                | absent from the built CSS                                                      |
+| Card example lines                             | `white-space:normal; overflow-wrap:anywhere` shipped                           |
+| Long `alt` strings                             | gone; replaced by the short forms                                              |
 
 NOT verified, and why: `packages/earth` cannot be built or run from a Linux workspace — `rolldown`,
 `rspack`, `oxlint` and `vale` all ship darwin-only native bindings here. The Earth changes have a clean

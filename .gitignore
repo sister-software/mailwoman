@@ -89,6 +89,11 @@ storybook-static
 # Vitest writes its report to `<root>/coverage` (the default `reportsDirectory`), and nothing writes a
 # per-package one, so anchoring the rule to the root covers the real output and stops claiming source.
 /coverage/
+# `jscpd.json` writes its report under `scratchpad/repo-health/jscpd/`, so `yarn lint` used to fail on its
+# own output: `health` ran the duplication check, and the NEXT run's `lint:oxfmt` format-checked the JSON
+# it had just written. Anchored to the root for the reason the coverage rule above is — a package may
+# legitimately carry a `scratchpad` directory.
+/scratchpad/
 playwright-report
 playwright-traces
 test-results
