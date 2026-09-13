@@ -17,9 +17,10 @@
  *
  *   The mapping keeps to what a person types on the envelope. Mappers put free text in `addr:housenumber` (`House 34,
  *   Road 4, Sector 9`, `Near Askari Towers 2`) and in `addr:street`; a house number is kept only in a designator shape,
- *   and a street with a comma or more than eight words is skipped as a line rather than a name. `addr:city` in
- *   Bangladesh often carries the neighborhood too (`Mirpur 10, Dhaka`): the last comma-separated part is the locality
- *   and the head becomes the dependent locality when no `addr:suburb` names one. `addr:district` is NOT mapped on its
+ *   and a street with a comma or more than eight words is skipped as a line rather than a name. A comma in `addr:city`
+ *   is the neighborhood ahead of the city (`Mirpur 10, Dhaka` in Bangladesh): the last comma-separated part is the
+ *   locality, and the head enters the dependent-locality chain last, behind `suburb`, `subdistrict`, `district` and
+ *   `place`. `addr:district` is NOT mapped on its
  *   own: for Vietnam it is the quận below the city, which the country template renders only when no city is present,
  *   so a mapped district with a city would be a component with no span to align to and the row would quarantine.
  *

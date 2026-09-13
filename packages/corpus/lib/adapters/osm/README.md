@@ -56,9 +56,10 @@ mailwoman corpus run osm \
 | `province`                                                          | `region`, unless it repeats the locality                              |
 
 Mappers write whole lines into `addr:housenumber` (`House 34, Road 4, Sector 9`) and `addr:street`; those
-rows keep the street and lose the number, or are skipped. `addr:city` in Bangladesh often carries the
-neighborhood ahead of the city (`Mirpur 10, Dhaka`), so the tail is the locality and the head the dependent
-locality. `addr:district` is not mapped beside a city: Vietnam's template renders it only when no city is
+rows keep the street and lose the number, or are skipped. A comma in `addr:city` is the neighborhood ahead of the
+city (`Mirpur 10, Dhaka` in Bangladesh): the tail is the locality, and the head enters the
+`dependent_locality` chain last, behind `suburb`, `subdistrict`, `district` and `place`. A value with no
+comma is the locality alone. `addr:district` is not mapped beside a city: Vietnam's template renders it only when no city is
 present, and a component with no span to align to quarantines the row.
 
 The rendered line follows the country template (`24 Road 104, Dhaka - 1207`; `359 Đường Nguyễn Văn Cừ,

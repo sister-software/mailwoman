@@ -273,7 +273,7 @@ coordinate, read the Latin board before a resolver mechanism ships.
 - **Corpus.** `build_jp_slice.py` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the compact
   folded number, the designator form, the municipality's kana reading) and holds out whole municipalities;
   `build_cjk_overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
-  register is a renderer entry with a weight and a build report that says how many rows it landed on.
+  register is a renderer entry with a weight and a build report that states the row count it landed on.
 - **The board read.** `scripts/score_jp_probe_board.py --label-set stage3-cjk` over the 20,000-row JP board: the check
   is coordinate-acceptability at 15 km through the municipality centroid table; beside it, the municipality macro, the
   per-register table, and `--all-municipalities` for every held-out name. A row-weighted number moves 2 pp on one
