@@ -5,7 +5,9 @@
  * @file The release registry as an MCP tool table — the pure half of this server, so the mapping from an operation to a
  *   tool can be tested against a synthetic registry with no transport.
  *
- *   ONE OPERATION, ONE TOOL, THE EFFECT IN THE NAME'S NEIGHBOUR. `release.verify-metadata` becomes `release_verify_metadata`
+ *   ONE OPERATION, ONE TOOL.
+ *
+ * 	 `release.verify-metadata` becomes `release_verify_metadata`
  *   and its description opens with `[read]`, `[local-write]` or `[external-write]`, the effect the registry declares
  *   rather than anything inferred here. A local-write tool gains a `dry_run` argument the operation's own schema does
  *   not carry, because the context flag is the adapter's to thread.

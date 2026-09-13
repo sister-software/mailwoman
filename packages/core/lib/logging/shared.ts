@@ -171,8 +171,8 @@ export class ConsoleLogger {
 	/**
 	 * Creates a logger with the given prefix.
 	 */
-	static prefix(logPrefix: string) {
-		return createLogger(logPrefix)
+	static prefix(...logPrefixes: string[]) {
+		return createLogger(logPrefixes.join(":"))
 	}
 }
 

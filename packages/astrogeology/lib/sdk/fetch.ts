@@ -64,7 +64,11 @@ async function writeLock(lock: SourcesLock): Promise<void> {
 }
 
 /**
- * Where a source's file lives: a nightly archive carries its snapshot date in the name; a product keeps its own.
+ * Resolve the cached file path for a source.
+ *
+ * Snapshot-pinned sources use `<source.id>-<snapshot><ext>` so each day gets a distinct file.
+ *
+ * Product-pinned sources keep the original filename from the URL.
  */
 function sourceCachePath(source: PlanetarySource, snapshot: string | undefined): string {
 	const fileName = snapshot ? `${source.id}-${snapshot}${extname(source.url)}` : basename(source.url)

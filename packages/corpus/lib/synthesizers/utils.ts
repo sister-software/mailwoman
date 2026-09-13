@@ -710,7 +710,7 @@ export function* synthesizeRow(
 }
 
 /**
- * One element of `arr`, drawn with the supplied unit-interval source.
+ * One element of `arr`, drawn with the supplied unit-interval source. TODO: Rename to "sample" for clarity.
  */
 export function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 	return arr[Math.floor(random() * arr.length)]!
