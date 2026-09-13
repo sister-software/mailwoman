@@ -215,8 +215,11 @@
 	border-radius: 6px;
 	padding: 0.5rem 0.6rem;
 	margin: 0.85rem 0;
-	overflow-x: auto;
-	white-space: nowrap;
+	/* These lines were `white-space: nowrap` + `overflow-x: auto`, which cut every card's example mid-string with no
+	   scrollbar and no fade — the cut read as a rendering bug rather than as scrollable content. They are short
+	   enough to wrap, so let them. */
+	white-space: normal;
+	overflow-wrap: anywhere;
 }
 .cardLinks {
 	font-size: 0.9rem;

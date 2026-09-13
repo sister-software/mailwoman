@@ -74,6 +74,28 @@ const config: Config = {
 				href: "https://public.mailwoman.ai",
 			},
 		},
+		// The four faces that paint above the fold, preloaded. Without these the chain is
+		// HTML -> styles.css -> parse -> discover @font-face -> cross-origin fetch, which measured ~1.57 s to first
+		// font byte on a warm cache; with `font-display: swap` on every face that is a guaranteed flash of the
+		// fallback plus a full-page reflow. `preconnect` above only removes the handshake, not the discovery.
+		// Any face NOT listed here still loads lazily off the stylesheet, which is what we want for the other 44.
+		...(
+			[
+				"IoveskaNexus/WOFF2/IosevkaNexus-Regular.woff2",
+				"IoveskaNexus/WOFF2/IosevkaNexus-Book.woff2",
+				"IoveskaNexus/WOFF2/IosevkaNexus-Bold.woff2",
+				"IosevkaNexusMono/WOFF2/IosevkaNexusMono-Regular.woff2",
+			] as const
+		).map((file) => ({
+			tagName: "link",
+			attributes: {
+				rel: "preload",
+				as: "font",
+				type: "font/woff2",
+				crossorigin: "anonymous",
+				href: `https://public.mailwoman.ai/fonts/${file}`,
+			},
+		})),
 		{
 			tagName: "link",
 			attributes: {
@@ -125,7 +147,16 @@ const config: Config = {
 			// link that CHANGELOG.md used to carry — gets a 404 on a site that is up. This sends it to the
 			// first page of the get-started trio, which is where the sidebar opens anyway.
 			"@docusaurus/plugin-client-redirects",
-			{ redirects: [{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" }] },
+			{
+				redirects: [
+					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
+					// The navbar labels this door "Pricing", so `/pricing` is the URL a visitor guesses and the one a
+					// colleague types from memory. It 404'd on a site that has the page.
+					{ from: "/pricing", to: "/docs/pricing" },
+					// Same for the license page, which is the only route that can take money.
+					{ from: ["/licensing", "/licenses"], to: "/license" },
+				],
+			},
 		],
 		"./plugins/runtime-assets/plugin.ts",
 		[
@@ -347,6 +378,7 @@ const config: Config = {
 					title: "More",
 					items: [
 						{ label: "Pricing", to: "/docs/pricing" },
+						{ label: "License", to: "/license" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
 					],

@@ -153,7 +153,7 @@ function FeaturedWork(): ReactNode {
 						<Link to="/research/provider-registry-meets-usf" className={styles.featuredImageLink}>
 							<img
 								src="/img/provider-registry-usf.png"
-								alt="Health providers resolved across the NPPES registry, the FCC Rural Health Care funding file, and the Texas HHSC licensing list, plotted across Texas — matched on the geocoded place, with no shared key."
+								alt="Three provider datasets resolved onto one map of Texas."
 								className={styles.featuredImage}
 								loading="lazy"
 							/>
@@ -193,7 +193,7 @@ function FeaturedWork(): ReactNode {
 						<Link to="/research/keep-the-receipt" className={styles.featuredImageLink}>
 							<img
 								src="/img/address-provenance-ny.png"
-								alt="Address points across New York, each colored by its source dataset: the federal National Address Database statewide, OpenAddresses (the city's own NYC Open Data) concentrated in New York City."
+								alt="Address points across New York, colored by source dataset."
 								className={styles.featuredImage}
 								loading="lazy"
 							/>
