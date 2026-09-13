@@ -140,9 +140,13 @@ async function runOperation(
 
 	const output = await operation.run(parsed.data, context)
 
-	io.stdout(
-		json ? `${JSON.stringify(output, null, 2)}\n` : `${String(output === undefined ? "ok" : JSON.stringify(output))}\n`
-	)
+	const renderedOutput = json
+		? JSON.stringify(output, null, 2)
+		: operation.formatOutput
+			? operation.formatOutput(output)
+			: String(output === undefined ? "ok" : JSON.stringify(output))
+
+	io.stdout(`${renderedOutput}\n`)
 
 	return 0
 }

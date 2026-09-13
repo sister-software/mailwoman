@@ -77,4 +77,14 @@ describe("mwops dispatch", () => {
 			rest: ["plan"],
 		})
 	})
+
+	it("renders clean as a concise summary outside JSON mode", async () => {
+		const h = io()
+		const withRealRoot = { ...h.io, repoRoot: String(repoRootPath()) }
+
+		expect(await dispatch(["release", "clean", "--dry-run"], withRealRoot)).toBe(0)
+		expect(h.out).toHaveLength(1)
+		expect(h.out[0]).toMatch(/^Would clean \d+ directories; \d+ build metadata files\.\n$/u)
+		expect(h.out[0]).not.toContain("{")
+	})
 })

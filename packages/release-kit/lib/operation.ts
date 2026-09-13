@@ -60,6 +60,10 @@ export interface ReleaseOperation<In = unknown, Out = unknown> {
 	inputSchema: ZodType<In>
 	outputSchema: ZodType<Out>
 	run(input: In, context: ReleaseContext): Promise<Out>
+	/**
+	 * Optional one-line rendering for an interactive CLI. Structured adapters continue to use the operation's output.
+	 */
+	formatOutput?: (output: Out) => string
 }
 
 /**

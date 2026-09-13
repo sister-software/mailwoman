@@ -96,4 +96,11 @@ export const cleanOperation = defineOperation({
 
 		return { dryRun: context.dryRun, directories, files }
 	},
+	formatOutput(output) {
+		const verb = output.dryRun ? "Would clean" : "Cleaned"
+		const directoryNoun = output.directories.length === 1 ? "directory" : "directories"
+		const fileNoun = output.files.length === 1 ? "build metadata file" : "build metadata files"
+
+		return `${verb} ${output.directories.length} ${directoryNoun}; ${output.files.length} ${fileNoun}.`
+	},
 })
