@@ -75,6 +75,27 @@ describe("prominence-floor ruler (#2264)", () => {
 		expect(problems.some((problem) => problem.includes("ceiling sits below its floor"))).toBe(true)
 	})
 
+	it("refuses a band starting below 1, which would admit an uncounted population as a zero", () => {
+		const problems = auditProminenceDefinition(
+			withChange((draft) => {
+				draft.populationBands[0]!.min = 0
+			})
+		)
+
+		expect(problems.some((problem) => problem.includes("must start at 1 or above"))).toBe(true)
+	})
+
+	it("refuses a gap between bands, which would drop rows with nothing reporting it", () => {
+		const problems = auditProminenceDefinition(
+			withChange((draft) => {
+				// One below the second band's floor, so 999 itself falls in no band.
+				draft.populationBands[0]!.max = draft.populationBands[0]!.max - 1
+			})
+		)
+
+		expect(problems.some((problem) => problem.includes("in no band"))).toBe(true)
+	})
+
 	it("refuses a floor arm that pins nothing, and a default arm that pins something", () => {
 		const unpinned = auditProminenceDefinition(
 			withChange((draft) => {

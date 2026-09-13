@@ -8,6 +8,7 @@
  *   subtly wrong still returns plausible-looking spans — the oracle is the point.
  */
 
+import { makeGlibcLcgFloat64 } from "@mailwoman/core/random"
 import {
 	decodeSegmentationsKBest,
 	parseSemiCRFTransitions,
@@ -34,13 +35,11 @@ function grammar(overrides: Partial<SemiCRFTransitions> = {}): SemiCRFTransition
  * Deterministic pseudo-random scores — a fixed table beats a seeded RNG for reproducibility.
  */
 function scores(seqLen: number, maxSpan: number, seed = 1): number[][][] {
-	let s = seed
-
-	const next = (): number => {
-		s = (s * 1_103_515_245 + 12_345) % 2_147_483_648
-
-		return (s / 2_147_483_648) * 4 - 2
-	}
+	const step = makeGlibcLcgFloat64(seed)
+	// The scores this fixture expects came from this exact stream, so it is the FLOAT64 generator rather than
+	// `makeGlibcLcgInt32`, which shares its constants and produces a different sequence. Verified identical to the loop
+	// this replaced over 10,000 steps from five seeds.
+	const next = (): number => (step() / 2_147_483_648) * 4 - 2
 
 	return Array.from({ length: seqLen }, () =>
 		Array.from({ length: maxSpan }, () => Array.from({ length: TYPES.length }, () => next()))

@@ -14,11 +14,21 @@
  *   seeded, deterministic-per-input stream and Python's helper semantics — inclusive `randint`,
  *   uniform `choice`, with-replacement `choices`.
  *
- *   TWO generators live here, and that is deliberate: their streams differ, and both streams are
- *   baked into shipped artifacts. mulberry32 decides which typos get injected into the training
- *   corpus; the LCG decides the train/test splits the scorer evals report. Collapsing them onto one
- *   would silently rewrite synthesized corpus rows and published eval numbers. New code should reach
- *   for `mulberry32` (better distribution) unless it must reproduce an existing stream.
+ *   FOUR generators live here, and that is deliberate: no two produce the same sequence, and each is
+ *   baked into an artifact that shipped. mulberry32 decides which typos get injected into the
+ *   training corpus and which rows the frozen eval panels draw; `makeLcg` decides the registry
+ *   scorers' train/test splits; the two glibc-constant generators decide the coarse-placer's split
+ *   and the conformal calibration split. Collapsing any onto another would silently rewrite
+ *   synthesized corpus rows, a frozen panel, or a published number. New code should reach for
+ *   `mulberry32` (better distribution) unless it must reproduce an existing stream.
+ *
+ *   The two glibc generators are the trap: SAME constants, different multiply, different sequence.
+ *   They were typed out in two files that each called theirs "the glibc LCG", which is how a reader
+ *   comes to believe they are interchangeable. They are not — see `makeGlibcLcgFloat64`.
+ *
+ *   `shuffleBy` is the other half of the split. What a call site may be unable to change is its
+ *   SAMPLER — the stream, and how an index is drawn from it. The WALK is the same everywhere, so it
+ *   is written once and takes `pick(bound)`; `shuffleWith` is the common sampler over it.
  */
 
 /**
@@ -38,6 +48,78 @@ export function mulberry32(seed: number): () => number {
 
 		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
+}
+
+/**
+ * In-place Fisher-Yates over `array`, taking the SAMPLER as a parameter: `pick(bound)` returns an index in `[0,
+ * bound)`.
+ *
+ * The walk is "swap `i` with a uniform index in `[0, i]`, counting down". How that index is drawn is the sampler, and
+ * the samplers here differ because each reproduces a stream baked into an artifact — the coarse-placer's train/test
+ * split, the conformal calibration split, a frozen eval panel. Parameterizing the sampler rather than the generator is
+ * what lets all of them share one walk; CPython's `random.shuffle` takes `randbelow` for the same reason.
+ *
+ * Prefer {@link shuffleWith} unless the call site derives its index some way other than scaling a float.
+ */
+export function shuffleBy<T>(array: T[], pick: (bound: number) => number): void {
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = pick(i + 1)
+		const swapped = array[i]!
+
+		array[i] = array[j]!
+		array[j] = swapped
+	}
+}
+
+/**
+ * In-place Fisher-Yates over `array`, drawing from a generator of floats in `[0, 1)`.
+ *
+ * The common case: `pick` is `Math.floor(random() * bound)`. A call site whose sampler is not that shape — taking a raw
+ * generator state modulo `bound`, say — reaches for {@link shuffleBy} instead, and gets the same walk.
+ */
+export function shuffleWith<T>(array: T[], random: () => number): void {
+	shuffleBy(array, (bound) => Math.floor(random() * bound))
+}
+
+/**
+ * The multiplier and increment glibc's `rand()` uses. Two generators below share them and are NOT the same stream, so
+ * the constants live here once rather than being re-typed beside each.
+ */
+const GLIBC_LCG_MULTIPLIER = 1_103_515_245
+const GLIBC_LCG_INCREMENT = 12_345
+
+/**
+ * Glibc's LCG constants stepped with a FLOAT64 multiply, returning the raw 31-bit state.
+ *
+ * The float multiply is the point, and it is not a rounding detail: the state reaches 2³¹ and the product with the
+ * multiplier is about 2.3 × 10¹⁸, past 2⁵³ where a double stops being exact. So this produces a different sequence from
+ * {@link makeGlibcLcgInt32} despite the identical constants. Measured over every seed from 1 to 2,000,000, the draw the
+ * two first disagree on is the 2nd for 1,963,788 seeds, the 3rd for 35,967, the 4th for 242 and the 5th for 3 — never
+ * the 1st, because a seed under 2⁵³/1103515245 = 8,162,279 keeps that first product exact. Above it they part on the
+ * FIRST draw, which is where this file's own caller sits: the conformal seed mixes to 192,663,848.
+ *
+ * So a reader comparing one draw, or a few from a small seed, can conclude these are the same generator. They are not,
+ * and neither is substitutable for the other.
+ *
+ * Kept because the published conformal thresholds were selected under this one. Prefer {@link mulberry32} for anything
+ * new; this exists to reproduce an artifact, not to generate numbers well.
+ */
+export function makeGlibcLcgFloat64(seed: number): () => number {
+	let state = seed
+
+	return () => (state = (state * GLIBC_LCG_MULTIPLIER + GLIBC_LCG_INCREMENT) & 0x7f_ff_ff_ff)
+}
+
+/**
+ * Glibc's LCG constants stepped with `Math.imul`, a 32-bit wrapping multiply, returning the raw 31-bit state.
+ *
+ * The coarse-placer's train/test split reproduces from this one, so every shipped coarse-placer model was trained on
+ * the order it produces. See {@link makeGlibcLcgFloat64} for why the two are different streams.
+ */
+export function makeGlibcLcgInt32(seed: number): () => number {
+	let state = seed
+
+	return () => (state = (Math.imul(state, GLIBC_LCG_MULTIPLIER) + GLIBC_LCG_INCREMENT) & 0x7f_ff_ff_ff)
 }
 
 /**
@@ -110,12 +192,7 @@ export class SeededRandom {
 	 * CPython's `_randbelow` stream (see the module header on the seeded-but-not- MT19937 tradeoff).
 	 */
 	shuffle<T>(arr: T[]): void {
-		for (let i = arr.length - 1; i > 0; i--) {
-			const j = this.randint(0, i)
-			const tmp = arr[i]!
-			arr[i] = arr[j]!
-			arr[j] = tmp
-		}
+		shuffleWith(arr, () => this.random())
 	}
 
 	/**
