@@ -20,7 +20,7 @@
  *   largest bearer would be satisfied by a population prior alone, and that prior is under test.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { SeededRandom } from "@mailwoman/core/random"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { GEONAMES_MAIN_COLUMNS } from "@mailwoman/corpus/adapters/geonames/adapter"
 import { GEONAMES_POSTAL_COLUMNS } from "@mailwoman/corpus/adapters/geonames/postal/adapter"
@@ -72,8 +72,10 @@ export interface GeoNamesCity {
 }
 
 /**
- * Parse `cities15000.txt` — the main table filtered to places above 15,000 population, so the column map is the main
- * table's. `header: false`: the dump is headerless, and a spliterator that assumed one would eat the first city.
+ * Parse a GeoNames main-table dump. This benchmark reads `cities15000.txt`, the table filtered to places above 15,000
+ * population; a per-country dump (`FR.txt`) carries the same columns and parses here unchanged, which is what a panel
+ * reaching below that floor would read. `header: false`: the dump is headerless, and a spliterator that assumed one
+ * would eat the first row.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
 	const rows: GeoNamesCity[] = []
@@ -143,16 +145,16 @@ export async function readPostcodeByAdmin(path: string): Promise<Map<string, str
 
 /**
  * A seeded Fisher-Yates over a copy, so the caller's array is untouched and two runs draw identically.
+ *
+ * The ORDER this returns is load-bearing: it selects which rows entered the frozen panel, whose digest the published
+ * record names. `SeededRandom.shuffle` reproduces it exactly — verified identical over sizes 24, 1,000, 10,932 (the
+ * panel's own eligible-pool size) and 100,000, at seeds 1, 7, 20260913 and 4294967295 — so this wraps the shared home
+ * rather than re-typing the loop beside it.
  */
 function seededShuffle<T>(items: readonly T[], seed: number): T[] {
 	const shuffled = [...items]
-	const random = mulberry32(seed)
 
-	for (let index = shuffled.length - 1; index > 0; index--) {
-		const swap = Math.floor(random() * (index + 1))
-
-		;[shuffled[index], shuffled[swap]] = [shuffled[swap]!, shuffled[index]!]
-	}
+	new SeededRandom(seed).shuffle(shuffled)
 
 	return shuffled
 }
