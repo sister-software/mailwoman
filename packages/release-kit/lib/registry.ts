@@ -12,6 +12,7 @@
 import type { ReleaseOperation } from "#operation"
 import { blessPackage } from "#operations/bless-package"
 import { checkParity } from "#operations/check-parity"
+import { cleanOperation } from "#operations/clean"
 import { copyWeightsOperation } from "#operations/copy-weights"
 import { deployTargets } from "#operations/deploy-targets"
 import { fetchHFWeightsOperation } from "#operations/fetch-hf-weights"
@@ -36,6 +37,7 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	plan,
 	verifyMetadata,
 	checkParity,
+	cleanOperation,
 	prepareVersion,
 	generatedSurfaces,
 	copyWeightsOperation,
