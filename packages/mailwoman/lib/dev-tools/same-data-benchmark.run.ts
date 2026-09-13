@@ -11,7 +11,7 @@
  *             and freeze every answer. This is the only phase that touches a gazetteer.
  *     run     Replay the frozen fixture through the three arms, score, and write the results.
  *     sweep   Re-grade the frozen results under an abstention threshold and write the trade curve (#2264).
- *     knob    Replay the frozen fixture at a range of `minWinningScore` floors — the shipped knob (#2264).
+ *     knob    Replay the frozen fixture at a matrix of `ResolveOpts` arms — the shipped knob (#2264, #2265).
  *
  *   Nothing after `record` reads a database, so a difference the `run` phase reports cannot come from
  *   retrieval, an index vintage, or a data footprint: every arm reads the same frozen bytes, and
@@ -22,6 +22,8 @@
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts record
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts run
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts score
+ *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts sweep
+ *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -397,10 +399,24 @@ async function sweepPhase(): Promise<void> {
 }
 
 /**
- * The `minWinningScore` floors the knob sweep replays. The candidate backend's score is a log-population rank, measured
- * over this fixture's pools at min 0, median 2.55 and max 9.14, so these walk the populated half of that range.
+ * The option sets the knob replay walks.
+ *
+ * The candidate backend's score is a log-population rank, measured over this fixture's pools at min 0, median 2.55 and
+ * max 9.14, so the floors walk the populated half of that range. The `spanRescore` arms are here because a floor on its
+ * own barely moves the false-selection rate and the pair moves it a long way: `applySpanRescore` returns early only
+ * when the tree already holds a resolved place (`resolve/passes.ts`), so a floor's refusal leaves exactly the state
+ * that invites the recovery pass to answer instead.
  */
-const MIN_WINNING_SCORES = [0, 1, 2, 3, 4, 5] as const
+const KNOB_ARMS: Array<[string, ResolveOpts]> = [
+	["default", {}],
+	["minWinningScore 1", { minWinningScore: 1 }],
+	["minWinningScore 2", { minWinningScore: 2 }],
+	["minWinningScore 3", { minWinningScore: 3 }],
+	["minWinningScore 4", { minWinningScore: 4 }],
+	["minWinningScore 5", { minWinningScore: 5 }],
+	["spanRescore off", { spanRescore: false }],
+	["minWinningScore 4 + spanRescore off", { minWinningScore: 4, spanRescore: false }],
+]
 
 async function knobPhase(): Promise<void> {
 	const { panel, fixture } = await allKeyed({
@@ -410,46 +426,70 @@ async function knobPhase(): Promise<void> {
 
 	const fixtureByID = new Map(fixture.map((row) => [row.id, row]))
 	const rows = panel.filter((row) => fixtureByID.has(row.id))
-	const panelByID = new Map(rows.map((row) => [row.id, row]))
 
-	const knobRows: string[][] = []
+	const byArm = new Map<string, ArmRowResult[]>()
 
-	for (const minWinningScore of MIN_WINNING_SCORES) {
+	for (const [label, opts] of KNOB_ARMS) {
 		const results: ArmRowResult[] = []
 
 		for (const row of rows) {
-			results.push(await runResolverArm("mailwoman", row, fixtureByID.get(row.id)!, { minWinningScore }))
+			results.push(await runResolverArm(label, row, fixtureByID.get(row.id)!, opts))
 		}
 
-		const metrics = armMetrics("mailwoman", `minWinningScore:${minWinningScore}`, panelByID, results)
+		byArm.set(label, results)
+	}
 
-		knobRows.push([
-			minWinningScore.toFixed(1),
-			String(metrics.errors),
-			String(metrics.selections),
+	// A raised floor changes what the walk asks next, so each arm loses a different set of rows to replay misses.
+	// Scoring every arm over its own survivors would compare rates whose denominators moved; this intersection is what
+	// makes the columns comparable, and the count of rows it drops is reported beside them.
+	const errored = new Set(
+		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))
+	)
+
+	const common = rows.filter((row) => !errored.has(row.id))
+	const commonByID = new Map(common.map((row) => [row.id, row]))
+	const commonIDs = new Set(commonByID.keys())
+
+	const knobRows = KNOB_ARMS.map(([label]) => {
+		const results = byArm.get(label)!
+
+		const metrics = armMetrics(
+			label,
+			"common",
+			commonByID,
+			results.filter((result) => commonIDs.has(result.rowID))
+		)
+
+		return [
+			label,
+			String(results.filter((result) => result.error).length),
 			renderRatio(metrics.selectionAccuracy),
 			renderRatio(metrics.wrongArea),
 			renderRatio(metrics.falseSelection),
-		])
-	}
+		]
+	})
 
 	const lines = [
 		"# The shipped knob, replayed",
 		"",
 		"`ResolveOpts.minWinningScore` compares against the candidate backend's score, which is a log-population",
-		"rank. It is a PROMINENCE floor, not a confidence floor: raising it withholds small places rather than",
-		"unsupported ones. Replayed against the frozen fixture, so a walk that asks a question the recording never",
-		"answered is counted in `errors` and excluded from every rate — never read as an abstention.",
+		"rank — a prominence floor rather than a confidence floor. Replayed against the frozen fixture, so a walk",
+		"that asks a question the recording never answered is counted in `replay misses` and its row is dropped",
+		"from every arm's denominator, never read as an abstention.",
 		"",
-		"**Read the errors column before the rates.** A floor above 0 makes the walk refuse a node, and the",
-		"questions it asks afterwards then differ from the ones the recording answered. Those rows leave the",
-		"denominator, so selection accuracy at a raised floor is measured over fewer rows than at 0 and the two",
-		"are not comparable. The false-selection column is, because its 100 withheld-gold rows all survive.",
+		`Every rate below is measured over the ${common.length} of ${rows.length} rows that every arm scored without a`,
+		"replay miss. The dropped rows are exactly the ones a floor changed most, so the accuracy column understates",
+		"how much the floors move; all 100 withheld-gold rows survive every arm, so the false-selection column is",
+		"complete.",
 		"",
 		...renderMarkdownTable(
-			["minWinningScore", "errors", "selections", "selection accuracy", "wrong-area rate", "false-selection rate"],
+			["arm", "replay misses", "selection accuracy", "wrong-area rate", "false-selection rate"],
 			knobRows
 		),
+		"",
+		"A floor alone is nearly inert. Paired with `spanRescore: false` it is not, and the reason is that",
+		"`applySpanRescore` returns early only when the tree already holds a resolved place: a floor's refusal",
+		"leaves an unresolved tree, which is the recovery pass's trigger condition rather than a state it respects.",
 	]
 
 	await writeLocalTextFile(lines, KNOB_PATH)
