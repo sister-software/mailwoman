@@ -23,6 +23,7 @@
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import { duplicateRowIDProblems, loadFrozenDefinition, preregistrationPath } from "#eval-harness/preregistration"
+import { WITHHELD_CANDIDATE_FIELDS } from "#eval-harness/same-data/fixture"
 
 /**
  * The five registered strata, in fill order. Order is meaningful: strata draw from disjoint geonameid pools, and a
@@ -188,6 +189,15 @@ export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition)
 
 	if (!definition.metrics.some((metric) => metric.id === "candidate_selection_accuracy")) {
 		problems.push("no candidate_selection_accuracy metric — it is the decision rule's primary quantity")
+	}
+
+	const registered = definition.withheldFixtureFields.fields.toSorted(compareByCodePoint).join(",")
+	const enforced = [...WITHHELD_CANDIDATE_FIELDS].toSorted(compareByCodePoint).join(",")
+
+	if (registered !== enforced) {
+		problems.push(
+			`the ruler withholds ${registered} and the fixture type withholds ${enforced} — the two must name the same fields, or "equal evidence" means one thing in the record and another in the file`
+		)
 	}
 
 	return problems
