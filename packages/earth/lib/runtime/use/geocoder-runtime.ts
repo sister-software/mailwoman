@@ -578,6 +578,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				progress: rt.loadingProgress,
 				stepLabels: rt.loadingStepLabels,
 				stepIndex: rt.loadingStepIndex,
+				byteFraction: rt.loadingByteFraction,
 			},
 			errorMessage: rt.errorMessage,
 			// Map surface
@@ -603,6 +604,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		rt.loadingProgress,
 		rt.loadingStepLabels,
 		rt.loadingStepIndex,
+		rt.loadingByteFraction,
 		rt.errorMessage,
 		rt.selectedVersion,
 		rt.activeBackend,

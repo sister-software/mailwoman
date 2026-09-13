@@ -915,6 +915,32 @@
 		color: var(--color-text-secondary);
 	}
 
+	/* The debug record: label/value pairs a reporter reads off, sized to the sheet rather than the page. The value
+	   column wraps because a user-agent string is long and truncating the one field that identifies the browser
+	   would defeat the row. */
+	.mw-debug-info {
+		display: grid;
+		gap: 0.2rem;
+		width: 100%;
+		font-size: var(--font-size-caption);
+	}
+
+	.mw-debug-info__row {
+		display: grid;
+		grid-template-columns: minmax(6rem, auto) 1fr;
+		gap: 0.5rem;
+		align-items: baseline;
+	}
+
+	.mw-debug-info__label {
+		color: var(--color-text-tertiary);
+	}
+
+	.mw-debug-info__value {
+		overflow-wrap: anywhere;
+		color: var(--color-text-secondary);
+	}
+
 	/* #endregion */
 
 	/* #region Place autocomplete listbox (reuses .mw-chip) */

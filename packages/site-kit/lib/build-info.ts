@@ -17,9 +17,21 @@ export interface BuildInfo {
 	 */
 	revision: string
 	/**
+	 * The same revision, full length. Kept BESIDE `revision` rather than replacing it: a production smoke already reads
+	 * `revision` and compares it against a short form, and a commit URL wants the whole thing.
+	 */
+	commit: string
+	/**
 	 * ISO-8601 seconds, `Z` suffix.
 	 */
 	buildTime: string
+}
+
+/**
+ * `https://github.com/sister-software/mailwoman/commit/<sha>` for a build's own revision.
+ */
+export function commitURL(info: Pick<BuildInfo, "commit">): string {
+	return `https://github.com/sister-software/mailwoman/commit/${info.commit}`
 }
 
 export function renderBuildInfo(info: BuildInfo): string {

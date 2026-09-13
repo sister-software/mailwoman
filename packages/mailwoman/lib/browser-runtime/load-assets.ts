@@ -16,7 +16,7 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
-import { fetchWithRetry } from "#browser-runtime/fetch"
+import { fetchWithProgress, fetchWithRetry } from "#browser-runtime/fetch"
 import type { ReleaseInfo } from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
@@ -117,13 +117,25 @@ export async function loadReleaseAssets(
 	// classifier contract this module exposes, so the neural package's own classifier type never enters a host bundle.
 	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
+	// The model is the only artifact here whose transfer a visitor waits on — tens of megabytes against kilobytes for
+	// every lexicon beside it — so it is the only one whose bytes reach the bar. Reporting the small ones too would
+	// send the bar backwards each time one started.
+	const reportBytes = progress.setByteFraction
+
+	const modelFetch = reportBytes
+		? fetchWithProgress(
+				(received, total) => reportBytes(total ? Math.min(1, received / total) : null),
+				(url) => url.endsWith(".onnx")
+			)
+		: fetchWithRetry
+
 	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } = (await loadNeuralClassifierFromURLs(
 		{
 			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
 				hasAnchor: release.hasAnchor,
 				forceWASM: progress.forceWASM,
 			}),
-			fetchImpl: fetchWithRetry,
+			fetchImpl: modelFetch,
 			// Every published pair index is loaded; the loader keeps each live and `selectPairIndexForText` picks per
 			// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
 			pairIndexURLs: pairIndexURLs(pairIndexBase),
@@ -139,6 +151,9 @@ export async function loadReleaseAssets(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
 	)
 
+	// The model is in. What follows is the lexicons and the optional gazetteer, which the step index reports, so the
+	// byte channel goes quiet rather than holding its last value at 100%.
+	progress.setByteFraction?.(null)
 	progress.setStepIndex(0)
 
 	// The calibration table is the model's own held-out reliability, so it must match the loaded version. A release

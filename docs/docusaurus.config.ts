@@ -119,6 +119,14 @@ const config: Config = {
 	},
 
 	plugins: [
+		[
+			// `/docs` is `routeBasePath`, not a page: the docs plugin routes `/docs/<slug>` and leaves the
+			// bare prefix with nothing on it, so a reader who trims the path to `/docs` — or follows the
+			// link that CHANGELOG.md used to carry — gets a 404 on a site that is up. This sends it to the
+			// first page of the get-started trio, which is where the sidebar opens anyway.
+			"@docusaurus/plugin-client-redirects",
+			{ redirects: [{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" }] },
+		],
 		"./plugins/runtime-assets/plugin.ts",
 		[
 			// Wraps docusaurus-plugin-glossary: same validation/tooltips/remark, custom page with

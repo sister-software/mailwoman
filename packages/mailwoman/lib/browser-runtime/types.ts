@@ -118,4 +118,12 @@ export interface AssetLoadProgress {
 	setStepLabels: (labels: string[]) => void
 	setStepIndex: (index: number) => void
 	setBackend: (backend: string) => void
+	/**
+	 * Bytes received over bytes expected for the artifact downloading right now, in [0, 1]; `null` once nothing is in
+	 * flight. Optional so a host that predates it still satisfies this contract.
+	 *
+	 * The step index cannot report the model: it is fetched before the first step is entered, so a step-derived bar holds
+	 * one value for the whole of a 38 MB transfer.
+	 */
+	setByteFraction?: (fraction: number | null) => void
 }

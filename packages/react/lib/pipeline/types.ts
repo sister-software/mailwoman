@@ -19,6 +19,15 @@ export interface PipelineLoadingState {
 	progress?: string
 	stepLabels: string[]
 	stepIndex: number
+	/**
+	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1] — `null` while nothing is
+	 * downloading or when the response declares no length.
+	 *
+	 * The step index alone cannot report this download. The model is fetched BEFORE the first step is entered, so a
+	 * step-derived bar sits at one-third for the whole of a 38 MB transfer and then jumps — which reads as a hung page,
+	 * not a loading one. This is the only channel that moves during the wait that actually takes the time.
+	 */
+	byteFraction?: number | null
 }
 
 /**

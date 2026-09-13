@@ -27,6 +27,7 @@ import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
 import { BackendControl } from "./BackendControl.tsx"
 import { CompareToggle } from "./CompareToggle.tsx"
+import { DebugInfo } from "./DebugInfo.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
@@ -157,13 +158,18 @@ export function GeocoderControls({
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0
 
+	// The model downloads BEFORE the first step is entered, so the step fraction holds at 1/steps for the whole of a
+	// 38 MB transfer — the part of the wait a visitor actually sits through. While bytes are arriving the bar follows
+	// them, scaled into the first step's share so it never runs backwards when the steps take over.
+	const stepFraction = steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null
+	const byteFraction = loading?.byteFraction
+
+	const fraction =
+		typeof byteFraction === "number" && steps ? (byteFraction * 1) / steps : (byteFraction ?? stepFraction)
+
 	return (
 		<>
-			<MapProgressBar
-				active={bundleLoading}
-				fraction={steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null}
-				label="Loading the geocoder"
-			/>
+			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
 			<div className="mw-map-chrome mw-map-chrome--top">
 				<form
@@ -287,6 +293,16 @@ export function GeocoderControls({
 							activeBackend={runtime.activeBackend}
 							forceWASM={runtime.forceWASM ?? false}
 							onForceWASMChange={onForceWASMChange}
+						/>
+					</div>
+
+					<div className="mw-map-sheet__row">
+						<span className="mw-map-sheet__label">Debug info</span>
+						<DebugInfo
+							activeBackend={runtime.activeBackend}
+							forceWASM={runtime.forceWASM}
+							selectedVersion={runtime.selectedVersion}
+							ready={runtime.ready}
 						/>
 					</div>
 

@@ -42,10 +42,15 @@ test.describe("Mailwoman Earth shell", () => {
 		const build = await request.get("/build.json")
 		expect(build.status()).toBe(200)
 
-		const info = (await build.json()) as { app: string; revision: string; buildTime: string }
+		const info = (await build.json()) as { app: string; revision: string; commit: string; buildTime: string }
 		expect(info.app).toBe("mailwoman-earth")
 		expect(info.revision.length).toBeGreaterThanOrEqual(7)
 		expect(info.buildTime.endsWith("Z")).toBe(true)
+
+		// The footer links this one, so it has to be a whole sha and the same revision `revision` abbreviates —
+		// a link built from a different commit than the page was built from is worse than no link.
+		expect(info.commit).toHaveLength(40)
+		expect(info.commit.startsWith(info.revision)).toBe(true)
 
 		const manifest = await request.get("/manifest.webmanifest")
 		expect(manifest.status()).toBe(200)

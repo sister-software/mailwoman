@@ -18,12 +18,13 @@ export function buildInfoPlugin(options: { app: string }): Plugin {
 	return {
 		name: "mailwoman-build-info",
 		async generateBundle() {
-			const revision = await gitHead(repoRootPath(), { short: true })
+			const root = repoRootPath()
+			const [revision, commit] = await Promise.all([gitHead(root, { short: true }), gitHead(root)])
 
 			this.emitFile({
 				type: "asset",
 				fileName: "build.json",
-				source: renderBuildInfo({ app: options.app, revision, buildTime: isoSeconds() }),
+				source: renderBuildInfo({ app: options.app, revision, commit, buildTime: isoSeconds() }),
 			})
 		},
 	}

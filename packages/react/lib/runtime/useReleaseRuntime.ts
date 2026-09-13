@@ -77,6 +77,14 @@ export interface AssetsLoadContext {
 	 * Report the backend the neural runtime resolved to (e.g. `webgpu (27 MB int8)`).
 	 */
 	setBackend: (backend: string) => void
+	/**
+	 * Report bytes received over bytes expected for the asset downloading right now, in [0, 1]. Pass `null` when nothing
+	 * is in flight or the response declares no length.
+	 *
+	 * The staged step index cannot carry this: the model is fetched before the first step is entered, so a step-derived
+	 * bar holds one value for the whole transfer. This is what moves during it.
+	 */
+	setByteFraction: (fraction: number | null) => void
 }
 
 /**
@@ -141,6 +149,11 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	 */
 	loadingStepLabels: string[]
 	/**
+	 * Bytes received over bytes expected for the asset downloading right now, in [0, 1]; `null` when nothing is in flight
+	 * or the response declares no length.
+	 */
+	loadingByteFraction: number | null
+	/**
 	 * A load error (manifest or asset), distinct from any per-parse error a consumer tracks separately.
 	 */
 	errorMessage: string | null
@@ -182,6 +195,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const [loadingStepLabels, setLoadingStepLabels] = useState<string[]>([])
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [activeBackend, setActiveBackend] = useState<string>("")
+	const [loadingByteFraction, setLoadingByteFraction] = useState<number | null>(null)
 	const [forceWASM, setForceWASMState] = useState(false)
 
 	// Latest-ref the injected loaders: a host that re-creates them each render (an inline arrow) must NOT retrigger the
@@ -246,6 +260,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 				setLoadingStepIndex(-1)
 				setLoadingStepLabels([])
 				setActiveBackend("")
+				setLoadingByteFraction(null)
 
 				const ctx: AssetsLoadContext = {
 					signal,
@@ -254,6 +269,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 					setStepLabels: (labels) => guard(() => setLoadingStepLabels(labels)),
 					setStepIndex: (index) => guard(() => setLoadingStepIndex(index)),
 					setBackend: (backend) => guard(() => setActiveBackend(backend)),
+					setByteFraction: (fraction) => guard(() => setLoadingByteFraction(fraction)),
 				}
 
 				const loaded = await loadAssetsRef.current(release, ctx)
@@ -261,6 +277,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 				if (signal.aborted) return
 				setAssets(loaded)
 				setLoadingProgress("")
+				setLoadingByteFraction(null)
 			} catch (error) {
 				if (signal.aborted) return
 				setErrorMessage(error instanceof Error ? error.message : String(error))
@@ -292,6 +309,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		loadingProgress,
 		loadingStepIndex,
 		loadingStepLabels,
+		loadingByteFraction,
 		errorMessage,
 		activeBackend,
 		forceWASM,
