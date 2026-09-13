@@ -16,13 +16,16 @@ Four findings, in the order they constrain each other:
    once — at four of the fifteen tested values it would also have satisfied the full registered rule.
 2. That same signal is blind to the case it most needs to catch. 28 of the 75 false selections carry
    the maximum confidence, so no threshold can reach a false-selection rate below 28%.
-3. `ResolveOpts.minWinningScore`, the shipped knob nearest to this, moves the false-selection rate
-   from 75% to 74% across the populated range of its scale — one row.
-4. It is not inert because it fails to refuse. It refuses, and `spanRescore` answers the refusal:
-   `applySpanRescore` declines only when the tree already holds a resolved place, so a refusal leaves
-   exactly the state that invites it. With both off the rate is 8%. **A deliberate refusal and a
-   failed parse are the same state, and the recovery pass answers both.** That is the finding worth
-   acting on; the 8% itself is confounded by how this panel was built.
+3. `ResolveOpts.minWinningScore`, the shipped knob nearest to this, could not express abstention at
+   all: across the populated range of its scale it moved the false-selection rate from 75% to 74% —
+   one row.
+4. It was not failing to refuse. It refused, and `spanRescore` answered the refusal by re-issuing the
+   same lookup, because `applySpanRescore` recovers any tree holding no resolved place and a refusal
+   leaves exactly that. **A deliberate refusal and a failed parse were the same state, and the
+   recovery pass answered both.** Fixed in
+   [#2265](https://github.com/sister-software/mailwoman/issues/2265); the floor then takes the rate to
+   26% at a cost of 1.5 points of accuracy. Those magnitudes are this panel's own construction and
+   are not a recommended setting.
 
 ## What is being thresholded
 
@@ -161,37 +164,45 @@ across lookups held three to five.
 
 ## The shipped knob is inert, and the reason is a second pass
 
+The measurement that produced this section found a defect, and the table below is the one taken after
+it was fixed ([#2265](https://github.com/sister-software/mailwoman/issues/2265)).
+
+**What the defect was.** `applySpanRescore` begins `if (hasResolvedPlace(roots)) return`
+(`packages/resolver/lib/resolve/passes.ts`) — it declines only when the tree already holds a resolved
+place. A `minWinningScore` refusal leaves a tree with no resolved place, which is precisely the
+recovery pass's trigger condition, so the recovery re-issued the byte-identical locality lookup the
+floor had just declined. Measured before the fix, raising the floor across the whole populated range
+of the scale moved the false-selection rate from 75 of 100 rows to 74 — one row — and moved selection
+accuracy not at all. The handover was visible in the mechanism strings: at floor 4 the withheld-gold
+rows decided by `picked:ranked` fell from 56 to 8 while `picked:span_rescore` rose from 18 to 66.
+
+Span rescore was built to recover a locality the parser fragmented, and its own header calls the
+early return the "#685 brake — never second-guess a working coordinate". The brake reads a resolved
+place, so it could not tell a deliberate refusal from a parse that failed. **A refusal and a failure
+were the same state, and the recovery pass answered both.** The fix records the refusal on the walk
+state and has the call site decline; it is inert at the default, because `minWinningScore` defaults
+to 0 and no shipped backend emits a negative score.
+
 Generated into [`same-data-knob.md`](/benchmarks/same-data-knob.md). Unlike the curve above this is a
-real replay of the resolver at each option set, not a re-grade. Every rate is measured over the 341 of
+real replay of the resolver at each option set, not a re-grade. Every rate is measured over the 372 of
 453 rows that every arm scored without a replay miss, so the columns are comparable to each other;
 all 100 withheld-gold rows survive every arm, so the false-selection column is complete.
 
 | arm                                 | replay misses | selection accuracy | wrong-area rate | false-selection rate |
 | ----------------------------------- | ------------- | ------------------ | --------------- | -------------------- |
-| default                             | 0             | 67.6% (163/241)    | 15.3% (30/196)  | 75.0% (75/100)       |
-| minWinningScore 1                   | 31            | 67.6% (163/241)    | 12.8% (25/196)  | 74.0% (74/100)       |
-| minWinningScore 2                   | 32            | 67.6% (163/241)    | 12.8% (25/196)  | 74.0% (74/100)       |
-| minWinningScore 3                   | 34            | 67.6% (163/241)    | 12.8% (25/196)  | 74.0% (74/100)       |
-| minWinningScore 4                   | 35            | 67.6% (163/241)    | 12.8% (25/196)  | 74.0% (74/100)       |
-| minWinningScore 5                   | 112           | 68.0% (164/241)    | 12.8% (25/196)  | 74.0% (74/100)       |
-| spanRescore off                     | 0             | 51.5% (124/241)    | 13.1% (19/145)  | 57.0% (57/100)       |
-| minWinningScore 4 + spanRescore off | 25            | 51.0% (123/241)    | 5.8% (8/138)    | 8.0% (8/100)         |
+| default                             | 0             | 66.9% (182/272)    | 17.2% (39/227)  | 75.0% (75/100)       |
+| minWinningScore 1                   | 22            | 65.4% (178/272)    | 11.7% (25/213)  | 43.0% (43/100)       |
+| minWinningScore 2                   | 23            | 65.4% (178/272)    | 11.7% (25/213)  | 43.0% (43/100)       |
+| minWinningScore 3                   | 25            | 65.4% (178/272)    | 11.3% (24/212)  | 36.0% (36/100)       |
+| minWinningScore 4                   | 25            | 65.4% (178/272)    | 10.5% (22/210)  | 26.0% (26/100)       |
+| minWinningScore 5                   | 81            | 47.8% (130/272)    | 12.2% (19/156)  | 21.0% (21/100)       |
+| spanRescore off                     | 0             | 52.6% (143/272)    | 15.9% (28/176)  | 57.0% (57/100)       |
+| minWinningScore 4 + spanRescore off | 25            | 51.1% (139/272)    | 6.9% (11/159)   | 8.0% (8/100)         |
 
-A floor on its own moves the false-selection rate by one row across the whole populated range of the
-scale, and does not move selection accuracy at all. Turning off `spanRescore` alone moves it to 57.
-The two together move it to **8**, which is far more than either.
-
-The floor is refusing. What it is not doing is producing an abstention, because
-`applySpanRescore` begins `if (hasResolvedPlace(roots)) return` (`packages/resolver/lib/resolve/passes.ts`)
-— it declines only when the tree already holds a resolved place. A refusal leaves a tree with no
-resolved place, which is precisely the recovery pass's trigger condition. The mechanism counts show
-the handover directly: at floor 4 the rows decided by `picked:ranked` fall from 56 to 8 while
-`picked:span_rescore` rises from 18 to 66.
-
-Span rescore was built to recover a locality the parser fragmented, and its own header calls the
-early return the "#685 brake — never second-guess a working coordinate". The brake reads a resolved
-place, so it cannot tell a deliberate refusal from a parse that failed. **A refusal and a failure are
-the same state, and the recovery pass answers both.**
+The floor is now a working knob. At 4.0 it takes the false-selection rate from 75 of 100 rows to 26
+and costs 1.5 points of selection accuracy, 66.9% to 65.4%; it also takes the wrong-area rate from
+17.2% to 10.5%. The gap that remains to `spanRescore: false` is span rescore answering rows the floor
+never reached, which is the behaviour it exists for, rather than rows it refused.
 
 ### The 8% is this panel's construction, and cannot be read as a setting
 
@@ -226,20 +237,17 @@ triggers on — read from the code and confirmed by the mechanism counts, so it 
 panel. Refused: any claim that a particular threshold or floor is the right one; the floor that
 produces 8% here is calibrated by accident to a panel whose gold all has population above 15,000.
 
-Four next measurements, in order of what they would settle:
+Three next measurements, in order of what they would settle. The first item this list carried — give a
+refusal a state of its own so the recovery pass can tell it from a parse that resolved nothing — is
+done, and the knob table above is the re-run.
 
-1. Give a refusal a state of its own, so `applySpanRescore`'s early return can tell it from a parse
-   that resolved nothing, and re-run this table — tracked as
-   [#2265](https://github.com/sister-software/mailwoman/issues/2265). Until a refusal can survive the
-   walk, no abstention rule can be measured end to end: every one of them will be answered by the
-   recovery pass.
-2. Register a threshold and a fit-based abstention signal ahead of a fresh panel whose gold spans
+1. Register a threshold and a fit-based abstention signal ahead of a fresh panel whose gold spans
    population strata rather than sitting entirely above 15,151. The margin caps at 28% false
    selection, and no panel whose every gold answer clears a floor can measure that floor.
-3. Measure the bare-toponym race against a matched arm. Withheld-gold rows carrying `bare_race` select
+2. Measure the bare-toponym race against a matched arm. Withheld-gold rows carrying `bare_race` select
    on 82.6% against 58.1% for the rest of the stratum, but the check also fires on 69 of the 100 rows,
    so the comparison needs rows matched on query shape before that gap means anything.
-4. Re-run any candidate threshold as a real replay rather than a re-grade. The knob table shows the
+3. Re-run any candidate threshold as a real replay rather than a re-grade. The knob table shows the
    re-grade and the replay disagree about which rows are even measurable.
 
 ## Reproduction

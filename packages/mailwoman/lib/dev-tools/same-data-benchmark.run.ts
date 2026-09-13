@@ -487,9 +487,15 @@ async function knobPhase(): Promise<void> {
 			knobRows
 		),
 		"",
-		"A floor alone is nearly inert. Paired with `spanRescore: false` it is not, and the reason is that",
-		"`applySpanRescore` returns early only when the tree already holds a resolved place: a floor's refusal",
-		"leaves an unresolved tree, which is the recovery pass's trigger condition rather than a state it respects.",
+		"Before #2265, a floor alone was inert: it moved the false-selection rate by one row across the whole",
+		"populated range of the scale, because `applySpanRescore` recovers any tree holding no resolved place and a",
+		"refusal leaves exactly that — so the recovery re-issued the byte-identical lookup the floor had declined.",
+		"The floor now refuses for real, and the remaining gap to `spanRescore: false` is span rescore answering",
+		"the rows the floor never reached rather than the ones it refused.",
+		"",
+		"The magnitudes are this panel's, not a setting: every one of its 453 gold entities has population above",
+		"15,151 and four of its five strata sit above 50,000, so a floor of 4.0 — population 10,000 — admits every",
+		"correct answer here by construction. A panel whose gold all clears a floor cannot measure that floor.",
 	]
 
 	await writeLocalTextFile(lines, KNOB_PATH)
