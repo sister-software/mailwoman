@@ -33,12 +33,58 @@
 	text-decoration: none;
 }
 
-.plan strong {
+.planName {
 	font-size: 0.8rem;
 	font-weight: var(--ifm-font-weight-bold);
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--ifm-color-emphasis-700);
+}
+
+/* The figure, set in the site mono between the name and the basis — the same treatment the pricing page gives it. */
+.planPrice {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 2rem;
+	line-height: 1.1;
+	font-weight: var(--ifm-font-weight-bold);
+	color: var(--ifm-heading-color);
+}
+
+.planBasis {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.planNote {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.planRenewal {
+	font-size: 0.85rem;
+	line-height: 1.5;
+	color: var(--ifm-color-emphasis-800);
+	margin-top: 0.35rem;
+}
+
+/* Pushed to the bottom so both cards' calls to action line up whatever the copy above them does. */
+.planCTA {
+	margin-top: auto;
+	padding-top: 0.75rem;
+	font-size: 0.9rem;
+	font-weight: var(--ifm-font-weight-semibold);
+	color: var(--ifm-color-primary);
+}
+
+.plan:hover .planCTA {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* The card is the link, so its focus ring has to be visible — a keyboard user tabbing the buy section had nothing. */
+.plan:focus-visible {
+	outline: 2px solid var(--ifm-color-primary);
+	outline-offset: 2px;
 }
 
 .fine {
