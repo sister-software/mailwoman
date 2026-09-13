@@ -126,6 +126,7 @@ export async function trainCoarsePlacer(
 	const rand = (): number => (rng = (Math.imul(rng, 1_103_515_245) + 12_345) & 0x7f_ff_ff_ff) / 0x7f_ff_ff_ff
 
 	function shuffle(arr: Sample[]): void {
+		// oxlint-disable-next-line mailwoman/prefer-home -- see the NOTE above: this LCG stream is what every shipped model was trained on, and SeededRandom.shuffle draws from mulberry32.
 		for (let i = arr.length - 1; i > 0; i--) {
 			const j = Math.floor(rand() * (i + 1))
 			;[arr[i], arr[j]] = [arr[j]!, arr[i]!]
