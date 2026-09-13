@@ -16,6 +16,7 @@
  */
 
 import { SeededRandom } from "@mailwoman/core/random"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 /**
  * What a stratum's own rule made of one eligible row.
@@ -119,4 +120,78 @@ export function fillStratum<Item, Row>(
  */
 export function padRowIndex(index: number): string {
 	return String(index + 1).padStart(3, "0")
+}
+
+/**
+ * The register columns a panel builder reads to select and grade a row. `GeoNamesCity` satisfies it; the builders take
+ * this shape rather than that type so the grouping and gold helpers below are not tied to one register's reader.
+ */
+export interface PanelSubject {
+	geonameid: string
+	name: string
+	asciiname: string
+	lat: number
+	lon: number
+	country: string
+	admin1: string
+	population: number
+}
+
+/**
+ * Rows grouped by their lowercased ASCII name, which is how both builders ask whether a name is borne once.
+ *
+ * Built ONCE per build and passed down: the question is asked per candidate row, and re-deriving the grouping for each
+ * would walk the whole register every time.
+ */
+export function groupByFoldedName<Subject extends PanelSubject>(subjects: readonly Subject[]): Map<string, Subject[]> {
+	const byName = new Map<string, Subject[]>()
+
+	for (const subject of subjects) {
+		const key = subject.asciiname.toLowerCase()
+		const bucket = byName.get(key) ?? []
+
+		bucket.push(subject)
+		byName.set(key, bucket)
+	}
+
+	return byName
+}
+
+/**
+ * Rows whose name is borne exactly once and which no earlier stratum has taken, in geonameid order.
+ *
+ * The ORDER matters and is why this is shared rather than re-typed: `fillStratum` shuffles what it is handed, so two
+ * builders sorting differently would draw different rows from the same seed. `extra` is the caller's own rule — a
+ * population floor, a band — applied before the sort.
+ */
+export function uniqueNameEligible<Subject extends PanelSubject>(options: {
+	subjects: readonly Subject[]
+	byName: ReadonlyMap<string, Subject[]>
+	used: ReadonlySet<string>
+	extra?: (subject: Subject) => boolean
+}): Subject[] {
+	const { subjects, byName, used, extra } = options
+
+	return subjects
+		.filter((subject) => byName.get(subject.asciiname.toLowerCase())!.length === 1)
+		.filter((subject) => (extra ? extra(subject) : true))
+		.filter((subject) => !used.has(subject.geonameid))
+		.toSorted((left, right) => compareByCodePoint(left.geonameid, right.geonameid))
+}
+
+/**
+ * The gold a panel row carries: the register's own entity and coordinate, plus the identity set the concordance
+ * reached. Every benchmark here grades against this shape, so it is written once.
+ */
+export function goldOf<Subject extends PanelSubject>(subject: Subject, placeIDs: number[]) {
+	return {
+		geonameid: subject.geonameid,
+		placeIDs,
+		name: subject.name,
+		country: subject.country,
+		admin1: subject.admin1,
+		lat: subject.lat,
+		lon: subject.lon,
+		population: subject.population,
+	}
 }

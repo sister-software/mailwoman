@@ -25,7 +25,15 @@ import { GEONAMES_MAIN_COLUMNS } from "@mailwoman/corpus/adapters/geonames/adapt
 import { GEONAMES_POSTAL_COLUMNS } from "@mailwoman/corpus/adapters/geonames/postal/adapter"
 import { TSVSpliterator } from "spliterator"
 
-import { fillStratum, padRowIndex, type StratumFillCensus, type StratumOutcome } from "#eval-harness/panel-fill"
+import {
+	fillStratum,
+	goldOf,
+	groupByFoldedName,
+	padRowIndex,
+	type StratumFillCensus,
+	type StratumOutcome,
+	uniqueNameEligible,
+} from "#eval-harness/panel-fill"
 import type { SameDataBenchmarkDefinition } from "#eval-harness/same-data/definition"
 import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 
@@ -165,19 +173,6 @@ export interface PanelBuildResult {
 	census: PanelBuildCensus[]
 }
 
-function goldOf(city: GeoNamesCity, placeIDs: number[]): SameDataPanelRow["gold"] {
-	return {
-		geonameid: city.geonameid,
-		placeIDs,
-		name: city.name,
-		country: city.country,
-		admin1: city.admin1,
-		lat: city.lat,
-		lon: city.lon,
-		population: city.population,
-	}
-}
-
 /**
  * Build the panel by executing the frozen selection rules.
  *
@@ -188,15 +183,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	const { definition, cities, countryNames, postcodeByAdmin, goldSets } = inputs
 	const { seed, rowsPerStratum } = definition.sampling
 
-	const byName = new Map<string, GeoNamesCity[]>()
-
-	for (const city of cities) {
-		const key = city.asciiname.toLowerCase()
-		const bucket = byName.get(key) ?? []
-
-		bucket.push(city)
-		byName.set(key, bucket)
-	}
+	const byName = groupByFoldedName(cities)
 
 	const used = new Set<string>()
 	const rows: SameDataPanelRow[] = []
@@ -206,11 +193,12 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	 * Rows whose name is borne exactly once, above the population floor — the pool three strata share.
 	 */
 	const uniqueEligible = (): GeoNamesCity[] =>
-		cities
-			.filter((city) => byName.get(city.asciiname.toLowerCase())!.length === 1)
-			.filter((city) => city.population >= POPULATION_FLOOR)
-			.filter((city) => !used.has(city.geonameid))
-			.toSorted((left, right) => compareByCodePoint(left.geonameid, right.geonameid))
+		uniqueNameEligible({
+			subjects: cities,
+			byName,
+			used,
+			extra: (city) => city.population >= POPULATION_FLOOR,
+		})
 
 	const take = (
 		stratum: string,

@@ -17,7 +17,15 @@
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
-import { fillStratum, padRowIndex, type StratumFillCensus, type StratumOutcome } from "#eval-harness/panel-fill"
+import {
+	fillStratum,
+	goldOf,
+	groupByFoldedName,
+	padRowIndex,
+	type StratumFillCensus,
+	type StratumOutcome,
+	uniqueNameEligible,
+} from "#eval-harness/panel-fill"
 import { bandFor, type ProminenceBand, type ProminenceFloorDefinition } from "#eval-harness/prominence-floor/definition"
 import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 import type { GeoNamesCity } from "#eval-harness/same-data/panel"
@@ -65,16 +73,7 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 	const { definition, cities, goldSets } = inputs
 	const { seed, rowsPerStratum } = definition.sampling
 
-	const byName = new Map<string, GeoNamesCity[]>()
-
-	for (const city of cities) {
-		const key = city.asciiname.toLowerCase()
-		const bucket = byName.get(key) ?? []
-
-		bucket.push(city)
-		byName.set(key, bucket)
-	}
-
+	const byName = groupByFoldedName(cities)
 	const used = new Set<string>()
 	const rows: ProminencePanelRow[] = []
 	const census: StratumFillCensus[] = []
@@ -84,13 +83,14 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 	 * no earlier stratum has taken.
 	 */
 	const eligibleIn = (band: ProminenceBand): GeoNamesCity[] =>
-		cities
-			.filter((city) => byName.get(city.asciiname.toLowerCase())!.length === 1)
+		uniqueNameEligible({
+			subjects: cities,
+			byName,
+			used,
 			// Through `bandFor` rather than a comparison written here, so the unbounded ceiling and the refusal of a row
 			// with no recorded population are decided in one place for the builder and the scorer alike.
-			.filter((city) => bandFor([band], city.population) !== null)
-			.filter((city) => !used.has(city.geonameid))
-			.toSorted((left, right) => compareByCodePoint(left.geonameid, right.geonameid))
+			extra: (city) => bandFor([band], city.population) !== null,
+		})
 
 	const goldFor = (city: GeoNamesCity): number[] | null => goldSets.get(city.geonameid) ?? null
 
@@ -121,16 +121,7 @@ export function buildProminencePanel(inputs: ProminencePanelInputs): ProminenceP
 							// The withheld-gold stratum is what `goldPresent: false` marks: the recorder reads it to know which
 							// candidates to remove after recording, and the scorer reads it to pick the denominator.
 							goldPresent: !stratum.correctIsAbstention,
-							gold: {
-								geonameid: city.geonameid,
-								placeIDs: gold,
-								name: city.name,
-								country: city.country,
-								admin1: city.admin1,
-								lat: city.lat,
-								lon: city.lon,
-								population: city.population,
-							},
+							gold: goldOf(city, gold),
 							source: panelProvenance(definition),
 						},
 					}
