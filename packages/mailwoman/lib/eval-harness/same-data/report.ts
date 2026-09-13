@@ -26,16 +26,17 @@ import {
 	type ArmMetrics,
 	type BenchmarkVerdict,
 	type PairedComparison,
+	type Ratio,
 	type ReliabilityBin,
 } from "#eval-harness/same-data/score"
 
 /**
- * A rate as a percentage with its denominator, or the word that says nobody could measure it.
+ * A rate as a percentage with the two counts that produced it, or the word that says nobody could measure it.
  */
-function rate(value: number | null, denominator: number): string {
+function rate({ numerator, denominator, value }: Ratio): string {
 	if (value === null) return "unmeasured"
 
-	return `${(100 * value).toFixed(1)}% (${Math.round(value * denominator)}/${denominator})`
+	return `${(100 * value).toFixed(1)}% (${numerator}/${denominator})`
 }
 
 /**
@@ -57,9 +58,9 @@ export function renderMetricsTable(
 		String(metrics.errors),
 		String(metrics.selections),
 		String(metrics.abstentions),
-		rate(metrics.selectionAccuracy, metrics.n - metrics.errors),
-		rate(metrics.wrongAreaRate, metrics.wrongAreaMeasured),
-		`${(100 * metrics.mechanismCoverage).toFixed(1)}%`,
+		rate(metrics.selectionAccuracy),
+		rate(metrics.wrongArea),
+		`${(100 * (metrics.mechanismCoverage.value ?? 0)).toFixed(1)}%`,
 	]
 
 	for (const stratum of strata) {
@@ -116,12 +117,7 @@ export function renderAbstentionTable(
 		const scoped = results.filter((result) => result.arm === arm && result.stratum === stratum)
 		const metrics = armMetrics(arm, stratum, panelByID, scoped)
 
-		return [
-			arm,
-			String(metrics.n),
-			rate(metrics.abstentionPrecision, metrics.n),
-			rate(metrics.falseSelectionRate, metrics.n),
-		]
+		return [arm, String(metrics.n), rate(metrics.abstentionPrecision), rate(metrics.falseSelection)]
 	})
 
 	return renderMarkdownTable(["arm", "n", "abstention precision", "false-selection rate"], rows)

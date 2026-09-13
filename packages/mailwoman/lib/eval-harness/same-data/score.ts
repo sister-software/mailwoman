@@ -70,38 +70,55 @@ export function mcnemarExactP(b: number, c: number): number {
 }
 
 /**
+ * A rate together with the two counts that produced it.
+ *
+ * The counts travel with the value because a renderer that is handed only the rate has to recover the numerator by
+ * multiplying, and it can only multiply by the denominator it happens to hold. Pooled selection accuracy is measured
+ * over the gold-present rows while the table's `n` column counts every scored row, so that reconstruction printed a
+ * numerator no arm ever produced beside a rate that was correct.
+ */
+export interface Ratio {
+	numerator: number
+	denominator: number
+	/**
+	 * Null when the denominator is zero — an unmeasured rate, never zero.
+	 */
+	value: number | null
+}
+
+function ratio(numerator: number, denominator: number): Ratio {
+	return { numerator, denominator, value: denominator === 0 ? null : numerator / denominator }
+}
+
+/**
  * One arm's counts within one denominator.
  */
 export interface ArmMetrics {
 	arm: string
 	stratum: string
 	/**
-	 * Rows scored — the denominator, after errored rows are removed.
+	 * Rows scored — after errored rows are removed. This is the row count, NOT the denominator of any rate below; each
+	 * rate carries its own.
 	 */
 	n: number
 	errors: number
 	selections: number
 	abstentions: number
-	correct: number
 	/**
-	 * Null when the stratum withholds the gold, where selection accuracy has no correct answer by construction.
+	 * Correct over the rows whose gold is present. Unmeasured in the withheld-gold stratum, which has no correct answer
+	 * by construction.
 	 */
-	selectionAccuracy: number | null
+	selectionAccuracy: Ratio
 	/**
-	 * Null when no selection carried a coordinate — an unmeasured rate, never zero.
+	 * Wrong-area selections over the selections that carried a coordinate.
 	 */
-	wrongAreaRate: number | null
-	wrongAreaMeasured: number
+	wrongArea: Ratio
 	/**
-	 * Present only in the withheld-gold stratum.
+	 * Both measured over the withheld-gold rows, so both are unmeasured everywhere else.
 	 */
-	abstentionPrecision: number | null
-	falseSelectionRate: number | null
-	mechanismCoverage: number
-}
-
-function rate(numerator: number, denominator: number): number | null {
-	return denominator === 0 ? null : numerator / denominator
+	abstentionPrecision: Ratio
+	falseSelection: Ratio
+	mechanismCoverage: Ratio
 }
 
 /**
@@ -119,7 +136,6 @@ export function armMetrics(
 	const goldAbsent = scored.filter((result) => panelByID.get(result.rowID)?.goldPresent === false)
 	const selections = scored.filter((result) => result.selection !== null)
 	const abstentions = scored.length - selections.length
-	const correct = goldPresent.filter((result) => result.correct).length
 	const measuredArea = goldPresent.filter((result) => result.wrongArea !== null)
 
 	return {
@@ -129,13 +145,11 @@ export function armMetrics(
 		errors,
 		selections: selections.length,
 		abstentions,
-		correct,
-		selectionAccuracy: rate(correct, goldPresent.length),
-		wrongAreaRate: rate(measuredArea.filter((result) => result.wrongArea === true).length, measuredArea.length),
-		wrongAreaMeasured: measuredArea.length,
-		abstentionPrecision: rate(goldAbsent.filter((result) => result.selection === null).length, goldAbsent.length),
-		falseSelectionRate: rate(goldAbsent.filter((result) => result.selection !== null).length, goldAbsent.length),
-		mechanismCoverage: !scored.length ? 0 : scored.filter((result) => result.mechanism !== null).length / scored.length,
+		selectionAccuracy: ratio(goldPresent.filter((result) => result.correct).length, goldPresent.length),
+		wrongArea: ratio(measuredArea.filter((result) => result.wrongArea === true).length, measuredArea.length),
+		abstentionPrecision: ratio(goldAbsent.filter((result) => result.selection === null).length, goldAbsent.length),
+		falseSelection: ratio(goldAbsent.filter((result) => result.selection !== null).length, goldAbsent.length),
+		mechanismCoverage: ratio(scored.filter((result) => result.mechanism !== null).length, scored.length),
 	}
 }
 
@@ -167,7 +181,7 @@ export function reliabilityTable(results: readonly ArmRowResult[]): ReliabilityB
 			low,
 			high,
 			count: inBin.length,
-			accuracy: rate(inBin.filter((result) => result.correct).length, inBin.length),
+			accuracy: ratio(inBin.filter((result) => result.correct).length, inBin.length).value,
 		}
 	})
 }
@@ -306,14 +320,14 @@ export function evaluateVerdict(
 
 	for (const [stratum, arms] of byStratum) {
 		const worseArea =
-			arms.mailwoman.wrongAreaRate !== null &&
-			arms.baseline.wrongAreaRate !== null &&
-			arms.mailwoman.wrongAreaRate > arms.baseline.wrongAreaRate
+			arms.mailwoman.wrongArea.value !== null &&
+			arms.baseline.wrongArea.value !== null &&
+			arms.mailwoman.wrongArea.value > arms.baseline.wrongArea.value
 
 		const worseFalse =
-			arms.mailwoman.falseSelectionRate !== null &&
-			arms.baseline.falseSelectionRate !== null &&
-			arms.mailwoman.falseSelectionRate > arms.baseline.falseSelectionRate
+			arms.mailwoman.falseSelection.value !== null &&
+			arms.baseline.falseSelection.value !== null &&
+			arms.mailwoman.falseSelection.value > arms.baseline.falseSelection.value
 
 		if (worseArea) {
 			regressions.push(`${stratum}: wrong-area rate`)

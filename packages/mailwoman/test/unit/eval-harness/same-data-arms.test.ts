@@ -159,8 +159,31 @@ describe("same-data synthetic smoke (#2261)", () => {
 
 		const metrics = armMetrics("mailwoman", "gold_absent", new Map([[panel.id, panel]]), [result])
 
-		expect(metrics.abstentionPrecision).toBe(1)
-		expect(metrics.falseSelectionRate).toBe(0)
+		expect(metrics.abstentionPrecision).toStrictEqual({ numerator: 1, denominator: 1, value: 1 })
+		expect(metrics.falseSelection).toStrictEqual({ numerator: 0, denominator: 1, value: 0 })
+	})
+
+	it("measures selection accuracy over the gold-present rows rather than over every scored row", async () => {
+		const present = panelFor("smoke-mixed-present", [101], true)
+		const absent = panelFor("smoke-mixed-absent", [], false)
+
+		const results = [
+			await runResolverArm("mailwoman", present, fixtureFor("smoke-mixed-present", [SPRINGFIELD_IL]), {}),
+			await runResolverArm("mailwoman", absent, fixtureFor("smoke-mixed-absent", [SPRINGFIELD_MA]), {}),
+		]
+
+		const metrics = armMetrics(
+			"mailwoman",
+			"pooled",
+			new Map([
+				[present.id, present],
+				[absent.id, absent],
+			]),
+			results
+		)
+
+		expect(metrics.n).toBe(2)
+		expect(metrics.selectionAccuracy).toStrictEqual({ numerator: 1, denominator: 1, value: 1 })
 	})
 
 	it("catches two arms that read different evidence for one row", async () => {
