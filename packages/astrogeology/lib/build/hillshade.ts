@@ -27,7 +27,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
-import { resolvePath } from "path-ts"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { BODIES, type BuildableBodyID } from "#bodies"
 
@@ -58,7 +58,7 @@ interface DEMGrid {
  * The unit and width of a DEM's grid, from `gdalinfo`. A source that does not span the whole body is refused: the
  * extent assigned below is the whole body's.
  */
-async function readDEMGrid(demPath: string, body: BuildableBodyID): Promise<DEMGrid> {
+async function readDEMGrid(demPath: PathBuilderLike, body: BuildableBodyID): Promise<DEMGrid> {
 	const { stdout } = await runFile("gdalinfo", ["-json", demPath])
 
 	const info = parseJSONStrict<{
@@ -87,8 +87,8 @@ async function readDEMGrid(demPath: string, body: BuildableBodyID): Promise<DEMG
 
 export interface HillshadeBuildOptions {
 	body: BuildableBodyID
-	demPath: string
-	outPath: string
+	demPath: PathBuilderLike
+	outPath: PathBuilderLike
 	/**
 	 * The deepest zoom the archive carries; overviews run from it down to zoom 0.
 	 */
@@ -115,6 +115,7 @@ const TERRARIUM_FRACTIONAL_BAND = "0"
  */
 async function assertWithinTerrariumEnvelope(rasterPath: string): Promise<void> {
 	const { stdout } = await runFile("gdalinfo", ["-json", "-stats", rasterPath])
+
 	const info = parseJSONStrict<{ bands?: Array<{ minimum?: number; maximum?: number }> }>(stdout)
 	const [band] = info.bands ?? []
 
@@ -132,18 +133,21 @@ async function assertWithinTerrariumEnvelope(rasterPath: string): Promise<void> 
 /**
  * Build a body's hillshade archive. Answers the exact tool invocations, in order, for the manifest.
  */
-export async function buildHillshadePMTiles(options: HillshadeBuildOptions): Promise<{ commands: string[][] }> {
+export async function buildHillshadePMTiles(
+	options: HillshadeBuildOptions
+): Promise<{ commands: PathBuilderLike[][] }> {
 	// Refuses a source that does not span the whole body: the extent assigned below is the whole body's.
 	await readDEMGrid(options.demPath, options.body)
 
 	await using scratch = await temporaryDirectory("astrogeology-hillshade-")
-	const resampled = String(resolvePath(scratch.path, "elevation-4326.tif"))
-	const redBand = String(resolvePath(scratch.path, "terrarium-r.tif"))
-	const greenBand = String(resolvePath(scratch.path, "terrarium-g.tif"))
-	const blueBand = String(resolvePath(scratch.path, "terrarium-b.tif"))
-	const bandsVRT = String(resolvePath(scratch.path, "terrarium.vrt"))
-	const forTiling = String(resolvePath(scratch.path, "hillshade-4326.tif"))
-	const mbtiles = String(resolvePath(scratch.path, "hillshade.mbtiles"))
+
+	const resampled = resolvePath(scratch.path, "elevation-4326.tif")
+	const redBand = resolvePath(scratch.path, "terrarium-r.tif")
+	const greenBand = resolvePath(scratch.path, "terrarium-g.tif")
+	const blueBand = resolvePath(scratch.path, "terrarium-b.tif")
+	const bandsVRT = resolvePath(scratch.path, "terrarium.vrt")
+	const forTiling = resolvePath(scratch.path, "hillshade-4326.tif")
+	const mbtiles = resolvePath(scratch.path, "hillshade.mbtiles")
 
 	// 1. Resample the ELEVATIONS and declare the tiling grid, in one pass. Averaging is meaningful here and nowhere
 	//    later: the mean of four heights is a height. The XYZ scheme is angular, so the EPSG:4326 label with the
@@ -295,6 +299,7 @@ export async function buildHillshadePMTiles(options: HillshadeBuildOptions): Pro
  */
 async function readMBTilesZoom(mbtiles: string): Promise<number> {
 	const { stdout } = await runFile("gdalinfo", ["-json", mbtiles])
+
 	const info = parseJSONStrict<{ metadata?: { ""?: { ZOOM_LEVEL?: string } } }>(stdout)
 	const zoom = Number(info.metadata?.[""]?.ZOOM_LEVEL)
 

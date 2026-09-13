@@ -44,30 +44,36 @@ export const SourceCoordinatesSchema = z.object({
 })
 
 /**
+ * One source as recorded in the build manifest.
+ */
+export const ResourceManifest = z.object({
+	id: z.string(),
+	url: z.url(),
+	sha256: z.string().length(SHA256_HEX_LENGTH),
+	bytes: z.number().int().positive(),
+	snapshot: z.string().optional(),
+	coordinates: SourceCoordinatesSchema.optional(),
+})
+
+/**
+ * One output as recorded in the build manifest.
+ */
+export const OutputManifest = z.object({
+	tileset: z.string(),
+	path: z.string(),
+	sha256: z.string().length(SHA256_HEX_LENGTH),
+	bytes: z.number().int().positive(),
+})
+
+/**
  * `manifest.json` beside a body's artifacts: what was read, what was written, and the transformations between.
  */
 export const PlanetaryBuildManifestSchema = z.object({
 	schemaVersion: z.literal(1),
 	body: z.enum(["moon", "mars"]),
 	builtAt: z.iso.datetime(),
-	sources: z.array(
-		z.object({
-			id: z.string(),
-			url: z.url(),
-			sha256: z.string().length(SHA256_HEX_LENGTH),
-			bytes: z.number().int().positive(),
-			snapshot: z.string().optional(),
-			coordinates: SourceCoordinatesSchema.optional(),
-		})
-	),
-	outputs: z.array(
-		z.object({
-			tileset: z.string(),
-			path: z.string(),
-			sha256: z.string().length(SHA256_HEX_LENGTH),
-			bytes: z.number().int().positive(),
-		})
-	),
+	sources: z.array(ResourceManifest),
+	outputs: z.array(OutputManifest),
 	/**
 	 * The exact tool invocations the build ran, in order.
 	 */

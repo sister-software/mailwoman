@@ -13,6 +13,7 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import { BODIES, type BuildableBodyID } from "#bodies"
 import { buildHillshadePMTiles } from "#build/hillshade"
@@ -55,7 +56,7 @@ interface Options {
 
 async function pinnedSource(
 	source: PlanetarySource
-): Promise<{ path: string; entry: PlanetaryBuildManifest["sources"][number] }> {
+): Promise<{ path: PathBuilderLike; entry: PlanetaryBuildManifest["sources"][number] }> {
 	const lock = await readLock()
 	const locked = lock[source.id]
 
@@ -67,7 +68,7 @@ async function pinnedSource(
 	const fetched = await downloadPinned(source)
 
 	return {
-		path: fetched.path,
+		path: fetched.path.toString(),
 		entry: {
 			id: source.id,
 			url: source.url,
@@ -102,7 +103,7 @@ export async function buildBody(
 	const nomenclature = await pinnedSource(sourceFor(body, "nomenclature"))
 	const dem = await pinnedSource(sourceFor(body, "dem"))
 	const buildVersion = nomenclature.entry.snapshot ?? "unpinned"
-	const transformations: string[][] = []
+	const transformations: PathBuilderLike[][] = []
 
 	report(`reading ${nomenclature.path}`)
 

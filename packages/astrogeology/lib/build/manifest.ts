@@ -12,6 +12,7 @@ import { statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { isoSeconds } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 import type { BuildableBodyID } from "#bodies"
 import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "#schema/manifest"
@@ -28,14 +29,16 @@ export interface EmitManifestOptions {
 	/**
 	 * The tool invocations the build ran, in order, each as its argument vector.
 	 */
-	transformations: string[][]
+	transformations: PathBuilderLike[][]
 }
 
 /**
  * One tool invocation as the manifest records it: the argument vector joined the way a shell would show it.
  */
-export function formatTransformation(command: readonly string[]): string {
-	return command.map((argument) => (/[\s"']/u.test(argument) ? JSON.stringify(argument) : argument)).join(" ")
+export function formatTransformation(command: readonly PathBuilderLike[]): string {
+	return command
+		.map((argument) => (/[\s"']/u.test(argument.toString()) ? JSON.stringify(argument) : argument))
+		.join(" ")
 }
 
 /**

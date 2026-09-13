@@ -16,6 +16,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -34,7 +35,10 @@ export const NOMENCLATURE_LAYERS = {
 /**
  * The rows of the shapefile inside the archive, one at a time.
  */
-export async function* readNomenclatureRows(archivePath: string, layer: string): AsyncIterable<NomenclatureSourceRow> {
+export async function* readNomenclatureRows(
+	archivePath: PathBuilderLike,
+	layer: string
+): AsyncIterable<NomenclatureSourceRow> {
 	await using scratch = await temporaryDirectory("astrogeology-rows-")
 	const seq = resolvePath(scratch.path, `${layer}.geojsonl`)
 
