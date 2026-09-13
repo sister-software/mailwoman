@@ -226,7 +226,7 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   and the parent's `overflow: hidden` (`:1892`) clips even the UA outline. Every sibling control has a
   focus ring; this rail is the gap.
 - Developer panel: the Model version `<select>` truncates mid-string
-  (`v9.1.0 — the suffix-boundary cure (model v4.4.0` — closing paren cut, no ellipsis), and its
+  (`v9.1.0 — the suffix-boundary cure (model v4.4.0` — closing paren missing, no ellipsis), and its
   checkboxes are native/unstyled beside magenta styling everywhere else.
 - `packages/earth/lib/panels/ResultExtras.tsx:67,85` — `demoStyles.xml` and `demoStyles.hierarchy` are
   **not defined** in `panels.module.css`, so both render `className="undefined"`. The XML dump and the
@@ -283,7 +283,7 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
 - ~~`docs/src/components/TrainingCharts/styles.module.css:176` — `min-width: 600px` forces horizontal
   overflow on a phone.~~ WITHDRAWN: its parent `.chartWrapper` already carries `overflow-x: auto`, so the
   600px scrolls the chart in its own container, not the document. The rule is correct as written.
-- Homepage cards clip their mono example lines mid-string with a hard cut — no ellipsis, no fade:
+- Homepage cards clip their mono example lines mid-string with a hard truncation — no ellipsis, no fade:
   `"apt 4b 350 5th ave new york ny 10118" → unit=house-street·` and
   `type an address → components, coordinate, and the source it`.
 - `docs/src/pages/index.tsx:154,194` — `alt` strings of 205 and 196 characters, both inside a `<Link>`, so

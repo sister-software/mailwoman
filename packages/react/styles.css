@@ -1944,7 +1944,7 @@
 	/*
 	 * This rail was the one control group in the app with no focus ring — every sibling has one (.mw-map-chip,
 	 * .mw-map-compass, .mw-map-sheet__close, .mw-map-footer__attribution-button). An `outline` alone would not have
-	 * shown anyway: the parent capsule clips with `overflow: hidden`, which cuts an outline drawn outside the button's
+	 * shown anyway: the parent capsule clips with `overflow: hidden`, which hides an outline drawn outside the button's
 	 * box. An inset ring is drawn inside it, so the capsule cannot clip it.
 	 */
 	.mw-map-control:focus-visible {

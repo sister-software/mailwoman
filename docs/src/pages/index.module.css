@@ -215,9 +215,9 @@
 	border-radius: 6px;
 	padding: 0.5rem 0.6rem;
 	margin: 0.85rem 0;
-	/* These lines were `white-space: nowrap` + `overflow-x: auto`, which cut every card's example mid-string with no
-	   scrollbar and no fade — the cut read as a rendering bug rather than as scrollable content. They are short
-	   enough to wrap, so let them. */
+	/* These lines were `white-space: nowrap` + `overflow-x: auto`, which truncated every card's example mid-string with
+	   no scrollbar and no fade — the truncation read as a rendering bug rather than as scrollable content. They are
+	   short enough to wrap, so let them. */
 	white-space: normal;
 	overflow-wrap: anywhere;
 }
