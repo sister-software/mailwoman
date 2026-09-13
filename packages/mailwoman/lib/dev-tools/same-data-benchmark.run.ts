@@ -26,6 +26,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoSeconds } from "@mailwoman/core/utils"
@@ -103,10 +104,13 @@ async function readJSONL<T>(path: string): Promise<T[]> {
 }
 
 async function panelPhase(): Promise<void> {
-	const definition = await loadSameDataDefinition()
-	const cities = await readCities(`${GEONAMES}/cities15000.txt`)
-	const countryNames = await readCountryNames(`${GEONAMES}/countryInfo.txt`)
-	const postcodeByAdmin = await readPostcodeByAdmin(`${GEONAMES}/allCountries-postal.txt`)
+	const { definition, cities, countryNames, postcodeByAdmin } = await allKeyed({
+		definition: loadSameDataDefinition(),
+		cities: readCities(`${GEONAMES}/cities15000.txt`),
+		countryNames: readCountryNames(`${GEONAMES}/countryInfo.txt`),
+		postcodeByAdmin: readPostcodeByAdmin(`${GEONAMES}/allCountries-postal.txt`),
+	})
+
 	const { byGeonameID: goldSets, census: goldCensus } = await readGoldSets(GAZETTEER, cities)
 
 	const { rows, census } = buildPanel({ definition, cities, countryNames, postcodeByAdmin, goldSets })

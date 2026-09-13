@@ -571,6 +571,11 @@
 			"node": "./lib/hash.ts",
 			"default": "./out/hash.js"
 		},
+		"./promises": {
+			"types": "./out/promises.d.ts",
+			"node": "./lib/promises.ts",
+			"default": "./out/promises.js"
+		},
 		"./stats": {
 			"types": "./out/stats.d.ts",
 			"node": "./lib/stats.ts",
