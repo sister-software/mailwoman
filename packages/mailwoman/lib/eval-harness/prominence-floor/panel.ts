@@ -15,8 +15,6 @@
  *   to reach below 15,000. The dumps carry the same columns, so `readCities` parses them unchanged.
  */
 
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
-
 import {
 	fillStratum,
 	goldOf,
