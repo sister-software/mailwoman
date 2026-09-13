@@ -167,7 +167,7 @@ function gradeSelection(
 ): Pick<ArmRowResult, "correct" | "wrongArea" | "distanceKm"> {
 	if (selection === null) return { correct: false, wrongArea: null, distanceKm: null }
 
-	const correct = selection === String(panel.gold.placeID)
+	const correct = panel.gold.placeIDs.some((placeID) => String(placeID) === selection)
 
 	if (selectedCoord?.lat === undefined || selectedCoord.lon === undefined) {
 		return { correct, wrongArea: null, distanceKm: null }

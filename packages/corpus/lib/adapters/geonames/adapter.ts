@@ -49,16 +49,26 @@ export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
  * GeoNames main-table column indices (0-based; see the export README).
+ *
+ * Exported because the register's layout is one fact with more than one reader — `@mailwoman/mailwoman`'s same-data
+ * benchmark panel reads `cities15000.txt`, which is the same table filtered by population. A second hand-typed copy
+ * would drift the day GeoNames adds a column.
  */
-const COL = {
+export const GEONAMES_MAIN_COLUMNS = {
 	geonameid: 0,
 	name: 1,
+	asciiname: 2,
 	alternatenames: 3,
+	latitude: 4,
+	longitude: 5,
 	featureClass: 6,
 	featureCode: 7,
 	country: 8,
 	admin1: 10,
+	population: 14,
 } as const
+
+const COL = GEONAMES_MAIN_COLUMNS
 
 /**
  * Populated-place feature codes that are NOT current real places — skip them.

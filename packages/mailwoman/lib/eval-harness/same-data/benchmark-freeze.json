@@ -1,8 +1,22 @@
 {
 	"definition": "packages/mailwoman/lib/eval-harness/same-data/benchmark-definition.json",
 	"benchmarkID": "same-data-resolver-v1",
-	"version": "1.0.0",
-	"sha256": "2e7e63f5dbdaf42d4354854f5563ae99c18b311553cdce1440e6b11dd6ef1367",
+	"version": "1.1.0",
+	"sha256": "51a0fe513f2226ee5cc655a596b7ec6df3763b2cf94ae4675206dedca739c1f8",
 	"frozenAt": "2026-09-13",
-	"note": "Content hash over the definition, keys sorted at every depth. The loader refuses a definition whose hash has moved. What is frozen here is the SELECTION RULES, the sampling seed and the decision rule — a rule that can be edited after a result is visible asserts nothing, because the rule that produced the losing panel can be rewritten into the rule that produces the winning one. Changing the definition bumps BOTH the version and this hash, and the change is a reviewed one."
+	"note": "Content hash over the definition, keys sorted at every depth. The loader refuses a definition whose hash has moved. What is frozen is the SELECTION RULES, the sampling seed and the decision rule — a rule editable after a result is visible asserts nothing, because the rule that produced the losing panel can be rewritten into the rule that produces the winning one. Changing the definition bumps BOTH the version and this hash.",
+	"changeLog": [
+		{
+			"version": "1.0.0",
+			"frozenAt": "2026-09-13",
+			"sha256": "2e7e63f5dbdaf42d4354854f5563ae99c18b311553cdce1440e6b11dd6ef1367",
+			"note": "First freeze, before any panel was built."
+		},
+		{
+			"version": "1.1.0",
+			"frozenAt": "2026-09-13",
+			"sha256": "51a0fe513f2226ee5cc655a596b7ec6df3763b2cf94ae4675206dedca739c1f8",
+			"note": "The gold became an identity SET behind a coherence guard, and rowsPerStratum became a target with a floor. NO ARM HAD RUN and no result had been observed — the change follows an audit of the identity join itself, whose counts are in the definition: of the 13,465 cities15000.txt rows the shipped gazetteer concords, 4,304 concord to more than one city-tier WOF row, 1,152 reach only a neighbourhood or region, and 1,492 reach a differently-named row. Version 1.0.0 would have graded a correct selection against one arbitrary duplicate, or against a row of the wrong tier. The contest floor was NOT touched: the homograph pool holds 53 names under it, and lowering it to reach 100 would be fitting a rule to a yield."
+		}
+	]
 }

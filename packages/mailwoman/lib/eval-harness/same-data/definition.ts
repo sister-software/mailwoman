@@ -97,7 +97,15 @@ export interface SameDataBenchmarkDefinition {
 		generator: string
 		seed: number
 		order: string
+		/**
+		 * The TARGET row count per stratum. A stratum whose eligible pool cannot reach it is reported at its achieved n.
+		 */
 		rowsPerStratum: number
+		/**
+		 * Below this, a stratum is reported and excluded from the pooled decision.
+		 */
+		minimumRowsPerStratum: number
+		underfillRule: string
 	}
 	strata: SameDataStratumDefinition[]
 	arms: SameDataArmDefinition[]
@@ -172,6 +180,12 @@ export function auditSameDataDefinition(definition: SameDataBenchmarkDefinition)
 	if (definition.sampling.rowsPerStratum < 100) {
 		problems.push(
 			`rowsPerStratum is ${definition.sampling.rowsPerStratum} — the registered power arithmetic needs at least 100`
+		)
+	}
+
+	if (definition.sampling.minimumRowsPerStratum > definition.sampling.rowsPerStratum) {
+		problems.push(
+			`minimumRowsPerStratum ${definition.sampling.minimumRowsPerStratum} exceeds the target ${definition.sampling.rowsPerStratum} — the floor cannot sit above the target it is a floor for`
 		)
 	}
 

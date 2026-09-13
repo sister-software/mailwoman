@@ -74,7 +74,7 @@ const PANEL: SameDataPanelRow[] = [
 		goldPresent: true,
 		gold: {
 			geonameid: "6182962",
-			placeID: 101,
+			placeIDs: [101],
 			name: "Whitby",
 			country: "CA",
 			admin1: "08",

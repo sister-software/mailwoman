@@ -1,11 +1,11 @@
 {
 	"benchmarkID": "same-data-resolver-v1",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"issue": "https://github.com/sister-software/mailwoman/issues/2261",
 	"claim": "Given the same frozen candidate fixture, Mailwoman selects the correct admin candidate more often and makes fewer wrong-area selections than the registered baseline resolver.",
 	"claimBoundary": "The benchmark says nothing about global coverage, index quality, retrieval, rooftop accuracy, or performance against any third-party geocoder. Those claims belong to the end-to-end record at docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md, which this work does not alter.",
 	"whyAdminOnly": "resolveTree picks a place per node, and the rooftop tier (AddressPointLookup / InterpolationLookup / StreetCentroidLookup) returns one hit or null with no candidate set. ResolverBackend.findPlace is the only interface in the resolution ladder where a candidate set is selected from, so it is the only layer a same-evidence comparison can measure.",
-	"selectedCandidateRule": "An arm's selection for a row is the place id decorating the resolved node of the deepest admin tag in the returned tree, deepest-first over locality, subregion, county, region, country. A row where no admin node resolved is an abstention. A selection is CORRECT when its id equals the WOF id that the gazetteer's gn:id concordance links to the row's gold geonameid.",
+	"selectedCandidateRule": "An arm's selection for a row is the place id decorating the resolved node of the deepest admin tag in the returned tree, deepest-first over locality, dependent_locality, municipality, district, subregion, region, prefecture, country. A row where no admin node resolved is an abstention. A selection is CORRECT when its id is a MEMBER of the row's gold identity set.",
 	"goldSource": {
 		"register": "GeoNames cities15000.txt",
 		"license": "CC-BY-4.0",
@@ -13,20 +13,24 @@
 		"baseURL": "https://download.geonames.org/export/dump",
 		"identity": "geonameid",
 		"postalRegister": "GeoNames allCountries-postal.txt",
-		"concordance": "The gn:id rows of the concordances table in the WOF admin gazetteer, which map a geonameid to the spr id the candidate backend returns. The gold ENTITY and its coordinate come from GeoNames; only the identity join is WOF's, and it is a published concordance a reader can check.",
-		"excludedRowsNote": "A row whose gold geonameid has no gn:id concordance is ungradeable and is excluded before sampling. The excluded count is reported per stratum; it is a property of the gazetteer, not of the panel."
+		"concordance": "The gn:id rows of the concordances table in the WOF admin gazetteer, joined to spr so the guard below can read each linked row's placetype, name, country and coordinate. The gold ENTITY and its coordinate come from GeoNames; only the identity join is WOF's, and it is a published concordance a reader can check.",
+		"identitySetRule": "The gold is the SET of city-tier WOF rows (placetype locality or localadmin) the concordance reaches, not one id. Measured on the shipped admin-global-priority.db: of the 13,465 cities15000.txt rows it concords at all, 4,304 concord to more than one city-tier row — the gazetteer carries the same place twice — so grading against one arbitrary member would measure which duplicate an arm returned.",
+		"coherenceGuard": "A set is admitted only when every member's folded name equals the register's name or its ASCII transliteration, every member sits in the register's country, and every member lies within 25 km of the register's coordinate. Without the guard the set stops being one place: 1,152 geonameids reach only a neighbourhood or a region, and grading a locality selection against a region's id marks a correct answer wrong.",
+		"excludedRowsNote": "A geonameid whose join fails any part of the guard is UNGRADEABLE and is excluded before sampling, under the count that names the reason: no concordance, no city-tier row, name disagrees, country split, or too far apart. Measured on the shipped artifact: 20,406 / 1,152 / 1,492 / 11 / 72 of 33,871, leaving 10,738 coherent. These are properties of the gazetteer, not choices the panel made."
 	},
 	"sampling": {
 		"generator": "mulberry32",
 		"seed": 20260913,
-		"order": "Eligible rows are sorted by geonameid ascending, then shuffled once with the seeded generator, then taken in order until the stratum is full. Strata are filled in the order listed below and draw from disjoint geonameid pools.",
-		"rowsPerStratum": 100
+		"order": "Eligible rows are sorted by geonameid ascending, then shuffled once with the seeded generator, then taken in order until the stratum reaches its target. Strata are filled in the order listed below and draw from disjoint geonameid pools.",
+		"rowsPerStratum": 100,
+		"minimumRowsPerStratum": 50,
+		"underfillRule": "rowsPerStratum is a TARGET. A stratum whose eligible pool cannot reach it is reported at its achieved n with the census that explains the shortfall, and its rows still enter the pooled decision. A stratum below minimumRowsPerStratum is reported and EXCLUDED from the pooled decision, because too few rows would contribute noise under a per-stratum label that implies coverage. Pooling strata of unequal size weights them unequally; the record states each stratum's n beside every pooled figure."
 	},
 	"strata": [
 		{
 			"id": "unambiguous",
 			"purpose": "Establish that each resolver can select an obvious correct result.",
-			"eligibility": "The lowercased asciiname is borne by exactly one row in cities15000.txt; population is at least 50000; the gold has a gn:id concordance.",
+			"eligibility": "The lowercased asciiname is borne by exactly one row in cities15000.txt; population is at least 50000; the row has a coherent gold identity set.",
 			"query": "The row's name field, verbatim — the bare-toponym form.",
 			"gold": "That row's geonameid.",
 			"correctIsAbstention": false
@@ -34,7 +38,7 @@
 		{
 			"id": "homograph_qualified",
 			"purpose": "Test whether a named country or region qualifier overrides the population-anchored ranking prior.",
-			"eligibility": "The lowercased asciiname is borne by two or more rows in two or more distinct countries; the second-largest bearer's population is at least one third of the largest bearer's; every bearer has a gn:id concordance.",
+			"eligibility": "The lowercased asciiname is borne by two or more rows in two or more distinct countries; the second-largest bearer's population is at least one third of the largest bearer's; BOTH of the two largest bearers have a coherent gold identity set, because the gold alternates between them and a row whose gold cannot be graded cannot be built. Bearers beyond those two are distractors and need no identity join. Measured on the shipped artifact this pool holds 53 names, short of the 100 target — the shortfall is concordance coverage, and the underfill rule above governs it.",
 			"query": "The bearer's name, a comma and a space, then the qualifier: the country's English short name for a country-qualified row, or the bearer's admin1 code for a region-qualified row. The country-qualified and region-qualified forms alternate by position in the shuffled order.",
 			"gold": "One named bearer. In 50 of the 100 rows the gold is the MOST populous bearer; in the other 50 it is a bearer that is not the most populous, alternating by position in the shuffled order. A panel whose gold is always the most populous bearer would be satisfied by the population prior alone and would measure nothing.",
 			"correctIsAbstention": false
@@ -60,7 +64,7 @@
 			"purpose": "Test abstention; a resolver must not manufacture a place.",
 			"eligibility": "The unambiguous-stratum eligibility rule, over rows not drawn by an earlier stratum.",
 			"query": "The row's name field, verbatim.",
-			"gold": "That row's geonameid, with every candidate concording to it REMOVED from the fixture after recording. The correct behaviour is to select nothing.",
+			"gold": "That row's geonameid, with EVERY MEMBER of its gold identity set removed from the fixture after recording. Removing one member of a duplicated place would leave the other answerable, and the stratum would measure nothing. The correct behaviour is to select nothing.",
 			"correctIsAbstention": true
 		}
 	],

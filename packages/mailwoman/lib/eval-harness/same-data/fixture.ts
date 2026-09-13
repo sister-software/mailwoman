@@ -76,9 +76,11 @@ export interface SameDataLookup {
 export interface SameDataGold {
 	geonameid: string
 	/**
-	 * The concordant WOF id — the value an arm's selection is compared against.
+	 * The WOF ids that denote this place, ascending — a SET because the gazetteer carries 4,304 of its 13,465 concorded
+	 * `cities15000.txt` places twice. A selection naming any member is correct; grading against one arbitrary member
+	 * would measure which duplicate an arm returned.
 	 */
-	placeID: number
+	placeIDs: number[]
 	name: string
 	country: string
 	admin1: string
