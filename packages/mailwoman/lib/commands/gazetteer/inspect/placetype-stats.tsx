@@ -12,6 +12,7 @@
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -19,6 +20,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.
  */
@@ -171,7 +173,7 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	if (options.json) return <Text>{JSON.stringify(state.result, null, 2)}</Text>
+	if (options.json) return <Text>{prettyJSON(state.result)}</Text>
 
 	const { stats, country } = state.result
 	const pct = (f: number) => `${Math.round(f * 100)}%`

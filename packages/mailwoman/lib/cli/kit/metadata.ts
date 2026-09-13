@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 export interface CommandArgumentMetadata {
 	name: string
 	description?: string
@@ -14,7 +16,7 @@ export interface CommandArgumentMetadata {
  * directly in `CommandSpec` and do not need this helper.
  */
 export function argument(config: CommandArgumentMetadata): string {
-	return `__mailwoman_argument_config__${JSON.stringify(config)}`
+	return `__mailwoman_argument_config__${stringifyJSON(config)}`
 }
 
 /**

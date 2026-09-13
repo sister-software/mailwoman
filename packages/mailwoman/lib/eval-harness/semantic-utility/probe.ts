@@ -31,6 +31,8 @@
  *   green. A control set that cannot fail is not a control set.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import {
 	type CaseGrade,
 	gradeCase,
@@ -97,7 +99,7 @@ export function gradeWithComparator(
 	outcome: POIBoardOutcome
 ): CaseGrade {
 	if (comparator !== "poi_board_assembled_answer") {
-		throw new Error(`semantic-utility probe: unregistered outcome comparator ${JSON.stringify(comparator)}`)
+		throw new Error(`semantic-utility probe: unregistered outcome comparator ${stringifyJSON(comparator)}`)
 	}
 
 	return gradeCase(fixture, outcome)
@@ -297,11 +299,11 @@ export function auditProbeDefinition(definition: SemanticProbeDefinition): strin
 	const problems: string[] = []
 
 	if (!(PROBE_COMPARATORS as readonly string[]).includes(definition.outcomeComparator)) {
-		problems.push(`outcomeComparator ${JSON.stringify(definition.outcomeComparator)} is not registered`)
+		problems.push(`outcomeComparator ${stringifyJSON(definition.outcomeComparator)} is not registered`)
 	}
 
 	if (!(POI_OUTCOME_SHAPES as readonly string[]).includes(definition.baselineFailureShape)) {
-		problems.push(`baselineFailureShape ${JSON.stringify(definition.baselineFailureShape)} is not a POI outcome shape`)
+		problems.push(`baselineFailureShape ${stringifyJSON(definition.baselineFailureShape)} is not a POI outcome shape`)
 	}
 
 	if (!definition.targetRows.length) {
@@ -323,7 +325,7 @@ export function auditProbeDefinition(definition: SemanticProbeDefinition): strin
 
 		if (!(POI_OUTCOME_SHAPES as readonly string[]).includes(row.baselineShape)) {
 			problems.push(
-				`target row ${row.id}: baselineShape ${JSON.stringify(row.baselineShape)} is not a POI outcome shape`
+				`target row ${row.id}: baselineShape ${stringifyJSON(row.baselineShape)} is not a POI outcome shape`
 			)
 		}
 
@@ -334,7 +336,7 @@ export function auditProbeDefinition(definition: SemanticProbeDefinition): strin
 
 	for (const row of definition.controlRows) {
 		if (!(PROBE_CONTROL_GROUPS as readonly string[]).includes(row.group)) {
-			problems.push(`control row ${row.id}: group ${JSON.stringify(row.group)} is not a control group`)
+			problems.push(`control row ${row.id}: group ${stringifyJSON(row.group)} is not a control group`)
 		}
 
 		if (!row.guards.trim()) {
@@ -345,7 +347,7 @@ export function auditProbeDefinition(definition: SemanticProbeDefinition): strin
 	for (const group of PROBE_CONTROL_GROUPS) {
 		if (!definition.controlRows.some((row) => row.group === group)) {
 			problems.push(
-				`control group ${JSON.stringify(group)} has no rows — see the module header for why one group alone is vacuous`
+				`control group ${stringifyJSON(group)} has no rows — see the module header for why one group alone is vacuous`
 			)
 		}
 	}
@@ -388,7 +390,7 @@ function auditThresholds(definition: SemanticProbeDefinition): string[] {
 
 	for (const [key, value] of Object.entries(thresholds)) {
 		if (!Number.isInteger(value) || value < 0) {
-			problems.push(`thresholds.${key} is ${JSON.stringify(value)} — every threshold is a whole row count`)
+			problems.push(`thresholds.${key} is ${stringifyJSON(value)} — every threshold is a whole row count`)
 		}
 	}
 
@@ -450,7 +452,7 @@ export function resolveControlRows(
 		const fixture = byID.get(row.id)
 
 		if (!fixture) {
-			throw new Error(`semantic-utility probe: control row ${JSON.stringify(row.id)} is not in ${row.source}`)
+			throw new Error(`semantic-utility probe: control row ${stringifyJSON(row.id)} is not in ${row.source}`)
 		}
 
 		const declared = canonicalJSON({ id: row.id, query: row.query, locale: row.locale, expect: row.expect })
@@ -464,7 +466,7 @@ export function resolveControlRows(
 
 		if (declared !== actual) {
 			throw new Error(
-				`semantic-utility probe: control row ${JSON.stringify(row.id)} has moved in ${row.source}\n  frozen : ${declared}\n  committed: ${actual}`
+				`semantic-utility probe: control row ${stringifyJSON(row.id)} has moved in ${row.source}\n  frozen : ${declared}\n  committed: ${actual}`
 			)
 		}
 

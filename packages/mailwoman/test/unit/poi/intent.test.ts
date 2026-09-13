@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseMatch } from "@mailwoman/kind-classifier"
@@ -297,7 +298,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 			LOCALE
 		)
 
-		if (outcome?.type !== "intent") throw new Error(`expected an intent, got ${JSON.stringify(outcome)}`)
+		if (outcome?.type !== "intent") throw new Error(`expected an intent, got ${stringifyJSON(outcome)}`)
 
 		expect(outcome.intent.subject).toEqual({
 			kind: "category",

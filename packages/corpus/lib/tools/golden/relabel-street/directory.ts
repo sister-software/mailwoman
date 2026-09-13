@@ -6,9 +6,15 @@
  */
 
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import {
+	makeDirectories,
+	writeLocalFile,
+	writeLocalJSONFile,
+	writeLocalTextFile,
+	writeLocalJSONLFile,
+} from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -189,10 +195,10 @@ export async function relabelGoldenDirectory(
 					})
 				}
 
-				out.push(JSON.stringify(result.row))
+				out.push(stringifyJSON(result.row))
 			}
 
-			await writeLocalTextFile(out.join("\n") + "\n", to)
+			await writeLocalTextFile(out, to)
 			files[`${prefix}${name.name}`] = { entries: lineNumber, changed, flagged, prefixSplit, counts }
 
 			report(
@@ -204,7 +210,7 @@ export async function relabelGoldenDirectory(
 	report(`relabel ${input} → ${output}`)
 	await walk(input, output, "")
 
-	await writeLocalTextFile(deck.map((entry) => JSON.stringify(entry)).join("\n") + "\n", deckPath)
+	await writeLocalJSONLFile(deck, deckPath)
 	await writeLocalFile(renderDeckMarkdown(deck, basename(input), basename(output)), deckPath.replace(/\.jsonl$/, ".md"))
 
 	const manifestFiles: Record<
@@ -272,7 +278,7 @@ function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, vers
 	const span = (components: Record<string, string>): string =>
 		[components.street_prefix, components.street, components.street_suffix]
 			.filter(isPresent)
-			.map((s) => JSON.stringify(s))
+			.map((s) => stringifyJSON(s))
 			.join(" + ")
 
 	// The split dirs are copies of the same rows — dedupe the deck to the top-level files for reading.
@@ -285,7 +291,7 @@ function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, vers
 		entries
 			.map(
 				(entry) =>
-					`| ${entry.file}:${entry.line} | ${span(entry.before)} | ${span(entry.after)} | ${entry.flags.map((f) => f.kind).join(", ") || "—"} | ${JSON.stringify(entry.raw)} |`
+					`| ${entry.file}:${entry.line} | ${span(entry.before)} | ${span(entry.after)} | ${entry.flags.map((f) => f.kind).join(", ") || "—"} | ${stringifyJSON(entry.raw)} |`
 			)
 			.join("\n")
 

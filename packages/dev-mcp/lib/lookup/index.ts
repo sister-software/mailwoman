@@ -20,6 +20,7 @@
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalize } from "@mailwoman/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -202,7 +203,7 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
 			entries: [{ normalized, changed: normalized !== query }],
 			...(normalized === query
 				? {}
-				: { note: `Normalization changed the input — downstream sources see ${JSON.stringify(normalized)}.` }),
+				: { note: `Normalization changed the input — downstream sources see ${stringifyJSON(normalized)}.` }),
 		}
 	})
 }

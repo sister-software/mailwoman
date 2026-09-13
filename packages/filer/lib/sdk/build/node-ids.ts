@@ -16,6 +16,8 @@
  *   non-ISO one matches nothing.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import { FilerIdentifierType } from "#schema"
 import { assertISODate } from "#sdk/guards"
 
@@ -60,7 +62,7 @@ const CIK_SHAPE_PATTERN = /^\d{10}$/
 export function mintCIKNodeID(cik: string, context: string): string {
 	if (!CIK_SHAPE_PATTERN.test(cik)) {
 		throw new Error(
-			`buildFilerDatabase: malformed ${context} — cik must be a zero-padded 10-digit string, got ${JSON.stringify(cik)}`
+			`buildFilerDatabase: malformed ${context} — cik must be a zero-padded 10-digit string, got ${stringifyJSON(cik)}`
 		)
 	}
 
@@ -109,7 +111,7 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
 export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: number): string {
 	if (lastFiledAt.trim() === "") {
 		throw new Error(
-			`buildFilerDatabase: malformed form499 row #${rowIndex} (form499ID=${JSON.stringify(form499ID)}) — empty ` +
+			`buildFilerDatabase: malformed form499 row #${rowIndex} (form499ID=${stringifyJSON(form499ID)}) — empty ` +
 				`lastFiledAt. Decision 7 / criterion 1 make valid_from MANDATORY on every edge; a blank value would silently ` +
 				`write source_vintage/valid_from as "" on every edge and attribute this row produces, which a ` +
 				`time-scoped (valid_from <= asOf) read would then treat as valid since forever.`
@@ -151,7 +153,7 @@ export function mintProviderNodeID(providerID: number, rowIndex: number): string
 	if (!Number.isSafeInteger(providerID)) {
 		throw new TypeError(
 			`buildFilerDatabase: malformed provider-list row #${rowIndex} — providerID did not parse to a safe ` +
-				`integer (got ${JSON.stringify(providerID)}). Refusing to mint a degenerate node_id that every other ` +
+				`integer (got ${stringifyJSON(providerID)}). Refusing to mint a degenerate node_id that every other ` +
 				`malformed row would silently collapse into.`
 		)
 	}

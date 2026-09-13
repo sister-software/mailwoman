@@ -25,6 +25,7 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { htmlToLayoutText } from "@mailwoman/core/html/text"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { parseExhibit21 } from "@mailwoman/filer/sdk/exhibit21"
@@ -118,7 +119,7 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 		async (name) => {
 			for (const subsidiary of parseExhibit21(await fixture(name)).subsidiaries) {
 				for (const pattern of NEVER_A_SUBSIDIARY_NAME) {
-					expect(subsidiary.name, `${name}: ${JSON.stringify(subsidiary.name)}`).not.toMatch(pattern)
+					expect(subsidiary.name, `${name}: ${stringifyJSON(subsidiary.name)}`).not.toMatch(pattern)
 				}
 			}
 		}
@@ -159,10 +160,10 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 		const haystack = normalized(await fixture(name))
 
 		for (const subsidiary of parseExhibit21(await fixture(name)).subsidiaries) {
-			expect(haystack, `${name}: name ${JSON.stringify(subsidiary.name)}`).toContain(subsidiary.name)
+			expect(haystack, `${name}: name ${stringifyJSON(subsidiary.name)}`).toContain(subsidiary.name)
 
 			if (subsidiary.jurisdiction) {
-				expect(haystack, `${name}: jurisdiction ${JSON.stringify(subsidiary.jurisdiction)}`).toContain(
+				expect(haystack, `${name}: jurisdiction ${stringifyJSON(subsidiary.jurisdiction)}`).toContain(
 					subsidiary.jurisdiction
 				)
 			}

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @file The character encoder for char-path models — the runtime twin of `encode_row_units` in
  *   `corpus-python/src/mailwoman_train/char_tokenizer.py`, under the same contract (D1): one UNIT per Unicode code point,
@@ -129,7 +131,7 @@ export function parseCharVocabulary(parsed: unknown, source: string): CharVocabu
 
 	for (const [character, id] of Object.entries(parsed as Record<string, unknown>)) {
 		if (typeof id !== "number" || !Number.isInteger(id)) {
-			throw new TypeError(`char vocabulary ${source}: entry ${JSON.stringify(character)} has a non-integer id`)
+			throw new TypeError(`char vocabulary ${source}: entry ${stringifyJSON(character)} has a non-integer id`)
 		}
 
 		vocabulary.set(character, id)
@@ -174,7 +176,7 @@ export function encoderDescriptorFromCard(
 	if (encoder === undefined || encoder === "sentencepiece") return { kind: "sentencepiece" }
 
 	if (encoder !== "char") {
-		throw new Error(`model-card at ${source} declares an unknown \`encoder\` ${JSON.stringify(encoder)}`)
+		throw new Error(`model-card at ${source} declares an unknown \`encoder\` ${stringifyJSON(encoder)}`)
 	}
 
 	const charVocab = card?.char_vocab

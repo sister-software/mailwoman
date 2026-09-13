@@ -146,7 +146,7 @@ yarn mwops release sbom --version <version>   # writes docs/static/sbom/mailwoma
 
 Commit the two files with the release. The generator reads the **published** tarball, so it must run
 after publish. Validation commands + rationale live in
-[`docs/articles/licensing/sbom.md`](./docs/articles/licensing/sbom.md); the script header explains the
+[`docs/records/site-2026-08/licensing/sbom.md`](./docs/records/site-2026-08/licensing/sbom.md); the script header explains the
 SPDX normalization. Follow-up: fold this into the `publish` workflow as an automated commit-back step
 (deferred — it needs a bot commit into `main` after the publish job, which is more than a one-line
 addition to `publish.yml`).
@@ -554,13 +554,15 @@ Every model promotion leaves the same three-part staleness behind — a number c
 card, a CLI capture from the old weights. Do this AFTER Step 4 (the model is live), so captures run
 against the real shipped weights, not a staging candidate:
 
-1. **Refresh the model-card-derived numbers** on the known surfaces: the two flagship concept pages
-   (`docs/articles/concepts/how-mailwoman-parses-an-address.mdx`,
-   `docs/articles/concepts/how-mailwoman-resolves-a-place.mdx`),
-   `docs/articles/concepts/tokenization.mdx`, the homepage (`docs/src/pages/index.tsx` +
-   `docs/src/components/AboutDemo/AboutDemo.tsx`),
-   `docs/articles/understanding/our-approach/from-pelias-to-mailwoman.mdx`, and
-   `docs/articles/status.mdx` + `docs/articles/releases.mdx` (params, vocab size, int8/fp32 size —
+1. **Refresh the model-card-derived numbers** on the known surfaces. **This list predates the site
+   restructure and most of it no longer names a published page — see #2259.** The published tree is
+   `docs/articles/` (`docusaurus.config.ts` sets `path: "articles"`); `docs/records/site-2026-08/` is
+   the archived August site and must NOT be edited at release. Live today:
+   `docs/articles/developers/status.mdx` and the homepage (`docs/src/pages/index.tsx`;
+   `docs/src/components/AboutDemo/AboutDemo.tsx` is gone from the tracked tree — only a compiled
+   remnant under `docs/out/` survives). The flagship concept pages, the tokenization page,
+   the from-Pelias page and `releases.mdx` survive only under `docs/records/site-2026-08/`, so decide
+   whether each returns to the published tree or leaves this list (params, vocab size, int8/fp32 size —
    byte-verify each against **the model card** `neural-weights-en-us/model-card.json`
    (`architecture`, `format`, `files_md5`); don't trust the prose you're replacing. A fine-tune off
    the same lineage can change NONE of these — confirm via the card rather than assuming drift.
@@ -772,7 +774,7 @@ Publishing / OIDC, `pypi` environment — PyPI's trust binds to the `publish-cli
 never rename it without updating the PyPI-side publisher config) and `cargo` (`cargo` environment,
 whose `CARGO_REGISTRY_TOKEN` environment secret is the credential). The `publish_python` /
 `publish_cargo` dispatch inputs (default true) make single-registry retries cheap — nothing
-regenerates. See `docs/articles/api.mdx` "Client
+regenerates. See `docs/records/site-2026-08/api.mdx` "Client
 libraries" for what the clients are; this section is the release-operator's view.
 
 > **Sequencing — do not publish clients before the next npm release.** The generated clients stamp

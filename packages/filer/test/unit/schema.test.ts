@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -162,7 +163,7 @@ describe("filer schema", () => {
 				assertion: FilerEdgeAssertion.Inferred,
 				source: "bdc-provider-list",
 				match_score: 0.92,
-				evidence: JSON.stringify({ nameSimilarity: 0.92 }),
+				evidence: stringifyJSON({ nameSimilarity: 0.92 }),
 			})
 			.execute()
 

@@ -7,6 +7,8 @@
  *   here so a consumer never guesses the source convention.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 import type { BuildableBodyID } from "#bodies"
 import { type PlanetaryNomenclatureFeature, PlanetaryNomenclatureFeatureSchema } from "#schema/nomenclature"
 
@@ -91,7 +93,7 @@ export function normalizeBBox(box: { minLon: number; maxLon: number; minLat: num
 export function featureIDFromLink(link: string): string {
 	const match = /\/Feature\/(\d+)\s*$/u.exec(link)
 
-	if (!match?.[1]) throw new Error(`nomenclature link carries no feature id: ${JSON.stringify(link)}`)
+	if (!match?.[1]) throw new Error(`nomenclature link carries no feature id: ${stringifyJSON(link)}`)
 
 	return match[1]
 }

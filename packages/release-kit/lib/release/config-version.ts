@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  *   The `release.config.json` version bump as a PURE textual replacement (#1891). The file is
  *   oxfmt-formatted — single-line arrays, an order the generic parse-then-stringify write path would
@@ -14,19 +16,19 @@
  * does not match (the sync check's job, restated here so a caller cannot skip it).
  */
 export function bumpReleaseConfigVersion(text: string, currentVersion: string, targetVersion: string): string {
-	const line = `\t"version": ${JSON.stringify(currentVersion)},`
+	const line = `\t"version": ${stringifyJSON(currentVersion)},`
 	const first = text.indexOf(line)
 
 	if (first === -1) {
 		throw new Error(
-			`release.config.json carries no line ${JSON.stringify(line)} — either its version is not ` +
+			`release.config.json carries no line ${stringifyJSON(line)} — either its version is not ` +
 				`${currentVersion} (version drift; see the sync check) or the file's formatting changed.`
 		)
 	}
 
 	if (text.indexOf(line, first + 1) !== -1) {
-		throw new Error(`release.config.json contains ${JSON.stringify(line)} more than once — refusing to guess.`)
+		throw new Error(`release.config.json contains ${stringifyJSON(line)} more than once — refusing to guess.`)
 	}
 
-	return text.replace(line, `\t"version": ${JSON.stringify(targetVersion)},`)
+	return text.replace(line, `\t"version": ${stringifyJSON(targetVersion)},`)
 }

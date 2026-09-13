@@ -24,6 +24,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
@@ -197,7 +198,7 @@ for (const s of SWEEP_ROWS) {
 }
 
 const sorted = out.toSorted((a, b) => a.id.localeCompare(b.id))
-await writeLocalTextFile(`${sorted.map((c) => JSON.stringify(canonicalizeHardSliceCase(c))).join("\n")}\n`, OUT)
+await writeLocalTextFile(`${sorted.map((c) => stringifyJSON(canonicalizeHardSliceCase(c))).join("\n")}\n`, OUT)
 
 const inReach = sorted.filter((c) => c.fstReach === "in").length
 const moved = sorted.filter((c) => c.popBias !== c.impBias).length

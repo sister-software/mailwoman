@@ -25,8 +25,10 @@
  *   `@mailwoman/core/module/resolvers`.
  *
  *   `prefer-home`: a table of helper shapes that already have a home (`HELPER_HOMES`) — the UTC date string, the
- *   Earth radius, the seeded generators' constants. A review that finds a helper typed twice adds a row; the
- *   pre-commit hook then reports the third copy before it lands, so the review stops needing a reminder.
+ *   Earth radius, the seeded generators' constants, the Fisher-Yates shuffle. A review that finds a helper typed twice
+ *   adds a row; the pre-commit hook then reports the third copy before it lands, so the review stops needing a
+ *   reminder. A row matches a token or a control shape: the shuffle writes no constant of its own, so a table that
+ *   only knew literals could report a re-typed generator and never a re-typed shuffle.
  *
  *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
  *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
@@ -34,6 +36,7 @@
  *   delimiters only; splitting on anything else is not a streaming shape and stays silent.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 
 interface RuleContext {
@@ -431,7 +434,7 @@ const noRelativeDynamicImportRule: Rule = {
 				context.report({
 					node,
 					message:
-						`import(${JSON.stringify(specifier)}) names a module by the importer's location. Use the package's ` +
+						`import(${stringifyJSON(specifier)}) names a module by the importer's location. Use the package's ` +
 						"`imports` map instead (`#<path-from-package-root>`, no extension) — it resolves `.ts` under `node` and " +
 						"`out/*.js` everywhere else, and moves with the file.",
 				})
@@ -457,7 +460,7 @@ const noPrivateImportInTestRule: Rule = {
 			context.report({
 				node,
 				message:
-					`${JSON.stringify(specifier)} is the package's private \`imports\` map. A test imports the package under ` +
+					`${stringifyJSON(specifier)} is the package's private \`imports\` map. A test imports the package under ` +
 					"test through its public exports (`@mailwoman/<pkg>/<subpath>`); a module no export names gets an " +
 					"`exports` entry, and only a helper under `test/` is imported by relative path.",
 			})
@@ -571,7 +574,7 @@ const noImportMetaDirnameWalkRule: Rule = {
 				context.report({
 					node,
 					message:
-						`${JSON.stringify(text)} counts directories up from this module. Use ` +
+						`${stringifyJSON(text)} counts directories up from this module. Use ` +
 						'`resolvePackagePath("<package>", …)` from `@mailwoman/core/module/resolvers` for a file in this ' +
 						"package, or `repoRootPath(…)` from `@mailwoman/core/utils` for a repository file.",
 				})
@@ -585,12 +588,16 @@ const noImportMetaDirnameWalkRule: Rule = {
  * import the copy should become. Add a row when a review finds the same helper typed twice — the row is the durable
  * half of that review, and the pre-commit hook then reports the third copy before it is committed.
  *
- * Two signature kinds cover every row so far. A `method-chain` names the method calls of the outermost call
+ * Four signature kinds cover every row so far. A `method-chain` names the method calls of the outermost call
  * innermost-first, matched as a suffix of the chain the call stands on (`new Date().toISOString().slice(0, 10)` is
  * `["toISOString", "slice"]`), optionally with the literal arguments the outer call must carry. A `numeric-literal`
  * names the constants a re-typed algorithm cannot avoid writing: Earth's mean radius, a generator's multiplier. A
  * `string-literal` names a substring a re-typed shell-out cannot avoid: the git subcommand it runs, in a plain string,
  * a template literal, or a `$\`…`` command.
+ *
+ * A `descending-swap-loop` names a CONTROL SHAPE rather than a token, for the helpers whose re-typed copy carries no
+ * distinctive literal at all. The three token kinds above can only report a re-typed generator, never a re-typed
+ * shuffle: the loop writes no constant of its own and calls whatever generator it was handed.
  */
 interface HelperHome {
 	readonly id: string
@@ -598,6 +605,7 @@ interface HelperHome {
 		| { readonly kind: "method-chain"; readonly chain: readonly string[]; readonly arguments?: readonly number[] }
 		| { readonly kind: "numeric-literal"; readonly values: ReadonlySet<number> }
 		| { readonly kind: "string-literal"; readonly includes: readonly string[] }
+		| { readonly kind: "descending-swap-loop" }
 	readonly specifier: string
 	readonly symbol: string
 	readonly reason: string
@@ -655,6 +663,20 @@ const HELPER_HOMES: readonly HelperHome[] = [
 		symbol: "makeLcg",
 		reason: "the linear congruential stream baked into shipped corpus rows",
 	},
+	{
+		id: "glibc-lcg",
+		signature: { kind: "numeric-literal", values: new Set([1_103_515_245]) },
+		specifier: "@mailwoman/core/random",
+		symbol: "makeGlibcLcgInt32 or makeGlibcLcgFloat64 — read their docstrings, the two are NOT the same sequence",
+		reason: "glibc's LCG multiplier, which three files had each re-typed under the same name for two different streams",
+	},
+	{
+		id: "fisher-yates",
+		signature: { kind: "descending-swap-loop" },
+		specifier: "@mailwoman/core/random",
+		symbol: "shuffleWith (or shuffleBy, when the sampler is not a scaled float)",
+		reason: "the Fisher-Yates walk, whose draw order decides which rows a seeded panel selects",
+	},
 ]
 
 /**
@@ -680,6 +702,98 @@ function numericLiteralValue(node: AstNode): number | null {
 	if ((node.type === "Literal" || node.type === "NumericLiteral") && typeof node.value === "number") return node.value
 
 	return null
+}
+
+/**
+ * The base object's name in a computed index read or write — `rows` in `rows[i]`. Null for anything else, including a
+ * dotted property (`a.b`), which is not an index.
+ */
+function indexedBaseName(node: AstNode | undefined): string | null {
+	if (node?.type !== "MemberExpression" || node.computed !== true) return null
+
+	return typeof node.object?.name === "string" ? node.object.name : null
+}
+
+/**
+ * Whether a computed index is a VARIABLE rather than a constant — `xs[i]`, not `xs[0]`.
+ *
+ * Heapsort's extraction phase counts down from the last index, stops at 1, and swaps two computed indices of one array,
+ * so it satisfies every other clause of the shuffle shape. What separates it is that one of its indices is the literal
+ * 0: a shuffle swaps the loop variable with a DRAWN index, and neither is a constant.
+ */
+function isVariableIndex(node: AstNode | undefined): boolean {
+	if (node?.type !== "MemberExpression" || node.computed !== true) return false
+
+	return node.property?.type === "Identifier"
+}
+
+/**
+ * Whether a `for` header counts DOWN from a length to 1: `for (let i = xs.length - 1; i > 0; i--)`, or the same written
+ * `i >= 1`.
+ *
+ * All three clauses are required, and they are not sufficient on their own — heapsort's extraction phase satisfies
+ * every one of them. What the body check adds is that both swapped indices are variables; see {@link isVariableIndex}.
+ *
+ * Known miss: a loop whose bound is hoisted (`const n = xs.length; for (let i = n - 1; …)`) reads as a plain descent
+ * and is not reported. Widening the init clause to any identifier would report every backwards loop in the repository,
+ * which is a worse trade for a suggestion rule.
+ */
+function isDescendingFromLength(node: AstNode): boolean {
+	const declaration = node.init?.declarations?.[0]?.init
+
+	const fromLength =
+		declaration?.type === "BinaryExpression" &&
+		declaration.operator === "-" &&
+		numericLiteralValue(declaration.right as AstNode) === 1 &&
+		declaration.left?.type === "MemberExpression" &&
+		declaration.left.property?.name === "length"
+
+	// `i > 0` and `i >= 1` are the same stopping point, and both are written.
+	const bound = node.test?.type === "BinaryExpression" ? numericLiteralValue(node.test.right as AstNode) : null
+
+	const toOne = (node.test?.operator === ">" && bound === 0) || (node.test?.operator === ">=" && bound === 1)
+
+	return (
+		Boolean(fromLength) && Boolean(toOne) && node.update?.type === "UpdateExpression" && node.update.operator === "--"
+	)
+}
+
+/**
+ * Whether a loop body swaps two computed indices of one array.
+ *
+ * Two forms, because both are written here: the destructured `[xs[i], xs[j]] = [xs[j], xs[i]]`, and the temporary `tmp
+ * = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up as two index WRITES to the same base.
+ *
+ * Reads the body's own statements rather than walking the subtree. A generic walk over an oxlint node's values follows
+ * its back-references and never terminates, and depth buys nothing here: a shuffle writes its swap at the top of the
+ * loop, so a swap nested inside a branch is a different algorithm.
+ */
+function swapsTwoIndices(body: AstNode): boolean {
+	const statements: AstNode[] = body.type === "BlockStatement" ? ((body.body as AstNode[]) ?? []) : [body]
+
+	const assignments = statements
+		.map((statement) => (statement.type === "ExpressionStatement" ? (statement.expression as AstNode) : statement))
+		.filter((node): node is AstNode => node?.type === "AssignmentExpression")
+
+	for (const assignment of assignments) {
+		const left = assignment.left as AstNode | undefined
+
+		if (left?.type !== "ArrayPattern" && left?.type !== "ArrayExpression") continue
+
+		const elements = (left.elements as AstNode[]) ?? []
+		const bases = elements.map((element) => indexedBaseName(element))
+
+		if (bases.length === 2 && bases[0] !== null && bases[0] === bases[1] && elements.every(isVariableIndex)) {
+			return true
+		}
+	}
+
+	const writtenBases = assignments
+		.filter((assignment) => isVariableIndex(assignment.left as AstNode))
+		.map((assignment) => indexedBaseName(assignment.left as AstNode))
+		.filter((name): name is string => name !== null)
+
+	return writtenBases.some((name, index) => writtenBases.indexOf(name) !== index)
 }
 
 function endsWith(chain: readonly string[], suffix: readonly string[]): boolean {
@@ -757,6 +871,16 @@ const preferHomeRule: Rule = {
 				const text = (node.quasis ?? []).map((quasi) => quasi.value?.cooked ?? "").join(" ")
 				reportStringHome(context, node, text)
 			},
+			ForStatement(node: AstNode) {
+				if (!isDescendingFromLength(node) || !node.body || !swapsTwoIndices(node.body)) return
+
+				for (const home of HELPER_HOMES) {
+					if (home.signature.kind !== "descending-swap-loop") continue
+					context.report({ node, message: homeMessage(home) })
+
+					return
+				}
+			},
 		}
 	},
 }
@@ -784,7 +908,7 @@ const noCrossPackageReexportRule: Rule = {
 			context.report({
 				node,
 				message:
-					`Re-exporting from ${JSON.stringify(specifier)} gives its names a second public home. Consumers import ` +
+					`Re-exporting from ${stringifyJSON(specifier)} gives its names a second public home. Consumers import ` +
 					"them from the package that declares them; delete the re-export and repoint the importers.",
 			})
 		}

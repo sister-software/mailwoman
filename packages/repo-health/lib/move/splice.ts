@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @file Replacing strings at known offsets, shared by the planner and the writer.
  *
@@ -37,7 +39,7 @@ export function spliceText(label: string, text: string, edits: readonly TextEdit
 		const found = spliced.slice(edit.start, edit.end)
 
 		if (!found.includes(edit.expected)) {
-			throw new Error(`${label}: ${JSON.stringify(edit.expected)} is not at ${edit.start}–${edit.end} (${found})`)
+			throw new Error(`${label}: ${stringifyJSON(edit.expected)} is not at ${edit.start}–${edit.end} (${found})`)
 		}
 
 		const quote = edit.quoted ? (found[0] ?? '"') : ""

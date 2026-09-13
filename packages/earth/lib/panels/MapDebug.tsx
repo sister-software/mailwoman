@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { DebugControlBase } from "@mailwoman/react/map/map-debug"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import "maplibre-gl/dist/maplibre-gl.css"
+import { DebugControlBase } from "@mailwoman/react/map/map-debug"
 import type { LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
 import { Fragment, memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
@@ -123,7 +124,7 @@ export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
 								{entries.map(([key, value]) => (
 									<Fragment key={key}>
 										<dt>{key}</dt>
-										<dd>{typeof value === "object" ? JSON.stringify(value) : String(value)}</dd>
+										<dd>{typeof value === "object" ? stringifyJSON(value) : String(value)}</dd>
 									</Fragment>
 								))}
 							</dl>

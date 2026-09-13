@@ -16,6 +16,7 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { sliceSourceID, type CanonicalSliceRow, type CorpusRecipe } from "#recipes/scaffold"
@@ -91,7 +92,7 @@ export const streetBareRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }))
 
 			emitted++
 		}

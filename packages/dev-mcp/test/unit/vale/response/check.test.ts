@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
@@ -10,7 +10,7 @@ const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "vale
 
 function runHook(lastAssistantMessage: string, stopHookActive = false): string {
 	const result = spawnProcessSync(process.execPath, [HOOK_PATH], {
-		input: JSON.stringify({ last_assistant_message: lastAssistantMessage, stop_hook_active: stopHookActive }),
+		input: stringifyJSON({ last_assistant_message: lastAssistantMessage, stop_hook_active: stopHookActive }),
 		encoding: "utf8",
 	})
 

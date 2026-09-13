@@ -11,6 +11,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
@@ -69,7 +70,7 @@ for (const locale of new Set(fixtures.map((row) => localeForCountry(row.country)
 				bucket.hit++
 			} else {
 				allHit = false
-				failures.push(`${row.id}\t${tag}\texpect=${JSON.stringify(expected)}\tgot=${JSON.stringify(actual)}`)
+				failures.push(`${row.id}\t${tag}\texpect=${stringifyJSON(expected)}\tgot=${stringifyJSON(actual)}`)
 			}
 		}
 

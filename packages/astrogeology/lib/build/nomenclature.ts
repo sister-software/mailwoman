@@ -14,7 +14,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -33,7 +35,10 @@ export const NOMENCLATURE_LAYERS = {
 /**
  * The rows of the shapefile inside the archive, one at a time.
  */
-export async function* readNomenclatureRows(archivePath: string, layer: string): AsyncIterable<NomenclatureSourceRow> {
+export async function* readNomenclatureRows(
+	archivePath: PathBuilderLike,
+	layer: string
+): AsyncIterable<NomenclatureSourceRow> {
 	await using scratch = await temporaryDirectory("astrogeology-rows-")
 	const seq = resolvePath(scratch.path, `${layer}.geojsonl`)
 
@@ -99,11 +104,11 @@ export const NOMENCLATURE_LAYER = "nomenclature"
 export function nomenclatureNDJSONLine(feature: PlanetaryNomenclatureFeature): string {
 	const { centerLon, centerLat, ...properties } = feature
 
-	return JSON.stringify({
+	return stringifyJSON({
 		type: "Feature",
 		tippecanoe: { layer: NOMENCLATURE_LAYER, minzoom: minZoomForDiameter(feature.diameterKm) },
 		geometry: { type: "Point", coordinates: [centerLon, centerLat] },
-		properties: { ...properties, bbox: properties.bbox ? JSON.stringify(properties.bbox) : undefined },
+		properties: { ...properties, bbox: properties.bbox ? stringifyJSON(properties.bbox) : undefined },
 	})
 }
 
@@ -120,7 +125,7 @@ export async function writeNomenclatureNDJSON(
 		lines.push(nomenclatureNDJSONLine(feature))
 	}
 
-	await writeLocalTextFile(lines.join("\n") + "\n", outPath)
+	await writeLocalTextFile(lines, outPath)
 
 	return lines.length
 }

@@ -6,6 +6,7 @@
  *   the sealed vocabulary, never the tokenizer or the lexicons, and hands the classifier a `charEncoder`.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock, classifierConfigs } = vi.hoisted(() => ({
@@ -61,11 +62,11 @@ function charFetch(requested: string[]): typeof fetch {
 		requested.push(url)
 
 		if (url.endsWith("model-card.json")) {
-			return new Response(JSON.stringify(CARD), { headers: { "content-type": "application/json" } })
+			return new Response(stringifyJSON(CARD), { headers: { "content-type": "application/json" } })
 		}
 
 		if (url.endsWith("char-vocab.json")) {
-			return new Response(JSON.stringify(VOCAB), { headers: { "content-type": "application/json" } })
+			return new Response(stringifyJSON(VOCAB), { headers: { "content-type": "application/json" } })
 		}
 
 		if (url.endsWith("model.onnx")) return new Response(new Uint8Array([1, 2, 3]))
@@ -117,7 +118,7 @@ describe("the browser loader on a char card", () => {
 				fetchImpl: async (input) => {
 					requested.push(String(input))
 
-					return new Response(JSON.stringify({ labels: ["O"] }), { headers: { "content-type": "application/json" } })
+					return new Response(stringifyJSON({ labels: ["O"] }), { headers: { "content-type": "application/json" } })
 				},
 			})
 		).rejects.toThrow(/tokenizerURL/)

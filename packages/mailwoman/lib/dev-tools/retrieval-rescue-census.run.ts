@@ -8,6 +8,7 @@
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
@@ -82,7 +83,7 @@ deps[Symbol.dispose]()
 const summary = summarizeRescue(reports)
 
 console.log("=== retrieval-rescue census ===")
-console.log(JSON.stringify(summary, null, 2))
+console.log(prettyJSON(summary, false))
 
 for (const cls of ["rescue_available_entity", "rescue_available_rank", "rescue_available_both"] as const) {
 	const rows = reports.filter((r) => r.classification === cls)

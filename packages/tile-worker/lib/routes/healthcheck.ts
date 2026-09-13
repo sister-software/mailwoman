@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { prettyJSON } from "@mailwoman/core/json"
+
 import { CloudflareWorkerPMTiles } from "#protomaps/index"
 import { WorkerRoute } from "#routing"
 
@@ -9,15 +11,11 @@ import { WorkerRoute } from "#routing"
  */
 export const HomeRoute = WorkerRoute.GET("/", () => {
 	return new Response(
-		JSON.stringify(
-			{
-				id: "mailwoman-api",
-				timestamp: new Date().toISOString(),
-				count: CloudflareWorkerPMTiles.SharedResolvedValueCache.counter,
-			},
-			null,
-			"\t"
-		),
+		prettyJSON({
+			id: "mailwoman-api",
+			timestamp: new Date().toISOString(),
+			count: CloudflareWorkerPMTiles.SharedResolvedValueCache.counter,
+		}),
 		{
 			headers: {
 				"Content-Type": "application/json",

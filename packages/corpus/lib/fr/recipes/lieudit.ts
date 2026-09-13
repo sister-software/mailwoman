@@ -28,6 +28,8 @@ import { formatAddress } from "@mailwoman/codex/address-format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { shuffleWith } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -38,6 +40,7 @@ import type { CorpusRecipe } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
+
 /**
  * Matches the `ban` adapter's Tier-B election for BAN data.
  */
@@ -137,16 +140,6 @@ function composeHouseNumber(numero: string, rep: string | null): string {
 }
 
 /**
- * Fisher-Yates shuffle, in place, with the recipe's seeded PRNG — reproducible sampling without replacement.
- */
-function shuffleInPlace<T>(arr: T[], random: () => number): void {
-	for (let i = arr.length - 1; i > 0; i--) {
-		const j = Math.floor(random() * (i + 1))
-		;[arr[i], arr[j]] = [arr[j]!, arr[i]!]
-	}
-}
-
-/**
  * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
  * and `description` below for the surface form it generates.
  */
@@ -181,7 +174,11 @@ export const frLieuditRecipe: CorpusRecipe = {
 			throw new Error(`No clean lieu-dit rows found under ${banDir} — see ban/sdk/extract.ts's cleanLieuDit filter.`)
 		}
 
-		shuffleInPlace(pool, random)
+		// `random` is threaded in rather than constructed here: the recipe shares ONE mulberry32 stream between this
+		// shuffle and the country-fraction draw below, so a fresh generator would move every later draw and the committed
+		// rows with it.
+		shuffleWith(pool, random)
+
 		const selected = pool.slice(0, Math.min(count, pool.length))
 
 		let emitted = 0
@@ -261,7 +258,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: source, synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_base_id: null }))
 
 			emitted++
 		}

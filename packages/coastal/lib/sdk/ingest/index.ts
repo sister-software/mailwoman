@@ -33,6 +33,7 @@
  *   renamed fails as a SQL error naming the column rather than as a stream of null distances.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { limitedFeatureCount } from "@mailwoman/core/layers"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
@@ -507,7 +508,7 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 
 		if (!scenario) {
 			throw new Error(
-				`coastal ingest: ${JSON.stringify(key)} is not one of the twelve published scenarios (${[...NCERM_SCENARIOS_BY_KEY.keys()].join(", ")})`
+				`coastal ingest: ${stringifyJSON(key)} is not one of the twelve published scenarios (${[...NCERM_SCENARIOS_BY_KEY.keys()].join(", ")})`
 			)
 		}
 

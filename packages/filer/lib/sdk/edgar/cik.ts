@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { nameSimilarity } from "@mailwoman/match"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { Tagged } from "type-fest"
@@ -93,8 +94,8 @@ export function parseCompanyTickers(raw: unknown): CompanyTickerEntry[] {
 
 		if (cik === null || typeof ticker !== "string" || typeof title !== "string") {
 			throw new Error(
-				`parseCompanyTickers: malformed row ${JSON.stringify(key)} — expected {cik_str, ticker, title}, got ` +
-					JSON.stringify(value)
+				`parseCompanyTickers: malformed row ${stringifyJSON(key)} — expected {cik_str, ticker, title}, got ` +
+					stringifyJSON(value)
 			)
 		}
 

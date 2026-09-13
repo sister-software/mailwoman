@@ -21,6 +21,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /**
@@ -105,7 +106,7 @@ export class RemoteResolver implements Resolver {
 			const res = await this.#fetch(this.#endpoint, {
 				method: "POST",
 				headers: { "Content-Type": "application/json", ...this.#headers },
-				body: JSON.stringify(body),
+				body: stringifyJSON(body),
 				signal: controller.signal,
 			})
 

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  *   OverpassQL EXPORT emitter over a POI intent (spec §1: "we print the query; we never run it").
  *   Overpass is not a serving backend — this exists so users who live in Overpass-turbo can take
@@ -92,7 +94,7 @@ export function emitOverpassQL(intent: OverpassIntentLike, opts: EmitOverpassOpt
 				const parts = osmTag.split("=")
 
 				if (parts.length !== 2 || !parts[0] || !parts[1]) {
-					throw new Error(`emitOverpassQL: malformed osmTag ${JSON.stringify(osmTag)} — expected key=value`)
+					throw new Error(`emitOverpassQL: malformed osmTag ${stringifyJSON(osmTag)} — expected key=value`)
 				}
 
 				return `nwr["${escapeQL(parts[0])}"="${escapeQL(parts[1])}"]`

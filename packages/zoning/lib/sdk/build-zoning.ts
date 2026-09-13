@@ -36,6 +36,7 @@
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,
 	assertNoNegativeClaim as assertCoverageNoNegativeClaim,
@@ -72,6 +73,7 @@ import {
 	GZT_LICENSE,
 	GZT_PLAN_LEVELS,
 } from "#vocabulary"
+
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
  * ignore.
@@ -571,7 +573,7 @@ export function assertCrosswalkIsNotATable(pairs: ReadonlyArray<CrosswalkPair>, 
 
 	throw new Error(
 		`zoning build: ${edgeCount} crosswalk edge(s) would be written while ${broken.length} of ${pairs.length} ` +
-			`(authority, local code) pairs take more than one generic type — ${worst[0]} ${JSON.stringify(worst[1])} takes ` +
+			`(authority, local code) pairs take more than one generic type — ${worst[0]} ${stringifyJSON(worst[1])} takes ` +
 			`${worst[2].length} (${worst[2].join(", ")}). An edge table asserts that a code determines a type, and this ` +
 			"publisher assigns the type per polygon, so the table would be this build's invention rather than the authority's mapping"
 	)

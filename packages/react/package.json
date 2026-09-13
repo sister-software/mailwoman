@@ -98,6 +98,16 @@
 			"node": "./lib/common/text-tokens.ts",
 			"default": "./out/common/text-tokens.js"
 		},
+		"./common/useBuildInfo": {
+			"types": "./out/common/useBuildInfo.d.ts",
+			"node": "./lib/common/useBuildInfo.ts",
+			"default": "./out/common/useBuildInfo.js"
+		},
+		"./map/AppIdentity": {
+			"types": "./out/map/AppIdentity.d.ts",
+			"node": "./lib/map/AppIdentity.tsx",
+			"default": "./out/map/AppIdentity.js"
+		},
 		"./common/LoadingIndicator": {
 			"types": "./out/common/LoadingIndicator.d.ts",
 			"node": "./lib/common/LoadingIndicator.tsx",

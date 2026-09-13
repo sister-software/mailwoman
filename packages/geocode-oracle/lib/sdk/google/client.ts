@@ -51,6 +51,7 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { GeoPoint, type GeoPointInput, isGooglePlaceID } from "@mailwoman/spatial"
 
 import { $private } from "#env"
@@ -285,7 +286,7 @@ export function geocodeCacheKey(config: { method?: string; url?: string; params?
 		.filter((name) => name !== "key")
 		.toSorted()
 
-	return `${(config.method ?? "get").toLowerCase()}:${config.url ?? ""}:${JSON.stringify(params, names)}`
+	return `${(config.method ?? "get").toLowerCase()}:${config.url ?? ""}:${stringifyJSON(params, names)}`
 }
 
 /**
@@ -397,7 +398,7 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 		if (!point) {
 			throw ResourceError.from(
 				HTTP_BAD_REQUEST,
-				`reverseGeocode: ${JSON.stringify(input)} is not a coordinate this client will stand behind. Coordinate ` +
+				`reverseGeocode: ${stringifyJSON(input)} is not a coordinate this client will stand behind. Coordinate ` +
 					"pairs are GeoJSON [longitude, latitude]; an out-of-range magnitude, and 0/0, are both rejected rather " +
 					"than repaired (see GeoPoint.from).",
 				"google",

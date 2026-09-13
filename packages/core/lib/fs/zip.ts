@@ -15,7 +15,6 @@
  *   size and offset slots and carries the real values in the entry's extra field.
  */
 
-import { createWriteStream } from "node:fs"
 import { pipeline } from "node:stream/promises"
 import { crc32 } from "node:zlib"
 
@@ -25,6 +24,7 @@ import { resolvePath, dirname, basename, type PathBuilderLike } from "path-ts"
 import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-promise"
 
 import { tryStat } from "#fs/readers"
+import { openWriteStream } from "#fs/streams"
 import { makeDirectories } from "#fs/writers"
 import { once } from "#utils/events"
 
@@ -251,7 +251,7 @@ export async function extractZipEntry(
 	for await (const entry of archive) {
 		if (!selectorMatches(selector, entry.filename)) continue
 
-		await pipeline(await entry.openReadStream(), createWriteStream(String(destinationPath)))
+		await pipeline(await entry.openReadStream(), openWriteStream(destinationPath))
 
 		return entry.uncompressedSize
 	}
@@ -310,7 +310,7 @@ export async function extractZipEntries(
 		const existing = skipExisting ? await tryStat(destination) : null
 
 		if (existing?.size !== entry.uncompressedSize) {
-			await pipeline(await entry.openReadStream(), createWriteStream(destination))
+			await pipeline(await entry.openReadStream(), openWriteStream(destination))
 		}
 
 		written.push(entry.filename)

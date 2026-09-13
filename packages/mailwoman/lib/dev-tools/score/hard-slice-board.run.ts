@@ -50,6 +50,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -369,7 +370,7 @@ if (values["out-json"]) {
 }
 
 if (values["out-rows"]) {
-	await writeLocalTextFile(`${results.map((r) => JSON.stringify(r)).join("\n")}\n`, values["out-rows"])
+	await writeLocalTextFile(`${results.map((r) => stringifyJSON(r)).join("\n")}\n`, values["out-rows"])
 
 	console.error(`[out] ${values["out-rows"]}`)
 }

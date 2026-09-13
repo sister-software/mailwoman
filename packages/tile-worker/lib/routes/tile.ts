@@ -3,6 +3,7 @@
 
 import { parseTileCoordParams } from "@mailwoman/cartographer/tiles/coords"
 import { ResourceError } from "@mailwoman/core/errors"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { TileType } from "pmtiles"
 
 import { cacheResponse } from "#caching"
@@ -81,7 +82,7 @@ export const TileMetadataRoute = WorkerRoute.GET(
 
 		const tileMetadata = await pm.retrieveTileJSON(tileSetName)
 
-		const response = new Response(JSON.stringify(tileMetadata), {
+		const response = new Response(stringifyJSON(tileMetadata), {
 			headers: {
 				"Content-Type": "application/json",
 				"Cache-Control": "public, max-age=86400",

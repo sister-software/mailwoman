@@ -1,0 +1,16 @@
+{
+	"definition": "packages/mailwoman/lib/eval-harness/prominence-floor/benchmark-definition.json",
+	"benchmarkID": "prominence-floor-v1",
+	"version": "1.0.0",
+	"sha256": "0750cdbafeda0b6a4e4891114ca3ce0fc1493af4089204098464decfb208d3cf",
+	"frozenAt": "2026-09-13",
+	"note": "Content hash over the definition, keys sorted at every depth. The loader refuses a definition whose hash has moved. What is frozen is the POPULATION BANDS, the selection rules, the arm floors, the sampling seed and the decision rule — a band edge or a floor chosen after a rate is visible asserts nothing, because the bands that produced the losing result can be redrawn into the bands that produce the winning one. Changing the definition bumps BOTH the version and this hash.",
+	"changeLog": [
+		{
+			"version": "1.0.0",
+			"frozenAt": "2026-09-13",
+			"sha256": "0750cdbafeda0b6a4e4891114ca3ce0fc1493af4089204098464decfb208d3cf",
+			"note": "First freeze. No panel had been built and no arm had run. One measurement preceded it and is recorded in the definition rather than left implicit: concordance coverage per band, over a 400-row stride sample per band across the four registered countries, to establish that a panel reaching below the cities15000 floor could be populated at all. It returned 301, 282, 231, 208 and 195 coherent of 400 from the smallest band to the largest — coverage is better at the small end, the opposite of the expectation that motivated measuring it. That measurement fixed no band edge, no floor and no threshold; the bands it used are the bands registered here, and they were drawn before it ran."
+		}
+	]
+}

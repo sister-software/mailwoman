@@ -9,6 +9,7 @@
  *   abstention is why `valid_to` is sometimes left open on a filer known to have ceased.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "#schema"
@@ -161,7 +162,7 @@ export function processForm499FRNRelationships(
 	context: Form499FRNContext
 ): number {
 	const { row, frn, form499NodeID, form499RowIndex, lastFiledAt, relationshipValidTo } = context
-	const frnContext = `form499 row #${form499RowIndex} (form499ID=${JSON.stringify(row.form499ID)})`
+	const frnContext = `form499 row #${form499RowIndex} (form499ID=${stringifyJSON(row.form499ID)})`
 	const frnNodeID = mintFRNNodeID(frn, frnContext)
 	insNode.run(frnNodeID, FilerIdentifierType.FRN, frn)
 

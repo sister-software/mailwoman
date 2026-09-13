@@ -6,6 +6,7 @@
  *   block, an operation's thrown error as an `isError` result rather than a dropped connection.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import { operations, type ReleaseOperation } from "@mailwoman/release-kit"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
@@ -32,7 +33,7 @@ export function createReleaseMCPServer(options: ReleaseMCPServerOptions): McpSer
 					const structured: Record<string, unknown> = { ...(await tool.handler(args as Record<string, unknown>)) }
 
 					return {
-						content: [{ type: "text", text: JSON.stringify(structured, null, 2) }],
+						content: [{ type: "text", text: prettyJSON(structured) }],
 						structuredContent: structured,
 					}
 				} catch (error) {

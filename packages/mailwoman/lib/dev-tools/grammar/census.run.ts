@@ -3,6 +3,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
@@ -171,8 +172,5 @@ for (const id of TARGET_IDS) {
 }
 
 if (values["out-json"]) {
-	await writeLocalTextFile(
-		`${JSON.stringify({ summary, requiredIDs: TARGET_IDS, rows: reports }, null, 2)}\n`,
-		values["out-json"]
-	)
+	await writeLocalTextFile(prettyJSON({ summary, requiredIDs: TARGET_IDS, rows: reports }), values["out-json"])
 }

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	buildEngineStamp,
 	encodeLicenseKey,
@@ -81,8 +82,8 @@ describe("buildEngineStamp", () => {
 				["license", "license_url", "name", "version", ...(stamp.notice ? ["notice"] : [])].toSorted()
 			)
 
-			expect(JSON.stringify(stamp)).not.toContain("Example Ltd")
-			expect(JSON.stringify(stamp)).not.toContain(kid)
+			expect(stringifyJSON(stamp)).not.toContain("Example Ltd")
+			expect(stringifyJSON(stamp)).not.toContain(kid)
 		}
 	})
 })

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  *   Shared validation guards for filer.db writers (pulled out of `build-filer.ts`). Before
  *   this move, `cluster-filers.ts` reached into `build-filer.ts` for {@linkcode assertISODate} (the
@@ -39,7 +41,7 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 export function assertISODate(value: string, context: string, caller = "buildFilerDatabase"): string {
 	if (!ISO_DATE_PATTERN.test(value)) {
 		throw new Error(
-			`${caller}: malformed ${context} — ${JSON.stringify(value)} is not an ISO YYYY-MM-DD date. ` +
+			`${caller}: malformed ${context} — ${stringifyJSON(value)} is not an ISO YYYY-MM-DD date. ` +
 				`valid_from/valid_to must always be ISO-sortable dates (decision 7 / criterion 1's asOf predicate is a ` +
 				`plain string comparison over them) — a vintage LABEL like "2026-Q2" outranks every ISO date in its own ` +
 				`year, so it would silently break every asOf-scoped read against the edge it's written to.`

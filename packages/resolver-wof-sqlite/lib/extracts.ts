@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { basename } from "path-ts"
 
 /**
@@ -49,7 +50,7 @@ export function deriveSchemaName(path: string): string {
 		.replaceAll(/[^a-zA-Z0-9_]/g, "_")
 
 	if (!stem) {
-		throw new Error(`deriveSchemaName: could not derive a SQL schema name from path ${JSON.stringify(path)}`)
+		throw new Error(`deriveSchemaName: could not derive a SQL schema name from path ${stringifyJSON(path)}`)
 	}
 
 	return stem
@@ -112,8 +113,8 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
 
 		if (!SQLITE_IDENT_RE.test(derived)) {
 			throw new Error(
-				`resolveExtracts: schema name ${JSON.stringify(derived)} is not a valid SQLite identifier ` +
-					`(derived from path ${JSON.stringify(cfg.path)}). Pass an explicit ` +
+				`resolveExtracts: schema name ${stringifyJSON(derived)} is not a valid SQLite identifier ` +
+					`(derived from path ${stringifyJSON(cfg.path)}). Pass an explicit ` +
 					`{ path, schemaName } to override.`
 			)
 		}
@@ -124,7 +125,7 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
 
 		if (i > 0 && (schemaName === "main" || seen.has(schemaName))) {
 			throw new Error(
-				`resolveExtracts: schema name ${JSON.stringify(schemaName)} collides ` +
+				`resolveExtracts: schema name ${stringifyJSON(schemaName)} collides ` +
 					`(either with "main" or another extract). Pass an explicit { path, schemaName }.`
 			)
 		}

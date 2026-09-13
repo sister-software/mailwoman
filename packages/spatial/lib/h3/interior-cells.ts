@@ -21,6 +21,7 @@
  *   cells, 290 interior, holding 3,248 of the extract's 3,308 `amenity=pharmacy` features.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { cellToBoundary, gridDisk, polygonToCells } from "h3-js"
 
 import { arealPolygons, geometryContains, type ParsedGeometry, type PolygonRings } from "#geometries/polygon"
@@ -35,9 +36,7 @@ function outerRings(geometry: ParsedGeometry): PolygonRings {
 	const polygons = arealPolygons(geometry)
 
 	if (!polygons) {
-		throw new Error(
-			`coverage region: expected a Polygon or MultiPolygon geometry, got ${JSON.stringify(geometry.type)}`
-		)
+		throw new Error(`coverage region: expected a Polygon or MultiPolygon geometry, got ${stringifyJSON(geometry.type)}`)
 	}
 
 	return polygons.filter((rings) => rings.length).map((rings) => rings[0]!)

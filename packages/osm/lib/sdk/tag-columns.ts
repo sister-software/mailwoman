@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  * @file How an OSM tag is read out of a GDAL OSM-driver layer in OGRSQL, shared by the POI and sub-venue extractors.
  */
@@ -32,7 +34,7 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
 
 	if (!promoted) {
 		throw new Error(
-			`tagSelectExpr: no promoted-key list for OSM layer ${JSON.stringify(layer)} — known layers are ` +
+			`tagSelectExpr: no promoted-key list for OSM layer ${stringifyJSON(layer)} — known layers are ` +
 				`${Object.keys(promotedKeysByLayer).join(", ")}`
 		)
 	}
@@ -71,7 +73,7 @@ export function assertSafeTagRules(rules: readonly TagRuleLike[], label: string)
 			] as const) {
 				if (!SAFE_TAG_TOKEN.test(token)) {
 					throw new Error(
-						`${label}: rule ${kind} ${JSON.stringify(token)} contains characters outside the OSM tag-token ` +
+						`${label}: rule ${kind} ${stringifyJSON(token)} contains characters outside the OSM tag-token ` +
 							`allowlist ${SAFE_TAG_TOKEN} — refusing to interpolate it into OGRSQL`
 					)
 				}

@@ -88,6 +88,7 @@
  *   pass.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
@@ -145,7 +146,7 @@ for (const query of board) {
 			result.resolution_tier,
 			result.candidates.length,
 			result.intent_markers.map((m) => m.code).join(",") || "-",
-			result.intent_markers.length ? JSON.stringify(result.intent_markers[0]!.evidence ?? {}) : "-",
+			result.intent_markers.length ? stringifyJSON(result.intent_markers[0]!.evidence ?? {}) : "-",
 		].join("\t")
 	)
 }

@@ -5,6 +5,7 @@ import cluster, { type Worker } from "node:cluster"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
 import type { ServerHandle } from "@mailwoman/api-kit"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 // Default import, not `* as process` — the ESM namespace object for `node:process` only reflects
@@ -151,7 +152,7 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 		worker.on("listening", onListening)
 
 		worker.on("message", (msg) => {
-			setMessage(JSON.stringify(msg))
+			setMessage(stringifyJSON(msg))
 		})
 
 		return () => {

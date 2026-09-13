@@ -159,6 +159,184 @@ test("prefer-home names the git home for a shell-out string in a literal or a te
 	expect(reportsFor("prefer-home", { type: "Literal", value: "git push", range: [0, 0] })).toEqual([])
 })
 
+/**
+ * A `for` header, by its three clauses. `from` is the `<base>.length - <n>` initializer, so a test can vary the descent
+ * without restating the whole node.
+ */
+function forLoop(options: {
+	from?: number
+	until?: number
+	test?: string
+	update?: string
+	body: TestNode
+	base?: string
+}): TestNode {
+	const base = options.base ?? "xs"
+
+	return {
+		type: "ForStatement",
+		range: [0, 0],
+		init: {
+			type: "VariableDeclaration",
+			declarations: [
+				{
+					type: "VariableDeclarator",
+					init: {
+						type: "BinaryExpression",
+						operator: "-",
+						left: { type: "MemberExpression", object: { name: base }, property: { name: "length" } },
+						right: { type: "Literal", value: options.from ?? 1 },
+					},
+				},
+			],
+		},
+		test: {
+			type: "BinaryExpression",
+			operator: options.test ?? ">",
+			left: { type: "Identifier", name: "i" },
+			right: { type: "Literal", value: options.until ?? 0 },
+		},
+		update: { type: "UpdateExpression", operator: options.update ?? "--" },
+		body: options.body,
+	}
+}
+
+/**
+ * `base[index]`. `property` carries its `type` because the rule reads it: a swap of two VARIABLE indices is a shuffle,
+ * a swap where one index is a literal is heapsort's extraction phase.
+ */
+function indexRead(base: string, index: string): TestNode {
+	return {
+		type: "MemberExpression",
+		computed: true,
+		range: [0, 0],
+		object: { type: "Identifier", name: base },
+		property: { type: "Identifier", name: index },
+	}
+}
+
+/**
+ * `base[0]` — a constant index, which is what separates heapsort from a shuffle.
+ */
+function constantIndexRead(base: string): TestNode {
+	return {
+		type: "MemberExpression",
+		computed: true,
+		range: [0, 0],
+		object: { type: "Identifier", name: base },
+		property: { type: "Literal", value: 0 },
+	}
+}
+
+/**
+ * `[base[i], base[j]] = [base[j], base[i]]` — the destructured swap.
+ */
+function destructuredSwap(base: string): TestNode {
+	return {
+		type: "BlockStatement",
+		range: [0, 0],
+		body: [
+			{
+				type: "ExpressionStatement",
+				expression: {
+					type: "AssignmentExpression",
+					left: { type: "ArrayPattern", elements: [indexRead(base, "i"), indexRead(base, "j")] },
+					right: { type: "ArrayExpression", elements: [indexRead(base, "j"), indexRead(base, "i")] },
+				},
+			},
+		],
+	}
+}
+
+/**
+ * `tmp = base[i]; base[i] = base[j]; base[j] = tmp` — two index WRITES to one base.
+ */
+function temporarySwap(base: string): TestNode {
+	const write = (index: string): TestNode => ({
+		type: "ExpressionStatement",
+		range: [0, 0],
+		expression: {
+			type: "AssignmentExpression",
+			left: indexRead(base, index),
+			right: { type: "Identifier", name: "tmp" },
+		},
+	})
+
+	return { type: "BlockStatement", range: [0, 0], body: [write("i"), write("j")] }
+}
+
+test("prefer-home names shuffleWith for a re-typed Fisher-Yates, destructured or with a temporary", () => {
+	const destructured = reportsFor("prefer-home", forLoop({ body: destructuredSwap("xs") }))
+
+	expect(destructured).toHaveLength(1)
+	expect(destructured[0]).toContain("`@mailwoman/core/random`")
+	// The home is `shuffleWith`, NOT `SeededRandom.shuffle`. Three of the four copies could not use the class: each pins
+	// its own stream, and the class seeds mulberry32 internally. Naming it would send a reader to the one home that
+	// cannot serve them.
+	expect(destructured[0]).toContain("shuffleWith")
+	expect(reportsFor("prefer-home", forLoop({ body: temporarySwap("rows") }))).toHaveLength(1)
+})
+
+test("prefer-home stays silent on loops that are not a shuffle", () => {
+	// A backwards scan that swaps nothing.
+	const scan: TestNode = {
+		type: "BlockStatement",
+		range: [0, 0],
+		body: [{ type: "ExpressionStatement", expression: { type: "CallExpression", callee: { name: "visit" } } }],
+	}
+
+	expect(reportsFor("prefer-home", forLoop({ body: scan }))).toEqual([])
+	// Ascending, so `sample`'s partial-Fisher-Yates and every forward loop are out of scope.
+	expect(reportsFor("prefer-home", forLoop({ update: "++", body: destructuredSwap("xs") }))).toEqual([])
+	// Runs to 0 rather than 1 — a full reverse walk, not a shuffle's arithmetic.
+	expect(reportsFor("prefer-home", forLoop({ until: -1, body: destructuredSwap("xs") }))).toEqual([])
+
+	// Two different arrays, so nothing is swapped in place.
+	const across: TestNode = {
+		type: "BlockStatement",
+		range: [0, 0],
+		body: [
+			{
+				type: "ExpressionStatement",
+				expression: {
+					type: "AssignmentExpression",
+					left: { type: "ArrayPattern", elements: [indexRead("xs", "i"), indexRead("ys", "j")] },
+					right: { type: "ArrayExpression", elements: [indexRead("ys", "j"), indexRead("xs", "i")] },
+				},
+			},
+		],
+	}
+
+	expect(reportsFor("prefer-home", forLoop({ body: across }))).toEqual([])
+
+	// Heapsort's extraction phase: counts down from the last index, stops at 1, swaps two computed indices of one array.
+	// It satisfies every clause except that one index is the literal 0 — a shuffle swaps the loop variable with a DRAWN
+	// index, and neither is a constant.
+	const heapsort: TestNode = {
+		type: "BlockStatement",
+		range: [0, 0],
+		body: [
+			{
+				type: "ExpressionStatement",
+				expression: {
+					type: "AssignmentExpression",
+					left: { type: "ArrayPattern", elements: [constantIndexRead("xs"), indexRead("xs", "end")] },
+					right: { type: "ArrayExpression", elements: [indexRead("xs", "end"), constantIndexRead("xs")] },
+				},
+			},
+		],
+	}
+
+	expect(reportsFor("prefer-home", forLoop({ body: heapsort }))).toEqual([])
+})
+
+test("prefer-home reads `i >= 1` as the same stopping point as `i > 0`", () => {
+	const messages = reportsFor("prefer-home", forLoop({ test: ">=", until: 1, body: destructuredSwap("xs") }))
+
+	expect(messages).toHaveLength(1)
+	expect(messages[0]).toContain("shuffleWith")
+})
+
 function importNode(type: string, specifier: string): TestNode {
 	const source = { type: "Literal", value: specifier, range: [0, 0] as [number, number] }
 

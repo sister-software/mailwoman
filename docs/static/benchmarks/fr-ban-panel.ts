@@ -46,6 +46,7 @@
 import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { createRequire } from "@mailwoman/core/module/resolvers"
 import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -262,7 +263,7 @@ async function resample(): Promise<void> {
 		rows,
 	}
 
-	await writeLocalTextFile(`${JSON.stringify(panel, null, "\t")}\n`, flags.sample)
+	await writeLocalTextFile(prettyJSON(panel), flags.sample)
 
 	console.error(`fr-ban-panel: wrote ${rows.length} rows to ${flags.sample} (BAN release ${release}).`)
 }
@@ -430,7 +431,7 @@ async function run() {
 		records: Object.fromEntries(Object.entries(results).map(([arm, r]) => [arm, r.records])),
 	}
 
-	await writeLocalTextFile(`${JSON.stringify(report, null, "\t")}\n`, flags.out)
+	await writeLocalTextFile(prettyJSON(report), flags.out)
 
 	for (const [arm, summary] of Object.entries(report.arms)) {
 		console.log(
@@ -439,7 +440,7 @@ async function run() {
 				`exact=${summary.exactRow} routed=${summary.routedToPostcodeArea} ` +
 				`median=${summary.medianKm}km p90=${summary.p90Km}km max=${summary.maxKm}km`
 		)
-		console.log(`${" ".repeat(10)} tiers ${JSON.stringify(summary.tiers)}`)
+		console.log(`${" ".repeat(10)} tiers ${stringifyJSON(summary.tiers)}`)
 	}
 
 	console.log(`wrote ${resolvePath(flags.out)}`)

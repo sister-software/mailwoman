@@ -61,6 +61,7 @@ import {
 	type USStreetSuffix,
 	NAME_PRONE_US_SUFFIXES,
 } from "@mailwoman/codex/us"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -312,7 +313,7 @@ export function relabelGoldenStreetRow(
 	const rebuilt = `${prefix ? prefix + prefixGap : ""}${name}${suffix ? suffixGap + suffix : ""}`
 
 	if (rebuilt !== street) {
-		throw new Error(`golden-relabel: span reconstruction failed for ${JSON.stringify(street)}`)
+		throw new Error(`golden-relabel: span reconstruction failed for ${stringifyJSON(street)}`)
 	}
 
 	if (canonical && NAME_PRONE_US_SUFFIXES.has(canonical)) {
@@ -327,7 +328,7 @@ export function relabelGoldenStreetRow(
 	if (suffix && venue && new RegExp(`(^|\\W)${escapeRegExp(suffix)}(\\W|$)`, "i").test(venue)) {
 		flags.push({
 			kind: "venue-context",
-			detail: `venue ${JSON.stringify(venue)} also carries ${JSON.stringify(suffix)}`,
+			detail: `venue ${stringifyJSON(venue)} also carries ${stringifyJSON(suffix)}`,
 		})
 	}
 
@@ -338,7 +339,7 @@ export function relabelGoldenStreetRow(
 	if (isStreetDirectionalToken(name)) {
 		flags.push({
 			kind: "remainder-is-affix",
-			detail: `street would become the bare directional ${JSON.stringify(name)}`,
+			detail: `street would become the bare directional ${stringifyJSON(name)}`,
 		})
 	}
 

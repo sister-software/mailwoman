@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	makeTimezoneAnnotator,
@@ -42,14 +43,7 @@ async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {
 	const db = DatabaseClient.temp<TimezoneDatabase>()
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
 
-	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(
-		"Test/Zone",
-		0,
-		10,
-		0,
-		10,
-		JSON.stringify(SQUARE)
-	)
+	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run("Test/Zone", 0, 10, 0, 10, stringifyJSON(SQUARE))
 
 	return db
 }

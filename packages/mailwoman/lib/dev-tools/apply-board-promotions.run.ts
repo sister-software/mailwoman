@@ -29,6 +29,7 @@
  *   [--refuse-country de,es,gb,in,it,nz] [--dry-run]
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { join } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
@@ -54,7 +55,7 @@ if (!idsPath) throw new Error("--ids <file> is required: one board row id per li
 const status = values.to
 
 if (status !== "pass" && status !== "improvement_target" && status !== "known_fail") {
-	throw new Error(`--to must be pass | improvement_target | known_fail, got ${JSON.stringify(status)}`)
+	throw new Error(`--to must be pass | improvement_target | known_fail, got ${stringifyJSON(status)}`)
 }
 
 const refused = new Set(
@@ -87,10 +88,7 @@ const found = new Map<string, string>()
 for (const cc of countryDirectories) {
 	const directory = join(CASES_DIR, cc)
 
-	const files = (await Globerator.from("*", { cwd: directory, withFileTypes: true, onlyFiles: false }).toArray())
-		.filter((entry) => entry.isFile() && entry.name.endsWith(".jsonl"))
-		.map((entry) => entry.name)
-		.toSorted()
+	const files = await Globerator.files("jsonl", { cwd: directory, absolute: false }).toSorted()
 
 	for (const name of files) {
 		const path = join(directory, name)

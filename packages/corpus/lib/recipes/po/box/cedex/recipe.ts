@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { renderAUPoBox, renderNZPoBox } from "#recipes/po/box/cedex/au-nz"
@@ -157,7 +158,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(JSON.stringify({ raw, components: orderComponents(components), country }) + "\n")
+				write(stringifyJSON({ raw, components: orderComponents(components), country }))
 
 				emitted++
 
@@ -192,7 +193,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: kind, synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: kind, synth_base_id: null }))
 
 			emitted++
 		}

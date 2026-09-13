@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { expect } from "vitest"
 
 /**
@@ -15,7 +16,7 @@ export function assertDeepSerialized(
 	expected: unknown,
 	message = "Items are deeply equally after serialization"
 ): void {
-	expect(JSON.stringify(actual), message).toStrictEqual(JSON.stringify(expected))
+	expect(stringifyJSON(actual), message).toStrictEqual(stringifyJSON(expected))
 }
 
 /**

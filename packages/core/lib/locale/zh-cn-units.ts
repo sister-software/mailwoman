@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "#json"
+
 /**
  * @file The CN organizational-unit reader (#2034). China's rural and state-farm addresses carry a hierarchy below the
  *   named settlement that the universal tags have no rung for: `孟定农场 → 三分场 → 八队` (Mengding Farm → No. 3 sub-farm →
@@ -109,7 +111,7 @@ export function isCNUnitChain(span: string): boolean {
  */
 export function readCNUnits(span: string): CNUnit[] {
 	if (!isCNUnitChain(span)) {
-		throw new Error(`readCNUnits: ${JSON.stringify(span)} is not an organizational-unit chain`)
+		throw new Error(`readCNUnits: ${stringifyJSON(span)} is not an organizational-unit chain`)
 	}
 
 	const units: CNUnit[] = []

@@ -7,6 +7,7 @@
  *   rather than crashing a session open.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { createCapitalTable, readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -29,7 +30,7 @@ describe("capital table round-trip", () => {
 			9.9333,
 			-84.0833,
 			"national",
-			JSON.stringify(["san jose", "chepe"])
+			stringifyJSON(["san jose", "chepe"])
 		)
 
 		expect(readCapitalPoints(db)).toEqual([
@@ -47,9 +48,9 @@ describe("capital table round-trip", () => {
 		await using db = await openWithTable()
 		const insert = db.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 
-		insert.run("XX", 0, 0, "county-seat", JSON.stringify(["x"]))
+		insert.run("XX", 0, 0, "county-seat", stringifyJSON(["x"]))
 		insert.run("YY", 0, 0, "national", "not json")
-		insert.run("GD", 12.0529, -61.7523, "national", JSON.stringify(["saint george s", "st georges"]))
+		insert.run("GD", 12.0529, -61.7523, "national", stringifyJSON(["saint george s", "st georges"]))
 
 		const points = readCapitalPoints(db)
 

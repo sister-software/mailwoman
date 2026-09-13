@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "@mailwoman/neural/query-shape-prior"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { describe, expect, it } from "vitest"
@@ -255,7 +256,7 @@ describe("format coverage", () => {
 	const SAMPLES = ["90210", "90210-1234", "SW1A 1AA", "K1A 0B1", "100-0001", "1012 LG", "1012LG", "100 00", "PO Box 74"]
 
 	for (const input of SAMPLES) {
-		it(`biases every format hit produced for ${JSON.stringify(input)}`, () => {
+		it(`biases every format hit produced for ${stringifyJSON(input)}`, () => {
 			const shape = computeQueryShape(input)
 
 			expect(shape.knownFormats.length).toBeGreaterThan(0)

@@ -15,6 +15,7 @@
  *   than picking, and why the corroboration must also land in `filer_family`.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { StatementSync } from "@mailwoman/sqlite/client"
 
@@ -68,7 +69,7 @@ export function processEdgarSubsidiaryRow(
 	row: EdgarSubsidiaryRow,
 	rowIndex: number
 ): void {
-	const context = `edgar row #${rowIndex} (cik=${JSON.stringify(row.cik)})`
+	const context = `edgar row #${rowIndex} (cik=${stringifyJSON(row.cik)})`
 	const cikNodeID = mintCIKNodeID(row.cik, context)
 	insNode.run(cikNodeID, FilerIdentifierType.CIK, row.cik)
 
@@ -126,7 +127,7 @@ export function processEdgarSubsidiaryRow(
 		filingDate,
 		null,
 		matchScore,
-		JSON.stringify({ subsidiaryName: row.subsidiaryName, legalNameOfCarrier: matched.legalName, cik: row.cik })
+		stringifyJSON({ subsidiaryName: row.subsidiaryName, legalNameOfCarrier: matched.legalName, cik: row.cik })
 	)
 
 	// The family-visibility precondition: a filer_edge row ALONE is invisible to familyRollup/filerLookup.families — both

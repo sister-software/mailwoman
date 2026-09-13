@@ -23,6 +23,7 @@
  *   on this recipe's rows; its label set has no `locality_unit`.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { splitCNUnitChain } from "@mailwoman/core/locale/zh-cn-units"
 
 import { type CorpusRecipe, readTuples, sliceSourceID } from "#recipes/scaffold"
@@ -156,7 +157,7 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(JSON.stringify({ raw, components, country: "CN", locale: "zh-CN" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "CN", locale: "zh-CN" }))
 
 				emitted++
 
@@ -185,7 +186,7 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(JSON.stringify({ ...aligned.row, synth_method: "cn-organizational-units", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "cn-organizational-units", synth_base_id: null }))
 
 			emitted++
 		}

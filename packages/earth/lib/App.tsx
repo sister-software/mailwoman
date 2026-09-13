@@ -14,7 +14,6 @@ import "@mailwoman/react/styles.css"
 import "./styles/app.css"
 import { Geocoder, type GeocoderPanels } from "@mailwoman/react/map"
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
-import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
@@ -24,6 +23,7 @@ import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geol
 import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
 
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
+import { EarthFooter } from "./panels/EarthFooter.tsx"
 import { useGeocoderPanels } from "./panels/GeocoderPanels.tsx"
 
 import geocoderStyles from "./panels/geocoder.module.css"
@@ -75,6 +75,11 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			runtime={handle.runtime}
 			panels={panels}
 			defaultAddress={query ?? DEFAULT_ADDRESS}
+			// A permalink answers on arrival. `defaultAddress` only pre-fills the field, so a link carrying `?q=` used to
+			// land on the world view with the address sitting in the box, unrun — the one thing a shared link must not do.
+			// Only the URL's query goes here: a cold visit still pre-fills the demo address without spending the visitor's
+			// first seconds resolving an address they never asked for.
+			initialQuery={query}
 			presets={PRESETS}
 			// `/debug` exists to show the model machinery, so it opens the disclosure the default view collapses.
 			developer={route === Route.Debug}
@@ -95,12 +100,11 @@ function writeQueryToURL(query: string): void {
 
 /**
  * The app's identity and source credits. They belong to the page rather than to the runtime, so the canned runtime the
- * smoke and the stories mount shows the same footer the real one does.
+ * smoke and the stories mount shows the same footer the real one does — the SAME component the real panels use, not a
+ * second copy of it, which is how the commit link came to render here and nowhere a visitor could see it.
  */
 const IDENTITY_PANELS: GeocoderPanels = {
-	footer: (
-		<MapFooter identity={<strong>Mailwoman Earth</strong>} attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]} />
-	),
+	footer: <EarthFooter />,
 }
 
 function FakeGeocoder({ query }: { query: string | null }) {

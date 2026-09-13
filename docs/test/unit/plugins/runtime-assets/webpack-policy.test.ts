@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bundleAliases, configureRuntimeWebpack } from "@mailwoman/docs/plugins/runtime-assets/webpack-policy"
@@ -76,7 +77,7 @@ describe("docs webpack policy", () => {
 						declared.some((pattern) => pattern === `./${stylesheet}` || pattern === stylesheet))
 
 				if (!covered) {
-					offenders.push(`${key} (sideEffects: ${JSON.stringify(declared)})`)
+					offenders.push(`${key} (sideEffects: ${stringifyJSON(declared)})`)
 				}
 			}
 		}

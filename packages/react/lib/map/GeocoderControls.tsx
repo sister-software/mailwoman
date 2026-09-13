@@ -12,7 +12,7 @@
  *   NODE-SAFE: pure React + the shared units, no maplibre.
  */
 
-import { type ReactNode, useCallback, useState } from "react"
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
 
 import type { GeocoderPanels, GeocoderRuntime } from "#map/types"
@@ -26,6 +26,7 @@ import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
 import { BackendControl } from "./BackendControl.tsx"
 import { CompareToggle } from "./CompareToggle.tsx"
+import { DebugInfo } from "./DebugInfo.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
@@ -53,6 +54,11 @@ export interface GeocoderControlsProps {
 	 * The compare-mode state.
 	 */
 	compare: UseCompareState
+	/**
+	 * A query that arrived with the page (a permalink's `?q=`), run once as soon as the runtime is ready. See
+	 * `GeocoderProps.initialQuery`.
+	 */
+	initialQuery?: string | null
 	/**
 	 * Host-injected panels (about, release blurb, compare, permalink, extras, failure).
 	 */
@@ -109,6 +115,7 @@ export function GeocoderControls({
 	presets,
 	placeholder,
 	map = null,
+	initialQuery = null,
 	onSubmitQuery,
 	onSelectVersion,
 	onForceWASMChange,
@@ -121,6 +128,11 @@ export function GeocoderControls({
 
 	// One sheet at a time. Two open at once stack on the same edge, and on a phone each is the full panel.
 	const [openSheet, setOpenSheet] = useState<SheetName>(developer ? "developer" : null)
+
+	// The result sheet covers the bottom half of the map and had no way out: no close, no Escape, no backdrop — the
+	// only way to clear it was to run another query. `MapSheet` states the rule for the other four sheets ("the close
+	// button is not optional"); this one is hand-rolled and never got it. Reset on every new query, below.
+	const [resultDismissed, setResultDismissed] = useState(false)
 	const { bearing, resetNorth } = useMapBearing(map)
 
 	const toggleSheet = (name: Exclude<SheetName, null>) => setOpenSheet((current) => (current === name ? null : name))
@@ -130,11 +142,42 @@ export function GeocoderControls({
 	// caused it, rather than an effect watching the result after the fact.
 	const runQuery = useCallback(
 		(query: string) => {
+			// A new query is a new answer: whatever the visitor dismissed, they want to see this one.
+			setResultDismissed(false)
 			onSubmitQuery?.(query)
 			void geocode.submit(query)
 		},
 		[onSubmitQuery, geocode]
 	)
+
+	// A permalink answers on arrival. `runtime.ready` holds it back — the parse pipeline drops a submit made before the
+	// model is loaded, which is exactly the window a cold permalink lands in — and the ref makes it once-only, so a
+	// later re-render (or the visitor clearing the field) cannot re-run the URL's query over their own work.
+	const autoRanInitialQuery = useRef(false)
+
+	useEffect(() => {
+		if (autoRanInitialQuery.current) return
+
+		if (!initialQuery || !runtime.ready) return
+
+		autoRanInitialQuery.current = true
+		// `geocode.submit` rather than `runQuery`: the query is already in the URL, so writing it back is a no-op that
+		// would only add a history entry's worth of churn.
+		void geocode.submit(initialQuery)
+	}, [initialQuery, runtime.ready, geocode])
+
+	// Escape dismisses the result sheet, matching `MapSheet`.
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setResultDismissed(true)
+			}
+		}
+
+		document.addEventListener("keydown", onKeyDown)
+
+		return () => document.removeEventListener("keydown", onKeyDown)
+	}, [])
 
 	// A label on the map is a search a visitor already typed by pointing at it.
 	const pickLabel = useCallback(
@@ -151,18 +194,23 @@ export function GeocoderControls({
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
 	// The bundle load no longer opens the result sheet: it reports on the bar at the top of the viewport and in the
 	// footer, so an empty sheet does not sit over the map for the length of a 38 MB download.
-	const showSheet = Boolean(busy || result || errorMessage)
+	const showSheet = Boolean(busy || result || errorMessage) && !resultDismissed
 
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0
 
+	// The model downloads BEFORE the first step is entered, so the step fraction holds at 1/steps for the whole of a
+	// 38 MB transfer — the part of the wait a visitor actually sits through. While bytes are arriving the bar follows
+	// them, scaled into the first step's share so it never runs backwards when the steps take over.
+	const stepFraction = steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null
+	const byteFraction = loading?.byteFraction
+
+	const fraction =
+		typeof byteFraction === "number" && steps ? (byteFraction * 1) / steps : (byteFraction ?? stepFraction)
+
 	return (
 		<>
-			<MapProgressBar
-				active={bundleLoading}
-				fraction={steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null}
-				label="Loading the geocoder"
-			/>
+			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
 			<div className="mw-map-chrome mw-map-chrome--top">
 				<form
@@ -184,6 +232,14 @@ export function GeocoderControls({
 							aria-label="Address"
 							value={geocode.text}
 							onChange={(event) => geocode.setText(event.target.value)}
+							// The field ships pre-filled with the demo address, so the first click used to drop a caret in the
+							// middle of it and the visitor typed into someone else's address. Select the seed on focus so one
+							// keystroke replaces it — and only while it IS the untouched seed, so this never eats real work.
+							onFocus={(event) => {
+								if (placeholder && event.currentTarget.value === placeholder) {
+									event.currentTarget.select()
+								}
+							}}
 							disabled={!runtime.ready}
 							placeholder={placeholder}
 							onKeyDown={autocomplete.onInputKeyDown}
@@ -290,6 +346,16 @@ export function GeocoderControls({
 					</div>
 
 					<div className="mw-map-sheet__row">
+						<span className="mw-map-sheet__label">Debug info</span>
+						<DebugInfo
+							activeBackend={runtime.activeBackend}
+							forceWASM={runtime.forceWASM}
+							selectedVersion={runtime.selectedVersion}
+							ready={runtime.ready}
+						/>
+					</div>
+
+					<div className="mw-map-sheet__row">
 						<CompareToggle
 							versions={versions}
 							primaryVersion={runtime.selectedVersion ?? null}
@@ -308,6 +374,23 @@ export function GeocoderControls({
 			{showSheet ? (
 				<section className="mw-map-sheet mw-map-sheet--bottom" aria-label="Result">
 					<div className="mw-map-sheet__handle" aria-hidden="true" />
+
+					{/*
+					 * A zero-height sticky row, so the close stays pinned to the top of the sheet as a long result scrolls
+					 * under it. An absolutely-positioned button would scroll away with the content — the sheet is its own
+					 * scroll container — which is the same thing that already happens to this sheet's "Parsed components"
+					 * header.
+					 */}
+					<div className="mw-map-sheet__dismiss">
+						<button
+							type="button"
+							className="mw-map-sheet__close mw-map-sheet__close--floating"
+							aria-label="Close the result"
+							onClick={() => setResultDismissed(true)}
+						>
+							<span aria-hidden="true">×</span>
+						</button>
+					</div>
 
 					{errorMessage ? <p className="mw-error">{errorMessage}</p> : null}
 

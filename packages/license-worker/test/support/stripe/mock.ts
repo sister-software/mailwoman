@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  *   Two stand-ins for Stripe. `signedWebhook` signs a payload the way Stripe's destination does, so the verifier under
  *   test sees a real `Stripe-Signature`. `stripeFetch` is a fetch the SDK's HTTP client calls instead of the network:
@@ -16,7 +18,7 @@ export async function signedWebhook(
 	secret: string,
 	timestamp = Math.floor(Date.now() / 1000)
 ): Promise<{ body: string; signature: string }> {
-	const body = JSON.stringify(payload)
+	const body = stringifyJSON(payload)
 	const encoder = new TextEncoder()
 
 	const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, [

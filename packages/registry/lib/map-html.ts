@@ -24,6 +24,7 @@
  *   Bucket labels render verbatim from the data, never editorialized.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeHTML } from "@mailwoman/core/strings/escape"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
@@ -96,7 +97,7 @@ const CROSS_COLOR = "#e8590c"
  * breakout impossible.
  */
 function safeJSONForScript(value: unknown): string {
-	return JSON.stringify(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
+	return stringifyJSON(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
 }
 
 function sourceCount(props: MapFeatureData): number {

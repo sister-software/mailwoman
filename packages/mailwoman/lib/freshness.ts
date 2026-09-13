@@ -20,6 +20,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 import { probeManifest } from "#data/inventory"
 
@@ -143,7 +144,7 @@ async function readArtifact({ name, path }: FreshnessArtifact): Promise<Artifact
 			name,
 			path,
 			manifest: ManifestState.Unreadable,
-			reason: `layer_manifest.created_at is not a date: ${JSON.stringify(manifest.created_at)}`,
+			reason: `layer_manifest.created_at is not a date: ${stringifyJSON(manifest.created_at)}`,
 		}
 	}
 

@@ -8,6 +8,7 @@
  *   no-match fall-through.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import { type StreetSegmentDatabase, writeInterpCalibration } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -59,7 +60,7 @@ function seed(db: DatabaseClient<StreetSegmentDatabase>, segments: SeedSegment[]
 			s.parity,
 			s.postcode,
 			s.street_norm,
-			JSON.stringify(s.geometry)
+			stringifyJSON(s.geometry)
 		)
 	}
 }

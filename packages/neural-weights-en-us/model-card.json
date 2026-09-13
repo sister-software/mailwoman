@@ -260,14 +260,14 @@
 				"combined_verdict": "FAIL — do not ship (until the metamorphic regression above is triaged)"
 			}
 		},
-		"check_2026_07_18_v710_camx": "v6.0.0-shipped-baseline check + golden 2pp check (v385 vs shipped v381, channels-on, same run): PASS. Golden: exact-match 24.2% (1105 vs 1104, +1 row), country 89.8 vs 91.4 (−1.6, small-N 220/245, sub-threshold — the only mover >0.5pp down), region 78.1 vs 78.6 (−0.5), locality/postcode/street/house_number flat. NO tag >2pp down. Native-order held-out board: MX locality 74.0→82.7 (+8.7), CA neutral. Gauntlet (eval gauntlet --candidate): regression 33/33 PASS; metamorphic INV 62/63, DIR 3/3, BAND 16/21 — identical known-xfail profile to shipped v381 (the 1 INV[comma-drop] xfail is the pre-existing FR #1101 case; US comma-drop held). No new regression. Grade: docs/articles/evals/2026-07-18-v710-camx-latam-grade.md.",
+		"check_2026_07_18_v710_camx": "v6.0.0-shipped-baseline check + golden 2pp check (v385 vs shipped v381, channels-on, same run): PASS. Golden: exact-match 24.2% (1105 vs 1104, +1 row), country 89.8 vs 91.4 (−1.6, small-N 220/245, sub-threshold — the only mover >0.5pp down), region 78.1 vs 78.6 (−0.5), locality/postcode/street/house_number flat. NO tag >2pp down. Native-order held-out board: MX locality 74.0→82.7 (+8.7), CA neutral. Gauntlet (eval gauntlet --candidate): regression 33/33 PASS; metamorphic INV 62/63, DIR 3/3, BAND 16/21 — identical known-xfail profile to shipped v381 (the 1 INV[comma-drop] xfail is the pre-existing FR #1101 case; US comma-drop held). No new regression. Grade: docs/records/evals/2026-07-18-v710-camx-latam-grade.md.",
 		"check_2026_07_17_v650_punct_digit": "v6.0.0-shipped-baseline check: PASS, 0 tags >2pp below shipped v310, +2.3pp us.country_homograph_f1 (only >2pp mover). Gauntlet: PASS — clear to ship (regression 33/33; metamorphic INV[comma-drop] 9/10 held — the US '1600 Pennsylvania Ave NW Washington DC' comma-free rooftop RESTORED, the FR 'Rue du Chevaleret' remains the tracked #1101 xfail; held-out FR/BAN n=300 not significantly worse). Digit ownership (NO board 3): bare-street-hn 0.693->0.733 (+4pp), bare-pc guard held 1.000. Grade: package-shaped --weights-cache (#718), int8 candidate vs int8 shipped, on 2026-07-17.",
 		"check_2026_07_16_v640_fr_fragment": {
 			"promotion_eval": "v6.0.0-shipped-baseline check: PASS 18/18, no revision, no relaxation. This spec was reduce from the SHIPPED v264's own readings BEFORE v310 was graded, with per-metric noise margins (floor = shipped − max(1.0pp, 2 × the 95% binomial half-width)); it tightened 15 of 18 floors over the retired v5.3.0-family spec. The FR fragment board's targets and guards were pre-registered in the v3.1.0-fr-fragment config header and in baselines.json (profile fragment-fr-v264), registered against the shipped model before the run. 2pp pre-publish bar: clear on every tag. No trade was measured and none is claimed.",
 			"promotion_eval_docs": [
-				"docs/articles/evals/2026-07-16-t2-fr-fragment-verdict.md (the read)",
-				"docs/articles/evals/2026-07-16-t1c-fragment-board-verdict.md (the diagnosis this fix confirms)",
-				"docs/articles/evals/2026-07-16-span-head-closed.md (the pre-registered follow-up: the span head does NOT compose with this extract)"
+				"docs/records/evals/2026-07-16-t2-fr-fragment-verdict.md (the read)",
+				"docs/records/evals/2026-07-16-t1c-fragment-board-verdict.md (the diagnosis this fix confirms)",
+				"docs/records/evals/2026-07-16-span-head-closed.md (the pre-registered follow-up: the span head does NOT compose with this extract)"
 			],
 			"fr_fragment_board": {
 				"$note": "Board 2 — BAN-sampled, 2800 fixtures, street surfaces disjoint from the training extract. Wilson 95% CIs. No target's interval overlaps its baseline.",
@@ -366,9 +366,9 @@
 		"check_2026_07_02_v510_vocab_splice": {
 			"promotion_eval": "#884 checks ALL PASS, pre-registered before measurement (check log: /mnt/playpen/mailwoman-data/scratch-825/check-v193/RESULTS.md; evidence comments on #884). US-2k non-inferiority passed at the strongest possible level — the int8 candidate's per-row dump is byte-identical to shipped v4.15.0's. CZ/PL/SK/SI improve checks: wrong-city diff CIs wholly negative, resolved-p50 improve CIs wholly negative, resolve-rate floors held. Functional eyeball: CZ churn (103 fixed / 43 newly-wrong) diagnosed as a pre-existing locality-truncation→namesake residual exposed where the baseline won by garbage-parse fluke — NOT a parse regression (10/10 rows read). The int8 SLO overage (+3.8 MB) was an explicit operator accept (four locales for the same bytes).",
 			"promotion_eval_docs": [
-				"docs/articles/evals/2026-07-01-day-825-tokenizer-fix.md",
-				"docs/articles/evals/2026-07-02-lab-session-postmortem.md",
-				"docs/articles/evals/parity-scorecard-2026-07-02.md (the pre-splice baseline, 17/17 PASS)"
+				"docs/records/evals/retrospectives/2026-07-01-day-825-tokenizer-fix.md",
+				"docs/records/evals/retrospectives/2026-07-02-lab-session-postmortem.md",
+				"docs/records/evals/competitive-parity/parity-scorecard-2026-07-02.md (the pre-splice baseline, 17/17 PASS)"
 			],
 			"wrong_city_resolved_gt20km_n1k": {
 				"cz": {
@@ -403,7 +403,7 @@
 		},
 		"check_2026_06_25_v415_anchor_absorption": {
 			"promotion_eval": "v4.15.0-boundary check PASS after a stated, operator-approved revision of two postcode floors (us.postcode 97→95, fr.postcode 99.5→99.3). The #723 fix (SLICE-H anchor-ON 20→100) trades −2pp us.postcode LABEL-F1 on the rare leading-5-digit-postcode (VT E911) case. The trade is COORDINATE-INVISIBLE — proven by the non-circular oa-resolver-eval below, not asserted. Every other floor holds with margin (us.locality 76.7/62.2, us.street 82.3/74, us.region 88.6/80.1, de.native_locality 89.3/83.8, arena.perturb 78/71); mask-regression check (#718) PASS; int8↔fp32 delta 0. No silent drift: the revision is in scripts/eval/checks/v4.15.0-boundary.json with the reason, mirrored here and in the promotion doc.",
-			"promotion_eval_doc": "docs/articles/evals/2026-06-25-v4.15.0-promotion.md",
+			"promotion_eval_doc": "docs/records/evals/model-versions/2026-06-25-v4.15.0-promotion.md",
 			"slice_h_anchor_on": {
 				"v192": 20,
 				"v193a3": 100,
@@ -449,7 +449,7 @@
 		},
 		"check_2026_06_19_fr_admin_split": {
 			"promotion_eval": "FR centroid check PASS — surpasses v1.5.0 on the SHIPPED assembled anchor-ON coordinate (held-out FR golden, 3000 disjoint communes): coord p50 42.5→2.2 km, mean 175→105.5 km (−40%), région-emit 39.6→99.6%. US assembled coordinate FLAT (oa-resolver-eval, 2000 OA-US rows: locality-match 97.5→97.6, p50 3.3=3.3). Two label deltas trip the 2pp pre-publish check, BOTH coordinate-invisible and operator-approved (#728): us.locality −2.2 (precision-only, 0 recall misses) and fr.country −3.5 (resolver given --default-country FR). No silent drift — both stated here + on #728 + the night postmortem.",
-			"promotion_eval_doc": "docs/articles/evals/2026-06-19-night-postmortem.md",
+			"promotion_eval_doc": "docs/records/evals/night-shifts/2026-06-19-night-postmortem.md",
 			"bridge_retired": true,
 			"flagged_deltas_coordinate_invisible": [
 				"us.locality -2.2 (precision-only — 0 recall misses, spurious-FP on gold-locality-absent rows)",

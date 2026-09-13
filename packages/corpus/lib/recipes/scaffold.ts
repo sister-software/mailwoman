@@ -10,7 +10,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
@@ -278,11 +278,38 @@ export interface CanonicalSliceRow {
 }
 
 /**
+ * Emit one line of a recipe's output.
+ *
+ * The delimiter is supplied by the caller of `run` — pass the content alone, never `content + "\n"`.
+ */
+export type WriteRecipeLine = (line: string) => void
+
+/**
+ * A sink the recipe writer emits into — `WriteStream` satisfies it, and so does a test's array push.
+ */
+export interface RecipeLineSink {
+	write(chunk: string): unknown
+}
+
+/**
+ * Bind {@linkcode WriteRecipeLine} to a sink, supplying the delimiter.
+ *
+ * The content and the delimiter are separate writes. Stream writes are ordered, so the newline always follows its line,
+ * and concatenating the two would stringify a non-string chunk through `toString()` and corrupt its bytes.
+ */
+export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
+	return (line) => {
+		sink.write(line)
+		sink.write("\n")
+	}
+}
+
+/**
  * Run a canonical row through `alignRow` and, on success, write the `LabeledRow` (+ `synth_method` / `synth_base_id`)
  * as one JSONL line. Returns true if emitted, false if alignment quarantined it.
  */
 export function alignAndWrite(
-	write: (line: string) => void,
+	write: WriteRecipeLine,
 	canonical: CanonicalSliceRow,
 	synthMethod: string,
 	synthBaseID: string | null = null
@@ -290,7 +317,7 @@ export function alignAndWrite(
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 	if (!aligned.row) return false
-	write(JSON.stringify({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseID }) + "\n")
+	write(stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseID }))
 
 	return true
 }
@@ -440,5 +467,5 @@ export interface CorpusRecipe {
 	 * Do the build: create the recipe's PRNG from `opts.seed` (its LEGACY generator — `makeLcg` or `makeMulberry32` — for
 	 * byte-reproducibility), synthesize, and emit each row via `write`.
 	 */
-	run(opts: SliceRecipeOpts, write: (line: string) => void): Promise<SliceStats>
+	run(opts: SliceRecipeOpts, write: WriteRecipeLine): Promise<SliceStats>
 }

@@ -17,13 +17,13 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { isoDate, isoSeconds, streamToDisk } from "@mailwoman/core/utils"
-import { basename, dirname, extname } from "path-ts"
+import { basename, dirname, extname, type PathBuilderLike } from "path-ts"
 
 import { type LockedSource, type SourcesLock, SourcesLockSchema } from "#schema/manifest"
 import type { PlanetarySource } from "#sdk/sources"
 
 export interface FetchedSource {
-	path: string
+	path: PathBuilderLike
 	bytes: number
 	sha256: string
 	/**
@@ -63,12 +63,16 @@ async function writeLock(lock: SourcesLock): Promise<void> {
 }
 
 /**
- * Where a source's file lives: a nightly archive carries its snapshot date in the name; a product keeps its own.
+ * Resolve the cached file path for a source.
+ *
+ * Snapshot-pinned sources use `<source.id>-<snapshot><ext>` so each day gets a distinct file.
+ *
+ * Product-pinned sources keep the original filename from the URL.
  */
-function sourceCachePath(source: PlanetarySource, snapshot: string | undefined): string {
+function sourceCachePath(source: PlanetarySource, snapshot: string | undefined) {
 	const fileName = snapshot ? `${source.id}-${snapshot}${extname(source.url)}` : basename(source.url)
 
-	return String(dataRootPath("astrogeology", source.body, "source", fileName))
+	return dataRootPath("astrogeology", source.body, "source", fileName)
 }
 
 /**
@@ -94,7 +98,12 @@ export async function downloadPinned(
 			)
 		}
 
-		return { path, bytes, sha256: locked.sha256, reused: true }
+		return {
+			path,
+			bytes,
+			sha256: locked.sha256,
+			reused: true,
+		}
 	}
 
 	// A file at the final path finished (the transfer renames from `.part` only on a clean end), so a complete file
@@ -102,7 +111,13 @@ export async function downloadPinned(
 	if (!onDisk) {
 		// The transfer opens its `.part` stream in place; the source directory is this fetch's to create.
 		await makeDirectories(dirname(path))
-		await streamToDisk({ url: source.url, destination: path, context: source.id, onProgress: options.onProgress })
+
+		await streamToDisk({
+			url: source.url,
+			destination: path,
+			context: source.id,
+			onProgress: options.onProgress,
+		})
 	}
 
 	const bytes = (await statPath(path)).size

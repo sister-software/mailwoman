@@ -9,6 +9,7 @@
  *   Reports; does not decide. Both databases are opened read-only.
  */
 
+import { prettyJSON } from "@mailwoman/core/json"
 import { Box, Text } from "ink"
 
 import {
@@ -60,7 +61,7 @@ const GazetteerVerifyPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opt
 			onPhase: phaseReporter(),
 		})
 
-		return options.json ? [JSON.stringify(report, null, 2)] : formatCodePointCheckReport(report)
+		return options.json ? [prettyJSON(report)] : formatCodePointCheckReport(report)
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

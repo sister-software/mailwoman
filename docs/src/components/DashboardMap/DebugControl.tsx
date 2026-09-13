@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { DebugControlBase } from "@mailwoman/react/map/map-debug"
+import { prettyJSON } from "@mailwoman/core/json"
 
 import "maplibre-gl/dist/maplibre-gl.css"
+import { DebugControlBase } from "@mailwoman/react/map/map-debug"
 import type { LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
 import { memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
@@ -54,7 +55,7 @@ export const DebugControl: React.FC = memo(() => {
 				const layerID = feature.layer.id
 
 				const properties: string =
-					"pmap:kind" in feature.properties ? feature.properties.name : JSON.stringify(feature.properties, null, 2)
+					"pmap:kind" in feature.properties ? feature.properties.name : prettyJSON(feature.properties)
 
 				return (
 					<div key={index}>

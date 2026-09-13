@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { prettyJSON } from "@mailwoman/core/json"
+
 import { booleanValue, type CommandSpec, runNativeCommand } from "#cli/native/spec"
 
 /**
@@ -38,7 +40,7 @@ export async function run(args: readonly string[]): Promise<number> {
 
 		process.stdout.write(
 			booleanValue(parsed.values, "json")
-				? `${JSON.stringify(environment ? { ...report, environment } : report, null, 2)}\n`
+				? prettyJSON(environment ? { ...report, environment } : report)
 				: `${renderDoctorReport(report, environment)}\n`
 		)
 

@@ -180,6 +180,15 @@ export interface ResolutionState {
 	lookupsRemaining: number
 	placetypeMap: PlacetypeMap
 	minWinningScore: number
+	/**
+	 * Nodes {@link ResolutionState.minWinningScore} refused, counted so a recovery pass can tell a refusal from a node
+	 * nothing resolved.
+	 *
+	 * Both look identical in the tree — neither carries a `placeID` — and `applySpanRescore` runs on any tree holding no
+	 * resolved place, so without this the refusal reopens the very lookup it just declined and the floor cannot express
+	 * abstention at all.
+	 */
+	minScoreRefusals: number
 	candidatesPerLookup: number
 	defaultCountry?: string
 	/**

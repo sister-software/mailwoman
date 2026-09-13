@@ -1,0 +1,147 @@
+{
+	"benchmarkID": "same-data-resolver-v1",
+	"version": "1.2.0",
+	"issue": "https://github.com/sister-software/mailwoman/issues/2261",
+	"claim": "Given the same frozen candidate fixture, Mailwoman selects the correct admin candidate more often and makes fewer wrong-area selections than the registered baseline resolver.",
+	"claimBoundary": "The benchmark says nothing about global coverage, index quality, retrieval, rooftop accuracy, or performance against any third-party geocoder. Those claims belong to the end-to-end record at docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md, which this work does not alter.",
+	"whyAdminOnly": "resolveTree picks a place per node, and the rooftop tier (AddressPointLookup / InterpolationLookup / StreetCentroidLookup) returns one hit or null with no candidate set. ResolverBackend.findPlace is the only interface in the resolution ladder where a candidate set is selected from, so it is the only layer a same-evidence comparison can measure.",
+	"selectedCandidateRule": "An arm's selection for a row is the place id decorating the resolved node of the deepest admin tag in the returned tree, deepest-first over locality, dependent_locality, municipality, district, subregion, region, prefecture, country. A row where no admin node resolved is an abstention. A selection is CORRECT when its id is a MEMBER of the row's gold identity set.",
+	"goldSource": {
+		"register": "GeoNames cities15000.txt",
+		"license": "CC-BY-4.0",
+		"attribution": "GeoNames",
+		"baseURL": "https://download.geonames.org/export/dump",
+		"identity": "geonameid",
+		"postalRegister": "GeoNames allCountries-postal.txt",
+		"concordance": "The gn:id rows of the concordances table in the WOF admin gazetteer, joined to spr so the guard below can read each linked row's placetype, name, country and coordinate. The gold ENTITY and its coordinate come from GeoNames; only the identity join is WOF's, and it is a published concordance a reader can check.",
+		"identitySetRule": "The gold is the SET of DISTINCT city-tier WOF ids (placetype locality or localadmin) the concordance reaches, not one id. Measured on the shipped admin-global-priority.db: 21 of the 10,738 coherent sets hold more than one distinct id — the gazetteer carries that place twice — and grading against one arbitrary member would measure which duplicate an arm returned. The ids are deduplicated before the count: the table holds 2,057,196 gn:id rows over 1,775,438 distinct (id, other_id) pairs, so the same link is written more than once, and a count taken over rows rather than distinct ids reports 4,304 instead of 21.",
+		"coherenceGuard": "A set is admitted only when every member's folded name equals the register's name or its ASCII transliteration, every member sits in the register's country, and every member lies within 25 km of the register's coordinate. This guard, not the set rule, is what most of the exclusions rest on: 1,152 geonameids reach only a neighbourhood or a region, and grading a locality selection against a region's id marks a correct answer wrong; 1,492 more reach a differently-named row.",
+		"excludedRowsNote": "A geonameid whose join fails any part of the guard is UNGRADEABLE and is excluded before sampling, under the count that names the reason: no concordance, no city-tier row, name disagrees, country split, or too far apart. Measured on the shipped artifact: 20,406 / 1,152 / 1,492 / 11 / 72 of 33,871, leaving 10,738 coherent. These are properties of the gazetteer, not choices the panel made."
+	},
+	"sampling": {
+		"generator": "mulberry32",
+		"seed": 20260913,
+		"order": "Eligible rows are sorted by geonameid ascending, then shuffled once with the seeded generator, then taken in order until the stratum reaches its target. Strata are filled in the order listed below and draw from disjoint geonameid pools.",
+		"rowsPerStratum": 100,
+		"minimumRowsPerStratum": 50,
+		"underfillRule": "rowsPerStratum is a TARGET. A stratum whose eligible pool cannot reach it is reported at its achieved n with the census that explains the shortfall, and its rows still enter the pooled decision. A stratum below minimumRowsPerStratum is reported and EXCLUDED from the pooled decision, because too few rows would contribute noise under a per-stratum label that implies coverage. Pooling strata of unequal size weights them unequally; the record states each stratum's n beside every pooled figure."
+	},
+	"strata": [
+		{
+			"id": "unambiguous",
+			"purpose": "Establish that each resolver can select an obvious correct result.",
+			"eligibility": "The lowercased asciiname is borne by exactly one row in cities15000.txt; population is at least 50000; the row has a coherent gold identity set.",
+			"query": "The row's name field, verbatim — the bare-toponym form.",
+			"gold": "That row's geonameid.",
+			"correctIsAbstention": false
+		},
+		{
+			"id": "homograph_qualified",
+			"purpose": "Test whether a named country or region qualifier overrides the population-anchored ranking prior.",
+			"eligibility": "The lowercased asciiname is borne by two or more rows in two or more distinct countries; the second-largest bearer's population is at least one third of the largest bearer's; BOTH of the two largest bearers have a coherent gold identity set, because the gold alternates between them and a row whose gold cannot be graded cannot be built. Bearers beyond those two are distractors and need no identity join. Measured on the shipped artifact this pool holds 53 names, short of the 100 target — the shortfall is concordance coverage, and the underfill rule above governs it.",
+			"query": "The bearer's name, a comma and a space, then the qualifier: the country's English short name for a country-qualified row, or the bearer's admin1 code for a region-qualified row. The country-qualified and region-qualified forms alternate by position in the shuffled order.",
+			"gold": "One named bearer. In 50 of the 100 rows the gold is the MOST populous bearer; in the other 50 it is a bearer that is not the most populous, alternating by position in the shuffled order. A panel whose gold is always the most populous bearer would be satisfied by the population prior alone and would measure nothing.",
+			"correctIsAbstention": false
+		},
+		{
+			"id": "reordered",
+			"purpose": "Test resolution over a fragmented or reordered parse, with the candidate evidence unchanged.",
+			"eligibility": "The unambiguous-stratum eligibility rule, over rows not drawn by an earlier stratum.",
+			"query": "The qualified rendering with its parts reversed and its comma removed: the admin1 code, a space, then the name. The transform is mechanical and is applied without reading the row.",
+			"gold": "That row's geonameid.",
+			"correctIsAbstention": false
+		},
+		{
+			"id": "contradictory_postcode",
+			"purpose": "Test refusal of a nearby but inconsistent candidate.",
+			"eligibility": "The unambiguous-stratum eligibility rule, over rows not drawn by an earlier stratum, and the row's country must appear in allCountries-postal.txt with at least one postcode in a different admin1 from the row's.",
+			"query": "The row's name, a comma and a space, then a postcode from the SAME country and a DIFFERENT admin1, taken in geonameid order from the postal register.",
+			"gold": "That row's geonameid. The name is the address's own statement of what it denotes; the postcode contradicts it. An abstention is scored as a miss on selection accuracy and is not a wrong-area selection, the same as every other stratum — no special rule.",
+			"correctIsAbstention": false
+		},
+		{
+			"id": "gold_absent",
+			"purpose": "Test abstention; a resolver must not manufacture a place.",
+			"eligibility": "The unambiguous-stratum eligibility rule, over rows not drawn by an earlier stratum.",
+			"query": "The row's name field, verbatim.",
+			"gold": "That row's geonameid, with EVERY MEMBER of its gold identity set removed from the fixture after recording. Removing one member of a duplicated place would leave the other answerable, and the stratum would measure nothing. The correct behaviour is to select nothing.",
+			"correctIsAbstention": true
+		}
+	],
+	"arms": [
+		{
+			"id": "mailwoman",
+			"description": "The production resolver, createWOFResolver over the replay backend, with library-default options. Its git revision and the frozen parse's model version are recorded in the run receipt."
+		},
+		{
+			"id": "baseline",
+			"description": "A deterministic resolver declared before results: exact component agreement first, then normalized name and qualifier similarity, then the fixture's canonical candidate order. It reports its score components, has no network, and reads no data beyond the fixture."
+		},
+		{
+			"id": "ablation",
+			"description": "The production resolver with its six default-ON coherence and recovery options disabled: adminCoherence, postcodeConsistency, spanRescore, postalCompoundRecovery, parentFallback, hierarchyCompletion. It is not a substitute for the baseline; it says whether those passes, rather than candidate availability, account for a difference.",
+			"resolveOpts": {
+				"adminCoherence": false,
+				"postcodeConsistency": false,
+				"spanRescore": false,
+				"postalCompoundRecovery": false,
+				"parentFallback": false,
+				"hierarchyCompletion": false
+			}
+		}
+	],
+	"withheldFixtureFields": {
+		"fields": ["containedByQualifier", "regionScopeMiss", "resolutionQuality", "mismatch", "variantAliasExempted"],
+		"reason": "Each is a verdict the backend already computed ABOUT THIS QUERY rather than a fact about the place. Shipping one hands every arm a partly solved row and makes the containment ablation unmeasurable. They are absent for every arm, and adminContainmentRerank is pinned off, which is also its library default.",
+		"carriedAnyway": {
+			"fields": ["prominence", "referential"],
+			"reason": "Both are backend-derived from population and the bias points, so they repeat evidence the fixture already carries — but the production ranking reads them, and removing them would change the arm under test rather than the baseline. They stay in the fixture, available to every arm, and the baseline's declared rule does not read them."
+		}
+	},
+	"metrics": [
+		{
+			"id": "candidate_selection_accuracy",
+			"denominator": "rows where the gold candidate is present in the fixture",
+			"definition": "the selected candidate id equals the gold candidate id"
+		},
+		{
+			"id": "wrong_area_rate",
+			"denominator": "rows where the gold candidate is present in the fixture",
+			"definition": "the selected candidate lies more than 25 km from the gold coordinate"
+		},
+		{
+			"id": "abstention_precision",
+			"denominator": "rows where the gold candidate is absent from the fixture",
+			"definition": "abstentions divided by all rows in this stratum"
+		},
+		{
+			"id": "false_selection_rate",
+			"denominator": "rows where the gold candidate is absent from the fixture",
+			"definition": "non-abstentions divided by all rows in this stratum"
+		},
+		{
+			"id": "calibration",
+			"denominator": "all non-abstained selections",
+			"definition": "a reliability table over the confidence bins [0,0.2), [0.2,0.4), [0.4,0.6), [0.6,0.8), [0.8,1.0], reporting count and accuracy in every bin"
+		},
+		{
+			"id": "mechanism_coverage",
+			"denominator": "Mailwoman selections and abstentions",
+			"definition": "the share carrying a machine-readable explanation from ResolveOpts.traceSink naming the deciding check or the refusal condition"
+		}
+	],
+	"decisionRule": {
+		"primary": "Pooled over all five strata. Mailwoman's candidate-selection accuracy must exceed the baseline's by at least 8 percentage points, and the exact McNemar test on the discordant pairs must reject at alpha 0.05, two-sided.",
+		"secondary": "Mailwoman must not have a higher wrong-area rate or a higher false-selection rate than the baseline in any stratum. This condition is a count comparison, not a significance test.",
+		"perStratumIsDescriptive": "Per-stratum accuracy is reported with its interval and is not itself a decision. Exact power at alpha 0.05 two-sided for this design: 100 rows gives 0.74 power against a true 12-point margin and 0.90 against 18 points, while 50 rows gives 0.36 and 0.58. Five per-stratum significance decisions at that power would be five chances to find a win.",
+		"interval": "Paired bootstrap over rows, 10000 resamples, mulberry32 seeded at 20260913, reported as a 95 percent interval on the difference in proportions.",
+		"nondeterminism": "Every arm is run twice from the same fixture. Differing checksums are reported as a harness failure; a favourable run is never chosen."
+	},
+	"standingConstraints": [
+		"No model training, no data build, and no production behaviour change belongs in this benchmark.",
+		"A candidate-fixture comparison is never presented as an end-to-end geocoder ranking.",
+		"The 2026-08-18 three-arm record is not deleted or altered.",
+		"Publishable output uses open truth only, and records attribution and license per source.",
+		"Three of the five strata are synthetic constructions. The record states that they measure the refusal and recovery rules rather than how often those conditions occur in real input."
+	]
+}

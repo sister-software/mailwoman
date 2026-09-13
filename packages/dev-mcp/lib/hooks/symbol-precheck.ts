@@ -19,6 +19,7 @@
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { relative } from "path-ts"
 
 import {
@@ -49,7 +50,7 @@ async function main(): Promise<void> {
 
 	if (!additionalContext) return
 
-	process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", additionalContext } }))
+	process.stdout.write(stringifyJSON({ hookSpecificOutput: { hookEventName: "PreToolUse", additionalContext } }))
 }
 
 try {

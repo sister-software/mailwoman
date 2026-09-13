@@ -48,8 +48,9 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON, prettyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { SeededRandom } from "@mailwoman/core/random"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
@@ -63,6 +64,12 @@ import { streamParquetRows } from "#utils/parquet"
  * Longest raw line still plausibly a single address rather than a concatenated record.
  */
 const MAX_CANDIDATE_LENGTH = 500
+
+/**
+ * The stream position the per-source subsample draws from. Fixed rather than supplied, because the point is that two
+ * runs over one corpus choose the same seeds; a caller-supplied seed would make that the caller's problem to remember.
+ */
+const SUBSAMPLE_SEED = 20_260_913
 
 interface CorpusRow {
 	raw: string
@@ -265,17 +272,17 @@ async function loadSeeds(
 	const perSource = Math.floor(count / sources.length)
 	const remainder = count - perSource * sources.length
 	const picked: Seed[] = []
+	// One stream across every source, so the same inputs choose the same seeds on every run and two sources do not draw
+	// the same positions. The previous shuffle called `Math.random()` under a comment promising determinism.
+	const random = new SeededRandom(SUBSAMPLE_SEED)
 
 	for (let i = 0; i < sources.length; i++) {
 		const src = sources[i]!
 		const pool = bySource.get(src)!
 		const target = perSource + (i < remainder ? 1 : 0)
 
-		// Random subsample without replacement — deterministic via shuffle then slice
-		for (let j = pool.length - 1; j > 0; j--) {
-			const k = Math.floor(Math.random() * (j + 1))
-			;[pool[j], pool[k]] = [pool[k]!, pool[j]!]
-		}
+		// Subsample without replacement — shuffle, then slice.
+		random.shuffle(pool)
 
 		const take = Math.min(target, pool.length)
 		picked.push(...pool.slice(0, take))
@@ -324,7 +331,7 @@ OUTPUT a JSON array of N objects, each shaped {"raw": "...", "dropped": ["..."]}
 
 function buildUserPrompt(seed: Seed, n: number): string {
 	return `INPUT:
-${JSON.stringify({ raw: seed.raw, components: seed.components, country: seed.country }, null, 2)}
+${prettyJSON({ raw: seed.raw, components: seed.components, country: seed.country })}
 
 N: ${n}`
 }
@@ -557,7 +564,7 @@ export async function expandGolden(
 		await using out = createNewlineWriter(outputPath)
 
 		for (const row of outRows) {
-			await out.write(JSON.stringify(row))
+			await out.write(stringifyJSON(row))
 		}
 	}
 

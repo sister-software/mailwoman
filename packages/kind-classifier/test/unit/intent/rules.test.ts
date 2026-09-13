@@ -7,6 +7,7 @@
  *   works on title case is a rule that only works on our test data.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier/classify"
 import { scoreBareToponym, scoreNearMe, scoreRoutePair } from "@mailwoman/kind-classifier/intent-rules"
@@ -60,7 +61,7 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${JSON.stringify(register)}`, () => {
+			test(`fires on ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreBareToponym(input, shape)).toBeGreaterThan(0)
@@ -83,7 +84,7 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${JSON.stringify(register)}`, () => {
+			test(`silent on ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreBareToponym(input, shape)).toBe(0)
@@ -108,7 +109,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${JSON.stringify(register)}`, () => {
+			test(`fires on ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreRoutePair(input, shape)).toBeGreaterThan(0)
@@ -141,7 +142,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${JSON.stringify(register)}`, () => {
+			test(`silent on ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreRoutePair(input, shape)).toBe(0)
@@ -173,7 +174,7 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${JSON.stringify(register)}`, () => {
+			test(`fires on ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreNearMe(input, shape)).toBeGreaterThan(0)
@@ -195,7 +196,7 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${JSON.stringify(register)}`, () => {
+			test(`silent on ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreNearMe(input, shape)).toBe(0)

@@ -23,21 +23,43 @@
 
 /* #endregion */
 
-/* #region Example-chip row (reused by the injected geo-bias row) */
+/* #region Result-panel disclosures */
 
-.examples {
-	margin-top: 0.75rem;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.4rem;
-	align-items: baseline;
+/*
+ * `ResultExtras` asks for `.xml` and `.hierarchy`; neither existed, so the XML dump and the containment tree both
+ * rendered with `class="undefined"` and no styling at all — a raw, full-bleed <pre> inside the result sheet.
+ *
+ * The `.examples` / `.examplesLabel` pair that used to sit here went the other way: nothing referenced them once the
+ * chip row moved into `@mailwoman/react` as `.mw-map-chiprow`.
+ */
+.xml {
+	margin: 0.5rem 0;
+	padding: 0.6rem 0.7rem;
+	max-height: 18rem;
+	overflow: auto;
+	overscroll-behavior: contain;
+	border: 1px solid var(--color-separator);
+	border-radius: var(--radius-control);
+	background: var(--color-background-raised);
+	font-family: var(--font-family-code);
+	font-size: var(--font-size-caption);
+	line-height: 1.5;
+	tab-size: 2;
 }
 
-.examplesLabel {
-	font-size: 0.85rem;
-	color: var(--color-text-secondary);
-	margin-right: 0.25rem;
+.hierarchy {
+	margin-top: 0.5rem;
+	font-size: 0.9rem;
 }
+
+.hierarchy > summary {
+	cursor: pointer;
+	user-select: none;
+}
+
+/* #endregion */
+
+/* #region Example-chip row (the XML disclosure's button still uses .exampleBtn) */
 
 .exampleBtn {
 	font-size: 0.8rem;
@@ -107,3 +129,31 @@
 		border-top: 1px solid var(--control-border);
 	}
 }
+
+/* #region Device-location bias row */
+
+/*
+ * The geo-bias chip's own row. It used to reuse `.mw-map-chiprow`, which carries an overflow-scroll and a 2rem edge
+ * fade sized for a dozen example chips — on a single button that only faded the right edge of "Use my location".
+ */
+.biasRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.15rem;
+}
+
+.biasError {
+	flex: 1 1 100%;
+	margin: 0;
+	padding: 0.3rem 0.5rem;
+	border-radius: var(--radius-control);
+	background: var(--color-background-raised);
+	box-shadow: var(--material-glass-shadow);
+	font-size: var(--font-size-caption);
+	line-height: 1.4;
+	color: var(--color-text-secondary);
+}
+
+/* #endregion */

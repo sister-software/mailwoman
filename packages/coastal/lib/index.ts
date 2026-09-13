@@ -47,6 +47,7 @@
  *   `schema.ts`.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	assertCoverageLicensesNoExclusion,
 	assertNoCellsFinerThanIndex,
@@ -330,7 +331,7 @@ export class CoastalErosionLookup implements Disposable {
 
 		if (!scenario || !this.identity.scenarioKeys.includes(scenarioKey)) {
 			throw new Error(
-				`coastal reader: ${JSON.stringify(scenarioKey)} is not a scenario this layer holds (${this.identity.scenarioKeys.join(", ")}) — ` +
+				`coastal reader: ${stringifyJSON(scenarioKey)} is not a scenario this layer holds (${this.identity.scenarioKeys.join(", ")}) — ` +
 					"a scenario is part of the claim, so an unrecognized one is refused rather than answered as an absence"
 			)
 		}

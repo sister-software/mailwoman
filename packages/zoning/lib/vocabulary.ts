@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  *   The Department's own words, as data: the product identity, the national generic-type domain it declares,
  *   the plan vocabulary, the exclusions it states, and the licence posture that holds this layer at
@@ -334,7 +336,7 @@ export function assertTierMatchesLicense(tier: string, license: string): void {
 
 	if (license === GZT_LICENSE) {
 		throw new Error(
-			`zoning build: tier "shipped" was asked for while the licence reads ${JSON.stringify(GZT_LICENSE)}. ` +
+			`zoning build: tier "shipped" was asked for while the licence reads ${stringifyJSON(GZT_LICENSE)}. ` +
 				`${GZT_LICENSE_CONTRADICTION} Resolve the grant in writing first, then change both this guard and the tier.`
 		)
 	}

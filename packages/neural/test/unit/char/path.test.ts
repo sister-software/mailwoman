@@ -10,6 +10,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { scriptFamilyBase } from "@mailwoman/neural/char-encoder"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { packCharFeed } from "@mailwoman/neural/onnx-runner"
@@ -39,10 +40,10 @@ async function charPackage(cardExtra: Record<string, unknown> = {}): Promise<str
 	const dir = resolvePath(fixtures.use(await temporaryDirectory("char-pkg-")).path)
 
 	await writeLocalTextFile("not-a-real-graph", join(dir, "model.onnx"))
-	await writeLocalTextFile(JSON.stringify(VOCAB), join(dir, "char-vocab.json"))
+	await writeLocalTextFile(stringifyJSON(VOCAB), join(dir, "char-vocab.json"))
 
 	await writeLocalTextFile(
-		JSON.stringify({
+		stringifyJSON({
 			encoder: "char",
 			char_vocab: "char-vocab.json",
 			max_units: CONTRACT.maxUnits,
@@ -210,10 +211,10 @@ describe("script-family fallback", () => {
 		const cjk = join(root, "cjk")
 
 		await writeLocalTextFile("not-a-real-graph", join(cjk, "model.onnx"))
-		await writeLocalTextFile(JSON.stringify(VOCAB), join(cjk, "char-vocab.json"))
+		await writeLocalTextFile(stringifyJSON(VOCAB), join(cjk, "char-vocab.json"))
 
 		await writeLocalTextFile(
-			JSON.stringify({
+			stringifyJSON({
 				encoder: "char",
 				char_vocab: "char-vocab.json",
 				max_units: 96,

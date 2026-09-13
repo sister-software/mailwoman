@@ -23,6 +23,8 @@
  *   on, and what to do with the bytes afterwards.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 import { openWriteStream, pipeline, Readable } from "#fs/streams"
 import { movePath, removePathIfPresent } from "#fs/writers"
 
@@ -36,7 +38,7 @@ export interface StreamToDiskOptions {
 	/**
 	 * Where the finished file lands. The transfer writes to `${destination}.part` and renames on a clean finish.
 	 */
-	destination: string
+	destination: PathBuilderLike
 	/**
 	 * Names the caller in the refusal, so a log says which acquisition stopped.
 	 */

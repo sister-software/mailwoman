@@ -18,6 +18,7 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
  * Options for {@linkcode raceDotsMap}.
@@ -181,7 +182,7 @@ export async function raceDotsMap(
 	maplibregl.addProtocol("pmtiles", protocol.tile);
 	var map = new maplibregl.Map({
 		container: "map",
-		style: ${JSON.stringify(style)},
+		style: ${stringifyJSON(style)},
 		center: [${CENTER_LNG}, ${CENTER_LAT}],
 		zoom: ${ZOOM},
 		attributionControl: false

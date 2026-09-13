@@ -7,6 +7,7 @@
  *   decision. No filesystem, no network — every fact is passed in.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	artifactURL,
 	BUNDLES,
@@ -151,11 +152,11 @@ describe("resolveBundleArtifacts — maps versioned names", () => {
 	})
 
 	it("does not mutate the input bundle's artifacts", () => {
-		const before = JSON.stringify(bundle)
+		const before = stringifyJSON(bundle)
 
 		resolveBundleArtifacts(bundle, { "address-points": "2026-08-01" })
 
-		expect(JSON.stringify(bundle)).toBe(before)
+		expect(stringifyJSON(bundle)).toBe(before)
 	})
 })
 

@@ -31,6 +31,7 @@ export const spec = {
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"int8-weights-cache": { type: "string", description: "Package-shaped INT8 candidate directory" },
 		"out-dir": { type: "string", description: "Battery output dir (default /tmp/eval-<label>-<hhmm>)" },
+		"profile-json": { type: "string", description: "Per-leg wall-time ledger, written outside --out-dir" },
 	},
 } as const satisfies CommandSpec
 
@@ -44,6 +45,7 @@ interface Options {
 	weightsCache?: string
 	int8WeightsCache?: string
 	outDir?: string
+	profileJSON?: string
 }
 
 const EvalPromote: ParsedCommandComponent<Options> = ({ options }) => {

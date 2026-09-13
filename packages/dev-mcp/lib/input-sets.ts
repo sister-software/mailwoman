@@ -16,7 +16,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { mulberry32 } from "@mailwoman/core/random"
@@ -338,9 +338,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 	const definition = holdoutSources()[source]
 
 	if (!definition) {
-		throw new Error(
-			`input set: unknown holdout source ${JSON.stringify(source)}. Known: ${HOLDOUT_SOURCES.join(", ")}.`
-		)
+		throw new Error(`input set: unknown holdout source ${stringifyJSON(source)}. Known: ${HOLDOUT_SOURCES.join(", ")}.`)
 	}
 
 	if (!(await pathExists(definition.file))) {

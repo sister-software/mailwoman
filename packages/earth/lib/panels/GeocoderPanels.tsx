@@ -11,7 +11,6 @@
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { About } from "@mailwoman/react/common/About"
 import type { GeocoderPanels } from "@mailwoman/react/map"
-import { MapFooter } from "@mailwoman/react/map/MapFooter"
 import { ResultPanel } from "@mailwoman/react/map/ResultPanel"
 import { FailureDiagnostic } from "@mailwoman/react/pipeline/FailureDiagnostic"
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
@@ -22,6 +21,7 @@ import type { GeocoderRuntimeHandle } from "#runtime/use/geocoder-runtime"
 import { Compare } from "./Compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./Controls.tsx"
 import { DebugDrawer } from "./DebugDrawer.tsx"
+import { EarthFooter } from "./EarthFooter.tsx"
 import { LayerToggleControl } from "./LayerToggleControl/LayerToggleControl.tsx"
 import { MapControls } from "./MapControls.tsx"
 import { PermalinkButton } from "./PermalinkButton/PermalinkButton.tsx"
@@ -82,7 +82,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 					{selectedRelease.tokenizerVocab.toLocaleString()} vocab, {selectedRelease.steps.toLocaleString()} steps)
 				</p>
 			) : undefined,
-			bias: <GeoBiasRow active={geoBias.active} onToggle={geoBias.toggle} />,
+			bias: <GeoBiasRow active={geoBias.active} error={geoBias.error} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
 			// The two display toggles read on the MODEL, not on an address, so they live behind the Developer capsule
 			// rather than above every result — at the top of the result sheet they were the first thing a visitor met,
@@ -126,15 +126,9 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			),
 			mapControls: <MapControls />,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
-			footer: (
-				<MapFooter
-					identity={<strong>Mailwoman Earth</strong>}
-					// What is loading, beside the identity. The bar across the top of the viewport says how far along it
-					// is; this says which artifact it is fetching, which is the part a number cannot carry.
-					status={loadStatus}
-					attribution={["© OpenStreetMap", "Protomaps", "MapLibre"]}
-				/>
-			),
+			// The identity, the docs link, the commit and the credits live in `EarthFooter` so this footer and the canned
+			// runtime's cannot differ. `status` is the one thing only this path has: what is being fetched right now.
+			footer: <EarthFooter status={loadStatus} />,
 			compare: (ctx) => (
 				<Compare
 					primary={ctx.result}

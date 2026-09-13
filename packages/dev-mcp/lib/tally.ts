@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
+
 /**
  *   Value tallies over a run's full results — the aggregation the recount scripts existed for.
  *
@@ -56,7 +58,7 @@ export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<st
 		const key = !present
 			? ABSENT_KEY
 			: typeof value === "object" && value !== null
-				? JSON.stringify(value)
+				? stringifyJSON(value)
 				: String(value)
 
 		counts[key] = (counts[key] ?? 0) + 1

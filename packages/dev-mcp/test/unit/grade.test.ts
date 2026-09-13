@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { caseCarriesTruth, gradeRow, seedToCaseTable, significance } from "@mailwoman/dev-mcp/grade"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
@@ -44,7 +45,7 @@ describe("seedToCaseTable", () => {
 	it("carries the expectation columns the grader reads", () => {
 		const table = seedToCaseTable(seed({ expectComponents: { locality: "Paris" }, expectToleranceM: 500 }))
 
-		expect(table.expect_components).toBe(JSON.stringify({ locality: "Paris" }))
+		expect(table.expect_components).toBe(stringifyJSON({ locality: "Paris" }))
 		expect(table.expect_tolerance_m).toBe(500)
 	})
 

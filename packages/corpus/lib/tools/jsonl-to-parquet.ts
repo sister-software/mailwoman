@@ -31,7 +31,7 @@
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -120,7 +120,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 		const missing = SPAN_COLUMNS.filter((c) => row[c] == null)
 		throw new Error(
 			`line ${lineNo}: row is missing the char-offset span triple (#519): ` +
-				`missing ${JSON.stringify(missing)} (source_id=${JSON.stringify(row.source_id ?? null)}). Every parquet-bound row ` +
+				`missing ${stringifyJSON(missing)} (source_id=${stringifyJSON(row.source_id ?? null)}). Every parquet-bound row ` +
 				"must carry span_starts/span_ends/span_tags; re-emit this slice through alignRow."
 		)
 	}
@@ -131,7 +131,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 		throw new Error(
 			`line ${lineNo}: span triple arrays are not parallel — ` +
 				`starts=${(row.span_starts as unknown[]).length} ends=${(row.span_ends as unknown[]).length} ` +
-				`tags=${(row.span_tags as unknown[]).length} (source_id=${JSON.stringify(row.source_id ?? null)})`
+				`tags=${(row.span_tags as unknown[]).length} (source_id=${stringifyJSON(row.source_id ?? null)})`
 		)
 	}
 }
@@ -146,7 +146,7 @@ export async function jsonlToParquet(
 	const rowGroupSize = options.rowGroupSize ?? 50_000
 
 	if (!Number.isInteger(rowGroupSize) || rowGroupSize <= 0) {
-		throw new Error(`rowGroupSize must be a positive integer (got ${JSON.stringify(rowGroupSize)})`)
+		throw new Error(`rowGroupSize must be a positive integer (got ${stringifyJSON(rowGroupSize)})`)
 	}
 
 	// Stage the validated rows to a temp NDJSON, then let DuckDB type + write them. Streaming keeps

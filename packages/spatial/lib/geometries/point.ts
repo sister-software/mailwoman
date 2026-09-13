@@ -3,7 +3,7 @@
 
 import type google from "@googlemaps/google-maps-services-js"
 import type { LatLng, LatLngLiteral } from "@googlemaps/google-maps-services-js"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { convert as convertCoords } from "geo-coordinates-parser"
 import { latLngToCell } from "h3-js"
 
@@ -410,7 +410,7 @@ export class GeoPoint implements PointLiteral {
 	}
 
 	public toString(): string {
-		return JSON.stringify(this.toJSON())
+		return stringifyJSON(this.toJSON())
 	}
 	//#endregion
 

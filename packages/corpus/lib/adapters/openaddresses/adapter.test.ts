@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import {
 	OPENADDRESSES_ADAPTER_ID,
@@ -137,7 +138,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		const inline = join(scratch.path, "edge.geojsonl")
 
 		const lines = [
-			JSON.stringify({
+			stringifyJSON({
 				type: "Feature",
 				geometry: { type: "Point", coordinates: [0, 0] },
 				properties: {
@@ -149,7 +150,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 					postcode: "89001",
 				},
 			}),
-			JSON.stringify({
+			stringifyJSON({
 				type: "Feature",
 				geometry: { type: "Point", coordinates: [0, 0] },
 				properties: {
@@ -161,7 +162,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 					postcode: "89002",
 				},
 			}),
-			JSON.stringify({
+			stringifyJSON({
 				type: "Feature",
 				geometry: { type: "Point", coordinates: [0, 0] },
 				properties: {
@@ -174,7 +175,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			}),
 		]
 
-		await writeLocalTextFile(`${lines.join("\n")}\n`, inline)
+		await writeLocalTextFile(lines, inline)
 
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -198,8 +199,8 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			"",
 			"# this is a comment",
 			"{not even json}",
-			JSON.stringify({ type: "FeatureCollection", features: [] }),
-			JSON.stringify({
+			stringifyJSON({ type: "FeatureCollection", features: [] }),
+			stringifyJSON({
 				type: "Feature",
 				geometry: { type: "Point", coordinates: [0, 0] },
 				properties: {
@@ -214,7 +215,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			"",
 		]
 
-		await writeLocalTextFile(`${lines.join("\n")}\n`, messy)
+		await writeLocalTextFile(lines, messy)
 
 		const manifest = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -292,7 +293,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	it("accepts UPPERCASE property names (legacy OA dumps)", async () => {
 		const upper = join(scratch.path, "upper.geojsonl")
 
-		const line = JSON.stringify({
+		const line = stringifyJSON({
 			type: "Feature",
 			geometry: { type: "Point", coordinates: [0, 0] },
 			properties: {

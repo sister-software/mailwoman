@@ -13,6 +13,7 @@
 import { readLocalTextFile, realPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import type { RepoContext } from "@mailwoman/repo-health"
 import { applyModuleMoves } from "@mailwoman/repo-health/move/apply"
@@ -23,8 +24,8 @@ import { describe, expect, test } from "vitest"
 const PACKAGE = "packages/recipes"
 
 const FILES: Record<string, string> = {
-	"package.json": JSON.stringify({ name: "@fixture/root", private: true, workspaces: ["packages/*"] }),
-	[`${PACKAGE}/package.json`]: JSON.stringify({
+	"package.json": stringifyJSON({ name: "@fixture/root", private: true, workspaces: ["packages/*"] }),
+	[`${PACKAGE}/package.json`]: stringifyJSON({
 		name: "@fixture/recipes",
 		type: "module",
 		imports: { "#*": { types: "./out/*.d.ts", node: "./lib/*.ts", default: "./out/*.js" } },

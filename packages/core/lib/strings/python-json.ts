@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { stringifyJSON } from "#json"
+
 /**
  *   A faithful reimplementation of Python's `json.dumps` single-line serialization, used by the
  *   ported `scripts/eval/*.ts` golden/eval builders so their JSONL output is byte-identical to the
@@ -29,7 +31,7 @@
  */
 function serializeString(value: string, ensureASCII: boolean): string {
 	// JSON.stringify handles the quote/backslash/control escaping identically to Python's json.
-	const out = JSON.stringify(value)
+	const out = stringifyJSON(value)
 
 	if (!ensureASCII) return out
 	// ensure_ascii: escape every code unit >= 0x80 as \uXXXX (surrogate halves handled per-unit,
@@ -48,7 +50,7 @@ function serializeString(value: string, ensureASCII: boolean): string {
  * Serialize one finite/non-finite number the way Python's json does.
  */
 function serializeNumber(value: number): string {
-	if (Number.isFinite(value)) return JSON.stringify(value)
+	if (Number.isFinite(value)) return stringifyJSON(value)
 
 	// Python json renders these literally (not RFC-valid, but it's what json.dumps does by default).
 	if (Number.isNaN(value)) return "NaN"

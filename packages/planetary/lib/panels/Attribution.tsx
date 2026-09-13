@@ -7,7 +7,9 @@
  */
 
 import type { PlanetaryBuildManifest } from "@mailwoman/astrogeology/schema/manifest"
+import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
 import { MapFooter } from "@mailwoman/react/map/MapFooter"
+import { commitURL } from "@mailwoman/site-kit/build-info"
 
 import type { PlanetaryMapConfig } from "#bodies/config"
 import { useBuildManifest } from "#panels/useBuildManifest"
@@ -49,7 +51,10 @@ export function Attribution({ config }: AttributionProps) {
 
 	return (
 		<div className="attribution" data-manifest={state.status}>
-			<MapFooter identity={<strong>{config.displayName}</strong>} attribution={lines} />
+			<MapFooter
+				identity={<AppIdentity name={config.displayName} docsURL="https://mailwoman.ai/docs" commitHref={commitURL} />}
+				attribution={lines}
+			/>
 		</div>
 	)
 }

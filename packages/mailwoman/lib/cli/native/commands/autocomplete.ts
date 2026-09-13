@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { prettyJSON } from "@mailwoman/core/json"
+
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
 import {
 	booleanValue,
@@ -51,7 +53,7 @@ export async function run(args: readonly string[]): Promise<number> {
 		const { stamp } = await resolveEngineStamp()
 
 		const output = booleanValue(parsed.values, "json")
-			? JSON.stringify({ engine: stamp, entries }, null, 2)
+			? prettyJSON({ engine: stamp, entries })
 			: formatAutocomplete(entries)
 
 		process.stdout.write(`${output}\n`)

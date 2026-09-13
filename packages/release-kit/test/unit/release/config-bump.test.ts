@@ -10,7 +10,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { bumpReleaseConfigVersion } from "@mailwoman/release-kit/release/config-version"
@@ -37,7 +37,7 @@ describe("release.config.json under the prepare bump", () => {
 
 		expect(changedLines).toEqual(['\t"version": "999.0.0",'])
 
-		const weightsOf = (text: string): string => JSON.stringify(parseJSONStrict<{ weights: unknown }>(text).weights)
+		const weightsOf = (text: string): string => stringifyJSON(parseJSONStrict<{ weights: unknown }>(text).weights)
 
 		expect(weightsOf(bumped)).toBe(weightsOf(original))
 	})
