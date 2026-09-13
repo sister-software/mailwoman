@@ -178,7 +178,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			}),
 		]
 
-		await writeLocalTextFile(`${lines.join("\n")}\n`, inline)
+		await writeLocalTextFile(lines, inline)
 
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -218,7 +218,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			"",
 		]
 
-		await writeLocalTextFile(`${lines.join("\n")}\n`, messy)
+		await writeLocalTextFile(lines, messy)
 
 		const manifest = await runAdapter({
 			adapter: createOpenaddressesAdapter(),

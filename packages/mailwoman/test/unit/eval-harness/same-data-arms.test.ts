@@ -7,13 +7,11 @@
  *   contradiction, one withheld gold. It exists to prove the harness catches the two failures that would
  *   otherwise be invisible in a real run.
  *
- *   A REPLAY MISS IS AN ERROR, NOT AN ABSTENTION. This is the false-abstention claim the brief asks to be
- *   caught. A fixture that cannot answer an arm's question must not let that arm report "I refused" — the
- *   fixture refused. So the arm records `error`, the scorer excludes the row from every metric, and the
- *   abstention counts stay about the resolver.
+ *   A replay miss records `error` rather than an abstention: the fixture refused, not the resolver, and the
+ *   scorer excludes the row from every metric so the abstention counts stay about the resolver.
  *
- *   AN UNEQUAL FIXTURE IS CAUGHT OVER WHAT THE ARMS READ, not over the file. `assertEqualEvidence` runs on
- *   the receipts the arms carry out of their own runs.
+ *   An unequal fixture is caught over what the arms read rather than over the file — `assertEqualEvidence`
+ *   runs on the receipts the arms carry out of their own runs.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

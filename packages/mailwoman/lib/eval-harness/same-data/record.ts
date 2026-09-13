@@ -3,26 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fixture recorder for the same-data benchmark (#2261): it drives the REAL backend once per arm
- *   configuration and freezes every answer, so that afterwards no arm touches a gazetteer.
+ *   The fixture recorder for the same-data benchmark (#2261). It drives the real backend once per arm
+ *   configuration and freezes every answer, so no arm touches a gazetteer afterwards.
  *
- *   THE RECORDING MUST BE A SUPERSET OF EVERY ARM'S QUESTIONS. An ablation issues queries the production
- *   walk never issues — `parentFallback: false` alone removes a retry whose key nothing else asks for, and
- *   `adminCoherence: false` changes which nodes get probed at all. A fixture recorded from one arm makes
- *   the others miss, and `replayBackend` raises on a miss rather than hiding it. So the walk runs once per
- *   registered option set and the keys are unioned.
+ *   The recording runs once per registered option set and unions the keys, because each arm asks different
+ *   questions: `parentFallback: false` drops a retry nothing else asks for, and `adminCoherence: false`
+ *   changes which nodes are probed. A fixture recorded from one arm makes the others miss, which
+ *   `replayBackend` raises on.
  *
- *   THE WITHHELD VERDICTS ARE STRIPPED HERE, at the only place that ever sees the backend's full answer.
- *   Stripping later would mean a fixture existed, however briefly, that could hand an arm a partly solved
- *   row.
+ *   Withheld verdict fields are stripped here, the only place that sees the backend's full answer, so no
+ *   fixture ever exists that could hand an arm a partly solved row.
  *
- *   THE WITHHELD-GOLD STRATUM IS WITHHELD AT THE BACKEND, not subtracted afterwards. Removing the gold from
- *   a finished recording changes what the walk would have done: with the gold gone a different candidate
- *   wins, a different parent resolves, and the walk asks questions the recording never captured — measured
- *   as 6 replay misses in 100 withheld rows. Filtering inside the recording makes the walk see exactly what
- *   replay will see, so the recorded keys are the keys replay asks for. Every member of the gold identity
- *   set is filtered, because leaving one member of a place the gazetteer carries twice leaves it
- *   answerable and the stratum measures nothing.
+ *   The withheld-gold stratum is filtered during recording rather than subtracted from a finished one.
+ *   Without the gold the walk picks a different candidate, resolves a different parent, and asks questions
+ *   the recording would not hold. Every member of the gold identity set is filtered: leaving one member of a
+ *   place the gazetteer carries twice leaves it answerable.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -148,8 +143,8 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 	for (const row of panel) {
 		const tree = await parse(row.query)
 		const lookups = new Map<string, SameDataLookup>()
-		// Named apart from the catch binding, which the lint rules require to be `error`: a same-named outer variable is
-		// SHADOWED, the assignment writes to the parameter, and the receipt then reports a clean run over a failed one.
+		// Not `error`: the catch binding below takes that name, and a same-named outer variable is shadowed — the
+		// assignment would write to the parameter and the receipt would report a clean run over a failed one.
 		let recordingError: string | undefined
 
 		let removedGold = 0

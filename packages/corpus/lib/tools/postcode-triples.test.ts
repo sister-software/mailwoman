@@ -47,7 +47,10 @@ async function writeExport(
 	const line = ([country, postcode, place, admin1, admin2]: readonly string[]): string =>
 		[country, postcode, place, admin1, "code", admin2].join(TAB)
 
-	await writeLocalTextFile(rows.map((cells) => line(cells)).join("\n") + "\n", path)
+	await writeLocalTextFile(
+		rows.map((cells) => line(cells)),
+		path
+	)
 
 	return path
 }

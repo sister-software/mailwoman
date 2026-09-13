@@ -6,19 +6,18 @@
  *   The three arms of the same-data benchmark (#2261), each reading one frozen fixture row and answering
  *   with a selection, a confidence, and a machine-readable reason.
  *
- *   EVERY ARM RECORDS WHAT IT READ BEFORE IT RESOLVES. `observeEvidence` runs first and its receipt travels
- *   with the result, so the equality check is over what the arms actually consumed rather than over the
- *   file they were handed — a validator that only reads the file cannot catch an arm that filtered the
- *   pool on its way in.
+ *   `observeEvidence` runs before the arm resolves and its receipt travels with the result, so the equality
+ *   check covers what each arm consumed rather than the file it was handed. A validator reading only the
+ *   file cannot catch an arm that filtered the pool on its way in.
  *
- *   ONE CONFIDENCE DEFINITION FOR ALL THREE. The winner's margin over the runner-up within the arm's own
- *   considered set, normalized into [0, 1], with 1 when there was no runner-up. The arms score on
- *   different scales, so the bins are not comparable across arms and the record says so; calibration asks
- *   whether an arm's own confidence tracks its own accuracy, which is a per-arm property.
+ *   All three report confidence the same way: the winner's margin over the runner-up within that arm's own
+ *   considered set, normalized into [0, 1], and 1 when there was no runner-up. The arms score on different
+ *   scales, so bins are not comparable between them — calibration asks whether an arm's confidence tracks
+ *   its own accuracy.
  *
- *   AN ABSTENTION IS A CLAIM. `picked: null` on every trace, or no admin node carrying a `placeID`, is
- *   recorded as an abstention WITH the checks that produced it. A row that errored is not an abstention
- *   and is never scored as one — it is a harness failure, and `error` carries it.
+ *   `picked: null` on every trace, or no admin node carrying a `placeID`, is recorded as an abstention with
+ *   the checks that produced it. A row that raised is a harness failure carried in `error`, never scored as
+ *   an abstention.
  */
 
 import { collectNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"

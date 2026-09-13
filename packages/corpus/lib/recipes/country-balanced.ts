@@ -475,7 +475,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 			const localeTag = rowISO2 === "US" ? "en-US" : `${rowISO2.toLowerCase()}-${rowISO2}`
 
 			if (opts.golden) {
-				write(stringifyJSON({ raw, components, country: rowISO2 }) + "\n")
+				write(stringifyJSON({ raw, components, country: rowISO2 }))
 
 				emitted++
 
@@ -501,7 +501,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "country", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "country", synth_base_id: null }))
 
 			emitted++
 		}

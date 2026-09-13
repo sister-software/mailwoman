@@ -530,7 +530,7 @@ export const intersectionRecipe: CorpusRecipe = {
 
 			if (opts.golden) {
 				seenRaw.add(raw)
-				write(stringifyJSON({ raw, components, country: "US", form: formID }) + "\n")
+				write(stringifyJSON({ raw, components, country: "US", form: formID }))
 				formCounts[formID] = (formCounts[formID] ?? 0) + 1
 				tailCounts[tailID] = (tailCounts[tailID] ?? 0) + 1
 				caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1
@@ -572,7 +572,7 @@ export const intersectionRecipe: CorpusRecipe = {
 			}
 
 			seenRaw.add(raw)
-			write(stringifyJSON({ ...aligned.row, synth_method: "intersection", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "intersection", synth_base_id: null }))
 			formCounts[formID] = (formCounts[formID] ?? 0) + 1
 			tailCounts[tailID] = (tailCounts[tailID] ?? 0) + 1
 			caseCounts[caseID] = (caseCounts[caseID] ?? 0) + 1

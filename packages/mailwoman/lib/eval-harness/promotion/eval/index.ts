@@ -70,7 +70,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { makeDirectories, toLinesText, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { isoSeconds } from "@mailwoman/core/utils"
@@ -334,7 +334,7 @@ async function runLoreGuards(env: {
 			provLines.push(`WC-INT8        ${await md5(WC8_MODEL)}  dql=${wc8Dql}  ${WC8_MODEL}`)
 		}
 
-		const provenance = provLines.join("\n") + "\n"
+		const provenance = toLinesText(provLines)
 		await writeLocalFile(provenance, `${OUT_DIR}/provenance.txt`)
 		process.stdout.write(provenance)
 
@@ -369,7 +369,7 @@ async function runLoreGuards(env: {
 			provLines.push(`INT8   ${await md5(INT8)}  dql=${int8Dql}  ${INT8}`)
 		}
 
-		const provenance = provLines.join("\n") + "\n"
+		const provenance = toLinesText(provLines)
 		await writeLocalFile(provenance, `${OUT_DIR}/provenance.txt`) // tee → file …
 		process.stdout.write(provenance)
 

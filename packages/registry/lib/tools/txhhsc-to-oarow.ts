@@ -106,7 +106,7 @@ export async function convertTXHHSC(
 		)
 	}
 
-	await writeLocalTextFile(records.join("\n") + "\n", out)
+	await writeLocalTextFile(records, out)
 	report?.(`wrote ${records.length} rows (skipped ${skipped}) → ${out}`)
 
 	return { written: records.length, skipped, out }

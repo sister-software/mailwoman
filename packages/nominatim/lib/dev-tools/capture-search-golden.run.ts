@@ -74,7 +74,7 @@ try {
 		rows.push(stringifyJSON({ query, status: res.status, body: await res.json() }))
 	}
 
-	await writeLocalTextFile(rows.join("\n") + "\n", OUT_PATH)
+	await writeLocalTextFile(rows, OUT_PATH)
 
 	console.error(
 		`captured ${rows.length} /search responses (${withHouseNumber.length} house-number parity cases available)`

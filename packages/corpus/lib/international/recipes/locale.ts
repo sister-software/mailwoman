@@ -556,7 +556,7 @@ export const localeRecipe: CorpusRecipe = {
 					continue
 				}
 
-				write(stringifyJSON({ raw: synth.raw, components: synth.components, country, order }) + "\n")
+				write(stringifyJSON({ raw: synth.raw, components: synth.components, country, order }))
 
 				emitted++
 
@@ -589,7 +589,7 @@ export const localeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_order: order, synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_order: order, synth_base_id: null }))
 
 			emitted++
 		}

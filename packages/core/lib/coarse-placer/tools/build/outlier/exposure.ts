@@ -61,6 +61,8 @@ export interface BuildOutlierExposureResult {
 
 /**
  * Off-map languages whose `names` are written in a NON-Latin, NON-CJK script (CJK = the in-map CN/JP/KR/TW).
+ *
+ * TODO: Belongs in a constant, perhaps derived from `@mailwoman/codex`?
  */
 const OFF_MAP_LANGS = [
 	"rus",

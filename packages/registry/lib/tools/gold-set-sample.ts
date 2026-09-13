@@ -21,7 +21,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { jaccard } from "@mailwoman/match"
 
@@ -130,7 +130,7 @@ export async function goldSetSample(
 	report?.(`    sampling ${sample.length} (stride ${stride}) for adjudication`)
 
 	if (OUT) {
-		await writeLocalTextFile(sample.map((p) => stringifyJSON(p)).join("\n") + "\n", OUT)
+		await writeLocalJSONLFile(sample, OUT)
 		report?.(`[written] ${OUT}`)
 	} else {
 		for (const p of sample.slice(0, 10)) {

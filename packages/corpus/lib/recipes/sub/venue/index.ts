@@ -670,7 +670,7 @@ function emitRow(
 		return false
 	}
 
-	context.write(stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: null }) + "\n")
+	context.write(stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: null }))
 
 	context.counters.emitted++
 	bump(stats.byRegister, register)

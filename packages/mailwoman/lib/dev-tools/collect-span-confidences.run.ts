@@ -42,8 +42,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { JSONSpliterator } from "spliterator"
@@ -209,7 +208,7 @@ async function main(): Promise<void> {
 		}
 	}
 
-	await writeLocalTextFile(records.map((r) => stringifyJSON(r)).join("\n") + "\n", outPath)
+	await writeLocalJSONLFile(records, outPath)
 	const n = records.length
 	const acc = records.filter((r) => r.correct).length / n
 	const meanConf = records.reduce((a, r) => a + r.conf, 0) / n

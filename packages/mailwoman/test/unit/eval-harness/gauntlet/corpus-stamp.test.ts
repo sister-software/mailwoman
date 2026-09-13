@@ -53,7 +53,7 @@ async function scratchCorpus(...rows: string[]): Promise<string> {
 	const root = fixtures.use(await temporaryDirectory("gauntlet-stamp-")).path.toString()
 
 	await makeDirectories(join(root, "xx"))
-	await writeLocalTextFile(`${rows.join("\n")}\n`, join(root, "xx", "regression.jsonl"))
+	await writeLocalTextFile(rows, join(root, "xx", "regression.jsonl"))
 
 	return root
 }

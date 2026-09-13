@@ -826,7 +826,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 				geonamesLine(3, "Ghosttown", 55.001, -1.201, "P", 5000),
 				// an S-class row must never attest
 				geonamesLine(4, "Oldblob", 52.001, -1.001, "S", 90_000),
-			].join("\n") + "\n",
+			],
 			join(geonamesDir, "GB.txt")
 		)
 

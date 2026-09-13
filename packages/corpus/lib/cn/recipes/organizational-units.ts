@@ -157,7 +157,7 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(stringifyJSON({ raw, components, country: "CN", locale: "zh-CN" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "CN", locale: "zh-CN" }))
 
 				emitted++
 
@@ -186,7 +186,7 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "cn-organizational-units", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "cn-organizational-units", synth_base_id: null }))
 
 			emitted++
 		}

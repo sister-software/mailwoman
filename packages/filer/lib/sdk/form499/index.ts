@@ -11,7 +11,7 @@
  *
  *   - The Nexus loader reads the ENTIRE TSV into memory via `fs.readFile`, then parses it with the
  *     `csv` package configured `relax_column_count_less: true` — a short row is silently truncated,
- *     never surfaced. {@linkcode parseForm499} instead streams line-by-line off a `ReadStream` (the
+ *     never surfaced. {@linkcode parseForm499} instead streams row by row through `TSVSpliterator` (the
  *     file is never held in memory whole) and throws a descriptive error naming the file and the
  *     1-indexed line number the moment a row's column count doesn't match
  *     {@linkcode FORM_499_COLUMNS}'s 17 — decision 8's "malformed input must be loud" discipline,
@@ -34,9 +34,7 @@
  *   design, not by oversight.
  */
 
-import { createInterface } from "node:readline"
-
-import { openReadStream } from "@mailwoman/core/fs/streams"
+import { TSVSpliterator } from "spliterator"
 
 import { toFRN, type FRN } from "#frn"
 import type { Form499Lifecycle } from "#sdk/form499/notes"
@@ -199,10 +197,7 @@ export function classifyFiler(row: Form499Row): FilerClassification[] {
  * discipline (the 2a `peekProviderID` precedent), replacing Nexus's `relax_column_count_less: true`, which silently
  * truncated short rows instead.
  */
-function splitForm499Line(line: string, tsvPath: string, lineNumber: number): Record<Form499Column, string> {
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `line` is a single already-delimited row; the caller streams the file.
-	const fields = line.split("\t")
-
+function toForm499Raw(fields: readonly string[], tsvPath: string, lineNumber: number): Record<Form499Column, string> {
 	if (fields.length !== FORM_499_COLUMNS.length) {
 		throw new Error(
 			`parseForm499: malformed row at ${tsvPath}:${lineNumber} (line ${lineNumber}) — expected ` +
@@ -220,8 +215,8 @@ function splitForm499Line(line: string, tsvPath: string, lineNumber: number): Re
 }
 
 /**
- * Converts one {@linkcode splitForm499Line} result into a typed {@linkcode Form499Row} — applies {@linkcode toFRN} to
- * `frn` and the `"TRUE"` literal check to `usfContributor`; every other field passes through as the raw TSV string.
+ * Converts one {@linkcode toForm499Raw} result into a typed {@linkcode Form499Row} — applies {@linkcode toFRN} to `frn`
+ * and the `"TRUE"` literal check to `usfContributor`; every other field passes through as the raw TSV string.
  */
 function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
 	return {
@@ -246,27 +241,20 @@ function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
 }
 
 /**
- * Streams the Form 499 filer TSV at `tsvPath` line-by-line (`node:readline` over a `ReadStream` — the file is never
- * read into memory whole, unlike Nexus's `fs.readFile`-then-parse original) and yields each row as a typed
- * {@linkcode Form499Row}. A line whose column count doesn't match {@linkcode FORM_499_COLUMNS} throws immediately,
- * naming `tsvPath` and the 1-indexed line number (decision 8) — no partial/truncated row is ever silently yielded. A
- * blank trailing line (a lone `\n` at EOF) is skipped rather than treated as malformed.
+ * Streams the Form 499 filer TSV at `tsvPath` row by row through `TSVSpliterator` — the file is never read into memory
+ * whole, unlike Nexus's `fs.readFile`-then-parse original — and yields each row as a typed {@linkcode Form499Row}. A
+ * line whose column count doesn't match {@linkcode FORM_499_COLUMNS} throws immediately, naming `tsvPath` and the
+ * 1-indexed line number (decision 8) — no partial/truncated row is ever silently yielded. A blank trailing line (a lone
+ * `\n` at EOF) is skipped rather than treated as malformed.
  */
 export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row> {
-	const lines = createInterface({
-		input: openReadStream(tsvPath, { encoding: "utf8" }),
-		crlfDelay: Infinity,
-	})
-
 	let lineNumber = 0
 
-	for await (const line of lines) {
+	for await (const fields of TSVSpliterator.fromAsync<string[]>(tsvPath, { header: false })) {
 		lineNumber++
 
-		if (!line.length) continue
+		if (!fields.length || (fields.length === 1 && !fields[0])) continue
 
-		const raw = splitForm499Line(line, tsvPath, lineNumber)
-
-		yield toForm499Row(raw)
+		yield toForm499Row(toForm499Raw(fields, tsvPath, lineNumber))
 	}
 }

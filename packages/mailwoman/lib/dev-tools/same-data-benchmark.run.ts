@@ -11,14 +11,15 @@
  *             and freeze every answer. This is the only phase that touches a gazetteer.
  *     run     Replay the frozen fixture through the three arms, score, and write the results.
  *
- *   AFTER `record`, NOTHING READS A DATABASE. That is the whole point: a difference the `run` phase
- *   reports cannot come from retrieval, an index vintage, or a data footprint, because every arm reads the
- *   same frozen bytes and `replayBackend` raises rather than inventing an answer.
+ *   Nothing after `record` reads a database, so a difference the `run` phase reports cannot come from
+ *   retrieval, an index vintage, or a data footprint: every arm reads the same frozen bytes, and
+ *   `replayBackend` raises rather than inventing an answer.
  *
  *   Run:
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts panel
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts record
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts run
+ *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts score
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -295,10 +296,9 @@ async function scorePhase(): Promise<void> {
 		...renderLosses(panel, results, 25),
 	]
 
-	// Exactly one trailing newline. A blank line at the end is what `oxfmt` strips, so a generated file that carries one
-	// leaves the tree failing `yarn lint` the moment it is committed — and "regenerate and commit" stops being a
-	// complete instruction.
-	await writeLocalTextFile(`${lines.join("\n")}\n`, SCORE_PATH)
+	// `lines` must not end with an empty element: `oxfmt` strips a trailing blank line, so a generated file carrying
+	// one fails `yarn lint` as soon as it is committed.
+	await writeLocalTextFile(lines, SCORE_PATH)
 
 	console.log(lines.join("\n"))
 	console.log(`\nreport → ${SCORE_PATH}`)

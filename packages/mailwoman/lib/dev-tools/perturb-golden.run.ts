@@ -109,7 +109,7 @@ async function main(): Promise<void> {
 		base += PER_FILE
 	}
 
-	await writeLocalTextFile(out.join("\n") + "\n", OUT)
+	await writeLocalTextFile(out, OUT)
 
 	console.log(`wrote ${out.length} perturbed cases (${PERTURBATIONS.map((p) => p.name).join(", ")}) → ${OUT}`)
 }

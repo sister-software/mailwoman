@@ -264,7 +264,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: source, synth_base_id: null }))
 
 			emitted++
 		}

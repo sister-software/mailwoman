@@ -88,6 +88,6 @@ emit(3, "")
 const header = { version: 2, width: WIDTH, height: HEIGHT, title: "mailwoman parse" }
 const lines = [stringifyJSON(header), ...events.map((event) => stringifyJSON(event))]
 
-await writeLocalTextFile(`${lines.join("\n")}\n`, "cast.json")
+await writeLocalTextFile(lines, "cast.json")
 
 console.log(`wrote cast.json: ${events.length} events, ${events.at(-1)?.[0]}s`)

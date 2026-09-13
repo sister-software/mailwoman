@@ -6,19 +6,17 @@
  *   The scorer for the same-data benchmark (#2261): the registered metrics per stratum and pooled, the
  *   exact McNemar decision, and the paired bootstrap interval.
  *
- *   THE TEST IS PAIRED BECAUSE THE DESIGN IS. Every arm answers the same rows from the same evidence, so
- *   the informative quantity is the DISCORDANT pairs — rows one arm got right and the other did not — and
- *   an unpaired proportion test would throw that pairing away and widen the interval for nothing.
+ *   The test is paired because the design is: every arm answers the same rows from the same evidence, so the
+ *   informative quantity is the discordant pairs — rows one arm got right and the other did not. An unpaired
+ *   proportion test would discard that pairing and widen the interval for nothing.
  *
- *   THE DECISION IS POOLED, AND THE PER-STRATUM TABLES ARE DESCRIPTIVE. Exact power at alpha 0.05
- *   two-sided for this design: 100 rows gives 0.74 against a true 12-point margin and 0.90 against 18
- *   points, while 50 rows gives 0.36 and 0.58. Five per-stratum significance decisions at that power are
- *   five chances to find a win, so the frozen ruler spends the power once, pooled, at a registered
- *   8-point margin.
+ *   The decision is pooled and the per-stratum tables are descriptive. Exact power at alpha 0.05 two-sided:
+ *   100 rows gives 0.74 against a true 12-point margin and 0.90 against 18 points; 50 rows gives 0.36 and
+ *   0.58. Five per-stratum significance decisions at that power are five chances to find a win, so the power
+ *   is spent once, pooled, at the registered 8-point margin.
  *
- *   ERRORED ROWS ARE NOT ABSTENTIONS. A row whose arm raised is excluded from every metric and counted
- *   separately. Folding it into abstention would let a harness failure read as a resolver refusing, which
- *   is the one confusion the abstention strata exist to measure.
+ *   A row whose arm raised is excluded from every metric and counted separately. Folding it into abstention
+ *   would let a harness failure read as a resolver refusing, which is what the abstention strata measure.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"

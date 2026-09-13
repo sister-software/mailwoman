@@ -300,7 +300,7 @@ export const germanRecipe: CorpusRecipe = {
 			// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO. `order`
 			// rides along so the eval can stratify native vs international.
 			if (opts.golden) {
-				write(stringifyJSON({ raw: synth.raw, components: synth.components, country: "DE", order }) + "\n")
+				write(stringifyJSON({ raw: synth.raw, components: synth.components, country: "DE", order }))
 
 				emitted++
 
@@ -340,7 +340,7 @@ export const germanRecipe: CorpusRecipe = {
 					synth_order: order,
 					synth_separator: separator === " " ? "space" : "comma",
 					synth_base_id: null,
-				}) + "\n"
+				})
 			)
 
 			emitted++

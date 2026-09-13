@@ -87,7 +87,7 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "anchor-absorption", synth_template: synth.template }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "anchor-absorption", synth_template: synth.template }))
 
 			written++
 			byTemplate[synth.template] = (byTemplate[synth.template] ?? 0) + 1

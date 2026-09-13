@@ -88,7 +88,7 @@ export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBu
 		return stringifyJSON(canonical, [...SEED_CASE_KEY_ORDER, ...Object.keys(canonical.expectComponents ?? {})])
 	})
 
-	await writeLocalTextFile(lines.join("\n") + "\n", path)
+	await writeLocalTextFile(lines, path)
 
 	console.log(`wrote ${sorted.length} rows → ${path}`)
 }

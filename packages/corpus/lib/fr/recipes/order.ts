@@ -197,7 +197,7 @@ export const frOrderRecipe: CorpusRecipe = {
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components, country:"FR"}).
 			if (opts.golden) {
-				write(stringifyJSON({ raw, components, country: "FR" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "FR" }))
 
 				emitted++
 
@@ -236,7 +236,7 @@ export const frOrderRecipe: CorpusRecipe = {
 					synth_method: "fr-order",
 					synth_order: isReversed ? "reversed" : "canonical",
 					synth_base_id: null,
-				}) + "\n"
+				})
 			)
 
 			emitted++

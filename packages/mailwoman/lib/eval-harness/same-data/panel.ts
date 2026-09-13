@@ -6,20 +6,18 @@
  *   The panel builder for the same-data benchmark (#2261): it executes the frozen selection rules over
  *   GeoNames and emits the rows, and it contains no judgement of its own.
  *
- *   EVERY CHOICE HERE IS THE FROZEN RULER'S. Eligibility, query construction, gold, fill order and the
- *   sampling seed come from `benchmark-definition.json`, which was committed before any row was inspected.
- *   This module is the executable form of those sentences, and a change to what it selects is a change to
- *   the definition — which bumps the version and the content hash.
+ *   Eligibility, query construction, gold, fill order and the sampling seed all come from
+ *   `benchmark-definition.json`, committed before any row was inspected. This module is the executable form
+ *   of those rules, so a change to what it selects is a change to the definition, which bumps the version
+ *   and the content hash.
  *
- *   THE GOLD ENTITY IS GEONAMES; ONLY THE IDENTITY JOIN IS WOF'S. A row's entity, name, coordinate and
- *   population come from `cities15000.txt` under CC-BY-4.0. `readGoldSets` turns that geonameid into the
- *   set of ids the candidate backend answers with, so a selection can be compared at all. A geonameid whose
- *   join is not coherent is UNGRADEABLE and is dropped before sampling, with the count reported: it is a
- *   property of the gazetteer, and reporting it keeps a coverage hole from reading as a panel choice.
+ *   A row's entity, name, coordinate and population come from `cities15000.txt` under CC-BY-4.0;
+ *   `readGoldSets` turns the geonameid into the ids the candidate backend answers with. A geonameid whose
+ *   join is not coherent is dropped before sampling with the count reported, because that count describes
+ *   the gazetteer and reporting it keeps a coverage hole from reading as a panel choice.
  *
- *   THE HOMOGRAPH GOLD IS NOT ALWAYS THE MOST POPULOUS BEARER. Half the rows name a bearer that is not the
- *   largest. A panel whose gold is always the largest bearer is satisfied by a population prior alone, and
- *   the population prior is one of the things under test.
+ *   Half the homograph rows name a bearer that is not the most populous. A panel whose gold is always the
+ *   largest bearer would be satisfied by a population prior alone, and that prior is under test.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"

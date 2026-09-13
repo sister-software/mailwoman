@@ -26,10 +26,9 @@
  *   excluded by (street, locality, postcode) so the training slice never overlaps the benchmark.
  */
 
-import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
-import { PSVSpliterator, TextSpliterator } from "spliterator"
+import { createNewlineWriter, PSVSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 export interface GNAFAssembleOptions {
@@ -207,17 +206,16 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 		progress(`${state}: ${seen.toLocaleString()} valid joinable seen`)
 	}
 
-	const out = openWriteStream(opts.out)
 	const byState: Record<string, number> = {}
 
-	for (const t of reservoir) {
-		out.write(stringifyJSON(t) + "\n")
-		byState[t.region] = (byState[t.region] ?? 0) + 1
-	}
+	{
+		await using out = createNewlineWriter(opts.out)
 
-	await new Promise<void>((res) => {
-		out.end(res)
-	})
+		for (const t of reservoir) {
+			await out.write(stringifyJSON(t))
+			byState[t.region] = (byState[t.region] ?? 0) + 1
+		}
+	}
 
 	progress(`wrote ${reservoir.length.toLocaleString()} tuples → ${opts.out}`)
 

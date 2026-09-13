@@ -6,7 +6,13 @@
  */
 
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import {
+	makeDirectories,
+	writeLocalFile,
+	writeLocalJSONFile,
+	writeLocalTextFile,
+	writeLocalJSONLFile,
+} from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
@@ -192,7 +198,7 @@ export async function relabelGoldenDirectory(
 				out.push(stringifyJSON(result.row))
 			}
 
-			await writeLocalTextFile(out.join("\n") + "\n", to)
+			await writeLocalTextFile(out, to)
 			files[`${prefix}${name.name}`] = { entries: lineNumber, changed, flagged, prefixSplit, counts }
 
 			report(
@@ -204,7 +210,7 @@ export async function relabelGoldenDirectory(
 	report(`relabel ${input} → ${output}`)
 	await walk(input, output, "")
 
-	await writeLocalTextFile(deck.map((entry) => stringifyJSON(entry)).join("\n") + "\n", deckPath)
+	await writeLocalJSONLFile(deck, deckPath)
 	await writeLocalFile(renderDeckMarkdown(deck, basename(input), basename(output)), deckPath.replace(/\.jsonl$/, ".md"))
 
 	const manifestFiles: Record<

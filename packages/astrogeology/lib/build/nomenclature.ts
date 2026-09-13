@@ -122,7 +122,7 @@ export async function writeNomenclatureNDJSON(
 		lines.push(nomenclatureNDJSONLine(feature))
 	}
 
-	await writeLocalTextFile(lines.join("\n") + "\n", outPath)
+	await writeLocalTextFile(lines, outPath)
 
 	return lines.length
 }

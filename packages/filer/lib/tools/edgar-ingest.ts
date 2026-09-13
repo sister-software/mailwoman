@@ -86,7 +86,7 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 	const jsonlPath = join(options.outDir, "edgar-subsidiaries.jsonl")
 	const lines = rows.map((row) => stringifyJSON(row))
 
-	await writeLocalTextFile(lines.join("\n") + "\n", jsonlPath)
+	await writeLocalTextFile(lines, jsonlPath)
 
 	return { report, jsonlPath, lookupEntries: tickers.length }
 }

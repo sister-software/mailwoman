@@ -6,17 +6,15 @@
  *   The same-data benchmark's tables (#2261), rendered from generated results so the published record is
  *   never typed by hand — the self-reporting rule `oa/resolver/eval.ts` states for every eval here.
  *
- *   NOT THE HOMOGRAPH SCORER NEXT DOOR. `eval-harness/score/country-homograph.ts` grades the CLASSIFIER's
- *   country/region/locality tagging on a homograph corpus. This grades the RESOLVER's selection from a
- *   frozen candidate set. They share a word and measure different layers; neither subsumes the other.
+ *   Distinct from `eval-harness/score/country-homograph.ts`, which grades the classifier's
+ *   country/region/locality tagging on a homograph corpus. This grades the resolver's selection from a
+ *   frozen candidate set. They share a word and measure different layers.
  *
- *   EVERY RATE PRINTS ITS DENOMINATOR, and an unmeasured rate prints as `unmeasured` rather than as zero. A
- *   wrong-area rate over no coordinate-bearing selection is not 0%; it is a rate nobody could compute, and
- *   the two must not read the same.
+ *   Every rate prints its denominator, and a rate nobody could compute prints as `unmeasured` rather than as
+ *   zero — a wrong-area rate over no coordinate-bearing selection is not 0%.
  *
- *   THE LOSSES ARE PART OF THE REPORT. `renderLosses` lists the rows the baseline won and Mailwoman did
- *   not, with the query in view — a record that prints only the aggregate cannot be audited, and the rows
- *   where the simpler resolver wins are the ones worth reading.
+ *   `renderLosses` lists the rows the baseline won and Mailwoman did not, with the query in view. A report
+ *   of aggregates alone cannot be audited, and those rows name the mechanism.
  */
 
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"

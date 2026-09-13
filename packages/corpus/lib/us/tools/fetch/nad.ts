@@ -201,7 +201,7 @@ async function fetchChunk(
 		}
 	}
 
-	await writeLocalTextFile(!lines.length ? "" : lines.join("\n") + "\n", chunkPath)
+	await writeLocalTextFile(lines, chunkPath)
 
 	return { recordCount: lines.length, errors }
 }

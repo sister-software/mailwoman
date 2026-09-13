@@ -91,9 +91,7 @@ export const boundaryStressRecipe: CorpusRecipe = {
 			}
 
 			// Match the base corpus parquet schema: flat synth_method / synth_base_id, not a nested `synth`.
-			write(
-				stringifyJSON({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }) + "\n"
-			)
+			write(stringifyJSON({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }))
 
 			emitted++
 		}

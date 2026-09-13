@@ -159,7 +159,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(stringifyJSON({ raw, components: orderComponents(components), country }) + "\n")
+				write(stringifyJSON({ raw, components: orderComponents(components), country }))
 
 				emitted++
 
@@ -194,7 +194,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: kind, synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: kind, synth_base_id: null }))
 
 			emitted++
 		}

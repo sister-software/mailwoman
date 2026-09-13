@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { removePathIfPresent, writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	OVERTURE_ADAPTER_ID,
@@ -26,7 +26,7 @@ const loadRows = () => readCanonicalRows(scratch.path, OVERTURE_ADAPTER_ID)
  */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch.path, "overture-es.corpus.jsonl")
-	await writeLocalTextFile(rows.map((r) => stringifyJSON(r)).join("\n") + "\n", p)
+	await writeLocalJSONLFile(rows, p)
 
 	return p
 }
@@ -188,7 +188,7 @@ describe("overture adapter", () => {
 				stringifyJSON({ postcode: "28013", locality: "Madrid" }), // no street → skip
 				stringifyJSON({ street: "PLAZA MAYOR", number: "1", postcode: "28012", locality: "Madrid" }),
 				"",
-			].join("\n") + "\n",
+			],
 			p
 		)
 

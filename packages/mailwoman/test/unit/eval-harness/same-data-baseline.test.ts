@@ -5,14 +5,12 @@
  *
  *   The same-data benchmark's baseline resolver and its scorer (#2261).
  *
- *   THE BASELINE MUST BE ABLE TO WIN. A baseline that cannot read a qualifier would lose the homograph
- *   stratum to its own blindness and the benchmark would measure nothing, so the first two cases pin that
- *   a country qualifier resolved INSIDE the pool flips the selection — using only facts the production arm
- *   also received.
+ *   The baseline has to be able to win, or the benchmark measures its blindness rather than the mechanism.
+ *   The first two cases pin that a country qualifier resolved inside the pool flips the selection, using
+ *   only facts the production arm also received.
  *
- *   THE EXACT TEST IS PINNED AGAINST ITS CLOSED FORM. `mcnemarExactP` builds its terms by ratio to avoid
- *   forming a factorial, so the cases below check it against values computed from the binomial directly:
- *   a 6/0 split is 2 × 2⁻⁶, a 5/0 split is 2 × 2⁻⁵ and does NOT reject, and 12/3 is
+ *   `mcnemarExactP` builds its terms by ratio rather than forming a factorial, so the cases check it against
+ *   the binomial directly: a 6/0 split is 2 × 2⁻⁶, a 5/0 split is 2 × 2⁻⁵ and does not reject, and 12/3 is
  *   2 × (1 + 15 + 105 + 455) / 2¹⁵.
  */
 

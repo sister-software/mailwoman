@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import {
 	componentsForOSMRow,
 	createOSMAdapter,
@@ -28,7 +27,7 @@ const loadRows = () => readCanonicalRows(scratch.path, OSM_ADAPTER_ID)
 
 async function writeFixture(name: string, rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch.path, name)
-	await writeLocalTextFile(rows.map((r) => stringifyJSON(r)).join("\n") + "\n", p)
+	await writeLocalJSONLFile(rows, p)
 
 	return p
 }

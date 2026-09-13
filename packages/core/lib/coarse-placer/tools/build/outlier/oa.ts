@@ -36,8 +36,7 @@ import { COUNTRIES } from "#coarse-placer/tools/country-sets"
 import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-placer/tools/outlier-rows"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
-import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
-import { stringifyJSON } from "#json"
+import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
 import { dataRootPath } from "#utils"
 
 interface OaTestRow {
@@ -217,10 +216,7 @@ export async function buildOutlierOA(
 	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
 	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 
-	await writeLocalTextFile(
-		testRows.map((r) => stringifyJSON(r)).join("\n") + "\n",
-		resolvePath(dataDir, "test-latin-offmap-oa.jsonl")
-	)
+	await writeLocalJSONLFile(testRows, resolvePath(dataDir, "test-latin-offmap-oa.jsonl"))
 
 	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
 	report?.(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)

@@ -93,7 +93,7 @@ export const streetBareRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }))
 
 			emitted++
 		}

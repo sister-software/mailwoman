@@ -152,7 +152,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 				}
 
 				if (opts.golden) {
-					write(stringifyJSON({ raw: rendering.raw, components: rendering.components, country, locale }) + "\n")
+					write(stringifyJSON({ raw: rendering.raw, components: rendering.components, country, locale }))
 
 					emitted++
 					registers[rendering.register] = (registers[rendering.register] ?? 0) + 1

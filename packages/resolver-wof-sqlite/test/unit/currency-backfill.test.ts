@@ -63,7 +63,7 @@ async function census(
 	await using scratch = await temporaryDirectory("currency-backfill-")
 
 	await writeLocalTextFile(
-		[geonamesRow("Gillingham", 51.39, 0.55, 104_157), geonamesRow("Ashford", 51.15, 0.87, 74_204)].join("\n") + "\n",
+		[geonamesRow("Gillingham", 51.39, 0.55, 104_157), geonamesRow("Ashford", 51.15, 0.87, 74_204)],
 		scratch.resolve("GB.txt")
 	)
 

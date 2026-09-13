@@ -5,15 +5,14 @@
  *
  *   The same-data panel builder (#2261) — the executable form of the frozen selection rules.
  *
- *   THE HOMOGRAPH GOLD IS NOT ALWAYS THE LARGEST BEARER, and that is the property most worth pinning: a
- *   panel whose gold is always the most populous bearer is satisfied by a population prior alone, and the
- *   population prior is one of the things the benchmark asks about.
+ *   The homograph gold is not always the largest bearer, which is the property most worth pinning: a panel
+ *   whose gold is always the most populous bearer would be satisfied by a population prior alone, and that
+ *   prior is under test.
  *
- *   THE GOLD CHECK BELONGS TO EACH STRATUM. The homograph rule's gold is a bearer other than the row being
- *   iterated, so a gradeability check against the iterated row refuses rows whose real gold is fine — it
- *   dropped 12 of 53 before the check moved into the rules.
+ *   Each stratum checks its own gold. The homograph rule's gold is a bearer other than the row being
+ *   iterated, so a gradeability check against the iterated row refuses rows whose real gold is fine.
  *
- *   STRATA DRAW FROM DISJOINT POOLS. A geonameid used twice would put one place on both sides of a paired
+ *   Strata draw from disjoint pools: a geonameid used twice would put one place on both sides of a paired
  *   comparison.
  */
 

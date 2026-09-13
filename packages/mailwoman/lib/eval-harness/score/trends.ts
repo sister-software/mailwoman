@@ -251,7 +251,7 @@ export async function buildScoreTrends(options: ScoreTrendsOptions = {}): Promis
 		lines.push("")
 	}
 
-	await writeLocalTextFile(lines.join("\n") + "\n", outPath)
+	await writeLocalTextFile(lines, outPath)
 
 	return { outPath, versions: rows.length, runs: ledger.runs.length }
 }

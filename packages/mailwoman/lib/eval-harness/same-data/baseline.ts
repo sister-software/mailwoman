@@ -6,20 +6,20 @@
  *   The registered baseline resolver for the same-data benchmark (#2261): exact component agreement
  *   first, then normalized name similarity, then the fixture's canonical candidate order.
  *
- *   IT READS THE FIXTURE AND NOTHING ELSE. No network, no gazetteer, no ancestry sidecar, no population
- *   prior. A qualifier is resolved INSIDE the pool — the country token is matched against the pool's own
- *   country-placetype candidates and the ISO code read off the winner — so the baseline can honour
- *   `Whitby, United Kingdom` without a country table, and every fact it uses is a fact the production arm
- *   also received. A baseline that could not read a qualifier at all would lose the homograph stratum to
- *   its own blindness rather than to the mechanism under test.
+ *   It reads the fixture and nothing else: no network, no gazetteer, no ancestry sidecar, no population
+ *   prior. A qualifier is resolved inside the pool — the country token is matched against the pool's own
+ *   country-placetype candidates and the ISO code read off the winner — so `Whitby, United Kingdom` resolves
+ *   without a country table, and every fact used is one the production arm also received. A baseline that
+ *   could not read a qualifier would lose the homograph stratum to its own blindness rather than to the
+ *   mechanism being measured.
  *
- *   IT DOES NOT RANK ON FAME. No population, importance, prominence or referential term appears below.
- *   That absence is the comparison: the production resolver's fame-anchored ranking is one of the things
- *   the benchmark is asking about, so the baseline must not contain a copy of it.
+ *   No population, importance, prominence or referential term appears below. That absence is the comparison:
+ *   the production resolver's fame-anchored ranking is one of the things under test, so the baseline must
+ *   not hold a copy of it.
  *
- *   THE NAME KEY IS THE BACKEND'S. `normalizeLocalityForKey` is imported rather than re-typed, because a
- *   baseline folding names differently would measure normalization rather than selection — and three fake
- *   gazetteers already drifted on exactly that fold (#1764).
+ *   `normalizeLocalityForKey` is imported rather than re-typed. A baseline folding names differently would
+ *   measure normalization rather than selection, and three fake gazetteers have already drifted on that
+ *   fold (#1764).
  */
 
 import { collectNodes, type AddressTree } from "@mailwoman/core/decoder"

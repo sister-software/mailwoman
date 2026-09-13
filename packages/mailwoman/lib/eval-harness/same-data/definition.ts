@@ -3,21 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The FROZEN ruler for the same-data resolver benchmark (#2261), and the audit that refuses an
+ *   The frozen ruler for the same-data resolver benchmark (#2261), and the audit that refuses an
  *   unexecutable one. Pure — no model, no database, no resolver — so every refusal is testable without
  *   loading an engine.
  *
- *   WHY THE RULER IS FROZEN AT ALL. The strata are defined by SELECTION RULES rather than by listed rows,
- *   and a selection rule that can be edited after a result is visible asserts nothing: the rule that
- *   produced the losing panel can be rewritten into the rule that produces the winning one. The content
- *   hash pins the rules, the sampling seed and the decision rule together, so the panel a reader rebuilds
- *   is the panel that was scored.
+ *   The strata are defined by selection rules rather than by listed rows, and a rule editable after a result
+ *   is visible asserts nothing: the rule that produced the losing panel can be rewritten into the one that
+ *   produces the winning panel. The content hash pins the rules, the sampling seed and the decision rule
+ *   together, so a rebuilt panel is the panel that was scored.
  *
- *   WHAT THE BENCHMARK MEASURES, AND THE ONE REASON IT IS ADMIN-ONLY. `resolveTree` picks a place per
- *   node, and the rooftop tier answers through `AddressPointLookup` / `InterpolationLookup` /
- *   `StreetCentroidLookup`, each returning one hit or null. `ResolverBackend.findPlace` is the only
- *   interface in the ladder that returns a candidate SET, so it is the only layer at which "same evidence,
- *   different selection" is a statement about the code rather than about two indexes.
+ *   The benchmark is admin-only because `resolveTree` picks a place per node, and the rooftop tier answers
+ *   through `AddressPointLookup` / `InterpolationLookup` / `StreetCentroidLookup`, each returning one hit or
+ *   null. `ResolverBackend.findPlace` is the only interface in the ladder returning a candidate set, so it
+ *   is the only layer where "same evidence, different selection" describes the code rather than two indexes.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"

@@ -55,8 +55,7 @@ import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { makeDirectories, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -533,7 +532,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	}
 
 	await makeDirectories(dirname(output))
-	await writeLocalTextFile(stringifyJSON(lexicon) + "\n", output)
+	await writeLocalJSONLFile([lexicon], output)
 
 	return {
 		path: output,

@@ -121,7 +121,7 @@ describe("readTuples (OA CSV parse)", () => {
 				"174.7,-36.8,31,Rawene Road,,Birkenhead,Auckland,,,id1,hash1",
 				// Empty DISTRICT (~18% of NZ rows) → CITY becomes the locality, no dependent_locality.
 				"174.4,-36.6,26A,Henley Road,,Kaukapakapa,,,,id2,hash2",
-			].join("\n") + "\n",
+			],
 			file
 		)
 
@@ -180,7 +180,7 @@ describe("readTuples (OA CSV parse)", () => {
 				// Genuinely distinct CITY/DISTRICT still produces dependent_locality (the districtAsLocality
 				// contract is otherwise unchanged).
 				"1,2,11,Elm Ave,,Baranbio,Amurrio,Araba,01450,id2,hash2",
-			].join("\n") + "\n",
+			],
 			file
 		)
 
@@ -210,7 +210,7 @@ describe("readTuples (OA CSV parse)", () => {
 				// poblacion empty → falls back to municipio→locality, no dependent_locality (the districtAsLocality
 				// NZ-pattern fallback, exercised here through the CNIG column names instead of CITY/DISTRICT).
 				'-2.503,42.836,"2","PK",CARRETERA,A-4136,15,,,,01240,01001,Alegría-Dulantzi,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
-			].join("\n") + "\n",
+			],
 			file
 		)
 
@@ -245,7 +245,7 @@ describe("readTuples (OA CSV parse)", () => {
 				"1,2,11,SomeSt,,,d,R,00000,i,h", // no city → skip
 				'1,2,12,RealSt,,"Comunidad de 09076, 09150 y 09578",d,R,00000,i,h', // quoted city-noise → drop
 				"1,2,13,Keep St,,Keepville,d,R,00000,i,h", // kept
-			].join("\n") + "\n",
+			],
 			file
 		)
 

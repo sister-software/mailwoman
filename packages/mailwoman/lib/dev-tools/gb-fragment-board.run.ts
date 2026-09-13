@@ -145,7 +145,7 @@ for (const shape of SHAPES) {
 console.log(`span serialization sha256: ${sha256Hex(spans.join("\n"))}`)
 
 if (values["dump-spans"]) {
-	await writeLocalTextFile(spans.join("\n") + "\n", values["dump-spans"])
+	await writeLocalTextFile(spans, values["dump-spans"])
 
 	console.log(`spans → ${values["dump-spans"]} (${spans.length} parses)`)
 }

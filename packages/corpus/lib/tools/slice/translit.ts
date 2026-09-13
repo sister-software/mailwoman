@@ -174,7 +174,7 @@ export async function buildTranslitSlice(
 
 	if (quarantine.length) {
 		const qPath = join(corpusDir, "quarantine-transliteration.tsv")
-		await writeLocalTextFile(quarantine.join("\n") + "\n", qPath)
+		await writeLocalTextFile(quarantine, qPath)
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
 

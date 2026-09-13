@@ -6,26 +6,26 @@
  *   The GeoNames-to-WOF identity join the same-data benchmark grades through (#2261), and the guard that
  *   decides when the join may be trusted.
  *
- *   WHY A JOIN IS NEEDED AT ALL. The gold entity is a GeoNames row, chosen so the truth is open and
- *   independent of Mailwoman's own gazetteer. The candidates are WOF rows, because that is what the
- *   backend answers with. Without a published link between the two, "the selection is correct" would have
- *   to be decided by distance — and distance is not identity: two same-named places a kilometre apart are
- *   different entities, and a correct selection 30 km from a large city's centroid is still correct.
+ *   The gold entity is a GeoNames row, so the truth stays open and independent of Mailwoman's own gazetteer;
+ *   the candidates are WOF rows, because that is what the backend answers with. Without a published link
+ *   between the two, correctness would have to be decided by distance, and distance is not identity — two
+ *   same-named places a kilometre apart are different entities, and a correct selection 30 km from a large
+ *   city's centroid is still correct.
  *
- *   THE GOLD IS A SET, NOT AN ID. 21 of the 10,738 coherent sets hold more than one DISTINCT city-tier WOF
- *   id — the gazetteer carries that place twice — and grading against one arbitrary member would measure
- *   which duplicate an arm happened to return. Count distinct IDS, not rows: the table writes the same link
- *   more than once (2,057,196 rows over 1,775,438 distinct pairs), and the row-wise count says 4,304.
+ *   The gold is a SET of ids rather than one id: 21 of the 10,738 coherent sets reach more than one distinct
+ *   city-tier WOF row, so grading against one arbitrary member would measure which duplicate an arm returned.
+ *   Count distinct ids rather than rows — the table writes the same link more than once (2,057,196 rows over
+ *   1,775,438 distinct pairs), and the row-wise count reads 4,304.
  *
- *   THE COHERENCE GUARD IS WHERE THE EXCLUSIONS ACTUALLY COME FROM. Every member's folded name must agree
- *   with the register's name, every member must sit in the register's country, and every member must lie
- *   within {@link GOLD_COHERENCE_KM} of the register's coordinate. 1,152 geonameids reach only a
- *   neighbourhood or a region — grading a locality selection against a region's id marks a correct answer
- *   wrong — and 1,492 reach a differently-named row.
+ *   A set is admitted only when every member's folded name matches the register's, every member sits in the
+ *   register's country, and every member lies within {@link GOLD_COHERENCE_KM} of its coordinate. Most
+ *   exclusions come from that guard: 1,152 geonameids reach only a neighbourhood or a region, where grading
+ *   a locality selection against a region's id marks a correct answer wrong, and 1,492 reach a
+ *   differently-named row.
  *
- *   EVERY REJECTION IS COUNTED. A geonameid the join cannot resolve is UNGRADEABLE and never enters the
- *   panel, and {@link GoldCensus} carries why. The counts are properties of the gazetteer, not choices the
- *   panel made, and reporting them keeps a coverage hole from reading as a selection rule.
+ *   A geonameid the join cannot resolve never enters the panel, and {@link GoldCensus} says which check
+ *   refused it. Those counts describe the gazetteer rather than the panel, so reporting them keeps a
+ *   coverage hole from reading as a selection rule.
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"

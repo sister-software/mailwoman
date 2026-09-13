@@ -1,6 +1,5 @@
-import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { JSONSpliterator } from "spliterator"
+import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
 /**
  * Re-emit a CANONICAL jsonl ({raw, components, country, source, ...}) as a LABELED jsonl in the CURRENT align format,
@@ -36,8 +35,7 @@ export interface AlignSliceOptions {
 }
 
 export async function alignCanonicalSlice(args: AlignSliceOptions): Promise<void> {
-	// Read phase only — the write path stays on createWriteStream.
-	const outStream = openWriteStream(args.output, { encoding: "utf8" })
+	await using outStream = createNewlineWriter(args.output)
 	let labeled = 0
 	let quarantined = 0
 	const quarantineReasons: Record<string, number> = {}
@@ -48,7 +46,7 @@ export async function alignCanonicalSlice(args: AlignSliceOptions): Promise<void
 		const result = alignRow(canonical)
 
 		if (result.kind === "labeled") {
-			outStream.write(stringifyJSON(result.row) + "\n")
+			await outStream.write(stringifyJSON(result.row))
 
 			labeled++
 		} else {
@@ -57,10 +55,6 @@ export async function alignCanonicalSlice(args: AlignSliceOptions): Promise<void
 			quarantineReasons[r] = (quarantineReasons[r] ?? 0) + 1
 		}
 	}
-
-	await new Promise<void>((res) => {
-		outStream.end(res)
-	})
 
 	console.error(
 		`align-canonical-slice: ${labeled} labeled, ${quarantined} quarantined → ${args.output}\n` +

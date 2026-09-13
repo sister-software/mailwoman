@@ -6,18 +6,14 @@
  *   The frozen candidate fixture every arm of the same-data benchmark reads (#2261): the row contract, the
  *   replay key, the digests, and the validator that refuses a fixture two arms could read differently.
  *
- *   THE FIXTURE IS KEYED PER LOOKUP, NOT PER ROW. One input costs the walk up to `maxLookups` backend
- *   calls (default 10), each with its own text, placetype and scope, so a row's evidence is a MAP from a
- *   canonical query to the answer that query got — plus the POOL, the deduplicated union of every answer,
- *   which is the ordered candidate set the row is judged to have offered. An arm's own query policy
- *   decides which of the pool it looks at, and that policy is part of the resolver under test; what must
- *   be equal is the pool, and `assertEqualEvidence` is what says so.
+ *   Evidence is keyed per LOOKUP rather than per row: one input costs the walk up to `maxLookups` backend
+ *   calls (default 10), each with its own text, placetype and scope. So a row holds a map from canonical
+ *   query to answer, plus the pool — the deduplicated union of every answer, which is the ordered candidate
+ *   set the row offered. Which of the pool an arm consults is its own query policy and part of what is being
+ *   measured; the pool is what must be equal, and `assertEqualEvidence` checks that.
  *
- *   THE RECORDING MUST BE A SUPERSET OF EVERY ARM'S QUESTIONS. An ablation issues queries the production
- *   walk never issues — `parentFallback: false` alone removes a retry whose key nothing else asks for — so
- *   a fixture recorded from one arm makes the others miss. `replayBackend` RAISES on a miss rather than
- *   answering `[]`, because an empty answer is a resolvable state the resolver would silently absorb: the
- *   arm would report an abstention that the fixture, not the resolver, produced.
+ *   `replayBackend` raises on a key it does not hold rather than answering `[]`. An empty answer is a state
+ *   the resolver absorbs silently, so the arm would report an abstention the fixture produced.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -382,10 +378,9 @@ export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): R
 			}
 
 			// A fresh array AND a fresh object per candidate. The array copy stops an in-place sort inside the walk from
-			// reordering the frozen evidence; the per-candidate copy stops the walk WRITING to it. The resolver stamps
-			// verdict fields onto the candidates it is handed — `containedByQualifier`, `mismatch` — so a shared object
-			// leaves arm two reading evidence arm one edited. Measured: one row of 453 differed, which is exactly the
-			// density at which a shared reference survives review.
+			// reordering the frozen evidence; the per-candidate copy stops the walk writing to it, because the resolver
+			// stamps verdict fields onto the candidates it is handed (`containedByQualifier`, `mismatch`). A shared
+			// object would leave one arm reading evidence another arm edited.
 			return hit.map((candidate) => ({ ...candidate }))
 		},
 	}

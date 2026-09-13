@@ -97,7 +97,7 @@ export async function buildKryptoniteSlice(
 
 	if (quarantine.length) {
 		const qPath = join(options.outDir, `corpus-v${corpusVersion}`, "quarantine-kryptonite.tsv")
-		await writeLocalTextFile(quarantine.join("\n") + "\n", qPath)
+		await writeLocalTextFile(quarantine, qPath)
 		report?.(`quarantine log → ${qPath}`)
 	}
 

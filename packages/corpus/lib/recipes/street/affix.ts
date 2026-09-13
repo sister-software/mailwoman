@@ -515,7 +515,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(stringifyJSON({ raw, components, country: "US" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "US" }))
 
 				emitted++
 
@@ -541,7 +541,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "affix", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "affix", synth_base_id: null }))
 
 			emitted++
 		}
@@ -587,7 +587,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 				const locale = `${t.iso2.toLowerCase()}-${t.iso2}`
 
 				if (opts.golden) {
-					write(stringifyJSON({ raw, components, country: t.iso2 }) + "\n")
+					write(stringifyJSON({ raw, components, country: t.iso2 }))
 
 					balanceEmitted++
 
@@ -613,7 +613,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 					continue
 				}
 
-				write(stringifyJSON({ ...aligned.row, synth_method: "affix-balance", synth_base_id: null }) + "\n")
+				write(stringifyJSON({ ...aligned.row, synth_method: "affix-balance", synth_base_id: null }))
 
 				balanceEmitted++
 			}
@@ -737,7 +737,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 				return false
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: method, synth_base_id: base.base_source_id }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: method, synth_base_id: base.base_source_id }))
 
 			classCounts[rowClass]++
 			formatCounts[fmt] = (formatCounts[fmt] ?? 0) + 1

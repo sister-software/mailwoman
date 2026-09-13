@@ -228,7 +228,7 @@ export const sgRegisterRecipe: CorpusRecipe = {
 			if (opts.golden) {
 				const golden = { raw: rendering.raw, components: rendering.components, country: "SG", locale: "en-SG" }
 
-				write(stringifyJSON(golden) + "\n")
+				write(stringifyJSON(golden))
 
 				emitted++
 				registers[rendering.register] = (registers[rendering.register] ?? 0) + 1

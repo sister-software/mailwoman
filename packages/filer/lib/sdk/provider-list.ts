@@ -9,10 +9,9 @@
  *   whole-file, header-keyed read. This port keeps the header-keyed shape (so extra or reordered
  *   real-world columns, e.g. `provider_name`/`dba_name`, don't break it — only the three named columns
  *   below are required, anywhere in the header), but rewrites the loader per decision 8: it streams
- *   line-by-line off a `ReadStream` (`node:readline`, the same construction as {@linkcode parseForm499}
- *   in `form499.ts`) rather than reading the file whole, and it throws a descriptive error naming the
- *   file and 1-indexed line number the instant a row's column count doesn't match the header — no
- *   partial/truncated row is ever silently yielded.
+ *   row by row through `CSVSpliterator` rather than reading the file whole, and it throws a descriptive
+ *   error naming the file and 1-indexed row number the instant a row's column count doesn't match the
+ *   header — no partial/truncated row is ever silently yielded.
  *
  *   Decision 6 is the entire point of this file, so it bears repeating exactly what NOT to copy: Nexus's
  *   `parseBDCProvidersFiles` folds every row sharing a `provider_id` into ONE `BroadbandProvider` via a
@@ -31,10 +30,8 @@
  *   malformed input and throws (decision 8), not silently coerced to `null`.
  */
 
-import { createInterface } from "node:readline"
-
-import { openReadStream } from "@mailwoman/core/fs/streams"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { CSVSpliterator } from "spliterator"
 
 import { toFRN, type FRN } from "#frn"
 
@@ -67,53 +64,6 @@ export interface ProviderListRow {
 	 * stable per `providerID`.
 	 */
 	holdingCompany: string | null
-}
-
-/**
- * Splits one CSV line into fields, honoring double-quote-delimited fields (so a quoted `holding_company` value
- * containing a comma, e.g. `"Second Holdings, Renamed LLC"`, survives as one field) and the standard `""` doubled-quote
- * escape for a literal quote inside a quoted field. Deliberately scoped to single-line fields only — a quoted field
- * spanning multiple physical lines is out of scope, since this parser reads line-by-line via `node:readline` (see the
- * module docstring's streaming rationale) and the BDC provider list's `holding_company` values are single-line company
- * names in practice.
- */
-function splitProviderListCSVLine(line: string): string[] {
-	const fields: string[] = []
-	let current = ""
-	let inQuotes = false
-
-	for (let index = 0; index < line.length; index++) {
-		const char = line[index]!
-
-		if (inQuotes) {
-			if (char === '"') {
-				if (line[index + 1] === '"') {
-					current += '"'
-
-					index++
-				} else {
-					inQuotes = false
-				}
-			} else {
-				current += char
-			}
-
-			continue
-		}
-
-		if (char === '"') {
-			inQuotes = true
-		} else if (char === ",") {
-			fields.push(current)
-			current = ""
-		} else {
-			current += char
-		}
-	}
-
-	fields.push(current)
-
-	return fields
 }
 
 /**
@@ -179,8 +129,9 @@ function toProviderListRow(
 }
 
 /**
- * Streams the BDC provider list CSV at `csvPath` line-by-line (`node:readline` over a `ReadStream` — same construction
- * as {@linkcode parseForm499}, the file is never read into memory whole) and yields EVERY row as a typed
+ * Streams the BDC provider list CSV at `csvPath` row by row through `CSVSpliterator`, which is quote-aware across
+ * physical lines — a line reader splits a quoted `holding_company` containing a newline into two broken rows, and the
+ * column-count check below then rejects both. The file is never read into memory whole. Yields EVERY row as a typed
  * {@linkcode ProviderListRow}. The first non-blank line is read as the header and used to locate the
  * `frn`/`provider_id`/`holding_company` columns by name; a header missing any of the three throws immediately. A data
  * row whose column count doesn't match the header's throws immediately, naming `csvPath` and the 1-indexed line number
@@ -192,20 +143,13 @@ function toProviderListRow(
  * folding into a `Map` keyed by `provider_id` — the crosswalk graph is where that cardinality belongs, not here.
  */
 export async function* parseProviderList(csvPath: string): AsyncIterable<ProviderListRow> {
-	const lines = createInterface({
-		input: openReadStream(csvPath, { encoding: "utf8" }),
-		crlfDelay: Infinity,
-	})
-
 	let lineNumber = 0
 	let header: string[] | null = null
 
-	for await (const line of lines) {
+	for await (const fields of CSVSpliterator.fromAsync<string[]>(csvPath, { header: false })) {
 		lineNumber++
 
-		if (!line.length) continue
-
-		const fields = splitProviderListCSVLine(line)
+		if (!fields.length || (fields.length === 1 && !fields[0])) continue
 
 		if (header === null) {
 			assertRequiredProviderListColumns(fields, csvPath)

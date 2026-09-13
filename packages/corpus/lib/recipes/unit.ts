@@ -270,7 +270,7 @@ export const unitRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				write(stringifyJSON({ raw, components, country: "US" }) + "\n")
+				write(stringifyJSON({ raw, components, country: "US" }))
 
 				emitted++
 
@@ -296,7 +296,7 @@ export const unitRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "unit", synth_base_id: null }) + "\n")
+			write(stringifyJSON({ ...aligned.row, synth_method: "unit", synth_base_id: null }))
 
 			emitted++
 		}

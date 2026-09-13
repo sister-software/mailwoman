@@ -22,8 +22,8 @@
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
@@ -367,7 +367,7 @@ async function main() {
 	const dumpPath = stringArgs["dump-rows"] || ""
 
 	if (dumpPath) {
-		await writeLocalTextFile(rowRecords.map((r) => stringifyJSON(r)).join("\n") + "\n", dumpPath)
+		await writeLocalJSONLFile(rowRecords, dumpPath)
 
 		console.error(`wrote per-row dump: ${dumpPath} (${rowRecords.length} rows)`)
 	}
