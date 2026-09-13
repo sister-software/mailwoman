@@ -50,7 +50,7 @@ import {
 	renderMetricsTable,
 	renderPairedComparison,
 	renderReliability,
-	renderVerdictTable,
+	renderDecisionTable,
 } from "#eval-harness/same-data/report"
 import {
 	armMetrics,
@@ -289,7 +289,7 @@ async function scorePhase(): Promise<void> {
 		...arms.flatMap((arm) => [...renderReliability(arm, reliabilityTable(byArm(arm))), ""]),
 		"## Registered decision",
 		"",
-		...renderVerdictTable(verdict),
+		...renderDecisionTable(verdict),
 		"",
 		"## Rows the baseline won and Mailwoman did not",
 		"",

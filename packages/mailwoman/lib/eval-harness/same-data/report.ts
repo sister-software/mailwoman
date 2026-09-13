@@ -171,7 +171,7 @@ export function renderReliability(arm: string, bins: readonly ReliabilityBin[]):
 /**
  * The registered decision, with the quantity that decided it beside each condition.
  */
-export function renderVerdictTable(verdict: BenchmarkVerdict): string[] {
+export function renderDecisionTable(verdict: BenchmarkVerdict): string[] {
 	return [
 		...renderMarkdownTable(
 			["condition", "required", "observed", "met"],
