@@ -6,6 +6,48 @@ Every claim carries the file:line or the live observation it came from.
 
 ---
 
+## Verification, 2026-09-13
+
+Everything below was checked against the Docusaurus build output and a `docusaurus serve` of it. The
+docs build is the check that matters, because `onBrokenLinks` and `onBrokenAnchors` are both `"throw"`
+— it passing means every link added here resolves.
+
+| Check | Result |
+|---|---|
+| `/pricing`, `/licensing`, `/licenses` | 200, each a redirect page to its target |
+| `/nope-not-a-page` | 404, carrying the new body; upstream's "contact the owner of the site" is gone |
+| `/docs/reviews/2026-08-02-mailfail-robustness` | 404 — the orphan is off the published site |
+| Font preloads in `index.html` | 4, all `rel=preload as=font type=font/woff2 crossorigin=anonymous` |
+| Buy cards | `$250`, `$2,400`, "Works out to $200 a month", both billing-basis lines |
+| `/docs/pricing` | "Buying one" + "Buy a commercial license" CTA |
+| Footer | `href=/license>License` |
+| `rebeccapurple` | absent from the built CSS |
+| Card example lines | `white-space:normal; overflow-wrap:anywhere` shipped |
+| Long `alt` strings | gone; replaced by the short forms |
+
+NOT verified, and why: `packages/earth` cannot be built or run from a Linux workspace — `rolldown`,
+`rspack`, `oxlint` and `vale` all ship darwin-only native bindings here. The Earth changes have a clean
+`tsc --noEmit`, and the browser specs were read rather than run (below), but nobody has watched them
+work in a browser.
+
+### How the permalink change lands in the existing browser specs
+
+`initialQuery` makes a `?q=` run on arrival, and `GeocoderFixture.goto(query)` navigates to exactly
+that URL — so eleven specs now exercise the permalink path for free (`200-demo-resolve` ×6,
+`000-demo-production-smoke` ×3, `270-demo-debug-drawer`, `300-demo-theme`, plus `shell.spec.ts`).
+
+All of them stay green. Each one submits the SAME query it navigated with, so whether the fixture's
+Enter is swallowed by the `busy` guard mid-auto-run or re-runs after it, `readResult()` reads a result
+for the query the spec asked about. Specs that call `demo.goto()` with no query are untouched — no
+auto-run fires.
+
+One new flake vector worth knowing about if one ever appears: when the auto-run finishes BEFORE the
+fixture presses Enter, `submit()`'s wait for "Parsed components" is satisfied by the first run's panel
+while the second is still in flight. Both runs carry the same query and render the same DOM, so there
+is nothing observable to differ — but that is why a re-run is happening at all.
+
+---
+
 ## P0 — broken in front of a visitor
 
 ### 1. A `?q=` permalink never runs
@@ -26,7 +68,7 @@ An earlier draft of this record called this a fly-to that overshot the basemap's
 wrong, and it is recorded here because it is the kind of wrong that gets a camera "fixed" into a
 second bug.
 
-What actually happens: the camera is correct. `computeMapPlaceRenderSpec`
+What happens instead: the camera is correct. `computeMapPlaceRenderSpec`
 (`packages/react/lib/map/place-render.ts:126`) flies an interpolated hit to z15, well inside the
 Protomaps source's `maxzoom: 15`, and the marker lands on the right building. The viewport is
 nevertheless black for tens of seconds, and then fills in on its own with no interaction — the tiles
@@ -34,7 +76,7 @@ for the landed view are queued behind the model and gazetteer work saturating th
 connection (the resolve alone measured 2,535 ms). Scrolling appeared to "fix" it only because any
 interaction forces a repaint of tiles that had by then arrived.
 
-NOT FIXED, deliberately — the honest fix is retaining the parent tiles across the flight, or holding
+NOT FIXED, deliberately — the real fix is retaining the parent tiles across the flight, or holding
 the camera until the target tiles are ready, and neither can be verified from a session that cannot
 run the Earth dev server. Left as the top open item.
 
