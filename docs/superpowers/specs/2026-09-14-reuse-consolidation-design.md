@@ -217,7 +217,7 @@ other measures parallelism, and parallelism is the correct state for four produc
 Lane A1 was not in any of the five censuses. 143 `interface Options` blocks restated their own `spec.options`:
 invisible to `jscpd` (different tokens), to `knip` (all used), to the declaration census (it compares functions
 and constants, not a type against a constant) and to file clustering (the pair sits inside one file). It delivered
-1,180 net lines, more than every cross-package family in the tree combined.
+1,182 net lines, more than every cross-package family in the tree combined.
 
 A sixth probe went looking for the rest of that category — a string-literal union restating an `as const` object's
 values, an interface restating its keys, a zod schema restating an interface — and found **223 lines**, of which
@@ -229,7 +229,7 @@ are deliberately different: the interface types `annotations` as `OpenCageAnnota
 
 | Source                                  |      Lines | State                                        |
 | --------------------------------------- | ---------: | -------------------------------------------- |
-| Derived command options (lane A1)       |      1,180 | delivered                                    |
+| Derived command options (lane A1)       |      1,182 | delivered                                    |
 | French voie types taken from the codex  |         26 | delivered, and closed a 16-token recall gap  |
 | Types restating values                  |        223 | mostly deliberate on inspection              |
 | Duplicated declarations, cross-package  |        520 | small families, no single one above 27 lines |
@@ -243,7 +243,11 @@ agreeing near zero is that enforcement reporting success.
 
 ## Order
 
-1. **A1** — done. 143 files, −1,180 net lines, two inert flags fixed.
+1. **A1** — done. 143 files, −1,182 net lines, two inert flags fixed.
+
+   Per commit, so the branch's own arithmetic is auditable: A1 −1,182, the voie consolidation −26, and the
+   `locale-tables` check +400 — which is new capability rather than consolidation. The branch nets −808.
+
 2. **Home shadows** — the French voie set is done. The rest are layer-package shadows
    (`assertAreaAgreement`, `resolveCells`, `readIdentity`, `aggregateChunks`, `runBatchedIngest`,
    `sampleAgreementPoints`) and belong to lane B.
