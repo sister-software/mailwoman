@@ -1420,44 +1420,46 @@
 	}
 
 	/*
-	 * The grab bar. Sticky so it survives the panel scrolling under it, opaque so content cannot show through, and
-	 * full-bleed over the panel's padding. On the desktop column the handle means nothing — there is no drawer to
-	 * resize — so only the close survives there, right-aligned.
+	 * The header: the grab bar and the search field as ONE sticky block.
+	 *
+	 * The field is in here rather than down in the scroll because scrolling a long result used to carry it off the
+	 * top of the panel, and the field is what a visitor reaches for next. The reference map apps pin exactly this
+	 * much and let everything under it move.
+	 *
+	 * It OWNS the panel's top gutter rather than sitting inside it: the panel carries no top padding, so the header's
+	 * paint reaches the panel's top edge. Opaque, because the panel's material is glass and a result read straight
+	 * through a translucent pinned header.
+	 *
+	 * NO NEGATIVE TOP MARGIN to reach that edge. In a grid the track is sized from the margin box while the item is
+	 * laid out at the track's start, so a bar pulled up by 12px painted 12px past its own row, onto the field below.
 	 */
-	.mw-map-panel__grip {
+	.mw-map-panel__header {
 		position: sticky;
 		top: 0;
 		z-index: 2;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		/*
-		 * NO MINIMUM on the desktop column. The bar holds a handle that only the drawer offers and a close that only a
-		 * result offers, so on a desktop with nothing found it holds nothing — and a 2.5rem minimum drew that nothing
-		 * as a band of empty glass above the search field. Its height is whatever it is carrying; the drawer rule
-		 * below puts the minimum back, where the handle is the thing being reached for.
-		 */
-		min-height: 0;
-		/*
-		 * The bar OWNS the panel's top gutter rather than sitting inside it: the panel has no top padding and the bar
-		 * carries 0.75rem of its own, so its paint reaches the top edge and its box still measures what it occupies.
-		 *
-		 * NO NEGATIVE TOP MARGIN. Pulling it up out of the panel's padding is the obvious version and it is wrong in a
-		 * grid: the track was sized from the margin box (12px shorter) while the bar was laid out at the track's start
-		 * and painted its full height, so the bar's lower 12px came down across the search field below it.
-		 */
+		display: grid;
+		gap: 0.5rem;
 		margin-inline: -0.75rem;
-		padding: 0.75rem 0.5rem 0;
+		padding: 0.75rem 0.75rem 0.6rem;
+		background: var(--color-background-raised);
 		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+		/* A hairline under the pinned block, so a result scrolling beneath it has an edge to disappear at. */
+		box-shadow: 0 1px 0 var(--color-separator);
 	}
 
 	/*
-	 * Opaque only when the bar HOLDS something. It is what the panel's contents scroll under, and the panel's own
-	 * material is glass — so text would read through a sticky bar that shared it. An empty bar has nothing to hide
-	 * behind, and an opaque strip across the top of a panel with no result reads as a stray divider.
+	 * The grab bar's own row, inside the header.
+	 *
+	 * NO MINIMUM on the desktop column: the row holds a handle that only the drawer offers and a close that only a
+	 * result offers, so on a desktop with nothing found it holds nothing — and a minimum drew that nothing as a band
+	 * of empty glass above the search field. Its height is whatever it is carrying; the drawer rule below puts a
+	 * minimum back, where the handle is the thing being reached for.
 	 */
-	.mw-map-panel__grip:has(button) {
-		background: var(--color-background-raised);
+	.mw-map-panel__grip {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 0;
 	}
 
 	.mw-map-panel__result {
@@ -1782,6 +1784,12 @@
 			 * close. A sheet raised over a map covers what it covers; it does not share a corner with it.
 			 */
 			z-index: 5;
+			/*
+			 * `none`, not `contain`. A pull at the top of the scroll is a drag on the drawer here (see
+			 * `onPanelPointerMove`), and the browser's own rubber band fought it: the content bounced while the drawer
+			 * stayed put, which reads as the gesture being heard and refused.
+			 */
+			overscroll-behavior: none;
 			max-height: 55dvh;
 			border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
 			border-inline: 0;
@@ -1792,13 +1800,18 @@
 			display: grid;
 		}
 
+		/* The header is the grab target, so the browser must not claim the gesture as a scroll before it is read. */
+		.mw-map-panel__header {
+			touch-action: none;
+		}
+
 		/*
 		 * The drawer's bar IS the grab target, so it keeps a full row — but only while it holds one. With no result the
 		 * bar is empty on a phone too, and an empty band over the search field is the gap this rule would otherwise put
 		 * back. `:has()` is the test; where it is unsupported the bar collapses, which is the harmless half.
 		 */
 		.mw-map-panel__grip:has(button) {
-			min-height: 2.5rem;
+			min-height: 2.25rem;
 		}
 
 		.mw-map-sheet__close--floating {

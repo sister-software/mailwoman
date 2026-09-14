@@ -155,17 +155,41 @@ export function GeocoderControls({
 		}
 	}, [])
 
-	const onGripPointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+	/*
+	 * A pull that began at the top of the scroll rather than on the header. Armed on pointer-down and promoted to a
+	 * real drag once it has travelled far enough downward — until then it is still a scroll, and a tap is neither.
+	 */
+	const overscrollRef = useRef<{ startY: number; pointerId: number } | null>(null)
+
+	// The detents exist only where the panel IS a drawer. The desktop column is sized by its content and has nothing
+	// to drag towards, so every pointer gesture there is a scroll or a click.
+	const isDrawerLayout = () => typeof window !== "undefined" && window.matchMedia("(max-width: 600px)").matches
+
+	const beginSheetDrag = useCallback((clientY: number, pointerId: number) => {
 		const sheet = sheetRef.current
 
 		if (!sheet) return
 
-		event.currentTarget.setPointerCapture(event.pointerId)
-		sheetDragRef.current = { startY: event.clientY, startHeight: sheet.getBoundingClientRect().height, moved: false }
+		sheet.setPointerCapture(pointerId)
+		sheetDragRef.current = { startY: clientY, startHeight: sheet.getBoundingClientRect().height, moved: false }
 	}, [])
 
+	/*
+	 * The WHOLE header is the grab target, not just the pill: that is the part of a sheet a thumb lands on, and the
+	 * pill alone is a 3rem strip to hit. The field and the close keep their own gestures.
+	 */
+	const onHeaderPointerDown = useCallback(
+		(event: React.PointerEvent<HTMLDivElement>) => {
+			if (!isDrawerLayout()) return
+			if (event.target instanceof Element && event.target.closest("input, .mw-map-sheet__close")) return
+
+			beginSheetDrag(event.clientY, event.pointerId)
+		},
+		[beginSheetDrag]
+	)
+
 	const onGripPointerMove = useCallback(
-		(event: React.PointerEvent<HTMLButtonElement>) => {
+		(event: React.PointerEvent<HTMLElement>) => {
 			const drag = sheetDragRef.current
 
 			if (!drag) return
@@ -209,6 +233,65 @@ export function GeocoderControls({
 
 		setSheetHeight(current > midpoint ? large : medium)
 	}, [sheetDetents])
+
+	/*
+	 * OVERSCROLL IS A DRAG, not a bounce. Pull down on a sheet that is already scrolled to its top and the sheet
+	 * itself should come down — that is what the reference sheets do, and it is what makes a drawer dismissable
+	 * without first hunting for the pill. A rubber band in that position says the gesture was heard and refused.
+	 *
+	 * The pull is only armed here; it becomes a drag after 8px of downward travel, so a tap stays a tap and a flick
+	 * upward stays a scroll.
+	 */
+	const onPanelPointerDown = useCallback((event: React.PointerEvent<HTMLElement>) => {
+		if (!isDrawerLayout()) return
+		if (sheetDragRef.current) return
+
+		const sheet = sheetRef.current
+
+		if (!sheet || sheet.scrollTop > 0) return
+		if (event.target instanceof Element && event.target.closest(".mw-map-panel__header")) return
+
+		overscrollRef.current = { startY: event.clientY, pointerId: event.pointerId }
+	}, [])
+
+	const onPanelPointerMove = useCallback(
+		(event: React.PointerEvent<HTMLElement>) => {
+			if (sheetDragRef.current) {
+				onGripPointerMove(event)
+
+				return
+			}
+
+			const armed = overscrollRef.current
+
+			if (!armed || armed.pointerId !== event.pointerId) return
+
+			const sheet = sheetRef.current
+
+			if (!sheet) return
+
+			if (sheet.scrollTop > 0) {
+				overscrollRef.current = null
+
+				return
+			}
+
+			if (event.clientY - armed.startY < 8) return
+
+			overscrollRef.current = null
+			// Measured from where the pull STARTED, so the sheet does not jump by the threshold at the moment it takes over.
+			sheetDragRef.current = { startY: armed.startY, startHeight: sheet.getBoundingClientRect().height, moved: true }
+			sheet.setPointerCapture(event.pointerId)
+			onGripPointerMove(event)
+		},
+		[onGripPointerMove]
+	)
+
+	const onPanelPointerUp = useCallback(() => {
+		overscrollRef.current = null
+		onGripPointerUp()
+	}, [onGripPointerUp])
+
 	const { bearing, resetNorth } = useMapBearing(map)
 
 	const toggleSheet = (name: Exclude<SheetName, null>) => setOpenSheet((current) => (current === name ? null : name))
@@ -243,6 +326,20 @@ export function GeocoderControls({
 		// would only add a history entry's worth of churn.
 		void geocode.submit(initialQuery)
 	}, [initialQuery, runtime.ready, geocode])
+
+	/*
+	 * A dragged height belongs to the layout it was dragged in. Carried across the breakpoint it clipped the desktop
+	 * column at whatever detent a phone-width drag had left behind, so the card ended mid-result with no way to say
+	 * so. Crossing the breakpoint in either direction hands the height back to the stylesheet.
+	 */
+	useEffect(() => {
+		const query = window.matchMedia("(max-width: 600px)")
+		const onChange = () => setSheetHeight(null)
+
+		query.addEventListener("change", onChange)
+
+		return () => query.removeEventListener("change", onChange)
+	}, [])
 
 	// Escape dismisses the result sheet, matching `MapSheet`.
 	useEffect(() => {
@@ -303,77 +400,91 @@ export function GeocoderControls({
 				className="mw-map-panel"
 				aria-label="Search and results"
 				ref={sheetRef}
+				onPointerDown={onPanelPointerDown}
+				onPointerMove={onPanelPointerMove}
+				onPointerUp={onPanelPointerUp}
+				onPointerCancel={onPanelPointerUp}
 				{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
 			>
 				{/*
-				 * The drawer's grab bar. Sticky and opaque so it survives the panel scrolling under it; the handle is
-				 * only meaningful where the panel IS a drawer, so CSS hides it on the desktop column.
+				 * THE HEADER STAYS. The grab bar and the search field are one sticky block, so scrolling a long result
+				 * never takes the field with it — the thing a visitor reaches for next is the thing that scrolled away.
+				 * It is opaque because the panel's own material is glass, and text read through a pinned header.
 				 */}
-				<div className="mw-map-panel__grip">
-					{/*
-					 * The handle appears only WITH a result. With the drawer holding a search field and a row of examples
-					 * there is nothing behind it to pull into view, and a handle offered over nothing either expands a band
-					 * of empty glass or reads as broken — the same fault as the decorative handle it replaced.
-					 */}
-					{showSheet ? (
-						<button
-							type="button"
-							className="mw-map-sheet__handle"
-							aria-label="Resize the panel"
-							aria-expanded={sheetHeight !== null && sheetHeight > window.innerHeight * 0.7}
-							onPointerDown={onGripPointerDown}
-							onPointerMove={onGripPointerMove}
-							onPointerUp={onGripPointerUp}
-							onPointerCancel={onGripPointerUp}
-						/>
-					) : null}
+				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>
+					<div className="mw-map-panel__grip">
+						{/*
+						 * The handle appears only WITH a result. With the drawer holding a search field and a row of examples
+						 * there is nothing behind it to pull into view, and a handle offered over nothing either expands a band
+						 * of empty glass or reads as broken — the same fault as the decorative handle it replaced.
+						 */}
+						{showSheet ? (
+							<button
+								type="button"
+								className="mw-map-sheet__handle"
+								aria-label="Resize the panel"
+								aria-expanded={sheetHeight !== null && sheetHeight > window.innerHeight * 0.7}
+								// The pointer gesture belongs to the header, which is the whole grab target. This is the keyboard's
+								// way in: `detail === 0` is a click with no pointer behind it, so a drag that ends on the pill does
+								// not also toggle a detent.
+								onClick={(event) => {
+									if (event.detail !== 0) return
 
-					{showSheet ? (
-						<button
-							type="button"
-							className="mw-map-sheet__close mw-map-sheet__close--floating"
-							aria-label="Close the result"
-							onClick={() => setResultDismissed(true)}
-						>
-							<span aria-hidden="true">×</span>
-						</button>
-					) : null}
+									const { medium, large } = sheetDetents()
+									const current = sheetRef.current?.getBoundingClientRect().height ?? medium
+
+									setSheetHeight(current > (medium + large) / 2 ? medium : large)
+								}}
+							/>
+						) : null}
+
+						{showSheet ? (
+							<button
+								type="button"
+								className="mw-map-sheet__close mw-map-sheet__close--floating"
+								aria-label="Close the result"
+								onClick={() => setResultDismissed(true)}
+							>
+								<span aria-hidden="true">×</span>
+							</button>
+						) : null}
+					</div>
+
+					<form
+						className="mw-map-chrome__search"
+						onSubmit={(event) => {
+							event.preventDefault()
+							runQuery(geocode.text)
+						}}
+					>
+						{/*
+						 * `type="search"` brings its own clear button, so the pill carries no trailing slot: a second cross
+						 * beside the native one is two controls for one job, and the spinner that used to live there changed
+						 * the field's height on every submit.
+						 */}
+						<MapSearchBar label="Search addresses" leading={<SearchGlyph />} busy={busy}>
+							<input
+								id="mw-pipeline-input"
+								type="search"
+								aria-label="Address"
+								value={geocode.text}
+								onChange={(event) => geocode.setText(event.target.value)}
+								// The field ships pre-filled with the demo address, so the first click used to drop a caret in the
+								// middle of it and the visitor typed into someone else's address. Select the seed on focus so one
+								// keystroke replaces it — and only while it IS the untouched seed, so this never eats real work.
+								onFocus={(event) => {
+									if (placeholder && event.currentTarget.value === placeholder) {
+										event.currentTarget.select()
+									}
+								}}
+								disabled={!runtime.ready}
+								placeholder={placeholder}
+								onKeyDown={autocomplete.onInputKeyDown}
+								{...autocomplete.inputProps}
+							/>
+						</MapSearchBar>
+					</form>
 				</div>
-
-				<form
-					className="mw-map-chrome__search"
-					onSubmit={(event) => {
-						event.preventDefault()
-						runQuery(geocode.text)
-					}}
-				>
-					{/*
-					 * `type="search"` brings its own clear button, so the pill carries no trailing slot: a second cross
-					 * beside the native one is two controls for one job, and the spinner that used to live there changed
-					 * the field's height on every submit.
-					 */}
-					<MapSearchBar label="Search addresses" leading={<SearchGlyph />} busy={busy}>
-						<input
-							id="mw-pipeline-input"
-							type="search"
-							aria-label="Address"
-							value={geocode.text}
-							onChange={(event) => geocode.setText(event.target.value)}
-							// The field ships pre-filled with the demo address, so the first click used to drop a caret in the
-							// middle of it and the visitor typed into someone else's address. Select the seed on focus so one
-							// keystroke replaces it — and only while it IS the untouched seed, so this never eats real work.
-							onFocus={(event) => {
-								if (placeholder && event.currentTarget.value === placeholder) {
-									event.currentTarget.select()
-								}
-							}}
-							disabled={!runtime.ready}
-							placeholder={placeholder}
-							onKeyDown={autocomplete.onInputKeyDown}
-							{...autocomplete.inputProps}
-						/>
-					</MapSearchBar>
-				</form>
 
 				<PlaceAutocomplete
 					suggestions={autocomplete.suggestions}
