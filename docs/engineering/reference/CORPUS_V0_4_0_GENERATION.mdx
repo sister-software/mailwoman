@@ -95,9 +95,9 @@ fraction.
 Three artifacts pin the generation:
 
 1. **Prompts** — the system + user prompt strings live in
-   [`generate_deepseek_corpus.py`](../../../../corpus-python/scripts/generate_deepseek_corpus.py)
-   constants (`KRYPTONITE_SYSTEM`, `KRYPTONITE_USER_TEMPLATE`, `TRANSLIT_SYSTEM`,
-   `KRYPTONITE_CATEGORIES`). Version-pinned through git history.
+   [`corpora/deepseek/prompts.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/corpora/deepseek/prompts.py)
+   as `KRYPTONITE_SYSTEM`, `KRYPTONITE_USER_TEMPLATE`, `TRANSLIT_SYSTEM` and
+   `KRYPTONITE_CATEGORIES`. Version-pinned through git history.
 2. **Raw responses** — every chat-completion is persisted to
    `raw-deepseek-kryptonite.jsonl` with `{batch_id, category, n_requested, model, finish_reason, usage, response_content}`.
    Regenerating from this raw log requires only the JSON validator, not another DeepSeek call.
@@ -182,13 +182,31 @@ v0.3.0 baseline has 674 train parquet files; one more is noise at the audit leve
   - `hans` — Simplified Chinese (locale `zh-CN`)
   - `hang` — Korean Hangul (locale `ko-KR`)
   - `armn` — Armenian (locale `hy-AM`)
+
+:::danger[The locales above were written onto the rows, and that was the defect]
+
+This section records the run as it happened. The generator stamped each target script's locale
+**and country** on every row it produced, so a US address rendered in katakana was written with
+`country: "JP"`, `locale: "ja-JP"`. The rows reached no model — every recipe reading corpus-v0.4.0
+weighted US and FR alone, and the training loader drops a row whose country carries no weight — but
+the mapping is wrong and a re-run under it would be accepted by a CJK recipe, which admits `JP: 1.0`.
+
+A transliterated row now keeps the **seed's** country and locale and names its surface separately, in
+`surface_script` (ISO 15924, `Jpan`) and `surface_language` (a language subtag with no region, `ja`).
+Do not reconstruct the table above from this page. See
+[#2281](https://github.com/sister-software/mailwoman/issues/2281).
+
+:::
+
 - Target row count: 15K seeds × 5 scripts = ~75K transliterations. The original plan
   said ~50K; the seed pool grew during sampling and the upper bound is what fits the
   v0.5.0 byte-fallback budget on Thread A.
 
 ### Mode + invocation
 
-Implemented in `generate_deepseek_corpus.py`:
+Implemented in `generate_deepseek_corpus.py`, which is now the package
+`corpus-python/src/mailwoman_train/corpora/deepseek/` and runs as
+`python3 -m mailwoman_train.corpora.deepseek`. The invocation below is the one the recorded run used:
 
 ```bash
 python3 corpus-python/scripts/generate_deepseek_corpus.py \

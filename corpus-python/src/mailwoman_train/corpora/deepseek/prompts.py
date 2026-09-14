@@ -9,13 +9,23 @@ from __future__ import annotations
 
 from typing import Any
 
-# Five target scripts. Each entry: (script_label_for_prompt, locale_tag, country_tag, slug).
+# Five target scripts. Each entry: (script_label_for_prompt, surface_language, surface_script, slug).
+#
+# THERE IS NO COUNTRY COLUMN, and its absence is the point. The table used to read
+# ("Japanese (Katakana + Kanji)", "ja-JP", "JP", "jpan") and the generator stamped that JP on every row it
+# produced — so a US address rendered in katakana was written as a Japanese address. A script is a way of
+# writing; it names neither a territory nor, by itself, a language. The address being rendered keeps its own
+# country and locale, and these two fields say how the surface is written.
+#
+# `surface_language` is a BCP-47 LANGUAGE SUBTAG with no region: a US address rendered by Japanese convention
+# is `ja`, not `ja-JP`, because the region subtag is the half that was wrong. `surface_script` is the ISO
+# 15924 code. The slug stays lowercase because it names files and batch ids.
 TRANSLIT_SCRIPTS = [
-    ("Russian Cyrillic", "ru-RU", "RU", "cyrl"),
-    ("Japanese (Katakana + Kanji)", "ja-JP", "JP", "jpan"),
-    ("Simplified Chinese (Mandarin)", "zh-CN", "CN", "hans"),
-    ("Korean Hangul", "ko-KR", "KR", "hang"),
-    ("Armenian", "hy-AM", "AM", "armn"),
+    ("Russian Cyrillic", "ru", "Cyrl", "cyrl"),
+    ("Japanese (Katakana + Kanji)", "ja", "Jpan", "jpan"),
+    ("Simplified Chinese (Mandarin)", "zh", "Hans", "hans"),
+    ("Korean Hangul", "ko", "Hang", "hang"),
+    ("Armenian", "hy", "Armn", "armn"),
 ]
 
 

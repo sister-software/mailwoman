@@ -8,7 +8,9 @@ Two modes:
   non-Latin script (Russian Cyrillic, Japanese Kana+Kanji, Simplified Chinese, Korean
   Hangul, Armenian). Each output row carries the transliterated raw + transliterated
   component surface forms (substring-match invariant enforced by the model and
-  re-validated locally before write).
+  re-validated locally before write). A rendered row keeps the SEED's ``country`` and
+  ``locale`` — a US address written in katakana is a US address — and names how it is
+  written in ``surface_script`` and ``surface_language``.
 
 - ``--mode kryptonite``: prompt-engineers DeepSeek to produce incongruent-component
   examples (Buffalo Buffalo, NY-NY Steakhouse Houston TX, Saint Petersburg FL, Paris
@@ -22,6 +24,8 @@ Outputs canonical JSONL rows compatible with ``corpus/src/types.ts:CanonicalRow`
       "components": {tag: surface_form, ...},
       "country": "US"|"FR"|...,
       "locale": "en-US"|"fr-FR"|...,
+      "surface_script": "Cyrl"|"Jpan"|...,   # transliteration mode only
+      "surface_language": "ru"|"ja"|...,     # transliteration mode only
       "source": "deepseek-translit-cyrl"|"deepseek-kryptonite"|...,
       "source_id": "<deterministic id>",
       "license": "Synthetic (DeepSeek-v4-flash output, AGPL-compatible)",
@@ -70,7 +74,7 @@ from .prompts import (
     build_translit_user_prompt,
 )
 from .run import Sink, load_checkpoint, run_batches
-from .transliteration import TranslitBatch, emit_transliteration
+from .transliteration import TranslitBatch, canonical_translit_row, emit_transliteration, load_seeds
 
 __all__ = [
     "API_URL",
@@ -85,11 +89,13 @@ __all__ = [
     "TranslitBatch",
     "build_kryptonite_user_prompt",
     "build_translit_user_prompt",
+    "canonical_translit_row",
     "deepseek_call",
     "deterministic_id",
     "emit_kryptonite",
     "emit_transliteration",
     "load_checkpoint",
+    "load_seeds",
     "main",
     "parse_args",
     "parse_jsonl_response",

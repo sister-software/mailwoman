@@ -24,12 +24,20 @@ class TranslitBatch:
     batch_id: str
     script_label: str
     script_slug: str
-    locale_tag: str
-    country_tag: str
+    #: BCP-47 language subtag of the rendering convention, with NO region — `ja`, not `ja-JP`.
+    surface_language: str
+    #: ISO 15924 code of the script the surface is written in — `Jpan`, `Cyrl`.
+    surface_script: str
     seeds: list[dict[str, Any]]  # seed canonical rows
 
 
 def load_seeds(paths: list[str], limit: int) -> list[dict[str, Any]]:
+    """Every seed row, checked for the fields its transliterations inherit BEFORE a request is paid for.
+
+    A transliterated row takes the seed's country and locale, so a seed file missing either produces rows
+    that cannot be written. Finding that out at load time costs nothing; finding it out in the worker costs
+    the batch that already returned.
+    """
     seeds: list[dict[str, Any]] = []
     for path in paths:
         with open(path, encoding="utf-8") as f:
@@ -37,6 +45,9 @@ def load_seeds(paths: list[str], limit: int) -> list[dict[str, Any]]:
                 seeds.append(json.loads(ln))
     if limit:
         seeds = seeds[:limit]
+    for seed in seeds:
+        _required(seed, "country")
+        _required(seed, "locale")
     print(f"loaded {len(seeds)} seed addresses", flush=True)
     return seeds
 
@@ -48,7 +59,7 @@ def plan_batches(seeds: list[dict[str, Any]], batch_size: int, scripts: list[str
     same batches and a restart skips what it already paid for.
     """
     batches: list[TranslitBatch] = []
-    for script_label, locale_tag, country_tag, slug in TRANSLIT_SCRIPTS:
+    for script_label, surface_language, surface_script, slug in TRANSLIT_SCRIPTS:
         if scripts and slug not in scripts:
             continue
         for i in range(0, len(seeds), batch_size):
@@ -59,8 +70,8 @@ def plan_batches(seeds: list[dict[str, Any]], batch_size: int, scripts: list[str
                     batch_id=deterministic_id(f"translit-{slug}", batch_payload),
                     script_label=script_label,
                     script_slug=slug,
-                    locale_tag=locale_tag,
-                    country_tag=country_tag,
+                    surface_language=surface_language,
+                    surface_script=surface_script,
                     seeds=chunk,
                 )
             )
@@ -68,12 +79,46 @@ def plan_batches(seeds: list[dict[str, Any]], batch_size: int, scripts: list[str
     return batches
 
 
-def _canonical_row(batch: TranslitBatch, seed: dict[str, Any], raw: str, comps: dict[str, str]) -> dict[str, Any]:
+def _required(seed: dict[str, Any], field: str) -> str:
+    """The seed's own value for a field the row cannot be written without.
+
+    It RAISES rather than defaulting, because every default available here is the defect this generator was
+    fixed for: the target script's country, the string "US", or an empty value the loader reads as a country
+    it does not weight. A seed file that carries no country is a seed file this mode cannot transliterate.
+    """
+    value = seed.get(field)
+
+    if not isinstance(value, str) or not value:
+        raise ValueError(
+            f"seed {seed.get('source_id', '<no source_id>')!r} carries no {field!r}; "
+            "a transliterated row takes its country and locale from the address being rendered, "
+            "so a seed without them cannot be transliterated"
+        )
+
+    return value
+
+
+def canonical_translit_row(
+    batch: TranslitBatch, seed: dict[str, Any], raw: str, comps: dict[str, str]
+) -> dict[str, Any]:
+    """One transliterated row, carrying the SEED's country and locale.
+
+    A US address rendered in katakana is a US address. `country` and `locale` therefore name the address;
+    `surface_script` and `surface_language` name how this copy of it is written. The two were conflated here
+    until #2281 — the row took the target script's country tag, so 1600 Pennsylvania Ave in kana was written
+    as a Japanese address, and the only reason no model learned it is that every recipe reading that corpus
+    weighted US and FR alone and the loader drops a row whose country carries no weight.
+
+    Public because the conflation survived for the length of a corpus generation with no test asserting the
+    country of a row: the row builder has to be reachable for one to exist.
+    """
     return {
         "raw": raw,
         "components": comps,
-        "country": batch.country_tag,
-        "locale": batch.locale_tag,
+        "country": _required(seed, "country"),
+        "locale": _required(seed, "locale"),
+        "surface_script": batch.surface_script,
+        "surface_language": batch.surface_language,
         "source": f"deepseek-translit-{batch.script_slug}",
         "source_id": deterministic_id(
             f"deepseek-translit-{batch.script_slug}",
@@ -85,7 +130,6 @@ def _canonical_row(batch: TranslitBatch, seed: dict[str, Any], raw: str, comps: 
             "base_source_id": seed["source_id"],
         },
         "_seed_raw": seed["raw"],
-        "_seed_locale": seed["locale"],
     }
 
 
@@ -133,7 +177,7 @@ def emit_transliteration(args: argparse.Namespace, api_key: str, sink: Sink, che
             if not ok:
                 stats[f"reject:{reason}"] += 1
                 continue
-            rows.append(_canonical_row(batch, batch.seeds[i], raw, comps))
+            rows.append(canonical_translit_row(batch, batch.seeds[i], raw, comps))
             stats["ok"] += 1
         stats["expected"] = len(batch.seeds)
         stats["finish:" + str(finish)] += 1

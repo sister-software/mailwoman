@@ -14,6 +14,7 @@ Nothing here calls the API. `deepseek_call` is the one function that does, and i
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
@@ -21,9 +22,12 @@ import pytest
 from mailwoman_train.corpora.deepseek import (
     KRYPTONITE_CATEGORIES,
     TRANSLIT_SCRIPTS,
+    TranslitBatch,
     build_kryptonite_user_prompt,
     build_translit_user_prompt,
+    canonical_translit_row,
     deterministic_id,
+    load_seeds,
     parse_jsonl_response,
     validate_components,
 )
@@ -33,12 +37,14 @@ SEEDS: list[dict[str, Any]] = [
         "raw": "350 5th Ave, New York, NY 10118",
         "components": {"house_number": "350", "street": "5th Ave", "locality": "New York", "region": "NY"},
         "source_id": "seed-us-0001",
+        "country": "US",
         "locale": "en-US",
     },
     {
         "raw": "5 Avenue Anatole France, 75007 Paris",
         "components": {"house_number": "5", "street": "Avenue Anatole France", "locality": "Paris"},
         "source_id": "seed-fr-0002",
+        "country": "FR",
         "locale": "fr-FR",
     },
 ]
@@ -82,9 +88,14 @@ def test_the_kryptonite_prompt_carries_the_category_and_its_examples() -> None:
 
 def test_every_script_and_category_is_well_formed() -> None:
     """The two tables are hand-maintained; a row missing a field fails at request time, mid-spend."""
-    for label, locale, country, slug in TRANSLIT_SCRIPTS:
-        assert label and locale and country and slug
+    for label, language, script, slug in TRANSLIT_SCRIPTS:
+        assert label and language and script and slug
         assert slug.islower() and " " not in slug
+        # A script names no territory. The table carried a country column until #2281 and the generator
+        # stamped it on every row, so the language subtag must stay region-free or the conflation returns
+        # one column over.
+        assert "-" not in language, f"{language!r} carries a region subtag; a rendering convention has none"
+        assert script.istitle() and len(script) == 4, f"{script!r} is not an ISO 15924 code"
     slugs = [slug for *_, slug in TRANSLIT_SCRIPTS]
     assert len(slugs) == len(set(slugs)), "two scripts share a slug, so their batch ids collide"
 
@@ -127,3 +138,65 @@ def test_component_validation_names_why_a_row_is_rejected(
     """The substring invariant is the whole guarantee on a generated row: every surface is IN the raw."""
     ok, got = validate_components(raw, components)
     assert (ok, got) == (reason is None, reason)
+
+
+KANA_BATCH = TranslitBatch(
+    batch_id="translit-jpan-test",
+    script_label="Japanese (Katakana + Kanji)",
+    script_slug="jpan",
+    surface_language="ja",
+    surface_script="Jpan",
+    seeds=SEEDS,
+)
+
+
+def test_a_transliterated_row_keeps_the_seed_country_and_names_its_script() -> None:
+    """#2281, in one assertion: a US address rendered in katakana is a US address.
+
+    The generator stamped the target script's country on every row, so this seed was written with
+    ``country: "JP"``, ``locale: "ja-JP"``. Nothing caught it for the length of a corpus generation because
+    the row was validated for its surface-form invariant and never for its metadata.
+    """
+    row = canonical_translit_row(
+        KANA_BATCH,
+        SEEDS[0],
+        "ニューヨーク州ニューヨーク 350 フィフス・アベニュー 10118",
+        {"locality": "ニューヨーク"},
+    )
+
+    assert row["country"] == "US"
+    assert row["locale"] == "en-US"
+    assert row["surface_script"] == "Jpan"
+    assert row["surface_language"] == "ja"
+
+
+def test_a_french_seed_rendered_in_hangul_is_still_French() -> None:
+    """The same claim from the other seed locale, so the first case cannot pass on a hardcoded US."""
+    batch = TranslitBatch(
+        batch_id="translit-hang-test",
+        script_label="Korean Hangul",
+        script_slug="hang",
+        surface_language="ko",
+        surface_script="Hang",
+        seeds=SEEDS,
+    )
+    row = canonical_translit_row(batch, SEEDS[1], "파리 아나톨 프랑스 대로 5", {"locality": "파리"})
+
+    assert (row["country"], row["locale"]) == ("FR", "fr-FR")
+    assert (row["surface_script"], row["surface_language"]) == ("Hang", "ko")
+
+
+def test_a_seed_without_a_country_is_refused_at_load_rather_than_defaulted(tmp_path: Any) -> None:
+    """The refusal is at LOAD because that is before the spend.
+
+    Every default available to the row builder is the defect: the target script's country, a literal "US",
+    or an empty value the training loader reads as a country it does not weight and drops in silence.
+    """
+    seed_file = tmp_path / "seeds.jsonl"
+    seed_file.write_text(
+        json.dumps({"raw": "350 5th Ave", "components": {}, "source_id": "seed-x", "locale": "en-US"}) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="carries no 'country'"):
+        load_seeds([str(seed_file)], 0)
