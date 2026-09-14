@@ -6,6 +6,9 @@ document records what five instruments measured, why 15% is not reachable throug
 
 ## Baseline
 
+Measured at `c4237ec06`, so the figures are reproducible rather than merely dated. The tree moves under them: by
+`8cbf51d2b` the total was 538,308, a difference of 44 lines that changes no conclusion here.
+
 | Bucket                      |   Lines | Share |
 | --------------------------- | ------: | ----- |
 | Tracked TS/TSX, 3,041 files | 538,264 | 100%  |
