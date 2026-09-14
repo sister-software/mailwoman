@@ -438,6 +438,34 @@ build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 
 ---
 
+## Map chrome, second pass (reported from a phone and a desktop)
+
+Five faults reported against the floating-pill-plus-bottom-sheet arrangement, all of them the same fault
+seen from different widths: two surfaces over one map, neither of which owned the search.
+
+| Reported                                      | Resolution                                                                                                                                   |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held nothing. Its height is now its contents. |
+| Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.            |
+| Magnifying glass too small                    | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                |
+| Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples. |
+| Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                  |
+
+Three layout faults found while fixing those, all at the panel's top edge, all worth writing down because
+each looked correct in the stylesheet:
+
+- An absolutely positioned close reserves no space. Hung off a bar with no height of its own, a 44px
+  button came down across the right end of the search field below it.
+- A negative top margin does not pull a grid item out of its padding. The track is sized from the margin
+  box while the item is laid out at the track's start, so the bar painted 12px past its own row.
+- A drawer at its tall detent crosses the control rail's corner. Under it, the rail sat on the drawer's
+  own close; the drawer is now raised over the rail, which is what a sheet over a map does.
+
+Still open here: `MapSheet`'s side sheets keep a header pattern of their own rather than the grip bar, so
+the About, Layers and Developer panels close differently from the result.
+
+---
+
 ## Judgment call, not a defect
 
 `docs/research/authors.yml` publishes field notes under **"Playpen Agent — Autonomous Researcher"**
