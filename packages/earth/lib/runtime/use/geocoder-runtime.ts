@@ -185,24 +185,20 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[config.basemapTileJSONURL]
 	)
 
-	// Stable parse and enrich callbacks read these refs without taking stale closures.
-	const assetsRef = useRef<ReleaseAssets | null>(rt.assets)
-	const releaseRef = useRef<ReleaseInfo | null>(rt.selectedRelease)
-	const versionRef = useRef<string | null>(rt.selectedVersion)
-
-	// Mirrored DURING RENDER, not in an effect.
-	//
-	// React runs effects child-first. `runtime.ready` is derived from the same `rt.assets` these mirror, so any
-	// descendant effect that reacts to `ready` flipping true runs BEFORE this parent's effect would — and read a null
-	// `assetsRef.current` while `ready` said otherwise. The permalink auto-run in `GeocoderControls` does exactly that
-	// and lost the race every time: `?q=` produced "Classifier not ready" on a page whose classifier had loaded fine.
-	//
-	// Writing the mirror in render closes the window: the ref is current the moment the value is, for every consumer
-	// here, not only the one that surfaced it. These are idempotent assignments of values owned by this same tree, so
-	// a render that is discarded writes a value the committed render writes again.
-	assetsRef.current = rt.assets
-	releaseRef.current = rt.selectedRelease
-	versionRef.current = rt.selectedVersion
+	/*
+	 * THE PARSE CALLBACKS DEPEND ON THE BUNDLE THEY PARSE WITH. There is no mirror.
+	 *
+	 * They used to read `rt.assets` out of a ref so their identity could stay fixed across a load, and the ref was
+	 * written in an EFFECT — which lost a race it could not win. React runs effects child-first, and `runtime.ready`
+	 * is derived from the same `rt.assets`, so a descendant effect reacting to `ready` flipping true ran before this
+	 * parent's effect had written the mirror: `?q=` answered "Classifier not ready" on a page whose classifier had
+	 * loaded fine. Writing the mirror during render instead closed the window and broke a different rule — a ref
+	 * written in render is a value React is entitled to discard.
+	 *
+	 * Naming the values as dependencies has neither problem. A callback that parses with a bundle is not the same
+	 * callback once the bundle changes, and saying so is what keeps every consumer in step without a second copy of
+	 * the truth. The identity churns once per release load, which is the only moment it means anything.
+	 */
 
 	const geoBias = useGeoBias()
 
@@ -263,7 +259,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	// ── The bias-aware parse+resolve — the god-component `onSubmit` re-expressed as a pure ParseResult factory. ──
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
-			const assets = assetsRef.current
+			const assets = rt.assets
 			const classifier = assets?.classifier
 
 			if (!classifier) throw new Error("Classifier not ready")
@@ -361,8 +357,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			hooks.onStage(2)
 
 			// Open the polygon DB now (no await) so its worker spawn overlaps the cascade below.
-			const release = releaseRef.current
-			const version = versionRef.current
+			const release = rt.selectedRelease
+			const version = rt.selectedVersion
 
 			if (release?.hasPolygons && version && !polygonDBRef.current) {
 				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqljsBaseURL)
@@ -455,7 +451,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
-		[ensureStreetLookups, geoBias.locationRef, sqljsBaseURL]
+		[ensureStreetLookups, geoBias.locationRef, sqljsBaseURL, rt.assets, rt.selectedRelease, rt.selectedVersion]
 	)
 
 	const runParse = useCallback(
@@ -466,24 +462,27 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	/**
 	 * FST autocomplete, the combobox's injected fetcher.
 	 */
-	const autocomplete = useCallback(async (query: string): Promise<Suggestion[]> => {
-		const fst = assetsRef.current?.fstMatcher
+	const autocomplete = useCallback(
+		async (query: string): Promise<Suggestion[]> => {
+			const fst = rt.assets?.fstMatcher
 
-		if (!fst) return []
+			if (!fst) return []
 
-		try {
-			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
+			try {
+				const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
 
-			const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
-				maxSuggestions: 6,
-				dedupeByName: true,
-			})
+				const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
+					maxSuggestions: 6,
+					dedupeByName: true,
+				})
 
-			return res.suggestions.map((s) => ({ value: s.name, placetype: s.placetype }))
-		} catch {
-			return []
-		}
-	}, [])
+				return res.suggestions.map((s) => ({ value: s.name, placetype: s.placetype }))
+			} catch {
+				return []
+			}
+		},
+		[rt.assets]
+	)
 
 	/**
 	 * Map-place enricher: candidate → ResolvedMapPlace (bbox / tier / lazily-fetched crisp polygon).
@@ -502,8 +501,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			// Crisp admin polygon (like `_app.tsx`): only for a real WOF place with no precise street tier. The pure
 			// `computeMapPlaceRenderSpec` cascade prefers `geometry` when present; the async fetch stays here (a runtime
 			// concern), populating a cache + bumping a nonce so the enricher re-runs with the geometry in hand.
-			const release = releaseRef.current
-			const version = versionRef.current
+			const release = rt.selectedRelease
+			const version = rt.selectedVersion
 
 			if (!place.tier && candidate.id && release?.hasPolygons && version) {
 				const cached = polygonCache.get(candidate.id)
@@ -536,21 +535,24 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			return place
 		},
-		[sqljsBaseURL, polygonCache]
+		[sqljsBaseURL, polygonCache, rt.selectedRelease, rt.selectedVersion]
 	)
 
 	// ── Decode-path trace (dev-mode ModelVisualizer): trace the current input through the loaded classifier. ──
-	const traceParse = useCallback(async (input: string): Promise<ParseTraceLike | null> => {
-		const classifier = assetsRef.current?.classifier
+	const traceParse = useCallback(
+		async (input: string): Promise<ParseTraceLike | null> => {
+			const classifier = rt.assets?.classifier
 
-		if (!classifier?.traceParse) return null
+			if (!classifier?.traceParse) return null
 
-		try {
-			return await classifier.traceParse(input, { addressSystemConventions: "auto" })
-		} catch {
-			return null
-		}
-	}, [])
+			try {
+				return await classifier.traceParse(input, { addressSystemConventions: "auto" })
+			} catch {
+				return null
+			}
+		},
+		[rt.assets]
+	)
 
 	// ── Coverage "fog of war" overlay: the XYZ vector source + default-off fill layers, handed to the package's
 	// declarative `<OverlayLayers>`. Default-off (`visible: false`); the LayerToggleControl (injected via

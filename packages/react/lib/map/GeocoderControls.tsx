@@ -114,6 +114,22 @@ type SheetName = "about" | "layers" | "developer" | null
 const DRAWER_LAYOUT = "(max-width: 600px)"
 
 /**
+ * Travel, in pixels, that turns a press on the drawer's header into a drag rather than a tap.
+ *
+ * A finger never holds still, so zero would make every tap a one-pixel drag and put the tap-to-toggle path out of
+ * reach. Three is the smallest number that survives a resting hand without swallowing a deliberate short pull.
+ */
+const DRAG_TRAVEL_PX = 3
+
+/**
+ * Downward travel, in pixels, that promotes a pull at the top of the scroll into a drag on the drawer.
+ *
+ * Larger than {@link DRAG_TRAVEL_PX} because this gesture starts on the CONTENT, where the same few pixels could still
+ * turn out to be a scroll: the drawer must not start moving under a reader who meant to flick the result up.
+ */
+const OVERSCROLL_PROMOTE_PX = 8
+
+/**
  * The chrome. Everything positioned here floats over the map; nothing occupies a column of the page.
  */
 export function GeocoderControls({
@@ -173,7 +189,7 @@ export function GeocoderControls({
 
 	// The detents exist only where the panel IS a drawer. The desktop column is sized by its content and has nothing
 	// to drag towards, so every pointer gesture there is a scroll or a click.
-	const isDrawerLayout = () => typeof window !== "undefined" && window.matchMedia(DRAWER_LAYOUT).matches
+	const isDrawerLayout = () => typeof globalThis.window !== "undefined" && globalThis.matchMedia(DRAWER_LAYOUT).matches
 
 	const beginSheetDrag = useCallback((clientY: number, pointerId: number) => {
 		const sheet = sheetRef.current
@@ -191,6 +207,7 @@ export function GeocoderControls({
 	const onHeaderPointerDown = useCallback(
 		(event: React.PointerEvent<HTMLDivElement>) => {
 			if (!isDrawerLayout()) return
+
 			if (event.target instanceof Element && event.target.closest("input, .mw-map-sheet__close")) return
 
 			beginSheetDrag(event.clientY, event.pointerId)
@@ -207,7 +224,9 @@ export function GeocoderControls({
 			// Up is taller, so the delta is inverted against the pointer's y.
 			const delta = drag.startY - event.clientY
 
-			if (Math.abs(delta) > 3) drag.moved = true
+			if (Math.abs(delta) > DRAG_TRAVEL_PX) {
+				drag.moved = true
+			}
 
 			const { floor, large } = sheetDetents()
 
@@ -262,7 +281,7 @@ export function GeocoderControls({
 		}
 
 		setSheetHeight(current > midpoint ? large : medium)
-	}, [sheetDetents])
+	}, [sheetDetents, toggleDetent])
 
 	/*
 	 * OVERSCROLL IS A DRAG, not a bounce. Pull down on a sheet that is already scrolled to its top and the sheet
@@ -274,11 +293,13 @@ export function GeocoderControls({
 	 */
 	const onPanelPointerDown = useCallback((event: React.PointerEvent<HTMLElement>) => {
 		if (!isDrawerLayout()) return
+
 		if (sheetDragRef.current) return
 
 		const sheet = sheetRef.current
 
 		if (!sheet || sheet.scrollTop > 0) return
+
 		if (event.target instanceof Element && event.target.closest(".mw-map-panel__header")) return
 
 		overscrollRef.current = { startY: event.clientY, pointerId: event.pointerId }
@@ -306,7 +327,7 @@ export function GeocoderControls({
 				return
 			}
 
-			if (event.clientY - armed.startY < 8) return
+			if (event.clientY - armed.startY < OVERSCROLL_PROMOTE_PX) return
 
 			overscrollRef.current = null
 			// Measured from where the pull STARTED, so the sheet does not jump by the threshold at the moment it takes over.
@@ -363,7 +384,7 @@ export function GeocoderControls({
 	 * so. Crossing the breakpoint in either direction hands the height back to the stylesheet.
 	 */
 	useEffect(() => {
-		const query = window.matchMedia(DRAWER_LAYOUT)
+		const query = globalThis.matchMedia(DRAWER_LAYOUT)
 		const onChange = () => setSheetHeight(null)
 
 		query.addEventListener("change", onChange)
@@ -385,6 +406,7 @@ export function GeocoderControls({
 
 		const collapse = (event: { originalEvent?: unknown }) => {
 			if (!event.originalEvent) return
+
 			if (!isDrawerLayout()) return
 
 			const { floor } = sheetDetents()
@@ -448,7 +470,7 @@ export function GeocoderControls({
 	 */
 	const drawerRaised =
 		showSheet &&
-		(sheetHeight === null || (typeof window !== "undefined" && sheetHeight > sheetDetents().collapsedBelow))
+		(sheetHeight === null || (typeof globalThis.window !== "undefined" && sheetHeight > sheetDetents().collapsedBelow))
 
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0

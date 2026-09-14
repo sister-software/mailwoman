@@ -191,7 +191,7 @@ function GeocoderInner({
 					// maplibre wordmark logo.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
-					<GraticuleLayer beforeId={baseLayerID} />
+					<GraticuleLayer beforeID={baseLayerID} />
 					<OverlayLayers overlays={runtime.overlays} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
 					{panels.mapControls}

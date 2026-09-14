@@ -8,9 +8,8 @@
  *   projection, and would cut across the globe instead of curving over it.
  */
 
+import { buildGraticule } from "@mailwoman/react/map/graticule"
 import { describe, expect, test } from "vitest"
-
-import { buildGraticule } from "#map/graticule"
 
 describe("buildGraticule", () => {
 	const collection = buildGraticule(15)

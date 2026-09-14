@@ -20,6 +20,12 @@ const DEFAULT_STEP_DEGREES = 15
  * Degrees between vertices ALONG each line. A meridian drawn as two points is a straight chord through the sphere under
  * a globe projection; it has to be densified to curve. 2° keeps the longest line under 100 vertices.
  */
+/**
+ * The antimeridian, in degrees. Longitude runs [-180, 180]; meridians are drawn from the first bound up to but NOT
+ * including the second, because -180 and 180 are the same line and drawing both puts two strokes on one pixel.
+ */
+const MAX_LONGITUDE = 180
+
 const VERTEX_STEP_DEGREES = 2
 
 /**
@@ -36,7 +42,7 @@ export function buildGraticule(stepDegrees: number = DEFAULT_STEP_DEGREES): Feat
 	const lines: number[][][] = []
 
 	// Meridians: constant longitude, walking latitude pole to pole.
-	for (let lon = -180; lon < 180; lon += stepDegrees) {
+	for (let lon = -MAX_LONGITUDE; lon < MAX_LONGITUDE; lon += stepDegrees) {
 		const line: number[][] = []
 
 		for (let lat = -MAX_LATITUDE; lat <= MAX_LATITUDE; lat += VERTEX_STEP_DEGREES) {
@@ -51,7 +57,7 @@ export function buildGraticule(stepDegrees: number = DEFAULT_STEP_DEGREES): Feat
 	for (let lat = -MAX_LATITUDE + stepDegrees; lat < MAX_LATITUDE; lat += stepDegrees) {
 		const line: number[][] = []
 
-		for (let lon = -180; lon <= 180; lon += VERTEX_STEP_DEGREES) {
+		for (let lon = -MAX_LONGITUDE; lon <= MAX_LONGITUDE; lon += VERTEX_STEP_DEGREES) {
 			line.push([lon, lat])
 		}
 

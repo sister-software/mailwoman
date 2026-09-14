@@ -178,6 +178,11 @@
 			"node": "./lib/map/geometry.ts",
 			"default": "./out/map/geometry.js"
 		},
+		"./map/graticule": {
+			"types": "./out/map/graticule.d.ts",
+			"node": "./lib/map/graticule.ts",
+			"default": "./out/map/graticule.js"
+		},
 		"./map/OverlayLayers": {
 			"types": "./out/map/OverlayLayers.d.ts",
 			"node": "./lib/map/OverlayLayers.tsx",

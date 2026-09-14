@@ -28,14 +28,14 @@ export interface GraticuleLayerProps {
 	 * The basemap layer to insert beneath — the id of the lowest layer that draws data. Omit and the grid renders on top
 	 * of the basemap, which is wrong but not broken: `<Layer>` with no `beforeId` appends.
 	 */
-	beforeId?: string
+	beforeID?: string
 	/**
 	 * Hide the grid. @default false
 	 */
 	hidden?: boolean
 }
 
-export function GraticuleLayer({ beforeId, hidden = false }: GraticuleLayerProps): ReactNode {
+export function GraticuleLayer({ beforeID, hidden = false }: GraticuleLayerProps): ReactNode {
 	const data = useMemo(() => buildGraticule(), [])
 
 	// `<Source>` and `<Layer>` as SIBLINGS with an explicit `source`, matching `OverlayLayers`. Nesting the layer
@@ -47,7 +47,7 @@ export function GraticuleLayer({ beforeId, hidden = false }: GraticuleLayerProps
 				id="mw-graticule-line"
 				type="line"
 				source="mw-graticule"
-				{...(beforeId ? { beforeId } : {})}
+				{...(beforeID ? { beforeId: beforeID } : {})}
 				layout={{ visibility: hidden ? "none" : "visible", "line-cap": "round" }}
 				paint={{
 					"line-color": "#8aa0c8",

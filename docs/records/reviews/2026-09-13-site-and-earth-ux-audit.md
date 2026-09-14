@@ -536,6 +536,33 @@ background hexes in the planetary app.
 
 ---
 
+## What the linter caught that the tests did not
+
+`oxlint` cannot run in the workspace VM (node 22 against the repo's 24), so these came back from a run on
+real hardware. Four were mine, and one of them was a rule I had argued myself out of.
+
+**The ref written during render.** The permalink race — `?q=` answering "Classifier not ready" on a page
+whose classifier had loaded — came from mirroring `rt.assets` into a ref in an EFFECT: React runs effects
+child-first, so the descendant that reacts to `ready` flipping true read the mirror before the parent wrote
+it. Moving the write into render closed that window and broke a different rule, and `react(refs)` was right
+to say so: a value written during render is one React is entitled to discard.
+
+The fix is neither mirror. The callbacks that parse with a bundle now DEPEND on the bundle — `rt.assets`,
+`rt.selectedRelease`, `rt.selectedVersion` in their dependency arrays — so every consumer gets the new
+callback in the same render that produced the new assets, and there is no second copy of the truth to keep
+in step. The identity churns once per release load, which is the only moment it means anything. The refs
+existed to hold identity fixed across exactly that change, which is the one time it should not be.
+
+**The rest.** A test reaching into `#map/graticule`, the package's private imports map, instead of a public
+export (`./map/graticule` added, and the test now imports it the way the geometry test does); two missing
+hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has travelled far
+enough to be a drag, `8` for a pull at the top of the scroll that has travelled far enough to be one — the
+second is larger on purpose, because that gesture starts on content that could still turn out to be
+scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there; and
+`beforeId`, which title-cases an acronym the house style capitalizes whole.
+
+---
+
 ## Judgment call, not a defect
 
 `docs/research/authors.yml` publishes field notes under **"Playpen Agent — Autonomous Researcher"**
