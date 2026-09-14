@@ -47,6 +47,7 @@ import { join } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	positiveInteger,
 	splitUpperList,
@@ -71,15 +72,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	release: string
-	states?: string
-	licenseFilter?: string
-	concurrency: number
-	threads?: number
-	force: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture address coverage in

@@ -9,7 +9,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -23,10 +29,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	concurrency: number
-}
+type Options = OptionsOf<typeof spec>
 
 const DevDownloadSSLAddress: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

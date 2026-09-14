@@ -29,6 +29,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	phaseReporter,
 	splitUpperList,
@@ -59,17 +60,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	source: "overture" | "osm"
-	release?: string
-	countries?: string
-	out?: string
-	limit?: string
-	skipIngest: boolean
-	pbf?: string
-	country?: string
-	bbox?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * `--bbox` field count: `minLon,minLat,maxLon,maxLat`.

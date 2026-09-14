@@ -27,6 +27,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -48,10 +49,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	checkRemote: boolean
-	dataRoot?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * Live `Content-Length` for one artifact, or `undefined` on any failure (404, timeout, network) — the caller falls back

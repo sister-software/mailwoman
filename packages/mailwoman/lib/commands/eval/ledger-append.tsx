@@ -9,7 +9,13 @@
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Append a promotion-eval run to evals/scores-by-version.json (#885)"
 
@@ -48,18 +54,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	modelVersion?: string
-	runId?: string
-	modelPath?: string
-	card: string
-	ledger: string
-	trainedAt?: string
-	notes: string
-	replace: boolean
-	operatorException?: string[]
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalLedgerAppend: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

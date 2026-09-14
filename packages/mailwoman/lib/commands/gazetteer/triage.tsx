@@ -18,7 +18,14 @@ import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof/triage"
 
 /**
@@ -36,13 +43,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	admin?: string
-	geonames?: string
-	countries?: string
-	out?: string
-	uncoveredOnly: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

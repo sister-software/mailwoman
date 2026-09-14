@@ -16,7 +16,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, type OptionsOf, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 
@@ -33,11 +33,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	bucket: string
-	outDir: string
-	dryRun: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 interface Step {
 	label: string

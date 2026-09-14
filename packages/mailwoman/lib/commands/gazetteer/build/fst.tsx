@@ -12,7 +12,14 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -28,12 +35,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locales?: string
-	db?: string
-	output?: string
-	uncurated: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerBuildFST: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

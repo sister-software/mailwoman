@@ -20,7 +20,14 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, parseRoles, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	parseRoles,
+	useCommandTask,
+} from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 
@@ -61,11 +68,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	roles?: string
-	output?: string
-	interpolator?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function resolveInterpolator(raw: string | undefined): Promise<InterpolateColorCallback | undefined> {
 	if (!raw) return undefined

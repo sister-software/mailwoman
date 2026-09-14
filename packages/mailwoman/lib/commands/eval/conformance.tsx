@@ -16,7 +16,13 @@
  *   instruction.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Every committed conformance-law suite, through the Gauntlet's deps"
 
@@ -36,14 +42,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	suite?: string
-	candidate?: string
-	tokenizer?: string
-	card?: string
-	weightsCache?: string
-	candidateDB?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalConformance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

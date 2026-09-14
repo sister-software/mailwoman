@@ -70,17 +70,41 @@ export function requiredArgument(scope: string, name: string, value: string | un
  * still passes validation; it reaches the component under a name nothing reads, so it does nothing and reports no
  * error. Add the segment here when a flag carries an acronym.
  */
-const OPTION_INITIALISMS = new Map([
-	["csv", "CSV"],
-	["db", "DB"],
-	["html", "HTML"],
-	["ids", "IDs"],
-	["json", "JSON"],
-	["jsonl", "JSONL"],
-	["km", "KM"],
-	["svg", "SVG"],
-	["xml", "XML"],
-])
+export const OPTION_INITIALISMS = {
+	csv: "CSV",
+	db: "DB",
+	html: "HTML",
+	ids: "IDs",
+	json: "JSON",
+	jsonl: "JSONL",
+	km: "KM",
+	svg: "SVG",
+	xml: "XML",
+} as const
+
+/**
+ * One kebab segment's property spelling. Shared by {@linkcode optionPropertyName} and {@linkcode OptionPropertyName} so
+ * the value and the type can never capitalize a segment differently.
+ */
+type InitialismOf<Segment extends string> = Segment extends keyof typeof OPTION_INITIALISMS
+	? (typeof OPTION_INITIALISMS)[Segment]
+	: Capitalize<Segment>
+
+type TailPropertyName<Value extends string> = Value extends `${infer Head}-${infer Tail}`
+	? `${InitialismOf<Head>}${TailPropertyName<Tail>}`
+	: InitialismOf<Value>
+
+/**
+ * {@linkcode optionPropertyName} at the type level, so a command's option properties are DERIVED from its flags rather
+ * than restated beside them.
+ *
+ * The two must agree for a flag to bind, and matched tables would not hold that: the type and the value diverge at the
+ * points a constant cannot express. They share {@linkcode OPTION_INITIALISMS} itself — one declaration, read by
+ * `typeof` here and by `Object.hasOwn` there.
+ */
+export type OptionPropertyName<Value extends string> = Value extends `${infer Head}-${infer Tail}`
+	? `${Head}${TailPropertyName<Tail>}`
+	: Value
 
 /**
  * Convert a kebab-case option name to its TypeScript property name.
@@ -93,7 +117,13 @@ export function optionPropertyName(value: string): string {
 
 	return (
 		head +
-		tail.map((part) => OPTION_INITIALISMS.get(part) ?? `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join("")
+		tail
+			.map((part) =>
+				Object.hasOwn(OPTION_INITIALISMS, part)
+					? OPTION_INITIALISMS[part as keyof typeof OPTION_INITIALISMS]
+					: `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`
+			)
+			.join("")
 	)
 }
 

@@ -14,6 +14,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -43,19 +44,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sources?: string
-	state?: string
-	npis?: number
-	cap?: number
-	cost?: number
-	precisionBar?: number
-	out?: string
-	locale: string
-	date?: string
-	wof?: string
-	dataRoot?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Variant = (typeof variants)[number]
 

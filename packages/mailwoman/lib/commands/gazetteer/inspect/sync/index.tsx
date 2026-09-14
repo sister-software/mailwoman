@@ -32,6 +32,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -76,12 +77,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	repos?: string
-	countries?: string
-	all?: boolean
-	dryRun?: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 interface SyncPlan {
 	destination: string

@@ -14,6 +14,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -32,11 +33,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	input: string
-	output: string
-	rowGroupSize: number
-}
+type Options = OptionsOf<typeof spec>
 
 const DevJSONLToParquet: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

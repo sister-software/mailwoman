@@ -19,7 +19,13 @@ import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
@@ -39,11 +45,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	out: string
-	source?: string
-	floor: number
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

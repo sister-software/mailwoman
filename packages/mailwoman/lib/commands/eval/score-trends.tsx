@@ -10,7 +10,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Regenerate the per-tag score-trend page from evals/scores-by-version.json"
 
@@ -26,10 +32,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	ledger?: string
-	out?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalScoreTrends: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

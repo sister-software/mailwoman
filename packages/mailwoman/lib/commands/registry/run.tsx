@@ -33,7 +33,13 @@ import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tool
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
 import type { RegionDatabaseResolver } from "#geocode/regions"
 /**
@@ -74,23 +80,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	mapping?: string
-	inferMapping: boolean
-	sources?: string
-	out?: string
-	mapOut?: string
-	trainEm: boolean
-	threshold: number
-	maxBlockSize?: number
-	reconcile: boolean
-	source?: string
-	locale: string
-	defaultCountry?: string
-	placeCountry: boolean
-	resolveDB?: string
-	dataRoot: string
-}
+type Options = OptionsOf<typeof spec>
 
 //#endregion
 

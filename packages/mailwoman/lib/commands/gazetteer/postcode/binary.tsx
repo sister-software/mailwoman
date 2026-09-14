@@ -44,7 +44,13 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import type { GBGranularity, PostcodeDatabaseRow } from "#gazetteer-pipeline/postcode/binary"
 
 interface LocaleSource {
@@ -77,11 +83,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	out: string
-	locale?: string[]
-	gbGranularity: GBGranularity
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

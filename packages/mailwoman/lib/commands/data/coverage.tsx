@@ -26,6 +26,7 @@ import { Globerator } from "spliterator/node/fs"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitUpperList,
 	useCommandTask,
@@ -51,12 +52,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	countries?: string
-	config?: string
-	refresh: boolean
-	json: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

@@ -8,7 +8,14 @@
 
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -31,15 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	base: string
-	newDir: string
-	modalRoot: string
-	corpusVersion: string
-	sliceParquet: string
-	source: string
-	note: string
-}
+type Options = OptionsOf<typeof spec>
 
 const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

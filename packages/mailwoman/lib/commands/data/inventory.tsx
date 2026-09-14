@@ -21,6 +21,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 	writeRawStdout,
@@ -52,12 +53,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	dataRoot?: string
-	depth?: string
-	all: boolean
-	json: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * One line per directory: how many of its databases carry a manifest, and how much disk they hold.

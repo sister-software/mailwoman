@@ -20,6 +20,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	phaseReporter,
 	useCommandTask,
@@ -43,10 +44,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outDir?: string
-	skipVerify: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const ClientsGenerate: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

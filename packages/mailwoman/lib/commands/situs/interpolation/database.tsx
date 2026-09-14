@@ -36,7 +36,13 @@ import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
@@ -124,12 +130,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	state: string
-	edgesDir: string
-	release: string
-	out?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped).

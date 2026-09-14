@@ -20,6 +20,7 @@ import { resolvePath } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 	writeRawStdout,
@@ -46,9 +47,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	list: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * The per-bundle table `--list` prints: name, artifact count, total size, destination, and the one-line description

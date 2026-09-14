@@ -14,6 +14,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -40,12 +41,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db?: string
-	out: string
-	per: number
-	layer: string
-}
+type Options = OptionsOf<typeof spec>
 
 const TIGERRaceDots: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

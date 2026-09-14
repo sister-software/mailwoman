@@ -51,6 +51,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -106,13 +107,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	dryRun: boolean
-	only?: string
-	force: boolean
-	dataRoot?: string
-	host?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * HEAD the artifact (and, when it publishes one, GET its `.md5` sidecar) via the paced/retried `APIClient`. Failures

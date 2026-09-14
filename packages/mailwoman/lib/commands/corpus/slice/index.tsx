@@ -21,6 +21,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	countOption,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	stringOption,
 	useCommandTask,
@@ -72,39 +73,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	list: boolean
-	output?: string
-	input?: string
-	count?: string
-	variants: string
-	seed?: string
-	golden: boolean
-	sourceName?: string
-	houseNumberProb?: string
-	pmbRatio?: string
-	militaryRatio?: string
-	reversedFraction?: string
-	edgesDir?: string
-	country?: string
-	intlFraction?: string
-	commaFreeFraction?: string
-	ortsteilFraction?: string
-	adminDB?: string
-	countryFraction?: string
-	districtAsLocality?: boolean
-	bareProb?: string
-	hnProb?: string
-	communes?: string
-	banDir?: string
-	excludeSurfaces?: string
-	multilocaleCount?: string
-	lexicon?: string
-	extractsDir?: string
-	poiDB?: string
-	subVenueTuples?: string
-	negativeFraction?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 

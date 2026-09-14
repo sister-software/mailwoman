@@ -12,7 +12,13 @@
  *   the exit code.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Promotion check (#479) — eval battery + check-spec floors → verdict.json"
 
@@ -36,18 +42,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	int8?: string
-	check?: string
-	tokenizer?: string
-	card?: string
-	gazetteerLexicon?: string
-	weightsCache?: string
-	int8WeightsCache?: string
-	outDir?: string
-	profileJSON?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalPromote: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

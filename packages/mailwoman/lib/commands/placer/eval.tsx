@@ -13,6 +13,7 @@
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -40,15 +41,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	data?: string
-	abstain?: number
-	fitPerClass?: number
-	outMd?: string
-	fp32?: string
-	int8?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Kind = (typeof kinds)[number]
 

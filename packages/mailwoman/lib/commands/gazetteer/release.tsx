@@ -17,6 +17,7 @@ import { join } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	phaseReporter,
 	splitUpperList,
@@ -45,16 +46,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	admin?: string
-	out?: string
-	countries?: string
-	fold: boolean
-	promote: boolean
-	publish: boolean
-	gazetteerVersion?: string
-	dryRun: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

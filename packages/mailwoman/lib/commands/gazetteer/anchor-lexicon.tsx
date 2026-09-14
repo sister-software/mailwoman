@@ -29,7 +29,13 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Homographs printed before the list is truncated.
@@ -55,9 +61,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	output?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * THE shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in

@@ -20,7 +20,13 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Measure, check, or update the regression board's pins (row count, corpus hash, board id)."
 
@@ -50,11 +56,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	check?: boolean
-	update?: boolean
-	reportIssue?: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * The title the audit searches for, so a second drift updates the open issue rather than opening a sibling.

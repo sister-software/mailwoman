@@ -49,6 +49,7 @@ import type { PathBuilderLike } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitUpperList,
 	useCommandTask,
@@ -69,13 +70,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	geonames?: string
-	countries?: string
-	out?: string
-	foldInto?: string
-	foldOut?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * The street-normalize key function, threaded in after a dynamic import of the optional peer.

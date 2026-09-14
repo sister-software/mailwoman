@@ -13,6 +13,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitNumberList,
 	useCommandTask,
@@ -36,12 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sizes: string
-	dup: number
-	em: boolean
-	outMd?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const RegistryMatcherScale: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

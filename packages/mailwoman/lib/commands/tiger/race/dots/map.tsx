@@ -16,6 +16,7 @@ import { useState } from "react"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -44,17 +45,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	pmtilesUrl: string
-	out: string
-	per: number
-	title?: string
-	lng: number
-	lat: number
-	zoom: number
-	serve: boolean
-	port: number
-}
+type Options = OptionsOf<typeof spec>
 
 const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
 	const [serving, setServing] = useState<{ dir: string; port: number } | null>(null)

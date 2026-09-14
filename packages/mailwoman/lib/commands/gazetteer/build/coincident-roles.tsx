@@ -19,6 +19,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -33,9 +34,7 @@ export const spec = {
 	options: { drop: { type: "boolean", default: true, description: "Rebuild the relation; --no-drop appends" } },
 } as const satisfies CommandSpec
 
-interface Options {
-	drop: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerBuildCoincidentRoles: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(

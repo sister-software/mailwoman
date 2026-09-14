@@ -23,6 +23,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitUpperList,
 	useCommandTask,
@@ -50,15 +51,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	countries?: string
-	output?: string
-	source: "parent-join" | "geonames"
-	quota?: number
-	budget?: number
-	postcodeDb?: string
-	adminDb?: string
-}
+type Options = OptionsOf<typeof spec>
 
 interface TuplesReport {
 	written: number
@@ -87,8 +80,8 @@ const CorpusTuples: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		} else {
 			triples = await tools.readTriplesFromParentJoin(countries, {
-				...(options.postcodeDb ? { postcodeDB: options.postcodeDb } : {}),
-				...(options.adminDb ? { adminDB: options.adminDb } : {}),
+				...(options.postcodeDB ? { postcodeDB: options.postcodeDB } : {}),
+				...(options.adminDB ? { adminDB: options.adminDB } : {}),
 			})
 		}
 

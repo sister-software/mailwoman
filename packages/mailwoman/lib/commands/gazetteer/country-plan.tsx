@@ -26,6 +26,7 @@ import { resolvePath } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 	writeRawStdout,
@@ -68,11 +69,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	target?: string
-	adminDB?: string
-	write: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * The repositories a WOF move would clone. Names only — `--plan` never reaches the network, so their existence and size

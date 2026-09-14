@@ -33,6 +33,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitNumberList,
 	useCommandTask,
@@ -75,18 +76,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	region?: string
-	area?: string
-	out?: string
-	indexResolution: string
-	coverageResolution: string
-	measureResolutions?: string
-	chunkSize?: string
-	verify: boolean
-	verifyOnly: boolean
-	verifyPoints?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * Both halves of the check, as the summary lines they produce.

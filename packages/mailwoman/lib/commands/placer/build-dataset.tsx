@@ -13,6 +13,7 @@
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -41,15 +42,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outliers?: "exposure" | "latin" | "oa"
-	data?: string
-	perCountry?: number
-	perLang?: number
-	wof?: string
-	overture?: string
-	oaDir?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function run(options: Options): Promise<string> {
 	const { buildDataset, buildOutlierExposure, buildOutlierLatin, buildOutlierOA } =

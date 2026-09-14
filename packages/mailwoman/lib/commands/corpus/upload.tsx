@@ -28,7 +28,14 @@ import { Box, Text } from "ink"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 import { $private } from "#env"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
@@ -52,14 +59,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	bucket: string
-	corpusVersion?: string
-	corpusDir?: string
-	tokenizer: boolean
-	code: boolean
-	dryRun: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 interface Step {
 	label: string

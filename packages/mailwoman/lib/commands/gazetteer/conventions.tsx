@@ -37,7 +37,13 @@ import {
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -51,10 +57,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	src: string
-	output?: string
-}
+type Options = OptionsOf<typeof spec>
 
 interface AuthoredConvention {
 	wof_id: number

@@ -24,7 +24,14 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -40,12 +47,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	wikidataDir?: string
-	extracts?: string
-	overtureDB?: string
-	out: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs. A bare path keeps region `""`.

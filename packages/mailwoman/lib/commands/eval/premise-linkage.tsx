@@ -23,6 +23,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	readMailwomanVersion,
 	useCommandTask,
@@ -58,12 +59,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	config?: string
-	out?: string
-	minCellSize?: number
-	policy?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * The synthetic self-check publishes nothing, so its cell floor exists only to keep the writer's suppression path on

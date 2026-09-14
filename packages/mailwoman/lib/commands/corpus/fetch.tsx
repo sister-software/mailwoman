@@ -15,6 +15,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	splitList,
@@ -69,24 +70,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outRoot: string
-	mode?: "featureserver" | "bulk"
-	nadUrl?: string
-	chunkSize?: number
-	pageSize?: number
-	concurrency?: number
-	startOid?: number
-	endOid?: number
-	country?: string
-	countries?: string
-	skipStateFips?: string
-	rateSleep?: number
-	maxParallel?: number
-	dryRun: boolean
-	month?: string
-	categories?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {

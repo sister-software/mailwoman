@@ -10,7 +10,13 @@
  *   formats. Needs the optional `@duckdb/node-api` peer dep (maintainer-only data command).
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Build Overture-derived postcode-centroid spr DBs (#474)"
 
@@ -31,12 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	country: string
-	pcLen?: number
-	parquet?: string
-	out?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalESPostcodeCentroids: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

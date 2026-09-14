@@ -35,7 +35,13 @@ import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/c
 import { Box, Text } from "ink"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
@@ -59,14 +65,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	state: string
-	asOfDate?: string
-	out?: string
-	includeLocationIDs: boolean
-	providerListPath?: string
-	filerDBPath?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

@@ -13,6 +13,7 @@ import {
 	booleanOption,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -68,47 +69,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	eval?: string
-	limit?: number
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	modelAnchorLookup?: string
-	wof?: string
-	defaultCountry?: string
-	ablateToAnchor: boolean
-	anchorOff: boolean
-	normalizeCase: boolean
-	rawCase: boolean
-	adminCoherence: boolean
-	adminCoherenceOff: boolean
-	postcodeCountryCoherence: boolean
-	postcodeCountryCoherenceOff: boolean
-	hierarchyCompletion: boolean
-	postcodeAnchor: boolean
-	postcodeDatabases?: string
-	anchorMinConf?: number
-	anchorRerank: boolean
-	addressPoints?: string
-	interpolation?: string
-	cascade: boolean
-	dataRoot?: string
-	candidateDB?: string
-	postalCityAliasDB?: string
-	assembled: boolean
-	adminFst?: string
-	placeCountry: boolean
-	placeCountryHard: boolean
-	placeCountryHardAll: boolean
-	outMd?: string
-	outJSON?: string
-	errorsJSON?: string
-	outResolved?: string
-	outRows?: string
-	lookupMemo: boolean
-	profileJSON?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalOAResolver: ParsedCommandComponent<Options> = ({ options }) => {
 	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options

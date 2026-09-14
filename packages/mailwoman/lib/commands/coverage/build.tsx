@@ -19,7 +19,7 @@ import { useState } from "react"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type OptionsOf, type ParsedCommandComponent,
 	splitList,
 	splitNumberList,
 	useCommandTask,
@@ -99,30 +99,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	states: string
-	excludeStates: string
-	dataRoot: string
-	interp: boolean
-	interpRoot: string
-	fineRes: number
-	rollup: string
-	domainRes: number
-	saturation: number
-	satSeg: number
-	interpWeight: number
-	optimisticGamma: number
-	postcode: boolean
-	geonamesPostal: string
-	wofDB: string
-	postcodeCeiling: number
-	salienceFloor: number
-	postcodeExclude: string
-	maxZoom: number
-	out: string
-	keepNdjson: boolean
-	threads?: number
-}
+type Options = OptionsOf<typeof spec>
 
 const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()

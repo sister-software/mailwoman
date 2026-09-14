@@ -10,7 +10,13 @@
  *   (#582). `eval promote` runs it automatically when the spec declares `requires_conventions`.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Mask-regression check (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
@@ -37,15 +43,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	anchorLookup?: string
-	gazetteerLexicon?: string
-	threshold?: number
-	json?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalMaskRegression: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

@@ -25,7 +25,13 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Pre-registered geographic-model semantic-utility probe (#1928)"
 
@@ -52,17 +58,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	arm: string
-	semanticObservation: boolean
-	out?: string
-	json: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalSemanticUtilityProbe: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

@@ -20,7 +20,13 @@ import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * `--inputs` accepts either:
@@ -49,13 +55,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	corpusVersion: string
-	output: string
-	inputs: string
-	synthesize: boolean
-	rowsPerSlice: number
-}
+type Options = OptionsOf<typeof spec>
 
 type AdapterInput = string | AdapterOptions
 

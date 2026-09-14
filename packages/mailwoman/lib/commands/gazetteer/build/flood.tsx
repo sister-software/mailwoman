@@ -26,6 +26,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitNumberList,
 	useCommandTask,
@@ -69,19 +70,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	gdb?: string
-	out?: string
-	indexResolution: string
-	coverageResolution: string
-	measureResolutions?: string
-	limit?: string
-	boundary?: string
-	offline: boolean
-	sourceVintage?: string
-	chunkSize?: string
-	verify: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

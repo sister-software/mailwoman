@@ -18,6 +18,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -39,9 +40,7 @@ export const spec = {
 	options: { drop: { type: "boolean", default: false, description: "Drop and rebuild place_search and place_bbox" } },
 } as const satisfies CommandSpec
 
-interface Options {
-	drop: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerBuildFTS: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(

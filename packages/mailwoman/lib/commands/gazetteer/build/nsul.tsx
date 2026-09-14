@@ -25,6 +25,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	phaseReporter,
 	useCommandTask,
@@ -49,11 +50,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sourceDir?: string
-	out?: string
-	uprnDB?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerBuildNSUL: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {

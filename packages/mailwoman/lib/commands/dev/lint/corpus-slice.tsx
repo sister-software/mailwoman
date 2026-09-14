@@ -12,6 +12,7 @@
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -32,13 +33,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	database: string
-	stats: string
-	rules?: string
-	outMd?: string
-	outJSON?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const DevLintCorpusDatabase: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

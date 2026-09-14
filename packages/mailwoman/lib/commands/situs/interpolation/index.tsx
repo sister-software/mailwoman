@@ -42,6 +42,7 @@ import { Globerator } from "spliterator/node/fs"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	positiveInteger,
 	splitUpperList,
@@ -93,17 +94,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	edgesDir: string
-	outDir?: string
-	release: string
-	states?: string
-	topCounties?: number
-	concurrency: number
-	force: boolean
-	downloadOnly: boolean
-	buildOnly: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 //#region State FIPS map
 

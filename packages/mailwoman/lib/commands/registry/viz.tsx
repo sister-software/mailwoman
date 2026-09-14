@@ -15,6 +15,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -43,18 +44,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	in?: string
-	crossAgencyOnly: boolean
-	lambda?: number
-	state?: string
-	db?: string
-	nadMod?: number
-	oaMod?: number
-	cap?: number
-	outHTML?: string
-	outSVG?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Figure = (typeof figures)[number]
 

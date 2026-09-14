@@ -19,6 +19,7 @@ import { useState } from "react"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	positiveIntegerOption,
 	useCommandTask,
@@ -46,14 +47,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	input: string
-	output: string
-	country?: string
-	limit?: number
-	corpusVersion: string
-	progressEvery: number
-}
+type Options = OptionsOf<typeof spec>
 
 const CorpusRun: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const [progress, setProgress] = useState<{ yielded: number; written: number; bytes: number }>({

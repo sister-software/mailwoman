@@ -20,7 +20,13 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.
@@ -44,11 +50,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db?: string
-	country?: string
-	json?: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 interface PlacetypeStat {
 	placetype: string

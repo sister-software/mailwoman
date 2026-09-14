@@ -9,7 +9,13 @@
  *   model's emissions. Informational (always exits 0) — the standing floors stay on `eval parity`.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Largest useful hypothesis set for the bounded oracle probe.
@@ -49,14 +55,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	fixtures?: string
-	goldenDir?: string
-	k: number
-	assertBaseline?: string
-}
+type Options = OptionsOf<typeof spec>
 
 const EvalOracleK: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

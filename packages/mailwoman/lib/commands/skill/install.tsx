@@ -48,6 +48,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -63,9 +64,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	dest?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * The packaged skill's source directory, resolved relative to THIS package's root. See the module docstring for why two

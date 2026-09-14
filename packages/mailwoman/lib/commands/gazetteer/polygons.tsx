@@ -43,6 +43,7 @@ import { resolvePath } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitUpperList,
 	useCommandTask,
@@ -80,14 +81,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	points?: string
-	admin?: string
-	countries?: string
-	out: string
-	tol: number
-	repos: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Position = number[]
 

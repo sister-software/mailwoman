@@ -36,6 +36,7 @@ import { join } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	splitUpperList,
 	useCommandTask,
@@ -78,14 +79,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	release?: string
-	countries: string
-	limit?: string
-	out?: string
-	probeOnly: boolean
-	corpusJSONL: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 function renderMarkdown(release: string, probes: CountryProbe[]): string {
 	const lines = [

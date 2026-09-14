@@ -25,7 +25,14 @@ import { runFile } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 import type { RepoSyncPlan } from "#gazetteer-pipeline/repos/sync"
 
 /**
@@ -43,13 +50,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	root?: string
-	countries?: string
-	apply: boolean
-	repoint: boolean
-	offline: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const ACTION_MARK: Record<string, string> = {
 	"up-to-date": "=",

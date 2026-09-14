@@ -16,6 +16,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	phaseReporter,
 	splitUpperList,
@@ -38,14 +39,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	data?: string
-	out?: string
-	overtureCountries?: string
-	geonamesCountries?: string
-	overtureRelease?: string
-	skipVerify: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const csv = (raw: string | undefined): string[] | undefined => (raw ? splitUpperList(raw) : undefined)
 

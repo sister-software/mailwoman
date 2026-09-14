@@ -22,6 +22,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	CLIUsageError,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -40,9 +41,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	method: string
-}
+type Options = OptionsOf<typeof spec>
 
 const MERGE_METHODS = ["merge", "squash", "rebase"] as const
 

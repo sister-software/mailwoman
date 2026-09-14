@@ -22,7 +22,14 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 
-import { CheckList, type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CheckList,
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -37,11 +44,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db?: string
-	reversePanel: boolean
-	fstFreshness: boolean
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerVerify: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(

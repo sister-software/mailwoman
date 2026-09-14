@@ -17,7 +17,13 @@
 import { runFileSync } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type OptionsOf,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
@@ -34,12 +40,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db?: string
-	out?: string
-	minRows?: number
-	dominance?: number
-}
+type Options = OptionsOf<typeof spec>
 
 const GazetteerBuildPOIBrands: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
