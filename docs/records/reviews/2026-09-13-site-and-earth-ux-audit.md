@@ -61,6 +61,36 @@ is nothing observable to differ — but that is why a re-run is happening at all
 
 ---
 
+## Memory, added 2026-09-14
+
+Reported symptom: Safari force-reloads the Earth tab with a memory warning. Cause: `session.release()`
+appeared nowhere in the repository.
+
+An ONNX `InferenceSession` keeps its weights and arenas in the WASM heap, or on the GPU — memory the
+JavaScript collector does not own. Dropping the last reference to a loaded bundle freed the wrapper and
+left the model resident. `useReleaseRuntime` rebuilds the bundle whenever the version or the backend
+force changes (`useReleaseRuntime.ts:289`, deps `[selectedVersion, forceWASM]`), so every model-version
+pick, every Force WASM toggle and every compare-mode entry added a model's worth of native memory that
+never came back. A visitor poking at the Developer panel a few times accumulated several.
+
+Three leaks, fixed in 86e85929f:
+
+1. `WebONNXRunner` held `modelBytes` for its whole life. `InferenceSession.create` copies the graph into
+   the runtime's own heap, so that was a second full copy of a 38 MB model, kept for the page's life,
+   for nothing. Dropped as soon as a session owns it.
+2. `WebONNXRunner.release()` did not exist. It does now, and is what hands the session's memory back.
+   Safe to call twice, and safe mid-load — an in-flight session is awaited and then released, so an
+   aborted load cannot leak the session it was half-way through building.
+3. `useReleaseRuntime` now takes `disposeAssets` and calls it in the three places a bundle stopped being
+   anybody's: the outgoing bundle when a reload begins (before the replacement is built, so two models
+   are never resident at once — the peak is what kills a tab), a bundle whose load was aborted after it
+   had already resolved, and the last bundle on unmount.
+
+This is separate from the main-thread stall below, and does not fix it. It does reduce what the page
+holds while that work runs, and it is the more likely explanation of a tab being killed outright.
+
+---
+
 ## P0 — broken in front of a visitor
 
 ### 1. A `?q=` permalink never runs
@@ -347,12 +377,13 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   in light mode the right-hand TOC and every piece of secondary copy on the homepage render `#663399`.
   The dark theme's counterpart carries a `/* FIX: was pure white (too bright) */` marker at
   `theme-dark.css:35` — this one never got the same pass.
-- **A dead component tree.** `PipelineExplorer` has zero importers site-wide, which orphans its whole
-  subtree: `BIOHighlight`, `CRFDiff`, `ClassifierOverlay`, `FSTWalker`, `SubwordExplorer`, `GuidedTour`.
-  Also unreferenced: `CalibrationShowcase`, `F1ScoreTable`, `PricingTiers`, `DashboardMap`, `POIExplorer`,
-  and the stray `TrainingChart.tsx` (superseded by `TrainingCharts/`). Roughly 2,000 lines of TSX and
-  1,600 of CSS that nothing renders. Mount them or delete them — the half-state is what makes the site
-  feel unfinished from the inside.
+- ~~**A dead component tree.**~~ DELETED: 14 paths, 29 files, 6,531 lines. `PipelineExplorer` and its
+  orphaned subtree (`BIOHighlight`, `CRFDiff`, `ClassifierOverlay`, `FSTWalker`, `SubwordExplorer`,
+  `GuidedTour`), plus `src/contexts/RuntimeEmbed.tsx` — those four were its only consumers —
+  `CalibrationShowcase`, `F1ScoreTable`, `POIExplorer`, `DashboardMap`, `SplashScreen` and the stray
+  `TrainingChart.tsx`. `PricingTiers` stays: its docblock records a decision to keep it for the Product
+  door, which has since landed, so that is now a choice rather than a wait. Verified by `docusaurus
+  build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 - `docs/src/pages/index.module.css` — 25 colour literals, 2 media queries, **zero `[data-theme]`
   overrides**; `:119-153` adds eight `rgba(255,255,255,…)` values that assume a dark hero.
   `GuidedTour/styles.module.css:172-186` is half-tokenised: the correct
