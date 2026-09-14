@@ -15,7 +15,7 @@
  *   - `evals/scores-by-version.json` — the per-model score ledger (`mailwoman eval ledger-append`
  *       exists but was manual, so it froze).
  *   - `docs/records/site-2026-08/releases.mdx` — the version matrix, stuck showing an OLD `(current)` row.
- *   - `docs/articles/status.mdx` — the status info box, citing a superseded release.
+ *   - `docs/articles/developers/status.mdx` — the status info box, citing a superseded release.
  *
  *   THE MODEL-vs-npm DISTINCTION (see the "Two version series" intro of releases.mdx). Two version
  *   series exist: the npm version (what `npm install` gives you, bumped in lockstep across all
@@ -32,7 +32,7 @@
  *   1. `evals/scores-by-version.json` has a run whose `model_version === V`.
  *   2. `docs/records/site-2026-08/releases.mdx` has a matrix row for V, AND the `(current)` marker sits on V's
  *      row — OR on a newer row when every release above V is a "model unchanged" (code-only) row.
- *   3. `docs/articles/status.mdx` cites V in its `:::info[Verified as of …]` box.
+ *   3. `docs/articles/developers/status.mdx` cites V in its `:::info[Verified as of …]` box.
  *
  *   On any failure: ONE actionable error per surface (the exact command / file+section to fix), then
  *   exit 1. On success: one `OK` line per surface, exit 0.
@@ -47,7 +47,7 @@
  *       --card packages/neural-weights-en-us/model-card.json \
  *       --ledger evals/scores-by-version.json \
  *       --releases docs/records/site-2026-08/releases.mdx \
- *       --status docs/articles/status.mdx
+ *       --status docs/articles/developers/status.mdx
  *
  *   The path overrides exist so the surfaces can be pointed at doctored copies when exercising the
  *   failure modes; the defaults are the real repo files. Wired into `.github/workflows/publish.yml`
@@ -95,6 +95,35 @@ export interface VerifyReleaseMetadataOptions {
 	releases?: string
 	status?: string
 	log: (line: string) => void
+}
+
+/**
+ * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`). A status page outside it is not the page a
+ * reader opens, so citing the shipped model there proves nothing.
+ */
+const PUBLISHED_DOCS_ROOT = "docs/articles/"
+
+/**
+ * The page https://mailwoman.ai serves as "What ships today".
+ */
+const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
+
+/**
+ * Refuse a status path outside the published tree.
+ *
+ * This check verifies that A FILE cites the shipped version, and for four releases it verified the archived August copy
+ * while the live page said 8.6.0 and model 7.0.0 (#2259). A target that can move out from under a check while still
+ * RESOLVING reports success from the wrong place, and absence of failure was read as propagation — so the path is
+ * constrained rather than merely defaulted.
+ */
+function assertPublishedStatusPage(statusPath: string): void {
+	if (statusPath.startsWith(PUBLISHED_DOCS_ROOT)) return
+
+	throw new Error(
+		`verify-release-metadata: the status surface must be a page the site publishes, under ${PUBLISHED_DOCS_ROOT} ` +
+			`(received ${statusPath}). Only that tree is built — a page elsewhere can cite the shipped model while ` +
+			`the page a reader opens does not.`
+	)
 }
 
 export interface SurfaceResult {
@@ -284,7 +313,7 @@ async function checkStatus(version: string, statusPath: string): Promise<Surface
 			surface,
 			ok: false,
 			message:
-				`docs/articles/status.mdx has no ":::info[Verified as of …]" box.\n` +
+				`docs/articles/developers/status.mdx has no ":::info[Verified as of …]" box.\n` +
 				`      Add / restore the info box and cite release ${version}.`,
 		}
 	}
@@ -300,7 +329,7 @@ async function checkStatus(version: string, statusPath: string): Promise<Surface
 		surface,
 		ok: false,
 		message:
-			`docs/articles/status.mdx ":::info[Verified as of …]" box does NOT cite the shipped model ${version}.\n` +
+			`docs/articles/developers/status.mdx ":::info[Verified as of …]" box does NOT cite the shipped model ${version}.\n` +
 			`      Update the ":::info[Verified as of <date> — release ${version}]" header (and the body model paragraph) to ${version}.`,
 	}
 }
@@ -319,11 +348,18 @@ export async function verifyReleaseMetadata(
 ): Promise<VerifyReleaseMetadataReport> {
 	const { repoRoot, log } = options
 
+	const statusRelative = options.status ?? PUBLISHED_STATUS_PAGE
+
+	assertPublishedStatusPage(statusRelative)
+
 	const paths = {
 		cardPath: resolvePath(repoRoot, options.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolvePath(repoRoot, options.ledger ?? "evals/scores-by-version.json"),
+		// NOT an archive, despite the directory. `docs/records/site-2026-08/releases.mdx` is the maintained release
+		// matrix — AGENTS.md names it as where a version with no ledger row carries its headline, and it took 10.0.0
+		// in `76c08d950`. It is deliberately unpublished, so there is no live page to move this to.
 		releasesPath: resolvePath(repoRoot, options.releases ?? "docs/records/site-2026-08/releases.mdx"),
-		statusPath: resolvePath(repoRoot, options.status ?? "docs/records/site-2026-08/status.mdx"),
+		statusPath: resolvePath(repoRoot, statusRelative),
 	}
 
 	const version = await readModelVersion(paths.cardPath)
