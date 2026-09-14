@@ -24,7 +24,7 @@
  *   would not make them pass.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, test } from "vitest"
@@ -69,7 +69,7 @@ class RecordingBackend implements ResolverBackend {
 }
 
 const node = (
-	tag: ComponentTag,
+	tag: AddressNode["tag"],
 	value: string,
 	start: number,
 	end: number,
