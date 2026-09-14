@@ -154,6 +154,34 @@ read this"_ into _"there is none of it"_ — at a measurement boundary that is a
 insurance is to re-measure a surprising ABSENCE by a second path before reporting it. One corpus file read
 two ways caught two of the seven in sixty seconds.
 
+## A right answer under the wrong TYPE — the UAE's 178,171 postcodes
+
+**Every check that asks whether an answer is SUPPORTED passes an answer that is supported and mislabelled.** Three
+mechanisms in this repository refuse to produce a well-formed answer they cannot back: `createStreetLocaleRegistry`
+throws for an unregistered country rather than falling back to a neighbour, `coarserAnswerMarker` returns null rather
+than an empty marker, and `declared_ambiguity` reports its margin rather than presenting a thin win as a clean one.
+None of the three would have caught this.
+
+The widened GeoNames postal tail took 178,171 rows for AE — more than RU, RO and KR combined, the largest single
+country in it. Every row is a `NNNNN NNNNN` pair at Dubai-area coordinates (lat 24.63–25.32, lon 54.91–56.20): Makani
+**building** geocodes. The United Arab Emirates has no postcode system; mail is addressed to PO boxes.
+
+The lookup works, which is why nothing would have reported it. The #920 name law strips non-alphanumerics so a stored
+name matches what `sanitizeFTSQuery` makes of a query token, turning `28119 95762` into `2811995762` on both sides. A
+user typing a Makani number gets the right building, at the right coordinate, through the right key. The only false
+thing is the placetype — and `placetype = 'postalcode'` is a contract that the tier above it reads. A country census
+would have ranked the UAE the third best-covered postcode locale in the artifact, and every coverage figure drawn from
+that tier would have carried the claim.
+
+So there are three distinct failure modes, not two. **Under-claiming** is abstention. **Over-claiming confidence** is
+the thin win presented as clean, which `declared_ambiguity` exists to report. **Claiming the wrong KIND** is this one,
+and it is invisible to both: the answer is fully backed, correctly retrieved, and about a different sort of thing than
+it says. The tell is never in the answer; it is in whether the world has the category at all.
+
+It was found by drawing real rows out of the built artifact to set up a before/after measurement, not by reading the
+country list — the list looked fine, as a list of ISO codes will. Same method point as the two receipts below: an
+aggregate that agrees with itself is not evidence, and a row you can read is.
+
 ## A short read is a small file — the GeoNames quote-handling loss
 
 The inverse of the quote-blind splitter below, and the same rule from the other side. `TSVSpliterator`
