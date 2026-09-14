@@ -210,6 +210,40 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 		expect(rankByImportance(withUnmeasured).map((c) => c.id)).toEqual([85_971_363, 4, 85_940_429])
 	})
 
+	it("#2272: a bearer with NO recorded population never heads its country over one the gazetteer counted", () => {
+		// The live Brussels shape. `blendImportance` returns the encyclopedic score UNCAPPED when
+		// `referential <= 0` (`place-importance-schema.ts:153`), so an article-only row outscored a
+		// municipality of 160,553 — absence of evidence read as the strongest evidence there is.
+		const anderlecht: ResolvedPlace[] = [
+			place({ id: 1, name: "Anderlecht", country: "BE", prominence: 5.2, population: 160_553, importance: 0.524 }),
+			place({ id: 2, name: "Anderlecht", country: "BE", prominence: 0, importance: 0.5665 }),
+		]
+
+		expect(rankByImportance(anderlecht).map((c) => c.id)).toEqual([1, 2])
+	})
+
+	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
+		// Scoped deliberately. Across borders an article-only score is the only evidence there is, which
+		// is why `blendImportance` leaves that branch uncapped; the cap's own docstring protects it.
+		const crossBorder: ResolvedPlace[] = [
+			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
+			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
+		]
+
+		expect(rankByImportance(crossBorder).map((c) => c.id)).toEqual([2, 1])
+	})
+
+	it("#2272: two uncounted same-country bearers still separate on importance", () => {
+		// The prior's own job. 7,317 of the 19,622 remaining same-country flips are this shape, and the
+		// partition must not touch them: neither row was measured, so importance is all there is.
+		const neitherCounted: ResolvedPlace[] = [
+			place({ id: 1, name: "Bonito", country: "BR", prominence: 0, importance: 0.31 }),
+			place({ id: 2, name: "Bonito", country: "BR", prominence: 0, importance: 0.44 }),
+		]
+
+		expect(rankByImportance(neitherCounted).map((c) => c.id)).toEqual([2, 1])
+	})
+
 	it("never bands a candidate that carries no country", () => {
 		const anonymous = [
 			place({ id: 1, name: "X", country: undefined, prominence: 6, importance: 0.6 }),

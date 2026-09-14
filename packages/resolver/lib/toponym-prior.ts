@@ -86,7 +86,7 @@ const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
  * structural twin) can be ranked without a cast.
  */
 type Rankable = Pick<ResolvedPlace, "score"> &
-	Partial<Pick<ResolvedPlace, "country" | "exactMatch" | "importance" | "prominence">>
+	Partial<Pick<ResolvedPlace, "country" | "exactMatch" | "importance" | "population" | "prominence">>
 
 /**
  * Partition into (exact, rest), sort each half with `key` DESC, and re-join. The partition is what keeps a soft prior
@@ -164,6 +164,57 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], order: (measure
  * member, then head size, then input order. A cluster therefore moves as a unit: a same-country near-tie cannot be
  * split by a foreign row falling between its members' scores.
  */
+/**
+ * A bearer the gazetteer actually counted. Absence is UNMEASURED — the backend emits `population` only for a row
+ * carrying one, so there is no zero to confuse this with.
+ */
+const counted = (c: Rankable): boolean => typeof c.population === "number" && c.population > 0
+
+/**
+ * Within ONE country, a counted bearer orders ahead of an uncounted one, both groups keeping their incoming order.
+ * Cross-country order is untouched: the partition only ever permutes rows that already share a country, among the
+ * positions those rows already hold.
+ *
+ * This is the meaning-of-zero rule applied to ranking. `blendImportance` bounds the encyclopedic channel against the
+ * referential one — except at `referential <= 0`, where it returns the article score UNCAPPED, because a constant cap
+ * would demote every famous place WOF records no population for. That exemption is right across borders and wrong
+ * inside one: it lets a row the gazetteer never counted outrank every bearer it did. Measured on
+ * `candidate-global-2026-09-09-sg.db`, 20,301 of the 31,975 same-country pools the fame prior reorders are won by a row
+ * with no recorded population — 63%.
+ *
+ * Deliberately NOT a cap in `blendImportance`: that is a gazetteer rebuild, and it would reach the cross-country pools
+ * the cap's own docstring protects, where an article-only score is the only evidence there is.
+ */
+function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] {
+	const out = [...rows]
+	const slotsByCountry = new Map<string, number[]>()
+
+	for (const [index, row] of out.entries()) {
+		const country = row.country?.toUpperCase()
+
+		// A row without a country can never substantiate a same-country comparison, so it never moves.
+		if (!country) continue
+
+		const slots = slotsByCountry.get(country) ?? []
+
+		slots.push(index)
+		slotsByCountry.set(country, slots)
+	}
+
+	for (const slots of slotsByCountry.values()) {
+		if (slots.length < 2) continue
+
+		const members = slots.map((slot) => out[slot]!)
+		const reordered = [...members.filter((row) => counted(row)), ...members.filter((row) => !counted(row))]
+
+		for (const [k, slot] of slots.entries()) {
+			out[slot] = reordered[k]!
+		}
+	}
+
+	return out
+}
+
 function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] {
 	// Group by country in first-appearance order; a row without a country can never substantiate a
 	// same-country tie, so it stays a singleton.
@@ -214,7 +265,7 @@ function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] 
 
 	keyed.sort((a, b) => b.key - a.key || size(b.members[0]!) - size(a.members[0]!) || a.firstIndex - b.firstIndex)
 
-	return keyed.flatMap((c) => c.members)
+	return countedFirstWithinCountry(keyed.flatMap((c) => c.members))
 }
 
 /**
