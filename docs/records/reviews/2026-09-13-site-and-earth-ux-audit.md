@@ -89,9 +89,29 @@ for the landed view are queued behind the model and gazetteer work saturating th
 connection (the resolve alone measured 2,535 ms). Scrolling appeared to "fix" it only because any
 interaction forces a repaint of tiles that had by then arrived.
 
-NOT FIXED, deliberately — the real fix is retaining the parent tiles across the flight, or holding
-the camera until the target tiles are ready, and neither can be verified from a session that cannot
-run the Earth dev server. Left as the top open item.
+The cause, traced 2026-09-14. It is not the tiles and it is not the camera — it is the main thread.
+
+1. During the stall, `tiles.mailwoman.ai` had received **three** requests for the whole page life:
+   `geolocate`, `basemap-v4.json`, `coverage-v5.json`. Not one vector tile. The map was not waiting on
+   a slow tile; it never asked for one.
+2. MapLibre's update loop — the thing that decides which tiles a viewport needs and requests them —
+   runs on the main thread.
+3. The main thread is where inference runs. `packages/neural/lib/web/onnx-runner.ts:140` creates the
+   session with `executionProviders: ["webgpu", "wasm"]` in the page, not in a worker. The gazetteer
+   IS in a worker (sql.js-httpvfs); the classifier and the resolve orchestration are not, and one
+   resolve measured 2,535 ms of the 2,674 ms total.
+4. So the viewport goes black at the moment the camera lands and stays black until the work finishes,
+   then paints with no interaction — which is exactly what was observed, and why scrolling appeared to
+   "fix" it: any interaction forces a repaint of tiles that had by then arrived.
+
+`place-render.node.test.ts` (10 tests, green) covers the camera arithmetic, and it is correct: an
+interpolated hit flies to z15, inside the Protomaps source's `maxzoom: 15`.
+
+NOT FIXED, deliberately. The fix is to stop blocking the main thread — inference in a worker, or
+yielding between pipeline stages so MapLibre can paint — and that is an architecture change whose
+whole value is in what it does to frame timing, which is the one thing a workspace that cannot open a
+browser must not be trusted to judge. Left as the top open item, now with its cause rather than a
+guess about it.
 
 ### 2. Nine silent failure paths in Earth
 
@@ -264,8 +284,10 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
 - Component labels run together with no separator: the strip reads
   `house_numberstreetstreet_suffix locality regionpostcode`. Unreadable, and it is the first thing a
   visitor looks at.
-- Candidate scores mix scales: `#1 350 5th Ave — interpolated · 1.00`, `#2 New York — locality · 6.95`,
-  `#3 10118 — postalcode · 0.00`. A 6.95 beside a 1.00 reads as a bug whatever the intent.
+- ~~Candidate scores mix scales.~~ FIXED. They were never on one scale: `score` is
+  implementation-defined and its type says to treat it as ordinal — 6.95 is `log10(8.9M)` from the
+  candidate regime, 1.00 a bounded blend from the FTS regime. The row now carries the rank and the
+  placetype; the raw value stays on the button's `title`.
 - Vocabulary disagrees with itself in one panel: the parse tags `postcode`, the candidate says
   `postalcode`; `placetype: interpolated` and `precision: ≈ interpolated · ±64 m` say the same word twice.
 - `packages/react/lib/map/GeocoderControls.tsx:326` — the result sheet has **no close button, no Escape
@@ -280,9 +302,8 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   unchanged on touch. It defines `:hover`, `:active`, `--active`, `:disabled` but **no `:focus-visible`**,
   and the parent's `overflow: hidden` (`:1892`) clips even the UA outline. Every sibling control has a
   focus ring; this rail is the gap.
-- Developer panel: the Model version `<select>` truncates mid-string
-  (`v9.1.0 — the suffix-boundary cure (model v4.4.0` — closing paren missing, no ellipsis), and its
-  checkboxes are native/unstyled beside magenta styling everywhere else.
+- Developer panel: ~~the Model version `<select>` truncates mid-string.~~ FIXED (ellipsis, plus the
+  whole label on `title`). Its checkboxes are still native/unstyled beside magenta styling elsewhere.
 - `packages/earth/lib/panels/ResultExtras.tsx:67,85` — `demoStyles.xml` and `demoStyles.hierarchy` are
   **not defined** in `panels.module.css`, so both render `className="undefined"`. The XML dump and the
   hierarchy block are unstyled. Conversely `.examples` / `.examplesLabel` are defined and referenced by
@@ -305,9 +326,10 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
 
 - Six `@media` rules total across both packages, at three unshared breakpoints (600 / 640 / 768). Nothing
   between 601px and desktop; no tablet or landscape case.
-- 601–615px: `.mw-map-chrome--top` and `.mw-map-control-stack` overlap and the rail (higher z-index)
-  covers the right end of the search pill. The ≤600px rule at `styles.css:1623` exists to prevent exactly
-  this and its breakpoint is ~16px too low.
+- ~~601–615px: the rail covers the right end of the search pill.~~ FIXED, and not by moving the
+  breakpoint: `.mw-map-chrome--top` reserves the rail's width at every viewport. Above ~620px
+  `max-width` decides the box and the inset is never reached, so it costs nothing and cannot drift out
+  of tune when a control changes size.
 - `packages/earth/lib/panels/VersionCompare/styles.module.css` — 9 hardcoded state colours (`#d8504a`,
   `#1aa84d` and their rgba washes at `:129-169`) where `--color-state-danger` / `-success` / `-warning`
   already exist, none of which respond to the theme switch.
