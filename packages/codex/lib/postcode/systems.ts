@@ -183,7 +183,7 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * selection effect, and it is why this table reports 577 rows for the US and full panels for the others, which have no
  * such cascade.
  *
- * **The JP row is the JP board through the served path** (`jp-served-resolve.run.ts`, 2,000 rows, seed 42): the 586
+ * **The JP row is the JP board through the served path** (`served-board-resolve.run.ts`, 2,000 rows, seed 42): the 586
  * rows carrying a postcode the candidate table keys, graded on the row's own entrance point — the locality-first answer
  * is the municipality centroid, the postcode answer the code's 町域 centroid from the WOF extract.
  *

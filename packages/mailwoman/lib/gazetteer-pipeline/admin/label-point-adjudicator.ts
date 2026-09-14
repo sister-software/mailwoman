@@ -27,10 +27,10 @@
  *   existing label-first behavior byte-identically.
  */
 
+import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { haversineKm } from "@mailwoman/spatial"
 import { join, type PathBuilderLike } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 /**
  * A candidate or anchor coordinate pair, WGS-84 decimal degrees.
@@ -125,7 +125,7 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 			// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
 			// TSV parser.
 			if (await pathExists(path)) {
-				for (const cols of TSVSpliterator.from(await readLocalTextFile(path), { header: false })) {
+				for (const cols of readUnquotedTSVText(await readLocalTextFile(path))) {
 					const latitude = Number(cols[GN_COLUMN_LAT])
 					const longitude = Number(cols[GN_COLUMN_LON])
 

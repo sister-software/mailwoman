@@ -21,12 +21,12 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 export interface CentroidFillOptions {
 	/**
@@ -128,7 +128,7 @@ async function readGeonamesPostal(
 	// array mode, and GeoNames postal is headerless, so the first postcode would vanish without it.
 	//
 	// Columns: country, postcode, place, admin1..3 (name + code pairs), latitude, longitude, accuracy.
-	for await (const cells of TSVSpliterator.fromAsync(source, { header: false })) {
+	for await (const cells of readUnquotedTSV(source)) {
 		if (!wanted.has(cells[0] ?? "")) continue
 
 		const pc = cells[1]

@@ -25,11 +25,11 @@
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 import type { WOFDatabase } from "#schema"
 
@@ -90,6 +90,24 @@ export interface GeonamesIngestProgress {
 	 * True when the country's `<CC>.txt` dump was missing — the country is skipped, not fatal.
 	 */
 	skipped: boolean
+	/**
+	 * Alternate names the admission rule REFUSED. A build reporting only names written cannot tell a country whose source
+	 * carries few names from one whose names the fold threw away, and those were indistinguishable downstream for as long
+	 * as the rule tested script.
+	 */
+	aliasesRefused?: number
+}
+
+/**
+ * The one rendering of a fold progress event. Three call sites reported the same event in three hand-written spellings,
+ * so a field added to the event reached whichever of them its author happened to open.
+ */
+export function formatGeonamesIngestProgress(event: GeonamesIngestProgress, missingFile?: string): string {
+	if (event.skipped) {
+		return `${event.country}: ${missingFile ? `${missingFile} missing` : "dump missing"} — download from download.geonames.org/export/dump/${event.country}.zip; skipped`
+	}
+
+	return `${event.country}: ${event.places.toLocaleString()} places, ${(event.aliasesRefused ?? 0).toLocaleString()} alt-names refused`
 }
 
 /**
@@ -127,7 +145,7 @@ async function parseAlternateNamesV2(
 	// `header: false` — the dump is headerless.
 	const historicNames = new Set<string>()
 
-	for await (const f of TSVSpliterator.fromAsync(v2File, { header: false })) {
+	for await (const f of readUnquotedTSV(v2File)) {
 		if (f[6] === "1" || f[7] === "1" || (f[9] ?? "").trim() !== "") {
 			const alt = (f[3] ?? "").trim()
 
@@ -137,7 +155,7 @@ async function parseAlternateNamesV2(
 		}
 	}
 
-	for await (const f of TSVSpliterator.fromAsync(v2File, { header: false })) {
+	for await (const f of readUnquotedTSV(v2File)) {
 		const gid = Number(f[1])
 
 		if (!wanted.has(gid)) continue
@@ -176,7 +194,7 @@ async function parseAlternateNamesV2(
 }
 
 /**
- * Fold the GeoNames `P`-class places (+ their Latin alt-names) for `countries` into `db`'s `spr` / `names` /
+ * Fold the GeoNames `P`-class places (+ their alt-names, in every script) for `countries` into `db`'s `spr` / `names` /
  * `place_population` tables. Returns the total places ingested.
  *
  * `onProgress` receives one event per country (default: a stderr line, matching the build scripts' legacy output). The
@@ -212,10 +230,42 @@ export async function ingestGeonamesAliases(
 	// airport codes), 2–60 chars, at least one letter (drops bare postcodes/numbers).
 	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
 
+	/**
+	 * The DISPLAY rule, for `spr.name` and the A-class admin names. A row's display name stays in one script because
+	 * consumers render it beside Latin siblings; which names are REACHABLE is `cleanAlias`'s question, and the two are
+	 * separate on purpose.
+	 */
 	const clean = (s: string): string | null => {
 		const t = s.trim()
 
 		return t && LATIN_NAME.test(t) && /\p{L}/u.test(t) ? t : null
+	}
+
+	/**
+	 * GeoNames packs parenthesized asides, pipe-joined lists and bracketed qualifiers into `alternatenames`. Refusing
+	 * those is what the display rule's character class was doing that still needs doing; refusing a SCRIPT is not. This
+	 * fold is the only path by which a place in a fold country acquires a name in its own script, so a script test here
+	 * decides whether a country is reachable in its own writing at all — Hong Kong carried six Han lookup keys, all of
+	 * them the country row's, and every one of its eighteen districts was reachable only in romanization.
+	 *
+	 * Measured over the 161-country fold set: 1,662,953 alternate names admitted under the display rule, 345,555 further
+	 * names admitted here — Arabic 138,897, Cyrillic 49,302, Hangul 43,249, Han 11,437, then eleven more scripts.
+	 */
+	const NAME_NOISE = /[()[\]{}<>|/\\_@#$%^*+=~`"]/u
+
+	/**
+	 * The length band, carried over from the display rule unchanged. Two characters is a real place name in a Han script
+	 * (上海) and noise in none; sixty is longer than any name in the dumps and refuses a field that ran together.
+	 */
+	const NAME_MIN_LENGTH = 2
+	const NAME_MAX_LENGTH = 60
+
+	const cleanAlias = (s: string): string | null => {
+		const t = s.trim()
+
+		return t.length >= NAME_MIN_LENGTH && t.length <= NAME_MAX_LENGTH && /\p{L}/u.test(t) && !NAME_NOISE.test(t)
+			? t
+			: null
 	}
 
 	const sprInsert = db.prepare(
@@ -237,14 +287,8 @@ export async function ingestGeonamesAliases(
 	const report = (event: GeonamesIngestProgress, missingFile?: string): void => {
 		if (onProgress) {
 			onProgress(event)
-		} else if (event.skipped) {
-			console.error(
-				`  GeoNames ${event.country}: ${missingFile} missing — download from download.geonames.org/export/dump/${event.country}.zip; skipped`
-			)
 		} else {
-			console.error(
-				`  GeoNames ${event.country}: ${event.places.toLocaleString()} populated places (+ Latin alt-names)`
-			)
+			console.error(`  GeoNames ${formatGeonamesIngestProgress(event, missingFile)}`)
 		}
 	}
 
@@ -266,6 +310,7 @@ export async function ingestGeonamesAliases(
 		}
 
 		let nc = 0
+		let refused = 0
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
 		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
@@ -286,7 +331,7 @@ export async function ingestGeonamesAliases(
 		const adminRows: string[][] = []
 
 		if (readV2 || addAdmin) {
-			for await (const f of TSVSpliterator.fromAsync(file, { header: false })) {
+			for await (const f of readUnquotedTSV(file)) {
 				if (f[6] === "P") {
 					if (readV2) {
 						wanted.add(Number(f[0]))
@@ -347,7 +392,7 @@ export async function ingestGeonamesAliases(
 		}
 
 		// Emit pass — a second stream over the same file, off the page cache the survey pass just warmed.
-		for await (const f of TSVSpliterator.fromAsync(file, { header: false })) {
+		for await (const f of readUnquotedTSV(file)) {
 			if (f[6] !== "P") continue // populated places only
 			const lat = Number(f[4])
 			const lon = Number(f[5])
@@ -387,7 +432,11 @@ export async function ingestGeonamesAliases(
 			const tags = v2?.get(Number(f[0]))
 
 			for (const raw of [f[2] ?? "", ...(f[3] ? f[3].split(",") : [])]) {
-				const alt = clean(raw)
+				const alt = cleanAlias(raw)
+
+				if (!alt && raw.trim()) {
+					refused++
+				}
 
 				if (alt && !seen.has(alt)) {
 					seen.add(alt)
@@ -406,7 +455,7 @@ export async function ingestGeonamesAliases(
 			nc++
 		}
 
-		report({ country: cc, places: nc, skipped: false })
+		report({ country: cc, places: nc, skipped: false, aliasesRefused: refused })
 		total += nc
 	}
 

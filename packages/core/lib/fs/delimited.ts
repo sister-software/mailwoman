@@ -1,0 +1,79 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file Reading a delimited file whose `"` is an ordinary character.
+ *
+ *   `CSVSpliteratorInit.enableQuoteHandling` DEFAULTS TO TRUE, and a quote-aware reader over an unquoted source does
+ *   not fail — it joins every line between one `"` and the next into a single record, so the caller sees a shorter
+ *   file and reads it as a smaller dataset. Nothing downstream can tell that apart from a small file, because every
+ *   count downstream is derived from what the reader returned.
+ *
+ *   Measured on the GeoNames country dumps, which are unquoted TSV and carry `"` in place names (`Ovrag Kyzylak"on`):
+ *   2,896,186 rows across the 161-country fold set, 2,355,927 records read, **540,259 lost** — Finland 84.4 %,
+ *   Azerbaijan 94.7 %, Slovakia 93.1 %, North Korea 82.2 %, Turkmenistan 76.7 %. Türkmenabat, population 230,861,
+ *   sits past the first `"` in its dump and vanished from the gazetteer.
+ */
+
+import type { PathBuilderLike } from "path-ts"
+import { TextSpliterator, TSVSpliterator } from "spliterator"
+
+/**
+ * Stream the records of an UNQUOTED tab-separated file.
+ *
+ * Use this for any source whose `"` is literal — the GeoNames dumps, and every register that writes plain TSV. A source
+ * that really is quoted (a spreadsheet export, a register that escapes its delimiters) wants `TSVSpliterator` directly
+ * with the default, and should say so where it is read.
+ */
+export function readUnquotedTSV(path: PathBuilderLike): AsyncIterable<string[]> {
+	return TSVSpliterator.fromAsync(path, {
+		header: false,
+		enableQuoteHandling: false,
+	}) as AsyncIterable<string[]>
+}
+
+/**
+ * The same rule over a string already in memory, for a caller that read the file itself.
+ */
+export function readUnquotedTSVText(text: string): Iterable<string[]> {
+	return TSVSpliterator.from(text, {
+		header: false,
+		enableQuoteHandling: false,
+	}) as Iterable<string[]>
+}
+
+/**
+ * The same read, checked against the file's own line count, raising rather than answering short.
+ *
+ * A reader that can return a PARTIAL result must say what it got or throw: a short read and a small file are the same
+ * number to every consumer, and absence is the answer a gazetteer build is looking for, so the wrong answer arrives
+ * looking like a discovery. This costs one extra pass over the bytes and is the right default for a build step that
+ * will bake its result into a shipped artifact.
+ */
+export async function readUnquotedTSVChecked(path: PathBuilderLike): Promise<string[][]> {
+	let expected = 0
+
+	// Streamed rather than split: the largest dump this guards is Finland's at 552,802 lines, and the point of
+	// the check is to be cheap enough that a build step always runs it.
+	for await (const line of TextSpliterator.fromAsync(path)) {
+		if (line.length) {
+			expected++
+		}
+	}
+
+	const rows: string[][] = []
+
+	for await (const row of readUnquotedTSV(path)) {
+		rows.push(row)
+	}
+
+	if (rows.length !== expected) {
+		throw new Error(
+			`${String(path)}: read ${rows.length} records from ${expected} lines. A delimited reader that answers short has ` +
+				`swallowed rows into a quoted region or a stray delimiter, and the shortfall is indistinguishable from a ` +
+				`smaller file at every later boundary.`
+		)
+	}
+
+	return rows
+}

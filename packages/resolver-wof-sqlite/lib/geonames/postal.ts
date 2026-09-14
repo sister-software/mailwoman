@@ -34,11 +34,11 @@
  *   the model card like the existing GeoNames alias fold.
  */
 
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 import type { WOFDatabase } from "#schema"
 
@@ -170,7 +170,7 @@ export async function ingestGeonamesPostal(
 		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB, and only the caller
 		// knows which country is next. `header: false` is required; the GeoNames postal dump is
 		// headerless, so row 1 would be consumed as column names and its postcode lost.
-		for await (const cols of TSVSpliterator.fromAsync(file, { header: false })) {
+		for await (const cols of readUnquotedTSV(file)) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue
 			const display = cols[1]!.trim()
 			const name = normalizePostcodeName(display)

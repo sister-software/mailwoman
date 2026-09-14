@@ -14,10 +14,10 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * Fold every country surface ICU knows onto that country's candidate row (#1678 thread 1).
  *
  * A bare `格鲁吉亚` (Georgia the country) resolved to NOTHING while `佐治亚州` (Georgia the US state) resolved correctly, and
- * the model gave both the same wrong `locality` tag — so the tag was never the variable. Measured 2026-08-15: 140 of
- * 237 country rows are synthetic and carry a canonical English name and nothing else; WOF holds no Chinese country
- * names at all; and the GeoNames alias fold filters through a Latin-script regex, so neither existing source could ever
- * supply them.
+ * the model gave both the same wrong `locality` tag — so the tag was never the variable. 140 of 237 country rows are
+ * synthetic and carry a canonical English name and nothing else, and WOF holds no Chinese country names at all. The
+ * GeoNames alias fold now admits every script, but it reaches only the fold's own country set and names a place from
+ * its dump row, so it supplies a country surface for no country outside that set.
  *
  * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces, from the same ICU the runtime uses for
  * every other locale-sensitive operation. No download, no vendored corpus, no snapshot to drift.

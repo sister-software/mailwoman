@@ -61,13 +61,13 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
 import { pyFloat, pyRound } from "@mailwoman/core/numeric"
 import { once } from "@mailwoman/core/utils/events"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { TSVSpliterator } from "spliterator"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -286,7 +286,7 @@ function loadNLPC6(): Map<string, Centroid> {
 async function loadZCTA(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
-	for (const row of TSVSpliterator.from(await readLocalTextFile(path), { header: false })) {
+	for (const row of readUnquotedTSVText(await readLocalTextFile(path))) {
 		const fields = row.map((f) => f.trim())
 		const pc = fields.length ? fiveDigit(fields[0]) : null
 

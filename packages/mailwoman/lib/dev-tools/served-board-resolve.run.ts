@@ -2,8 +2,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The served JP path through the RESOLVER: board rows geocoded with the CJK weights and the candidate gazetteer,
- *   graded on the board's own coordinate (#2164 step 6, the half the parse board cannot read).
+ * @file A coordinate board read through the RESOLVER: board rows geocoded with the served weights and the candidate
+ *   gazetteer, graded on the board's own coordinate (#2164 step 6, the half a parse board cannot read).
+ *
+ *   The parse board and this one answer different questions. A parse board decodes spans and looks a predicted
+ *   (region, locality) pair up in a centroid table; this runs the pipeline a caller runs and grades the coordinate it
+ *   returns. A locale can read well on the first and resolve nothing on the second, so `SCOPE.mdx`'s rule — a locale is
+ *   claimed when a coordinate-graded eval exists for it — is answered here.
+ *
+ *   `--locale` and `--country` are flags rather than constants because every CJK board has the same shape and a tool
+ *   named for one of them grows a copy per country instead of an argument.
  *
  *   Three things had to hold before a JP parse produced a coordinate at all, and this tool measured each: the placetype
  *   map routes `prefecture` / `municipality` / `district` (0 of 300 rows resolved without it), the admin ladder carries
@@ -12,8 +20,8 @@
  *   pair for a compound municipality (`compoundMunicipality`, #2175) then took 271 to 282 of 300; the same split
  *   applied UNSCOPED before the walk had read 251, because a bare ward resolves a namesake in another city.
  *
- *   Usage: node packages/mailwoman/lib/dev-tools/jp-served-resolve.run.ts [--board <jsonl>] [--rows 300] [--seed 42]
- *   [--normalize false] [--tolerance-km 15] [--trace 2] [--json <out>]
+ *   Usage: node packages/mailwoman/lib/dev-tools/served-board-resolve.run.ts [--board <jsonl>] [--locale ja-JP]
+ *   [--country JP] [--rows 300] [--seed 42] [--normalize false] [--tolerance-km 15] [--trace 2] [--json <out>]
  */
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
@@ -65,6 +73,8 @@ async function main(): Promise<void> {
 	const { values } = parseArguments({
 		options: {
 			board: { type: "string" },
+			locale: { type: "string", default: "ja-JP" },
+			country: { type: "string" },
 			rows: { type: "string", default: "300" },
 			seed: { type: "string", default: "42" },
 			normalize: { type: "string", default: "true" },
@@ -90,7 +100,17 @@ async function main(): Promise<void> {
 		.slice(0, wanted)
 		.map((entry) => entry.row)
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "ja-JP" })
+	const locale = values.locale
+	// The country the board's rows are in, which scopes the resolve. It defaults from the locale's region subtag
+	// rather than a table: `zh-TW` is a Taiwanese board by construction, and a lookup keyed on locale would be one
+	// more per-country list to keep in step with the boards themselves.
+	const country = (values.country ?? locale.split("-").at(-1) ?? "").toUpperCase()
+
+	if (country.length !== 2) {
+		throw new Error(`--country could not be derived from --locale ${locale}; pass it explicitly`)
+	}
+
+	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = await createResolverBackend(mod, { dataRoot: mailwomanDataRoot(), wofPaths: [] })
 	const resolver = instrumented(createWOFResolver(lookup), traceRows > 0)
@@ -103,7 +123,7 @@ async function main(): Promise<void> {
 		const outcome = (await geocodeAddress(row.raw, {
 			classifier,
 			resolver,
-			defaultCountry: "JP",
+			defaultCountry: country,
 			adminContainmentRerank: true,
 			...(values.normalize === "false" ? { normalizeInput: false } : {}),
 		})) as { lat: number | null; lon: number | null; resolution_tier?: string | null }
@@ -143,7 +163,7 @@ async function main(): Promise<void> {
 	}
 
 	console.log(
-		`normalize=${values.normalize} rows=${graded.length} resolved=${resolved} accepted@${toleranceKm}km=${accepted} (${((100 * accepted) / graded.length).toFixed(1)}%)`
+		`locale=${locale} country=${country} board=${boardPath} normalize=${values.normalize} rows=${graded.length} resolved=${resolved} accepted@${toleranceKm}km=${accepted} (${((100 * accepted) / graded.length).toFixed(1)}%)`
 	)
 
 	for (const [register, bucket] of [...byRegister].toSorted()) {
@@ -157,7 +177,7 @@ async function main(): Promise<void> {
 	}
 
 	if (values.json) {
-		await writeLocalJSONFile({ toleranceKm, rows: graded }, values.json)
+		await writeLocalJSONFile({ locale, country, board: String(boardPath), toleranceKm, rows: graded }, values.json)
 	}
 }
 

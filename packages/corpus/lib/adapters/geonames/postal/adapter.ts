@@ -24,7 +24,7 @@
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
-import { TSVSpliterator } from "spliterator"
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 
 import { stableSourceID } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -58,11 +58,11 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			// `header: false` — the GeoNames postal dump is headerless, and the spliterator would
 			// otherwise consume row 1 as column names and lose its first postcode.
-			const rows = TSVSpliterator.fromAsync(opts.inputPath, { header: false })
+			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0
 
-			for await (const rec of rows as AsyncIterable<string[]>) {
+			for await (const rec of rows) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break

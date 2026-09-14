@@ -29,9 +29,9 @@
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dirname, join } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -85,7 +85,7 @@ async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 	if (!(await pathExists(fp))) return map
 
 	// `header: false` — the file is headerless, and the spliterator eats row 1 as a header otherwise.
-	for await (const cols of TSVSpliterator.fromAsync(fp, { header: false })) {
+	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0] && cols[1]) {
 			map.set(cols[0], cols[1])
 		}
@@ -105,7 +105,7 @@ async function loadCountries(dir: string): Promise<Map<string, string>> {
 
 	// `header: false` — the file's header IS a `#` comment, so it falls out with the other comments
 	// rather than being consumed as column names.
-	for await (const cols of TSVSpliterator.fromAsync(fp, { header: false })) {
+	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0]?.startsWith("#")) continue
 
 		// ISO(0), ISO3(1), iso-numeric(2), fips(3), Country(4), ...
@@ -130,7 +130,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			const countries = await loadCountries(dir)
 
 			// `header: false` — the per-country dump is headerless.
-			const rows = TSVSpliterator.fromAsync(opts.inputPath, { header: false })
+			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0
 

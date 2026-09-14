@@ -281,9 +281,11 @@ coordinate, read the Latin board before a resolver mechanism ships.
   kanji-keyed table cannot key (a kana-register surface) whose prediction equals the gold span — reported, never inside
   the check. Score the arm you are replacing on the same scorer in the same run; a scorer patch between two reads is a
   comparison of scorers.
-- **The served read.** `packages/mailwoman/lib/dev-tools/jp-served-resolve.run.ts` geocodes board rows through the
-  installed package and the candidate gazetteer and grades the resolver's coordinate on the board's own point. The
-  parse board and the served board answer different questions; a resolver change is read here.
+- **The served read.** `packages/mailwoman/lib/dev-tools/served-board-resolve.run.ts` geocodes board rows through the
+  installed package and the candidate gazetteer and grades the resolver's coordinate on the board's own point, under
+  the `--locale` and `--board` it is given. The parse board and the served board answer different questions; a resolver
+  change is read here, and `SCOPE.mdx`'s rule that a locale is claimed only when a coordinate-graded eval exists for it
+  is answered here rather than on the parse board.
 - **The D-rule here.** Only the character model emits the JP tags, so a resolver mechanism keyed on them cannot reach a
   Latin row by construction — and it is still read: `mwdev_compare` over the full regression board, origin/main
   against the working tree, before it ships.

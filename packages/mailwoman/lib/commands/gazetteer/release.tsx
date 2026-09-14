@@ -11,6 +11,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
@@ -80,8 +81,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 				adminIn,
 				adminOut: foldOut,
 				countries,
-				onCountry: (e) =>
-					console.error(`  ${e.country}: ${e.skipped ? "(skipped)" : `${e.places.toLocaleString()} places`}`),
+				onCountry: (e) => console.error(`  ${formatGeonamesIngestProgress(e)}`),
 				onPhase: phaseReporter(),
 			})
 

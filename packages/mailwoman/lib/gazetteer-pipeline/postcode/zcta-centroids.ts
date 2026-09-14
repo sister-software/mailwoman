@@ -29,9 +29,9 @@
  *   Tested by the sibling `zcta-centroids.test.ts`.
  */
 
+import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { TSVSpliterator } from "spliterator"
 
 /**
  * Columns a US Census gazetteer row carries; short rows are truncated and skipped.
@@ -62,7 +62,7 @@ export interface ZCTACentroid {
 export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 	const out = new Map<string, ZCTACentroid>()
 
-	for (const row of TSVSpliterator.from(text, { header: false })) {
+	for (const row of readUnquotedTSVText(text)) {
 		const fields = row.map((f) => f.trim())
 		const geoid = fields[0]
 
@@ -142,7 +142,7 @@ export function fillPlaceholderCentroids(
 export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
 
-	for (const f of TSVSpliterator.from(text, { header: false })) {
+	for (const f of readUnquotedTSVText(text)) {
 		const pc = f[1]?.trim()
 		const lat = Number(f[9])
 		const lon = Number(f[10])

@@ -5,8 +5,8 @@
  * @file The GeoNames postal-dump row reader the CJK postcode-locality builders share.
  */
 
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pyFloat } from "@mailwoman/core/numeric"
-import { TSVSpliterator } from "spliterator"
 
 /**
  * One usable row of a GeoNames postal dump: a postcode with a parseable coordinate, plus the settlement and admin-1
@@ -31,7 +31,7 @@ export interface GeonamesPostalRow {
  * `Number` + `(0, 0)`-skip validity rules differ from the `pyFloat` port here.)
  */
 export async function* geonamesPostalRows(source: string): AsyncGenerator<GeonamesPostalRow> {
-	for await (const f of TSVSpliterator.fromAsync(source, { header: false })) {
+	for await (const f of readUnquotedTSV(source)) {
 		if (f.length > 10 && f[1]) {
 			const latitude = pyFloat(f[9])
 			const longitude = pyFloat(f[10])

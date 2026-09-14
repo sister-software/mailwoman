@@ -32,12 +32,12 @@
  *   never `unattested`.
  */
 
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath, type PathBuilderLike } from "path-ts"
-import { TSVSpliterator } from "spliterator"
 
 /**
  * Admin placetypes the triage covers — the bands an address's locality span resolves against. Regions and countries are
@@ -291,7 +291,7 @@ async function loadAttestors(
 ): Promise<Map<string, { lat: number; lon: number; pop: number }[]>> {
 	const out = new Map<string, { lat: number; lon: number; pop: number }[]>()
 
-	for await (const f of TSVSpliterator.fromAsync(dumpPath, { header: false })) {
+	for await (const f of readUnquotedTSV(dumpPath)) {
 		if (f[6] !== "P") continue
 
 		const candidates = [fold(String(f[1] ?? "")), fold(String(f[2] ?? ""))].filter((key) => key && keys.has(key))
