@@ -16,6 +16,7 @@ import { docLinkTargetsCheck } from "#checks/doc-link-targets"
 import { exportNameAffixCheck } from "#checks/export-name-affix"
 import { exportsCheck } from "#checks/exports"
 import { licenseRegisterCheck } from "#checks/license-register"
+import { localeTablesCheck } from "#checks/locale-tables"
 import { manifestTargetsCheck } from "#checks/manifest-targets"
 import { moduleCohesionCheck } from "#checks/module/cohesion"
 import { moduleSurfaceCheck } from "#checks/module/surface"
@@ -38,6 +39,7 @@ import { vocabCensusCheck } from "#checks/vocab-census"
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
 	licenseRegisterCheck,
+	localeTablesCheck,
 	testContractCheck,
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,

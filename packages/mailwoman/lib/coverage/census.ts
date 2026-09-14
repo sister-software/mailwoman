@@ -424,6 +424,11 @@ export const WEIGHTS_PACKAGE_BY_COUNTRY: ReadonlyMap<string, string> = new Map([
 	["ES", "es-es"],
 	["IT", "it-it"],
 	["IN", "en-in"],
+	// The character-path overlays ship beside the Latin ones, under `charWeights` rather than `locales` in
+	// `release.config.json`. A census that reads only the Latin list reports a country with a shipping overlay as
+	// having none — `repo-health`'s `locale-tables` check holds this table against both halves of the config.
+	["JP", "ja-jp"],
+	["CN", "zh-cn"],
 ])
 
 export interface CensusCoverageOptions {
