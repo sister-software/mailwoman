@@ -1,0 +1,238 @@
+# Reuse consolidation — design
+
+The operator asked for a 30% reduction in TypeScript line count, achieved by making declarations reusable rather
+than by deleting features, comments or whitespace, and revised the target to 15% after the first measurement. This
+document records what five instruments measured, why 15% is not reachable through reuse, and the campaign that is.
+
+## Baseline
+
+| Bucket                      |   Lines | Share |
+| --------------------------- | ------: | ----- |
+| Tracked TS/TSX, 3,041 files | 538,264 | 100%  |
+| — code                      | 317,429 | 59.0% |
+| — comment                   | 141,066 | 26.2% |
+| — blank                     |  79,769 | 14.8% |
+| test files, of that total   | 161,304 | 30.0% |
+
+Comments and whitespace are out of scope by the operator's own framing, so **317,429 code lines is the
+denominator**. 15% of it is 47,614 lines.
+
+## What five instruments measured
+
+| Instrument                                   | Compares                                                     |                                        Found | Share of code |
+| -------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------: | ------------: |
+| `knip`                                       | unused files and exports                                     |                                            0 |            0% |
+| `jscpd`, `minLines: 12`                      | token clones                                                 |                                        3,438 |         1.08% |
+| declaration census, no size floor, all pairs | 48,953 functions and constants, exported and not             |                    2,974 (520 cross-package) |         0.94% |
+| home-shadow probe                            | a module-private declaration against a home package's export | 659 raw, ~350 after removing name collisions |         0.11% |
+| file 8-gram clustering, Jaccard ≥ 0.45       | whole files                                                  |                           22,829 upper bound |         7.19% |
+
+The scripts are throwaway and live in the session scratchpad; their method is reproduced in the appendix so the
+numbers can be re-derived.
+
+### The threshold the file clustering rests on
+
+| Threshold | Clusters | Upper bound | Reading                                                                      |
+| --------: | -------: | ----------: | ---------------------------------------------------------------------------- |
+|      0.60 |       51 |       9,857 | near-twins only                                                              |
+|  **0.45** |   **77** |  **22,829** | largest cluster is 61 files, all one family — no cross-workspace chaining    |
+|      0.30 |      129 |      50,129 | artifact: single-linkage chains 94 files across `astrogeology` + `mailwoman` |
+
+The 0.30 row is the only one that reaches 15%, and it reaches it by merging unrelated files. It is not counted.
+
+## The finding
+
+**The repetition in this repository is architectural, not lexical.**
+
+The four authority-layer packages each write their own `sdk/cells.ts`, `sdk/client.ts`, `sdk/ingest/chunk.ts` —
+same responsibilities, same call order, four different types, four different vocabularies, four different table
+names. The files are parallel; no two declarations inside them are the same. That is why `jscpd` reports 0.66% on
+files that read as twins, and why a declaration-level sweep with no size floor finds 520 cross-package lines in a
+538,264-line tree.
+
+The hypothesis that `core`, `codex` and `corpus` are sinks waiting to receive scattered code was tested directly.
+The gravity table assigns each cross-package family a proposed owner:
+
+| Proposed sink                | Families | Lines |
+| ---------------------------- | -------: | ----: |
+| `coastal`                    |       13 |   130 |
+| `corpus` _(designated home)_ |        6 |    66 |
+| `mailwoman`                  |       10 |    47 |
+| `libpostal`                  |        2 |    42 |
+| `core` _(designated home)_   |        6 |    22 |
+| `codex` _(designated home)_  |        1 |     7 |
+
+The three homes total 95 lines. They are not waiting to receive code — they have already received it. The strongest
+package pairs are the layer packages (`coastal ~ zoning` 98L, `coastal ~ flood` 91L, `flood ~ zoning` 75L) and the
+drop-in servers (`nominatim ~ photon` 69L).
+
+Consequence for the campaign: consolidation here means writing one generic implementation that several packages
+instantiate. It does not mean moving constants into `core`, because there are almost no shared constants to move.
+
+## Scope
+
+**In scope.** Reuse: a generic implementation replacing several parallel ones, a derived type replacing a
+hand-written one, a helper moved to the package that already owns the concept.
+
+**Out of scope.** Relocating the 36,088 lines of declared table literals or the 44,723 lines of type declarations
+out of TypeScript. That reaches the 15% and is a different project; the operator chose reuse at its real size.
+
+**Non-goals.** Deleting features. Removing docstrings. Splitting files because they are long — the mechanical
+cleanup lane stays closed except where this campaign's own work touches a file.
+
+## Lanes
+
+Each lane carries a measured upper bound from the census and a realistic estimate. The realistic figure assumes a
+generic implementation keeps each instance's irreducible vocabulary.
+
+| Lane                               |    Upper bound | Realistic         | Confidence |
+| ---------------------------------- | -------------: | ----------------- | ---------- |
+| A. CLI command tree                |          5,725 | 2,000–2,500       | high       |
+| B. Authority-layer kit             | 3,378 / 12,225 | 4,000–6,000       | high       |
+| C. Corpus adapters and recipes     |          2,064 | 1,200–1,600       | medium     |
+| E. Table schemas                   |            860 | 600–900           | medium     |
+| G. Drop-in servers, env, MCP tools |            673 | 400–600           | medium     |
+| H. Remainder                       |          2,791 | 800–1,200         | low        |
+| Home shadows                       |            659 | ~350              | high       |
+| Test families collapsing with A–C  |          6,733 | 2,500–4,000       | medium     |
+| **Total**                          |                | **11,850–17,150** |            |
+
+Lane B carries two bounds because two methods measured it. Clustering at 0.45 counts only the files that still
+look alike (3,378). Pairing the four packages by matching file name instead counts all 23 families (12,225), and
+the 8,847-line difference sits in same-named files that have drifted — `sdk/client.ts` measures 0.23 best-pair
+similarity, `sdk/download.ts` has one identical pair and one at 0.09. The truth is between them.
+
+### Lane A — the CLI command tree
+
+**A1. Derive `Options` from `typeof spec`.** 143 command files hand-write an `interface Options` restating their
+own `spec.options` block: **1,116 lines**, against 1,693 lines of `options` blocks across 161 specs.
+
+The kebab-to-property derivation already exists as `optionPropertyName` in `@mailwoman/core/scripting/arguments`,
+with an `OPTION_INITIALISMS` table naming the segments that capitalize a whole acronym. A mapped type mirroring
+that derivation makes `Options` derived.
+
+The runtime table and the type-level table must not drift, and matched constants would not prevent it — this
+repository's own rule is to share the function, not the constants. The remedy is one declaration: keep
+`OPTION_INITIALISMS` as a single `as const` object, take the type side from `typeof` it and the runtime side from
+`Object.entries` of it.
+
+`packages/repo-health/lib/checks/cli-flag-properties.ts` exists because these two can drift; its docstring records
+the cost, ten flags across seven commands reaching the component under a name nothing read, `eval oa-resolver
+--out-json` among them. Derivation turns that class into a compile error. Whether the check retires entirely is
+decided after A1 lands, by reading what it still catches — a flag whose property is declared but unread is a
+different finding and may survive.
+
+**A2. Shared option groups.** 450 of 881 option declarations restate a key another command already declares, at
+~707 lines. The repetition is broad rather than deep: `out` appears 56 times in 77 lines. Consolidating trades
+per-command legibility for lines, so this lane is taken only where a group is coherent (the engine options
+`locale` / `weights-cache` / `db` / `resolve-db` / `candidate-db`), not key by key.
+
+A2 also surfaces a naming split worth fixing while the files are open: `out` (56) beside `output` (23), and
+`country` (14) beside `countries` (14).
+
+**A3. The repeated command shape.** Every harness command runs `useCommandTask`, returns `<CommandTaskResult>`
+while pending, prints `prettyJSON` under `--json`, and otherwise returns `null`. A factory or a wrapper component
+collapses it. Estimated 61 files × ~12 lines.
+
+### Lane B — the authority-layer kit
+
+`flood`, `soil`, `coastal` and `zoning` are 17,418 non-test lines across 23 file families with matching names, and
+all four publish to npm. A fifth layer is already foreseeable, and the cost of adding one is the reason this lane
+ranks above its line count.
+
+What generalizes: `sdk/cells.ts`, `sdk/download.ts`, `sdk/measure-resolutions.ts`, `sdk/ingest/chunk.ts`,
+`scripts/ingest-chunk.ts`, `sdk/verify/*`, the `layer_manifest` and `layer_coverage` half of each `schema.ts`,
+`test-kit.ts`, plus the four `packages/mailwoman/lib/observations/*-route.ts` and the three
+`packages/mailwoman/lib/commands/gazetteer/build/*.tsx`.
+
+What must not: each layer's vocabulary, its reading kinds, its scenario scoping, and its coverage semantics. These
+differ by design and the differences are load-bearing — `flood` represents Zone 1 by absence, `coastal` and
+`zoning` license no negative claim at all, and `soil` answers a distribution rather than a winner class. A generic
+implementation parameterizes over them; it never averages them.
+
+**Where the kit lives** is the one open question. `@mailwoman/core/layers` already holds the manifest and schema
+contract at 895 lines and every layer depends on `core` already, but an ingest pipeline in `core` adds weight to
+the package everything depends on. A new `@mailwoman/layer-kit` workspace is cleaner and costs the seven-register
+registration that `AGENTS.md` documents. Decide before writing code.
+
+**Acceptance is already written.** Each layer carries a `test/unit/build.test.ts` driving the full build to a
+sealed database from hand-built fixture geometry, with no network and no GDAL. Those four suites plus the four
+`packages/mailwoman/test/unit/observations/*-route.test.ts` must pass unchanged. A test that needs editing to
+accommodate the kit is a behavior change, and it stops the lane until explained.
+
+### Lanes C, E, G, H
+
+- **C.** Nine `packages/corpus/lib/us/adapters/**` cluster at 1,140 lines upper bound, the two
+  `adapters/wof/**` at 194, and four national recipes (`no`, `nl`, `cz`, `si`) at 322. A CSV-adapter factory.
+- **E.** Six `resolver-wof-sqlite` schema modules plus `nominatim`/`photon` schemas share a shape; the Kysely
+  schema-builder idiom is already the house pattern, so this is a factory over it.
+- **G.** `libpostal` / `nominatim` / `photon` app and schema modules, the five `lib/env.ts` files, the five
+  `dev-mcp` tool definitions.
+- **H.** The remaining 21 clusters, taken opportunistically and not planned.
+
+### Home shadows
+
+Real, small, and a correctness improvement rather than a trade:
+
+| Declaration               | Lines | Where                                                            | Home               |
+| ------------------------- | ----: | ---------------------------------------------------------------- | ------------------ |
+| `runPipeline`             |   116 | `mailwoman/lib/commands/parse.tsx:441`                           | `core` exports it  |
+| `resolveCells`            |    80 | `flood/lib/sdk/build-flood.ts:429` against `soil`                | neither            |
+| `gradeRow` ×4             |   108 | three `eval-harness` runners and `dev-mcp`                       | neither            |
+| `assertAreaAgreement` ×2  |    51 | `soil/lib/sdk/build-soil.ts:421`, `zoning/…/build-zoning.ts:589` | `core` exports it  |
+| `FR_VOIE_TYPES`           |    50 | `resolver/lib/street/tier.ts:275`                                | `codex` exports it |
+| `resolvePackagedDataPath` |    16 | `poi-taxonomy/lib/packaged-data.ts:28`                           | `core` exports it  |
+
+`pointInRing` in `nuts-lookup` and `timezone-lookup` (32 lines) appears on the probe's list and **stays**. Both
+packages document the copy in place: reaching `@mailwoman/spatial` would pull `@mailwoman/core`'s ~11 MB of
+shipped data behind a ray cast. Price the dependency before moving a helper.
+
+## Order
+
+1. **A1**, because it is mechanical, compiler-verified, and proves the campaign's machinery — worktree, review,
+   CI — on 143 files before anything with behavioral risk.
+2. **Home shadows**, because they are small, independent, and each is a correctness fix.
+3. **B**, the largest and the one that pays forward on every future layer.
+4. **C**, **E**, **G**.
+5. **A2**, **A3**, then **H** opportunistically.
+
+Re-measure after step 3 and replace the realistic estimates with observed capture rates.
+
+## Verification
+
+Every lane, in order, and a lane is not finished until all of these pass:
+
+1. `yarn compile`, then `tsc -b`.
+2. `yarn test` for every workspace the lane touched.
+3. Root `yarn lint`, which chains the health checks — `oxlint`, `oxfmt`, the prose rules, `knip`, `jscpd`,
+   `depcruise`, and the debt counters.
+4. For lane B only: the four layer `build.test.ts` suites and the four observation-route suites, unedited.
+5. `gh run list` after any push.
+
+The debt counters move as a side effect of this work. Ratchet them silently in the same commit, per the standing
+rule; do not open a separate pull request for a baseline.
+
+## Risks
+
+- **A generic implementation can average away a deliberate difference.** The four layers disagree about what
+  absence means, and that disagreement is the product. The parameterization must make each layer state its own
+  answer; a default that silently applies one layer's semantics to another is the failure mode to watch.
+- **`yarn pack` freezes `workspace:*` at pack time.** A new `@mailwoman/layer-kit` joins seven registers, and a
+  workspace missing from the release list freezes silently at consumer expense. Run the release-list arithmetic
+  from `AGENTS.md` if lane B adds a workspace.
+- **A move leaves quoted path literals stale that the compiler never reads.** Sweep for quoted literals whose
+  first segment is a workspace name after any file moves, not only for imports.
+
+## Appendix: how the numbers were derived
+
+- **Declaration census.** Parse every tracked `.ts`/`.tsx` with the TypeScript compiler API. Record every
+  `FunctionDeclaration`, `MethodDeclaration`, and `VariableDeclaration` with an initializer, exported or not, with
+  no size floor. Group by four keys, strongest claim first so nothing counts twice: identical normalized
+  declaration text (≥40 chars); identical normalized body (≥60 chars); identical constant initializer (≥20 chars,
+  excluding `[]`, `{}`, `new Map()` and other empty values); identical AST-kind sequence (≥60 nodes). Same-name
+  matches are reported as leads and never counted — 184 declarations are named `state` and 425 are named `rows`.
+- **File clustering.** Pre-order AST node-kind sequence per file, 8-grams, Jaccard similarity, single-linkage
+  union-find at 0.45. Files under 40 lines excluded. Size banding skips pairs whose shingle counts differ by more
+  than 2.5×, which cannot reach the threshold.
+- **Reduction formula.** Keep the largest member whole, charge one line per remaining member for the import (three
+  for a file-level family), return the rest. It is an upper bound, not a promise.
