@@ -55,6 +55,18 @@ export interface PlaceCandidate {
 	country: string
 	lat: number
 	lon: number
+	/**
+	 * The place's IMMEDIATE ancestor id — the `candidate_ancestor` row at depth 1.
+	 *
+	 * Absent means the artifact carries no ancestors sidecar, not that the place is a root: an artifact predating the
+	 * sidecar answers no lineage at all, and the two readings must stay apart (meaning-of-zero).
+	 *
+	 * It is what lets a consumer see that two candidates in ONE answer denote one settlement at two admin tiers. The
+	 * gazetteer carries 285,478 populated localities that share a folded name with a `localadmin` within 5 km, and
+	 * 264,523 of those (92.7%) name that twin as their depth-1 ancestor — so the pair is legible from this field alone.
+	 * The backend reports the containment; whether two rows are ONE place is the consumer's call, because a `localadmin`
+	 * sometimes covers hamlets the settlement does not.
+	 */
 	parent_id?: number
 	score: number
 	distanceKm?: number
