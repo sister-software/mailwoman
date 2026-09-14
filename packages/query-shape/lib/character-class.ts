@@ -79,6 +79,10 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 		[
 			[0x11_00, 0x11_ff], // Hangul Jamo
 			[0x31_31, 0x31_8e], // Hangul compatibility jamo
+			[0x30_2e, 0x30_2f], // Hangul tone marks, inside the CJK punctuation block
+			[0x32_00, 0x32_1e], // Parenthesized and circled Hangul
+			[0x32_60, 0x32_7e],
+			[0xa9_60, 0xa9_7c], // Hangul Jamo Extended-A
 			[0xac_00, 0xd7_a3], // Hangul syllables
 			[0xd7_b0, 0xd7_c6], // Hangul Jamo Extended-B, either side of the unassigned D7C7..D7CA
 			[0xd7_cb, 0xd7_fb],
@@ -93,6 +97,13 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 	[
 		"Hani",
 		[
+			[0x2e_80, 0x2e_99], // CJK radicals supplement, either side of the unassigned 2E9A
+			[0x2e_9b, 0x2e_f3],
+			[0x2f_00, 0x2f_d5], // Kangxi radicals
+			[0x30_05, 0x30_05], // 々 — the iteration mark, in 代々木 and 佐々木 and 酒々井町
+			[0x30_07, 0x30_07], // 〇 — the ideographic number zero
+			[0x30_21, 0x30_29], // Hangzhou numerals
+			[0x30_38, 0x30_3b],
 			[0x34_00, 0x4d_bf], // CJK Unified Ideographs Extension A
 			[0x4e_00, 0x9f_ff], // CJK Unified Ideographs
 			[0xf9_00, 0xfa_6d], // CJK Compatibility Ideographs
@@ -163,8 +174,19 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
  */
 const COMMON_RANGES: ReadonlyArray<[number, number]> = [
 	[0x06_40, 0x06_40], // Arabic tatweel ـ — a letter-joining stretch, not a letter
-	[0x30_00, 0x30_3f], // CJK symbols and punctuation — 、 。 〜 々 and the ideographic space
-	[0x30_99, 0x30_a0], // Combining and standalone voiced marks, the katakana-hiragana double hyphen
+	// CJK symbols and punctuation, MINUS the characters in that block Unicode assigns to Han: 々 (U+3005), 〇 (U+3007),
+	// the Hangzhou numerals (U+3021..3029) and the ideographic marks U+3038..303B. The first version of this list took
+	// the block whole and answered `Zyyy` for the iteration mark, which appears in 代々木 and 佐々木 and 酒々井町.
+	[0x30_00, 0x30_04],
+	[0x30_06, 0x30_06],
+	[0x30_08, 0x30_20],
+	[0x30_2a, 0x30_2d], // Ideographic tone marks; U+302E..302F beside them are HANGUL tone marks
+	[0x30_30, 0x30_37],
+	[0x30_3c, 0x30_3f],
+	// The voiced marks and the katakana-hiragana double hyphen, MINUS U+309D..309F, which are Hiragana: the iteration
+	// marks ゝゞ and the digraph yori. Same defect as the block above, one range over.
+	[0x30_99, 0x30_9c],
+	[0x30_a0, 0x30_a0],
 	[0x30_fb, 0x30_fc], // Katakana middle dot ・ and prolonged sound mark ー
 	[0xff_01, 0xff_20], // Fullwidth punctuation and digits
 	[0xff_3b, 0xff_40],

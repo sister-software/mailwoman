@@ -201,6 +201,59 @@ describe("scriptForCodepoint", () => {
 		expect(checked).toBeGreaterThan(0)
 	})
 
+	/**
+	 * The converse, and the direction the first version of this suite did not check.
+	 *
+	 * Asserting only that what we CLAIM is a script really is one stops the table over-claiming and says nothing about
+	 * what it misses — and a range cannot express an exception, so a block holding two scripts gets drawn through. Both
+	 * of this file's misses were that: `COMMON_RANGES` took `0x3000..0x303f` whole, and Unicode assigns 々 (U+3005) and 〇
+	 * (U+3007) inside it to Han; it took `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
+	 *
+	 * The allowance is per script rather than global, and each number is a measurement of what is left uncovered rather
+	 * than a target. Tightening one is a change with its own evidence; a number that GROWS is a script the table stopped
+	 * answering for.
+	 */
+	const UNCOVERED_ALLOWANCE: Readonly<Record<string, number>> = {
+		// Hentaigana, the historic hiragana variants, at U+1B002 and above.
+		Hira: 291,
+		// Circled and squared katakana words — U+32D0.. and U+3300.., typographic rather than written.
+		Kana: 157,
+		Hang: 0,
+		// Ideographic symbols and punctuation in the supplementary plane, U+16FE2 and U+16FF0..16FF6.
+		Hani: 9,
+		// IPA extensions, modifier letters and the phonetic blocks.
+		Latn: 734,
+		Cyrl: 78,
+		Arab: 266,
+		Yiii: 0,
+	}
+
+	it.each(UNICODE_SCRIPT)("misses no more of %s than the allowance records", (code, property) => {
+		let uncovered = 0
+
+		for (let cp = 0; cp <= 0x2_a6_df; cp++) {
+			if (cp >= 0xd8_00 && cp <= 0xdf_ff) continue
+
+			if (!property.test(String.fromCodePoint(cp))) continue
+
+			if (scriptForCodepoint(cp) !== code) {
+				uncovered++
+			}
+		}
+
+		// Equality rather than a ceiling: a table that covers MORE than recorded is a change someone should state, and
+		// the allowance is what says which direction the change went.
+		expect([code, uncovered]).toEqual([code, UNCOVERED_ALLOWANCE[code]])
+	})
+
+	it("reads the two characters that were drawn through a block boundary", () => {
+		// 々 in 代々木 and 佐々木, 〇 in an all-zero ward number, ゝ in a name written with the hiragana iteration mark.
+		// Each sat inside a range this file called Common because the BLOCK is mostly common.
+		expect(scriptForCodepoint(0x30_05)).toBe("Hani")
+		expect(scriptForCodepoint(0x30_07)).toBe("Hani")
+		expect(scriptForCodepoint(0x30_9d)).toBe("Hira")
+	})
+
 	it("calls a digit, a comma and a prolonged sound mark Common rather than guessing a script", () => {
 		// `ー` is the one that mattered: it sits inside the Katakana block, Unicode calls it Common, and reading it off
 		// the block made `ブロードウェイ` report a fifth of itself as an unrecognized script.
