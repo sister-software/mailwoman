@@ -31,7 +31,7 @@ export { MapProgressBar } from "./MapProgressBar.tsx"
 export type { MapProgressBarProps } from "./MapProgressBar.tsx"
 export { MapSheet } from "./MapSheet.tsx"
 export type { MapSheetProps } from "./MapSheet.tsx"
-export { MapSearchBar } from "./MapSearchBar.tsx"
+export { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
 export type { MapSearchBarProps } from "./MapSearchBar.tsx"
 
 export type {

@@ -17,8 +17,8 @@ import type { FeatureCollection, MultiLineString } from "geojson"
 const DEFAULT_STEP_DEGREES = 15
 
 /**
- * Degrees between vertices ALONG each line. A meridian drawn as two points is a straight chord through the sphere
- * under a globe projection; it has to be densified to curve. 2° keeps the longest line under 100 vertices.
+ * Degrees between vertices ALONG each line. A meridian drawn as two points is a straight chord through the sphere under
+ * a globe projection; it has to be densified to curve. 2° keeps the longest line under 100 vertices.
  */
 const VERTEX_STEP_DEGREES = 2
 
@@ -29,8 +29,8 @@ const VERTEX_STEP_DEGREES = 2
 const MAX_LATITUDE = 85
 
 /**
- * Build the graticule as one MultiLineString. Pure — same step, same geometry — so it is built once at module scope
- * and never rebuilt for a render.
+ * Build the graticule as one MultiLineString. Pure — same step, same geometry — so it is built once at module scope and
+ * never rebuilt for a render.
  */
 export function buildGraticule(stepDegrees: number = DEFAULT_STEP_DEGREES): FeatureCollection<MultiLineString> {
 	const lines: number[][][] = []

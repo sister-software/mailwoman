@@ -25,8 +25,8 @@ import { buildGraticule } from "./graticule.ts"
 
 export interface GraticuleLayerProps {
 	/**
-	 * The basemap layer to insert beneath — the id of the lowest layer that draws data. Omit and the grid renders on
-	 * top of the basemap, which is wrong but not broken: `<Layer>` with no `beforeId` appends.
+	 * The basemap layer to insert beneath — the id of the lowest layer that draws data. Omit and the grid renders on top
+	 * of the basemap, which is wrong but not broken: `<Layer>` with no `beforeId` appends.
 	 */
 	beforeId?: string
 	/**

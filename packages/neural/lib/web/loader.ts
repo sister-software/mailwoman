@@ -70,9 +70,9 @@ export interface LoadResult {
 	 * Give the model's native memory back.
 	 *
 	 * The ONNX session keeps its weights and arenas in the WASM heap (or on the GPU), outside anything the JavaScript
-	 * garbage collector owns, so dropping this result frees the wrapper and leaves the model resident. A host that
-	 * loads more than one bundle over a page's life — a version switch, a backend-force toggle, compare mode — has to
-	 * call this on the bundle it is replacing, or each load adds a model that never comes back.
+	 * garbage collector owns, so dropping this result frees the wrapper and leaves the model resident. A host that loads
+	 * more than one bundle over a page's life — a version switch, a backend-force toggle, compare mode — has to call this
+	 * on the bundle it is replacing, or each load adds a model that never comes back.
 	 */
 	release: () => Promise<void>
 	/**

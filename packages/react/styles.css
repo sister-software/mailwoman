@@ -1386,36 +1386,83 @@
 	/* #region Chrome layout — where the floating pieces sit over a map */
 
 	/*
-	 * The search pill and the chips ride at the top, centred and width-capped rather than stretched: a search field
-	 * the width of a desktop screen reads as a page header, not as a control over a map. The column clears the
-	 * device's top and side safe-area insets because both apps install as PWAs.
+	 * THE panel: search, examples and result on one surface.
+	 *
+	 * It replaces a floating pill plus a separate bottom sheet. Two surfaces meant the search field shared its row
+	 * with the control rail — which covered its right end at any width where the two met — and meant a phone could
+	 * open a result it had no way back from. One surface has one set of edges to reason about.
+	 *
+	 * Desktop: a column down the left over a full-bleed map, sized to its content rather than stretched to the
+	 * viewport, because with no result there is nothing to fill a full-height sidebar with.
+	 * Phone (below): a bottom drawer, the search riding at its top.
 	 */
-	.mw-map-chrome--top {
+	.mw-map-panel {
 		position: absolute;
 		top: calc(1rem + var(--safe-area-top));
 		left: calc(1rem + var(--safe-area-left));
-		/*
-		 * The right inset clears the control rail at EVERY width, rather than only below the 600px breakpoint. The
-		 * rail is 2.75rem of button plus a 1rem inset; the chrome reserving 4rem costs nothing above ~620px, where
-		 * `max-width` decides the box's width and this inset is never reached.
-		 *
-		 * Without it there was a dead band: the ≤600px rule existed to stop the rail covering the right end of the
-		 * search pill, but the collision actually persisted to ~620px, so a window sized anywhere in between had the
-		 * rail (z-index 4) sitting on top of the pill (z-index 3). A breakpoint cannot fix that without being retuned
-		 * every time a control changes size — this cannot drift.
-		 */
-		right: calc(4rem + var(--safe-area-right));
 		z-index: 3;
 		display: grid;
 		gap: 0.5rem;
-		justify-items: stretch;
-		max-width: 34rem;
-		pointer-events: none;
+		align-content: start;
+		width: min(24rem, calc(100vw - 6rem));
+		/* Stops short of the footer strip, so a long result never runs under the credits. */
+		max-height: calc(100% - var(--map-footer-height) - var(--safe-area-top) - var(--safe-area-bottom) - 2rem);
+		/* NO TOP PADDING: the grip bar carries it, so the bar's paint can reach the panel's top edge. */
+		padding: 0 0.75rem 0.75rem;
+		border-radius: var(--radius-sheet);
+		overflow: auto;
+		overscroll-behavior: contain;
+		background: var(--material-glass-background);
+		border: 1px solid var(--material-glass-border);
+		box-shadow: var(--material-glass-shadow);
+		backdrop-filter: blur(20px);
+		-webkit-backdrop-filter: blur(20px);
 	}
 
-	/* The container is click-through so the map stays draggable between the controls; each control takes its own. */
-	.mw-map-chrome--top > * {
-		pointer-events: auto;
+	/*
+	 * The grab bar. Sticky so it survives the panel scrolling under it, opaque so content cannot show through, and
+	 * full-bleed over the panel's padding. On the desktop column the handle means nothing — there is no drawer to
+	 * resize — so only the close survives there, right-aligned.
+	 */
+	.mw-map-panel__grip {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		/*
+		 * NO MINIMUM on the desktop column. The bar holds a handle that only the drawer offers and a close that only a
+		 * result offers, so on a desktop with nothing found it holds nothing — and a 2.5rem minimum drew that nothing
+		 * as a band of empty glass above the search field. Its height is whatever it is carrying; the drawer rule
+		 * below puts the minimum back, where the handle is the thing being reached for.
+		 */
+		min-height: 0;
+		/*
+		 * The bar OWNS the panel's top gutter rather than sitting inside it: the panel has no top padding and the bar
+		 * carries 0.75rem of its own, so its paint reaches the top edge and its box still measures what it occupies.
+		 *
+		 * NO NEGATIVE TOP MARGIN. Pulling it up out of the panel's padding is the obvious version and it is wrong in a
+		 * grid: the track was sized from the margin box (12px shorter) while the bar was laid out at the track's start
+		 * and painted its full height, so the bar's lower 12px came down across the search field below it.
+		 */
+		margin-inline: -0.75rem;
+		padding: 0.75rem 0.5rem 0;
+		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+	}
+
+	/*
+	 * Opaque only when the bar HOLDS something. It is what the panel's contents scroll under, and the panel's own
+	 * material is glass — so text would read through a sticky bar that shared it. An empty bar has nothing to hide
+	 * behind, and an opaque strip across the top of a panel with no result reads as a stray divider.
+	 */
+	.mw-map-panel__grip:has(button) {
+		background: var(--color-background-raised);
+	}
+
+	.mw-map-panel__result {
+		display: grid;
+		gap: 0.5rem;
 	}
 
 	.mw-map-chrome__search {
@@ -1536,15 +1583,20 @@
 	}
 
 	/*
-	 * The close sits at the right of the grip bar. Absolute within it so the handle stays centred on the sheet rather
-	 * than centred on the space the close leaves. A full 44px target: on a phone the sheet is the whole panel and this
-	 * is the only way out of it.
+	 * The close sits at the right of the grip bar.
+	 *
+	 * IN FLOW on the desktop column, where the bar has no handle to centre and therefore no height of its own. Taken
+	 * out of flow there it reserved nothing, and a 44px button hanging from a 0px bar came down across the right end
+	 * of the search field below it — the overlap this whole panel was meant to end. In flow it carries the bar, and
+	 * the field starts under it.
+	 *
+	 * The phone rule below puts it back to absolute, where the handle IS the bar and has to stay centred on the sheet
+	 * rather than on the space the close leaves, and where the target grows to a full 44px because the drawer is the
+	 * whole panel and this is the only way out of it.
 	 */
 	.mw-map-sheet__close--floating {
-		position: absolute;
+		margin-left: auto;
 		right: 0.25rem;
-		width: 2.75rem;
-		height: 2.75rem;
 	}
 
 	.mw-map-sheet__row {
@@ -1649,6 +1701,11 @@
 	 * The pill is drawn as a pseudo-element so the button itself can be a 44px-tall target without a 44px-tall pill.
 	 * `touch-action: none` stops the browser claiming the gesture as a scroll before the pointer handlers see it.
 	 */
+	/* Desktop has no drawer to resize, so the handle is not offered there; the phone rule below restores it. */
+	.mw-map-panel .mw-map-sheet__handle {
+		display: none;
+	}
+
 	.mw-map-sheet__handle {
 		display: grid;
 		place-items: center;
@@ -1709,9 +1766,46 @@
 		 * control plus its 1rem inset plus a 0.5rem gap. Without this the capsule sits on the search pill's clear
 		 * button, which is the one control at that end of the pill.
 		 */
-		.mw-map-chrome--top {
-			max-width: none;
-			right: calc(4rem + var(--safe-area-right));
+		/*
+		 * The drawer. Anchored to the bottom edge above the footer, full width, and detented — the search rides at its
+		 * top so reaching it never means getting a result out of the way first.
+		 */
+		.mw-map-panel {
+			top: auto;
+			left: 0;
+			right: 0;
+			bottom: calc(var(--map-footer-height) + var(--safe-area-bottom));
+			width: auto;
+			/*
+			 * ABOVE the control rail (`z-index: 4`), which the desktop column never reaches. Pulled to its tall detent
+			 * the drawer's top edge crosses the rail's corner, and drawn under it the rail sat on the drawer's own
+			 * close. A sheet raised over a map covers what it covers; it does not share a corner with it.
+			 */
+			z-index: 5;
+			max-height: 55dvh;
+			border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+			border-inline: 0;
+			border-bottom: 0;
+		}
+
+		.mw-map-panel .mw-map-sheet__handle {
+			display: grid;
+		}
+
+		/*
+		 * The drawer's bar IS the grab target, so it keeps a full row — but only while it holds one. With no result the
+		 * bar is empty on a phone too, and an empty band over the search field is the gap this rule would otherwise put
+		 * back. `:has()` is the test; where it is unsupported the bar collapses, which is the harmless half.
+		 */
+		.mw-map-panel__grip:has(button) {
+			min-height: 2.5rem;
+		}
+
+		.mw-map-sheet__close--floating {
+			position: absolute;
+			margin-left: 0;
+			width: 2.75rem;
+			height: 2.75rem;
 		}
 
 		.mw-map-sheet--bottom {
@@ -1882,6 +1976,11 @@
 		font-family: var(--font-family-glyph);
 		font-size: 1.15rem;
 		line-height: 1;
+	}
+
+	/* A drawn mark, not a typed one — see `SearchGlyph`. `block` keeps the line box off its baseline. */
+	.mw-map-searchbar__glyph {
+		display: block;
 	}
 
 	/*

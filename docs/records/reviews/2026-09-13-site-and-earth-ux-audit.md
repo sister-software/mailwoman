@@ -420,7 +420,7 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   `CalibrationShowcase`, `F1ScoreTable`, `POIExplorer`, `DashboardMap`, `SplashScreen` and the stray
   `TrainingChart.tsx`. `PricingTiers` stays: its docblock records a decision to keep it for the Product
   door, which has since landed, so that is now a choice rather than a wait. Verified by `docusaurus
-  build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
+build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 - `docs/src/pages/index.module.css` — 25 colour literals, 2 media queries, **zero `[data-theme]`
   overrides**; `:119-153` adds eight `rgba(255,255,255,…)` values that assume a dark hero.
   `GuidedTour/styles.module.css:172-186` is half-tokenised: the correct

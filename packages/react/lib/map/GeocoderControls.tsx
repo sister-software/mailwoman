@@ -33,7 +33,7 @@ import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
 import { MapProgressBar } from "./MapProgressBar.tsx"
-import { MapSearchBar } from "./MapSearchBar.tsx"
+import { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
 import { MapSheet } from "./MapSheet.tsx"
 import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 import { ResultPanel } from "./ResultPanel.tsx"
@@ -290,7 +290,56 @@ export function GeocoderControls({
 		<>
 			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
-			<div className="mw-map-chrome mw-map-chrome--top">
+			{/*
+			 * ONE surface owns the search, the examples and the result — the arrangement the reference map apps use.
+			 * They used to be two: a floating pill at the top and a separate bottom sheet, which is what put the search
+			 * field in the same row as the control rail (the rail won, and covered its right end) and left a phone with
+			 * a result sheet it could not get back from.
+			 *
+			 * Desktop: a column down the left, sized to its content, over a full-bleed map.
+			 * Phone: a bottom drawer with detents, the search riding at its top.
+			 */}
+			<section
+				className="mw-map-panel"
+				aria-label="Search and results"
+				ref={sheetRef}
+				{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
+			>
+				{/*
+				 * The drawer's grab bar. Sticky and opaque so it survives the panel scrolling under it; the handle is
+				 * only meaningful where the panel IS a drawer, so CSS hides it on the desktop column.
+				 */}
+				<div className="mw-map-panel__grip">
+					{/*
+					 * The handle appears only WITH a result. With the drawer holding a search field and a row of examples
+					 * there is nothing behind it to pull into view, and a handle offered over nothing either expands a band
+					 * of empty glass or reads as broken — the same fault as the decorative handle it replaced.
+					 */}
+					{showSheet ? (
+						<button
+							type="button"
+							className="mw-map-sheet__handle"
+							aria-label="Resize the panel"
+							aria-expanded={sheetHeight !== null && sheetHeight > window.innerHeight * 0.7}
+							onPointerDown={onGripPointerDown}
+							onPointerMove={onGripPointerMove}
+							onPointerUp={onGripPointerUp}
+							onPointerCancel={onGripPointerUp}
+						/>
+					) : null}
+
+					{showSheet ? (
+						<button
+							type="button"
+							className="mw-map-sheet__close mw-map-sheet__close--floating"
+							aria-label="Close the result"
+							onClick={() => setResultDismissed(true)}
+						>
+							<span aria-hidden="true">×</span>
+						</button>
+					) : null}
+				</div>
+
 				<form
 					className="mw-map-chrome__search"
 					onSubmit={(event) => {
@@ -303,7 +352,7 @@ export function GeocoderControls({
 					 * beside the native one is two controls for one job, and the spinner that used to live there changed
 					 * the field's height on every submit.
 					 */}
-					<MapSearchBar label="Search addresses" leading={<span aria-hidden="true">⌕</span>} busy={busy}>
+					<MapSearchBar label="Search addresses" leading={<SearchGlyph />} busy={busy}>
 						<input
 							id="mw-pipeline-input"
 							type="search"
@@ -348,7 +397,45 @@ export function GeocoderControls({
 				/>
 
 				{panels.bias}
-			</div>
+
+				{showSheet ? (
+					<div className="mw-map-panel__result">
+						{errorMessage ? <p className="mw-error">{errorMessage}</p> : null}
+
+						{panels.aboveResult ? panels.aboveResult({ result }) : null}
+
+						{busy ? (
+							<div className="mw-result">
+								<LoadingIndicator mode="staged" steps={runtime.parseStageLabels} activeStep={geocode.parseStage} />
+							</div>
+						) : result ? (
+							panels.result ? (
+								panels.result({
+									result,
+									selectedCandidate,
+									selectedCandidateIndex: geocode.selectedCandidateIndex,
+									onSelectCandidate: geocode.selectCandidate,
+								})
+							) : (
+								<ResultPanel
+									result={result}
+									selectedCandidate={selectedCandidate}
+									selectedCandidateIndex={geocode.selectedCandidateIndex}
+									onSelectCandidate={geocode.selectCandidate}
+									extras={panels.extras}
+									failure={panels.failure}
+								/>
+							)
+						) : null}
+
+						{panels.compare
+							? panels.compare({ result, compareMode: compare.compareMode, compareVersion: compare.compareVersion })
+							: null}
+
+						{panels.permalink ? <div className="mw-map-sheet__actions">{panels.permalink(geocode.text)}</div> : null}
+					</div>
+				) : null}
+			</section>
 
 			{/*
 			 * Every floating control lives in this one column, so nothing can land on top of anything else: the layer
@@ -447,79 +534,6 @@ export function GeocoderControls({
 
 					{panels.developerExtras}
 				</MapSheet>
-			) : null}
-
-			{showSheet ? (
-				<section
-					className="mw-map-sheet mw-map-sheet--bottom"
-					aria-label="Result"
-					ref={sheetRef}
-					{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
-				>
-					{/*
-					 * One sticky bar carrying both controls, with real height.
-					 *
-					 * Both used to sit in the scroll flow: the grabber scrolled out of view, and the close was a
-					 * zero-height overlay that landed on top of whatever the host rendered at the sheet's top right —
-					 * "Copy JSON", in the result panel. A bar that occupies its own height and sticks to the top of the
-					 * scroll container fixes both: content starts below it and scrolls under it.
-					 */}
-					<div className="mw-map-sheet__grip">
-						<button
-							type="button"
-							className="mw-map-sheet__handle"
-							aria-label="Resize the result"
-							aria-expanded={sheetHeight !== null && sheetHeight > window.innerHeight * 0.7}
-							onPointerDown={onGripPointerDown}
-							onPointerMove={onGripPointerMove}
-							onPointerUp={onGripPointerUp}
-							onPointerCancel={onGripPointerUp}
-						/>
-
-						<button
-							type="button"
-							className="mw-map-sheet__close mw-map-sheet__close--floating"
-							aria-label="Close the result"
-							onClick={() => setResultDismissed(true)}
-						>
-							<span aria-hidden="true">×</span>
-						</button>
-					</div>
-
-					{errorMessage ? <p className="mw-error">{errorMessage}</p> : null}
-
-					{panels.aboveResult ? panels.aboveResult({ result }) : null}
-
-					{busy ? (
-						<div className="mw-result">
-							<LoadingIndicator mode="staged" steps={runtime.parseStageLabels} activeStep={geocode.parseStage} />
-						</div>
-					) : result ? (
-						panels.result ? (
-							panels.result({
-								result,
-								selectedCandidate,
-								selectedCandidateIndex: geocode.selectedCandidateIndex,
-								onSelectCandidate: geocode.selectCandidate,
-							})
-						) : (
-							<ResultPanel
-								result={result}
-								selectedCandidate={selectedCandidate}
-								selectedCandidateIndex={geocode.selectedCandidateIndex}
-								onSelectCandidate={geocode.selectCandidate}
-								extras={panels.extras}
-								failure={panels.failure}
-							/>
-						)
-					) : null}
-
-					{panels.compare
-						? panels.compare({ result, compareMode: compare.compareMode, compareVersion: compare.compareVersion })
-						: null}
-
-					{panels.permalink ? <div className="mw-map-sheet__actions">{panels.permalink(geocode.text)}</div> : null}
-				</section>
 			) : null}
 
 			{panels.footer}

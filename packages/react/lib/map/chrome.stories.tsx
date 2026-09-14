@@ -14,7 +14,7 @@ import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
 import { MapFooter } from "./MapFooter.tsx"
-import { MapSearchBar } from "./MapSearchBar.tsx"
+import { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
 
 const EXAMPLES = [
 	{ label: "White House" },
@@ -73,7 +73,7 @@ export const FullChrome: StoryObj = {
 				>
 					<MapSearchBar
 						label="Search addresses"
-						leading={<span aria-hidden="true">⌕</span>}
+						leading={<SearchGlyph />}
 						trailing={
 							query ? (
 								<button

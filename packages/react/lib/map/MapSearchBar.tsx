@@ -23,6 +23,29 @@ import type { ReactNode } from "react"
 
 import { cx } from "#common/cx"
 
+/**
+ * The magnifier for a search pill's leading slot.
+ *
+ * It is drawn rather than typed. `⌕` (U+2315) is the only magnifier in the glyph face, it is drawn at the weight of a
+ * punctuation mark, and sizing it up to read at all left it sitting off the field's baseline — a mark that reads as a
+ * typo beside the address it introduces. A path is the same size at every scale and lands where it is put.
+ */
+export function SearchGlyph(): ReactNode {
+	return (
+		<svg
+			viewBox="0 0 20 20"
+			width="18"
+			height="18"
+			aria-hidden="true"
+			focusable="false"
+			className="mw-map-searchbar__glyph"
+		>
+			<circle cx="8.75" cy="8.75" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+			<line x1="12.9" y1="12.9" x2="17" y2="17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+		</svg>
+	)
+}
+
 export interface MapSearchBarProps {
 	/**
 	 * The input (or combobox) the host owns. Rendered between the two slots.
