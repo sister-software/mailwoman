@@ -84,7 +84,6 @@
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
-		"classnames": "^2.5.1",
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.3.4",
 		"js-yaml": "^5.4.1",

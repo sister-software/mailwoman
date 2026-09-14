@@ -320,13 +320,18 @@ export async function findRescoreCandidate(
 	const isNameInterior = (s: number, e: number) =>
 		nameInteriors.some(([ns, ne]) => s >= ns && e <= ne && !(s === ns && e === ne))
 
-	// Enumerate contiguous spans, LONGEST first — the gold locality is usually the more-specific
-	// (longer) name; longest-wins lets it beat its own ambiguous prefix.
+	// Enumerate contiguous token windows up to `maxSpan`, then probe them LONGEST FIRST BY CHARACTER
+	// EXTENT. The first exact match returns, so this order IS the decision.
+	//
+	// The gold locality is usually the longer, more-specific name — "Tomaszów Mazowiecki" over its own
+	// ambiguous prefix "Tomaszów" — and character extent measures that directly where TOKEN COUNT does
+	// not: a two-character region code and a nine-character locality are both one token, so token count
+	// ties them and falls back to enumeration position, which puts the code first. "WA Sammamish" then
+	// probes "WA", matches Wa in Ghana and never reaches "Sammamish" at all.
 	interface Span {
 		text: string
 		start: number
 		end: number
-		len: number
 	}
 
 	const spans: Span[] = []
@@ -339,11 +344,11 @@ export async function findRescoreCandidate(
 			if (overlapsAvoid(start, end)) continue
 
 			if (isNameInterior(start, end)) continue
-			spans.push({ text: raw.slice(start, end), start, end, len })
+			spans.push({ text: raw.slice(start, end), start, end })
 		}
 	}
 
-	spans.sort((a, b) => b.len - a.len)
+	spans.sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start)
 
 	// #17 bare-toponym soft country. The caller's `country` is a LOCALE DEFAULT, not knowledge — the #961
 	// block below already says so, and for a bare city name it is the ONLY country signal there is, which

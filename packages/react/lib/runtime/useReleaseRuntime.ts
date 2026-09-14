@@ -226,7 +226,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		loadAssetsRef.current = config.loadAssets
 		disposeAssetsRef.current = config.disposeAssets
 		manifestRef.current = manifest
-	}, [config.loadAssets, config.loadManifest, config.disposeAssets, manifest])
+	}, [config.disposeAssets, config.loadAssets, config.loadManifest, manifest])
 
 	// Mount: fetch the manifest, then select the default version.
 	useEffect(() => {

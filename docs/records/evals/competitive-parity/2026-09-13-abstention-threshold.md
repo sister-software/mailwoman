@@ -1,9 +1,13 @@
 # Abstention threshold for admin selection (2026-09-13)
 
 The [same-data controlled benchmark](./2026-09-13-same-data.md) refused its registered claim on one
-condition: in the withheld-gold stratum, where no correct candidate is in the pool by construction,
-Mailwoman answered on 75 of 100 rows against the baseline's 57. This record measures what an
-abstention rule could do about that, on the same 453 frozen rows.
+condition: in the withheld-gold stratum, Mailwoman answered on 75 of 100 rows against the baseline's 57. This record measures what an abstention rule could do about that, on the same 453 frozen rows.
+
+That stratum withholds the gold **id**, not every row denoting the gold place, so "no correct
+candidate is in the pool" holds for most of it rather than by construction — see
+[the correction](#correction-nine-of-the-twenty-eight-name-the-right-place) and the whole-stratum
+re-grading in the
+[same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts).
 
 **Exploratory, and outside that pre-registration.** Every threshold here was read off results that
 were already visible, which is the one thing the registered rule forbids. Nothing below re-decides the
@@ -15,7 +19,10 @@ Four findings, in the order they constrain each other:
 1. A threshold on the confidence the resolver already records beats the baseline on **both** axes at
    once — at four of the fifteen tested values it would also have satisfied the full registered rule.
 2. That same signal is blind to the case it most needs to catch. 28 of the 75 false selections carry
-   the maximum confidence, so no threshold can reach a false-selection rate below 28%.
+   the maximum confidence, so no threshold can reach a false-selection rate below 28%. Nine of those
+   28 name the withheld settlement under a different WOF id and are not false at all, so the floor a
+   threshold has to clear is 19 rows — see
+   [the correction](#correction-nine-of-the-twenty-eight-name-the-right-place).
 3. `ResolveOpts.minWinningScore`, the shipped knob nearest to this, could not express abstention at
    all: across the populated range of its scale it moved the false-selection rate from 75% to 74% —
    one row.
@@ -140,8 +147,34 @@ The mechanisms behind those 28 rows:
 | `picked:span_rescore span_rescore rescore_postcode_unverified` |          4 |
 | `picked:bare_region bare_race bare_region_repick`              |          1 |
 
-`Langfang`, `Tirur`, `Matsusaka`, `Batāla` and `Troyes` are five of the 23: a bare toponym whose real
-referent was withheld, answered at full confidence from a lookup that considered one candidate.
+`Langfang`, `Tirur`, `Matsusaka`, `Batāla` and `Troyes` are five of the 23: a bare toponym whose
+concorded gold id was withheld, answered at full confidence from a lookup that considered one
+candidate.
+
+### Correction: nine of the twenty-eight name the right place
+
+Three of those five exemplars are correct answers. The withheld-gold stratum removes the ids the
+`gn:id` concordance links, and the gazetteer carries many settlements twice — once as a `locality`,
+once as the `localadmin` bearing the same name at the same centroid — so removing the concorded id
+leaves the twin answerable:
+
+| row             | query       | withheld gold | selected                |     km |
+| --------------- | ----------- | ------------- | ----------------------- | -----: |
+| gold_absent-003 | `Langfang`  | 102027403     | Langfang, localadmin CN |    2.8 |
+| gold_absent-014 | `Matsusaka` | 1259441025    | Matsuzaka, locality JP  |    1.3 |
+| gold_absent-021 | `Troyes`    | 101750981     | Troyes, localadmin FR   |    0.6 |
+| gold_absent-009 | `Tirur`     | 102028423     | Torur, locality IN      |  452.8 |
+| gold_absent-018 | `Batāla`    | 102030761     | Batala, locality IN     | 1420.9 |
+
+`Tirur` and `Batāla` stand as written. `Batāla` is why the identity test needs both halves: the folded
+names agree and the places are 1,421 km apart.
+
+Across the 28 max-margin rows, nine name the gold settlement under another id within 5 km (eleven
+within 25 km), and twelve sit within 5 km of the gold whatever they are called. So the floor the
+margin cannot cross is **19 rows, not 28** — still structural, and still for the reason the next
+paragraph gives, but a fifth smaller than published. The
+[same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts) carries
+the whole-stratum re-grading.
 
 **`bare_race` needs its denominator before it reads as a cause.** The check fires for a lone
 locality-tagged node, and this stratum is built from bare toponyms, so it fires on most of the

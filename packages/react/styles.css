@@ -848,8 +848,8 @@
 		width: 100%;
 		/*
 		 * The release labels are long ("v9.1.0 — the suffix-boundary cure (model v4.4.0)") and a native select clips
-		 * the selected option at the field's edge with no ellipsis, so the string ended mid-word with its closing
-		 * paren cut. The full text rides the element's `title` (see VersionPicker).
+		 * the selected option at the field's edge with no ellipsis, so the string ended mid-word and its closing
+		 * parenthesis never rendered. The full text rides the element's `title` (see VersionPicker).
 		 */
 		text-overflow: ellipsis;
 		padding: var(--space-2);

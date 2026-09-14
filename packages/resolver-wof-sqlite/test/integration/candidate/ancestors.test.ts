@@ -185,6 +185,35 @@ describe("the candidate ancestors sidecar", () => {
 		expect(lk.ancestors!(424_242)).toEqual([])
 	})
 
+	test("#2268: findPlace carries the depth-1 ancestor, so a same-settlement pair is legible in one answer", async () => {
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		const hits = await lk.findPlace({ text: "Weimar", placetype: ["locality", "localadmin"], limit: 5 })
+		const byID = new Map(hits.map((hit) => [hit.id, hit]))
+
+		// Each bearer names its OWN nearest ancestor — the DE one a county, the US one a region — which is
+		// what lets a consumer holding both rows tell two ids apart from two tiers of one place.
+		expect(byID.get(WEIMAR_DE)?.parent_id).toBe(WEIMARER_LAND)
+		expect(byID.get(WEIMAR_US)?.parent_id).toBe(TEXAS)
+	})
+
+	test("#2268: an artifact without the sidecar emits NO parent_id — absence is the artifact's, not a root claim", async () => {
+		using patch = new DatabaseClient<WOFDatabase>(candidatePath)
+
+		patch.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
+		patch.destroy()
+
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		const hits = await lk.findPlace({ text: "Weimar", placetype: ["locality", "localadmin"], limit: 5 })
+
+		expect(hits.length).toBeGreaterThan(0)
+
+		for (const hit of hits) {
+			expect(hit.parent_id).toBeUndefined()
+		}
+	})
+
 	test("interval containment truth table: ancestor, descendant, sibling, self, disjoint", () => {
 		using db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
