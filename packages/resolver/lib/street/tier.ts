@@ -9,9 +9,11 @@
  *
  *   Split out of `resolve.ts` so the resolver file holds the walk and the admin-coherence passes, and
  *   this one holds the tiers. The FR voie-type folding lives here because only the street-centroid
- *   tier consults it.
+ *   tier consults it; the voie types themselves are `@mailwoman/codex/fr`'s, and what stays local is
+ *   the tokens this recognizer admits beyond them.
  */
 
+import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
@@ -266,60 +268,20 @@ export function applyInterpolation(
 }
 
 /**
- * French thoroughfare (voie) type tokens — the leading word that marks a street-only span as a THOROUGHFARE rather than
- * a place name ("Place Bellecour", "Cours de l'Intendance", "Quai des Bateliers"). Used by the #1042 street-centroid
- * tier to recognize a thoroughfare that the model mis-parsed as a `locality` (the FR no-street class, #901).
- * Deliberately generous — a false positive simply misses the exact street-centroid lookup and no-ops; the lookup is the
- * real check.
+ * Tokens this recognizer admits BEYOND `@mailwoman/codex`'s French voie types.
+ *
+ * The canonical types and their abbreviations live in the codex, and {@linkcode isVoieShaped} asks it first. What stays
+ * here is the deliberate generosity: this tier recognizes a thoroughfare the model mis-parsed as a `locality` (the FR
+ * no-street class, #901), and a false positive simply misses the exact street-centroid lookup and no-ops — the lookup
+ * is the real check. A token admitted for that reason is not a claim that it is a voie type, so it does not belong in
+ * the postal reference.
  */
-const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
-	"rue",
-	"ruelle",
-	"venelle",
-	"avenue",
-	"av",
-	"ave",
-	"boulevard",
-	"bd",
-	"bld",
-	"bvd",
-	"boul",
-	"place",
-	"pl",
-	"cours",
-	"quai",
-	"impasse",
-	"imp",
-	"allee",
-	"all",
-	"chemin",
-	"ch",
-	"che",
-	"passage",
-	"pas",
-	"square",
-	"sq",
-	"faubourg",
-	"fg",
-	"fbg",
-	"route",
-	"rte",
-	"esplanade",
-	"promenade",
-	"sentier",
-	"sente",
-	"villa",
-	"cite",
-	"hameau",
-	"montee",
-	"chaussee",
-	"traverse",
-	"mail",
-	"clos",
-	"voie",
+const FR_GENEROUS_VOIE_TOKENS: ReadonlySet<string> = new Set([
+	// Not a voie type: an address quarter, admitted because a span reading `Quartier …` is a thoroughfare often
+	// enough to be worth the lookup.
 	"quartier",
-	"lotissement",
-	"residence",
+	// `foldVoieTokens` splits on the hyphen, so `Rond-Point de …` arrives here as `rond`, which the codex set
+	// holds only as the whole token `rond-point`.
 	"rond",
 ])
 
@@ -345,7 +307,9 @@ function foldVoieTokens(s: string): string[] {
 function isVoieShaped(s: string): boolean {
 	const first = foldVoieTokens(s)[0]
 
-	return first !== undefined && FR_VOIE_TYPES.has(first)
+	if (first === undefined) return false
+
+	return isFrenchStreetWord(first) || FR_GENEROUS_VOIE_TOKENS.has(first)
 }
 
 /**
