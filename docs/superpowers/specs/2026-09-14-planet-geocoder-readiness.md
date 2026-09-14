@@ -1,6 +1,7 @@
 # Planet geocoder — what the checkout can and cannot say
 
-A readiness survey taken from the checkout alone, with no gazetteer artifact and no board run. Every number here
+A readiness survey taken from the checkout, with no board run. The per-country gazetteer section is the one
+exception and says so in place: it came through the `mailwoman-dev` daemon, which has the data root. Every other number here
 is reproducible from tracked files; where a question needs `candidate.db` or the regression board it is named as
 unanswered rather than estimated.
 
@@ -176,17 +177,49 @@ municipality and nothing below it — median input 16 characters, p90 19, longes
 河口湖町` — which is the most Han-heavy part of a Japanese address. A full address with a building name
 (マンション, ハイツ, ビル) would carry Kana far more often, and this set cannot say how much more.
 
-## What the checkout cannot answer
+## What the gazetteer holds, per country
+
+Answered after the fact through the `mailwoman-dev` MCP daemon, which runs in the operator's environment and
+therefore has the data root a plain checkout does not. Places in `admin-global-priority.db`:
+
+```
+IN 1,113,550   CN 678,311   US 259,485   RU 159,485   PL 154,742
+FR   114,751   ID 109,717   DE  87,279   BR  84,725   IT  72,436
+MX    56,041   JP  54,488   KR  52,967   TR  46,979   GB  42,748
+ES    41,173   PH  36,820   UA  31,720   PK  27,605   TH  24,998
+NG    24,083   TW  18,597   AU  17,020   VN  16,584   CA  14,541
+AR    10,595   BD   5,438   ZA   2,665   EG   2,439   NZ   2,373
+SG        66
+```
+
+**India holds more places than any other country and is checked by two board rows.** That pairing states the
+planet problem in one line: retrieval reaches a million Indian places, and nothing measures whether the answers
+are right.
+
+### One reading here was the instrument, not the data
+
+`mwdev_sources` reports **NL = 28** for this artifact, against 19,812 in the `-coverage` generation. Taken at face
+value that reads as the promoted gazetteer losing the Netherlands. It has not:
+
+| Path                                     |                    Amsterdam |                    Rotterdam | Utrecht |           Groningen |
+| ---------------------------------------- | ---------------------------: | ---------------------------: | ------: | ------------------: |
+| `admin-global-priority.db`, FTS + names  |                 143 row-hits |                           97 |     135 |                 143 |
+| `candidate.db`, the resolver's own table | `wof:101751893`, pop 833,624 | `wof:101751843`, pop 629,606 |       — | three, by placetype |
+
+The census counts `spr` rows; the resolver reads the FTS index. Only the first is low. What remains true and
+narrow is that the `spr` count for NL moved 19,812 → 28 between generations while the FTS content stayed rich,
+and nothing reachable from here says why or what still reads `spr`.
+
+## What is still unanswered
 
 Named so the next reader does not mistake silence for absence:
 
-- **Per-country gazetteer coverage.** Needs `candidate.db`. #2268 measures 10.6% of populated localities carrying
-  a `localadmin` twin; that number came from the promoted artifact, not from here.
 - **Whether any ranking change is safe.** Needs the regression board and the promotion battery. Every open item on
-  #2266, plus #2267, #2268 and #2269, sits behind this.
+  #2266, plus #2267, #2268, #2269 and #2272, sits behind this.
 - **The real Kana rate in full Japanese addresses.** Needs a JP corpus with building lines.
-- **Whether the 119 thinly-covered countries are actually wrong.** A board row is the only instrument, and there
-  are one or two per country.
+- **Whether the 119 thinly-covered countries are actually wrong.** A board row is the only instrument, and 78 of
+  130 countries have one checking row or none.
+- **Why the NL `spr` count fell**, and what consequence it has.
 
 ## Recommended order, given the above
 
