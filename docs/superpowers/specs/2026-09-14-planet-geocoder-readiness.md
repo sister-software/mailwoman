@@ -30,30 +30,48 @@ countries with exactly one row   59 of 130
 rows in the eleven shipping countries   455 of 1,261
 ```
 
-Per shipping locale:
+**Not every row checks.** `mailwoman data coverage`'s docstring draws the distinction — "a board row that is not
+`status: pass` tracks rather than checks" — and a third of the board is tracking:
 
-| Country | Board rows | Case files |
-| ------- | ---------: | ---------: |
-| GB      |        152 |          9 |
-| US      |        105 |         10 |
-| FR      |         67 |          8 |
-| ES      |         26 |          3 |
-| AU      |         25 |          5 |
-| CN      |         23 |          3 |
-| DE      |         16 |          5 |
-| NZ      |         14 |          4 |
-| IT      |         13 |          4 |
-| JP      |         11 |          4 |
-| **IN**  |      **3** |      **1** |
+```
+pass                 857   68.0%
+improvement_target   403   32.0%
+known_fail             1    0.1%
+```
+
+So the denominator is 857, not 1,261, and the per-country reading gets worse rather than better:
+
+```
+countries with at least one CHECKING row   99 of 130
+countries with one checking row or none    78 of 130
+```
+
+Per shipping locale, with the checking half beside the total:
+
+| Country | Board rows | Of those, checking | Case files |
+| ------- | ---------: | -----------------: | ---------: |
+| GB      |        152 |                106 |          9 |
+| US      |        105 |                 82 |         10 |
+| FR      |         67 |                 55 |          8 |
+| ES      |         26 |                 12 |          3 |
+| AU      |         25 |                 25 |          5 |
+| **CN**  |         23 |              **2** |          3 |
+| DE      |         16 |                  8 |          5 |
+| NZ      |         14 |                 13 |          4 |
+| IT      |         13 |                  6 |          4 |
+| JP      |         11 |                  6 |          4 |
+| **IN**  |      **3** |              **2** |          1 |
+
+China ships a locale and is checked by two rows. India by two. Japan by six.
 
 Three of the largest blocks are not shipping locales at all: a `GENERALIZATION` country sweep (279 rows), Singapore
 (243, from the postcode work), and Canada (22).
 
-**This is the finding the rest depend on.** A country with one or two rows cannot separate a real regression from
-noise, so for 59 of 130 countries the board reports a number without the power to act on it. India ships a weights
-package and is measured by three rows. The release list has moved past what the board can measure, and a summary
-score over 1,261 rows reads as planet coverage while 36% of it sits in eleven countries and most of the rest is a
-row or two apiece.
+**This is the finding the rest depend on.** A country with one or two checking rows cannot separate a real
+regression from noise, so for 78 of 130 countries the board reports a number without the power to act on it. India
+ships a weights package and is checked by two rows; China by two. The release list has moved past what the board
+can measure, and a summary score over 1,261 rows reads as planet coverage while a third of those rows track
+rather than check and 36% of the total sits in eleven countries.
 
 Nothing here says the board is wrong. It says a per-country verdict is only available where the rows are, and the
 places a planet geocoder is about to be judged — the other 119 countries — are not those places.
