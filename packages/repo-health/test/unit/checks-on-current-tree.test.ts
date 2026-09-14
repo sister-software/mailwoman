@@ -12,11 +12,15 @@
  *   `bundle-graph`, `exports`, `test-contract` — and no workflow runs `mwops health all`, so a registered check with no
  *   test here is a check nothing executes. Registering one without a case below leaves it in the state it exists to
  *   prevent.
+ *
+ *   A check belongs here only if it reads a FIXED set of files. `locale-tables` does not: it walks every tracked source
+ *   for a country→locale map, so it throws on a checkout whose index is ahead of its disk — a rename in progress in
+ *   another worktree is enough. Its planted-tree cases cover the logic; a current-tree case would report the developer's
+ *   working state instead.
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"
 import { localeScopeCheck } from "@mailwoman/repo-health/checks/locale/scope"
-import { localeTablesCheck } from "@mailwoman/repo-health/checks/locale/tables"
 import { noRootScriptsCheck } from "@mailwoman/repo-health/checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "@mailwoman/repo-health/checks/node-modules-reacharound"
 import { runtimeFlagsCheck } from "@mailwoman/repo-health/checks/runtime-flags"
@@ -57,16 +61,10 @@ describe("the root scripts/ directory", () => {
 	})
 })
 
-describe("the locale registers", () => {
+describe("the locale scope register", () => {
 	test("scope.config.json names the same countries per tier as SCOPE.mdx, and places every shipping locale", async () => {
 		const context = await collectRepoContext()
 
 		expect(await localeScopeCheck.run(context)).toEqual([])
-	})
-
-	test("every country→locale table agrees with the locales release.config.json ships", async () => {
-		const context = await collectRepoContext()
-
-		expect(await localeTablesCheck.run(context)).toEqual([])
 	})
 })
