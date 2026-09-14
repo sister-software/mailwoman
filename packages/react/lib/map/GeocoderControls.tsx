@@ -189,7 +189,7 @@ export function GeocoderControls({
 
 	// The detents exist only where the panel IS a drawer. The desktop column is sized by its content and has nothing
 	// to drag towards, so every pointer gesture there is a scroll or a click.
-	const isDrawerLayout = () => typeof globalThis.window !== "undefined" && globalThis.matchMedia(DRAWER_LAYOUT).matches
+	const isDrawerLayout = () => globalThis.window !== undefined && globalThis.matchMedia(DRAWER_LAYOUT).matches
 
 	const beginSheetDrag = useCallback((clientY: number, pointerId: number) => {
 		const sheet = sheetRef.current
@@ -470,7 +470,7 @@ export function GeocoderControls({
 	 */
 	const drawerRaised =
 		showSheet &&
-		(sheetHeight === null || (typeof globalThis.window !== "undefined" && sheetHeight > sheetDetents().collapsedBelow))
+		(sheetHeight === null || (globalThis.window !== undefined && sheetHeight > sheetDetents().collapsedBelow))
 
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0
