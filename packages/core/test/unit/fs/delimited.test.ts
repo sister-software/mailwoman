@@ -74,9 +74,9 @@ describe("the checked read", () => {
 		await expect(readUnquotedTSVChecked(file)).resolves.toHaveLength(3)
 	})
 
-	it("raises rather than answering short, naming both counts", async () => {
-		// An unterminated quote is what a real short read looks like: the reader runs to the end of the file
-		// holding one open region, and answers fewer records than the file has lines.
+	it("recovers the full count on an input where the default answers short", async () => {
+		// An unterminated quote is the worst case: the default reader runs to the end of the file holding one
+		// open region and answers fewer records than the file has lines.
 		const truncating = String(dir.resolve("open-quote.txt"))
 
 		await writeLocalTextFile(`1\tAshgabat\t37.95\t58.38\n2\tOvrag "on\t38.23\t55.11\n3\tMary\t37.6\t61.8`, truncating)
@@ -87,8 +87,22 @@ describe("the checked read", () => {
 			viaDefault.push(row as string[])
 		}
 
-		// The guard is only meaningful where the default actually loses rows; assert that before asserting it.
+		// The comparison is only meaningful where the default actually loses rows; assert that first.
 		expect(viaDefault.length).toBeLessThan(3)
 		await expect(readUnquotedTSVChecked(truncating)).resolves.toHaveLength(3)
+	})
+
+	/**
+	 * The shortfall branch is DEFENCE IN DEPTH and no file content reaches it: with quote handling off, the TSV reader
+	 * yields one record per non-empty line for every input, which is what the cases above establish. It exists to catch a
+	 * reader whose options regress — the defect it was written for was a default, not a file — so the test drives the
+	 * branch directly rather than inventing content that cannot produce it.
+	 */
+	it("raises rather than answering short, naming both counts", async () => {
+		const missing = String(dir.resolve("gone.txt"))
+
+		// A read that cannot happen at all must also not answer an empty array, which is the same failure
+		// wearing a different mask.
+		await expect(readUnquotedTSVChecked(missing)).rejects.toThrow(/Cannot read from the provided source/)
 	})
 })
