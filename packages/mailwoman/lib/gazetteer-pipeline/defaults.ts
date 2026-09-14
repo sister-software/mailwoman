@@ -362,8 +362,127 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
  * BE joined 2026-08-12 (the eu-mixed lane — the Overture BE parquet measured too thin at 203 codes, none of the
  * panel's, while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity check
  * against the prior database, and swap under the .prev rotation.
+ *
+ * THE FIRST TEN ARE ORDER-CRITICAL AND EVERYTHING ELSE IS APPENDED. Ids are positional in ingest order, so a country
+ * inserted rather than appended moves every id after it — the parity check reads ids as well as counts for exactly that
+ * reason, and a rebuild that reorders reports zero lost codes while breaking every stored id.
+ *
+ * The tail was ten countries because it is the residue of #920's namesake campaign, not because anyone decided the rest
+ * should have no postcodes. GeoNames publishes 121 countries and the gazetteer carried a postcode tier for 28; the
+ * appended set is the 93 that had data on disk and no tier, among them KR (34,249 codes, a tier-5 locale the scope
+ * table already claims), RO (37,914, tier 2) and IN (19,238, ships weights). Measured on the rebuild: 10 → 103
+ * countries, 57,221 → 505,784 codes, with zero codes lost and zero ids moved on the original ten.
+ *
+ * Count at the unit a resolver reads. GeoNames postal publishes one row per (postcode, settlement) AND repeats a
+ * hyphenated format both ways, so dump rows overstate distinct codes — 938,543 rows fold to 448,563 codes across the
+ * appended 93, and fifteen countries inflate above 1.5×, PE by 36.32×. A priority list built from row counts puts India
+ * second; built from codes it is seventh.
  */
-export const DEFAULT_GEONAMES_TAIL_COUNTRIES = ["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"] as const
+export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
+	"FI",
+	"CZ",
+	"SK",
+	"SI",
+	"DK",
+	"NO",
+	"HR",
+	"PL",
+	"SE",
+	"BE",
+	"AD",
+	"AE",
+	"AI",
+	"AL",
+	"AR",
+	"AX",
+	"AZ",
+	"BD",
+	"BG",
+	"BM",
+	"BR",
+	"BY",
+	"CC",
+	"CL",
+	"CN",
+	"CO",
+	"CR",
+	"CX",
+	"CY",
+	"DO",
+	"DZ",
+	"EC",
+	"EE",
+	"FK",
+	"FM",
+	"FO",
+	"GF",
+	"GG",
+	"GI",
+	"GL",
+	"GP",
+	"GS",
+	"GT",
+	"GU",
+	"HK",
+	"HM",
+	"HN",
+	"HT",
+	"HU",
+	"ID",
+	"IE",
+	"IM",
+	"IN",
+	"IO",
+	"IS",
+	"JE",
+	"KE",
+	"KR",
+	"LI",
+	"LK",
+	"MA",
+	"MC",
+	"MD",
+	"MH",
+	"MK",
+	"MO",
+	"MP",
+	"MQ",
+	"MT",
+	"MW",
+	"MX",
+	"MY",
+	"NC",
+	"NF",
+	"NR",
+	"NU",
+	"NZ",
+	"PA",
+	"PE",
+	"PF",
+	"PH",
+	"PK",
+	"PM",
+	"PN",
+	"PR",
+	"PW",
+	"RE",
+	"RO",
+	"RS",
+	"RU",
+	"SJ",
+	"SM",
+	"TC",
+	"TH",
+	"TR",
+	"UA",
+	"UY",
+	"VA",
+	"VI",
+	"WF",
+	"WS",
+	"YT",
+	"ZA",
+] as const
 
 /**
  * Default parent-coverage floor for crediting a sub-locality rung.
