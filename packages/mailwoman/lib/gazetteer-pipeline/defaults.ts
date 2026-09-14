@@ -390,7 +390,18 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"SE",
 	"BE",
 	"AD",
-	"AE",
+	// AE is deliberately absent and is the largest single country GeoNames publishes here: 178,171 rows, more than
+	// RU + RO + KR combined. Every one is a `NNNNN NNNNN` pair at Dubai-area coordinates (lat 24.63–25.32, lon
+	// 54.91–56.20) — Makani BUILDING codes, not postcodes. The United Arab Emirates has no postal code system; mail
+	// goes to PO boxes. Ingesting them as `placetype = 'postalcode'` would claim 178,171 postcodes for a country
+	// with none, and every coverage figure taken from that tier would inherit the claim.
+	//
+	// The LOOKUP would have worked, which is why this would have shipped unnoticed: the #920 name law strips
+	// non-alphanumerics, so `28119 95762` keys as `2811995762` and matches a query typed the same way. Correct
+	// behaviour under a wrong placetype is the hardest kind of wrong to see.
+	//
+	// These belong in a building tier rather than being dropped — Makani is a rooftop-grade geocode with a
+	// coordinate per building (#2300).
 	"AI",
 	"AL",
 	"AR",
