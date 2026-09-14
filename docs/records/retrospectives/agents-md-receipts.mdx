@@ -154,6 +154,42 @@ read this"_ into _"there is none of it"_ — at a measurement boundary that is a
 insurance is to re-measure a surprising ABSENCE by a second path before reporting it. One corpus file read
 two ways caught two of the seven in sixty seconds.
 
+## A short read is a small file — the GeoNames quote-handling loss
+
+The inverse of the quote-blind splitter below, and the same rule from the other side. `TSVSpliterator`
+defaults `enableQuoteHandling` to true; a GeoNames dump is UNQUOTED TSV in which `"` is an ordinary
+character in a place name (`Ovrag Kyzylak"on`). A quote-AWARE reader over an unquoted source does not
+fail — it joins every line between one `"` and the next into a single record. **7,411,412 rows in,
+6,504,155 records out: 907,257 lost across 16 countries** — Finland 84.4%, Azerbaijan 94.7%, Vietnam
+88.3%, Russia 43.7%. Finland is the country the alias fold's founding measurement was taken on.
+
+Nothing downstream could see it. The fold reports places WRITTEN, so a country read short reports a
+smaller number; the coverage pre-flight compares one fold against the previous fold, so once both sides
+are short it agrees with itself. **A short read and a small file are the same number at every later
+boundary**, which is why the fix is a reader that compares its record count against the source's own
+line count (`readUnquotedTSVChecked`) rather than a list of sources to distrust — 69 dumps carry a quote
+and only 16 lose rows, since a pair that opens and closes inside one line never crosses a row boundary.
+
+Two things about how it was found, both worth more than the fix:
+
+**The dismissal.** The symptom was seen and reasoned away first. A rebuilt fold held 49,229 fewer places
+than its predecessor, and the reasoning was _"this diff cannot touch place ingestion"_ — true of the
+diff, and the missing places were a measurement. A claim about code was allowed to outrank a count. The
+rule that covers it was already written, one section below: re-measure a surprising ABSENCE by a second
+path.
+
+**The scoping error.** The first census reported 540,259 rows across 9 countries, because it counted
+over `DEFAULT_GEONAMES_COUNTRIES` — the alias fold's own 161. That is ONE consumer's list, not the reach
+of the defect; the currency backfill, the label-point anchor adjudication and the corpus adapters each
+read the same dumps for their own country sets. Re-measuring over every dump on disk found Russia,
+Vietnam, Iraq, Iran, Kazakhstan, Belarus and Jordan as well. **A count inherits the scope of whatever
+list you reached for** — here, one of three country lists in the same file, none of which bounds the
+defect.
+
+What surfaced it was a single graded row. A 982-row board comparison came back with one regression —
+`Turkmenabat` answering a Tajik namesake 468 km away — and Türkmenabat has a population of 230,861. An
+aggregate that moves by one row is still worth opening.
+
 ## The `node_modules` reach-around census — 2026-08-06
 
 **The rule is NOT "don't use `node:path`."** The 2026-08-06 triage counted **1,095 `join`/`resolve` call sites across 244 files**, and the split is the useful part: 20 node_modules reach-arounds, 48 data-root assembly, 25 module-relative, and **1,002 legitimate** — `mkdtemp` scratch dirs (127), test fixtures (420), and genuinely dynamic filesystem work (455): CLI `--out` flags, walking a user-supplied tree, composing under a root a caller threaded in. Banning the import would flag 1,075 correct lines to catch 20. Two shapes that look like violations and are not: a LOCAL root alias derived once from `mailwomanDataRoot()` and composed from thereafter (`scripts/copy-weights.ts` — the concern is re-deriving the root, not composing from it, and its `resolve(repoRoot, …)`-vs-`resolve(dataRoot, …)` contrast is required), and a probe that reads a FOREIGN project's install layout on purpose (`scripts/smoke-clean-install.ts` — `import.meta.resolve` would answer from the monorepo's graph, which is the exact thing a clean-install smoke must not consult).
