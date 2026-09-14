@@ -12,6 +12,10 @@ Everything below was checked against the Docusaurus build output and a `docusaur
 docs build is the check that matters, because `onBrokenLinks` and `onBrokenAnchors` are both `"throw"`
 — it passing means every link added here resolves.
 
+Why half of this was hard to check at all is its own record: `.yarnrc.yml` declared
+`supportedArchitectures` for `cpu` and `os` but not `libc`, so a macOS install silently dropped every
+`libc=glibc` package and left a tree no Linux machine could build from. Fixed in a0eac6ce3.
+
 | Check                                          | Result                                                                         |
 | ---------------------------------------------- | ------------------------------------------------------------------------------ |
 | `/pricing`, `/licensing`, `/licenses`          | 200, each a redirect page to its target                                        |
@@ -25,10 +29,19 @@ docs build is the check that matters, because `onBrokenLinks` and `onBrokenAncho
 | Card example lines                             | `white-space:normal; overflow-wrap:anywhere` shipped                           |
 | Long `alt` strings                             | gone; replaced by the short forms                                              |
 
-NOT verified, and why: `packages/earth` cannot be built or run from a Linux workspace — `rolldown`,
-`rspack`, `oxlint` and `vale` all ship darwin-only native bindings here. The Earth changes have a clean
-`tsc --noEmit`, and the browser specs were read rather than run (below), but nobody has watched them
-work in a browser.
+Earth, once the `libc` fix landed (2026-09-14): `vite build` completes on Linux, so the Earth changes
+compile, bundle and pass the PWA precache step. `packages/react`'s node-mode suite is green (21 tests,
+including `place-render.node.test.ts` — the camera logic this pass deliberately did not touch), and so
+are `packages/earth`'s unit tests (14, including `routes.test.ts`, the `?q=` parser `initialQuery`
+rides on).
+
+Still NOT verified: anything needing a real browser. `@mailwoman/react`'s component suite is Vitest
+browser mode over playwright/chromium, and the Earth browser specs likewise; the chromium download is
+refused by this workspace's egress allowlist. So the select-on-focus, the result sheet's close, the
+focus ring and the span-tag spacing are compiled and reasoned about, but nobody has watched them work.
+`oxlint` cannot run here either — with its binding correctly installed it now loads and then panics
+inside its own allocator pool (`oxc_allocator/src/pool/fixed_size.rs`), single-threaded too, so that
+one is this VM rather than the toolchain.
 
 ### How the permalink change lands in the existing browser specs
 
