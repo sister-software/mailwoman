@@ -3,20 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #2248's resolver invariant, and it does NOT hold: **a country NAMED in the input must never be looked
- *   up inside a country INFERRED from another node.**
+ *   #2248's resolver invariant: **a country NAMED in the input is never looked up inside a country
+ *   INFERRED from another node.**
  *
  *   The reported failure was `Maracaibo 4001, Zulia, Venezuela` answering with no country at all. The
  *   parse mis-tagged `Zulia` — a Venezuelan REGION — as a locality. Venezuela has no locality Zulia and
  *   Colombia does, so the locality claim was satisfiable only in CO; the walk inferred CO and probed
  *   `Venezuela` inside it, finding nothing.
  *
- *   **That input no longer reproduces it, and that is not evidence the invariant holds.** The parse moved
- *   too — today the same string reads `street: Maracaibo` + `house_number: 4001`, which never reaches the
- *   vulnerable path. These cases freeze the malformed parse and a controlled two-country contest, so the
- *   guard is exercised whatever the parser does next. All three fail today, which is why they are
- *   `test.fails`: the assertion is inverted, so the suite turns RED the moment the invariant starts
- *   holding and the expectation has to be un-inverted with the fix.
+ *   **The live input stopped reproducing it before the guard existed**, because the PARSE moved — today
+ *   the same string reads `street: Maracaibo` + `house_number: 4001`, which never reaches the vulnerable
+ *   path. So these cases freeze the malformed parse and a controlled two-country contest, and the guard
+ *   is exercised whatever the parser does next. They were committed inverted (`test.fails`) while the
+ *   invariant was violated, and un-inverted with the fix in `postcode/country-coherence.ts`.
  *
  *   Scope. This file owns the COUNTRY-PRECEDENCE half only. `Zulia` reaching the walk tagged `locality` is
  *   a parse defect owned by #1748, and the `«locality» «postcode»` to `«street» «house_number»` class is
@@ -92,14 +91,14 @@ const MALFORMED_PARSE: AddressTree = {
 }
 
 describe("#2248 — an inferred country must never overrule one the input named", () => {
-	test.fails("XFAIL: the country named in the input resolves, against a claim satisfiable only elsewhere", async () => {
+	test("the country named in the input resolves, against a claim satisfiable only elsewhere", async () => {
 		const backend = new RecordingBackend()
 		const result = await createWOFResolver(backend).resolveTree(MALFORMED_PARSE)
 
 		expect(result.roots[0]?.placeID).toBe(`wof:${VENEZUELA}`)
 	})
 
-	test.fails("XFAIL: no lookup is scoped to the inferred country", async () => {
+	test("no lookup is scoped to the inferred country", async () => {
 		const backend = new RecordingBackend()
 
 		await createWOFResolver(backend).resolveTree(MALFORMED_PARSE)
@@ -108,7 +107,7 @@ describe("#2248 — an inferred country must never overrule one the input named"
 		expect(backend.calls.filter((call) => call.country === "CO")).toEqual([])
 	})
 
-	test.fails("XFAIL: the mis-tagged locality does not carry the answer to Colombia", async () => {
+	test("the mis-tagged locality does not carry the answer to Colombia", async () => {
 		const backend = new RecordingBackend()
 		const result = await createWOFResolver(backend).resolveTree(MALFORMED_PARSE)
 

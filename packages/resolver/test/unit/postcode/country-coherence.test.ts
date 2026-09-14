@@ -395,6 +395,42 @@ describe("findPostcodeCountryScope", () => {
 		expect(scope?.distanceKm).toBeLessThan(1)
 	})
 
+	it("#2248: stands down when the input NAMES a country — even where it would otherwise verdict", async () => {
+		const backend = await makeBackend(RIVOLI_POOL)
+		const tree = addressTree("75001", "Paris")
+
+		// The row above verdicts FR on this exact evidence. Adding a country token makes the question
+		// answered, so the inference has nothing left to decide.
+		tree.roots.push(node({ tag: "country", value: "France" }))
+
+		const scope = await findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })
+
+		expect(scope).toBeNull()
+	})
+
+	it("#2248: stands down on a country token that CONTRADICTS the pair, rather than re-deciding", async () => {
+		const backend = await makeBackend(RIVOLI_POOL)
+		const tree = addressTree("75001", "Paris")
+
+		tree.roots.push(node({ tag: "country", value: "Portugal" }))
+
+		// A hard abstention on the PRESENCE of the token, not a test of whether it agrees. Re-deciding
+		// between the token and the pair would be the same inference wearing a tie-break, and whether the
+		// named country is spelled correctly is the walk's own country lookup to answer.
+		expect(await findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })).toBeNull()
+	})
+
+	it("#2248: an EMPTY country token is not a named country — the pass still runs", async () => {
+		const backend = await makeBackend(RIVOLI_POOL)
+		const tree = addressTree("75001", "Paris")
+
+		tree.roots.push(node({ tag: "country", value: "   " }))
+
+		const scope = await findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })
+
+		expect(scope?.country).toBe("FR")
+	})
+
 	it("returns null for (75001, Addison) — the literal collision, where the US default IS coherent", async () => {
 		const backend = await makeBackend(RIVOLI_POOL)
 

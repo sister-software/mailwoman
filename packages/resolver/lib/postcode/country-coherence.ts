@@ -106,7 +106,7 @@
 // `postcode-systems` has no dedicated export subpath; the barrel is where every other consumer
 // (`neural/postcode-anchor.ts`) reaches it from.
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
-import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
+import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -404,6 +404,22 @@ export async function findPostcodeCountryScope(
 	const defaultCountry = opts.defaultCountry?.trim().toUpperCase() || undefined
 
 	if (!postcode) return null
+
+	// #2248. A country the INPUT NAMED outranks every rung below, so this pass stands down rather than
+	// proposing a different one. The rungs infer a country from a postcode and a locality; that is the
+	// right question only while nothing in the address has answered it.
+	//
+	// `Maracaibo 4001, Zulia, Venezuela` is the worked case. `Zulia` is a Venezuelan REGION the parse
+	// mis-tagged `locality`, Venezuela holds no locality of that name and Colombia does, so rung 4a reads
+	// "this locality value names exactly one country" and returns CO. That override replaces
+	// `state.defaultCountry` for the WHOLE walk, so `Venezuela` itself is then probed inside Colombia and
+	// answers nothing — the address comes back with no country, having named one.
+	//
+	// Deliberately a HARD abstention on the presence of the token, not a test of whether the named country
+	// agrees. A pass that re-decided between the two would be the same inference wearing a tie-break, and
+	// this file's own discipline is that a contest it cannot settle abstains. Whether the named country is
+	// SPELLED correctly is a separate question, owned by the walk's own country lookup.
+	if (firstNodeWhere(roots, (n) => n.tag === "country" && n.value.trim().length > 0)) return null
 
 	const localities = localityValuesInDocumentOrder(roots)
 
