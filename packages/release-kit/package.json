@@ -49,6 +49,11 @@
 			"node": "./lib/release/stage.ts",
 			"default": "./out/release/stage.js"
 		},
+		"./release/verify-metadata": {
+			"types": "./out/release/verify-metadata.d.ts",
+			"node": "./lib/release/verify-metadata.ts",
+			"default": "./out/release/verify-metadata.js"
+		},
 		"./release/smoke-get-started": {
 			"types": "./out/release/smoke/get-started.d.ts",
 			"node": "./lib/release/smoke/get-started.ts",
