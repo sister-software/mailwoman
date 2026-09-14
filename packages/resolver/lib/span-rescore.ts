@@ -27,8 +27,10 @@
 
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { isRegionAbbreviationToken } from "@mailwoman/query-shape/region-abbreviations"
 import { haversineKm } from "@mailwoman/spatial"
 
+import { partitionByContainment } from "#admin/containment"
 import { foldName } from "#fold-name"
 import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "#toponym-prior"
 
@@ -368,6 +370,29 @@ export async function findRescoreCandidate(
 	// is no longer the only evidence — 'Berlin, Wisconsin' keeps resolving to Berlin, Wisconsin. And the
 	// span must cover the WHOLE input: a sub-span of a longer query is not a bare toponym, so
 	// "Weimar Thüringen" falls back to the country-scoped probe that lands the gold.
+	/**
+	 * The tokens a sub-span probe LEAVES BEHIND, when they read as an administrative qualifier.
+	 *
+	 * `WA Sammamish` recovers `Sammamish` and discards `WA` — and `WA` is the token that decides which Sammamish. The
+	 * backend already answers containment through `regionQualifier`; nothing was asking it. Measured against the shipped
+	 * artifact: `Irvington` alone ranks Irvington NY (population 6,417) over Irvington NJ (61,323) on the fame prior, and
+	 * `Irvington` with `regionQualifier: "NJ"` stamps the New Jersey row contained and lifts it to rank 1.
+	 *
+	 * A remainder is admitted on SHAPE, not by a country table: one token of 2 or 3 uppercase ASCII letters, which is
+	 * what a subdivision code written on an address line looks like in every register that uses one. Admitting more is
+	 * unsafe rather than merely noisy — a bare `de`, the commonest function word in FR/ES/PT/IT addresses, matches a
+	 * region-class row and REORDERS the pool, while `16`, `Ave`, `Street` and `1382` leave it untouched.
+	 */
+	const qualifierRemainder = (span: { start: number; end: number }): string | undefined => {
+		const outside = toks.filter((t) => t.end <= span.start || t.start >= span.end)
+
+		if (outside.length !== 1) return undefined
+
+		const token = outside[0]!.text
+
+		return isRegionAbbreviationToken(token, { maxLetters: 3 }) ? token : undefined
+	}
+
 	const softCountry = opts.bareToponymSoftCountry !== false
 	const countryWeight = opts.bareToponymCountryWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT
 	const qualified = !!postcode || hasAdminQualifier(roots)
@@ -386,6 +411,7 @@ export async function findRescoreCandidate(
 		// 2026-08-15 board before this line split them.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
 		const bare = softCountryEligible && wholeSpan
+		const qualifier = wholeSpan ? undefined : qualifierRemainder(sp)
 
 		const hits = bare
 			? rankByCountryPrior(
@@ -404,6 +430,9 @@ export async function findRescoreCandidate(
 					placetype: "locality",
 					limit: 5,
 					...(wholeSpan ? {} : { primaryOnly: true }),
+					// The qualifier the sub-span left behind. A backend without the ancestors sidecar
+					// ignores it and stamps nothing, which is the same answer as not asking.
+					...(qualifier === undefined ? {} : { regionQualifier: qualifier }),
 				})
 
 		// #1546: NO primary-name re-check here — the backend's `exactMatch` IS the name-OR-alias surface
@@ -420,7 +449,21 @@ export async function findRescoreCandidate(
 		// See `toponym-prior.ts`. It runs after the country prior deliberately: fame is the stronger
 		// signal when it has been measured, and leaves an unscored candidate exactly where population
 		// put it.
-		const exact = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
+		const ranked = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
+
+		// The same partition the walk applies for the same reason: `rankByImportance` has just re-ordered
+		// the tier by fame, which is where the qualifier is needed most — `Irvington` ranks the New York
+		// bearer (population 6,417, importance 0.4565) over the New Jersey one (61,323, 0.4258), and the
+		// recovered `NJ` says which. Tier-safe, stable, and positive-evidence-only: with no stamps it is
+		// the identity, so a backend that ignored `regionQualifier` is byte-stable.
+		const exact =
+			qualifier === undefined
+				? ranked
+				: partitionByContainment(
+						ranked,
+						(c) => c.containedByQualifier === true,
+						(c) => c.exactMatch === true
+					)
 
 		const withinThreshold = (p: ResolvedPlace): boolean =>
 			!anchor || thresholdKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= thresholdKm
