@@ -31,6 +31,34 @@ export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "cou
 const OVERTURE_ID_SPAN = 1_000_000_000_000
 
 /**
+ * Bracket, pipe and delimiter characters Overture packs around an editorial aside rather than a name.
+ */
+const NAME_NOISE = /[()[\]{}<>|/\\_@#$%^*+=~`"]/u
+
+/**
+ * Longer than any division name Overture carries, and short enough to refuse a description that ran into the name
+ * field. The rule this replaced had no length bound of its own — its character class was the bound.
+ */
+const NAME_MAX_LENGTH = 120
+
+/**
+ * Whether a `names.common` entry is a NAME. Admission never tests which script writes it.
+ *
+ * The rule this replaced kept Latin-script entries only, reasoning that the local-script form survives as
+ * `names.primary` — which it does, and load-bearingly: Russia keeps Москва because Москва is Overture's primary for
+ * Moscow. That premise fails for a country whose primary is ALREADY Latin, where `common` is the only place the local
+ * script lives. Measured on the shipped artifact over the fold's own id range: Singapore 0 of 228 names in Han, Sri
+ * Lanka 0 of 6,588 in Sinhala, Malaysia 6 of 9,111 in Jawi — against Russia's 159,478 Cyrillic and Myanmar's 54,835,
+ * which the old rule never touched.
+ *
+ * Constructed languages are the tell. Singapore's surviving names include Volapük, Lojban and Esperanto, all written in
+ * Latin, and no Chinese. Script is not a proxy for whether anyone types a name.
+ */
+export function isDivisionName(value: string): boolean {
+	return value.length <= NAME_MAX_LENGTH && /\p{L}/u.test(value) && !NAME_NOISE.test(value)
+}
+
+/**
  * Digest bytes to draw per GERS id. Six (48 bits, ~2.8e14) overshoots {@link OVERTURE_ID_SPAN} comfortably, so the
  * modulo costs nothing in collision terms, and the value stays exactly representable as a JS number.
  */
@@ -258,11 +286,6 @@ export async function ingestOvertureDivisions(
 	} = prepareInserts(db)
 
 	const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "bigint" ? Number(v) : 0)
-	// Keep only Latin-script common-name aliases (English + major-language transliterations — the names a
-	// Latin-keyboard user actually queries: "Moscow", "Moscou", "Moskva"). The local-script primary
-	// (Москва, القاهرة) is kept separately; obscure non-Latin aliases (Armenian, Mingrelian, …) would
-	// bloat the candidate for ~zero query value.
-	const isLatin = (s: string): boolean => /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.test(s)
 
 	db.exec("BEGIN")
 	let n = 0
@@ -300,10 +323,10 @@ export async function ingestOvertureDivisions(
 
 		namesInsert.run(nid, name, subtype, country, "", 0, 0)
 
-		// Multilingual aliases (names.common — language→name, incl. English / Latin transliterations) so a
-		// non-Latin-script place (Москва, القاهرة, กรุงเทพมหานคร) still resolves by its English/Latin name.
-		// The candidate build explodes every alias here into its own name_key. Overture `common` is the
-		// standard name per language (no variant axis), so #936 officialness is the language test alone.
+		// Multilingual aliases (names.common — language→name) so a place resolves by every name it is called,
+		// in every script those names are written in. The candidate build explodes each into its own
+		// name_key. Overture `common` is the standard name per language (no variant axis), so #936
+		// officialness is the language test alone.
 		if (r.common_json) {
 			// A malformed common map nulls out — keep the primary, skip aliases.
 			const common = tryParsingJSON<Record<string, string>>(String(r.common_json))
@@ -312,7 +335,7 @@ export async function ingestOvertureDivisions(
 				const seen = new Set([name])
 
 				for (const [lang, alias] of Object.entries(common)) {
-					if (typeof alias === "string" && alias.length && !seen.has(alias) && isLatin(alias)) {
+					if (typeof alias === "string" && !seen.has(alias) && isDivisionName(alias)) {
 						seen.add(alias)
 						namesInsert.run(nid, alias, subtype, country, lang, isOfficialLanguage(country, lang) ? 1 : 0, 0)
 					}
