@@ -125,7 +125,11 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			debugDrawer: ({ result }) => (
 				<DebugDrawer result={result} devMode={devMode} traceParse={traceParse} onClose={() => setDevMode(false)} />
 			),
-			mapControls: <MapControls />,
+			// The feature inspector and its longitude/latitude/zoom readout are developer tooling, and were mounted for
+			// every visitor. They sit in MapLibre's bottom-right corner, directly above the footer strip, so on a narrow
+			// window the readout ran along the same edge as the Sources button — two unrelated things sharing one line,
+			// one of which nobody outside this repository has a use for. Same gate as the decode-path drawer.
+			mapControls: devMode ? <MapControls /> : null,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
 			// The identity, the docs link, the commit and the credits live in `EarthFooter` so this footer and the canned
 			// runtime's cannot differ. `status` is the one thing only this path has: what is being fetched right now.

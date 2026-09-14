@@ -32,6 +32,7 @@ import { ClientOnly } from "../common/ClientOnly.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
 import { GeocoderControls } from "./GeocoderControls.tsx"
 import { MapCanvas } from "./MapCanvas.tsx"
+import { GraticuleLayer } from "./GraticuleLayer.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
 
@@ -116,9 +117,19 @@ function GeocoderInner({
 	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias threshold)
 	// before submitting, and a browser test cannot reach a React ref — so the same handle is republished on
 	// `globalThis.__mailwomanMapCanvas`, and cleared on unmount so a torn-down geocoder leaves no stale handle.
+	// The id of the lowest basemap layer that draws data — where the graticule is inserted, so the grid sits under the
+	// map rather than over it. Read from the loaded style rather than hardcoded: the basemap is a published artifact
+	// and its first layer is its business, not ours. `background` is skipped because inserting before it would put the
+	// grid behind an opaque fill and show nothing at all.
+	const [baseLayerID, setBaseLayerID] = useState<string | undefined>(undefined)
+
 	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
 		;(globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas = event.target
 		setMap(event.target)
+
+		const layers = event.target.getStyle()?.layers ?? []
+
+		setBaseLayerID(layers.find((layer) => layer.type !== "background")?.id)
 	}, [])
 
 	useEffect(
@@ -180,6 +191,7 @@ function GeocoderInner({
 					// maplibre wordmark logo.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
+					<GraticuleLayer beforeId={baseLayerID} />
 					<OverlayLayers overlays={runtime.overlays} />
 					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
 					{panels.mapControls}
