@@ -11,8 +11,10 @@ import {
 	foldInputClass,
 	foldInputScripts,
 	scriptForCodepoint,
+	scriptForRange,
 	tokenizeForClass,
 } from "@mailwoman/query-shape/character-class"
+import { computeQueryShape } from "@mailwoman/query-shape/compute"
 import type { ScriptCode, TokenClass } from "@mailwoman/query-shape/types"
 import { describe, expect, it } from "vitest"
 
@@ -212,6 +214,37 @@ describe("scriptForCodepoint", () => {
 		// Devanagari ग. An address in a script this file does not carry is a script it cannot name, and saying so is
 		// what lets a consumer tell that apart from "no script here".
 		expect(scriptForCodepoint(0x09_17)).toBe("Zzzz")
+	})
+})
+
+describe("scriptForRange", () => {
+	const CHINESE_UNIT = "逊克二分场四队, HEILONGJIANG, CHINA"
+
+	it("answers per segment, which is not what the whole string answers", () => {
+		// The string reads Latin, because the romanized province and country outweigh the Han unit. The unit reads Han.
+		// A rule about how to render or route the unit wants the second answer.
+		const shape = computeQueryShape(CHINESE_UNIT)
+
+		expect(shape.scripts[0]!.script).toBe("Latn")
+
+		expect(
+			shape.segments.map((segment) => scriptForRange(shape.tokenClasses, segment.span.start, segment.span.end))
+		).toEqual(["Hani", "Latn", "Latn"])
+	})
+
+	it("weighs by codepoints, so one long run is not outvoted by several short ones", () => {
+		// Three Latin tokens against one Han run of seven characters, inside a single range.
+		const shape = computeQueryShape(CHINESE_UNIT)
+
+		expect(scriptForRange(shape.tokenClasses, 0, CHINESE_UNIT.length)).toBe("Latn")
+		expect(scriptForRange(shape.tokenClasses, 0, 7)).toBe("Hani")
+	})
+
+	it("abstains on a range carrying no script, rather than borrowing a neighbour's", () => {
+		const shape = computeQueryShape("東京都千代田区丸の内1-9-1")
+		const houseNumber = shape.tokenClasses.at(-1)!.span
+
+		expect(scriptForRange(shape.tokenClasses, houseNumber.start, houseNumber.end)).toBe("Zyyy")
 	})
 })
 

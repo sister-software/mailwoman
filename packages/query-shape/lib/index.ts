@@ -21,6 +21,7 @@ export {
 	foldInputClass,
 	foldInputScripts,
 	scriptForCodepoint,
+	scriptForRange,
 } from "#character-class"
 
 export { computeQueryShape } from "#compute"

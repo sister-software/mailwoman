@@ -463,6 +463,43 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
 }
 
 /**
+ * The script a RANGE of the input is written in, given the tokens already classified for it.
+ *
+ * The answer for a whole string is not the answer for its parts, and for an address the parts are what a caller usually
+ * has. `逊克二分场四队, HEILONGJIANG, CHINA` is `Latn` 0.71 / `Hani` 0.29 as a string, because the romanized province and
+ * country outweigh the Han unit — but its first segment is `Hani`, its second and third are `Latn`, and a rule about
+ * how to render or route the unit wants the first of those, not the average of all three.
+ *
+ * Weighted by CODEPOINTS rather than by token count, so one long Han run is not outvoted by three short Latin ones, and
+ * `Zyyy` tokens abstain: a range holding only a house number answers `Zyyy` rather than borrowing a neighbour's script.
+ * Offsets are half-open and are the ones `TokenClass.span` carries, so a `Segment`, a component span or any pair of
+ * indices into the same normalized text can be passed straight in.
+ */
+export function scriptForRange(tokens: ReadonlyArray<TokenClass>, start: number, end: number): ScriptCode {
+	const weights = new Map<ScriptCode, number>()
+
+	for (const token of tokens) {
+		if (token.span.end <= start || token.span.start >= end) continue
+
+		if (token.script === "Zyyy") continue
+
+		weights.set(token.script, (weights.get(token.script) ?? 0) + (token.span.end - token.span.start))
+	}
+
+	let best: ScriptCode = "Zyyy"
+	let bestWeight = 0
+
+	for (const [script, weight] of weights) {
+		if (weight > bestWeight) {
+			best = script
+			bestWeight = weight
+		}
+	}
+
+	return best
+}
+
+/**
  * Every token of a string with its class and its script — the whole per-token half of a `QueryShape`.
  *
  * Exported because it was typed three times: `computeQueryShape` builds it, and two test files rebuilt it to feed
