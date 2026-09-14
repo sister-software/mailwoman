@@ -34,10 +34,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { movedAwayPaths } from "@mailwoman/core/git"
-import { resolvePath } from "path-ts"
+import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
+import { trackedSourcePaths } from "#tracked-sources"
 
 /**
  * First segments that make a literal a repository path rather than a package specifier or a bare filename.
@@ -92,9 +93,13 @@ export async function findStalePathLiterals(context: {
 }): Promise<StalePathLiteral[]> {
 	const tracked = new Set(context.trackedFiles)
 
-	const sources = context.trackedFiles.filter(
-		(file) => /\.tsx?$/u.test(file) && !file.endsWith(".d.ts") && !/\/test\/|\.test\.tsx?$/u.test(file)
-	)
+	// `existingOnly`: the index can name a file the working tree no longer has — a rename staged and not committed is
+	// enough — and this walk OPENS every path it is given, so the absent one throws ENOENT and the check fails for a
+	// reason that has nothing to do with path literals. `tracked` above keeps the FULL index, because a literal naming a
+	// staged-for-deletion file is still a literal naming a tracked file.
+	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
+		.map((path) => relative(context.repoRoot, path))
+		.filter((file) => !/\/test\/|\.test\.tsx?$/u.test(file))
 
 	const moved = await movedAwayPaths(context.repoRoot)
 	const stale: StalePathLiteral[] = []

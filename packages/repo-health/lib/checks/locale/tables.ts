@@ -39,10 +39,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readReleaseConfig } from "@mailwoman/core/release-config"
-import { resolvePath } from "path-ts"
+import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
+import { trackedSourcePaths } from "#tracked-sources"
 
 /**
  * The one table that must name every shipping locale, by name.
@@ -167,9 +168,12 @@ export async function findLocaleTables(context: {
 	repoRoot: string
 	trackedFiles: readonly string[]
 }): Promise<LocaleTable[]> {
-	const sources = context.trackedFiles.filter(
-		(file) => /\.tsx?$/u.test(file) && !file.endsWith(".d.ts") && !/\/test\/|\.test\.tsx?$/u.test(file)
-	)
+	// `existingOnly`: the index can name a file the working tree no longer has — a rename staged and not committed is
+	// enough — and this walk OPENS every path it is given, so the absent one throws ENOENT and the check fails for a
+	// reason that has nothing to do with the tables. Every other tracked-file walk in this package passes it.
+	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
+		.map((path) => relative(context.repoRoot, path))
+		.filter((file) => !/\/test\/|\.test\.tsx?$/u.test(file))
 
 	const tables: LocaleTable[] = []
 
