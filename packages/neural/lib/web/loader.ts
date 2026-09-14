@@ -67,6 +67,15 @@ export interface LoadResult {
 	classifier: NeuralAddressClassifier
 	diagnostics: WebONNXRunnerDiagnostics | null
 	/**
+	 * Give the model's native memory back.
+	 *
+	 * The ONNX session keeps its weights and arenas in the WASM heap (or on the GPU), outside anything the JavaScript
+	 * garbage collector owns, so dropping this result frees the wrapper and leaves the model resident. A host that
+	 * loads more than one bundle over a page's life — a version switch, a backend-force toggle, compare mode — has to
+	 * call this on the bundle it is replacing, or each load adds a model that never comes back.
+	 */
+	release: () => Promise<void>
+	/**
 	 * Labels actually applied to the classifier. `null` when no model-card was provided or its `labels` field was missing
 	 * — the classifier fell back to its built-in default (Stage 2).
 	 */
@@ -456,6 +465,8 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		labels,
 		pairIndexes,
 		selectPairIndexForText: (text, selectOpts) => resolvePairIndexForText(pairIndexes, text, selectOpts),
+		// How a caller gives the model's native memory back. See `WebONNXRunner.release`.
+		release: () => runner.release(),
 	}
 }
 
@@ -712,5 +723,7 @@ async function loadCharClassifierFromURLs(
 		// No pair index on the char path: the placetype-pair prior is a Latin retrieval channel, and the char graph
 		// declares no channel inputs.
 		selectPairIndexForText: () => undefined,
+		// How a caller gives the model's native memory back. See `WebONNXRunner.release`.
+		release: () => runner.release(),
 	}
 }

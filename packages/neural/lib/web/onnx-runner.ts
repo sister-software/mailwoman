@@ -102,11 +102,21 @@ export class WebONNXRunner implements NeuralRunner {
 	public diagnostics: WebONNXRunnerDiagnostics | null = null
 	#session: ort.InferenceSession | null = null
 	#loadPromise: Promise<ort.InferenceSession> | null = null
-	private readonly modelBytes: Uint8Array
+	/**
+	 * The model source, dropped the moment a session owns it. `InferenceSession.create` copies the graph into the
+	 * runtime's own heap, so holding this afterwards keeps a second full copy of the model alive for the life of the
+	 * page — 38 MB for the shipped int8 bundle, on top of the runtime's.
+	 */
+	#modelBytes: Uint8Array | null
+	/**
+	 * Kept because `diagnostics` reports it and the bytes themselves are released.
+	 */
+	readonly #modelByteLength: number
 	private readonly opts: WebONNXRunnerOpts
 
 	private constructor(modelBytes: Uint8Array, opts: WebONNXRunnerOpts) {
-		this.modelBytes = modelBytes
+		this.#modelBytes = modelBytes
+		this.#modelByteLength = modelBytes.byteLength
 		this.opts = opts
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 	}
@@ -133,17 +143,24 @@ export class WebONNXRunner implements NeuralRunner {
 
 		if (!this.#loadPromise) {
 			this.#loadPromise = (async () => {
+				const modelBytes = this.#modelBytes
+
+				if (!modelBytes) throw new Error("the ONNX runner has been released")
+
 				const wantWebGPU = this.opts.useWebGPU !== false
 
 				if (wantWebGPU) {
 					try {
-						const session = await ort.InferenceSession.create(this.modelBytes, {
+						const session = await ort.InferenceSession.create(modelBytes, {
 							executionProviders: ["webgpu", "wasm"],
 							graphOptimizationLevel: "all",
 						})
 
 						this.#session = session
-						this.diagnostics = { backend: "webgpu", modelBytes: this.modelBytes.byteLength }
+						this.diagnostics = { backend: "webgpu", modelBytes: this.#modelByteLength }
+						// The session owns the graph now. A retry cannot happen either way — `#loadPromise` caches the
+						// rejection — so there is nothing left for these bytes to do.
+						this.#modelBytes = null
 
 						return session
 					} catch {
@@ -151,19 +168,55 @@ export class WebONNXRunner implements NeuralRunner {
 					}
 				}
 
-				const session = await ort.InferenceSession.create(this.modelBytes, {
+				const session = await ort.InferenceSession.create(modelBytes, {
 					executionProviders: ["wasm"],
 					graphOptimizationLevel: "all",
 				})
 
 				this.#session = session
-				this.diagnostics = { backend: "wasm", modelBytes: this.modelBytes.byteLength }
+				this.diagnostics = { backend: "wasm", modelBytes: this.#modelByteLength }
+				this.#modelBytes = null
 
 				return session
 			})()
 		}
 
 		return this.#loadPromise
+	}
+
+	/**
+	 * Free the session's native memory.
+	 *
+	 * An `InferenceSession` holds its weights and arenas in the WASM heap (or on the GPU), which the JavaScript garbage
+	 * collector does not own and cannot reclaim — dropping the last reference to a runner frees the wrapper and leaves
+	 * the model resident. `release()` is the only thing that gives it back, and before this it was called nowhere in
+	 * the repository.
+	 *
+	 * That matters because a release bundle is reloaded whenever the version or the backend force changes, so picking a
+	 * different model version, toggling "Force WASM", or entering compare mode each added a model's worth of native
+	 * memory that never came back. Safari is the first browser to complain, because it kills a tab on memory pressure
+	 * rather than swapping.
+	 *
+	 * Safe to call more than once, and safe to call while a load is still in flight — the in-flight session is awaited
+	 * and then released, so an aborted load does not leak the session it was part-way through building.
+	 */
+	async release(): Promise<void> {
+		this.#modelBytes = null
+
+		const pending = this.#loadPromise
+
+		this.#loadPromise = null
+		this.#session = null
+
+		if (!pending) return
+
+		try {
+			const session = await pending
+
+			await session.release()
+		} catch {
+			// A session that failed to build holds nothing to free.
+		}
 	}
 
 	/**

@@ -144,6 +144,15 @@ export interface GeocoderRuntimeOptions {
  * orchestration, then wraps the loaded assets with the map surface (style / overlays / bias-aware parse / autocomplete
  * / calibrator / map-place enricher).
  */
+
+/**
+ * Give a superseded bundle's native memory back. Module scope, not a `useCallback`: it closes over nothing, so a stable
+ * identity costs nothing and it cannot churn the hook's effect.
+ */
+function disposeAssets(assets: ReleaseAssets): Promise<void> {
+	return assets.release()
+}
+
 export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
 	const { sqljsBaseURL } = config
 
@@ -159,7 +168,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[sqljsBaseURL]
 	)
 
-	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
 	// The service worker keeps one release's gazetteer chunks; tell it which.
 	useEffect(() => {

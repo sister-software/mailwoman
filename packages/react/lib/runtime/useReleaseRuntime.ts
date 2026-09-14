@@ -103,6 +103,16 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 	/**
+	 * Give a superseded bundle's resources back, when the bundle holds any the garbage collector does not own — an ONNX
+	 * session's WASM heap, a SQLite worker, a GPU buffer.
+	 *
+	 * Called for the bundle being replaced when the version or the backend force changes, for a bundle whose load was
+	 * aborted after it had already resolved, and on unmount. Without it each reload left a whole model resident:
+	 * dropping the last JavaScript reference to a session frees the wrapper and nothing else, and Safari answers a page
+	 * that accumulates those by reloading the tab.
+	 */
+	disposeAssets?: (assets: TAssets) => void | Promise<void>
+	/**
 	 * The progress line shown before the manifest arrives. @default "Loading releases…"
 	 */
 	initialProgress?: string
@@ -202,6 +212,9 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	// load effects, which key ONLY on version/backend. The effects read `.current` at run time.
 	const loadManifestRef = useRef(config.loadManifest)
 	const loadAssetsRef = useRef(config.loadAssets)
+	const disposeAssetsRef = useRef(config.disposeAssets)
+	// The bundle currently owning resources, held in a ref because the cleanup that must dispose it cannot see state.
+	const liveAssetsRef = useRef<TAssets | null>(null)
 
 	// Latest manifest for the version-load effect, so it can resolve the release WITHOUT depending on `manifest`
 	// identity — which would double-fire the load the instant the manifest first arrives (the selection transition
@@ -211,6 +224,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	useEffect(() => {
 		loadManifestRef.current = config.loadManifest
 		loadAssetsRef.current = config.loadAssets
+		disposeAssetsRef.current = config.disposeAssets
 		manifestRef.current = manifest
 	}, [config.loadAssets, config.loadManifest, manifest])
 
@@ -256,6 +270,14 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 		void (async () => {
 			try {
+				// Release the outgoing bundle BEFORE building its replacement, so the two models are never resident at
+				// once — the peak is what kills a tab, not the steady state.
+				const outgoing = liveAssetsRef.current
+
+				liveAssetsRef.current = null
+
+				if (outgoing) await disposeAssetsRef.current?.(outgoing)
+
 				setAssets(null)
 				setLoadingStepIndex(-1)
 				setLoadingStepLabels([])
@@ -274,7 +296,15 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 				const loaded = await loadAssetsRef.current(release, ctx)
 
-				if (signal.aborted) return
+				if (signal.aborted) {
+					// It resolved anyway, so it allocated anyway. Dropping it here is what leaked a model on every
+					// rapid version switch.
+					await disposeAssetsRef.current?.(loaded)
+
+					return
+				}
+
+				liveAssetsRef.current = loaded
 				setAssets(loaded)
 				setLoadingProgress("")
 				setLoadingByteFraction(null)
@@ -287,6 +317,17 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 		return () => controller.abort()
 	}, [selectedVersion, forceWASM])
+
+	// Unmount: the last bundle has nobody left to supersede it.
+	useEffect(() => {
+		return () => {
+			const live = liveAssetsRef.current
+
+			liveAssetsRef.current = null
+
+			if (live) void disposeAssetsRef.current?.(live)
+		}
+	}, [])
 
 	const selectVersion = useCallback((version: string) => {
 		setSelectedVersion(version)

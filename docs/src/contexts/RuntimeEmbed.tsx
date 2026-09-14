@@ -117,6 +117,15 @@ const RuntimeEmbedContext = createContext<RuntimeEmbedState | null>(null)
 
 //#region Hook
 
+
+/**
+ * Give a superseded bundle's native memory back. Module scope, not a `useCallback`: it closes over nothing, so a stable
+ * identity costs nothing and it cannot churn the hook's effect.
+ */
+function disposeAssets(assets: ReleaseAssets): Promise<void> {
+	return assets.release()
+}
+
 export function useRuntimeEmbed(): RuntimeEmbedState {
 	const ctx = useContext(RuntimeEmbedContext)
 
@@ -168,7 +177,7 @@ export const RuntimeEmbedProvider: React.FC<RuntimeEmbedProviderProps> = ({ sqlj
 		[sqljsBaseURL]
 	)
 
-	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets })
+	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
 	const value = useMemo<RuntimeEmbedState>(
 		() => ({

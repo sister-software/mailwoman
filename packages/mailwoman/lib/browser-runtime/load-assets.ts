@@ -61,6 +61,13 @@ export interface ReleaseAssets {
 	 * the load failed.
 	 */
 	lookup: MailwomanLookupLike | null
+	/**
+	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live in the WASM heap
+	 * outside the JavaScript heap and are not reclaimed by dropping this object. A host that loads a second bundle
+	 * over a page's life (a version switch, a backend-force toggle, compare mode) must call this on the one it is
+	 * replacing.
+	 */
+	release: () => Promise<void>
 	calibrator: Calibrator | null
 	/**
 	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278). Runs locale-check over the input text
@@ -129,7 +136,14 @@ export async function loadReleaseAssets(
 			)
 		: fetchWithRetry
 
-	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } = (await loadNeuralClassifierFromURLs(
+	const {
+		classifier,
+		diagnostics,
+		postcodeAnchorLookup,
+		selectPairIndexForText,
+		// `release` is the ReleaseInfo parameter in this scope; the classifier's disposer needs its own name.
+		release: releaseClassifier,
+	} = (await loadNeuralClassifierFromURLs(
 		{
 			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
 				hasAnchor: release.hasAnchor,
@@ -145,6 +159,7 @@ export async function loadReleaseAssets(
 		diagnostics?: { backend: string; modelBytes: number } | null
 		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
 		selectPairIndexForText?: SelectPairIndex | null
+		release?: () => Promise<void>
 	}
 
 	progress.setBackend(
@@ -229,5 +244,8 @@ export async function loadReleaseAssets(
 		lookup,
 		calibrator,
 		selectPairIndex: selectPairIndexForText ?? null,
+		release: async () => {
+			await releaseClassifier?.()
+		},
 	}
 }
