@@ -25,6 +25,7 @@ import { prefixDirectoriesCheck } from "#checks/prefix-directories"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
 import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
+import { stalePathLiteralsCheck } from "#checks/stale-path-literals"
 import { stylesheetContractCheck } from "#checks/stylesheet-contract"
 import { testContractCheck } from "#checks/test-contract"
 import { typecheckTestsCheck } from "#checks/typecheck-tests"
@@ -52,6 +53,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	docLinkTargetsCheck,
 	stylesheetContractCheck,
 	runtimeFlagsCheck,
+	stalePathLiteralsCheck,
 	debtCheck,
 	bundleGraphCheck,
 	vocabCensusCheck,
