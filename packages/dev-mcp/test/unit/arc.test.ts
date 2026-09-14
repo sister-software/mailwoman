@@ -9,8 +9,21 @@
  *   may not is worse than one that reports nothing.
  */
 
-import { type ArcLeg, decideArc, renderArc, summarizeArc } from "@mailwoman/dev-mcp/arc"
+import { dRuleCountries, readScopeConfig } from "@mailwoman/core/scope-config"
+import { type ArcLeg, decideArc, protectedCountries, renderArc, summarizeArc } from "@mailwoman/dev-mcp/arc"
 import { describe, expect, it } from "vitest"
+
+/**
+ * The protections these cases decide against, declared here rather than inherited from `scope.config.json`.
+ *
+ * A verdict test that reads the shipped register measures the register and the arithmetic at once, and when the two
+ * disagree it cannot say which one moved. The register gets its own case at the bottom of this file.
+ */
+const PROTECTIONS = [
+	{ country: "FR", reason: "tier 1 — iron rule 6 protects it unconditionally" },
+	{ country: "GB", reason: "the largest checking board of any country" },
+	{ country: "US", reason: "tier 1 — iron rule 6 protects it unconditionally" },
+]
 
 function leg(label: string, improved: number, regressed: number, extra: Partial<ArcLeg> = {}): ArcLeg {
 	return {
@@ -33,7 +46,12 @@ describe("decideArc", () => {
 		// The arc's actual numbers: v4.11.0 read -13 against shipped while the null read -5. Eight of those thirteen
 		// were the cost of touching the base, and reporting thirteen sent two more runs chasing a extract that was
 		// responsible for five.
-		const arc = decideArc(leg("control", 0, 0, { differed: 0 }), leg("null", 5, 10), leg("candidate", 5, 18))
+		const arc = decideArc(
+			leg("control", 0, 0, { differed: 0 }),
+			leg("null", 5, 10),
+			leg("candidate", 5, 18),
+			PROTECTIONS
+		)
 
 		expect(arc.attributableRegressions).toBe(8)
 		expect(arc.attributableNet).toBe(-8)
@@ -42,7 +60,12 @@ describe("decideArc", () => {
 	it("REFUSES to attribute when the self-control is dirty", () => {
 		// A rig that disagrees with itself cannot be asked about a candidate. The candidate numbers are still reported —
 		// withholding them would just get them re-measured — but the verdict says they are not evidence.
-		const arc = decideArc(leg("control", 0, 3, { differed: 3 }), leg("null", 5, 10), leg("candidate", 40, 2))
+		const arc = decideArc(
+			leg("control", 0, 3, { differed: 3 }),
+			leg("null", 5, 10),
+			leg("candidate", 40, 2),
+			PROTECTIONS
+		)
 
 		expect(arc.verdict).toBe("unattributable")
 		expect(arc.attributable).toBe(false)
@@ -53,7 +76,7 @@ describe("decideArc", () => {
 
 	it("says a missing control is a MISSING CONTROL, not a passing one", () => {
 		// The meaning-of-zero rule applied to the protocol itself: no self-control leg is not a quiet rig.
-		const arc = decideArc(undefined, undefined, leg("candidate", 12, 4))
+		const arc = decideArc(undefined, undefined, leg("candidate", 12, 4), PROTECTIONS)
 
 		expect(arc.attributableNet).toBeUndefined()
 		expect(arc.reasons.some((r) => r.includes("No self-control leg ran"))).toBe(true)
@@ -65,18 +88,36 @@ describe("decideArc", () => {
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 0, 0),
-			leg("candidate", 40, 3, { regressedByCountry: { FR: 1, US: 2 } })
+			leg("candidate", 40, 3, { regressedByCountry: { FR: 1, US: 2 } }),
+			PROTECTIONS
 		)
 
 		expect(arc.verdict).toBe("hold")
-		expect(arc.dRuleViolations).toEqual([{ country: "FR", n: 1 }])
+		// BOTH tier-1 locales are reported. The list this replaced named FR and not US, so this row read
+		// `[{ country: "FR", n: 1 }]` and the two US regressions beside it raised nothing (#2278).
+		expect(arc.dRuleViolations.map((entry) => `${entry.country}:${entry.n}`)).toEqual(["FR:1", "US:2"])
+	})
+
+	it("carries the REASON a country is protected into the block", () => {
+		// "D-RULE: regressions on GB (1)" leaves a reader no way to audit why GB is on the list, which is how a
+		// hand-written list survives four months of drift unread.
+		const arc = decideArc(
+			leg("control", 0, 0, { differed: 0 }),
+			leg("null", 0, 0),
+			leg("candidate", 40, 1, { regressedByCountry: { GB: 1 } }),
+			PROTECTIONS
+		)
+
+		expect(arc.reasons.some((reason) => reason.includes("GB (1) — the largest checking board"))).toBe(true)
 	})
 
 	it("ships only when the controls are clean, the net is positive, and it survives the null", () => {
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 2, 8),
-			leg("candidate", 30, 6, { regressedByCountry: { US: 6 } })
+			// NL is tier 2 and unprotected, so its regressions are priced by the net rather than refused outright.
+			leg("candidate", 30, 6, { regressedByCountry: { NL: 6 } }),
+			PROTECTIONS
 		)
 
 		expect(arc.verdict).toBe("ship")
@@ -87,7 +128,12 @@ describe("decideArc", () => {
 	it("holds a candidate that beats shipped but not the null", () => {
 		// The trap the arc walked into from the other side: -3 looks like a small regression and is actually an
 		// IMPROVEMENT over a -5 null. This one is the reverse — positive against shipped, negative against the placebo.
-		const arc = decideArc(leg("control", 0, 0, { differed: 0 }), leg("null", 12, 2), leg("candidate", 6, 3))
+		const arc = decideArc(
+			leg("control", 0, 0, { differed: 0 }),
+			leg("null", 12, 2),
+			leg("candidate", 6, 3),
+			PROTECTIONS
+		)
 
 		expect(arc.candidate.net).toBe(3)
 		expect(arc.attributableNet).toBe(-7)
@@ -98,7 +144,13 @@ describe("decideArc", () => {
 		// A missing null and an inapplicable null are different facts. v5.0.0 is from-scratch: it inherits no base, so
 		// discounting its number as "an upper bound carrying the cost of touching the base" would understate a run that
 		// touched no base.
-		const arc = decideArc(leg("control", 0, 0, { differed: 0 }), undefined, leg("candidate", 20, 4), "from-scratch")
+		const arc = decideArc(
+			leg("control", 0, 0, { differed: 0 }),
+			undefined,
+			leg("candidate", 20, 4),
+			PROTECTIONS,
+			"from-scratch"
+		)
 
 		expect(arc.shape).toBe("from-scratch")
 		expect(arc.reasons.some((r) => r.includes("upper bound"))).toBe(false)
@@ -110,7 +162,13 @@ describe("decideArc", () => {
 	it("does not contradict its own reasons in the one-line summary", () => {
 		// The first live run said "no null leg to attribute it against - treat as an upper bound" in the summary while
 		// the reasons beside it correctly called the null inapplicable. Two copies of a rule agree until one is fixed.
-		const arc = decideArc(leg("control", 0, 0, { differed: 0 }), undefined, leg("candidate", 3, 1), "from-scratch")
+		const arc = decideArc(
+			leg("control", 0, 0, { differed: 0 }),
+			undefined,
+			leg("candidate", 3, 1),
+			PROTECTIONS,
+			"from-scratch"
+		)
 
 		expect(summarizeArc(arc)).not.toContain("upper bound")
 		expect(summarizeArc(arc)).toContain("inherits no base")
@@ -127,6 +185,7 @@ describe("decideArc", () => {
 				improvedInputs: ["12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India"],
 				regressedInputs: ["Unter den Linden"],
 			}),
+			PROTECTIONS,
 			"from-scratch"
 		)
 
@@ -143,7 +202,8 @@ describe("decideArc", () => {
 			leg("candidate", 1, 1, {
 				regressedByCountry: { GB: 1 },
 				regressedInputs: ["Ye Three Lords, 27 Minories, London EC3N 1DE"],
-			})
+			}),
+			PROTECTIONS
 		)
 
 		const out = renderArc(arc)
@@ -151,5 +211,35 @@ describe("decideArc", () => {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- a rendered arc is a handful of lines, in memory already
 		expect(out.split("\n")[0]).toBe("verdict: hold")
 		expect(out).toContain("Ye Three Lords, 27 Minories, London EC3N 1DE")
+	})
+})
+
+describe("protectedCountries", () => {
+	it("protects both tier-1 locales, which the list it replaced did not", async () => {
+		// The defect in one assertion: `["FR", "GB", "DE"]` stood under a docstring reading "locales that iron rule 6
+		// protects unconditionally" while SCOPE's tier 1 read US and FR.
+		const countries = (await protectedCountries()).map((entry) => entry.country)
+
+		expect(countries).toContain("US")
+		expect(countries).toContain("FR")
+	})
+
+	it("gives every protected country a reason, and none an empty one", async () => {
+		const protections = await protectedCountries()
+
+		expect(protections.length).toBeGreaterThan(0)
+
+		for (const entry of protections) {
+			expect(entry.reason.length).toBeGreaterThan(0)
+		}
+	})
+
+	it("reads tier 1 from the register rather than from a second copy of it", async () => {
+		// The derivation is the whole change: a tier-1 country added to `scope.config.json` is protected without an
+		// edit here, which is the property the hand-written list could not have.
+		const scope = await readScopeConfig()
+		const widened = { ...scope, tiers: { ...scope.tiers, "1": [...(scope.tiers["1"] ?? []), "ZZ"] } }
+
+		expect(dRuleCountries(widened).map((entry) => entry.country)).toContain("ZZ")
 	})
 })

@@ -26,17 +26,26 @@
  *   them unattributable, and says which control failed. That refusal is the feature.
  */
 
+import { dRuleCountries, type ProtectedCountry, readScopeConfig } from "@mailwoman/core/scope-config"
+
 import { runCompare } from "#compare/index"
 import type { EngineRegistryLike } from "#engine/registry"
 import type { ComparedRow } from "#tool-kit"
 
 /**
- * Locales that iron rule 6 — the D-rule — protects unconditionally.
+ * The countries a default-on change may not regress, read from `scope.config.json`.
  *
  * No default-on mechanism ships with a known regression on any of these, whatever the net says. A candidate that wins
  * 40 rows and loses one in France is not a candidate.
+ *
+ * It is DERIVED rather than written here because the written version drifted. `["FR", "GB", "DE"]` stood under a
+ * docstring claiming iron rule 6's protection while `SCOPE.mdx` put US and FR in tier 1 — so a candidate regressing US
+ * rows raised no D-rule reason at all, which is the one reading the rule exists to force. Tier-1 membership now comes
+ * from the register the table is checked against, and every country protected beyond it carries its reason.
  */
-export const D_RULE_COUNTRIES = ["FR", "GB", "DE"] as const
+export async function protectedCountries(): Promise<ProtectedCountry[]> {
+	return dRuleCountries(await readScopeConfig())
+}
 
 /**
  * One arm's board result, reduced to what a verdict needs.
@@ -87,7 +96,7 @@ export interface ArcResult {
 	 * evidence about the candidate.
 	 */
 	attributable: boolean
-	dRuleViolations: Array<{ country: string; n: number }>
+	dRuleViolations: Array<{ country: string; n: number; reason: string }>
 	verdict: "ship" | "hold" | "unattributable"
 	reasons: string[]
 }
@@ -154,11 +163,16 @@ export interface ArcOptions {
 /**
  * The verdict, given three legs. Pure on purpose: this is the half that was getting decided by eye, and deciding it by
  * eye is what produced eight confidently-wrong regression counts.
+ *
+ * `protections` is an argument rather than a file read for the same reason. The function stays pure, the caller states
+ * which countries it is blocking on, and a test declares its own list instead of inheriting whatever the register
+ * happens to hold — {@linkcode runArc} passes {@linkcode protectedCountries}.
  */
 export function decideArc(
 	control: ArcLeg | undefined,
 	nullLeg: ArcLeg | undefined,
 	candidate: ArcLeg,
+	protections: readonly ProtectedCountry[],
 	shape: RunShape = "fine-tune"
 ): ArcResult {
 	const reasons: string[] = []
@@ -190,17 +204,22 @@ export function decideArc(
 		)
 	}
 
-	const dRuleViolations = D_RULE_COUNTRIES.map((country) => ({
-		country,
-		n: candidate.regressedByCountry[country] ?? 0,
-	})).filter((entry) => entry.n > 0)
+	const dRuleViolations = protections
+		.map(({ country, reason }) => ({
+			country,
+			n: candidate.regressedByCountry[country] ?? 0,
+			reason,
+		}))
+		.filter((entry) => entry.n > 0)
 
 	const attributableRegressions = nullLeg ? candidate.regressed - nullLeg.regressed : undefined
 	const attributableNet = nullLeg ? candidate.net - nullLeg.net : undefined
 
 	if (dRuleViolations.length) {
 		reasons.push(
-			`D-RULE: regressions on ${dRuleViolations.map((entry) => `${entry.country} (${entry.n})`).join(", ")}. ` +
+			`D-RULE: regressions on ${dRuleViolations
+				.map((entry) => `${entry.country} (${entry.n}) — ${entry.reason}`)
+				.join("; ")}. ` +
 				"Iron rule 6 blocks a default-on ship regardless of net. Fix, check per-locale, or make it opt-in."
 		)
 	}
@@ -259,7 +278,7 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
 	const nullLeg = options.null ? await compare("null (same base, no new data)", options.null) : undefined
 	const candidate = await compare("candidate", options.candidate)
 
-	return decideArc(control, nullLeg, candidate, options.shape ?? "fine-tune")
+	return decideArc(control, nullLeg, candidate, await protectedCountries(), options.shape ?? "fine-tune")
 }
 
 /**

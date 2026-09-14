@@ -1,0 +1,22 @@
+{
+	"$comment": "The locale scope declaration as DATA. `docs/engineering/SCOPE.mdx` carries the prose and the evidence behind every tier; this file carries the MEMBERSHIP, so a program can ask which countries a tier holds without a human reading a markdown table. `repo-health`'s `locale-scope` check refuses a disagreement between the two in either direction, which is the whole reason the file exists: the hand-written list that drifted from the table it claimed to encode was `D_RULE_COUNTRIES`, and a second hand-written list would drift the same way. Read through `@mailwoman/core/scope-config`; like `release.config.json` this is a repository file and a package that reached it from a published tarball would find nothing.",
+	"$comment_tiers": "Membership is MULTI-VALUED, and that is a property of the declaration rather than an encoding accident. Tiers 1 through 3 grade the strength of a claim; tiers 4 and 5 name a delivery mechanism — the diacritic tokenizer splice and the character path. So CZ and PL hold a tier-2 and a tier-4 membership at once, and neither supersedes the other. A faceted replacement for this axis is the address-topology work (#2276); until it lands the register mirrors the declaration rather than improving on it.",
+	"tiers": {
+		"1": ["FR", "US"],
+		"2": ["AT", "AU", "BE", "CH", "CZ", "DE", "DK", "ES", "FI", "HR", "IT", "NL", "PL", "PT"],
+		"3": ["NO", "SE"],
+		"4": ["CZ", "PL", "SI", "SK"],
+		"5": ["CN", "JP", "KR"]
+	},
+	"$comment_dRuleProtected": "Protection the graded arc applies BEYOND iron rule 6's own floor. Rule 6 protects tier 1 unconditionally and needs no entry here; an entry names a country the arc blocks on anyway, and states why. The list it replaced was `[\"FR\", \"GB\", \"DE\"]` — three countries with no recorded reason and, between them, one tier-1 locale missing (#2278).",
+	"dRuleProtected": {
+		"DE": "Tier 2, with a coordinate panel behind the claim and a data-only overlay in the release list. Its board is thin — 8 of its 16 rows check rather than track — so a DE regression is cheap to miss, which is a reason to block on one rather than a reason to stop watching for it.",
+		"GB": "The most detectable locale on the board: 106 of its 152 rows check, more checking rows than any other country holds. `@mailwoman/neural-weights-en-gb` ships with a trained postcode anchor slot and the Code-Point Open postcode binary, so a GB regression is both likely to be seen and expensive."
+	},
+	"$comment_untieredShippingLocales": "A country whose weights package ships while SCOPE's tier table places it in no tier. Each entry is a DEBT with a stated reason, not an exemption — `locale-scope` refuses a shipping country that is neither tiered nor named here, and refuses an entry here that has since been tiered or has stopped shipping. All three below are the same history: the tier table was declared on 2026-07-02 and the overlays shipped after it.",
+	"untieredShippingLocales": {
+		"GB": "Ships `@mailwoman/neural-weights-en-gb` and holds the largest checking board of any country (106 of 152 rows). SCOPE names GB only under Blocked/queued, which is about the OSM corpus license and says nothing about the claim. Tiering it needs the evidence column written, not a code change (#2278).",
+		"IN": "Ships `@mailwoman/neural-weights-en-in` with the IN placetype-pair index, against 2 checking board rows of 3 — the widest distance in the tree between gazetteer coverage and board power (#2277).",
+		"NZ": "Ships `@mailwoman/neural-weights-en-nz`, country scope only: no postcode binary, because no WOF NZ postcode extract exists, and no pair index. Carries 13 checking board rows of 14."
+	}
+}

@@ -3,13 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two AST guards that used to BE vitest files, run as checks against the tree this test sits in. Each must report
- *   no diagnostics: the reach-around guard's allowlist entries must still exist and still reach around (a stale
- *   exemption is a hole), and every registered runtime flag must be touched by a test. The checks carry those
- *   assertions as error diagnostics, so "no diagnostics" is the whole contract.
+ *   The checks that assert about the tree this test sits in, run as tests. Each must report no diagnostics: the
+ *   reach-around guard's allowlist entries must still exist and still reach around (a stale exemption is a hole), every
+ *   registered runtime flag must be touched by a test, and the scope register must still agree with the declaration it
+ *   encodes. The checks carry those assertions as error diagnostics, so "no diagnostics" is the whole contract.
+ *
+ *   This file is also the ONLY place several of them run. `yarn lint`'s health leg invokes four checks by id — `debt`,
+ *   `bundle-graph`, `exports`, `test-contract` — and no workflow runs `mwops health all`, so a registered check with no
+ *   test here is a check nothing executes. Registering one without a case below leaves it in the state it exists to
+ *   prevent.
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"
+import { localeScopeCheck } from "@mailwoman/repo-health/checks/locale/scope"
+import { localeTablesCheck } from "@mailwoman/repo-health/checks/locale/tables"
 import { noRootScriptsCheck } from "@mailwoman/repo-health/checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "@mailwoman/repo-health/checks/node-modules-reacharound"
 import { runtimeFlagsCheck } from "@mailwoman/repo-health/checks/runtime-flags"
@@ -47,5 +54,19 @@ describe("the root scripts/ directory", () => {
 		const diagnostics = await noRootScriptsCheck.run(planted)
 
 		expect(diagnostics.map((d) => d.file)).toContain("scripts/stray.ts")
+	})
+})
+
+describe("the locale registers", () => {
+	test("scope.config.json names the same countries per tier as SCOPE.mdx, and places every shipping locale", async () => {
+		const context = await collectRepoContext()
+
+		expect(await localeScopeCheck.run(context)).toEqual([])
+	})
+
+	test("every country→locale table agrees with the locales release.config.json ships", async () => {
+		const context = await collectRepoContext()
+
+		expect(await localeTablesCheck.run(context)).toEqual([])
 	})
 })

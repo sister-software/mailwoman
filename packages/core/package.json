@@ -531,6 +531,11 @@
 			"node": "./lib/release-config.ts",
 			"default": "./out/release-config.js"
 		},
+		"./scope-config": {
+			"types": "./out/scope-config.d.ts",
+			"node": "./lib/scope-config.ts",
+			"default": "./out/scope-config.js"
+		},
 		"./workspaces": {
 			"types": "./out/workspaces.d.ts",
 			"node": "./lib/workspaces.ts",

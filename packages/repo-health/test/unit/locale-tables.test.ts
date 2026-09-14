@@ -13,7 +13,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { findLocaleTables, localeTablesCheck, shippingLocales } from "@mailwoman/repo-health/checks/locale-tables"
+import { findLocaleTables, localeTablesCheck, shippingLocales } from "@mailwoman/repo-health/checks/locale/tables"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
