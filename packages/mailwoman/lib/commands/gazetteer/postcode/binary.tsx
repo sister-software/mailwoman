@@ -44,13 +44,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { GBGranularity, PostcodeDatabaseRow } from "#gazetteer-pipeline/postcode/binary"
 
 interface LocaleSource {
@@ -83,9 +77,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer whose only imports are

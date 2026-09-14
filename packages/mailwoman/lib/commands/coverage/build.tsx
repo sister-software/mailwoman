@@ -19,7 +19,7 @@ import { useState } from "react"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf, type ParsedCommandComponent,
+	type CommandComponent,
 	splitList,
 	splitNumberList,
 	useCommandTask,
@@ -99,9 +99,8 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
 
-const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
+const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()
 	const state = useCommandTask(async () => {
 		const { buildCoverageTiles } = await import("#coverage/core")

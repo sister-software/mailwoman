@@ -36,13 +36,7 @@ import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
@@ -130,8 +124,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 /**
  * Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped).
  */
@@ -152,7 +144,7 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 	return f === 1 ? "odd" : "even"
 }
 
-const SitusInterpolationDatabase: ParsedCommandComponent<Options> = ({ options }) => {
+const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/json")

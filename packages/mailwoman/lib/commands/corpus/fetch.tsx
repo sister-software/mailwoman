@@ -15,8 +15,8 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type CommandComponent,
 	type OptionsOf,
-	type ParsedCommandComponent,
 	reportToStderr,
 	splitList,
 	useCommandTask,
@@ -175,7 +175,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	}
 }
 
-const CorpusFetch: ParsedCommandComponent<Options, [FetchSourceID]> = ({ options, args }) => {
+const CorpusFetch: CommandComponent<typeof spec, [FetchSourceID]> = ({ options, args }) => {
 	const state = useCommandTask(
 		() => runSource(args[0], options),
 		(summary) => (summary.failed > 0 ? 1 : 0)

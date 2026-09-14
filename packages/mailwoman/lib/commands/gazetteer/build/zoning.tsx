@@ -33,8 +33,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
@@ -80,9 +79,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [
 			{ dataRootPath },

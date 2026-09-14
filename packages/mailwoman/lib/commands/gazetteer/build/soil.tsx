@@ -33,8 +33,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
@@ -76,8 +75,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 /**
  * Both halves of the check, as the summary lines they produce.
  *
@@ -110,7 +107,7 @@ async function runVerification(
 	})
 }
 
-const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 

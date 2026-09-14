@@ -17,13 +17,7 @@
  *   residuals (a row whose critical components the baseline never parsed at all).
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description =
 	"Metamorphic invariance mini-suite (comma-drop/abbrev/case/idempotence) — standing probe guard"
@@ -52,9 +46,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalInvariance: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalInvariance: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runInvarianceCommand } = await import("#eval-harness/invariance/command")

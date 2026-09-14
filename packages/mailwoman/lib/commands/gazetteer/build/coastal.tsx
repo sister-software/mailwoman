@@ -27,8 +27,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	splitList,
 	splitNumberList,
 	useCommandTask,
@@ -72,9 +71,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 

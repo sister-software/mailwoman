@@ -34,13 +34,7 @@ import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural
 import { Box, Text } from "ink"
 import { dirname, join } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode/prefix"
 
 /**
@@ -129,9 +123,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [DatabaseName]> = ({ args, options }) => {
+const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File, median } = await import("@mailwoman/core/utils")
 

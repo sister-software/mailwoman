@@ -15,8 +15,8 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type CommandComponent,
 	type OptionsOf,
-	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -81,7 +81,7 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 	}
 }
 
-const RegistryViz: ParsedCommandComponent<Options, [Figure]> = ({ options, args }) => {
+const RegistryViz: CommandComponent<typeof spec, [Figure]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runFigure(args[0], options))
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

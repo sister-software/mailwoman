@@ -10,14 +10,7 @@
 
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 export const description = "Train the coarse placer (#244) — SGD logistic regression, CPU-only"
 
@@ -36,9 +29,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const PlacerTrain: ParsedCommandComponent<Options> = ({ options }) => {
+const PlacerTrain: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { trainCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
 

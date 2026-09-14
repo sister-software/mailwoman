@@ -23,8 +23,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	readMailwomanVersion,
 	useCommandTask,
 } from "#cli-kit"
@@ -59,8 +58,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 /**
  * The synthetic self-check publishes nothing, so its cell floor exists only to keep the writer's suppression path on
  * the same code the controlled run takes.
@@ -73,7 +70,7 @@ const SYNTHETIC_MIN_CELL_SIZE = 1
  */
 const GENERATED_SALT_BYTES = 24
 
-const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [{ runPremiseLinkage, resolvePremiseLinkageConfig }, { publishableReport, writePremiseLinkageReport }] =
 			await Promise.all([

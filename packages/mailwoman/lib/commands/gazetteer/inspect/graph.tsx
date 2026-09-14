@@ -22,14 +22,7 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	parseRoles,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, parseRoles, useCommandTask } from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 
@@ -50,9 +43,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const WOFGraph: ParsedCommandComponent<Options, [string, string]> = ({ args, options }) => {
+const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, options }) => {
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {

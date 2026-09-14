@@ -25,13 +25,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Pre-registered geographic-model semantic-utility probe (#1928)"
 
@@ -58,9 +52,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalSemanticUtilityProbe: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalSemanticUtilityProbe: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { printProbeReceipt, runSemanticUtilityProbe } = await import("#eval-harness/semantic-utility/run")

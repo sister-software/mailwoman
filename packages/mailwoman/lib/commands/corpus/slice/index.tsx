@@ -21,8 +21,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	countOption,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	stringOption,
 	useCommandTask,
 } from "#cli-kit"
@@ -73,11 +72,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 
-const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
+const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { getSliceRecipe, listSliceRecipes } = await import("@mailwoman/corpus")
 

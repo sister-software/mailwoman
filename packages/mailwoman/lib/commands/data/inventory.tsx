@@ -18,14 +18,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { repoRootPath } from "@mailwoman/core/paths"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
 	buildCommandGaps,
 	inventorySentence,
@@ -52,8 +45,6 @@ export const spec = {
 		json: { type: "boolean", default: false, description: "Emit the report as JSON" },
 	},
 } as const satisfies CommandSpec
-
-type Options = OptionsOf<typeof spec>
 
 /**
  * One line per directory: how many of its databases carry a manifest, and how much disk they hold.
@@ -90,7 +81,7 @@ function rollup(entries: readonly InventoryEntry[]): string[] {
 		})
 }
 
-const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
+const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const dataRoot = options.dataRoot ?? String(mailwomanDataRoot())
 

@@ -9,14 +9,7 @@
  *   exits 1 when any error-severity flag fires (warnings don't check).
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -33,9 +26,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const DevLintCorpusDatabase: ParsedCommandComponent<Options> = ({ options }) => {
+const DevLintCorpusDatabase: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { lintCorpusSlice } = await import("@mailwoman/corpus/tools")

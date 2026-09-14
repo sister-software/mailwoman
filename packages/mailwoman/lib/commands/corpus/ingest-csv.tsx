@@ -8,13 +8,7 @@
  *   without importing.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -43,9 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const CorpusIngestCSV: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusIngestCSV: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { ingestCSV } = await import("@mailwoman/corpus/tools")
 		const { header, ...rest } = options

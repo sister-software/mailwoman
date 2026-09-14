@@ -9,13 +9,7 @@
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Append a promotion-eval run to evals/scores-by-version.json (#885)"
 
@@ -54,9 +48,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalLedgerAppend: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalLedgerAppend: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { ledgerAppend } = await import("#eval-harness/ledger-append")

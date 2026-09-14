@@ -7,13 +7,7 @@
  *   classifier. Exit 0 requires every first token to decode as postcode.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Read the 56 reserved bare-postcode capability cases with one warm classifier"
 
@@ -32,9 +26,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalBarePostcode: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalBarePostcode: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runBarePostcodeCapability } = await import("#eval-harness/bare-postcode-capability")

@@ -11,13 +11,7 @@
 
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -31,8 +25,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 /**
  * `null` renders as `N/A`, never as `0.000` — the withheld run makes no positive call, so its precision and F1 are
  * undefined rather than zero (see `linkage-metrics.ts`).
@@ -41,7 +33,7 @@ function formatScoreValue(value: number | null): string {
 	return value === null ? "N/A" : value.toFixed(3)
 }
 
-const FilerLinkageEval: ParsedCommandComponent<Options> = ({ options }) => {
+const FilerLinkageEval: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerLinkageEval } = await import("@mailwoman/filer/tools")
 

@@ -27,8 +27,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "#data/bundles"
@@ -48,8 +47,6 @@ export const spec = {
 		"data-root": { type: "string", description: "Override the data root" },
 	},
 } as const satisfies CommandSpec
-
-type Options = OptionsOf<typeof spec>
 
 /**
  * Live `Content-Length` for one artifact, or `undefined` on any failure (404, timeout, network) — the caller falls back
@@ -142,7 +139,7 @@ async function statusForBundles(
 	return { ok, checks }
 }
 
-const DataStatus: ParsedCommandComponent<Options> = ({ options, args }) => {
+const DataStatus: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { mailwomanDataRoot } = await import("@mailwoman/core/utils")

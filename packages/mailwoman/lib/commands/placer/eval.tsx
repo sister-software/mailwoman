@@ -13,8 +13,8 @@
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	type CommandComponent,
 	type OptionsOf,
-	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -81,7 +81,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const PlacerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
+const PlacerEval: CommandComponent<typeof spec, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runKind(args[0], options))
 
 	return <CommandTaskResult state={state} />

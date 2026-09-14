@@ -13,14 +13,7 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -45,9 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
+const TIGERRaceDotsMap: CommandComponent<typeof spec> = ({ options }) => {
 	const [serving, setServing] = useState<{ dir: string; port: number } | null>(null)
 
 	const state = useCommandTask(async () => {

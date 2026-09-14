@@ -15,14 +15,7 @@
  *   inference-side parity fix — see the pipeline module docstring.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	splitList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -41,9 +34,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildAnchorLookup: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildAnchorLookup } = await import("#gazetteer/anchor-lookup")
 

@@ -19,8 +19,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -34,9 +33,7 @@ export const spec = {
 	options: { drop: { type: "boolean", default: true, description: "Rebuild the relation; --no-drop appends" } },
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerBuildCoincidentRoles: ParsedCommandComponent<Options> = ({ options, args }) => {
+const GazetteerBuildCoincidentRoles: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")

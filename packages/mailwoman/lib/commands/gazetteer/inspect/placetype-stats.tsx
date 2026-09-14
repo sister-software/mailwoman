@@ -20,13 +20,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.
@@ -49,8 +43,6 @@ export const spec = {
 		json: { type: "boolean", description: "Emit raw JSON" },
 	},
 } as const satisfies CommandSpec
-
-type Options = OptionsOf<typeof spec>
 
 interface PlacetypeStat {
 	placetype: string
@@ -85,7 +77,7 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 	localadmin: "subregion",
 }
 
-const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPlacetypeStats: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { COMPONENT_TAGS } = await import("@mailwoman/codex/component")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

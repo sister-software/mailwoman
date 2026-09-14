@@ -20,13 +20,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Measure, check, or update the regression board's pins (row count, corpus hash, board id)."
 
@@ -55,8 +49,6 @@ export const spec = {
 		},
 	},
 } as const satisfies CommandSpec
-
-type Options = OptionsOf<typeof spec>
 
 /**
  * The title the audit searches for, so a second drift updates the open issue rather than opening a sibling.
@@ -89,7 +81,7 @@ async function reportStalePins(drift: string, testPath: string): Promise<string>
 	return "opened the audit issue"
 }
 
-const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPins: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { checkBoardPins, measureBoardPins, updateBoardPins, PIN_TEST_PATH } =
 			await import("#eval-harness/gauntlet/cases/pins")

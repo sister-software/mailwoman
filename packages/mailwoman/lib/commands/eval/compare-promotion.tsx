@@ -6,13 +6,7 @@
  *   `mailwoman eval compare-promotion` — compare two promotion-evaluation output directories.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Compare promotion-evaluation outputs before accepting a performance change"
 
@@ -28,9 +22,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const ComparePromotion: ParsedCommandComponent<Options> = ({ options }) => {
+const ComparePromotion: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			if (!options.baseline || !options.candidate) {

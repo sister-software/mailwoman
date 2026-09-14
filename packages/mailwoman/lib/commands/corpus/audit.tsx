@@ -7,13 +7,7 @@
  *   Pair with `--config` to weight the counts by a training YAML's source_weights block.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -34,9 +28,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const CorpusAudit: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
+const CorpusAudit: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { audit } = await import("@mailwoman/corpus/tools")
 

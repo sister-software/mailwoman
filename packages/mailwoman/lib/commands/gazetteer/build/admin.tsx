@@ -16,8 +16,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
 	splitUpperList,
 	useCommandTask,
@@ -39,11 +38,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 const csv = (raw: string | undefined): string[] | undefined => (raw ? splitUpperList(raw) : undefined)
 
-const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildAdmin } = await import("#gazetteer-pipeline")
 

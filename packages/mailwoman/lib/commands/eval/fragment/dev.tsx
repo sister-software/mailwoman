@@ -7,13 +7,7 @@
  *   (span-exact vs tag-accuracy; trailing-number→postcode rate). See eval-harness/fragment-dev.ts.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Fragment-dev read-out — probe-1 separator metrics (span-exact vs tag accuracy)"
 
@@ -41,9 +35,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalFragmentDev: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalFragmentDev: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { runFragmentDev } = await import("#eval-harness/fragment/dev")
 

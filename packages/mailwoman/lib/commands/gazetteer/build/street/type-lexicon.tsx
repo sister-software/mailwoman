@@ -8,13 +8,7 @@
  *   abbreviations uppercase-conditional). Small artifact, committed at `data/gazetteer/`.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -27,9 +21,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerBuildStreetTypeLexicon: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildStreetTypeLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildStreetTypeLexicon } = await import("#gazetteer/evidence-lexicons")
 		const built = await buildStreetTypeLexicon({ output: options.output })

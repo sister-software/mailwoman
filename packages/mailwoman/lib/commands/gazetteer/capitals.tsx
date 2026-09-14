@@ -12,13 +12,7 @@
 
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -32,9 +26,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerCapitals: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCapitalsReference } = await import("#gazetteer/capitals")
 		const { dataRootPath, repoRootPathBuilder } = await import("@mailwoman/core/utils")

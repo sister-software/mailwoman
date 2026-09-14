@@ -20,13 +20,7 @@ import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * `--inputs` accepts either:
@@ -55,8 +49,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 type AdapterInput = string | AdapterOptions
 
 function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput> {
@@ -81,7 +73,7 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 	})
 }
 
-const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {

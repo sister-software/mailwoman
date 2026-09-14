@@ -28,14 +28,7 @@ import { Box, Text } from "ink"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	splitList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 import { $private } from "#env"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
@@ -59,8 +52,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 interface Step {
 	label: string
 	status: "pending" | "running" | "done" | "error" | "skipped"
@@ -75,7 +66,7 @@ const MARK: Record<Step["status"], string> = {
 	skipped: "–",
 }
 
-const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 	const [steps, setSteps] = useState<Step[]>([])
 
 	const state = useCommandTask(async () => {

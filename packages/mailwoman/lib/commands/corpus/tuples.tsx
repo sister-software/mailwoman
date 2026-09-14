@@ -20,14 +20,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	splitUpperList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -51,8 +44,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 interface TuplesReport {
 	written: number
 	byCountry: Record<string, number>
@@ -60,7 +51,7 @@ interface TuplesReport {
 	output: string
 }
 
-const CorpusTuples: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async (): Promise<TuplesReport> => {
 		if (!options.countries) throw new CommandError("--countries <CC,CC> required")
 

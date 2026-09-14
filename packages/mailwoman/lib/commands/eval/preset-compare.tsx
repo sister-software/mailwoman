@@ -8,13 +8,7 @@
  *   companion; `eval promote` captures the same report into `<out-dir>/presets.md`.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Compare the 6 demo presets between the shipped baseline and a candidate"
 
@@ -30,9 +24,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalPresetCompare: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPresetCompare: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { presetCompare } = await import("#eval-harness/preset-compare")
 

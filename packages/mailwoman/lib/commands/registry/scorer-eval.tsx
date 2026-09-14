@@ -17,9 +17,9 @@ import type { EvalGeocodeStream } from "@mailwoman/registry/tools"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	numberOption,
 	type OptionsOf,
-	type ParsedCommandComponent,
+	numberOption,
+	type CommandComponent,
 	reportToStderr,
 	stringOption,
 	useCommandTask,
@@ -235,7 +235,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const RegistryScorerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
+const RegistryScorerEval: CommandComponent<typeof spec, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runKind(args[0], options))
 
 	return <CommandTaskResult state={state} />

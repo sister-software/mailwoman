@@ -20,8 +20,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
 	useCommandTask,
 } from "#cli-kit"
@@ -44,9 +43,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const ClientsGenerate: ParsedCommandComponent<Options> = ({ options }) => {
+const ClientsGenerate: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { generateClients } = await import("#tools/generate-clients")

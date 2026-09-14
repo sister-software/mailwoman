@@ -44,14 +44,7 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	splitList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -89,9 +82,7 @@ export const spec = {
  */
 const BBOX_FIELDS = 4
 
-type Options = OptionsOf<typeof spec>
-
-const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
+const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

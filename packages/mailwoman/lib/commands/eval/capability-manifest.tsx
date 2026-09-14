@@ -9,13 +9,7 @@
  *   card (refusing if a `capabilities` block already exists).
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Generate the model-card capability manifest (#718/#719)"
 
@@ -41,9 +35,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalCapabilityManifest: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalCapabilityManifest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { generateCapabilityManifest } = await import("#eval-harness/capability-manifest")
 

@@ -32,8 +32,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 import {
@@ -77,8 +76,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 interface SyncPlan {
 	destination: string
 	selection: RepoSelection
@@ -106,7 +103,7 @@ async function discoverRepos(): Promise<DiscoveredRepo[]> {
 	}
 }
 
-const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) => {
+const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
 	const [plan, setPlan] = useState<SyncPlan>()
 	const [active, setActive] = useState<readonly string[]>([])
 	const [doneCount, setDoneCount] = useState(0)

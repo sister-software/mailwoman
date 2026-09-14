@@ -9,14 +9,7 @@
  *   for the two-tier metric and every arm's rationale.
  */
 
-import {
-	booleanOption,
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { booleanOption, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
@@ -69,9 +62,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalOAResolver: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalOAResolver: CommandComponent<typeof spec> = ({ options }) => {
 	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
 
 	const state = useCommandTask(async () => {

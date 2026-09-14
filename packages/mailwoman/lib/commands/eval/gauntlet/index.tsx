@@ -19,14 +19,7 @@
  *   substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	splitList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
 
@@ -64,9 +57,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalGauntlet: CommandComponent<typeof spec> = ({ options }) => {
 	// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
 	// ever reaches `runGauntlet` as a field of its own.
 	const { postcodeCountryCoherenceOff, gazetteerPriorOff, adminContainmentRerankOff, components, ...rest } = options

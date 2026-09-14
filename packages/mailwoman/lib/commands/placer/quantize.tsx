@@ -10,14 +10,7 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 export const description = "Int8-quantize the coarse placer (#244) weights (4× smaller)"
 
@@ -33,9 +26,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const PlacerQuantize: ParsedCommandComponent<Options> = ({ options }) => {
+const PlacerQuantize: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { quantizeCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
 

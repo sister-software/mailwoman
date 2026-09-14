@@ -18,14 +18,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	CLIUsageError,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, CLIUsageError, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Admin-merge a pull request after running the sub-second guards the skipped checks carry."
 
@@ -40,8 +33,6 @@ export const spec = {
 		method: { type: "string", default: "merge", description: "Merge method: merge, squash, or rebase" },
 	},
 } as const satisfies CommandSpec
-
-type Options = OptionsOf<typeof spec>
 
 const MERGE_METHODS = ["merge", "squash", "rebase"] as const
 
@@ -123,7 +114,7 @@ async function mergeAdmin(prNumber: string, method: string): Promise<MergeAdminR
 	return { prNumber, title: pr.title, method, ranChecks, mergeOutput: merged.stdout.trim() }
 }
 
-const ReleaseMergeAdmin: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
+const ReleaseMergeAdmin: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
 	const state = useCommandTask(() => mergeAdmin(args[0], options.method))
 
 	if (state.status !== "done") {

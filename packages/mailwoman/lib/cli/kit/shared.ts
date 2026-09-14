@@ -22,6 +22,8 @@ import { Box, Text } from "ink"
 import { createElement as h, Fragment, useEffect, useState } from "react"
 import type * as React from "react"
 
+import type { CommandSpec, OptionsOf } from "#cli/native/spec"
+
 /**
  * Props shared by commands parsed through the native command specification.
  */
@@ -35,6 +37,18 @@ export interface ParsedCommandProps<Options, Args extends unknown[] = string[]> 
  */
 export type ParsedCommandComponent<Options = Record<string, never>, Args extends unknown[] = string[]> = React.FC<
 	ParsedCommandProps<Options, Args>
+>
+
+/**
+ * A command component whose options are DERIVED from the command's own `spec`.
+ *
+ * This is the annotation a command wants: naming `typeof spec` leaves the flags as the one declaration, where
+ * {@linkcode ParsedCommandComponent} takes an options type a command had to write beside its spec and keep in agreement
+ * with it. `ParsedCommandComponent` stays for a command that names its options type for another reason.
+ */
+export type CommandComponent<Spec extends CommandSpec, Args extends unknown[] = string[]> = ParsedCommandComponent<
+	OptionsOf<Spec>,
+	Args
 >
 
 /**

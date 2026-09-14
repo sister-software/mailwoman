@@ -18,8 +18,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -40,9 +39,7 @@ export const spec = {
 	options: { drop: { type: "boolean", default: false, description: "Drop and rebuild place_search and place_bbox" } },
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerBuildFTS: ParsedCommandComponent<Options> = ({ options, args }) => {
+const GazetteerBuildFTS: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite/fts")

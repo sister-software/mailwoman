@@ -10,13 +10,7 @@
  *   mangle + fragment campaign's progress.
  */
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Largest disagreement sample that keeps parity output reviewable.
@@ -58,9 +52,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const EvalParity: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalParity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runParityEval } = await import("#eval-harness/parity-corpus")

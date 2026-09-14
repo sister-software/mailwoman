@@ -31,13 +31,7 @@ import { stripCombiningMarks } from "@mailwoman/normalize"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
@@ -77,8 +71,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
 /**
  * Filesystem-safe form of a region name, for the default output path.
  */
@@ -89,7 +81,7 @@ function slugify(value: string): string {
 		.replaceAll(/^-|-$/g, "")
 }
 
-const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { pbf, region, country: rawCountry, release } = options
 

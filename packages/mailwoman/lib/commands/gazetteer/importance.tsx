@@ -43,13 +43,7 @@ import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 import { createReadStream } from "spliterator/node/fs"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type OptionsOf,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { FanoutCandidate } from "#gazetteer-pipeline/importance-fanout"
 /**
  * Permanent redirect.
@@ -83,9 +77,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
-
-const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
