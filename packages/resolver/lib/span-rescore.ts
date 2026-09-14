@@ -228,13 +228,31 @@ function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Ar
 	return out
 }
 
+/**
+ * The confident ranges, split by what a span containing one MEANS.
+ *
+ * `hard` is the house number, the postcode and the street body: a locality span overlapping one at all is reading
+ * material the parse already accounted for.
+ *
+ * `affix` is `street_prefix` / `street_suffix`, and the distinction is that a span EQUAL to an affix is the "Ave,
+ * France" failure — the guard's whole purpose — while a span that strictly CONTAINS one plus more is a different thing.
+ * `MN Eden Prairie` parses `Prairie` as a `street_suffix` at 0.86 and leaves `MN Eden` a `street` at 0.61, under the
+ * bar; blocking every span that touches `Prairie` makes `Eden Prairie` unenumerable, and the answer falls to `Eden` in
+ * North Carolina, 1,480 km away.
+ */
+interface ConfidentRanges {
+	hard: Array<[number, number]>
+	affix: Array<[number, number]>
+}
+
 function confidentRanges(
 	roots: readonly AddressNode[],
 	threshold: number,
 	raw: string,
 	postalCompoundRecovery: boolean
-): Array<[number, number]> {
+): ConfidentRanges {
 	const out: Array<[number, number]> = []
+	const affix: Array<[number, number]> = []
 
 	for (const n of walkNodes(roots)) {
 		if (
@@ -256,13 +274,15 @@ function confidentRanges(
 						out.push([n.start + t.start, n.start + t.end])
 					}
 				}
+			} else if (n.tag === "street_prefix" || n.tag === "street_suffix") {
+				affix.push([n.start, n.end])
 			} else {
 				out.push([n.start, n.end])
 			}
 		}
 	}
 
-	return out
+	return { hard: out, affix }
 }
 
 /**
@@ -315,7 +335,20 @@ export async function findRescoreCandidate(
 
 	const toks = tokenizeRaw(raw)
 	const avoid = confidentRanges(roots, threshold, raw, opts.postalCompoundRecovery ?? false)
-	const overlapsAvoid = (s: number, e: number) => avoid.some(([as, ae]) => s < ae && as < e)
+
+	// A span touching a hard range is refused. A span touching an AFFIX is refused unless it strictly
+	// contains that affix — which is what separates `Ave` (the span IS the suffix) from `Eden Prairie`
+	// (the suffix is one token inside a longer name). The rest of such a span still has to clear the hard
+	// ranges, so a `5th Ave` sitting inside a confident `street` stays refused by the first test.
+	const overlapsAvoid = (s: number, e: number) =>
+		avoid.hard.some(([as, ae]) => s < ae && as < e) ||
+		avoid.affix.some(([as, ae]) => {
+			if (e <= as || ae <= s) return false // disjoint — the affix has no say
+			const strictlyContains = s <= as && ae <= e && e - s > ae - as
+
+			return !strictlyContains
+		})
+
 	// Proper sub-spans of a multi-token country/region name are refused; the whole span is not.
 	const nameInteriors = multiTokenNameInteriors(roots, raw)
 

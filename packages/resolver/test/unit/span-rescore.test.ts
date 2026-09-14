@@ -176,6 +176,20 @@ const PLACES: FixturePlace[] = [
 		prominence: 7,
 		exactMatch: true,
 	},
+	// The "Ave, France" guard's own place, and the name that must survive it: `Prairie` is a street
+	// suffix AND the tail of a real locality, so the two cases differ only in whether the probed span
+	// IS the affix or merely contains it.
+	{ id: 60, name: "Ave", placetype: "locality", country: "FR", lat: 43.7, lon: 4.6, score: 2, exactMatch: true },
+	{
+		id: 61,
+		name: "Eden Prairie",
+		placetype: "locality",
+		country: "US",
+		lat: 44.85,
+		lon: -93.47,
+		score: 5,
+		exactMatch: true,
+	},
 	// #2266: a two-character name that collides with a region code, scoring far above the locality the
 	// query is actually about. Both spans are ONE token, so only character extent separates them.
 	{ id: 50, name: "Wa", placetype: "locality", country: "GH", lat: 10.06, lon: -2.5, score: 20, exactMatch: true },
@@ -331,6 +345,36 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate("New York City", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(40)
 		expect(hit?.alternatives).toEqual([])
+	})
+
+	it("a span EQUAL to a confident street suffix is refused — the Ave, France guard", async () => {
+		// "Ave" is a street suffix here and a commune in France. Probing it as a locality pins the address
+		// to Provence, which is the failure `confidentRanges` exists to prevent.
+		const raw = "350 5th Ave"
+
+		const roots: AddressNode[] = [
+			node({ tag: "house_number", value: "350", start: 0, end: 3, confidence: 0.95 }),
+			node({ tag: "street", value: "5th", start: 4, end: 7, confidence: 0.95 }),
+			node({ tag: "street_suffix", value: "Ave", start: 8, end: 11, confidence: 0.95 }),
+		]
+
+		expect(await findRescoreCandidate(raw, roots, await makeBackend(), { thresholdKm: 0 })).toBeNull()
+	})
+
+	it("#2266: a span CONTAINING a confident street suffix is probed — the suffix is one token of a longer name", async () => {
+		// `Prairie` carries a confident street_suffix tag while `MN Eden` is a street at 0.61, under the
+		// bar. Refusing every span that touches `Prairie` makes `Eden Prairie` unreachable.
+		const raw = "MN Eden Prairie"
+
+		const roots: AddressNode[] = [
+			node({ tag: "street", value: "MN Eden", start: 0, end: 7, confidence: 0.61 }),
+			node({ tag: "street_suffix", value: "Prairie", start: 8, end: 15, confidence: 0.86 }),
+		]
+
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { thresholdKm: 0 })
+
+		expect(hit?.text).toBe("Eden Prairie")
+		expect(hit?.place.id).toBe(61)
 	})
 
 	it("skips a span overlapping a confident street/house_number/postcode constituent", async () => {
