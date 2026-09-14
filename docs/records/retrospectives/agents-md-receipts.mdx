@@ -190,6 +190,37 @@ What surfaced it was a single graded row. A 982-row board comparison came back w
 `Turkmenabat` answering a Tajik namesake 468 km away — and Türkmenabat has a population of 230,861. An
 aggregate that moves by one row is still worth opening.
 
+## A count taken at the wrong unit — the 2026-09-14 script measurement
+
+The neighbour of the scoping error above, on a different axis. That one counted over the wrong
+POPULATION; this one counted the right population at the wrong UNIT, and the tell is the same shape: an
+exact integer ratio between the wrong number and the right one.
+
+Three counts entered [#2282](https://github.com/sister-software/mailwoman/issues/2282)'s task list from
+an earlier comment, and re-deriving them against the files gave:
+
+| Source                                              | Claimed |  Measured |
+| --------------------------------------------------- | ------: | --------: |
+| `data/eval/external/jp-overture-gold.jsonl`         |  11,946 | **3,982** |
+| …of those, kana-bearing                             |     356 |   **178** |
+| `corpus-python/…/countries/kr-build-reference.json` |      37 |    **20** |
+| `…/gauntlet/cases/cn/organizational-units.jsonl`    |      59 |    **21** |
+
+11,946 is 3,982 × 3 exactly, and 356 is 178 × 2 exactly. The first count had walked `text`, `muni` and
+`pref` as three rows each, and kana appears in two of those three fields on a kana-bearing row. Neither
+number was a typo or a stale file; both were the right file counted at the wrong unit, and the integer
+ratio is what says so.
+
+**The derived rate survived and its denominator did not.** Kana decides Japanese on 4.5% of ROWS (178 of
+3,982), not 3.0% of FIELDS (356 of 11,946). The conclusion the rate supports — that kana is too rare in
+this set to decide the language, so a script rule must abstain rather than guess — holds either way,
+which is exactly why nothing caught it: a number can be wrong by 3× and still argue for the same thing.
+
+The rule this instantiates is already written — count at the unit the model reads — and the addition is
+the detector: **when a re-derived count differs from the old one by a small exact integer factor, the
+unit moved, not the data.** A stale file gives a ragged difference; a changed unit gives 2×, 3×, or a
+reciprocal of one.
+
 ## The `node_modules` reach-around census — 2026-08-06
 
 **The rule is NOT "don't use `node:path`."** The 2026-08-06 triage counted **1,095 `join`/`resolve` call sites across 244 files**, and the split is the useful part: 20 node_modules reach-arounds, 48 data-root assembly, 25 module-relative, and **1,002 legitimate** — `mkdtemp` scratch dirs (127), test fixtures (420), and genuinely dynamic filesystem work (455): CLI `--out` flags, walking a user-supplied tree, composing under a root a caller threaded in. Banning the import would flag 1,075 correct lines to catch 20. Two shapes that look like violations and are not: a LOCAL root alias derived once from `mailwomanDataRoot()` and composed from thereafter (`scripts/copy-weights.ts` — the concern is re-deriving the root, not composing from it, and its `resolve(repoRoot, …)`-vs-`resolve(dataRoot, …)` contrast is required), and a probe that reads a FOREIGN project's install layout on purpose (`scripts/smoke-clean-install.ts` — `import.meta.resolve` would answer from the monorepo's graph, which is the exact thing a clean-install smoke must not consult).
