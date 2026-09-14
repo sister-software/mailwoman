@@ -166,4 +166,39 @@ two ways caught two of the seven in sixty seconds.
 
 **Known gaps (#875) — CLOSED 2026-08-03.** The eighteen public renames the old checker was holding behind a `DEFERRED` map — `@mailwoman/codex/nz`'s `NZ*` family, `@mailwoman/nuts-lookup`'s `NUTS*`, `@mailwoman/neural/weights`'s `CRFTransitions`/`readCRFTransitions`, `@mailwoman/annotations`'s `NUTS`, and `@mailwoman/registry`'s `createGBTScorer` — landed in the v9 major (#1432), and the same commit deleted `scripts/lint-acronym-casing.ts` along with the map. **There is no deferral list any more, and no script to add one to.** Enforcement is entirely the `acronymCasing` block in `oxlint.config.ts` driving `sister-software/no-title-case-acronym`, run by `yarn lint:oxlint` — which is what CI requires. That makes the check stricter than any sweep was: a fresh violation gets renamed in the commit that introduced it, and the only escape hatches are the two the paragraph above names (a scoped disable comment, or an `ignoreNames` entry when the casing is not ours to choose). Local (non-exported) identifiers stay out of scope — renaming one is free at any time, and flagging them is noise. **Correction to the pre-2026-08-03 text:** `outJsonl`/`outJson` were listed here as "residual internal cosmetic, no caller/def split". They are MEMBERS of exported options interfaces (`packages/registry/lib/tools/gold-set-sample.ts`'s `outJsonl?: string`), so a consumer constructing the options object types the name — caller-visible, and renamed with the rest. `ID` is enforced too: the house form is `ID`, never `Id`.
 
+## A threshold fitted to a failing population — the 2026-09-14 span-rescore arc
+
+**A rule fitted to the rows that are failing measures whatever defect is producing the failures, not the
+quantity the rule names.** The span-rescore audit of #2266 counted 34 of 453 frozen rows decided from a
+proper sub-span and found what looked like a clean separation: sorted by the share of the query the
+recovered span covers, **every row under 57% was wrong and every row at or above was correct** bar two.
+A coverage floor was the obvious rule, and it was one edit away from being registered.
+
+It would have been wrong, and the reason is that the low-coverage rows were low-coverage **because of the
+defect the same issue was fixing**. They recovered a two-character region code — `WA`, `ENG`, `CA`, `OK`
+— instead of the nine-character locality beside it, because the span comparator sorted by TOKEN COUNT and
+both spans are one token. Correct the comparator and those rows recover the locality, landing at 67% to
+82%. Re-measured after the fix: 26 of 28 sub-span recoveries correct, and the two failures read **67% and
+100% of the recoverable range** — the lowest and the highest the metric can produce. No threshold on
+either denominator separates them from the 26.
+
+Had the floor shipped first it would have bought every one of its wins from an ordering defect, then sat
+in the code with nothing left to do and a plausible docstring explaining why it was there.
+
+The general form is the D-rule's argument: a mechanism earns a default from evidence that survives the
+other defects being fixed. Three tests that cost minutes each and would have caught it — **fix the
+cheapest candidate cause first and re-measure**; **check whether the separating quantity is CAUSED by
+that cause**; and **read the failures the rule would newly refuse**, which here are `13 Kobe` and
+`ENG Bootle` at the same 67% as the row the rule was built to catch.
+
+Two more from the same arc, both the same shape. A "pocket of random countries" — CN, JP and KR the only
+places where a locality's same-name `localadmin` is absent from its ancestry chain — dissolved on
+measuring all 241 countries: the depth-1 parent is `region` in 136, `county` in 56, and `localadmin` in
+only 15, so CN at 98% `county` sits with India at 100%. And a withheld-gold benchmark stratum that
+removed every `gn:id`-concorded id left the `localadmin` twin answerable for 10.6% of populated
+localities, so three correct answers — `Langfang` 2.8 km, `Matsusaka` 1.3 km, `Troyes` 0.6 km — were
+published as exemplars of confident failure.
+
+The coverage rule's withdrawal is on https://github.com/sister-software/mailwoman/issues/2266.
+
 The overlay-template extraction is tracked in https://github.com/sister-software/mailwoman/issues/2035.

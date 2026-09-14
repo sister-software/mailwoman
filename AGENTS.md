@@ -262,6 +262,8 @@ Corollary for the docstring you write afterwards: if the claim was established b
 
 That corollary covers a MEASUREMENT THAT STILL BINDS, and nothing else. A comment states the invariant, the non-obvious constraint, or the reason an obvious implementation is unsafe; the incident that produced it goes in the commit message, the PR, or the runbook page. **A date, a version number, or a list of affected packages inside a comment is the tell** — strike it and see whether the sentence still stands; if it does not, the sentence was history.
 
+**A threshold fitted to a failing population measures the defect producing the failures, not the quantity it names.** A separation drawn over the rows that are currently wrong is evidence about their shared cause, and the cause is usually the thing you are already fixing. So before registering a rule: fix the cheapest candidate cause and re-measure; ask whether the separating quantity is CAUSED by that cause; and read the rows the rule would newly refuse, which is where a fitted threshold shows its real precision. The same reflex catches two neighbours — a finding that names three countries is a hypothesis about a global distribution until the statistic is computed for all of them, and a negative control built by REMOVING the right answer is complete only under the identity relation the data has, not the one the join used. The receipts are in [`docs/records/retrospectives/agents-md-receipts.mdx`](./docs/records/retrospectives/agents-md-receipts.mdx).
+
 ## Addendum
 
 - We use a version of Node.js that can strip types without any additional CLI flags. This is appropriate for everything but the Ink commands, which are TSX and require compiling.
