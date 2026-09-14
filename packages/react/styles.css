@@ -1806,6 +1806,17 @@
 		}
 
 		/*
+		 * The control rail is hidden while a result is open. It shares the corner the drawer's tall detent reaches,
+		 * and a control stranded above an open drawer is out of reach of the thumb holding the phone. Closing the
+		 * result brings it back — which is the same gesture that gives the map back.
+		 */
+		/* Doubled class: the base `.mw-map-control-stack` sets `display: flex` further down the sheet, and a single
+		 * class here loses to it on source order alone. */
+		.mw-map-control-stack.mw-map-control-stack--drawer-open {
+			display: none;
+		}
+
+		/*
 		 * The drawer's bar IS the grab target, so it keeps a full row — but only while it holds one. With no result the
 		 * bar is empty on a phone too, and an empty band over the search field is the gap this rule would otherwise put
 		 * back. `:has()` is the test; where it is unsupported the bar collapses, which is the harmless half.

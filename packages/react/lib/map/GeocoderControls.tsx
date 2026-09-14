@@ -152,6 +152,8 @@ export function GeocoderControls({
 			floor: viewport * 0.15,
 			// Released below this, the drag reads as "put it away" rather than "make it small".
 			dismissBelow: viewport * 0.28,
+			// At or under this the drawer is a search field over a map, not a panel standing on one.
+			collapsedBelow: viewport * 0.2,
 		}
 	}, [])
 
@@ -341,6 +343,38 @@ export function GeocoderControls({
 		return () => query.removeEventListener("change", onChange)
 	}, [])
 
+	/*
+	 * TOUCHING THE MAP PUTS THE DRAWER DOWN. A phone shows the map through whatever the drawer leaves, so the first
+	 * thing a visitor does after reading a result is pan to see where it is — and a drawer that stays at its detent
+	 * through that gesture is answering a question nobody asked twice.
+	 *
+	 * It shrinks rather than closes: the result is still there, one pull away. Only a gesture counts — a programmatic
+	 * camera move carries no `originalEvent`, and the fly-to that ANSWERS a query is exactly such a move, so reacting
+	 * to those would put a result away at the moment it arrived.
+	 */
+	useEffect(() => {
+		if (!map) return
+
+		const collapse = (event: { originalEvent?: unknown }) => {
+			if (!event.originalEvent) return
+			if (!isDrawerLayout()) return
+
+			const { floor } = sheetDetents()
+
+			setSheetHeight((current) => (current !== null && current <= floor ? current : floor))
+		}
+
+		map.on("dragstart", collapse)
+		map.on("zoomstart", collapse)
+		map.on("rotatestart", collapse)
+
+		return () => {
+			map.off("dragstart", collapse)
+			map.off("zoomstart", collapse)
+			map.off("rotatestart", collapse)
+		}
+	}, [map, sheetDetents])
+
 	// Escape dismisses the result sheet, matching `MapSheet`.
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -370,6 +404,15 @@ export function GeocoderControls({
 	// The bundle load no longer opens the result sheet: it reports on the bar at the top of the viewport and in the
 	// footer, so an empty sheet does not sit over the map for the length of a 38 MB download.
 	const showSheet = Boolean(busy || result || errorMessage) && !resultDismissed
+
+	/*
+	 * The drawer STANDS OVER the map, as opposed to resting at the bottom of it. Shrunk to its smallest detent it is
+	 * a search field with a map behind it, and the map's own controls belong back on screen at that point — which is
+	 * the state a pan leaves it in.
+	 */
+	const drawerRaised =
+		showSheet &&
+		(sheetHeight === null || (typeof window !== "undefined" && sheetHeight > sheetDetents().collapsedBelow))
 
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0
@@ -553,7 +596,12 @@ export function GeocoderControls({
 			 * control joins the capsule rather than sitting in the left column, and the compass takes its own capsule
 			 * below because it comes and goes and would otherwise resize the one above it.
 			 */}
-			<MapControlStack label="Map controls">
+			{/*
+			 * The rail steps aside for the drawer on a phone. It is pinned to the corner the drawer's tall detent
+			 * reaches, and a control stranded above an open result is one a thumb cannot get to anyway. It comes back
+			 * with the map, when the result is put away.
+			 */}
+			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : undefined}>
 				<MapControlGroup>
 					<MapControlButton
 						label="About this geocoder"
