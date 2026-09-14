@@ -4,18 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { classifyToken, tokenizeForClass } from "@mailwoman/query-shape/character-class"
+import { classifyTokens } from "@mailwoman/query-shape/character-class"
 import { computeQueryShape } from "@mailwoman/query-shape/compute"
 import { detectRegionAbbreviations } from "@mailwoman/query-shape/region-abbreviations"
 import { segment } from "@mailwoman/query-shape/segmentation"
-import type { TokenClass } from "@mailwoman/query-shape/types"
 import { describe, expect, it } from "vitest"
 
-function makeTokenClasses(text: string): TokenClass[] {
-	const spans = tokenizeForClass(text)
-
-	return spans.map((span) => ({ span, class: classifyToken(span.body), length: span.end - span.start }))
-}
+const makeTokenClasses = classifyTokens
 
 describe("detectRegionAbbreviations", () => {
 	it("detects 'DC' after comma in 'Washington, DC 20500'", () => {

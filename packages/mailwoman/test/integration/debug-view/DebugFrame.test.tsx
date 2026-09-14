@@ -78,6 +78,7 @@ const TRACE = {
 	},
 	queryShape: {
 		characterClass: "alphanumeric",
+		scripts: [],
 		tokenClasses: [],
 		segments: [],
 		knownFormats: [],

@@ -29,6 +29,14 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 		scored.push(script)
 	}
 
+	// The writing system is a property of the INPUT, so it is the same whichever rung of the precedence ladder decides
+	// `locale`. A caller passing `--locale en-GB` for a Han-bearing address gets their tag and the fact that the
+	// address carries Han; those are different claims and the hint now makes both.
+	const scripts: LocaleHint["script"] = (shape.scripts ?? []).map((entry) => ({
+		script: entry.script,
+		confidence: entry.share,
+	}))
+
 	const postcode = scoreByPostcode(shape)
 
 	if (postcode) {
@@ -58,6 +66,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 			confidence: 1,
 			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
 			source: "caller",
+			script: scripts,
 		}
 	}
 
@@ -67,6 +76,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 			confidence: 0.95,
 			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
 			source: "environment",
+			script: scripts,
 			evidence: { environmentLocale: opts.environmentLocale },
 		}
 	}
@@ -82,6 +92,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 			confidence: 0.55,
 			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
 			source: "machine",
+			script: scripts,
 			evidence: {
 				intlLocale: machineLocale,
 				...(opts.machinePreferences?.timeZone ? { timeZone: opts.machinePreferences.timeZone } : {}),
@@ -94,5 +105,6 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 		confidence: top.confidence,
 		alternatives: deduped.slice(1).map((c) => ({ locale: c.locale, confidence: c.confidence })),
 		source: "detected",
+		script: scripts,
 	}
 }

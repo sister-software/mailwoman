@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { classifyToken, foldInputClass, tokenizeForClass } from "#character-class"
+import { classifyTokens, foldInputClass, foldInputScripts } from "#character-class"
 import { detectKnownFormats } from "#known-formats"
 import { detectRegionAbbreviations } from "#region-abbreviations"
 import { segment } from "#segmentation"
@@ -59,22 +59,18 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 	const text = typeof input === "string" ? input : input.normalized
 	const locale = opts?.locale ?? (typeof input === "string" ? undefined : input.appliedLocale)
 
-	const tokenSpans = tokenizeForClass(text)
-
-	const tokenClasses: TokenClass[] = tokenSpans.map((span) => ({
-		span,
-		class: classifyToken(span.body),
-		length: span.end - span.start,
-	}))
+	const tokenClasses: TokenClass[] = classifyTokens(text)
 
 	const segments = segment(text, locale)
 	const knownFormats = detectKnownFormats(text, tokenClasses)
 	const regionAbbreviations = detectRegionAbbreviations(tokenClasses, segments)
 	const characterClass = foldInputClass(tokenClasses)
+	const scripts = foldInputScripts(text)
 	const whitespacePattern = detectWhitespacePattern(text)
 
 	return Object.freeze({
 		characterClass,
+		scripts: Object.freeze(scripts) as typeof scripts,
 		tokenClasses: Object.freeze(tokenClasses) as TokenClass[],
 		segments: Object.freeze(segments) as typeof segments,
 		knownFormats: Object.freeze(knownFormats) as typeof knownFormats,

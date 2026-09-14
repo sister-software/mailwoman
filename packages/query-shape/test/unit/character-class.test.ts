@@ -7,10 +7,13 @@
 import {
 	classifyCodepoint,
 	classifyToken,
+	classifyTokenScript,
 	foldInputClass,
+	foldInputScripts,
+	scriptForCodepoint,
 	tokenizeForClass,
 } from "@mailwoman/query-shape/character-class"
-import type { TokenClass } from "@mailwoman/query-shape/types"
+import type { ScriptCode, TokenClass } from "@mailwoman/query-shape/types"
 import { describe, expect, it } from "vitest"
 
 describe("classifyCodepoint", () => {
@@ -99,6 +102,7 @@ describe("foldInputClass", () => {
 		span: { start: 0, end: 1, body: "x" },
 		class: cls,
 		length: 1,
+		script: "Zyyy",
 	})
 
 	it("returns 'numeric' for all-digit tokens", () => {
@@ -157,5 +161,113 @@ describe("tokenizeForClass", () => {
 		expect(tokens).toHaveLength(2)
 		expect(tokens[0]!.body).toBe("東京")
 		expect(tokens[1]!.body).toBe("Tokyo")
+	})
+})
+
+describe("scriptForCodepoint", () => {
+	/**
+	 * Unicode's own script property, as the engine reports it. The hand ranges exist for speed — `computeQueryShape`
+	 * promises microseconds and runs per keystroke — and this is what keeps them honest as Unicode moves: every codepoint
+	 * the table claims is checked against `\p{Script=…}` rather than against a reading of the table.
+	 */
+	const UNICODE_SCRIPT: ReadonlyArray<[ScriptCode, RegExp]> = [
+		["Hira", /\p{Script=Hiragana}/u],
+		["Kana", /\p{Script=Katakana}/u],
+		["Hang", /\p{Script=Hangul}/u],
+		["Hani", /\p{Script=Han}/u],
+		["Latn", /\p{Script=Latin}/u],
+		["Cyrl", /\p{Script=Cyrillic}/u],
+		["Arab", /\p{Script=Arabic}/u],
+		["Yiii", /\p{Script=Yi}/u],
+	]
+
+	it.each(UNICODE_SCRIPT)("answers %s for every codepoint Unicode assigns to it in our ranges", (code, property) => {
+		let checked = 0
+
+		for (let cp = 0; cp <= 0x2_a6_df; cp++) {
+			// Surrogates are not characters and `String.fromCodePoint` produces a lone one, which no property matches.
+			if (cp >= 0xd8_00 && cp <= 0xdf_ff) continue
+
+			if (scriptForCodepoint(cp) !== code) continue
+
+			checked++
+
+			expect([cp.toString(16), property.test(String.fromCodePoint(cp))]).toEqual([cp.toString(16), true])
+		}
+
+		// A claim about zero codepoints passes however wrong the table is.
+		expect(checked).toBeGreaterThan(0)
+	})
+
+	it("calls a digit, a comma and a prolonged sound mark Common rather than guessing a script", () => {
+		// `ー` is the one that mattered: it sits inside the Katakana block, Unicode calls it Common, and reading it off
+		// the block made `ブロードウェイ` report a fifth of itself as an unrecognized script.
+		expect(scriptForCodepoint(0x39)).toBe("Zyyy")
+		expect(scriptForCodepoint(0x2c)).toBe("Zyyy")
+		expect(scriptForCodepoint(0x30_fc)).toBe("Zyyy")
+		expect(scriptForCodepoint(0x30_fb)).toBe("Zyyy")
+	})
+
+	it("says Zzzz for a script it has no ranges for, rather than folding it into a neighbour", () => {
+		// Devanagari ग. An address in a script this file does not carry is a script it cannot name, and saying so is
+		// what lets a consumer tell that apart from "no script here".
+		expect(scriptForCodepoint(0x09_17)).toBe("Zzzz")
+	})
+})
+
+describe("classifyTokenScript", () => {
+	it.each([
+		["東京都千代田区", "Hani"],
+		["ブロードウェイ", "Kana"],
+		["ひらがな", "Hira"],
+		["서울특별시", "Hang"],
+		["Gerrard", "Latn"],
+		["Москва", "Cyrl"],
+		["10118", "Zyyy"],
+		["52-1", "Zyyy"],
+	] as const)("reads %s as %s", (text, expected) => {
+		expect(classifyTokenScript(text)).toBe(expected)
+	})
+})
+
+describe("foldInputScripts", () => {
+	it("names both scripts of a mixed input, which the character class folds to one word", () => {
+		// `foldInputClass` answers `mixed` here, and `mixed` names no script at all — so the Han venue in a London
+		// address was invisible to every consumer reading the fold.
+		const scripts = foldInputScripts("金龍酒家, 12 Gerrard Street, London WC2H 7JS")
+
+		expect(scripts.map((entry) => entry.script)).toEqual(["Latn", "Hani"])
+		expect(scripts[0]!.share).toBeCloseTo(0.86, 2)
+		expect(scripts[1]!.share).toBeCloseTo(0.14, 2)
+	})
+
+	it("separates Hangul from Han, which the character class cannot", () => {
+		// Both answer `characterClass: "cjk"`, and the locale hint answers `ja-JP` for both.
+		expect(foldInputScripts("서울특별시 종로구 청운동 52-1")[0]!.script).toBe("Hang")
+		expect(foldInputScripts("東京都千代田区丸の内1-9-1")[0]!.script).toBe("Hani")
+	})
+
+	it("excludes digits and punctuation from BOTH halves of the share", () => {
+		// Otherwise a Japanese address with a postcode reports a lower Han share than the same address without one, and
+		// the number measures the punctuation rather than the writing.
+		const withPostcode = foldInputScripts("〒100-0005 東京都千代田区")
+		const without = foldInputScripts("東京都千代田区")
+
+		expect(withPostcode[0]).toEqual(without[0])
+	})
+
+	it("answers an empty list when nothing in the input names a script", () => {
+		// A bare postcode is not Latin. It is script-neutral, and an empty list says so where a default would not.
+		expect(foldInputScripts("10118")).toEqual([])
+	})
+
+	it("ranks by share and sums to one", () => {
+		const scripts = foldInputScripts("東京都千代田区丸の内1-9-1")
+		const total = scripts.reduce((sum, entry) => sum + entry.share, 0)
+
+		expect(total).toBeCloseTo(1, 10)
+		const shares = scripts.map((entry) => entry.share)
+
+		expect(shares).toEqual(shares.toSorted((left, right) => right - left))
 	})
 })

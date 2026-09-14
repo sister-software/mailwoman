@@ -13,7 +13,16 @@
  *   `docs/engineering/reference/STAGES.md` for how this fits into the runtime pipeline.
  */
 
-export { classifyCodepoint, classifyToken, foldInputClass } from "#character-class"
+export {
+	classifyCodepoint,
+	classifyToken,
+	classifyTokens,
+	classifyTokenScript,
+	foldInputClass,
+	foldInputScripts,
+	scriptForCodepoint,
+} from "#character-class"
+
 export { computeQueryShape } from "#compute"
 export { detectKnownFormats, isPostcodeFormat } from "#known-formats"
 export { detectRegionAbbreviations, isRegionAbbreviationToken } from "#region-abbreviations"
@@ -32,6 +41,8 @@ export type {
 	QueryShapeSegmentsView,
 	QueryShapeTokensView,
 	RegionAbbreviationHit,
+	ScriptCode,
+	ScriptShare,
 	Segment,
 	SegmentSeparator,
 	SegmentView,

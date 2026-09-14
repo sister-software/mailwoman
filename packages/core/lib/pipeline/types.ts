@@ -116,6 +116,26 @@ export interface QueryShapeLite {
 	}>
 	segments?: ReadonlyArray<{ body: string; index: number }>
 	characterClass?: string
+	/**
+	 * ISO 15924 scripts the input is written in, ranked by share of its script-bearing characters.
+	 *
+	 * It stands beside `characterClass` rather than replacing it, because they answer different questions: the class says
+	 * whether a run is ideographic or numeric, which is what the tokenizer and the decoder ask, and folds Kana, Han and
+	 * Hangul to one `cjk` value to do it. A consumer that needs the writing system reads here.
+	 */
+	scripts?: ReadonlyArray<{ script: string; share: number }>
+	/**
+	 * Per-token class and script. Optional so a hand-built shape stays valid; `computeQueryShape` always supplies it.
+	 *
+	 * The per-token script is the half a fold cannot reconstruct: `金龍酒家, 12 Gerrard Street, London WC2H 7JS` folds to
+	 * `mixed`, and `mixed` names no script, so which SPAN carried the Han was unrecoverable downstream.
+	 */
+	tokenClasses?: ReadonlyArray<{
+		span: { start: number; end: number; body: string }
+		class: string
+		length: number
+		script?: string
+	}>
 	totalLength?: number
 }
 
@@ -127,6 +147,25 @@ export interface LocaleHint {
 	confidence: number
 	alternatives: ReadonlyArray<{ locale: Intl.UnicodeBCP47LocaleIdentifier; confidence: number }>
 	source: "caller" | "environment" | "machine" | "detected" | "ensemble"
+	/**
+	 * The ISO 15924 scripts the input is written in, ranked by share of its script-bearing characters. Empty when nothing
+	 * in the input names a script — a bare postcode does not.
+	 *
+	 * SEPARATE FROM `locale`, and added because it had nowhere else to go. `locale` is one BCP-47 tag, so a Hangul
+	 * address and a kanji address both had to be reported under one of them, and the rule that picks it answers `ja-JP`
+	 * for every CJK input; on the Korean reference set that is every row. The tag is not wrong about ROUTING — the
+	 * character path is one weights family for Japanese, Korean and Chinese — it is wrong about what it says, and a
+	 * consumer reading the hint could not tell "Japanese" from "a script I cannot resolve a language for".
+	 *
+	 * This field lets it say the second. `locale` keeps its current meaning and its current values; a consumer that wants
+	 * the writing system reads here. Script narrows language where it is diagnostic — Hangul decides Korean on 37 of 37
+	 * rows of the Korean reference set — and does not where it is not: Han is shared, and kana decides Japanese on 356 of
+	 * 11,946 JP gold rows, because 県/市/区 and most place names are written in Han.
+	 *
+	 * `script` is plain strings for the reason every field on this contract is: `@mailwoman/core/pipeline` declares the
+	 * dependency-free shape and `@mailwoman/query-shape` owns the named `ScriptCode` union.
+	 */
+	script?: ReadonlyArray<{ script: string; confidence: number }>
 	/**
 	 * Diagnostic provenance for inferred preferences. Locale and timezone remain independent signals.
 	 */

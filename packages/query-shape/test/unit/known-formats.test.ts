@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { classifyToken, tokenizeForClass } from "@mailwoman/query-shape/character-class"
+import { classifyTokens } from "@mailwoman/query-shape/character-class"
 import { detectKnownFormats, isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
-import type { KnownFormat, TokenClass } from "@mailwoman/query-shape/types"
+import type { KnownFormat } from "@mailwoman/query-shape/types"
 import { describe, expect, it } from "vitest"
 
 describe("isPostcodeFormat", () => {
@@ -61,13 +61,7 @@ describe("isPostcodeFormat", () => {
 	})
 })
 
-function tokenize(text: string): TokenClass[] {
-	return tokenizeForClass(text).map((span) => ({
-		span,
-		class: classifyToken(span.body),
-		length: span.end - span.start,
-	}))
-}
+const tokenize = classifyTokens
 
 function formatsOf(text: string): KnownFormat[] {
 	return detectKnownFormats(text, tokenize(text)).map((h) => h.format)
