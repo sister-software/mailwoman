@@ -1536,25 +1536,15 @@
 	}
 
 	/*
-	 * The result sheet has no header row to hang a close button in — its content is host-injected — so this one rides a
-	 * zero-height sticky row pinned to the top of the sheet's scroll container. Sticky rather than absolute: the sheet
-	 * scrolls its own content, and an absolute child would scroll away with it.
+	 * The close sits at the right of the grip bar. Absolute within it so the handle stays centred on the sheet rather
+	 * than centred on the space the close leaves. A full 44px target: on a phone the sheet is the whole panel and this
+	 * is the only way out of it.
 	 */
-	.mw-map-sheet__dismiss {
-		position: sticky;
-		top: 0;
-		z-index: 2;
-		display: flex;
-		justify-content: flex-end;
-		height: 0;
-	}
-
-	/* A full 44px target: on a phone the sheet is the whole panel and this is the only way out of it. */
 	.mw-map-sheet__close--floating {
+		position: absolute;
+		right: 0.25rem;
 		width: 2.75rem;
 		height: 2.75rem;
-		background: var(--color-background-raised);
-		box-shadow: var(--material-glass-shadow);
 	}
 
 	.mw-map-sheet__row {
@@ -1630,13 +1620,67 @@
 		outline-offset: 1px;
 	}
 
-	/* The grab affordance the reference sheets carry. Decorative: the sheet scrolls, it does not drag. */
+	/*
+	 * The sheet's own header: the grab handle centred, the close at the right, both pinned to the top of the scroll
+	 * container. Sticky and opaque, because content passes UNDER it — the sheet's own material is translucent glass,
+	 * which would let a scrolling table show through the bar.
+	 *
+	 * The negative inline margin bleeds it over the sheet's padding so the bar reaches both edges.
+	 */
+	.mw-map-sheet__grip {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 2.5rem;
+		margin: -0.5rem -1rem 0.25rem;
+		padding-inline: 0.5rem;
+		background: var(--color-background-raised);
+		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+	}
+
+	/*
+	 * The grab affordance, and now a real control: drag to resize between two detents, drag down past the smaller one
+	 * to dismiss, tap or Enter to toggle. It was decorative, which is worse than absent — a handle that looks draggable
+	 * and is not reads as a broken sheet rather than a static one.
+	 *
+	 * The pill is drawn as a pseudo-element so the button itself can be a 44px-tall target without a 44px-tall pill.
+	 * `touch-action: none` stops the browser claiming the gesture as a scroll before the pointer handlers see it.
+	 */
 	.mw-map-sheet__handle {
+		display: grid;
+		place-items: center;
+		width: 3rem;
+		height: 2.5rem;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		cursor: grab;
+		touch-action: none;
+	}
+
+	.mw-map-sheet__handle::before {
+		content: "";
 		width: 2.25rem;
 		height: 0.25rem;
-		margin: 0 auto 0.6rem;
 		border-radius: var(--radius-pill);
 		background: var(--color-separator);
+	}
+
+	.mw-map-sheet__handle:hover::before {
+		background: var(--color-text-tertiary);
+	}
+
+	.mw-map-sheet__handle:active {
+		cursor: grabbing;
+	}
+
+	.mw-map-sheet__handle:focus-visible {
+		outline: 2px solid var(--color-selection);
+		outline-offset: -2px;
+		border-radius: var(--radius-pill);
 	}
 
 	.mw-map-sheet__actions {

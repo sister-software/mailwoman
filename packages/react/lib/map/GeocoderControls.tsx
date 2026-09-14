@@ -13,6 +13,7 @@
  *   NODE-SAFE: pure React + the shared units, no maplibre.
  */
 
+import type React from "react"
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
 
@@ -134,6 +135,80 @@ export function GeocoderControls({
 	// only way to clear it was to run another query. `MapSheet` states the rule for the other four sheets ("the close
 	// button is not optional"); this one is hand-rolled and never got it. Reset on every new query, below.
 	const [resultDismissed, setResultDismissed] = useState(false)
+
+	// The result sheet's height, in px, once a visitor has dragged it; `null` means the stylesheet's default detent.
+	const sheetRef = useRef<HTMLElement>(null)
+	const [sheetHeight, setSheetHeight] = useState<number | null>(null)
+	const sheetDragRef = useRef<{ startY: number; startHeight: number; moved: boolean } | null>(null)
+
+	// Detents as fractions of the viewport, resolved at interaction time so a rotated phone or a resized window gets
+	// the right numbers without a listener.
+	const sheetDetents = useCallback(() => {
+		const viewport = window.innerHeight
+
+		return {
+			medium: viewport * 0.52,
+			large: viewport * 0.88,
+			floor: viewport * 0.15,
+			// Released below this, the drag reads as "put it away" rather than "make it small".
+			dismissBelow: viewport * 0.28,
+		}
+	}, [])
+
+	const onGripPointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+		const sheet = sheetRef.current
+
+		if (!sheet) return
+
+		event.currentTarget.setPointerCapture(event.pointerId)
+		sheetDragRef.current = { startY: event.clientY, startHeight: sheet.getBoundingClientRect().height, moved: false }
+	}, [])
+
+	const onGripPointerMove = useCallback(
+		(event: React.PointerEvent<HTMLButtonElement>) => {
+			const drag = sheetDragRef.current
+
+			if (!drag) return
+
+			// Up is taller, so the delta is inverted against the pointer's y.
+			const delta = drag.startY - event.clientY
+
+			if (Math.abs(delta) > 3) drag.moved = true
+
+			const { floor, large } = sheetDetents()
+
+			setSheetHeight(Math.min(large, Math.max(floor, drag.startHeight + delta)))
+		},
+		[sheetDetents]
+	)
+
+	const onGripPointerUp = useCallback(() => {
+		const drag = sheetDragRef.current
+
+		if (!drag) return
+
+		sheetDragRef.current = null
+
+		const { medium, large, dismissBelow } = sheetDetents()
+		const midpoint = (medium + large) / 2
+		const current = sheetRef.current?.getBoundingClientRect().height ?? medium
+
+		// A press with no travel is a tap: toggle between the two detents, which is what a keyboard gets too.
+		if (!drag.moved) {
+			setSheetHeight(current > midpoint ? medium : large)
+
+			return
+		}
+
+		if (current < dismissBelow) {
+			setResultDismissed(true)
+			setSheetHeight(null)
+
+			return
+		}
+
+		setSheetHeight(current > midpoint ? large : medium)
+	}, [sheetDetents])
 	const { bearing, resetNorth } = useMapBearing(map)
 
 	const toggleSheet = (name: Exclude<SheetName, null>) => setOpenSheet((current) => (current === name ? null : name))
@@ -143,8 +218,10 @@ export function GeocoderControls({
 	// caused it, rather than an effect watching the result after the fact.
 	const runQuery = useCallback(
 		(query: string) => {
-			// A new query is a new answer: whatever the visitor dismissed, they want to see this one.
+			// A new query is a new answer: whatever the visitor dismissed, they want to see this one, at the size the
+			// stylesheet picks rather than whatever the last drag left behind.
 			setResultDismissed(false)
+			setSheetHeight(null)
 			onSubmitQuery?.(query)
 			void geocode.submit(query)
 		},
@@ -373,16 +450,32 @@ export function GeocoderControls({
 			) : null}
 
 			{showSheet ? (
-				<section className="mw-map-sheet mw-map-sheet--bottom" aria-label="Result">
-					<div className="mw-map-sheet__handle" aria-hidden="true" />
-
+				<section
+					className="mw-map-sheet mw-map-sheet--bottom"
+					aria-label="Result"
+					ref={sheetRef}
+					{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
+				>
 					{/*
-					 * A zero-height sticky row, so the close stays pinned to the top of the sheet as a long result scrolls
-					 * under it. An absolutely-positioned button would scroll away with the content — the sheet is its own
-					 * scroll container — which is the same thing that already happens to this sheet's "Parsed components"
-					 * header.
+					 * One sticky bar carrying both controls, with real height.
+					 *
+					 * Both used to sit in the scroll flow: the grabber scrolled out of view, and the close was a
+					 * zero-height overlay that landed on top of whatever the host rendered at the sheet's top right —
+					 * "Copy JSON", in the result panel. A bar that occupies its own height and sticks to the top of the
+					 * scroll container fixes both: content starts below it and scrolls under it.
 					 */}
-					<div className="mw-map-sheet__dismiss">
+					<div className="mw-map-sheet__grip">
+						<button
+							type="button"
+							className="mw-map-sheet__handle"
+							aria-label="Resize the result"
+							aria-expanded={sheetHeight !== null && sheetHeight > window.innerHeight * 0.7}
+							onPointerDown={onGripPointerDown}
+							onPointerMove={onGripPointerMove}
+							onPointerUp={onGripPointerUp}
+							onPointerCancel={onGripPointerUp}
+						/>
+
 						<button
 							type="button"
 							className="mw-map-sheet__close mw-map-sheet__close--floating"
