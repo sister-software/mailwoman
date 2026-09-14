@@ -4,21 +4,27 @@
  * @author Teffen Ellis, et al.
  * @file Every country→locale table agrees with the locales `release.config.json` ships.
  *
- *   Four tables map an ISO country code to a locale, each written by hand, and `release.config.json` is the one
- *   that decides what ships. Adding a locale means editing the config and then remembering four other files; the
- *   one that is forgotten fails silently, because a table that does not name a country simply answers nothing for
- *   it and every consumer treats that as an absence rather than an error.
+ *   Seven tables map an ISO country code to a locale, each written by hand, and `release.config.json` is the one
+ *   that decides what ships. Adding a locale means editing the config and then remembering the others; the one
+ *   that is forgotten fails silently, because a table that does not name a country simply answers nothing for it
+ *   and every consumer treats that as an absence rather than an error.
+ *
+ *   THE TABLES ARE DISCOVERED, NOT LISTED. A check that names its subjects cannot see the eighth table somebody
+ *   adds, which is the failure it exists to prevent. A declaration qualifies when at least two of its entries pair
+ *   a country code with a locale tag AND those are at least half of what it holds — both halves load-bearing,
+ *   since two pairs alone admits a table of something else carrying a couple, and the ratio alone admits a
+ *   two-entry map of anything. The rule finds seven where the first version named four.
  *
  *   TWO INVARIANTS, chosen because each has a failure nothing else reports.
  *
  *   COMPLETENESS binds one table. `WEIGHTS_PACKAGE_BY_COUNTRY` answers "which locale package scopes this country"
  *   for the coverage census, so a shipping locale missing from it is reported to the operator as a country with no
  *   weights. `ja-jp` and `zh-cn` were in that state: both are in the release list, both ship, and the census named
- *   neither. The other three tables are deliberate SUBSETS — the gauntlet's overlay routing excludes the base
- *   locale, the invariance suite lists the countries its fixture rows carry, and the autocomplete ladder's FST
- *   table is country-scoped by construction — so completeness is not asked of them.
+ *   neither. Every other country→locale map is a deliberate SUBSET — the gauntlet's overlay routing excludes the
+ *   base locale, the invariance suite lists the countries its fixture rows carry, and the autocomplete ladder's
+ *   FST table is country-scoped by construction — so completeness is not asked of them.
  *
- *   AGREEMENT binds all four. A country key must equal its locale's region subtag: `GB` takes `en-GB`, never
+ *   AGREEMENT binds every one. A country key must equal its locale's region subtag: `GB` takes `en-GB`, never
  *   `de-DE`. A table is read by key, so a transposed pair routes a whole country's rows through another country's
  *   weights and reports a plausible score for the wrong artifact.
  *
@@ -38,36 +44,34 @@ import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
-interface LocaleTable {
-	/**
-	 * Repository-relative path of the module declaring it.
-	 */
-	file: string
-	/**
-	 * The declaration's name, as exported.
-	 */
-	name: string
-	/**
-	 * Whether every shipping locale must appear. False for a table that is a deliberate subset; the reason each one is a
-	 * subset is in this file's header, not repeated per row.
-	 */
-	complete: boolean
-}
+/**
+ * The one table that must name every shipping locale, by name.
+ *
+ * Completeness is a claim about this table specifically: it answers "which locale package scopes this country" for the
+ * coverage census, so a shipping locale missing from it is reported to the operator as a country with no weights. Every
+ * other country→locale map in the tree is a deliberate subset — the gauntlet's overlay routing excludes the base
+ * locale, the invariance suite lists the countries its fixture rows carry, the autocomplete ladder's FST table is
+ * country-scoped by construction — so completeness is not asked of them.
+ */
+const MUST_NAME_EVERY_SHIPPING_LOCALE = "WEIGHTS_PACKAGE_BY_COUNTRY"
 
-const LOCALE_TABLES: readonly LocaleTable[] = [
-	{ file: "packages/mailwoman/lib/coverage/census.ts", name: "WEIGHTS_PACKAGE_BY_COUNTRY", complete: true },
-	{
-		file: "packages/mailwoman/lib/eval-harness/gauntlet/routing.ts",
-		name: "OVERLAY_LOCALE_BY_COUNTRY",
-		complete: false,
-	},
-	{ file: "packages/mailwoman/lib/eval-harness/invariance/parser.ts", name: "COUNTRY_TO_LOCALE", complete: false },
-	{
-		file: "packages/mailwoman/lib/eval-harness/autocomplete-ladder.ts",
-		name: "FST_LOCALE_BY_COUNTRY",
-		complete: false,
-	},
-]
+/**
+ * A country code, and a locale tag whose region half a country code can be read out of.
+ */
+const COUNTRY_CODE = /^[A-Za-z]{2}$/u
+const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
+
+/**
+ * A declaration is a country→locale map when at least two of its entries pair a country code with a locale tag AND
+ * those are at least half of what it holds.
+ *
+ * DISCOVERED RATHER THAN LISTED, because a check that names its subjects cannot see the fifth table somebody adds. The
+ * first version named four files; the rule below finds seven, and the three it gained are `corpus`'s `LOCALE_TAG`,
+ * `localeFor` and `LOCALE_BY_COUNTRY` — the last of which the constant inventory (#2219) lists as unmeasured. Both
+ * halves of the rule are load-bearing: two pairs alone admits a table of something else that happens to carry a couple,
+ * and the ratio alone admits a two-entry map of anything.
+ */
+const MINIMUM_LOCALE_PAIRS = 2
 
 interface TableEntry {
 	country: string
@@ -75,12 +79,19 @@ interface TableEntry {
 	line: number
 }
 
+export interface LocaleTable {
+	name: string
+	file: string
+	line: number
+	entries: TableEntry[]
+}
+
 /**
- * The `(country, locale)` pairs a declaration holds, whether it is written as an object literal or as `new Map([[…]])`.
- * Both spellings are in use and neither is worth normalizing for this check's sake.
+ * Every country→locale map one source declares, whether written as an object literal or as `new Map([[…]])`. Both
+ * spellings are in use and neither is worth normalizing for this check's sake.
  */
-function readTableEntries(source: ts.SourceFile, name: string): TableEntry[] | undefined {
-	let entries: TableEntry[] | undefined
+function readLocaleTables(source: ts.SourceFile, file: string): LocaleTable[] {
+	const tables: LocaleTable[] = []
 	const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line + 1
 
 	const unwrap = (node: ts.Node | undefined): ts.Node | undefined => {
@@ -96,26 +107,23 @@ function readTableEntries(source: ts.SourceFile, name: string): TableEntry[] | u
 		return current
 	}
 
-	const text = (node: ts.Node): string => node.getText(source).replaceAll(/^["'`]|["'`]$/g, "")
+	const text = (node: ts.Node): string => node.getText(source).replaceAll(/^["'`]|["'`]$/gu, "")
 
 	const visit = (node: ts.Node): void => {
-		if (ts.isVariableDeclaration(node) && node.name.getText(source) === name && node.initializer) {
+		if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
 			const initializer = unwrap(node.initializer)
+			const pairs: TableEntry[] = []
 
 			if (initializer && ts.isObjectLiteralExpression(initializer)) {
-				entries = initializer.properties.flatMap((property) =>
-					ts.isPropertyAssignment(property) && property.name
-						? [
-								{
-									country: text(property.name),
-									locale: text(property.initializer),
-									line: lineOf(property.getStart(source)),
-								},
-							]
-						: []
-				)
+				for (const property of initializer.properties) {
+					if (!ts.isPropertyAssignment(property) || !property.name) continue
 
-				return
+					pairs.push({
+						country: text(property.name),
+						locale: text(property.initializer),
+						line: lineOf(property.getStart(source)),
+					})
+				}
 			}
 
 			// `new Map([["US", "en-us"], …])`
@@ -123,22 +131,24 @@ function readTableEntries(source: ts.SourceFile, name: string): TableEntry[] | u
 				const list = unwrap(initializer.arguments?.[0])
 
 				if (list && ts.isArrayLiteralExpression(list)) {
-					entries = list.elements.flatMap((element) => {
+					for (const element of list.elements) {
 						const pair = unwrap(element)
 
-						if (!pair || !ts.isArrayLiteralExpression(pair) || pair.elements.length < 2) return []
+						if (!pair || !ts.isArrayLiteralExpression(pair) || pair.elements.length < 2) continue
 
-						return [
-							{
-								country: text(pair.elements[0]!),
-								locale: text(pair.elements[1]!),
-								line: lineOf(pair.getStart(source)),
-							},
-						]
-					})
+						pairs.push({
+							country: text(pair.elements[0]!),
+							locale: text(pair.elements[1]!),
+							line: lineOf(pair.getStart(source)),
+						})
+					}
 				}
+			}
 
-				return
+			const localePairs = pairs.filter((pair) => COUNTRY_CODE.test(pair.country) && LOCALE_TAG.test(pair.locale))
+
+			if (localePairs.length >= MINIMUM_LOCALE_PAIRS && localePairs.length * 2 >= pairs.length) {
+				tables.push({ name: node.name.text, file, line: lineOf(node.getStart(source)), entries: localePairs })
 			}
 		}
 
@@ -147,7 +157,40 @@ function readTableEntries(source: ts.SourceFile, name: string): TableEntry[] | u
 
 	source.forEachChild(visit)
 
-	return entries
+	return tables
+}
+
+/**
+ * Every country→locale map in the tracked non-test sources.
+ */
+export async function findLocaleTables(context: {
+	repoRoot: string
+	trackedFiles: readonly string[]
+}): Promise<LocaleTable[]> {
+	const sources = context.trackedFiles.filter(
+		(file) => /\.tsx?$/u.test(file) && !file.endsWith(".d.ts") && !/\/test\/|\.test\.tsx?$/u.test(file)
+	)
+
+	const tables: LocaleTable[] = []
+
+	for (const file of sources) {
+		const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
+
+		// Cheap reject before parsing: a country→locale map names one or the other somewhere in the file.
+		if (!/COUNTR|LOCALE|[Ll]ocale/u.test(text)) continue
+
+		const source = ts.createSourceFile(
+			file,
+			text,
+			ts.ScriptTarget.ESNext,
+			true,
+			file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+		)
+
+		tables.push(...readLocaleTables(source, file))
+	}
+
+	return tables
 }
 
 /**
@@ -179,30 +222,11 @@ export const localeTablesCheck: RepoCheck = {
 	async run(context) {
 		const config = await readReleaseConfig(context.repoRoot)
 		const shipping = shippingLocales(config)
+		const tables = await findLocaleTables(context)
 		const diagnostics: Diagnostic[] = []
 
-		for (const table of LOCALE_TABLES) {
-			const source = ts.createSourceFile(
-				table.file,
-				await readLocalTextFile(resolvePath(context.repoRoot, table.file)),
-				ts.ScriptTarget.ESNext,
-				true,
-				table.file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-			)
-
-			const entries = readTableEntries(source, table.name)
-
-			if (!entries) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `${table.name} is not declared in this file as an object literal or a Map — this check cannot read it, and the table it names is unguarded`,
-					file: table.file,
-				})
-
-				continue
-			}
-
-			for (const entry of entries) {
+		for (const table of tables) {
+			for (const entry of table.entries) {
 				const region = entry.locale.split("-")[1]?.toUpperCase()
 
 				if (region && region !== entry.country.toUpperCase()) {
@@ -214,20 +238,31 @@ export const localeTablesCheck: RepoCheck = {
 					})
 				}
 			}
+		}
 
-			if (!table.complete) continue
+		const census = tables.find((table) => table.name === MUST_NAME_EVERY_SHIPPING_LOCALE)
 
-			const named = new Set(entries.map((entry) => entry.locale.toLowerCase()))
-
-			for (const locale of [...shipping].toSorted()) {
-				if (named.has(locale.toLowerCase())) continue
-
-				diagnostics.push({
+		if (!census) {
+			return [
+				...diagnostics,
+				{
 					severity: DiagnosticSeverity.Error,
-					message: `release.config.json ships ${locale} and ${table.name} does not name it — every consumer reads the absence as a country with no weights package rather than as a missing row`,
-					file: table.file,
-				})
-			}
+					message: `${MUST_NAME_EVERY_SHIPPING_LOCALE} was not found as a country→locale map — the one table completeness is asked of is unreadable, so its absence would pass silently`,
+				},
+			]
+		}
+
+		const named = new Set(census.entries.map((entry) => entry.locale.toLowerCase()))
+
+		for (const locale of [...shipping].toSorted()) {
+			if (named.has(locale.toLowerCase())) continue
+
+			diagnostics.push({
+				severity: DiagnosticSeverity.Error,
+				message: `release.config.json ships ${locale} and ${census.name} does not name it — every consumer reads the absence as a country with no weights package rather than as a missing row`,
+				file: census.file,
+				line: census.line,
+			})
 		}
 
 		return diagnostics
