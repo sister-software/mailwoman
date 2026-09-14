@@ -176,6 +176,19 @@ const PLACES: FixturePlace[] = [
 		prominence: 7,
 		exactMatch: true,
 	},
+	// #2266: a two-character name that collides with a region code, scoring far above the locality the
+	// query is actually about. Both spans are ONE token, so only character extent separates them.
+	{ id: 50, name: "Wa", placetype: "locality", country: "GH", lat: 10.06, lon: -2.5, score: 20, exactMatch: true },
+	{
+		id: 51,
+		name: "Sammamish",
+		placetype: "locality",
+		country: "US",
+		lat: 47.64,
+		lon: -122.08,
+		score: 4,
+		exactMatch: true,
+	},
 ]
 
 async function makeBackend(): Promise<ResolverBackend> {
@@ -222,6 +235,14 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
 		expect(hit?.postcodeVerified).toBe(false) // check disabled (thresholdKm 0)
+	})
+
+	it("#2266: orders equal-token spans by CHARACTER extent, so a region code cannot outrun the locality", async () => {
+		// Both sub-spans are one token, so token-count ordering ties them and position decides — probing
+		// "WA" first and returning Ghana without ever reaching "Sammamish".
+		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), { thresholdKm: 0 })
+		expect(hit?.text).toBe("Sammamish")
+		expect(hit?.place.id).toBe(51)
 	})
 
 	it("flags a recovery CONDITIONAL when the postcode resolves and the match is within range", async () => {
