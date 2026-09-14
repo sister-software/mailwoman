@@ -146,6 +146,29 @@ whole page life. That measurement cannot carry the claim:
   requests to that host were made and went unrecorded. The two observations cannot both stand,
   and the measurement is the one that gives.
 
+**2026-09-14, measured at last — and the repro does not survive it.** Instrumented the live page with
+a longtask `PerformanceObserver` and a `requestAnimationFrame` sampler:
+
+- **1 long task in 66 seconds, 174 ms total.** The main thread is idle, not saturated. That kills the
+  main-thread theory outright.
+- **11 animation frames in 66 seconds, with a 52.9-second gap between two of them.**
+- `document.visibilityState === "hidden"` for the whole session.
+
+Chrome zeroes `requestAnimationFrame` for a hidden tab, and MapLibre both renders and decides which
+tiles to request inside that loop. No rAF, no render, no tile requests, black canvas — every symptom,
+with no bug required. And `totalResources` was 66, well under the 250-entry cap, so `tileReqs: 0` was a
+true count this time rather than a buffer artifact: the tab genuinely never asked for a tile because it
+never rendered a frame.
+
+Every observation of this symptom in this record came from a tab driven by browser automation, which
+runs the page hidden. So the black map is, on the evidence available, **an artifact of how it was
+observed**. It has never been reproduced in a browser tab a human was looking at.
+
+That does not prove the app is fine — a visible tab might still stall for its own reasons, and the
+original report deserves a look. It does mean there is currently no evidence of a bug here, and the
+next step is not a fix but a five-minute check in a visible tab:
+`yarn workspace @mailwoman/earth preview`, open `http://localhost:7770`, run a query, watch.
+
 **How to measure it properly**, for whoever picks this up: a Performance-panel recording across the
 resolve, which shows long tasks and main-thread occupancy directly — or
 `performance.setResourceTimingBufferSize(5000)` before the query if request counts are what is wanted.
