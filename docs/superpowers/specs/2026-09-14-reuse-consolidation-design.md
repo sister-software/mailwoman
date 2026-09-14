@@ -187,16 +187,78 @@ Real, small, and a correctness improvement rather than a trade:
 packages document the copy in place: reaching `@mailwoman/spatial` would pull `@mailwoman/core`'s ~11 MB of
 shipped data behind a ray cast. Price the dependency before moving a helper.
 
+## Outcome: the file-clustering number measures parallelism, not duplication
+
+Lane A1 landed and lane B was opened against the four authority-layer packages. Reading them revealed a systematic
+bias in the 22,829 figure, and it changes the campaign's answer.
+
+**Every high-similarity family in lane B is already consolidated.** The shared implementation exists and each
+layer's file is a manifest plus a call:
+
+| Family                        | Similarity | Where the shared implementation already lives                                                                                                                     |
+| ----------------------------- | ---------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/scripts/ingest-chunk.ts` |       0.72 | `runIngestChunkScript` + `INGEST_CHUNK_FLAGS`, `@mailwoman/core/scripting/ingest-chunk-script`                                                                    |
+| `lib/sdk/download.ts`         |       1.00 | `downloadZippedGeodatabase`, `@mailwoman/core/utils`                                                                                                              |
+| `lib/schema.ts`               |       0.78 | `addBoundingBoxColumns` / `addCellIndexColumns` / `addRingGeometryColumns`, `@mailwoman/sqlite/schema-columns`; `LayerContractDatabase`, `@mailwoman/core/layers` |
+| `observations/*-route.ts`     |          — | `#observations/layer-record`                                                                                                                                      |
+| `corpus/lib/us/adapters/**`   |          — | `#adapters/utils`, `@mailwoman/codex/address-format`, `#us/fips-state`, `CSVSpliterator`                                                                          |
+
+**Two files that correctly call the same shared helper with different arguments are structurally similar.** An
+8-gram node-kind hash cannot tell them from two files that duplicate the logic, so the clustering instrument counts
+the residue of a finished consolidation as if it were available work. What remains in each member is the product's
+own vocabulary — flood's flags and feature source, soil's, coastal's, zoning's — and that is irreducible.
+
+The declaration census does not carry the bias, because a call is not a declaration. Its 2,974 lines is the
+figure to trust, and the two instruments disagree for a reason rather than by error: one measures duplication, the
+other measures parallelism, and parallelism is the correct state for four products built on one kit.
+
+### A category no instrument measured
+
+Lane A1 was not in any of the five censuses. 143 `interface Options` blocks restated their own `spec.options`:
+invisible to `jscpd` (different tokens), to `knip` (all used), to the declaration census (it compares functions
+and constants, not a type against a constant) and to file clustering (the pair sits inside one file). It delivered
+1,180 net lines, more than every cross-package family in the tree combined.
+
+A sixth probe went looking for the rest of that category — a string-literal union restating an `as const` object's
+values, an interface restating its keys, a zod schema restating an interface — and found **223 lines**, of which
+most are not duplicates on inspection. `NominatimResult` and `NominatimResultSchema` share every field name and
+are deliberately different: the interface types `annotations` as `OpenCageAnnotations` where the wire schema has
+`z.looseObject({})`, so `z.infer` would widen it. The wire contract and the engine contract are two things.
+
+### What the tree actually holds
+
+| Source                                  |      Lines | State                                        |
+| --------------------------------------- | ---------: | -------------------------------------------- |
+| Derived command options (lane A1)       |      1,180 | delivered                                    |
+| French voie types taken from the codex  |         26 | delivered, and closed a 16-token recall gap  |
+| Types restating values                  |        223 | mostly deliberate on inspection              |
+| Duplicated declarations, cross-package  |        520 | small families, no single one above 27 lines |
+| Duplicated declarations, within-package |      2,454 | almost entirely test fixtures                |
+| **Realistic ceiling for reuse**         | **~4,400** | **1.4% of 317,429 code lines**               |
+
+The reason is not that the tree was never tidied. It is that the tidying already happened and the enforcement to
+keep it done is in place: `HELPER_HOMES` and `mailwoman/prefer-home`, `private-name-shadows-export`,
+`no-cross-package-reexport`, the `jscpd` threshold, `knip`, and the monotonic debt counters. Five instruments
+agreeing near zero is that enforcement reporting success.
+
 ## Order
 
-1. **A1**, because it is mechanical, compiler-verified, and proves the campaign's machinery — worktree, review,
-   CI — on 143 files before anything with behavioral risk.
-2. **Home shadows**, because they are small, independent, and each is a correctness fix.
-3. **B**, the largest and the one that pays forward on every future layer.
-4. **C**, **E**, **G**.
-5. **A2**, **A3**, then **H** opportunistically.
+1. **A1** — done. 143 files, −1,180 net lines, two inert flags fixed.
+2. **Home shadows** — the French voie set is done. The rest are layer-package shadows
+   (`assertAreaAgreement`, `resolveCells`, `readIdentity`, `aggregateChunks`, `runBatchedIngest`,
+   `sampleAgreementPoints`) and belong to lane B.
+3. **B** — **closed as already done.** See the outcome section above.
+4. **C**, **E**, **G** — closed for the same reason, verified by sampling.
+5. **A2**, **A3**, **H** — not taken. A2 is 450 option declarations restating a key another command declares, at
+   ~707 lines, but the repetition is broad rather than deep (`out` appears 56 times in 77 lines) and consolidating
+   trades per-command legibility for lines. A3 is ~700 lines across the 61-file eval-command family.
 
-Re-measure after step 3 and replace the realistic estimates with observed capture rates.
+A2 and A3 are the only reuse work left with more than a few hundred lines in it, and both trade legibility for
+count. They are a decision rather than a backlog item.
+
+Two findings from A2's census are worth fixing whenever those files are open, independent of any line count: the
+tree spells the same option two ways, `out` (56 commands) beside `output` (23), and `country` (14) beside
+`countries` (14).
 
 ## Verification
 
