@@ -62,10 +62,9 @@ export interface ReleaseAssets {
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
-	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live in the WASM heap
-	 * outside the JavaScript heap and are not reclaimed by dropping this object. A host that loads a second bundle
-	 * over a page's life (a version switch, a backend-force toggle, compare mode) must call this on the one it is
-	 * replacing.
+	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live in the WASM heap outside
+	 * the JavaScript heap and are not reclaimed by dropping this object. A host that loads a second bundle over a page's
+	 * life (a version switch, a backend-force toggle, compare mode) must call this on the one it is replacing.
 	 */
 	release: () => Promise<void>
 	calibrator: Calibrator | null
@@ -143,18 +142,16 @@ export async function loadReleaseAssets(
 		selectPairIndexForText,
 		// `release` is the ReleaseInfo parameter in this scope; the classifier's disposer needs its own name.
 		release: releaseClassifier,
-	} = (await loadNeuralClassifierFromURLs(
-		{
-			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-				hasAnchor: release.hasAnchor,
-				forceWASM: progress.forceWASM,
-			}),
-			fetchImpl: modelFetch,
-			// Every published pair index is loaded; the loader keeps each live and `selectPairIndexForText` picks per
-			// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
-			pairIndexURLs: pairIndexURLs(pairIndexBase),
-		}
-	)) as {
+	} = (await loadNeuralClassifierFromURLs({
+		...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
+			hasAnchor: release.hasAnchor,
+			forceWASM: progress.forceWASM,
+		}),
+		fetchImpl: modelFetch,
+		// Every published pair index is loaded; the loader keeps each live and `selectPairIndexForText` picks per
+		// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
+		pairIndexURLs: pairIndexURLs(pairIndexBase),
+	})) as {
 		classifier: MailwomanClassifierLike
 		diagnostics?: { backend: string; modelBytes: number } | null
 		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null

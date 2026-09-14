@@ -104,8 +104,8 @@ export class WebONNXRunner implements NeuralRunner {
 	#loadPromise: Promise<ort.InferenceSession> | null = null
 	/**
 	 * The model source, dropped the moment a session owns it. `InferenceSession.create` copies the graph into the
-	 * runtime's own heap, so holding this afterwards keeps a second full copy of the model alive for the life of the
-	 * page — 38 MB for the shipped int8 bundle, on top of the runtime's.
+	 * runtime's own heap, so holding this afterwards keeps a second full copy of the model alive for the life of the page
+	 * — 38 MB for the shipped int8 bundle, on top of the runtime's.
 	 */
 	#modelBytes: Uint8Array | null
 	/**
@@ -189,8 +189,8 @@ export class WebONNXRunner implements NeuralRunner {
 	 *
 	 * An `InferenceSession` holds its weights and arenas in the WASM heap (or on the GPU), which the JavaScript garbage
 	 * collector does not own and cannot reclaim — dropping the last reference to a runner frees the wrapper and leaves
-	 * the model resident. `release()` is the only thing that gives it back, and before this it was called nowhere in
-	 * the repository.
+	 * the model resident. `release()` is the only thing that gives it back, and before this it was called nowhere in the
+	 * repository.
 	 *
 	 * That matters because a release bundle is reloaded whenever the version or the backend force changes, so picking a
 	 * different model version, toggling "Force WASM", or entering compare mode each added a model's worth of native

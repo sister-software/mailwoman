@@ -107,9 +107,9 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	 * session's WASM heap, a SQLite worker, a GPU buffer.
 	 *
 	 * Called for the bundle being replaced when the version or the backend force changes, for a bundle whose load was
-	 * aborted after it had already resolved, and on unmount. Without it each reload left a whole model resident:
-	 * dropping the last JavaScript reference to a session frees the wrapper and nothing else, and Safari answers a page
-	 * that accumulates those by reloading the tab.
+	 * aborted after it had already resolved, and on unmount. Without it each reload left a whole model resident: dropping
+	 * the last JavaScript reference to a session frees the wrapper and nothing else, and Safari answers a page that
+	 * accumulates those by reloading the tab.
 	 */
 	disposeAssets?: (assets: TAssets) => void | Promise<void>
 	/**
@@ -226,7 +226,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		loadAssetsRef.current = config.loadAssets
 		disposeAssetsRef.current = config.disposeAssets
 		manifestRef.current = manifest
-	}, [config.loadAssets, config.loadManifest, manifest])
+	}, [config.disposeAssets, config.loadAssets, config.loadManifest, manifest])
 
 	// Mount: fetch the manifest, then select the default version.
 	useEffect(() => {
@@ -276,7 +276,9 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 				liveAssetsRef.current = null
 
-				if (outgoing) await disposeAssetsRef.current?.(outgoing)
+				if (outgoing) {
+					await disposeAssetsRef.current?.(outgoing)
+				}
 
 				setAssets(null)
 				setLoadingStepIndex(-1)
@@ -325,7 +327,9 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 			liveAssetsRef.current = null
 
-			if (live) void disposeAssetsRef.current?.(live)
+			if (live) {
+				void disposeAssetsRef.current?.(live)
+			}
 		}
 	}, [])
 
