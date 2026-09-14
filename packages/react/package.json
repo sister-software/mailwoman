@@ -333,7 +333,8 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*"
+		"@mailwoman/query-shape": "workspace:*",
+		"@types/geojson": "^7946.0.16"
 	},
 	"devDependencies": {
 		"@storybook/addon-docs": "^10.6.0",

@@ -6498,6 +6498,7 @@ __metadata:
     "@styleframe/loader": "npm:^3.0.4"
     "@styleframe/plugin": "npm:^3.4.1"
     "@styleframe/transpiler": "npm:^3.4.2"
+    "@types/geojson": "npm:^7946.0.16"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
     "@vitejs/plugin-react": "npm:^6.1.1"
@@ -6645,6 +6646,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     path-ts: "npm:^2.3.0"
   languageName: unknown
