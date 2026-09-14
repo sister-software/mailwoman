@@ -80,9 +80,10 @@ test("mounts the map container + floating control panel", async () => {
 
 	await vi.waitFor(() => expect(container.querySelector(".mw-geocoder-demo")).toBeTruthy())
 	// The chrome + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas). The
-	// chrome is the floating column that replaced the full-height control panel: a search pill, chips beneath it, and
-	// a control capsule down the right edge.
-	expect(container.querySelector(".mw-map-chrome--top")).not.toBeNull()
+	// chrome is ONE panel — a left column on a desktop, a bottom drawer on a phone — holding the search, the examples
+	// and the result, plus a control capsule down the right edge.
+	expect(container.querySelector(".mw-map-panel")).not.toBeNull()
+	expect(container.querySelector(".mw-map-panel__header")).not.toBeNull()
 	expect(container.querySelector(".mw-map-searchbar")).not.toBeNull()
 	expect(container.querySelector(".mw-map-control-stack")).not.toBeNull()
 	expect(container.querySelector(".mw-geocoder-demo__map .mw-demo-map")).not.toBeNull()

@@ -20,6 +20,30 @@ import { type ReactNode, useEffect } from "react"
 
 import { cx } from "#common/cx"
 
+export interface SheetCloseProps {
+	/**
+	 * What is being closed, for the accessible name: "Close the result", "Close About".
+	 */
+	label: string
+	onClose: () => void
+	className?: string
+}
+
+/**
+ * The × that dismisses a sheet.
+ *
+ * Exported because the geocoder's panel needs the same control and had grown its own copy: identical markup, the same
+ * borrowed class, a separately worded label. One component so they cannot disagree about the glyph, the target or the
+ * fact that it is a `button`.
+ */
+export function SheetClose({ label, onClose, className }: SheetCloseProps): ReactNode {
+	return (
+		<button type="button" className={cx("mw-map-sheet__close", className)} aria-label={label} onClick={onClose}>
+			<span aria-hidden="true">×</span>
+		</button>
+	)
+}
+
 export interface MapSheetProps {
 	/**
 	 * The sheet's heading, and its accessible name.
@@ -51,9 +75,7 @@ export function MapSheet({ title, onClose, children, className }: MapSheetProps)
 			<div className="mw-map-sheet__header">
 				<h2 className="mw-map-sheet__title">{title}</h2>
 
-				<button type="button" className="mw-map-sheet__close" aria-label={`Close ${title}`} onClick={onClose}>
-					<span aria-hidden="true">×</span>
-				</button>
+				<SheetClose label={`Close ${title}`} onClose={onClose} />
 			</div>
 
 			<div className="mw-map-sheet__body">{children}</div>

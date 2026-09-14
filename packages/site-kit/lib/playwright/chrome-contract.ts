@@ -44,11 +44,10 @@ const POINTER_MOVES = 8
  * carry no chip row on every route, and a test for one app must not fail on the other's absences.
  */
 export const CHROME_SELECTORS = [
-	".mw-map-chrome--top",
+	".mw-map-panel",
 	".search-slot",
 	".mw-map-control-stack",
 	".mw-map-sheet--side",
-	".mw-map-sheet--bottom",
 	".feature-panel",
 	".mw-map-footer",
 ] as const
@@ -101,8 +100,8 @@ export async function expectNoChromeOverlap(page: Page): Promise<void> {
 			const [leftSelector, left] = boxes[i]!
 			const [rightSelector, right] = boxes[j]!
 
-			// The top column contains the search pill and the chips, so a nested pair is not a collision.
-			if (leftSelector === ".mw-map-chrome--top" || leftSelector === ".search-slot") continue
+			// The panel contains the search field and the chips, so a nested pair is not a collision.
+			if (leftSelector === ".mw-map-panel" || leftSelector === ".search-slot") continue
 
 			if (boxesOverlap(left, right)) {
 				collisions.push(
@@ -124,7 +123,7 @@ export async function expectNothingUnderTheFooter(page: Page): Promise<void> {
 
 	if (!footer) return
 
-	for (const selector of [".mw-map-sheet--bottom", ".feature-panel"]) {
+	for (const selector of [".mw-map-panel", ".feature-panel"]) {
 		const locator = page.locator(selector)
 
 		if ((await locator.count()) !== 1 || !(await locator.isVisible())) continue

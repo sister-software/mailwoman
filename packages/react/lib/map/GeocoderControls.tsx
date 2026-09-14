@@ -34,7 +34,7 @@ import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
 import { MapProgressBar } from "./MapProgressBar.tsx"
 import { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
-import { MapSheet } from "./MapSheet.tsx"
+import { MapSheet, SheetClose } from "./MapSheet.tsx"
 import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 import { ResultPanel } from "./ResultPanel.tsx"
 import { VersionPicker } from "./VersionPicker.tsx"
@@ -106,6 +106,14 @@ export interface GeocoderControlsProps {
 type SheetName = "about" | "layers" | "developer" | null
 
 /**
+ * The width at or below which the panel is a bottom drawer rather than a left column.
+ *
+ * STATED ONCE, and it has to agree with the `@media (max-width: 600px)` block in `styles.css` that actually moves the
+ * panel: the gestures below arm on this query, so a disagreement arms a drag on a layout with nowhere to drag to.
+ */
+const DRAWER_LAYOUT = "(max-width: 600px)"
+
+/**
  * The chrome. Everything positioned here floats over the map; nothing occupies a column of the page.
  */
 export function GeocoderControls({
@@ -165,7 +173,7 @@ export function GeocoderControls({
 
 	// The detents exist only where the panel IS a drawer. The desktop column is sized by its content and has nothing
 	// to drag towards, so every pointer gesture there is a scroll or a click.
-	const isDrawerLayout = () => typeof window !== "undefined" && window.matchMedia("(max-width: 600px)").matches
+	const isDrawerLayout = () => typeof window !== "undefined" && window.matchMedia(DRAWER_LAYOUT).matches
 
 	const beginSheetDrag = useCallback((clientY: number, pointerId: number) => {
 		const sheet = sheetRef.current
@@ -208,6 +216,26 @@ export function GeocoderControls({
 		[sheetDetents]
 	)
 
+	/*
+	 * The two-detent toggle, in ONE place. A tap on the bar, Enter on the pill, and the `aria-expanded` the pill
+	 * reports are the same question asked three ways, and they were three copies of `(medium + large) / 2` — one of
+	 * them the literal `0.7`, which is that midpoint written out by hand and silently wrong the moment a detent moves.
+	 */
+	const detentMidpoint = useCallback(() => {
+		const { medium, large } = sheetDetents()
+
+		return (medium + large) / 2
+	}, [sheetDetents])
+
+	const atLargeDetent = () => sheetHeight !== null && sheetHeight > detentMidpoint()
+
+	const toggleDetent = useCallback(() => {
+		const { medium, large } = sheetDetents()
+		const current = sheetRef.current?.getBoundingClientRect().height ?? medium
+
+		setSheetHeight(current > detentMidpoint() ? medium : large)
+	}, [sheetDetents, detentMidpoint])
+
 	const onGripPointerUp = useCallback(() => {
 		const drag = sheetDragRef.current
 
@@ -221,7 +249,7 @@ export function GeocoderControls({
 
 		// A press with no travel is a tap: toggle between the two detents, which is what a keyboard gets too.
 		if (!drag.moved) {
-			setSheetHeight(current > midpoint ? medium : large)
+			toggleDetent()
 
 			return
 		}
@@ -335,7 +363,7 @@ export function GeocoderControls({
 	 * so. Crossing the breakpoint in either direction hands the height back to the stylesheet.
 	 */
 	useEffect(() => {
-		const query = window.matchMedia("(max-width: 600px)")
+		const query = window.matchMedia(DRAWER_LAYOUT)
 		const onChange = () => setSheetHeight(null)
 
 		query.addEventListener("change", onChange)
@@ -375,8 +403,16 @@ export function GeocoderControls({
 		}
 	}, [map, sheetDetents])
 
-	// Escape dismisses the result sheet, matching `MapSheet`.
+	/*
+	 * Escape dismisses the result, matching `MapSheet`.
+	 *
+	 * ONLY WHILE NOTHING IS OVER IT. `MapSheet` binds the same key for its own sheet and both listeners are on the
+	 * document, so Escape over an open About or Layers panel closed that panel AND threw away the result behind it —
+	 * one keystroke, two dismissals, the second of them invisible until the panel came away.
+	 */
 	useEffect(() => {
+		if (openSheet) return
+
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
 				setResultDismissed(true)
@@ -386,7 +422,7 @@ export function GeocoderControls({
 		document.addEventListener("keydown", onKeyDown)
 
 		return () => document.removeEventListener("keydown", onKeyDown)
-	}, [])
+	}, [openSheet])
 
 	// A label on the map is a search a visitor already typed by pointing at it.
 	const pickLabel = useCallback(
@@ -466,35 +502,29 @@ export function GeocoderControls({
 								type="button"
 								className="mw-map-sheet__handle"
 								aria-label="Resize the panel"
-								aria-expanded={sheetHeight !== null && sheetHeight > window.innerHeight * 0.7}
+								aria-expanded={atLargeDetent()}
 								// The pointer gesture belongs to the header, which is the whole grab target. This is the keyboard's
 								// way in: `detail === 0` is a click with no pointer behind it, so a drag that ends on the pill does
 								// not also toggle a detent.
 								onClick={(event) => {
 									if (event.detail !== 0) return
 
-									const { medium, large } = sheetDetents()
-									const current = sheetRef.current?.getBoundingClientRect().height ?? medium
-
-									setSheetHeight(current > (medium + large) / 2 ? medium : large)
+									toggleDetent()
 								}}
 							/>
 						) : null}
 
 						{showSheet ? (
-							<button
-								type="button"
-								className="mw-map-sheet__close mw-map-sheet__close--floating"
-								aria-label="Close the result"
-								onClick={() => setResultDismissed(true)}
-							>
-								<span aria-hidden="true">×</span>
-							</button>
+							<SheetClose
+								label="Close the result"
+								className="mw-map-sheet__close--floating"
+								onClose={() => setResultDismissed(true)}
+							/>
 						) : null}
 					</div>
 
 					<form
-						className="mw-map-chrome__search"
+						className="mw-map-panel__search"
 						onSubmit={(event) => {
 							event.preventDefault()
 							runQuery(geocode.text)

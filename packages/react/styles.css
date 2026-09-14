@@ -1412,11 +1412,14 @@
 		border-radius: var(--radius-sheet);
 		overflow: auto;
 		overscroll-behavior: contain;
-		background: var(--material-glass-background);
-		border: 1px solid var(--material-glass-border);
+		/*
+		 * The MATERIAL is not stated here. It is composed once, with every other glass surface, in the material region
+		 * below — which is also the list the two fallbacks repeat. Written out at the component this panel had the
+		 * vendor pair the wrong way round (so Firefox lost the blur), a hardcoded `blur(20px)` with no saturation, and
+		 * no entry in either fallback, so a viewer asking for reduced transparency still got translucent glass. Only
+		 * the shadow is local, because the panel's is the sheet's rather than the pill's.
+		 */
 		box-shadow: var(--material-glass-shadow);
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
 	}
 
 	/*
@@ -1467,18 +1470,9 @@
 		gap: 0.5rem;
 	}
 
-	.mw-map-chrome__search {
+	/* The form around the field carries no margin of its own; the header's grid sets the spacing. */
+	.mw-map-panel__search {
 		margin: 0;
-	}
-
-	.mw-map-searchbar__clear {
-		border: 0;
-		background: transparent;
-		color: inherit;
-		cursor: pointer;
-		font: inherit;
-		line-height: 1;
-		padding: 0 0.15rem;
 	}
 
 	/*
@@ -1498,16 +1492,6 @@
 		overscroll-behavior: contain;
 	}
 
-	.mw-map-sheet--bottom {
-		left: calc(1rem + var(--safe-area-left));
-		right: calc(1rem + var(--safe-area-right));
-		bottom: calc(2.5rem + var(--safe-area-bottom));
-		max-height: 52vh;
-		max-width: 34rem;
-		padding: 0.5rem 1rem 1rem;
-		border-radius: var(--radius-sheet);
-	}
-
 	/*
 	 * BESIDE the control column, not below it. Opening below meant the sheet's top depended on how many controls the
 	 * capsule held, and every app that added one covered the button that opened it. Beside, it clears the column
@@ -1524,8 +1508,12 @@
 		max-height: calc(100dvh - 2rem - var(--map-footer-height) - var(--safe-area-top) - var(--safe-area-bottom));
 		padding: 1rem;
 		border-radius: var(--radius-panel);
-		/* Above the result sheet: a panel is a different task, and it covers the answer rather than sharing an edge. */
-		z-index: 5;
+		/*
+		 * THE TOP OF THE MAP'S LADDER: panel 3 (5 as a drawer), control rail 4, side sheet 6. A side sheet is a
+		 * different task and covers the answer rather than sharing an edge with it. It was 5 — a tie with the drawer,
+		 * resolved by nothing but the order the two happen to render in, and one JSX reorder from inverting.
+		 */
+		z-index: 6;
 	}
 
 	/*
@@ -1675,27 +1663,6 @@
 	}
 
 	/*
-	 * The sheet's own header: the grab handle centred, the close at the right, both pinned to the top of the scroll
-	 * container. Sticky and opaque, because content passes UNDER it — the sheet's own material is translucent glass,
-	 * which would let a scrolling table show through the bar.
-	 *
-	 * The negative inline margin bleeds it over the sheet's padding so the bar reaches both edges.
-	 */
-	.mw-map-sheet__grip {
-		position: sticky;
-		top: 0;
-		z-index: 2;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-height: 2.5rem;
-		margin: -0.5rem -1rem 0.25rem;
-		padding-inline: 0.5rem;
-		background: var(--color-background-raised);
-		border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
-	}
-
-	/*
 	 * The grab affordance, and now a real control: drag to resize between two detents, drag down past the smaller one
 	 * to dismiss, tap or Enter to toggle. It was decorative, which is worse than absent — a handle that looks draggable
 	 * and is not reads as a broken sheet rather than a static one.
@@ -1832,18 +1799,6 @@
 			height: 2.75rem;
 		}
 
-		.mw-map-sheet--bottom {
-			left: 0;
-			right: 0;
-			bottom: calc(var(--map-footer-height) + var(--safe-area-bottom));
-			max-width: none;
-			max-height: 55dvh;
-			border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
-			border-inline: 0;
-			border-bottom: 0;
-			padding-bottom: 1rem;
-		}
-
 		.mw-map-sheet--side {
 			top: 0;
 			left: 0;
@@ -1890,7 +1845,8 @@
 	.mw-map-control-group,
 	.mw-map-footer,
 	.mw-map-footer__popover,
-	.mw-map-sheet {
+	.mw-map-sheet,
+	.mw-map-panel {
 		background: var(--material-glass-background);
 		border: 1px solid var(--material-glass-border);
 		/*
@@ -2408,7 +2364,8 @@
 		.mw-map-control-group,
 		.mw-map-footer,
 		.mw-map-footer__popover,
-		.mw-map-sheet {
+		.mw-map-sheet,
+		.mw-map-panel {
 			background: var(--material-glass-fallback-background);
 		}
 	}
@@ -2419,7 +2376,8 @@
 		.mw-map-control-group,
 		.mw-map-footer,
 		.mw-map-footer__popover,
-		.mw-map-sheet {
+		.mw-map-sheet,
+		.mw-map-panel {
 			background: var(--material-glass-fallback-background);
 			-webkit-backdrop-filter: none;
 			backdrop-filter: none;

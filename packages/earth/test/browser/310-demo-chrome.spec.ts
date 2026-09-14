@@ -51,12 +51,12 @@ test.describe("Chrome — the floating controls", () => {
 	test("a result sheet never ends under the footer", async ({ page }) => {
 		await openChrome(page)
 		await page.locator("#mw-pipeline-input").press("Enter")
-		await expect(page.locator(".mw-map-sheet--bottom")).toBeVisible()
+		await expect(page.locator(".mw-map-panel__result")).toBeVisible()
 
 		await expectNothingUnderTheFooter(page)
 
 		await page.setViewportSize({ width: 390, height: 844 })
-		await expect(page.locator(".mw-map-sheet--bottom")).toBeVisible()
+		await expect(page.locator(".mw-map-panel__result")).toBeVisible()
 		await expectNothingUnderTheFooter(page)
 	})
 
