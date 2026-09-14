@@ -123,6 +123,32 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 
 //#region Shape and motion
 
+/**
+ * SPACING IS A SCALE, not a guess.
+ *
+ * The stylesheet had 19 distinct padding/margin/gap values across 171 declarations — 0.05rem, 0.35rem, 0.65rem, 1.1rem
+ * — each picked by eye at the moment it was written and none of them relatable to any other. A tail of near-misses like
+ * that reads as care and behaves as noise: two panels meant to match never quite do, and nothing says which value was
+ * deliberate.
+ *
+ * Seven steps on a 2px grid. A padding, a margin or a gap that is not one of these is a value someone has to justify.
+ */
+const space0 = variable("space-0", "0.125rem")
+const space1 = variable("space-1", "0.25rem")
+const space2 = variable("space-2", "0.375rem")
+const space3 = variable("space-3", "0.5rem")
+const space4 = variable("space-4", "0.75rem")
+const space5 = variable("space-5", "1rem")
+const space6 = variable("space-6", "1.5rem")
+
+/**
+ * The small end of the radius scale. `radius-tick` is for marks a few pixels across — a legend swatch, a tag — where a
+ * larger radius eats the shape; `radius-tight` is the inline block. The stylesheet used to carry six raw pixel radii
+ * (2, 3, 4, 6, 8, 10) with no relation between them, and `999px` written out four times beside a `--radius-pill` that
+ * already said it.
+ */
+const radiusTick = variable("radius-tick", "0.125rem")
+const radiusTight = variable("radius-tight", "0.25rem")
 const radiusControl = variable("radius-control", "0.5rem")
 const radiusPanel = variable("radius-panel", "0.875rem")
 const radiusSheet = variable("radius-sheet", "0.875rem")
@@ -190,6 +216,31 @@ const stateInfo = variable("color-state-info", ref(infoBase))
 const stateInfoBackground = variable("color-state-info-background", "oklch(65% 0.13 230 / 0.14)")
 
 const accentBackground = variable("color-accent-background", "oklch(65% 0.29 340 / 0.14)")
+
+/**
+ * The three confidence tiers, said ONCE.
+ *
+ * They were two palettes for one idea: the bars and the About legend painted `#22c55e / #f59e0b / #ef4444` while the
+ * span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a` — so the legend in the About sheet
+ * explained colours the results table does not use, under a comment claiming the two matched. Raw hex also meant one
+ * set of colours for both themes, on a surface that flips from white to near-black.
+ *
+ * They are the state palette because that is what they are: high is success, mid is a warning, low is a failure.
+ */
+const confidenceHigh = variable("color-confidence-high", ref(stateSuccess))
+const confidenceHighTint = variable("color-confidence-high-tint", ref(stateSuccessBackground))
+const confidenceMid = variable("color-confidence-mid", ref(stateWarning))
+const confidenceMidTint = variable("color-confidence-mid-tint", ref(stateWarningBackground))
+const confidenceLow = variable("color-confidence-low", ref(stateDanger))
+const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerBackground))
+
+/**
+ * The pipeline's stage hues, for the timing bar. Deliberately NOT the confidence palette — a stage is not a verdict,
+ * and a reader who has learned that green means confident should not meet green again meaning "shape".
+ */
+const stageShape = variable("color-stage-shape", "#3578e5")
+const stageClassify = variable("color-stage-classify", "#8b5cf6")
+const stageResolve = variable("color-stage-resolve", "#14b8a6")
 
 //#endregion
 
@@ -283,6 +334,15 @@ void [
 	fontWeightRegular,
 	fontWeightMedium,
 	fontWeightSemibold,
+	space0,
+	space1,
+	space2,
+	space3,
+	space4,
+	space5,
+	space6,
+	radiusTick,
+	radiusTight,
 	radiusControl,
 	radiusPanel,
 	radiusSheet,
@@ -292,6 +352,15 @@ void [
 	durationSheet,
 	easingStandard,
 	easingDecelerate,
+	confidenceHigh,
+	confidenceHighTint,
+	confidenceMid,
+	confidenceMidTint,
+	confidenceLow,
+	confidenceLowTint,
+	stageShape,
+	stageClassify,
+	stageResolve,
 	backgroundRaised,
 	backgroundSunken,
 	textSecondary,

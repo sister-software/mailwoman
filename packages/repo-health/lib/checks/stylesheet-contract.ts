@@ -141,6 +141,17 @@ const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stro
 /**
  * The token that marks a glass surface, and the token its fallbacks paint instead.
  */
+/**
+ * A radius written as a raw pixel length.
+ *
+ * The design system carries a radius scale — `tick`, `tight`, `control`, `panel` / `sheet`, `pill` — and the
+ * stylesheets carried six raw pixel values beside it (2, 3, 4, 6, 8, 10) plus `999px` written out four times next to
+ * the `--radius-pill` that already said it. Nothing about a raw radius is wrong on its own; the defect is that six of
+ * them cannot be told apart from a decision, so two components meant to match never quite do and nobody can say which
+ * value was meant. `0` and `50%` are exempt because neither is a step on any scale.
+ */
+const RAW_RADIUS = /border-radius\s*:\s*[^;}]*\d+px/u
+
 const MATERIAL_BACKGROUND = "var(--material-glass-background)"
 const MATERIAL_FALLBACK = "var(--material-glass-fallback-background)"
 
@@ -214,6 +225,15 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 			})
 		}
 
+		if (RAW_RADIUS.test(rule.body)) {
+			diagnostics.push({
+				severity: DiagnosticSeverity.Error,
+				file,
+				line: rule.line,
+				message: `\`${rule.selector}\` sets \`border-radius\` in raw pixels. The radius scale is \`--radius-tick\`, \`--radius-tight\`, \`--radius-control\`, \`--radius-panel\` / \`--radius-sheet\` and \`--radius-pill\`; a seventh value nobody can name is how two surfaces meant to match stop matching.`,
+			})
+		}
+
 		for (const property of VENDOR_PAIRS) {
 			const standard = new RegExp(String.raw`(?:^|[;{])\s*${property}\s*:`, "u").exec(rule.body)?.index
 			const prefixed = new RegExp(String.raw`-webkit-${property}\s*:`, "u").exec(rule.body)?.index
@@ -260,7 +280,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 export const stylesheetContractCheck: RepoCheck = {
 	id: "stylesheet-contract",
 	description:
-		"The app stylesheets carry the box-sizing reset and the button color default, put a standard property after its vendor-prefixed twin, state a color wherever they paint an interactive background, and repeat a material's selector list exactly in each of its fallbacks.",
+		"The app stylesheets carry the box-sizing reset and the button color default, put a standard property after its vendor-prefixed twin, state a color wherever they paint an interactive background, take their radii from the scale rather than raw pixels, and repeat a material's selector list exactly in each of its fallbacks.",
 	async run(context) {
 		const diagnostics: Diagnostic[] = []
 

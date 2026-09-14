@@ -120,6 +120,24 @@ describe("stylesheet-contract", () => {
 		})
 	})
 
+	describe("the radius scale", () => {
+		it("reports a raw pixel radius", () => {
+			expect(messages(OTHER, ".a { border-radius: 6px; }")).toEqual([expect.stringContaining("raw pixels")])
+		})
+
+		it("reports a raw pixel radius inside a multi-corner shorthand", () => {
+			expect(messages(OTHER, ".a { border-radius: 2px 2px 0 0; }")).toEqual([expect.stringContaining("raw pixels")])
+		})
+
+		it("accepts a radius from the scale", () => {
+			expect(stylesheetDiagnostics(OTHER, ".a { border-radius: var(--radius-tick); }")).toEqual([])
+		})
+
+		it("accepts the two lengths that are not steps on any scale", () => {
+			expect(stylesheetDiagnostics(OTHER, ".a { border-radius: 0; }\n.b { border-radius: 50%; }")).toEqual([])
+		})
+	})
+
 	it("reads no declaration out of a comment", () => {
 		const css = "/* .fake { background: red; cursor: pointer; } */\n.real { color: red; }"
 

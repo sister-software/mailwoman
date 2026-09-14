@@ -471,13 +471,13 @@ the About, Layers and Developer panels close differently from the result.
 Run after the restructure, because a rearrangement is when copies of one idea get left behind. Every item
 fixed here was two implementations of one thing, and four of them had already disagreed.
 
-| Duplicate                                      | What the disagreement cost                                                                                                                     |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Duplicate                                      | What the disagreement cost                                                                                                                                   |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Glass material, hand-rolled on `.mw-map-panel` | Vendor pair reversed (no blur on Firefox), hardcoded `blur(20px)` with no saturation, and absent from both fallbacks — reduced-transparency still got glass. |
-| Detent toggle, written three times             | The third copy was the literal `0.7`, which is `(medium + large) / 2` by hand. `aria-expanded` would desync the moment a detent moved.          |
-| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel AND dismissed the result behind it. One keystroke, two dismissals.                      |
-| Sheet close button, markup re-typed            | Against `MapSheet`'s own docblock: "One component carries it so the four sheets cannot disagree."                                               |
-| `"(max-width: 600px)"` in three places         | The JS gestures arm on it and the CSS moves the panel on it; a drift arms a drag on a layout with nowhere to drag to.                           |
+| Detent toggle, written three times             | The third copy was the literal `0.7`, which is `(medium + large) / 2` by hand. `aria-expanded` would desync the moment a detent moved.                       |
+| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel AND dismissed the result behind it. One keystroke, two dismissals.                                   |
+| Sheet close button, markup re-typed            | Against `MapSheet`'s own docblock: "One component carries it so the four sheets cannot disagree."                                                            |
+| `"(max-width: 600px)"` in three places         | The JS gestures arm on it and the CSS moves the panel on it; a drift arms a drag on a layout with nowhere to drag to.                                        |
 
 Dead rules removed: `.mw-map-sheet--bottom` (×2), `.mw-map-sheet__grip`, `.mw-map-searchbar__clear`.
 `.mw-map-chrome__search` was the last member of a deleted namespace, now `.mw-map-panel__search`.

@@ -123,26 +123,32 @@
 
 /* #endregion */
 
-/* #region Row kind tints */
+/*
+ * #region Row kind tints
+ *
+ * The STATE palette, not a third copy of it. This panel carried `#1aa84d / #e6a800 / #d8504a` written out nine times
+ * — the same three colours the span ribbon and the containment tree had, and a different green from the one the
+ * confidence bars painted. Raw hex is also one value for both themes, on a panel that flips with the app.
+ */
 
 .rowPrimaryOnly td {
-	background: rgba(216, 80, 74, 0.06);
+	background: color-mix(in srgb, var(--color-state-danger) 6%, transparent);
 }
 
 .rowPrimaryOnly .tagCell {
-	color: #d8504a;
+	color: var(--color-state-danger);
 }
 
 .rowCompareOnly td {
-	background: rgba(26, 168, 77, 0.06);
+	background: color-mix(in srgb, var(--color-state-success) 6%, transparent);
 }
 
 .rowCompareOnly .tagCell {
-	color: #1aa84d;
+	color: var(--color-state-success);
 }
 
 .rowTagChanged td {
-	background: rgba(230, 168, 0, 0.06);
+	background: color-mix(in srgb, var(--color-state-warning) 6%, transparent);
 }
 
 /* #endregion */
@@ -154,9 +160,9 @@
 	font-family: var(--font-family-code);
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: #1aa84d;
-	background: rgba(26, 168, 77, 0.12);
-	border-radius: 3px;
+	color: var(--color-state-success);
+	background: color-mix(in srgb, var(--color-state-success) 12%, transparent);
+	border-radius: var(--radius-tick);
 	padding: 0 0.25rem;
 }
 
@@ -165,9 +171,9 @@
 	font-family: var(--font-family-code);
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: #d8504a;
-	background: rgba(216, 80, 74, 0.12);
-	border-radius: 3px;
+	color: var(--color-state-danger);
+	background: color-mix(in srgb, var(--color-state-danger) 12%, transparent);
+	border-radius: var(--radius-tick);
 	padding: 0 0.25rem;
 }
 
