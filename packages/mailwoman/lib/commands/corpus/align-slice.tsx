@@ -6,7 +6,7 @@
  *   Align one corpus slice with the current tokenizer.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -21,13 +21,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	input: string
-	output: string
-	corpusVersion: string
-}
-
-const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
+const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { alignCanonicalSlice } = await import("@mailwoman/corpus/tools")
 

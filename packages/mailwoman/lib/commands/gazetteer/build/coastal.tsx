@@ -27,7 +27,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	formatLayerVerification,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	splitList,
 	splitNumberList,
 	useCommandTask,
@@ -71,21 +71,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	gdb?: string
-	out?: string
-	indexResolution: string
-	coverageResolution: string
-	measureResolutions?: string
-	scenarios?: string
-	limit?: string
-	offline: boolean
-	sourceVintage?: string
-	chunkSize?: string
-	verify: boolean
-}
-
-const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 

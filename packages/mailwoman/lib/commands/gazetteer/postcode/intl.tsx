@@ -46,13 +46,7 @@ import { GeoPoint } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 import type { PathBuilderLike } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitUpperList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -68,14 +62,6 @@ export const spec = {
 		"fold-out": { type: "string", description: "Folded candidate destination" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	geonames?: string
-	countries?: string
-	out?: string
-	foldInto?: string
-	foldOut?: string
-}
 
 /**
  * The street-normalize key function, threaded in after a dynamic import of the optional peer.
@@ -372,7 +358,7 @@ async function foldIntoCandidate(
 	return n
 }
 
-const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 

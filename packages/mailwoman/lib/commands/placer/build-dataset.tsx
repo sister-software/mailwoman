@@ -13,7 +13,8 @@
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -41,15 +42,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outliers?: "exposure" | "latin" | "oa"
-	data?: string
-	perCountry?: number
-	perLang?: number
-	wof?: string
-	overture?: string
-	oaDir?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function run(options: Options): Promise<string> {
 	const { buildDataset, buildOutlierExposure, buildOutlierLatin, buildOutlierOA } =
@@ -88,7 +81,7 @@ async function run(options: Options): Promise<string> {
 	}
 }
 
-const PlacerBuildDataset: ParsedCommandComponent<Options> = ({ options }) => {
+const PlacerBuildDataset: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => run(options))
 
 	return <CommandTaskResult state={state} />

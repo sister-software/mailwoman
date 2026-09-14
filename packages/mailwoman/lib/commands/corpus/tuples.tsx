@@ -20,13 +20,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitUpperList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -50,16 +44,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	countries?: string
-	output?: string
-	source: "parent-join" | "geonames"
-	quota?: number
-	budget?: number
-	postcodeDb?: string
-	adminDb?: string
-}
-
 interface TuplesReport {
 	written: number
 	byCountry: Record<string, number>
@@ -67,7 +51,7 @@ interface TuplesReport {
 	output: string
 }
 
-const CorpusTuples: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async (): Promise<TuplesReport> => {
 		if (!options.countries) throw new CommandError("--countries <CC,CC> required")
 
@@ -87,8 +71,8 @@ const CorpusTuples: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		} else {
 			triples = await tools.readTriplesFromParentJoin(countries, {
-				...(options.postcodeDb ? { postcodeDB: options.postcodeDb } : {}),
-				...(options.adminDb ? { adminDB: options.adminDb } : {}),
+				...(options.postcodeDB ? { postcodeDB: options.postcodeDB } : {}),
+				...(options.adminDB ? { adminDB: options.adminDB } : {}),
 			})
 		}
 

@@ -11,7 +11,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -31,14 +31,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	names: string
-	lookup?: string
-	outDir: string
-	pin?: string[]
-}
-
-const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
+const FilerEdgarIngest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerEdgarIngest } = await import("@mailwoman/filer/tools")
 

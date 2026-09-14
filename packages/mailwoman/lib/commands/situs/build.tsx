@@ -47,7 +47,7 @@ import { join } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	positiveInteger,
 	splitUpperList,
 	stripAnsi,
@@ -70,16 +70,6 @@ export const spec = {
 		force: { type: "boolean", default: false, description: "Rebuild complete databases" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	outDir?: string
-	release: string
-	states?: string
-	licenseFilter?: string
-	concurrency: number
-	threads?: number
-	force: boolean
-}
 
 /**
  * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture address coverage in
@@ -155,7 +145,7 @@ interface StateManifestEntry {
 	datasets?: Record<string, number>
 }
 
-const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
+const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

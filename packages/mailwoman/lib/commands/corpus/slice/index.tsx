@@ -21,7 +21,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	countOption,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	stringOption,
 	useCommandTask,
 } from "#cli-kit"
@@ -72,43 +72,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	list: boolean
-	output?: string
-	input?: string
-	count?: string
-	variants: string
-	seed?: string
-	golden: boolean
-	sourceName?: string
-	houseNumberProb?: string
-	pmbRatio?: string
-	militaryRatio?: string
-	reversedFraction?: string
-	edgesDir?: string
-	country?: string
-	intlFraction?: string
-	commaFreeFraction?: string
-	ortsteilFraction?: string
-	adminDB?: string
-	countryFraction?: string
-	districtAsLocality?: boolean
-	bareProb?: string
-	hnProb?: string
-	communes?: string
-	banDir?: string
-	excludeSurfaces?: string
-	multilocaleCount?: string
-	lexicon?: string
-	extractsDir?: string
-	poiDB?: string
-	subVenueTuples?: string
-	negativeFraction?: string
-}
-
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 
-const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
+const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { getSliceRecipe, listSliceRecipes } = await import("@mailwoman/corpus")
 

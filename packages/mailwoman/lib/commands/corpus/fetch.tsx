@@ -15,7 +15,8 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	splitList,
 	useCommandTask,
@@ -69,24 +70,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	outRoot: string
-	mode?: "featureserver" | "bulk"
-	nadUrl?: string
-	chunkSize?: number
-	pageSize?: number
-	concurrency?: number
-	startOid?: number
-	endOid?: number
-	country?: string
-	countries?: string
-	skipStateFips?: string
-	rateSleep?: number
-	maxParallel?: number
-	dryRun: boolean
-	month?: string
-	categories?: string
-}
+type Options = OptionsOf<typeof spec>
 
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {
@@ -191,7 +175,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	}
 }
 
-const CorpusFetch: ParsedCommandComponent<Options, [FetchSourceID]> = ({ options, args }) => {
+const CorpusFetch: CommandComponent<typeof spec, [FetchSourceID]> = ({ options, args }) => {
 	const state = useCommandTask(
 		() => runSource(args[0], options),
 		(summary) => (summary.failed > 0 ? 1 : 0)

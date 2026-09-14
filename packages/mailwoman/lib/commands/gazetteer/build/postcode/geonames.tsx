@@ -20,7 +20,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
 	splitUpperList,
 	useCommandTask,
@@ -46,13 +46,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	countries?: string
-	out?: string
-	geonamesPostal?: string
-}
-
-const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
 

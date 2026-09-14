@@ -24,7 +24,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -39,13 +39,6 @@ export const spec = {
 		out: { type: "string", default: "packages/corpus/data/sub-venue-lexicon.json", description: "Destination" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	wikidataDir?: string
-	extracts?: string
-	overtureDB?: string
-	out: string
-}
 
 /**
  * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs. A bare path keeps region `""`.
@@ -62,7 +55,7 @@ function parseExtracts(extractSpec: string | undefined): Array<{ path: string; r
 	})
 }
 
-const CorpusSubVenueLexicon: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } =
 			await import("@mailwoman/corpus/tools")

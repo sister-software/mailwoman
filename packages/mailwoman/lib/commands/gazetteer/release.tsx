@@ -17,7 +17,7 @@ import { join } from "path-ts"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
 	splitUpperList,
 	useCommandTask,
@@ -45,18 +45,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	admin?: string
-	out?: string
-	countries?: string
-	fold: boolean
-	promote: boolean
-	publish: boolean
-	gazetteerVersion?: string
-	dryRun: boolean
-}
-
-const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 

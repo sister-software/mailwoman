@@ -16,13 +16,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	phaseReporter,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
 
 /**
@@ -43,15 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	gazetteerVersion?: string
-	bucket?: string
-	prefix: string
-	dryRun: boolean
-	bumpDemo: boolean
-}
-
-const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) => {
+const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("#gazetteer-pipeline")

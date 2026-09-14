@@ -48,7 +48,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -62,10 +62,6 @@ export const spec = {
 		dest: { type: "string", description: "Destination project directory" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	dest?: string
-}
 
 /**
  * The packaged skill's source directory, resolved relative to THIS package's root. See the module docstring for why two
@@ -112,7 +108,7 @@ async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 	}
 }
 
-const SkillInstall: ParsedCommandComponent<Options> = ({ options }) => {
+const SkillInstall: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => await installSkill(options.dest),
 		(result) => (result.ok ? 0 : 1)

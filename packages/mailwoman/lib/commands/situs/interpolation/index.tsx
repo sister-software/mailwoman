@@ -42,7 +42,7 @@ import { Globerator } from "spliterator/node/fs"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	positiveInteger,
 	splitUpperList,
 	stripAnsi,
@@ -92,18 +92,6 @@ export const spec = {
 		"build-only": { type: "boolean", default: false, description: "Only build existing downloads" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	edgesDir: string
-	outDir?: string
-	release: string
-	states?: string
-	topCounties?: number
-	concurrency: number
-	force: boolean
-	downloadOnly: boolean
-	buildOnly: boolean
-}
 
 //#region State FIPS map
 
@@ -475,7 +463,7 @@ interface StateResult {
 	skipped?: boolean
 }
 
-const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
+const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const EDGES_DIR = options.edgesDir
 		const OUT_DIR = options.outDir ?? dataRootPath("interpolation")

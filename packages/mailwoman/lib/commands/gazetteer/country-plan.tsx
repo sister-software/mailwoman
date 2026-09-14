@@ -23,13 +23,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { resolvePath } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
 	adminDBAvailable,
 	censusForCountry,
@@ -68,12 +62,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	target?: string
-	adminDB?: string
-	write: boolean
-}
-
 /**
  * The repositories a WOF move would clone. Names only — `--plan` never reaches the network, so their existence and size
  * are reported as UNKNOWN rather than guessed.
@@ -84,7 +72,7 @@ function wofRepoNames(country: string): string[] {
 	return [`whosonfirst-data-admin-${cc}`, `whosonfirst-data-postalcode-${cc}`]
 }
 
-const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ options, args }) => {
+const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const adminDB = options.adminDB ?? String(resolvePath(mailwomanDataRoot(), "wof", "admin-global-priority.db"))

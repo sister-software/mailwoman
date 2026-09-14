@@ -10,13 +10,7 @@
 
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitNumberList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitNumberList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -36,14 +30,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sizes: string
-	dup: number
-	em: boolean
-	outMd?: string
-}
-
-const RegistryMatcherScale: ParsedCommandComponent<Options> = ({ options }) => {
+const RegistryMatcherScale: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { matcherScale } = await import("@mailwoman/registry/tools")
 

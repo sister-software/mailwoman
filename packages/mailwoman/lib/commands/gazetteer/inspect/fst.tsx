@@ -10,7 +10,7 @@
 
 import { join } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -26,13 +26,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db?: string
-	showContinuations: boolean
-	max: number
-}
-
-const GazetteerInspectFST: ParsedCommandComponent<Options> = ({ args, options }) => {
+const GazetteerInspectFST: CommandComponent<typeof spec> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const { wofDir } = await import("#gazetteer-pipeline")
 

@@ -23,7 +23,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Pre-registered phase-2 decision ruler (#1967)"
 
@@ -45,18 +45,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	coverage?: string
-	out?: string
-	json: boolean
-}
-
-const EvalPhase2Decision: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPhase2Decision: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { printPhase2Receipt, runPhase2Decision } = await import("#eval-harness/phase-2-decision/run")

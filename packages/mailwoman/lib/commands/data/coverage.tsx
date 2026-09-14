@@ -26,7 +26,7 @@ import { Globerator } from "spliterator/node/fs"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	splitUpperList,
 	useCommandTask,
 	writeRawStdout,
@@ -51,14 +51,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	countries?: string
-	config?: string
-	refresh: boolean
-	json: boolean
-}
-
-const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
+const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { censusCoverage } = await import("#coverage/census")
 		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")

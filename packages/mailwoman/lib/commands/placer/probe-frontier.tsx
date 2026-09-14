@@ -10,13 +10,7 @@
 
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 export const description = "Probe whether the deployed coarse placer (#244) covers the recoverable tranche (#822)"
 
@@ -36,13 +30,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	n: number
-	out?: string
-}
-
-const PlacerProbeFrontier: ParsedCommandComponent<Options> = ({ options }) => {
+const PlacerProbeFrontier: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { probeFrontier } = await import("@mailwoman/core/coarse-placer/tools")
 

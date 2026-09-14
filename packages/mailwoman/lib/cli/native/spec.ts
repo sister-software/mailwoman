@@ -8,7 +8,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { type OptionPropertyName, parseArguments } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type * as React from "react"
 
@@ -68,6 +68,64 @@ export interface ParsedCommand {
 	positionals: string[]
 	values: Record<string, OptionValue | undefined>
 }
+
+/**
+ * Collapse an intersection of mapped types into one object type, preserving each property's optionality.
+ *
+ * {@linkcode OptionsOf} builds its required and optional halves separately, because a single mapped type cannot vary `?`
+ * per key. Without this the editor shows the intersection and an error names one half of it.
+ */
+type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
+
+/**
+ * The value a flag's property carries, before {@linkcode OptionSpec.multiple} is applied. A `choices` list narrows the
+ * property to that union rather than leaving it `string`, which is what a hand-written `Options` already did.
+ */
+type OptionScalar<Option> = Option extends { type: "boolean" }
+	? boolean
+	: Option extends { type: "number" }
+		? number
+		: Option extends { choices: readonly (infer Choice extends string)[] }
+			? Choice
+			: string
+
+type OptionValueOf<Option> = Option extends { multiple: true } ? Array<OptionScalar<Option>> : OptionScalar<Option>
+
+/**
+ * The flags the router always supplies a value for: one carrying a `default`, and one declared `required`. Every other
+ * flag is absent unless the user passes it.
+ */
+type AlwaysPresentFlag<Options> = {
+	[Flag in keyof Options]: Options[Flag] extends { default: unknown }
+		? Flag
+		: Options[Flag] extends { required: true }
+			? Flag
+			: never
+}[keyof Options]
+
+/**
+ * A command's options object, DERIVED from its own `spec`.
+ *
+ * The router writes each flag's value to the property `optionPropertyName` derives from it, so a property spelled any
+ * other way is never written to and the flag parses, validates, and does nothing. A restated `interface Options` can
+ * disagree that way silently; a derived one cannot, because the disagreement becomes a compile error at the read site.
+ *
+ * A flag carrying a `default`, or marked `required`, is always supplied and its property is required. Every other
+ * property is optional. `choices` narrows the property to that union; `multiple` widens it to an array.
+ */
+export type OptionsOf<Spec extends CommandSpec> = Spec["options"] extends infer Options
+	? Options extends Readonly<Record<string, OptionSpec>>
+		? OneObject<
+				{
+					[Flag in AlwaysPresentFlag<Options> & string as OptionPropertyName<Flag>]-?: OptionValueOf<Options[Flag]>
+				} & {
+					[
+						Flag in Exclude<keyof Options, AlwaysPresentFlag<Options>> & string as OptionPropertyName<Flag>
+					]?: OptionValueOf<Options[Flag]>
+				}
+			>
+		: Record<string, never>
+	: Record<string, never>
 
 export class CLIError extends CommandError {
 	constructor(message: string, options?: ErrorOptions) {

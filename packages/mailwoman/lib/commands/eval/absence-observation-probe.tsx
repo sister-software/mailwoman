@@ -27,7 +27,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Pre-registered coverage-qualified absence-observation probe (#1965)"
 
@@ -49,18 +49,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	coverage?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	out?: string
-	json: boolean
-}
-
-const EvalAbsenceObservationProbe: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalAbsenceObservationProbe: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { printAbsenceProbeReceipt, runAbsenceObservationProbe } =

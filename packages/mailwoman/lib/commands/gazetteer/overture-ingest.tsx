@@ -33,13 +33,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitUpperList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
 // Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one), so a stale
 // pin fails the default ingest outright. Moves together with `gazetteer-pipeline/poi/defaults.ts`'s
 // pin — see its docstring for why the two constants stay independent.
@@ -78,15 +72,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	release?: string
-	countries: string
-	limit?: string
-	out?: string
-	probeOnly: boolean
-	corpusJSONL: boolean
-}
-
 function renderMarkdown(release: string, probes: CountryProbe[]): string {
 	const lines = [
 		`# Overture addresses fill-rate report — release ${release}`,
@@ -121,7 +106,7 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 	return lines.join("\n")
 }
 
-const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 

@@ -10,7 +10,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -35,15 +35,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	jsonl: string
-	baseManifest: string
-	outDir: string
-	corpusVersion: string
-	source: string
-}
-
-const CorpusSliceKryptonite: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusSliceKryptonite: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildKryptoniteSlice } = await import("@mailwoman/corpus/tools")
 

@@ -25,7 +25,7 @@ import { runFile } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 import type { RepoSyncPlan } from "#gazetteer-pipeline/repos/sync"
 
 /**
@@ -43,14 +43,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	root?: string
-	countries?: string
-	apply: boolean
-	repoint: boolean
-	offline: boolean
-}
-
 const ACTION_MARK: Record<string, string> = {
 	"up-to-date": "=",
 	"fast-forward": "↑",
@@ -61,7 +53,7 @@ const ACTION_MARK: Record<string, string> = {
 	"refuse-not-a-clone": "✗",
 }
 
-const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { join } = await import("path-ts")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

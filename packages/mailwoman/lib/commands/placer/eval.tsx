@@ -13,7 +13,8 @@
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -40,15 +41,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	model?: string
-	data?: string
-	abstain?: number
-	fitPerClass?: number
-	outMd?: string
-	fp32?: string
-	int8?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Kind = (typeof kinds)[number]
 
@@ -88,7 +81,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const PlacerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
+const PlacerEval: CommandComponent<typeof spec, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runKind(args[0], options))
 
 	return <CommandTaskResult state={state} />

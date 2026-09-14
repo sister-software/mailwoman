@@ -37,7 +37,7 @@ import {
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -50,11 +50,6 @@ export const spec = {
 		output: { type: "string", description: "Compiled SQLite path" },
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	src: string
-	output?: string
-}
 
 interface AuthoredConvention {
 	wof_id: number
@@ -108,7 +103,7 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	if (errors.length) throw new CommandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
-const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

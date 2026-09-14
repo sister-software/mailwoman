@@ -11,7 +11,7 @@
  *   Informational (always exits 0) — the standing floors stay on `eval parity`.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"
 
@@ -32,14 +32,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	fixtures?: string
-	klass?: string
-}
-
-const EvalFragmentBoard: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalFragmentBoard: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runFragmentBoard } = await import("#eval-harness/fragment/board")

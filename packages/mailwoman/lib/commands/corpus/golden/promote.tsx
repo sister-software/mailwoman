@@ -11,7 +11,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -33,16 +33,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	input: string
-	bumpTo: string
-	prior: string
-	goldenRoot: string
-	filters: boolean
-	dryRun: boolean
-}
-
-const CorpusGoldenPromote: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusGoldenPromote: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { promoteGolden } = await import("@mailwoman/corpus/tools")
 

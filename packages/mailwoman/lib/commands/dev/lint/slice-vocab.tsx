@@ -12,7 +12,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -34,16 +34,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	slice: string
-	baseVersion: string
-	baseRoot?: string
-	threshold: number
-	minCount: number
-	fraction: number
-}
-
-const DevLintSliceVocab: ParsedCommandComponent<Options> = ({ options }) => {
+const DevLintSliceVocab: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { lintSliceVocab } = await import("@mailwoman/corpus/tools")

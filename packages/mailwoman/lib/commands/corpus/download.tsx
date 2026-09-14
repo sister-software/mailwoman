@@ -16,7 +16,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, type CommandComponent, useCommandTask } from "#cli-kit"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 
@@ -33,19 +33,13 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	bucket: string
-	outDir: string
-	dryRun: boolean
-}
-
 interface Step {
 	label: string
 	status: "pending" | "running" | "done" | "error"
 	detail?: string
 }
 
-const CorpusDownload: ParsedCommandComponent<Options> = ({ options }) => {
+const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 	const [steps, setSteps] = useState<Step[]>([
 		{ label: "Download corpus v0.3.0", status: "pending" },
 		{ label: "Download corpus v0.4.0", status: "pending" },

@@ -15,7 +15,8 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -43,18 +44,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	in?: string
-	crossAgencyOnly: boolean
-	lambda?: number
-	state?: string
-	db?: string
-	nadMod?: number
-	oaMod?: number
-	cap?: number
-	outHTML?: string
-	outSVG?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Figure = (typeof figures)[number]
 
@@ -91,7 +81,7 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 	}
 }
 
-const RegistryViz: ParsedCommandComponent<Options, [Figure]> = ({ options, args }) => {
+const RegistryViz: CommandComponent<typeof spec, [Figure]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runFigure(args[0], options))
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

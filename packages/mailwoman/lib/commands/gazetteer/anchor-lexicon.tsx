@@ -29,7 +29,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Homographs printed before the list is truncated.
@@ -55,10 +55,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	output?: string
-}
-
 /**
  * THE shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
  * `rules.word_norm` below): per whitespace-word, strip LEADING/TRAILING characters that are not Unicode letters or
@@ -77,7 +73,7 @@ const isShortCode = (s: string): boolean => {
 	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
-const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { wordNorm, wordNormLower } = await import("@mailwoman/codex")
 		const { COUNTRY_LOOKUP } = await import("@mailwoman/codex/country")

@@ -24,7 +24,7 @@ import { allRows } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -39,13 +39,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	candidateDB: string
-	aliasDB?: string
-	postcodeLocalityDB?: string
-}
-
-const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

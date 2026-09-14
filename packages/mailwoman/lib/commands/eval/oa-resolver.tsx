@@ -9,13 +9,7 @@
  *   for the two-tier metric and every arm's rationale.
  */
 
-import {
-	booleanOption,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { booleanOption, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
@@ -68,49 +62,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	eval?: string
-	limit?: number
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	modelAnchorLookup?: string
-	wof?: string
-	defaultCountry?: string
-	ablateToAnchor: boolean
-	anchorOff: boolean
-	normalizeCase: boolean
-	rawCase: boolean
-	adminCoherence: boolean
-	adminCoherenceOff: boolean
-	postcodeCountryCoherence: boolean
-	postcodeCountryCoherenceOff: boolean
-	hierarchyCompletion: boolean
-	postcodeAnchor: boolean
-	postcodeDatabases?: string
-	anchorMinConf?: number
-	anchorRerank: boolean
-	addressPoints?: string
-	interpolation?: string
-	cascade: boolean
-	dataRoot?: string
-	candidateDB?: string
-	postalCityAliasDB?: string
-	assembled: boolean
-	adminFst?: string
-	placeCountry: boolean
-	placeCountryHard: boolean
-	placeCountryHardAll: boolean
-	outMd?: string
-	outJSON?: string
-	errorsJSON?: string
-	outResolved?: string
-	outRows?: string
-	lookupMemo: boolean
-	profileJSON?: string
-}
-
-const EvalOAResolver: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalOAResolver: CommandComponent<typeof spec> = ({ options }) => {
 	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
 
 	const state = useCommandTask(async () => {

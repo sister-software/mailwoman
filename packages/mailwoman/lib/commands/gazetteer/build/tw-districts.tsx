@@ -9,7 +9,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peer or the DuckDB dev dependency.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -29,15 +29,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	release?: string
-	parquet?: string
-	admin?: string
-	out?: string
-	threads?: string
-}
-
-const GazetteerBuildTWDistricts: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildTWDistricts: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildTWDistrictsDatabase } = await import("#gazetteer/tw-districts")
 

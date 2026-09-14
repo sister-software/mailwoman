@@ -11,13 +11,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { Text } from "ink"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	reportToStderr,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -40,14 +34,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	db?: string
-	out: string
-	per: number
-	layer: string
-}
-
-const TIGERRaceDots: ParsedCommandComponent<Options> = ({ options }) => {
+const TIGERRaceDots: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		// Optional `@mailwoman/tiger` (operator census tooling) — lazy-imported so a geocoding-only
 		// install of the CLI degrades to a friendly message instead of crashing (see `tiger fetch`).

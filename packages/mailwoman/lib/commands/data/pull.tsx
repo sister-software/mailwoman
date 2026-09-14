@@ -51,7 +51,7 @@ import {
 	CheckList,
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 import {
@@ -105,14 +105,6 @@ export const spec = {
 		},
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	dryRun: boolean
-	only?: string
-	force: boolean
-	dataRoot?: string
-	host?: string
-}
 
 /**
  * HEAD the artifact (and, when it publishes one, GET its `.md5` sidecar) via the paced/retried `APIClient`. Failures
@@ -322,7 +314,7 @@ async function pullBundles(
 	return { ok, checks, pulledCandidate }
 }
 
-const DataPull: ParsedCommandComponent<Options> = ({ options, args }) => {
+const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			if (!args.length) {

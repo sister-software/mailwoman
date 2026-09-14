@@ -22,7 +22,7 @@
 import { prettyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
 
@@ -49,19 +49,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	weightsCache?: string
-	fixtures?: string
-	db?: string
-	resolveDB?: string
-	candidateDB?: string
-	semanticObservation: boolean
-	json: boolean
-	enforce: boolean
-}
-
-const EvalPoiBoard: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPoiBoard: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runPOIBoard } = await import("#eval-harness/poi/board")

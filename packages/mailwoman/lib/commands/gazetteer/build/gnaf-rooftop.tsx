@@ -10,7 +10,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peers.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -38,16 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	standardDir?: string
-	out?: string
-	states?: string
-	release?: string
-	buildSha: string
-	createdAt: string
-}
-
-const GazetteerBuildGNAFRooftop: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildGNAFRooftop: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildGNAFRooftopDatabase } = await import("#gazetteer/gnaf-rooftop")
 

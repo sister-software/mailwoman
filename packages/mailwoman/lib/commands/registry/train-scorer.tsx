@@ -14,7 +14,8 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
+	type OptionsOf,
 	reportToStderr,
 	useCommandTask,
 } from "#cli-kit"
@@ -43,19 +44,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sources?: string
-	state?: string
-	npis?: number
-	cap?: number
-	cost?: number
-	precisionBar?: number
-	out?: string
-	locale: string
-	date?: string
-	wof?: string
-	dataRoot?: string
-}
+type Options = OptionsOf<typeof spec>
 
 type Variant = (typeof variants)[number]
 
@@ -96,7 +85,7 @@ async function runVariant(variant: Variant, options: Options): Promise<{ out: st
 	}
 }
 
-const RegistryTrainScorer: ParsedCommandComponent<Options, [Variant]> = ({ options, args }) => {
+const RegistryTrainScorer: CommandComponent<typeof spec, [Variant]> = ({ options, args }) => {
 	const state = useCommandTask(() => runVariant(args[0], options))
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

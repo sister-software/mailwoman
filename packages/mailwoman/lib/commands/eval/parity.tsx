@@ -10,7 +10,7 @@
  *   mangle + fragment campaign's progress.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Largest disagreement sample that keeps parity output reviewable.
@@ -33,10 +33,13 @@ export const spec = {
 		fixtures: { type: "string", description: "Fixture JSONL override" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"street-morphology": { type: "boolean", default: false, description: "Enable street-morphology emission bias" },
-		"gazetteer-prior": {
+		// The runner reads `gazetteerPrior !== false`, so the prior is ON unless a caller forces it off and `false`
+		// is the only value this flag can usefully carry. Naming it for the thing it does keeps the flag and the
+		// property it binds to in agreement.
+		"gazetteer-prior-off": {
 			type: "boolean",
 			default: false,
-			description: "Feed the gazetteer FST emission prior (#1497)",
+			description: "Disable the gazetteer FST emission prior (#1497)",
 		},
 		"word-consistency": { type: "boolean", default: true, description: "Enable word-consistency healing" },
 		failing: {
@@ -49,20 +52,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	model?: string
-	tokenizer?: string
-	card?: string
-	fixtures?: string
-	weightsCache?: string
-	streetMorphology: boolean
-	gazetteerPriorOff: boolean
-	wordConsistency: boolean
-	failing: number
-}
-
-const EvalParity: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalParity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runParityEval } = await import("#eval-harness/parity-corpus")

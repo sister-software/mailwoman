@@ -19,7 +19,7 @@
 
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -44,23 +44,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	recipe: "base" | "jp" | "kr" | "tw"
-	output: string
-	country?: string
-	adminRepo?: string
-	postcodeDB?: string
-	radiusKM?: number
-	maxCandidates?: number
-	finalize: boolean
-	postalNames?: string
-	geonames?: string
-	adminDB?: string
-	postalXML?: string
-	divisions?: string
-}
-
-const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const need = (name: string, v: string | undefined): string => {
 			if (!v) throw new CommandError(`--${name} is required for --recipe ${options.recipe}`)

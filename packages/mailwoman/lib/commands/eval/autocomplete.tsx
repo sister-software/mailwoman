@@ -12,7 +12,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Autocomplete ladder (#2154) — first-hit rung, stability, latency and abstention per prefix"
 
@@ -37,18 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	country?: string
-	limit?: number
-	weightsCache?: string
-	candidateDB?: string
-	fstDir?: string
-	adminDB?: string
-	out?: string
-	json: boolean
-}
-
-const EvalAutocomplete: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalAutocomplete: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { printAutocompleteLadder, runAutocompleteLadder } = await import("#eval-harness/autocomplete-ladder")
 

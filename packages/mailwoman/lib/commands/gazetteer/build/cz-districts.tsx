@@ -9,7 +9,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -23,12 +23,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	source?: string
-	out?: string
-}
-
-const GazetteerBuildCZDistricts: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildCZDistricts: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCZDistrictsDatabase } = await import("#gazetteer/cz-districts")
 		const r = await buildCZDistrictsDatabase({ sourcePath: options.source, out: options.out })

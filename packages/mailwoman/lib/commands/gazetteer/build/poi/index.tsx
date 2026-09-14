@@ -29,7 +29,7 @@ import { Box, Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
-	type ParsedCommandComponent,
+	type CommandComponent,
 	phaseReporter,
 	splitUpperList,
 	useCommandTask,
@@ -59,18 +59,6 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	source: "overture" | "osm"
-	release?: string
-	countries?: string
-	out?: string
-	limit?: string
-	skipIngest: boolean
-	pbf?: string
-	country?: string
-	bbox?: string
-}
-
 /**
  * `--bbox` field count: `minLon,minLat,maxLon,maxLat`.
  */
@@ -92,7 +80,7 @@ function parseBBoxFlag(raw: string): BBox {
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { LayerTier } = await import("@mailwoman/core/layers")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

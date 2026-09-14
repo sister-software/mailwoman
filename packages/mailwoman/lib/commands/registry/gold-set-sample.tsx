@@ -10,7 +10,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -31,16 +31,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	sources?: string
-	cap: number
-	state: string
-	tau: number
-	n: number
-	outJSONL?: string
-}
-
-const RegistryGoldSetSample: ParsedCommandComponent<Options> = ({ options }) => {
+const RegistryGoldSetSample: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { goldSetSample } = await import("@mailwoman/registry/tools")
 

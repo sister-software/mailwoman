@@ -9,7 +9,7 @@
  *   weights-package sibling at the model promote that requires it.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -28,14 +28,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	countries?: string
-	placetypes?: string
-	db?: string
-	output?: string
-}
-
-const GazetteerBuildLocalitySurfaceLexicon: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildLocalitySurfaceLexicon } = await import("#gazetteer/evidence-lexicons")
 

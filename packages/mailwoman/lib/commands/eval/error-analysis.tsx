@@ -9,7 +9,7 @@
  *   `--no-strict` warns-and-continues for legacy pre-anchor models.
  */
 
-import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Categorized golden-set failure report (the pre-publish 2pp promote check)"
 
@@ -38,17 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	golden?: string
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	postcodeRepair: boolean
-	wordConsistency: boolean
-	strict: boolean
-}
-
-const EvalErrorAnalysis: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalErrorAnalysis: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { evalErrorAnalysis } = await import("#eval-harness/error-analysis")

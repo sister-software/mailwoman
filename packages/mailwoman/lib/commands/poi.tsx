@@ -36,6 +36,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	loadClassifierTolerant,
+	type OptionsOf,
 	type ParsedCommandComponent,
 	reportToStderr,
 	useCommandTask,
@@ -64,14 +65,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale: string
-	db?: string
-	overpass: boolean
-	json: boolean
-	resolveDB?: string
-	candidateDB?: string
-}
+type Options = OptionsOf<typeof spec>
 
 /**
  * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an anchor remainder

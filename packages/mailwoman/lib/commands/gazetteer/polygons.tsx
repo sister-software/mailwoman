@@ -40,13 +40,7 @@ import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import {
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	splitUpperList,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -79,15 +73,6 @@ export const spec = {
 		},
 	},
 } as const satisfies CommandSpec
-
-interface Options {
-	points?: string
-	admin?: string
-	countries?: string
-	out: string
-	tol: number
-	repos: string
-}
 
 type Position = number[]
 
@@ -191,7 +176,7 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	return null // Points / lines: no polygon to draw.
 }
 
-const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
+const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
