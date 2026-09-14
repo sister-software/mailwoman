@@ -111,37 +111,51 @@ An earlier draft of this record called this a fly-to that overshot the basemap's
 wrong, and it is recorded here because it is the kind of wrong that gets a camera "fixed" into a
 second bug.
 
-What happens instead: the camera is correct. `computeMapPlaceRenderSpec`
+What is settled is that the camera is correct. `computeMapPlaceRenderSpec`
 (`packages/react/lib/map/place-render.ts:126`) flies an interpolated hit to z15, well inside the
 Protomaps source's `maxzoom: 15`, and the marker lands on the right building. The viewport is
-nevertheless black for tens of seconds, and then fills in on its own with no interaction — the tiles
-for the landed view are queued behind the model and gazetteer work saturating the main thread and the
-connection (the resolve alone measured 2,535 ms). Scrolling appeared to "fix" it only because any
-interaction forces a repaint of tiles that had by then arrived.
+nevertheless black for tens of seconds and then fills in on its own with no interaction. Why it does
+that is the open question below — an earlier answer to it has also been withdrawn.
 
-The cause, traced 2026-09-14. It is not the tiles and it is not the camera — it is the main thread.
+The cause is NOT established. The 2026-09-14 entry that claimed it was has been withdrawn — this is the
+second confident wrong answer about this one symptom, and the pattern is worth naming in place.
 
-1. During the stall, `tiles.mailwoman.ai` had received **three** requests for the whole page life:
-   `geolocate`, `basemap-v4.json`, `coverage-v5.json`. Not one vector tile. The map was not waiting on
-   a slow tile; it never asked for one.
-2. MapLibre's update loop — the thing that decides which tiles a viewport needs and requests them —
-   runs on the main thread.
-3. The main thread is where inference runs. `packages/neural/lib/web/onnx-runner.ts:140` creates the
-   session with `executionProviders: ["webgpu", "wasm"]` in the page, not in a worker. The gazetteer
-   IS in a worker (sql.js-httpvfs); the classifier and the resolve orchestration are not, and one
-   resolve measured 2,535 ms of the 2,674 ms total.
-4. So the viewport goes black at the moment the camera lands and stays black until the work finishes,
-   then paints with no interaction — which is exactly what was observed, and why scrolling appeared to
-   "fix" it: any interaction forces a repaint of tiles that had by then arrived.
+**Fact, from source.** Inference runs on the page's main thread.
+`packages/neural/lib/web/onnx-runner.ts:140` creates the session with
+`executionProviders: ["webgpu", "wasm"]` in the page, not a worker. The gazetteer IS in a worker
+(sql.js-httpvfs).
 
-`place-render.node.test.ts` (10 tests, green) covers the camera arithmetic, and it is correct: an
-interpolated hit flies to z15, inside the Protomaps source's `maxzoom: 15`.
+**Fact, from the tests.** The camera is right — `place-render.node.test.ts` (10 tests) covers the
+arithmetic, and an interpolated hit flies to z15, inside the Protomaps source's `maxzoom: 15`.
 
-NOT FIXED, deliberately. The fix is to stop blocking the main thread — inference in a worker, or
-yielding between pipeline stages so MapLibre can paint — and that is an architecture change whose
-whole value is in what it does to frame timing, which is the one thing a workspace that cannot open a
-browser must not be trusted to judge. Left as the top open item, now with its cause rather than a
-guess about it.
+**Fact, observed.** After a result lands the viewport is black for roughly twenty seconds, then paints
+with no interaction. Scrolling appeared to fix it because any interaction forces a repaint of tiles
+that had by then arrived.
+
+**The withdrawn claim** was that MapLibre never requested a tile at all, evidenced by
+`performance.getEntriesByType("resource")` reporting three requests to `tiles.mailwoman.ai` for the
+whole page life. That measurement cannot carry the claim:
+
+- Resource Timing holds **250 entries by default** and drops the rest silently. This page fetches the
+  model, the tokenizer, six lexicons, the postcode binaries, eight pair indexes, the sqlite range reads
+  and several dozen terrarium elevation tiles. The buffer is long gone before a vector tile is asked
+  for, so "three entries" measures the buffer, not the network.
+- And the tiles come from the host that was counted:
+  `packages/tile-worker/lib/protomaps/index.ts:72` builds the template as
+  `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles demonstrably rendered, so
+  requests to that host were made and went unrecorded. The two observations cannot both stand,
+  and the measurement is the one that gives.
+
+**How to measure it properly**, for whoever picks this up: a Performance-panel recording across the
+resolve, which shows long tasks and main-thread occupancy directly — or
+`performance.setResourceTimingBufferSize(5000)` before the query if request counts are what is wanted.
+The question to answer first is whether the main thread is occupied or idle during those twenty
+seconds. Everything else follows from that, and nothing should be changed until it is known.
+
+NOT FIXED, and not to be fixed from here. The candidate remedies — inference in a worker, yielding
+between pipeline stages — are architecture changes whose whole value is what they do to frame timing,
+which is the one thing a workspace that cannot open a browser must not be trusted to judge. The memory
+work above (86e85929f) was a separate and established bug; it is not a fix for this.
 
 ### 2. Nine silent failure paths in Earth
 
