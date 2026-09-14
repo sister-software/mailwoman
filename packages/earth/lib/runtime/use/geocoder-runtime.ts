@@ -190,11 +190,19 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const releaseRef = useRef<ReleaseInfo | null>(rt.selectedRelease)
 	const versionRef = useRef<string | null>(rt.selectedVersion)
 
-	useEffect(() => {
-		assetsRef.current = rt.assets
-		releaseRef.current = rt.selectedRelease
-		versionRef.current = rt.selectedVersion
-	}, [rt.assets, rt.selectedRelease, rt.selectedVersion])
+	// Mirrored DURING RENDER, not in an effect.
+	//
+	// React runs effects child-first. `runtime.ready` is derived from the same `rt.assets` these mirror, so any
+	// descendant effect that reacts to `ready` flipping true runs BEFORE this parent's effect would — and read a null
+	// `assetsRef.current` while `ready` said otherwise. The permalink auto-run in `GeocoderControls` does exactly that
+	// and lost the race every time: `?q=` produced "Classifier not ready" on a page whose classifier had loaded fine.
+	//
+	// Writing the mirror in render closes the window: the ref is current the moment the value is, for every consumer
+	// here, not only the one that surfaced it. These are idempotent assignments of values owned by this same tree, so
+	// a render that is discarded writes a value the committed render writes again.
+	assetsRef.current = rt.assets
+	releaseRef.current = rt.selectedRelease
+	versionRef.current = rt.selectedVersion
 
 	const geoBias = useGeoBias()
 
