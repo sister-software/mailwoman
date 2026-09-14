@@ -58,6 +58,18 @@ row or two apiece.
 Nothing here says the board is wrong. It says a per-country verdict is only available where the rows are, and the
 places a planet geocoder is about to be judged — the other 119 countries — are not those places.
 
+**The instrument for this already ships.** `mailwoman data coverage` reports `boardRows` and `boardPassedRows`
+per country beside corpus rows, training admission, the weights package and gazetteer places, and its own
+docstring states the reason this survey exists:
+
+> It exists because the answer is held in five registers that do not agree, and reading any one of them alone
+> produces a confident wrong answer. […] Training is not verification (a board row that is not `status: pass`
+> tracks rather than checks).
+
+What is new here is having read the board-rows column across all 130 countries at once and stated what the
+distribution means. Reproduce it with that command rather than with a throwaway; the counts above come from the
+committed case files, so they need no artifact, while the command's other four registers do.
+
 ## Two tables contradict a claim made elsewhere
 
 ### The D-rule's own list omits a tier-1 locale
