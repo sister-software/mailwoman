@@ -57,6 +57,8 @@ import {
 	dominanceMarginLog10,
 } from "#eval-harness/gauntlet/ablation/expectation"
 import { collapseCoincident } from "#eval-harness/gauntlet/ablation/gazetteer"
+import { tierRank } from "#eval-harness/gauntlet/ablation/scoring"
+import type { ResolutionTier } from "#geocode/result"
 
 /**
  * The subset of a resolver `ResolvedPlace` this module reads. Structural on purpose — `AddressNode.alternatives` is
@@ -205,6 +207,94 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 			runnerUp: runnerUp
 				? { name: runnerUp.name, placetype: runnerUp.placetype, country: runnerUp.country || null }
 				: null,
+		},
+	}
+}
+
+/**
+ * The COARSEST tier at which each parsed component is still located, ranked by {@linkcode tierRank}.
+ *
+ * A component sets a FLOOR rather than a target. `house_number` reads `interpolated` and not `address_point` because
+ * interpolation IS how a house number is placed along a segment — the first version of this table put the floor at
+ * `address_point` and fired on `129 E Burr Oak St, Athens, MI`, an interpolated answer at 124 m uncertainty that
+ * locates the house as precisely as the tier permits. `postcode` reads `street` for the same reason from the other
+ * side: a postcode centroid is a street-grade answer in most address systems, and a finer floor would raise this marker
+ * on every correct Dutch result.
+ *
+ * `unit` is deliberately ABSENT. No layer in this repository locates a unit — there is no floor or interior geometry in
+ * the artifact set — so a unit can never be "used", and a floor for it would fire on every correct answer carrying
+ * one.
+ *
+ * The rank comes from `ablation/scoring.ts` rather than a second ladder declared here. That module already orders the
+ * tiers for the deletion scorer, and two orders would let this marker and the ablation runner disagree about whether an
+ * interpolated answer is a drop from an address point.
+ */
+const COMPONENT_TIER_FLOOR: ReadonlyArray<readonly [tag: string, floor: ResolutionTier]> = [
+	["house_number", "interpolated"],
+	["street", "street"],
+	["postcode", "street"],
+]
+
+/**
+ * Options for {@linkcode coarserAnswerMarker}.
+ */
+export interface CoarserAnswerOpts {
+	/**
+	 * The full kind verdict — top kind plus alternatives. The marker names the top kind, since a structured address that
+	 * fell short is still a structured address.
+	 */
+	kinds: ReadonlyArray<QueryKind>
+	/**
+	 * The parsed components, by tag. Read for PRESENCE only; the values never enter the verdict.
+	 */
+	components: Readonly<Record<string, string | null | undefined>>
+	reachedTier: ResolutionTier
+}
+
+/**
+ * Raise `declared_coarser_answer` when the query supplied components finer than the tier the answer reached.
+ *
+ * The counterpart of {@linkcode declaredAmbiguityMarker} and written because its absence was a real silence: `301
+ * College Ave #101, Athens, GA 30601` returned the Athens label centroid at `admin`, 1,627 m from the rooftop the same
+ * address without `#101` reaches at `address_point`, and the response carried no field distinguishing it from a correct
+ * answer to `Athens, GA`.
+ *
+ * Returns `null` — never an empty marker — when nothing finer was asked for and when the tier met the ask. "We checked
+ * and the answer was as fine as the question" is the caller's marker array not gaining an entry.
+ */
+export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker | null {
+	// `venue` and `plus_code` rank as house-grade in `tierRank`, so an entity answer and a decoded plus code satisfy
+	// every floor here and raise nothing — which is correct: a resolved venue IS the place the query asked about.
+	const reached = tierRank(opts.reachedTier)
+
+	const unused = COMPONENT_TIER_FLOOR.filter(([tag, floor]) => opts.components[tag] && reached < tierRank(floor))
+
+	if (!unused.length) return null
+
+	// The finest floor any unused component sets — what the answer would have had to reach to use all of them.
+	let floorTier = unused[0]![1]
+
+	for (const [, floor] of unused) {
+		if (tierRank(floor) > tierRank(floorTier)) {
+			floorTier = floor
+		}
+	}
+
+	const tags = unused.map(([tag]) => tag)
+	const kind = opts.kinds[0] ?? "structured_address"
+
+	return {
+		kind,
+		code: "declared_coarser_answer",
+		mechanism: "resolver:tier_shortfall",
+		message:
+			`The query supplied ${tags.join(", ")}, which ${tags.length === 1 ? "is" : "are"} located no coarser than ` +
+			`${floorTier}, and the walk reached ${opts.reachedTier}. The coordinate below is the ` +
+			`${opts.reachedTier}-grade one; it does not locate the ${tags[0]}.`,
+		evidence: {
+			unusedComponents: tags,
+			requiredTier: floorTier,
+			reachedTier: opts.reachedTier,
 		},
 	}
 }

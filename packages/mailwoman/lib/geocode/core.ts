@@ -71,7 +71,7 @@ import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observati
 import { applyPlusCodeOverride } from "#plus-code-override"
 import type { POIExecutorLookup } from "#poi/executor"
 import { repairPostcodeContradiction } from "#postcode-repair"
-import { declaredAmbiguityMarker } from "#query-intent"
+import { coarserAnswerMarker, declaredAmbiguityMarker } from "#query-intent"
 import { recognizeUSRegions } from "#region-recognition"
 import { repairStrandedAffix } from "#stranded-affix-repair"
 import { applyStreetMissFallback } from "#street/miss-fallback"
@@ -939,16 +939,29 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// ROAD_TO_V9 §4 marker assembly — the verdict itself is computed above the street-miss fallback.
 	const markers = [...(verdict.intentMarkers ?? [])]
 
-	const ambiguity = declaredAmbiguityMarker({
-		kinds: [verdict.kind, ...verdict.alternatives.map((a) => a.kind)],
-		tree: resolved,
-		lat: result.lat,
-		lon: result.lon,
-	})
+	// The two resolve-time readings, side by side because they are the same question from opposite ends: too MANY
+	// answers for the query is `declared_ambiguity`, too FEW is `declared_coarser_answer`. Only the first existed, so a
+	// street parsed and a locality centroid returned came back as an ordinary admin answer, indistinguishable from a
+	// correct answer to the locality alone. Each returns `null` when its rule did not fire.
+	const kinds = [verdict.kind, ...verdict.alternatives.map((a) => a.kind)]
 
-	if (ambiguity) {
-		markers.push(ambiguity)
-	}
+	markers.push(
+		...[
+			declaredAmbiguityMarker({ kinds, tree: resolved, lat: result.lat, lon: result.lon }),
+			coarserAnswerMarker({
+				kinds,
+				// Named rather than passed whole: `GeocodeResult` carries arrays and records beside its component strings,
+				// and a structural pass would let a future field of the wrong shape reach a reader expecting a surface form.
+				components: {
+					house_number: result.house_number,
+					unit: result.unit,
+					street: result.street,
+					postcode: result.postcode,
+				},
+				reachedTier: result.resolution_tier,
+			}),
+		].filter((marker) => marker !== null)
+	)
 
 	// Entity answers (fork-entity.ts owns both probes and their checks): the declared-fork rescue and the
 	// opt-in venue tier, extracted as one unit — see applyEntityTiers.

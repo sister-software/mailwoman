@@ -182,6 +182,7 @@ const QueryIntentMarkerSchema = z
 			"poi_category",
 			"coverage_qualified_absence",
 			"authority_designation",
+			"declared_coarser_answer",
 		]),
 		mechanism: z.string(),
 		message: z.string(),

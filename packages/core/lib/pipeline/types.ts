@@ -268,6 +268,24 @@ export const QueryIntentCode = {
 	 * advisory there would report a determination nobody made.
 	 */
 	AuthorityDesignation: "authority_designation",
+	/**
+	 * The query supplied components finer than the answer reached, and the answer says which ones it could not use.
+	 *
+	 * The counterpart of `declared_ambiguity`, and it exists because the two failures were reported asymmetrically. Too
+	 * MANY answers raised a marker with a margin and a runner-up; too FEW — a street parsed and a locality centroid
+	 * returned — raised nothing, so `301 College Ave #101, Athens, GA 30601` and `Athens, GA` came back as the same shape
+	 * of answer at the same tier with `uncertainty_m` null on both. A consumer could not tell "a city is the whole
+	 * answer" from "I was handed a street and a house number and discarded them".
+	 *
+	 * Raised at RESOLVE time, because the shortfall is a property of the tier reached rather than of the string.
+	 * `evidence.unusedComponents` names the parsed tags the answer's tier does not carry, `evidence.impliedTier` the tier
+	 * the finest of them implies, and `evidence.reachedTier` what the walk actually returned.
+	 *
+	 * It REPORTS and never re-ranks: an answer that degraded for a good reason — the street is genuinely absent from
+	 * coverage — raises the same marker as one that degraded for a bad one, because this surface cannot tell them apart
+	 * and saying so is the honest reading. What it removes is the silence.
+	 */
+	DeclaredCoarserAnswer: "declared_coarser_answer",
 } as const
 
 export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentCode]
