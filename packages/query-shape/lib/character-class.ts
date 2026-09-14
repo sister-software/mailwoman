@@ -12,6 +12,13 @@ import type { CharacterClass, ScriptCode, ScriptShare, SpanRange, TokenCharacter
 export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | "other"
 
 const CJK_RANGES: ReadonlyArray<[number, number]> = [
+	// The Han characters inside the CJK symbols block, which this list began at 0x3040 and so never held. `々` means
+	// "repeat the previous character" and appears inside a name — 代々木, 佐々木, 酒々井町, 野々市市 — so classifying it
+	// `other` made `tokenizeForClass` break the name at the one position that is not a boundary.
+	[0x30_05, 0x30_05],
+	[0x30_07, 0x30_07],
+	[0x30_21, 0x30_29],
+	[0x30_38, 0x30_3b],
 	[0x30_40, 0x30_ff], // Hiragana + Katakana
 	[0x31_f0, 0x31_ff], // Katakana phonetic extensions
 	[0x34_00, 0x4d_bf], // CJK Unified Ideographs Extension A
