@@ -15,8 +15,8 @@
  *
  * Run:
  *
- *     node packages/mailwoman/lib/dev-tools/us-city-state-postcode-arms.run.ts
- *     node packages/mailwoman/lib/dev-tools/us-city-state-postcode-arms.run.ts --out-json <path>
+ *     node packages/mailwoman/lib/dev-tools/us/city-state-postcode-arms.run.ts
+ *     node packages/mailwoman/lib/dev-tools/us/city-state-postcode-arms.run.ts --out-json <path>
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
