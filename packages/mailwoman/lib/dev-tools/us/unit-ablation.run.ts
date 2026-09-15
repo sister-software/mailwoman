@@ -23,7 +23,9 @@ import { haversineKm } from "@mailwoman/spatial"
 
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
-const { values } = parseArguments({ options: { "out-json": { type: "string" } } })
+const { values } = parseArguments({
+	options: { "out-json": { type: "string" }, "weights-cache": { type: "string" } },
+})
 
 /**
  * The rooftop `301 College Ave` resolves to, and the radius a row has to land inside to count as having reached it.
@@ -63,7 +65,9 @@ const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 
 const METRES_PER_KM = 1000
 
-const deps = await buildGauntletDeps()
+// A probe written to price a corpus change has to be able to point at the model that change produced; without this it
+// can only ever grade the installed one, which is the arm the change is measured AGAINST.
+const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const unitReport = []
 const pmbReport = []
 

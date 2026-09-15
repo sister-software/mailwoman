@@ -31,6 +31,7 @@ import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
+		"weights-cache": { type: "string" },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
 		limit: { type: "string" },
 	},
@@ -94,7 +95,9 @@ const ARMS = [
  */
 const EXAMPLES_PER_ARM = 5
 
-const deps = await buildGauntletDeps()
+// A probe written to price a corpus change has to be able to point at the model that change produced; without this it
+// can only ever grade the installed one, which is the arm the change is measured AGAINST.
+const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: Record<string, { matched: number; noLocality: number; total: number; examples: string[] }> = {}
 
 for (const arm of ARMS) {
