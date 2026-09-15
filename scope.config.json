@@ -6,15 +6,16 @@
 		"2": ["AT", "AU", "BE", "CH", "CZ", "DE", "DK", "ES", "FI", "HR", "IT", "NL", "PL", "PT"],
 		"3": ["NO", "SE"],
 		"4": ["CZ", "PL", "SI", "SK"],
-		"5": ["CN", "JP", "KR"]
+		"5": ["JP", "KR", "TW"]
 	},
 	"$comment_dRuleProtected": "Protection the graded arc applies BEYOND iron rule 6's own floor. Rule 6 protects tier 1 unconditionally and needs no entry here; an entry names a country the arc blocks on anyway, and states why. The list it replaced was `[\"FR\", \"GB\", \"DE\"]` — three countries with no recorded reason and, between them, one tier-1 locale missing (#2278).",
 	"dRuleProtected": {
 		"DE": "Tier 2, with a coordinate panel behind the claim and a data-only overlay in the release list. Its board is thin — 8 of its 16 rows check rather than track — so a DE regression is cheap to miss, which is a reason to block on one rather than a reason to stop watching for it.",
 		"GB": "The most detectable locale on the board: 106 of its 152 rows check, more checking rows than any other country holds. `@mailwoman/neural-weights-en-gb` ships with a trained postcode anchor slot and the Code-Point Open postcode binary, so a GB regression is both likely to be seen and expensive."
 	},
-	"$comment_untieredShippingLocales": "A country whose weights package ships while SCOPE's tier table places it in no tier. Each entry is a DEBT with a stated reason, not an exemption — `locale-scope` refuses a shipping country that is neither tiered nor named here, and refuses an entry here that has since been tiered or has stopped shipping. All three below are the same history: the tier table was declared on 2026-07-02 and the overlays shipped after it.",
+	"$comment_untieredShippingLocales": "A country whose weights package ships while SCOPE's tier table places it in no tier. Each entry is a DEBT with a stated reason, not an exemption — `locale-scope` refuses a shipping country that is neither tiered nor named here, and refuses an entry here that has since been tiered or has stopped shipping. GB, IN and NZ share one history — the tier table was declared before their overlays shipped. CN is the other kind: it was tiered and came out, because the tier asserted an evidence level it did not hold.",
 	"untieredShippingLocales": {
+		"CN": "Ships `@mailwoman/neural-weights-zh-cn` over the CJK base, and is untiered because SCOPE admits a claim only where a coordinate-graded eval exists. CN has 126 labeled rows in total, 14 of them on a board carrying no coordinate by design, against JP's 2,000,000 and KR's 6,424,089 — a number, not a claim. Held tier 5 until this entry, where it read as parity with those two. The blocker is the SOURCE rather than the work: `overture/2026-06-17.0/addresses-cn.parquet` holds 0 rows, the following release carries no Chinese file at all, and no open national register is acquirable on the terms JP, KR and TW used (#2294). Serving is unaffected — a Han-script query still routes to the CJK weights.",
 		"GB": "Ships `@mailwoman/neural-weights-en-gb` and holds the largest checking board of any country (106 of 152 rows). SCOPE names GB only under Blocked/queued, which is about the OSM corpus license and says nothing about the claim. Tiering it needs the evidence column written, not a code change (#2278).",
 		"IN": "Ships `@mailwoman/neural-weights-en-in` with the IN placetype-pair index, against 2 checking board rows of 3 — the widest distance in the tree between gazetteer coverage and board power (#2277).",
 		"NZ": "Ships `@mailwoman/neural-weights-en-nz`, country scope only: no postcode binary, because no WOF NZ postcode extract exists, and no pair index. Carries 13 checking board rows of 14."
