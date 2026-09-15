@@ -22,7 +22,7 @@ export const spec = {
 		"modal-root": {
 			type: "string",
 			required: true,
-			description: "Modal volume root the manifest paths are relative to",
+			description: "Remote path of --new-dir, e.g. /data/corpus/versioned/<version>/corpus-<version>",
 		},
 		"corpus-version": { type: "string", required: true, description: "New corpus version" },
 		"slice-parquet": { type: "string", required: true, description: "Slice parquets to add, comma-separated" },
