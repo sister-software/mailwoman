@@ -7,6 +7,11 @@
  *
  *   Built with `createElement`, not JSX, for the reason `shared.ts` gives in its own header — the kit's index is
  *   imported under the dev `node →` condition, which strips `.ts` and cannot read `.tsx`.
+ *
+ *   ADOPT IT WHEN A COMMAND IS OPEN ANYWAY, and never as a sweep. The 22 `eval` commands moved together because the
+ *   flow was identical across all of them and the move was reviewable as one diff; the 131 other `useCommandTask`
+ *   commands are not a backlog. A command that renders anything but the ✓/✗ tail and one JSON payload keeps the hook,
+ *   which is why four of the original 26 still do.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
