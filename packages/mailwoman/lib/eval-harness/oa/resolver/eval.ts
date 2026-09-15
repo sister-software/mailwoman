@@ -15,6 +15,21 @@
  *   neural parser vs the Pelias parser" on real addresses — no Docker Pelias stack needed, since v0
  *   already is that parser.
  *
+ *   WHAT THE `neural` ARM MEASURES, and what it does not. It calls `neural.parse(input)` — the CLASSIFIER — and
+ *   resolves that tree. It does NOT run the runtime pipeline's preprocessing (normalize → query shape → locale hint →
+ *   kind classifier → phrase grouper), which is what `geocodeAddress` runs and what a user gets. The two readings are
+ *   both legitimate and they are not interchangeable: this one attributes to the model, production attributes to the
+ *   product.
+ *
+ *   The gap is not always small. Measured on 604 bare `«city», «ST» «ZIP»` rows (#2303), this eval reads 33.9%
+ *   locality-match against the production path's 54.3%, and calls `Chicago, IL 60639` a miss where production answers
+ *   `locality: Chicago`. The classifier tags the city `street` on both; the pipeline recovers some of them. So an
+ *   absolute number from here is a statement about the MODEL, and a claim about what a caller receives needs
+ *   `buildGauntletDeps` or the board.
+ *
+ *   `--admin-fst` does not close it: the FST is fed to the ASSEMBLED arms only, and the `neural` arm above is
+ *   byte-identical with and without the flag on those same 604 rows.
+ *
  *   SELF-REPORTING (eval-integrity safeguard): pass `outMd` and the runner WRITES its own markdown
  *   table from the computed aggregates. Eval figures must never be hand-typed into docs — generate
  *   them here and include/commit the output verbatim.
