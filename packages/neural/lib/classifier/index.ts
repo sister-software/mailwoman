@@ -73,6 +73,8 @@ export type {
 
 export {
 	type RoutableClassifier,
+	carriesFamilySegment,
+	FAMILY_SCRIPTS,
 	ScriptRoutedClassifier,
 	scriptFamilyForText,
 	type ScriptRoutedClassifierOpts,

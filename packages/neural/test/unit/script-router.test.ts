@@ -9,7 +9,14 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { type ParseOpts, type RoutableClassifier, ScriptRoutedClassifier, scriptFamilyForText } from "@mailwoman/neural"
+import {
+	carriesFamilySegment,
+	type ParseOpts,
+	type RoutableClassifier,
+	ScriptRoutedClassifier,
+	scriptFamilyForText,
+} from "@mailwoman/neural"
+import { computeQueryShape } from "@mailwoman/query-shape"
 import { describe, expect, it, vi } from "vitest"
 
 function stubClassifier(name: string, encoder: "sentencepiece" | "char") {
@@ -32,6 +39,40 @@ describe("scriptFamilyForText", () => {
 		expect(scriptFamilyForText("りんりん, 〒506-0025 岐阜県高山市天満町3丁目 57")).toBe("cjk")
 		expect(scriptFamilyForText("부산광역시 해운대구 반송로 910-1")).toBe("cjk")
 		expect(scriptFamilyForText("1 Riverlight Quay, Nine Elms Lane, London SW11 8AY")).toBeUndefined()
+	})
+
+	it("names the family for a Han address line beside Latin segments", () => {
+		// The whole-input fold answers `mixed` for these, which sent the Han unit to the Latin model as one locality.
+		expect(scriptFamilyForText("逊克二分场四队, HEILONGJIANG, CHINA")).toBe("cjk")
+		expect(scriptFamilyForText("七分场, LIAONING, CHINA")).toBe("cjk")
+		expect(scriptFamilyForText("一零三团七连, xinjiang uyghur")).toBe("cjk")
+	})
+
+	it("abstains on a house number or a postcode inside a Han segment rather than disqualifying it", () => {
+		expect(carriesFamilySegment(computeQueryShape("六分场七队 100, HUNAN"))).toBe(true)
+	})
+
+	it("keeps a Latin line carrying a foreign-script venue name on the primary", () => {
+		// These four are what make the segment reading narrower than "any family script in the input": the name shares
+		// its segment with the Latin words around it, and the character model reads those by codepoint —
+		// `Far East Chinese 口福羊汤` came back as `country: "Chi"`, `region: "Far East"`.
+		expect(scriptFamilyForText("Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS")).toBeUndefined()
+
+		expect(
+			scriptFamilyForText(
+				"Four Seasons Inn四季酒家, New Smithfield Market, Unit, M8, Manchester M11 2WW, United Kingdom"
+			)
+		).toBeUndefined()
+
+		expect(scriptFamilyForText("SOKCHO 牛者, 6 Rue d'Antin, 75002 Paris")).toBeUndefined()
+		expect(scriptFamilyForText("JJAN! 짠 Châtelet, 14 Rue du Pont Neuf, 75001 Paris")).toBeUndefined()
+	})
+
+	it("does not reach a Han line separated from its Latin province by whitespace alone", () => {
+		// The stated cost of reading commas: this row has no segment of its own. A whitespace reading would reach it and
+		// would also re-admit the venue names above.
+		expect(scriptFamilyForText("六分场七队 Hunan")).toBeUndefined()
+		expect(scriptFamilyForText("一分场一队 Hunan China")).toBeUndefined()
 	})
 })
 

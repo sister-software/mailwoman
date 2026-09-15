@@ -1,17 +1,17 @@
 /**
- * What a script-reading router would do to the regression board's CJK-bearing rows (#2282).
+ * What a script-reading router does to the regression board's CJK-bearing rows (#2282, #2305).
  *
- * `scriptFamilyForText` routes on the FOLDED character class, so only an input that is CJK end to end reaches the
- * character model. Every mixed input goes to the Latin one, which is how `逊克二分场四队, HEILONGJIANG, CHINA` comes back as a
- * single locality holding the whole Han unit. Reading the per-span script instead is the change #2282 asks about, and
- * the question is not whether it helps the Chinese rows — it is what it does to a Latin address that happens to carry a
- * Han venue name.
+ * `scriptFamilyForText` once routed on the FOLDED character class alone, so only an input that was CJK end to end
+ * reached the character model and every mixed input went to the Latin one — which is how `逊克二分场四队, HEILONGJIANG, CHINA`
+ * came back as a single locality holding the whole Han unit. The question was never whether reading the per-span script
+ * helps the Chinese rows; it is what it does to a Latin address that happens to carry a Han venue name.
  *
- * Two candidate rules are measured against the same rows:
+ * Two candidate rules are measured against the same rows, beside what the shipped router does today (`routedToday`):
  *
  * - `presence` — any CJK script anywhere in the input names the family. This is the rule the issue proposed.
  * - `segment` — a comma SEGMENT written wholly in a CJK script names it. A Han name inside a Latin line does not, because
- *   the line it sits in is not written in that script.
+ *   the line it sits in is not written in that script. This is the rule the router ships (`carriesFamilySegment`), so
+ *   the rows it lists as newly routed are the ones a whole-input fold would still send to the Latin model.
  *
  * WHAT THIS MEASURES IS THE CLASSIFIER, NOT THE PIPELINE. Each arm calls `parse` directly, so normalization, the phrase
  * grouper and the resolver are all absent and the absolute scores here are not the board's. Both arms run through the
@@ -26,20 +26,14 @@
 import { decodeAsJSON, type AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { NeuralAddressClassifier, scriptFamilyForText } from "@mailwoman/neural"
-import { classifyTokens, computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
+import { carriesFamilySegment, FAMILY_SCRIPTS, NeuralAddressClassifier, scriptFamilyForText } from "@mailwoman/neural"
+import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 
 const { values } = parseArguments({
 	options: { "out-json": { type: "string" } },
 })
-
-/**
- * The scripts the character-path family serves. Japanese, Chinese and Korean are ONE weights package, so the four
- * belong to one family rather than naming three.
- */
-const FAMILY_SCRIPTS: ReadonlySet<string> = new Set(["Hani", "Kana", "Hira", "Hang"])
 
 /**
  * An input that would warm the family classifier, so both arms hold a loaded model before the first row is timed.
@@ -51,28 +45,6 @@ const FAMILY_WARMUP = "東京都千代田区"
  */
 function carriesFamilyScript(shape: QueryShape): boolean {
 	return (shape.scripts ?? []).some((entry) => FAMILY_SCRIPTS.has(entry.script))
-}
-
-/**
- * Whether some comma segment is written WHOLLY in a script the family serves.
- *
- * This is the reading that separates an address LINE in another script from a NAME in another script: `逊克二分场四队` is its
- * own segment, while the Han in `Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS` shares its segment with the
- * Latin words that introduce it. Tokens carrying no script (`Zyyy` — a house number, a postal code) abstain rather than
- * disqualifying a segment, which is what keeps `六分场七队 100` a Han line.
- */
-function carriesFamilySegment(input: string, shape: QueryShape): boolean {
-	const tokens = classifyTokens(input)
-
-	for (const segment of shape.segments ?? []) {
-		const inSegment = tokens.filter(
-			(token) => token.span.start >= segment.span.start && token.span.end <= segment.span.end && token.script !== "Zyyy"
-		)
-
-		if (inSegment.length && inSegment.every((token) => FAMILY_SCRIPTS.has(token.script))) return true
-	}
-
-	return false
 }
 
 /**
@@ -130,7 +102,7 @@ for (const board of await loadRegressionCases()) {
 			.reduce((sum, entry) => sum + entry.share, 0),
 		routedToday,
 		underPresence: true,
-		underSegment: carriesFamilySegment(board.input, shape),
+		underSegment: carriesFamilySegment(shape),
 		latin: agreement(await primary.parse(board.input), want),
 		character: agreement(await family.parse(board.input), want),
 	})
