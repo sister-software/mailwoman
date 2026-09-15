@@ -63,12 +63,74 @@ export function normalizePostcodeName(raw: string): string {
 export type PostcodePoint = readonly [number, number]
 
 /**
+ * A medoid with how much the group it came from actually held.
+ *
+ * The counts are deliberately NOT stated in `@mailwoman/evidence`'s vocabulary. That package's `EpistemicStatus` says
+ * what may be CLAIMED about a value and belongs to the answering path, where `epistemicStatusFor` derives it; these two
+ * integers are a property of the source dump, and naming them `observed`/`derived` here would mint a second, private
+ * version of a word the repository already assigns one meaning.
+ */
+export interface MedoidSupport {
+	/**
+	 * The chosen coordinate — the medoid over the DISTINCT member points.
+	 */
+	point: PostcodePoint
+	/**
+	 * Rows the group held.
+	 */
+	rows: number
+	/**
+	 * Distinct coordinates among them. One means every row named the same point, which in a dump whose coordinates are
+	 * computed is one value inherited N times, not N sources agreeing.
+	 */
+	distinctPoints: number
+}
+
+/**
+ * Collapse a group to its distinct points before any geometric consensus reads it.
+ *
+ * Rows sharing a coordinate to the digit are not independent measurements of the same place — in a derived source they
+ * are one value inherited by every row that matched it. GeoNames states this of its own postal file: coordinates are
+ * matched from place names and admin divisions, and averaged from neighbouring codes where the match fails.
+ *
+ * Measured across the 109 country dumps: 72,610 postcodes are carried by more than one row, and **18,279 of those
+ * (25.2%) have every member at one identical point**. Thailand is 88.4% of its multi-row codes, Japan 99.0%, Ukraine
+ * 51.2%, India 37.1%. TH 10230 is the worked case — `Lat Phrao` and `Khanna Yao`, both Bangkok districts, both
+ * published at 14.3333 / 99.9167, about 90 km from either.
+ *
+ * Exact equality, not a proximity radius — `collapseCoincident` in the gauntlet ablation is the nearby-looking
+ * neighbour and answers a different question (which ranked candidates are the same physical place, within
+ * `COINCIDENT_PLACE_KM`). Two genuinely surveyed settlements 200 m apart are two points here and must stay two.
+ */
+function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoint[] {
+	const seen = new Set<string>()
+	const out: PostcodePoint[] = []
+
+	for (const p of points) {
+		const key = `${p[0]},${p[1]}`
+
+		if (seen.has(key)) continue
+
+		seen.add(key)
+		out.push(p)
+	}
+
+	return out
+}
+
+/**
  * The #920 MEDOID law: pick the member point nearest the group's mean, never the mean itself.
  *
  * A postcode whose evidence is several scattered points has no single "true" centre, and the tempting answer — average
  * them — puts the code somewhere no address is. The night-31 experiment measured that as a p50 tax severe enough to
  * fail SK/SI/HR at 1.10–1.94 km CI: the mean displaced coordinates that were already correct. The medoid stays on a
  * real observation, so a single-member group is exactly its own point and a multi-member group is one of its members.
+ *
+ * The law's guarantee — "stays on a real observation" — holds only while the members ARE distinct. Duplicate points are
+ * collapsed first for that reason: a group of N rows at one coordinate carries one value, and letting it vote N times
+ * would weight it by how many settlements happened to inherit it. Collapsing changes no answer where the points differ
+ * (the mean of distinct points is the mean the law intends) and makes the degenerate case state its own thinness
+ * through {@link MedoidSupport.distinctPoints} rather than presenting it as agreement.
  *
  * Distance is squared-Euclidean in DEGREES, not haversine. At the scale a postcode spans, the ranking the two produce
  * is the same, and this one carries no trig into a per-group inner loop. Ties go to the earliest member, which makes
@@ -79,27 +141,37 @@ export type PostcodePoint = readonly [number, number]
  * is where they drift.
  */
 export function medoidPoint(points: readonly PostcodePoint[]): PostcodePoint {
-	const first = points[0]
+	return medoidWithSupport(points).point
+}
 
-	if (!first) throw new Error("medoidPoint: no member points")
+/**
+ * {@link medoidPoint} with the group size it rested on, for a caller that must record how thin the answer was.
+ */
+export function medoidWithSupport(points: readonly PostcodePoint[]): MedoidSupport {
+	if (!points.length) throw new Error("medoidWithSupport: no member points")
 
-	if (points.length === 1) return first
+	const distinct = collapseDuplicatePoints(points)
+	const only = distinct[0]!
+
+	if (distinct.length === 1) {
+		return { point: only, rows: points.length, distinctPoints: 1 }
+	}
 
 	let sumLat = 0
 	let sumLon = 0
 
-	for (const p of points) {
+	for (const p of distinct) {
 		sumLat += p[0]
 		sumLon += p[1]
 	}
 
-	const meanLat = sumLat / points.length
-	const meanLon = sumLon / points.length
+	const meanLat = sumLat / distinct.length
+	const meanLon = sumLon / distinct.length
 
-	let best = first
+	let best = only
 	let bestD = Infinity
 
-	for (const p of points) {
+	for (const p of distinct) {
 		const d = (p[0] - meanLat) ** 2 + (p[1] - meanLon) ** 2
 
 		if (d < bestD) {
@@ -108,7 +180,7 @@ export function medoidPoint(points: readonly PostcodePoint[]): PostcodePoint {
 		}
 	}
 
-	return best
+	return { point: best, rows: points.length, distinctPoints: distinct.length }
 }
 
 export interface GeonamesPostalIngestResult {
@@ -120,6 +192,12 @@ export interface GeonamesPostalIngestResult {
 	 * Per-country distinct-postcode counts.
 	 */
 	byCountry: Record<string, number>
+	/**
+	 * Per-country count of inserted codes the dump carried on SEVERAL rows that all named one point. The coordinate rests
+	 * on a single value no matter how many settlements sit under the code. Reported rather than refused: the point is
+	 * still the best the source offers, and a consumer weighing postal coverage needs to know how much of it is this.
+	 */
+	singlePointByCountry: Record<string, number>
 	/**
 	 * Countries whose `<CC>.txt` was missing under the postal dir (skipped, reported).
 	 */
@@ -147,6 +225,7 @@ export async function ingestGeonamesPostal(
 
 	let nextID = GEONAMES_POSTAL_ID_BASE
 	const byCountry: Record<string, number> = {}
+	const singlePointByCountry: Record<string, number> = {}
 	const missing: string[] = []
 	let inserted = 0
 
@@ -185,9 +264,18 @@ export async function ingestGeonamesPostal(
 
 		db.exec("BEGIN")
 
+		let singlePoint = 0
+
 		for (const [name, m] of members) {
-			// Medoid: the member point nearest the mean — stays on a real settlement (the p50-tax law).
-			const best = medoidPoint(m.pts)
+			// Medoid over the DISTINCT member points — stays on a real settlement (the p50-tax law), and a code whose
+			// rows all name one point contributes one vote rather than one per row.
+			const support = medoidWithSupport(m.pts)
+			const best = support.point
+
+			if (support.distinctPoints === 1 && support.rows > 1) {
+				singlePoint++
+			}
+
 			const id = nextID++
 			sprInsert.run(id, name, cc, best[0], best[1], best[0], best[1], best[0], best[1])
 			namesInsert.run(id, name, cc)
@@ -201,9 +289,13 @@ export async function ingestGeonamesPostal(
 
 		db.exec("COMMIT")
 		byCountry[cc] = members.size
+		singlePointByCountry[cc] = singlePoint
 
-		console.error(`  GeoNames postal ${cc}: ${members.size.toLocaleString()} distinct codes (medoid centroids)`)
+		console.error(
+			`  GeoNames postal ${cc}: ${members.size.toLocaleString()} distinct codes (medoid centroids), ` +
+				`${singlePoint.toLocaleString()} resting on one repeated point`
+		)
 	}
 
-	return { inserted, byCountry, missing }
+	return { inserted, byCountry, singlePointByCountry, missing }
 }

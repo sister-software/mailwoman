@@ -99,6 +99,36 @@ describe("ingestGeonamesPostal", () => {
 		expect(names).toEqual(["110 00", "11000"])
 	})
 
+	it("reports a code whose rows all name one point", async () => {
+		await using dirDirectory = await temporaryDirectory("gn-postal-degenerate-")
+		const dir = dirDirectory.path
+
+		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either. The medoid has
+		// nothing to choose between, and the result must say so rather than presenting two rows as agreement.
+		await writeLocalTextFile(
+			[
+				"TH\t10230\tLat Phrao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
+				"TH\t10230\tKhanna Yao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
+				"TH\t10120\tYan Nawa\tBangkok\t10\t\t\t\t\t13.6969\t100.5407\t4",
+			].join("\n"),
+			join(dir, "TH.txt")
+		)
+
+		const db = await fixtureDB()
+		const result = await ingestGeonamesPostal(db, ["TH"], dir)
+
+		expect(result.byCountry.TH).toBe(2)
+		// 10120 is a single row — one point by construction, and not what this counter is about.
+		expect(result.singlePointByCountry.TH).toBe(1)
+
+		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE name = '10230'").get() as {
+			latitude: number
+			longitude: number
+		}
+
+		expect([row.latitude, row.longitude]).toEqual([14.3333, 99.9167])
+	})
+
 	it("reports missing country files instead of throwing", async () => {
 		await using dirDirectory = await temporaryDirectory("gn-postal-empty-")
 		const dir = dirDirectory.path

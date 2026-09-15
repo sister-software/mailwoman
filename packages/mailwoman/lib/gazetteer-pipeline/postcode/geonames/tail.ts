@@ -37,6 +37,7 @@ import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
+import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -106,6 +107,13 @@ export interface GeonamesPostalSourceFact {
 	bytes: number
 	md5: string
 	rows: number
+	/**
+	 * How many of those codes the dump carried on SEVERAL rows that all named one coordinate. GeoNames computes a postal
+	 * coordinate by matching the code against place names and admin divisions, averaging neighbouring codes where the
+	 * match fails, so those rows are one value inherited N times rather than N settlements agreeing. The centroid is
+	 * still the best the source offers; the count is what tells a consumer how much of the country's coverage is that.
+	 */
+	singlePointRows: number
 }
 
 export interface BuildPostcodeGeonamesTailOptions {
@@ -210,7 +218,7 @@ export async function buildPostcodeGeonamesTail(
 		await createUnifiedIndexes(db)
 
 		phase("meta")
-		sources = await collectSourceFacts(countries, postalDir, ingest.byCountry)
+		sources = await collectSourceFacts(countries, postalDir, ingest.byCountry, ingest.singlePointByCountry)
 		await writeDatabaseMeta(db, { now, countries, sources, inserted: ingest.inserted })
 
 		phase("freeze")
@@ -254,7 +262,8 @@ export async function buildPostcodeGeonamesTail(
 async function collectSourceFacts(
 	countries: readonly string[],
 	postalDir: string,
-	byCountry: Record<string, number>
+	byCountry: Record<string, number>,
+	singlePointByCountry: Record<string, number>
 ): Promise<GeonamesPostalSourceFact[]> {
 	const facts: GeonamesPostalSourceFact[] = []
 
@@ -269,6 +278,7 @@ async function collectSourceFacts(
 			bytes: (await statPath(file)).size,
 			md5: await md5File(file),
 			rows: byCountry[country] ?? 0,
+			singlePointRows: singlePointByCountry[country] ?? 0,
 		})
 	}
 
@@ -343,7 +353,11 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		["license_gb", GB_LICENSE_NOTE],
 		[
 			"method",
-			"#920 laws: `name` stored in the sanitized-query token shape (every non-letter/number stripped) with the display form as an alt `names` row; centroid is the MEDOID member point (never the mean) of the (postcode, settlement) rows",
+			"#920 laws: `name` stored in the sanitized-query token shape (every non-letter/number stripped) with the display form as an alt `names` row; centroid is the MEDOID member point (never the mean) of the DISTINCT (postcode, settlement) coordinates — rows sharing a coordinate collapse to one observation before the medoid reads them",
+		],
+		[
+			"coordinate_epistemic_status",
+			`${EpistemicStatus.Derived} — GeoNames computes a postal coordinate by matching the code against place names and admin divisions, and averages neighbouring codes where the match fails. These points are an estimate of the code's neighbourhood under a stated rule, not a postal authority's centroid; \`source_files[].singlePointRows\` counts the codes whose several rows all named ONE such point`,
 		],
 		["builder", "mailwoman gazetteer build postcode-geonames --countries " + input.countries.join(",")],
 		["source_files", stringifyJSON(input.sources)],
