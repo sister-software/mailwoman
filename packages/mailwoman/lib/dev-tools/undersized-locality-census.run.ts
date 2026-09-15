@@ -17,8 +17,8 @@
  *   whether a second register agrees, which the `gn:id` concordance makes reachable.
  *
  *   Usage:
- *     node packages/mailwoman/lib/dev-tools/same-name-parent-population.run.ts
- *     node packages/mailwoman/lib/dev-tools/same-name-parent-population.run.ts --ratio 10 --json <path>
+ *     node packages/mailwoman/lib/dev-tools/undersized-locality-census.run.ts
+ *     node packages/mailwoman/lib/dev-tools/undersized-locality-census.run.ts --ratio 10 --json <path>
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
