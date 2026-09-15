@@ -45,6 +45,7 @@ import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { POPULATION_CORRECTIONS } from "#build/population-corrections"
 import { explodeAliasBags } from "#candidate/alias-bags"
 import { buildAncestorsSidecar } from "#candidate/ancestors/sidecar"
 import { stageCountryDisplayNames } from "#candidate/country-display-names"
@@ -346,8 +347,11 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		// ranking — it stops the artifact asserting a count for two thirds of the gazetteer.
 		const wofPop = r.pop === null || r.pop === undefined ? null : Number(r.pop)
 
+		// A reviewed correction wins over both readings below, because it is the only figure someone followed to a
+		// second source and read — `population-corrections.ts` states the bar an entry clears.
 		const pop =
-			wofPop === null && r.placetype === "country" ? (COUNTRY_POPULATION[String(r.country ?? "")] ?? null) : wofPop
+			POPULATION_CORRECTIONS[sid]?.population ??
+			(wofPop === null && r.placetype === "country" ? (COUNTRY_POPULATION[String(r.country ?? "")] ?? null) : wofPop)
 
 		const neg = -Math.log10((pop ?? 0) + 1)
 		const name = String(r.name ?? "")
