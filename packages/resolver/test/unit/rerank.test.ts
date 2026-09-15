@@ -29,6 +29,18 @@ function resolvedTree(tag: string, raw = "x"): AddressTree {
 
 const bare = (raw: string): AddressTree => ({ raw, roots: [] })
 
+/**
+ * A locality resolved at `lat`/`lon`. A locality rather than a country, so guard A passes it whatever the coordinate.
+ */
+function localityAt(lat: number, lon: number, raw = "x"): AddressTree {
+	const tree = resolvedTree("locality", raw)
+
+	tree.roots[0]!.lat = lat
+	tree.roots[0]!.lon = lon
+
+	return tree
+}
+
 describe("rerankByResolution", () => {
 	it("keeps the model's rank-1 when it resolves plausibly — no gratuitous reordering", async () => {
 		const resolve = vi.fn(async () => resolvedTree("locality"))
@@ -121,5 +133,33 @@ describe("rerankByResolution", () => {
 
 	it("throws on an empty candidate list rather than inventing a result", async () => {
 		await expect(rerankByResolution([], async (t) => t)).rejects.toThrow(/must not be empty/)
+	})
+
+	it("vetoes a resolution outside the expected country — guard B, reachable now", async () => {
+		// A locality that resolves in the middle of the Atlantic is the cross-country-jump class the bare-centroid guard
+		// structurally cannot see: the node is a locality, not a country, so guard A passes it.
+		const resolve = vi.fn(async (tree: AddressTree) =>
+			tree.raw === "a" ? localityAt(39.7392, -104.9903, "a") : localityAt(0, 0, "b")
+		)
+
+		const out = await rerankByResolution(
+			[
+				{ score: -1, tree: bare("b"), payload: "b" },
+				{ score: -2, tree: bare("a"), payload: "a" },
+			],
+			resolve,
+			{ expectedCountry: "US" }
+		)
+
+		expect(out.best.payload).toBe("a")
+		expect(out.ranked.find((r) => r.payload === "b")?.reason).toBe("outside-expected-country")
+	})
+
+	it("runs only guard A without an expected country, which is the shipped default", async () => {
+		const resolve = vi.fn(async () => localityAt(0, 0, "b"))
+
+		const out = await rerankByResolution([{ score: -1, tree: bare("b"), payload: "b" }], resolve)
+
+		expect(out.ranked[0]!.implausible).toBe(false)
 	})
 })

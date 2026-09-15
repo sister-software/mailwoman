@@ -31,6 +31,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
 import { isImplausibleResolution } from "#plausibility"
 
@@ -96,6 +97,21 @@ export interface RerankOpts {
 	 * — the last 5 candidates cost 2x the resolves for ~5pp of ceiling.
 	 */
 	maxResolve?: number
+	/**
+	 * ISO-2 country the resolutions are EXPECTED to land in — the parse's own country node, the `--locale` scope, or a
+	 * caller hint. Threaded to {@link isImplausibleResolution} as guard B: a coordinate outside that country's coarse box
+	 * is vetoed, which is the cross-country-jump class guard A structurally cannot see.
+	 *
+	 * Omitted → guard B does not run, and only the bare-country-centroid guard applies. That is the shipped default and
+	 * it changes nothing on the served path, because nothing on the served path calls this function: the runtime pipeline
+	 * reranks with `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
+	 */
+	expectedCountry?: string
+	/**
+	 * The loaded artifact's own guard-B boxes (`resolver.artifactCoverage?.countryBBoxes`). Replaces the built-in table
+	 * wholesale when supplied, so a consumer's artifact and its guard cannot disagree.
+	 */
+	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
 
 /**
@@ -140,7 +156,10 @@ export async function rerankByResolution<T>(
 			continue
 		}
 
-		const verdict = isImplausibleResolution(resolved)
+		const verdict = isImplausibleResolution(resolved, {
+			...(opts.expectedCountry ? { expectedCountry: opts.expectedCountry } : {}),
+			...(opts.countryBBoxes ? { countryBBoxes: opts.countryBBoxes } : {}),
+		})
 
 		ranked.push({
 			...candidate,
