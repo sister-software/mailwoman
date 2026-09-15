@@ -24,6 +24,12 @@
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts score
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts sweep
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
+ *
+ *   `record --withhold-every-denoting-row` removes every row DENOTING the gold settlement instead of every id the
+ *   concordance links. That is a different stratum, not a better one: the gazetteer carries 10.6% of its populated
+ *   localities at two admin tiers, and under the concorded-id rule an arm answering the twin is graded as selecting
+ *   where no correct candidate exists. A fixture recorded that way is a SUCCESSOR benchmark — the receipt says so —
+ *   because `benchmark-freeze.json` refuses a rule edited after a result is visible.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -84,6 +90,7 @@ const { values, positionals } = parseArguments({
 		backend: { type: "string" },
 		out: { type: "string" },
 		limit: { type: "string" },
+		"withhold-every-denoting-row": { type: "boolean" },
 	},
 	allowPositionals: true,
 })
@@ -157,11 +164,25 @@ async function recordPhase(): Promise<void> {
 
 	const parse = (query: string): Promise<AddressTree> => scorer.parse(query, { postcodeRepair: true })
 
+	// `--withhold-every-denoting-row` changes what the withheld-gold stratum MEANS: it removes every row denoting the
+	// gold settlement rather than every id the concordance links, which is the rule `same-data-resolver-v1` was NOT
+	// frozen under. `benchmark-freeze.json` states why that cannot be a version bump — a rule editable after a result
+	// is visible asserts nothing — so a fixture recorded this way belongs to a SUCCESSOR benchmark id, and the receipt
+	// below records which construction produced it.
+	const withholdEveryDenotingRow = values["withhold-every-denoting-row"] === true
+
+	if (withholdEveryDenotingRow) {
+		console.error(
+			`  withholding every DENOTING row — this is not the ${(await loadSameDataDefinition()).benchmarkID} construction; score it as a successor`
+		)
+	}
+
 	const { fixture, census } = await recordFixture({
 		panel: rows,
 		backend: lookup,
 		parse,
 		armOptions: armOptionSets(),
+		withholdEveryDenotingRow,
 	})
 
 	const problems = validateFixture(rows, fixture)
@@ -180,8 +201,11 @@ async function recordPhase(): Promise<void> {
 
 	await writeLocalJSONFile(
 		{
-			benchmarkID: definition.benchmarkID,
+			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
+			// WHICH withheld-gold construction produced this fixture. A receipt that named only the benchmark id would
+			// let two incomparable runs read as the same benchmark.
+			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
 			weights,
