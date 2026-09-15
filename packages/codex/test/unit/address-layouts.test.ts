@@ -266,12 +266,17 @@ describe("a country that writes two orders carries both", () => {
 		)
 
 		expect(latin).toBe("21 Jordan Road, Yau Tsim Mong, Kowloon")
+		expect(local).toBe("九龍油尖旺佐敦道21號")
+	})
 
-		// The FIELD ORDER is what this split delivers: region, then locality, then the street, which is the Chinese
-		// register's sequence and the reverse of the English one. Two things still read as English inside that order —
-		// the `", "` separator and the number-first street node — because the street order and the line join are stated
-		// per COUNTRY and this table is the first thing to be stated per script. `九龍油尖旺佐敦道21號` needs both.
-		expect(local).toBe("九龍, 油尖旺, 21號 佐敦道")
-		expect(local.startsWith("九龍")).toBe(true)
+	it("gives a caller who names no script the separator belonging to the layout they got", () => {
+		// The defect this whole split exists for: the order came from the layout and the separator from a country flag,
+		// so HK printed a Chinese field sequence with Latin separators. Hong Kong's default layout is its ENGLISH
+		// register, so its default join must be the English one even though its local join is `""`.
+		expect(lineJoinForCountry("HK")).toBe(", ")
+		expect(lineJoinForCountry("HK", "local")).toBe("")
+		expect(lineJoinForCountry("CN")).toBe("")
+		expect(lineJoinForCountry("CN", "local")).toBe("")
+		expect(lineJoinForCountry("US")).toBe(", ")
 	})
 })

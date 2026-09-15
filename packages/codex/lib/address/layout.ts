@@ -152,6 +152,22 @@ ${either(
 )}`
 
 /**
+ * The street line written in Han script: the name, then the number, with nothing between them — `佐敦道21號`.
+ *
+ * A separator is not optional here the way a space or a comma is elsewhere. `佐敦道 21號` is the romanized convention
+ * spelled in Chinese characters, which is what a Latin-order layout produces when it is handed Han components, and it
+ * is the half of the Hong Kong defect that survives getting the field order right.
+ *
+ * Lives beside the other street nodes rather than in the layout table, because the generated skeletons name it: a
+ * country's local-script street order is the same kind of fact as its number-first or number-last order.
+ */
+export const hanStreet: AddressLayout = addr`${poBoxLine}
+${either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.street_prefix}${SLOTS.street_prefix_particle}${SLOTS.street}${SLOTS.street_suffix}${SLOTS.house_number}${SLOTS.unit}`
+)}`
+
+/**
  * Build a layout from a tagged template. A newline in the literal text starts a line; other literal text is a
  * connector; an interpolation is a slot, an alternation, or another layout.
  */

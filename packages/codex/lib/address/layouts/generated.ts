@@ -23,6 +23,7 @@
 
 import {
 	addr,
+	hanStreet,
 	numberFirstCommaStreet,
 	numberFirstStreet,
 	numberLastCommaStreet,
@@ -1656,7 +1657,7 @@ export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLay
 	CN: addr`${country}
 ${postcode}
 ${region}${locality}${dependent_locality}
-${numberLastStreet}
+${hanStreet}
 ${venue}
 ${attention}`,
 
@@ -1665,7 +1666,7 @@ ${attention}`,
 ${region}
 ${dependent_locality}
 ${locality}
-${numberFirstStreet}
+${hanStreet}
 ${venue}
 ${attention}`,
 
@@ -1696,7 +1697,7 @@ ${attention}
 ${postcode}`,
 
 	// %A%n%O%n%N
-	MO: addr`${numberLastStreet}
+	MO: addr`${hanStreet}
 ${venue}
 ${attention}
 ${country}`,
@@ -1714,7 +1715,7 @@ ${country}`,
 ${postcode}
 ${dependent_locality}
 ${region}${locality}
-${numberLastStreet}
+${hanStreet}
 ${venue}
 ${attention}`,
 }

@@ -59,6 +59,26 @@ export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 ])
 
 /**
+ * How the street line is written in a country's OWN script, for the countries that write two.
+ *
+ * `STREET_ORDERS` below is read from the OpenCage templates, which render in Latin, so it states the romanized form of
+ * every country including these. Hong Kong's entry is `21 Jordan Road`; its Chinese register writes `佐敦道21號`, which is
+ * a different order AND a different separator, and neither is derivable from the other.
+ *
+ * The values are the codex's street-node names, so the generator emits the node rather than deriving one. `han` is the
+ * unseparated name-then-number line the Chinese-writing systems use, and the entries follow the split `LINE_JOINS`
+ * already makes: CN and TW join their lines with `""`, JP and KR with `" "`.
+ *
+ * Absent from this table means the country writes one street order in both scripts, which is every country but these.
+ */
+export const LOCAL_STREET_NODES: Readonly<Record<string, "han">> = {
+	CN: "han",
+	HK: "han",
+	MO: "han",
+	TW: "han",
+}
+
+/**
  * Street order by ISO 3166-1 alpha-2. Absence means the source named only one of the two slots.
  */
 export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {

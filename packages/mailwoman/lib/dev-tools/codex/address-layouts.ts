@@ -30,7 +30,12 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { COMMA_JOINED_STREET_COUNTRIES, STREET_ORDERS, type StreetOrder } from "#dev-tools/codex/street-orders"
+import {
+	COMMA_JOINED_STREET_COUNTRIES,
+	LOCAL_STREET_NODES,
+	STREET_ORDERS,
+	type StreetOrder,
+} from "#dev-tools/codex/street-orders"
 import { NO_SUB_LOCALITY_LINE_COUNTRIES } from "#dev-tools/codex/sub-locality-line"
 
 /**
@@ -95,9 +100,21 @@ function printsLargestFirst(lines: readonly string[]): boolean {
  * Every slot the source names is added to `slots`, so the emitted file destructures exactly what it uses — a
  * destructured slot no layout reaches is an unused binding, which the linter reports against a file nobody edits.
  */
-function layoutSource(fmt: string, code: string, order: StreetOrder, slots: Set<string>): string | null {
+function layoutSource(
+	fmt: string,
+	code: string,
+	order: StreetOrder,
+	slots: Set<string>,
+	localScript = false
+): string | null {
 	const comma = COMMA_JOINED_STREET_COUNTRIES.has(code) ? "Comma" : ""
-	const streetNode = order === "number-first" ? `numberFirst${comma}Street` : `numberLast${comma}Street`
+
+	const streetNode =
+		localScript && LOCAL_STREET_NODES[code] === "han"
+			? "hanStreet"
+			: order === "number-first"
+				? `numberFirst${comma}Street`
+				: `numberLast${comma}Street`
 
 	streetNodes.add(streetNode)
 	const lines: string[] = []
@@ -185,7 +202,7 @@ for (const file of await Globerator.files("json", { cwd: specsDirectory, absolut
 	// that shows it: its hand-authored layout is the Latin one, which leaves the Chinese order unreachable.
 	if (metadata.lfmt && metadata.fmt && metadata.lfmt !== metadata.fmt) {
 		const latin = layoutSource(metadata.lfmt, code, order, usedSlots)
-		const local = layoutSource(metadata.fmt, code, order, usedSlots)
+		const local = layoutSource(metadata.fmt, code, order, usedSlots, true)
 
 		if (latin) {
 			latinEntries.push(`\t// ${metadata.lfmt.replaceAll("\n", "\\n")}\n\t${code}: addr\`${latin}\`,`)

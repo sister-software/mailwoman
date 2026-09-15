@@ -92,6 +92,13 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 	CN: "",
 	TW: "",
 	KR: " ",
+	// Written in Han script the same way CN and TW are, and absent here for as long as the table was keyed by country:
+	// Hong Kong's country answer is its ENGLISH register, so a Chinese join under that key would have reached the Latin
+	// ordering. It is the LOCAL-script join, which is why {@link lineJoinForCountry} asks which script first.
+	HK: "",
+	MO: "",
+	// Korean, and the same split KR already states.
+	KP: " ",
 }
 
 /**
@@ -349,7 +356,25 @@ export function lineJoinForCountry(countryCode: string | null | undefined, scrip
 
 	const code = countryCode.trim().toUpperCase()
 
-	if (script === "latin" && GENERATED_LATIN_ADDRESS_LAYOUTS[code]) return ", "
+	if ((script ?? defaultScriptForCountry(code)) === "latin") return ", "
 
 	return LINE_JOINS[code] ?? ", "
+}
+
+/**
+ * Which script {@link layoutForCountry} answers in when no caller says.
+ *
+ * `local` everywhere except a country whose default layout prints the OTHER order from its own script's skeleton, which
+ * is Hong Kong: its hand-authored layout is the English register, so a caller asking for no script gets the Latin
+ * ordering and must get the Latin separator with it. Reading the join off the layout that was picked is the whole fix —
+ * before, the order came from the layout and the separator from a country flag, so the two could name different
+ * systems.
+ */
+function defaultScriptForCountry(code: string): AddressScript {
+	const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
+	const chosen = ADDRESS_LAYOUTS[code] ?? GENERATED_ADDRESS_LAYOUTS[code]
+
+	if (!local || !chosen) return "local"
+
+	return layoutPrintsLargestFirst(chosen) === layoutPrintsLargestFirst(local) ? "local" : "latin"
 }
