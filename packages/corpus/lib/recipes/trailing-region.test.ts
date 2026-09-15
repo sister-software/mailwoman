@@ -11,6 +11,7 @@
  *   means `leading`, because a tuples file written before the field existed must produce the rows it always did.
  */
 
+import { CA_PROVINCES } from "@mailwoman/codex/ca"
 import { trailingRegionRecipe } from "@mailwoman/corpus/recipes/trailing-region"
 import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
@@ -86,6 +87,68 @@ describe("trailing-region postcode placement", () => {
 
 			expect(rows.every((row) => /^Portopetro, Illes Balears(, Spain)?$/.test(row.raw))).toBe(true)
 		}
+	})
+})
+
+describe("trailing-region Canadian province codes (#2299)", () => {
+	/**
+	 * Measured over 102 built corpus files, 4,105,140 rows: 1,014 carry a bare Canadian province code beside a Canadian
+	 * postal code and every one is `ON`. The other twelve codes appear zero times, so `Gander, NL A1V 0A9, Canada`
+	 * answered `country: NL` — the Netherlands — with `Canada` in the same string.
+	 */
+	const ca = (region: string) => ({
+		locality: "Gander",
+		region,
+		country: "Canada",
+		cc: "CA",
+		locale: "en-CA",
+		postcode: "A1V 0A9",
+		postcodePlacement: "after_region",
+	})
+
+	it("writes the province CODE as a region surface, beside the name form", async () => {
+		const { rows } = await run(repeat(ca("Newfoundland and Labrador"), 12), [])
+
+		expect(rows.some((row) => row.raw.includes("Gander, NL A1V 0A9, Canada"))).toBe(true)
+		// Both forms are real and the name is what the resolver matches on, so the code must not replace it.
+		expect(rows.some((row) => row.raw.includes("Newfoundland and Labrador"))).toBe(true)
+	})
+
+	it("labels the code row's region component as the CODE it wrote, not the name it came from", async () => {
+		// A row whose `raw` says `NL` and whose component says `Newfoundland and Labrador` teaches the alignment to
+		// fail rather than teaching the surface.
+		const { rows } = await run(repeat(ca("Newfoundland and Labrador"), 12), [])
+		const coded = rows.filter((row) => row.raw.includes(", NL A1V 0A9"))
+
+		expect(coded.length).toBeGreaterThan(0)
+		expect(coded.every((row) => row.components["region"] === "NL")).toBe(true)
+	})
+
+	it("covers every province and territory, not only the one an unrelated source supplied", async () => {
+		// Driven from `CA_PROVINCES` rather than a list retyped here, so a subdivision added or renamed upstream is
+		// covered by this test on the next run instead of passing against a stale copy.
+		for (const { code, name } of Object.values(CA_PROVINCES)) {
+			const { rows } = await run(repeat(ca(name), 12), [])
+
+			expect(rows.some((row) => row.raw.includes(`, ${code} A1V 0A9`))).toBe(true)
+		}
+	})
+
+	it("accepts the co-official French name, which is what a Québec tuple carries", async () => {
+		// A Canadian subdivision has two equally-canonical names and an address can be written in either, so the
+		// French surface is not a fallback — `Terre-Neuve-et-Labrador` has to reach `NL` the same way.
+		for (const { code, french } of Object.values(CA_PROVINCES)) {
+			const { rows } = await run(repeat(ca(french), 12), [])
+
+			expect(rows.some((row) => row.raw.includes(`, ${code} A1V 0A9`))).toBe(true)
+		}
+	})
+
+	it("leaves a country that writes its region out alone", async () => {
+		// Teaching `BY` for Bayern would attest a form nobody posts.
+		const { rows } = await run(repeat({ ...base, postcode: "07691", postcodePlacement: "after_region" }, 12), [])
+
+		expect(rows.every((row) => row.raw.includes("Illes Balears"))).toBe(true)
 	})
 })
 
