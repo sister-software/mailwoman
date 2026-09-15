@@ -23,6 +23,7 @@
  *   Usage: `node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts`
  */
 
+import { ADDRESS_LAYOUTS } from "@mailwoman/codex/address-layouts"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -58,13 +59,27 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * The countries whose layout is hand-authored and checked on the locale board. A generated skeleton never overwrites
  * one of these.
+ *
+ * Read from `ADDRESS_LAYOUTS` itself. A list here is the same membership stated twice, and the two fall out of step
+ * silently: a country authored in the table but missing from the list is emitted into both, which
+ * `layout-table-source.test.ts` catches, and one listed but never authored loses its layout, which nothing catches.
  */
-const HAND_AUTHORED = new Set(["US", "FR", "GB", "DE", "ES", "IT", "IN", "NZ", "AU", "JP", "CN"])
+const HAND_AUTHORED = new Set(Object.keys(ADDRESS_LAYOUTS))
 
 /**
- * Address systems that print largest unit first. The country line leads in these and trails everywhere else.
+ * Whether the lines rendered so far print the largest unit first — the region ahead of the street.
+ *
+ * Read off the skeleton rather than from a country list. The generator runs BEFORE the layout it is writing exists, so
+ * it cannot consult `@mailwoman/codex`'s `LARGEST_FIRST_SYSTEMS`, which derives from those layouts; the `fmt` in hand
+ * carries the same statement. A hand-kept list here held JP, CN, TW and KR while the dataset printed largest-first for
+ * IR, KP and KZ as well, and those three took a trailing country line.
  */
-const LARGEST_FIRST_SYSTEMS = new Set(["JP", "CN", "TW", "KR"])
+function printsLargestFirst(lines: readonly string[]): boolean {
+	const region = lines.findIndex((line) => line.includes("${region}"))
+	const street = lines.findIndex((line) => line.includes("Street}") || line.includes("${house_number}"))
+
+	return region !== -1 && street !== -1 && region < street
+}
 
 /**
  * Render one `fmt` into the template source a layout is written as, or null when it names no field this project models.
@@ -130,7 +145,7 @@ function layoutSource(fmt: string, code: string, order: StreetOrder, slots: Set<
 	if (!named.has("country")) {
 		named.add("country")
 
-		if (LARGEST_FIRST_SYSTEMS.has(code)) {
+		if (printsLargestFirst(lines)) {
 			lines.unshift("${country}")
 		} else {
 			lines.push("${country}")

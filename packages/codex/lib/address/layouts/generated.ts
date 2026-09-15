@@ -541,15 +541,6 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %S%n%C%n%A%n%O%n%N
-	HK: addr`${region}
-${dependent_locality}
-${locality}
-${numberFirstStreet}
-${venue}
-${attention}
-${country}`,
-
 	// %O%n%N%n%A%n%C %S %Z
 	HM: addr`${venue}
 ${attention}
@@ -647,13 +638,13 @@ ${postcode}
 ${country}`,
 
 	// %O%n%N%n%S%n%C, %D%n%A%n%Z
-	IR: addr`${venue}
+	IR: addr`${country}
+${venue}
 ${attention}
 ${region}
 ${locality}, ${dependent_locality}
 ${numberLastStreet}
-${postcode}
-${country}`,
+${postcode}`,
 
 	// %N%n%O%n%A%n%Z %C
 	IS: addr`${attention}
@@ -732,14 +723,14 @@ ${locality}, ${region}
 ${country}`,
 
 	// %Z%n%S%n%C%n%A%n%O%n%N
-	KP: addr`${postcode}
+	KP: addr`${country}
+${postcode}
 ${region}
 ${dependent_locality}
 ${locality}
 ${numberLastStreet}
 ${venue}
-${attention}
-${country}`,
+${attention}`,
 
 	// %S %C%D%n%A%n%O%n%N%n%Z
 	KR: addr`${country}
@@ -765,14 +756,14 @@ ${region} ${postcode}
 ${country}`,
 
 	// %Z%n%S%n%C%n%A%n%O%n%N
-	KZ: addr`${postcode}
+	KZ: addr`${country}
+${postcode}
 ${region}
 ${dependent_locality}
 ${locality}
 ${numberLastCommaStreet}
 ${venue}
-${attention}
-${country}`,
+${attention}`,
 
 	// %N%n%O%n%A%n%Z %C
 	LA: addr`${attention}

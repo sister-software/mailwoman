@@ -34,14 +34,21 @@
 
 import {
 	addr,
+	type AddressAtom,
+	type AddressLayout,
+	isAlternation,
+	isLayout,
+	isSlot,
 	numberFirstCommaStreet,
 	numberFirstStreet,
 	numberLastCommaStreet,
 	numberLastStreet,
 	SLOTS,
-	type AddressLayout,
 } from "#address/layout"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
+import type { ComponentTag } from "#component"
+
+export { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 
 const { attention, venue, house_number, street, dependent_locality, locality, subregion, region, postcode, country } =
 	SLOTS
@@ -71,20 +78,65 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 }
 
 /**
- * Address systems that print the largest unit first.
- *
- * It is a property of the system, not of the layout table, so a caller composing its own order — a gazetteer hierarchy
- * string, say, which is a query rather than an address — reads it here instead of re-deriving it.
- */
-export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(["JP", "CN", "TW", "KR"])
-
-/**
  * Whether the country named by `countryCode` prints the largest unit first.
  */
 export function isLargestFirstSystem(countryCode: string | null | undefined): boolean {
 	if (!countryCode) return false
 
 	return LARGEST_FIRST_SYSTEMS.has(countryCode.trim().toUpperCase())
+}
+
+/**
+ * Which order a layout actually PRINTS: `true` when its `region` line precedes its street line.
+ *
+ * `null` when the layout names no region or no street, which several island and city-state records do — those carry no
+ * order to contradict.
+ *
+ * A layout and {@link isLargestFirstSystem} can disagree, and when they do the render is wrong in a way neither table
+ * shows on its own: the order comes from the layout while `LINE_JOINS` is picked by the flag, so an address prints one
+ * system's sequence with another's separators. `layouts.test.ts` compares the two for every country that has both.
+ */
+export function layoutPrintsLargestFirst(layout: AddressLayout): boolean | null {
+	const tags = printedTags(layout)
+
+	const regionAt = tags.indexOf("region")
+	const streetAt = tags.findIndex((tag) => tag === "street" || tag === "house_number")
+
+	if (regionAt === -1 || streetAt === -1) return null
+
+	return regionAt < streetAt
+}
+
+/**
+ * Every slot a layout prints, in print order, flattened across lines.
+ *
+ * Flat rather than per line because the CJK systems put the whole admin run on ONE line — Japan's prefecture and its
+ * sub-prefecture run share a line, so a comparison of line indices reads them as unordered.
+ */
+function printedTags(layout: AddressLayout): ComponentTag[] {
+	const tags: ComponentTag[] = []
+
+	const visit = (atom: AddressAtom): void => {
+		if (isSlot(atom)) {
+			tags.push(atom.tag)
+		} else if (isLayout(atom)) {
+			for (const line of atom.lines) {
+				for (const inner of line) {
+					visit(inner)
+				}
+			}
+		} else if (isAlternation(atom)) {
+			// The first alternative is the one that renders when both could; an alternation never reorders region
+			// against street, so reading one is enough to locate them.
+			for (const inner of atom.alternatives) {
+				visit(inner)
+			}
+		}
+	}
+
+	visit(layout)
+
+	return tags
 }
 
 /**
@@ -186,7 +238,42 @@ ${region}${locality}${dependent_locality}
 ${chineseStreet}
 ${venue}
 ${attention}`,
+
+	// %S%n%C%n%A%n%O%n%N — the generated skeleton is libaddressinput's `fmt`, which is the CHINESE field order, and the
+	// renderer joins it with `", "` because `LINE_JOINS` has no HK entry. That combination prints
+	// `KLN, YAU TSIM MONG DISTRICT, 21 JORDAN ROAD`, which is neither register.
+	//
+	// Hong Kong writes both. The Chinese form is `九龍油尖旺佐敦道21號` and the English form is
+	// `21 Jordan Road, Yau Tsim Mong, Kowloon`, and this table holds ONE layout per country, so it holds the Latin one
+	// — which is what `isLargestFirstSystem("HK") === false` already asserts and `LINE_JOINS`'s absent HK entry already
+	// assumes. The local-script order returns when the table is keyed by (country, script).
+	//
+	// No postcode line: Hong Kong operates no postcode system.
+	HK: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${region}
+${country}`,
 }
+
+/**
+ * Address systems that print the largest unit first.
+ *
+ * Derived from the layouts rather than listed, because the layout IS the statement of print order and a hand-kept set
+ * beside it is a second answer to one question. The set held four entries — JP, CN, TW, KR — while the layout table
+ * printed largest-first for seven: IR, KP and KZ were absent from the set and unaffected by it.
+ *
+ * A caller composing its own order — a gazetteer hierarchy string, which is a query rather than an address — reads this
+ * instead of re-deriving it. 122 of the 197 layouts name no region or no street and state no order, so they are absent
+ * here and a caller treats them as small-first, which is the anglophone default the rest of the table assumes.
+ */
+export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
+	Object.entries({ ...GENERATED_ADDRESS_LAYOUTS, ...ADDRESS_LAYOUTS })
+		.filter(([, layout]) => layoutPrintsLargestFirst(layout) === true)
+		.map(([countryCode]) => countryCode)
+)
 
 /**
  * The layout for `country`, or null when neither table names it.

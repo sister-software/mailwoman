@@ -13,8 +13,22 @@
  *   decision and a mistake.
  */
 
-import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom } from "@mailwoman/codex/address-layout"
-import { ADDRESS_LAYOUTS } from "@mailwoman/codex/address-layouts"
+import {
+	addr,
+	isAlternation,
+	isConnector,
+	isLayout,
+	isSlot,
+	SLOTS,
+	type AddressAtom,
+} from "@mailwoman/codex/address-layout"
+import {
+	ADDRESS_LAYOUTS,
+	GENERATED_ADDRESS_LAYOUTS,
+	isLargestFirstSystem,
+	layoutForCountry,
+	layoutPrintsLargestFirst,
+} from "@mailwoman/codex/address-layouts"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -49,6 +63,10 @@ const ACCEPTED_DEPARTURES: Readonly<Record<string, string>> = {
 	JP: "the sub-prefecture run is split into its own tags, and the prefecture joins it rather than taking a line",
 	// China's %A is the street line only; the admin run above it is already %S%C%D in the dataset.
 	CN: "the street line is split into street and house number",
+	// Hong Kong's %S%n%C%n%A%n%O%n%N is the Chinese field order. This table holds one layout per country and the rest of
+	// the codex already describes HK as small-first — `isLargestFirstSystem("HK")` is false and `LINE_JOINS` has no HK
+	// entry — so the transcribed order renders `KLN, YAU TSIM MONG DISTRICT, 21 JORDAN ROAD`, which is neither register.
+	HK: "the English register's order, which the rest of the codex already assumes for HK",
 }
 
 /**
@@ -136,5 +154,45 @@ describe("the skeleton matches libaddressinput", () => {
 			["«street»"],
 			["locality", "region", "postcode"],
 		])
+	})
+})
+
+describe("a layout's printed order agrees with its system convention", () => {
+	/**
+	 * The render order comes from the layout and `LINE_JOINS` is picked by the system flag, so a disagreement prints one
+	 * system's sequence with another's separators. HK rendered `KLN, YAU TSIM MONG DISTRICT, 21 JORDAN ROAD`.
+	 */
+	const both = [...new Set([...Object.keys(ADDRESS_LAYOUTS), ...Object.keys(GENERATED_ADDRESS_LAYOUTS)])]
+
+	it("every country whose layout states an order states the same one as isLargestFirstSystem", () => {
+		const disagreeing = both.filter((cc) => {
+			const layout = layoutForCountry(cc)
+
+			if (!layout) return false
+
+			const printed = layoutPrintsLargestFirst(layout)
+
+			return printed !== null && printed !== isLargestFirstSystem(cc)
+		})
+
+		expect(disagreeing).toEqual([])
+	})
+
+	it("reads the order off the four systems that print largest-first", () => {
+		for (const cc of ["JP", "CN", "TW", "KR"]) {
+			const layout = layoutForCountry(cc)
+
+			if (!layout) continue
+
+			expect(layoutPrintsLargestFirst(layout), cc).not.toBe(false)
+		}
+	})
+
+	it("answers null for a layout naming no region or no street", () => {
+		expect(layoutPrintsLargestFirst(addr`${SLOTS.locality}`)).toBeNull()
+	})
+
+	it("HK prints its English register", () => {
+		expect(layoutPrintsLargestFirst(layoutForCountry("HK")!)).toBe(false)
 	})
 })
