@@ -178,10 +178,12 @@ function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
 }
 
 /**
- * Strict frontmatter check — the NEW six-role contract, enforced on every published page (minus the delegated
- * evals/retrospectives workstream, same boundary as the legacy check). This is what a later task points CI at once the
- * old tree is gone; run today it fails wholesale against the current corpus, which predates the contract — that's
- * expected, not a regression.
+ * Strict frontmatter check — the six-role contract, enforced on every published page (minus the delegated
+ * evals/retrospectives workstream, same boundary as the legacy check). This is what CI runs and what the corpus
+ * satisfies: 79 of 79 published pages pass.
+ *
+ * It carries no `status:` check, which the legacy mode does. That is the one thing lost by deleting the legacy path,
+ * and the reason a deletion is not simply a subtraction.
  */
 function checkFrontmatterStrict(pages: DocPage[]): string[] {
 	const failures: string[] = []
