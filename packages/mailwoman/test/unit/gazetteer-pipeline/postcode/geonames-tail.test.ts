@@ -121,8 +121,37 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(parseJSONStrict<unknown[]>(meta.get("source_files")!)).toHaveLength(2)
 })
 
-test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten, in its ingest order", () => {
-	// Order is recovered from the frozen database's per-country spr.id ranges and is what makes a rebuild
-	// id-comparable to it. GB last, and PRESENT — the docstrings that said eight or nine were wrong.
-	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).toEqual(["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"])
+test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its ingest order", () => {
+	// `ingestGeonamesPostal` allocates ids from ONE counter in list order, so a country's id range is its
+	// POSITION. Appending is therefore safe and reordering is not: these ten were recovered from the frozen
+	// artifact's per-country spr.id ranges, and a rebuild stays id-comparable to it only while they lead.
+	// Everything after them is coverage added since, which the frozen artifact never held an id for.
+	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES].slice(0, 10)).toEqual([
+		"FI",
+		"CZ",
+		"SK",
+		"SI",
+		"DK",
+		"NO",
+		"HR",
+		"PL",
+		"SE",
+		"BE",
+	])
+})
+
+test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-3166 alpha-2", () => {
+	// A duplicate would ingest a country twice under two id ranges, and a lower-case entry would miss its
+	// `<CC>.txt` and be reported missing — both silent, since neither stops the build.
+	const list = [...DEFAULT_GEONAMES_TAIL_COUNTRIES]
+
+	expect(list.filter((cc) => !/^[A-Z]{2}$/.test(cc))).toEqual([])
+	expect(list).toHaveLength(new Set(list).size)
+})
+
+test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the UAE is absent — Makani codes are not postcodes", () => {
+	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump. They are a building
+	// reference, not a postal code, and folding them stored 178,171 rows under a placetype that means
+	// something else.
+	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).not.toContain("AE")
 })
