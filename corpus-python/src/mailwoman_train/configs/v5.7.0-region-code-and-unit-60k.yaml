@@ -1,0 +1,474 @@
+# v5.7.0 — three admin-tail surfaces the corpus has never carried, each with its own probe
+#
+# Control: v5.6.0-bare-postcode-60k.yaml at seed 42. This config differs from it in the corpus
+# version, THREE `source_doses`/`source_weights` lines, one supersession, and three receipts. FROM
+# SCRATCH: no `init_from`, launched with `--resume none`.
+#
+# WHY ONE ARM CARRIES THREE ADDED SOURCES. v5.6.0 added exactly one and said so, because a single
+# added source makes every difference between the arms attributable to it. Three stays attributable
+# here for a different reason: each has its OWN pre-registered probe over a capability the other two
+# cannot touch, and none of the three shares an instrument with another.
+#
+#   #2303  a US city in front of a state code and a ZIP   the four-arm table over 581 US cities
+#   #2299  the Canadian province codes `NL` and `PE`      the thirteen-province probe
+#   #2298  a bare identifier as a secondary unit          the six-row ablation on `301 College Ave, 101, …`
+#
+# Run separately these are three 60,000-step runs answering three questions that share no metric.
+#
+# WHAT IS BEING FIXED, and the count behind each.
+#
+# 1. `Washington, DC 20003` answers a locality 53.2% of the time (309/581 distinct US cities through
+#    the production path) against 99.7% for `123 Main St, Washington, DC 20003` (579/581). Every US
+#    recipe that pairs a city with a state code and a ZIP puts a STREET in front of the city, and
+#    `POSTCODE_CONVENTIONS` had no US entry at all, so the bare surface was never written. Adding it
+#    needed three things besides the table row: `lookupUSState`, because GeoNames publishes
+#    `California` and never `CA`; a per-country GeoNames locality COLUMN, because column 3 is the city
+#    for the US while admin2 is the county — the inverse of PT/MX/IN; and a round-robin over the
+#    region in `applyCountryBudget`, because source order is postcode order and the US was taking its
+#    16,000 rows from 23 of 56 states.
+#
+# 2. `Swiss Chalet, 92 Laurel Rd, Gander, NL A1V 0A9, Canada` answers `country: NL` — the Netherlands
+#    — with `Canada` written in full in the same string. `census_region_code_token` counted every
+#    two-letter uppercase token by the tag it opens over one epoch of the v5.6.0 mixture: `NL` appears
+#    45 times per million emitted rows and every one is `country`; `PE` never opens a span at all;
+#    only `DE` and `CA` carry both readings. So the region reading of a Canadian province code is at
+#    ZERO, which is the same shape as v5.6.0's bare postcode and not a margin to beat.
+#
+# 3. `301 College Ave, 101, Athens, GA 30601` drops the `101` entirely. `census_comma_segment_number`
+#    counted a digit group standing alone in its own comma segment: 2,923 per million in the LEADING
+#    position, every one a postcode, and ZERO in a later segment at either level. Nothing competes —
+#    but `Athens, GA, 30601` puts a postcode in exactly that position and is right today only by
+#    generalization, so the rebuilt recipe writes BOTH readings rather than the unit alone.
+#
+# EXPOSURE, and where each number comes from. 60,000 steps x batch 128 = 7,680,000 samples.
+#
+#   synth-trailing-region-us       1.0 x 16,000 =  16,000 draws, 0.21% of the run
+#   synth-trailing-region-ca-bare  4.0 x 13,740 =  54,960 draws, 0.72% of the run
+#   synth-unit-v30                 weight 1.5, the exposure `synth-unit` already drew (9,013/epoch)
+#
+# The US source takes ONE pass, like `synth-bare-postcode`, because its 16,000 rows are distinct real
+# (postcode, city, state) triples rather than templated variations; 12,000 of them carry no street at
+# all and 4,000 write the region as a code, so one pass delivers 4,000 instances of the exact family
+# the issue measured against v5.6.0's ~3,900 for the shape that worked.
+#
+# The Canadian source takes FOUR, and that number is set against a count rather than by symmetry. Its
+# 13,740 rows carry 188 that write `NL` and 169 that write `PE`. The mixture already carries `NL` as a
+# country 45 times per million emitted rows, which is about 345 over this run. One pass leaves the
+# region reading outnumbered 188 to 345; two reaches parity; four puts it at 752 against 345, on the
+# right side of 2:1. Eight would reach 4.4:1 and spend 1.43% of the run on one country's admin tail,
+# which is more than the margin needs.
+#
+# `synth-unit-v30` SUPERSEDES `synth-unit` and inherits its weight unchanged, because it is the same
+# recipe over the same sources with two surfaces added — not a new exposure decision. Its predecessor
+# goes to 0.0, the `-v22`/`-v21` pattern.
+#
+# PRE-REGISTERED WATCH. Grade these in order, before any target metric:
+#
+#   1. The D-rule floors. `fr.bare_street_intact` in the promotion battery (v5.5.0 raised it 95 -> 100)
+#      and the target-family boards v5.4.0 won: `sg/register.jsonl` 118/240, `us/family-po-box.jsonl`
+#      6/6, `ve/family-locality-postcode.jsonl` 5/5. FR and US are tier 1; a drop disqualifies the arm.
+#
+#   2. #2303's four arms, `us-city-state-postcode-arms.run.ts`, same 581-city panel. Baseline under
+#      v5.6.0: bare 53.2% (309/581), with-country 61.4% (357/581), with-street 99.7% (579/581). The
+#      bare arm must approach the street arm. THE REVERSE IS THE SAME MEASUREMENT: `street_only`
+#      renders each city's own street where the city would sit, and 579 of 581 correctly answer no
+#      locality today. That number may not fall — teaching `«city», «ST» «ZIP»` must not turn a street
+#      before a state code into a locality.
+#
+#   3. #2299's thirteen-province probe. `Gander, NL A1V 1M6, Canada` must answer `country: Canada` and
+#      `region: NL`; `Charlottetown, PE C1A 7W6, Canada` must keep `Charlottetown` as the locality.
+#      The two passing controls in `cases/ca/region-code-collision.jsonl` must stay passing:
+#      `Charlottetown, PE, Canada` and `Halifax, NS B3H 1R2, Canada`.
+#
+#   4. #2298's ablation, and a PO-BOX arm beside it. `301 College Ave #101, Athens, GA 30601` must
+#      reach `address_point` at 33.959694 / -83.3763072, and `301 College Ave, 101, Athens, GA 30601`
+#      must tag `101` as a unit. `Athens, GA, 30601` must still answer `postcode: 30601` and NOT a
+#      unit — that is the counter-reading the recipe writes for exactly this check. A gain on units
+#      may not be paid for with a loss on `PMB #`.
+#
+# The three receipts below fail the run before the GPU starts if any added source does not draw.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.31.0-region-code-and-unit/corpus-v0.31.0-region-code-and-unit
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights:
+    AD: 1.0
+    AE: 1.0
+    AF: 1.0
+    AG: 1.0
+    AI: 1.0
+    AL: 1.0
+    AO: 1.0
+    AR: 1.0
+    AS: 1.0
+    AT: 1.0
+    AU: 1.0
+    AW: 1.0
+    BA: 1.0
+    BB: 1.0
+    BD: 1.0
+    BE: 1.0
+    BF: 1.0
+    BI: 1.0
+    BJ: 1.0
+    BM: 1.0
+    BN: 1.0
+    BQ: 1.0
+    BR: 1.0
+    BS: 1.0
+    BT: 1.0
+    BW: 1.0
+    BY: 1.0
+    BZ: 1.0
+    CA: 1.0
+    CD: 1.0
+    CF: 1.0
+    CG: 1.0
+    CH: 1.0
+    CK: 1.0
+    CN: 1.0
+    CO: 1.0
+    CR: 1.0
+    CV: 1.0
+    CW: 1.0
+    CY: 1.0
+    CZ: 1.0
+    DE: 1.0
+    DJ: 1.0
+    DK: 1.0
+    DM: 1.0
+    DO: 1.0
+    EG: 1.0
+    ER: 1.0
+    ES: 1.0
+    FI: 1.0
+    FK: 1.0
+    FM: 1.0
+    FO: 1.0
+    FR: 1.0
+    GB: 1.0
+    GD: 1.0
+    GE: 1.0
+    GH: 1.0
+    GM: 1.0
+    GT: 1.0
+    GW: 1.0
+    HK: 1.0
+    HR: 1.0
+    HU: 1.0
+    ID: 1.0
+    IE: 1.0
+    IL: 1.0
+    IM: 1.0
+    IN: 1.0
+    IO: 1.0
+    IS: 1.0
+    IT: 1.0
+    JO: 1.0
+    JP: 1.0
+    KH: 1.0
+    KR: 1.0
+    KW: 1.0
+    KY: 1.0
+    LB: 1.0
+    MA: 1.0
+    ML: 1.0
+    MN: 1.0
+    MP: 1.0
+    MS: 1.0
+    MU: 1.0
+    MW: 1.0
+    MX: 1.0
+    MY: 1.0
+    NA: 1.0
+    NE: 1.0
+    NG: 1.0
+    NI: 1.0
+    NL: 1.0
+    NZ: 1.0
+    OM: 1.0
+    PE: 1.0
+    PG: 1.0
+    PH: 1.0
+    PK: 1.0
+    PL: 1.0
+    PM: 1.0
+    PR: 1.0
+    PT: 1.0
+    RU: 1.0
+    RW: 1.0
+    SA: 1.0
+    SB: 1.0
+    SC: 1.0
+    SE: 1.0
+    SG: 1.0
+    SH: 1.0
+    SI: 1.0
+    SK: 1.0
+    SM: 1.0
+    SO: 1.0
+    SR: 1.0
+    ST: 1.0
+    SV: 1.0
+    SX: 1.0
+    TH: 1.0
+    TK: 1.0
+    TM: 1.0
+    TO: 1.0
+    TR: 1.0
+    TT: 1.0
+    TW: 1.0
+    UA: 1.0
+    US: 1.0
+    VE: 1.0
+    VG: 1.0
+    VI: 1.0
+    VN: 1.0
+    VU: 1.0
+    ZA: 1.0
+  source_weights:
+    synth-house-venue: 2.0
+    synth-reviewed-postcode-tail: 0.05
+    overture-latam: 6.0
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-nad: 1.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 0.0 # SUPERSEDED by -v30
+    synth-unit-v30: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 0.0 # v0.9.4 vintage, SUPERSEDED by -v22
+    synth-fr-bare-street-v22: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED by -v21
+    synth-cz-pcfirst-preposition-v21: 12.0
+    synth-nl-postcode: 6.0
+    synth-fragment: 6.0
+    synth-fr-fragment: 12.0
+    synth-no-fragment: 12.0
+    synth-gb: 6.0
+    synth-sub-venue: 12.0
+    synth-suffix-boundary: 2.5
+  # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the nine
+  # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
+  # 1.0*20460 + 1.0*16000 + 4.0*13740 = 508,759 draws, 6.6% of the run. The big register sources take
+  # one pass each because they carry their diversity in the rows; the four-to-five-thousand-row ones
+  # take eight, which is the exposure `synth-suffix-boundary` already draws at weight 2.5.
+  #
+  # The two added lines are the arm's exposure decisions and the epoch audit is what confirms them —
+  # see the header for the count behind each.
+  source_doses:
+    synth-sg-register: 1.0
+    synth-pk-register: 1.0
+    synth-bd-register: 8.0
+    synth-trailing-region-es-v28: 8.0
+    synth-po-box-military: 8.0
+    osm: 0.5
+    synth-bare-postcode: 1.0
+    synth-trailing-region-us: 1.0
+    synth-trailing-region-ca-bare: 4.0
+  required_corpus_receipts:
+    # The three added sources. A receipt is what turns "the weights name it" into "the sampler drew
+    # it": the generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is
+    # why nothing failed for five model versions.
+    #
+    # Each floor is COUNTED. A 1.0 dose is exactly rows/samples of the run (`derive_source_weights`),
+    # so 16,000 US rows draw about 2,083 per 1,000,000-row epoch and 500 is a floor a real draw clears
+    # four times over. The Canadian source at 4.0 draws about 7,156, and 1,000 clears seven times over.
+    # `synth-unit-v30` inherits its predecessor's weight, which the v5.6.0 audit measured at 9,013
+    # draws per epoch, so 2,000 is the same four-times margin.
+    - name: us-city-state-postcode
+      min_draws: 500
+      source: synth-trailing-region-us
+      country: US
+      component_sequence:
+        - locality
+        - region
+        - postcode
+    - name: ca-region-code-tail
+      min_draws: 1000
+      source: synth-trailing-region-ca-bare
+      country: CA
+    - name: us-secondary-unit-current-generation
+      min_draws: 2000
+      source: synth-unit-v30
+      country: US
+    # Carried forward from v5.6.0 unchanged.
+    - name: bare-postcode-czech
+      min_draws: 250
+      source: synth-bare-postcode
+      country: CZ
+    - name: cz-postcode-first-current-generation
+      min_draws: 1000
+      source: synth-cz-pcfirst-preposition-v21
+      country: CZ
+    - name: fr-bare-street-current-generation
+      min_draws: 1000
+      source: synth-fr-bare-street-v22
+      country: FR
+    - name: ve-locality-postcode-region
+      min_draws: 250
+      source: synth-reviewed-postcode-tail
+      country: VE
+      component_sequence:
+        - locality
+        - postcode
+        - region
+    - name: sg-registers
+      min_draws: 1000
+      source: synth-sg-register
+      country: SG
+    - name: pk-house-line
+      min_draws: 1000
+      source: synth-pk-register
+      country: PK
+    - name: bd-trailing-postcode
+      min_draws: 500
+      source: synth-bd-register
+      country: BD
+    - name: es-trailing-region-local-surfaces
+      min_draws: 500
+      source: synth-trailing-region-es-v28
+      country: ES
+    - name: us-military-po-box
+      min_draws: 500
+      source: synth-po-box-military
+      country: US
+    - name: osm-south-asia-formats
+      min_draws: 1000
+      source: osm
+  augment_exclude_sources:
+    - synth-suffix-boundary
+    # A bare postcode has nothing to augment: a directional, a region or a glue token appended to
+    # `119 00` produces a row whose label sequence no longer matches its surface, and the shape this
+    # source exists to teach is the two-token input with nothing else in it.
+    - synth-bare-postcode
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model:
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v570-region-code-and-unit-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 60000
+  eval_every_steps: 2000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v570-region-code-and-unit-60k-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.3
+  val_jsonl: ""
