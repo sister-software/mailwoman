@@ -27,10 +27,17 @@ class ConsoleCallback:
     def on_step_end(self, state: TrainState, step: int) -> None:
         if step % self._log_every:
             return
+        # Steps THIS process ran over the seconds it ran them. `state.elapsed` is time since this process started, so
+        # a resumed run's absolute step divided by it reports the steps a previous process also paid for.
+        ran = step - state.start_step
+        rate = ran / state.elapsed if state.elapsed > 0 else 0.0
+        # The span is named because the figure cannot be read against the wrong one: `rate=5.42 steps/s over 2,100
+        # since step 35,000` and `rate=5.42 steps/s` are the same number and only the first is checkable.
+        span = f" over {ran:,} since step {state.start_step:,}" if state.start_step else ""
         print(
             f"step {step}/{self._max_steps}"
             f"  train_loss={state.train_loss:.4f}  lr={state.learning_rate:.6f}"
-            f"  rate={step / state.elapsed:.2f} steps/s"
+            f"  rate={rate:.2f} steps/s{span}"
         )
 
     def on_eval_end(self, state: TrainState, step: int, metrics: dict[str, float]) -> None:

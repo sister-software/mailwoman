@@ -190,9 +190,14 @@ def run_pretrain_loop(
                 lr = float(scheduler.get_last_lr()[0])
                 ppl = math.exp(min(20.0, avg))
                 elapsed = time.time() - started
+                # Steps THIS process ran over the seconds it ran them; `started` is this process's clock, so the
+                # absolute step over it credits a resumed run with a previous process's work.
+                ran = step - resume_step
+                rate = ran / elapsed if elapsed > 0 else 0.0
+                span = f" over {ran:,} since step {resume_step:,}" if resume_step else ""
                 print(
                     f"[pretrain] step {step}/{cfg.train.max_steps} mlm_loss={avg:.4f} "
-                    f"ppl={ppl:.1f} lr={lr:.6f} rate={step / elapsed:.2f}/s"
+                    f"ppl={ppl:.1f} lr={lr:.6f} rate={rate:.2f}/s{span}"
                 )
                 tracker.log(
                     {"mlm_train_loss": avg, "mlm_train_perplexity": ppl, "lr": lr, "wall_seconds": elapsed},

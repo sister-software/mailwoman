@@ -115,6 +115,7 @@ def run_training_loop(
     device, output_dir = state.device, state.output_dir
     accum = precision.accum
     step = resume_step
+    state.start_step = resume_step
     micro_step = 0
     train_loss_running = 0.0
     log_every = max(1, cfg.train.log_every_steps)

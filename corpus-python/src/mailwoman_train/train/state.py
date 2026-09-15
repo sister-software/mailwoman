@@ -37,6 +37,13 @@ class TrainState:
     #: width `build_model` uses, carried here so the checkpoint's extras can state it.
     vocab_size: int = 2
 
+    #: The step this PROCESS began at: 0 on a fresh run, the checkpoint's step on a resume.
+    #:
+    #: `elapsed` is time since this process started, so throughput is `(step - start_step) / elapsed`. Dividing the
+    #: absolute step by it reported 103.70 steps/s on a run resumed at 35,000 whose real rate was 5.42, and the figure
+    #: fell every line as `elapsed` grew — a resumed run inherits the steps but not the seconds.
+    start_step: int = 0
+
     #: Set by the loop before each dispatch.
     elapsed: float = 0.0
     train_loss: float = 0.0
