@@ -12,6 +12,11 @@
  *
  *   The locales this project publishes weights for are NOT here: those are hand-authored in the sibling `index.ts` and
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
+ *
+ *   The Latin table below is the exception to that split. A hand-authored entry states ONE order per country, so a
+ *   country whose two scripts disagree cannot carry its second order there — Hong Kong's hand-authored layout is the
+ *   Latin one, which leaves the Chinese order with nowhere to live. The Latin skeletons are therefore generated for
+ *   every country that has one, hand-authored or not.
  */
 
 // oxlint-disable max-lines -- one entry per country, each a template that reads in the order it prints
@@ -1564,4 +1569,152 @@ ${numberFirstStreet}
 ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
+}
+
+/**
+ * LATIN-script layouts, for the countries whose Latin print order differs from the one in their own script.
+ *
+ * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes one order in both scripts, so its
+ * country-keyed layout serves both. The `lfmt` each was derived from is quoted above it.
+ */
+export const GENERATED_LATIN_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
+	// %N%n%O%n%A%n%D%n%C%n%S, %Z
+	CN: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${region}, ${postcode}
+${country}`,
+
+	// %N%n%O%n%A%n%C%n%S
+	HK: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${region}
+${country}`,
+
+	// %N%n%O%n%A, %S%n%Z
+	JP: addr`${attention}
+${venue}
+${numberFirstStreet}, ${region}
+${postcode}
+${country}`,
+
+	// %N%n%O%n%A%n%C%n%S, %Z
+	KP: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${region}, ${postcode}
+${country}`,
+
+	// %N%n%O%n%A%n%D%n%C%n%S%n%Z
+	KR: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${region}
+${postcode}
+${country}`,
+
+	// %N%n%O%n%A
+	MO: addr`${attention}
+${venue}
+${numberLastStreet}
+${country}`,
+
+	// %N%n%O%n%A%n%D, %C%n%S %Z
+	TH: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}, ${locality}
+${region} ${postcode}
+${country}`,
+
+	// %N%n%O%n%A%n%C, %S %Z
+	TW: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}, ${region} ${postcode}
+${country}`,
+}
+
+/**
+ * LOCAL-script layouts for the same countries — the `fmt` skeleton, emitted even where the country is hand-authored.
+ *
+ * A hand-authored entry states ONE order, and for Hong Kong that order is the Latin one, so its own script's order has
+ * nowhere else to live. Sparse for the same reason as the Latin table: a country absent here writes one order in both.
+ */
+export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
+	// %Z%n%S%C%D%n%A%n%O%n%N
+	CN: addr`${country}
+${postcode}
+${region}${locality}${dependent_locality}
+${numberLastStreet}
+${venue}
+${attention}`,
+
+	// %S%n%C%n%A%n%O%n%N
+	HK: addr`${country}
+${region}
+${dependent_locality}
+${locality}
+${numberFirstStreet}
+${venue}
+${attention}`,
+
+	// 〒%Z%n%S%n%A%n%O%n%N
+	JP: addr`${country}
+〒${postcode}
+${region}
+${numberFirstStreet}
+${venue}
+${attention}`,
+
+	// %Z%n%S%n%C%n%A%n%O%n%N
+	KP: addr`${country}
+${postcode}
+${region}
+${dependent_locality}
+${locality}
+${numberLastStreet}
+${venue}
+${attention}`,
+
+	// %S %C%D%n%A%n%O%n%N%n%Z
+	KR: addr`${country}
+${region} ${locality}${dependent_locality}
+${numberLastStreet}
+${venue}
+${attention}
+${postcode}`,
+
+	// %A%n%O%n%N
+	MO: addr`${numberLastStreet}
+${venue}
+${attention}
+${country}`,
+
+	// %N%n%O%n%A%n%D %C%n%S %Z
+	TH: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality} ${locality}
+${region} ${postcode}
+${country}`,
+
+	// %Z%n%S%C%n%A%n%O%n%N
+	TW: addr`${country}
+${postcode}
+${dependent_locality}
+${region}${locality}
+${numberLastStreet}
+${venue}
+${attention}`,
 }

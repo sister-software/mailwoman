@@ -25,10 +25,14 @@ import {
 import {
 	ADDRESS_LAYOUTS,
 	GENERATED_ADDRESS_LAYOUTS,
+	GENERATED_LATIN_ADDRESS_LAYOUTS,
+	GENERATED_LOCAL_ADDRESS_LAYOUTS,
 	isLargestFirstSystem,
 	layoutForCountry,
 	layoutPrintsLargestFirst,
+	lineJoinForCountry,
 } from "@mailwoman/codex/address-layouts"
+import { joinRendering, renderAddress } from "@mailwoman/codex/address-render"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -194,5 +198,80 @@ describe("a layout's printed order agrees with its system convention", () => {
 
 	it("HK prints its English register", () => {
 		expect(layoutPrintsLargestFirst(layoutForCountry("HK")!)).toBe(false)
+	})
+})
+
+describe("a country that writes two orders carries both", () => {
+	/**
+	 * The eight records in the shipped dataset whose `lfmt` differs from their `fmt`. Listed rather than derived so the
+	 * test states the population it covers; `layout-table-source.test.ts` is what compares the tables to the dataset.
+	 */
+	const TWO_SCRIPT_COUNTRIES = ["CN", "HK", "JP", "KP", "KR", "MO", "TH", "TW"] as const
+
+	it("names exactly the eight the dataset distinguishes", () => {
+		expect(Object.keys(GENERATED_LATIN_ADDRESS_LAYOUTS).toSorted()).toEqual([...TWO_SCRIPT_COUNTRIES])
+		expect(Object.keys(GENERATED_LOCAL_ADDRESS_LAYOUTS).toSorted()).toEqual([...TWO_SCRIPT_COUNTRIES])
+	})
+
+	it("prints the Latin order smallest-first for every one of them", () => {
+		for (const cc of TWO_SCRIPT_COUNTRIES) {
+			expect(isLargestFirstSystem(cc, "latin"), cc).toBe(false)
+		}
+	})
+
+	it("reaches Hong Kong's own script, which its hand-authored layout cannot state", () => {
+		// The hand-authored HK entry IS the Latin order, so before the split the Chinese order had nowhere to live and
+		// `layoutForCountry("HK")` answered the English one for both scripts.
+		expect(layoutPrintsLargestFirst(layoutForCountry("HK", "local")!)).toBe(true)
+		expect(layoutPrintsLargestFirst(layoutForCountry("HK", "latin")!)).toBe(false)
+		expect(layoutPrintsLargestFirst(layoutForCountry("HK")!)).toBe(false)
+	})
+
+	it("keeps the board-checked layout where it already states the local order", () => {
+		// CN and JP are hand-authored AND largest-first, so the generated skeleton must not displace them.
+		for (const cc of ["CN", "JP"]) {
+			expect(layoutForCountry(cc, "local"), cc).toBe(ADDRESS_LAYOUTS[cc])
+		}
+	})
+
+	it("leaves a one-order country answering the same layout under either script", () => {
+		for (const cc of ["US", "GB", "FR", "DE"]) {
+			expect(layoutForCountry(cc, "latin"), cc).toBe(layoutForCountry(cc, "local"))
+		}
+	})
+
+	it("never joins a Latin ordering with the local script's separator", () => {
+		// The state that printed a Chinese field sequence with Latin separators: the order came from the layout while
+		// the separator came from a country flag, so the two could name different systems.
+		for (const cc of TWO_SCRIPT_COUNTRIES) {
+			expect(lineJoinForCountry(cc, "latin"), cc).toBe(", ")
+		}
+
+		expect(lineJoinForCountry("JP")).toBe(" ")
+		expect(lineJoinForCountry("JP", "local")).toBe(" ")
+	})
+
+	it("renders Hong Kong's two registers from components in their own script", () => {
+		const english = { house_number: "21", street: "Jordan Road", locality: "Yau Tsim Mong", region: "Kowloon" }
+		const chinese = { house_number: "21號", street: "佐敦道", locality: "油尖旺", region: "九龍" }
+
+		const latin = joinRendering(
+			renderAddress(layoutForCountry("HK", "latin")!, english),
+			lineJoinForCountry("HK", "latin")
+		)
+
+		const local = joinRendering(
+			renderAddress(layoutForCountry("HK", "local")!, chinese),
+			lineJoinForCountry("HK", "local")
+		)
+
+		expect(latin).toBe("21 Jordan Road, Yau Tsim Mong, Kowloon")
+
+		// The FIELD ORDER is what this split delivers: region, then locality, then the street, which is the Chinese
+		// register's sequence and the reverse of the English one. Two things still read as English inside that order —
+		// the `", "` separator and the number-first street node — because the street order and the line join are stated
+		// per COUNTRY and this table is the first thing to be stated per script. `九龍油尖旺佐敦道21號` needs both.
+		expect(local).toBe("九龍, 油尖旺, 21號 佐敦道")
+		expect(local.startsWith("九龍")).toBe(true)
 	})
 })

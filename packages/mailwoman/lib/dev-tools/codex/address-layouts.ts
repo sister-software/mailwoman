@@ -38,6 +38,14 @@ import { NO_SUB_LOCALITY_LINE_COUNTRIES } from "#dev-tools/codex/sub-locality-li
  */
 interface AddressMetadata {
 	readonly fmt?: string
+	/**
+	 * The LATIN-script print order, where the country writes one differently from its own script.
+	 *
+	 * Eight of the 252 shipped records carry one that differs from `fmt`: CN, HK, JP, KP, KR, MO, TH, TW. Hong Kong is
+	 * the worked case — `%S%n%C%n%A%n%O%n%N` largest-first against `%N%n%O%n%A%n%C%n%S` smallest-first — and reading
+	 * `fmt` alone gave the Chinese field order carried by Latin separators, an order no register uses.
+	 */
+	readonly lfmt?: string
 }
 
 /**
@@ -161,16 +169,34 @@ function layoutSource(fmt: string, code: string, order: StreetOrder, slots: Set<
 
 const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i18n", "ssl-address")
 const entries: string[] = []
+const latinEntries: string[] = []
+const localEntries: string[] = []
 const usedSlots = new Set<string>()
 const streetNodes = new Set<string>()
 let withoutFormat = 0
 
 for (const file of await Globerator.files("json", { cwd: specsDirectory, absolute: false }).toSorted()) {
 	const code = file.replace(/\.json$/, "")
+	const metadata = await readLocalJSONFile<AddressMetadata>(join(specsDirectory, file))
+	const order = STREET_ORDERS[code] ?? "number-first"
+
+	// The Latin skeleton is emitted for a hand-authored country too. The hand-authored table states ONE order per
+	// country, so a country whose two scripts disagree has no way to carry the second there, and Hong Kong is the case
+	// that shows it: its hand-authored layout is the Latin one, which leaves the Chinese order unreachable.
+	if (metadata.lfmt && metadata.fmt && metadata.lfmt !== metadata.fmt) {
+		const latin = layoutSource(metadata.lfmt, code, order, usedSlots)
+		const local = layoutSource(metadata.fmt, code, order, usedSlots)
+
+		if (latin) {
+			latinEntries.push(`\t// ${metadata.lfmt.replaceAll("\n", "\\n")}\n\t${code}: addr\`${latin}\`,`)
+		}
+
+		if (local) {
+			localEntries.push(`\t// ${metadata.fmt.replaceAll("\n", "\\n")}\n\t${code}: addr\`${local}\`,`)
+		}
+	}
 
 	if (HAND_AUTHORED.has(code)) continue
-
-	const metadata = await readLocalJSONFile<AddressMetadata>(join(specsDirectory, file))
 
 	if (!metadata.fmt) {
 		withoutFormat++
@@ -178,7 +204,7 @@ for (const file of await Globerator.files("json", { cwd: specsDirectory, absolut
 		continue
 	}
 
-	const source = layoutSource(metadata.fmt, code, STREET_ORDERS[code] ?? "number-first", usedSlots)
+	const source = layoutSource(metadata.fmt, code, order, usedSlots)
 
 	if (!source) {
 		withoutFormat++
@@ -203,6 +229,11 @@ const emitted = `/**
  *
  *   The locales this project publishes weights for are NOT here: those are hand-authored in the sibling \`index.ts\` and
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
+ *
+ *   The Latin table below is the exception to that split. A hand-authored entry states ONE order per country, so a
+ *   country whose two scripts disagree cannot carry its second order there — Hong Kong's hand-authored layout is the
+ *   Latin one, which leaves the Chinese order with nowhere to live. The Latin skeletons are therefore generated for
+ *   every country that has one, hand-authored or not.
  */
 
 // oxlint-disable max-lines -- one entry per country, each a template that reads in the order it prints
@@ -217,10 +248,33 @@ const { ${[...usedSlots].toSorted().join(", ")} } = SLOTS
 export const GENERATED_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 ${entries.join("\n\n")}
 }
+
+/**
+ * LATIN-script layouts, for the countries whose Latin print order differs from the one in their own script.
+ *
+ * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes one order in both scripts, so its
+ * country-keyed layout serves both. The \`lfmt\` each was derived from is quoted above it.
+ */
+export const GENERATED_LATIN_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
+${latinEntries.join("\n\n")}
+}
+
+/**
+ * LOCAL-script layouts for the same countries — the \`fmt\` skeleton, emitted even where the country is hand-authored.
+ *
+ * A hand-authored entry states ONE order, and for Hong Kong that order is the Latin one, so its own script's order has
+ * nowhere else to live. Sparse for the same reason as the Latin table: a country absent here writes one order in both.
+ */
+export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
+${localEntries.join("\n\n")}
+}
 `
 
 const outPath = resolvePackagePath("@mailwoman/codex", "lib", "address", "layouts", "generated.ts")
 
 await writeLocalTextFile(emitted, outPath)
 
-console.log(`wrote ${entries.length} layouts to ${outPath}; ${withoutFormat} countries carry no usable fmt`)
+console.log(
+	`wrote ${entries.length} layouts and ${latinEntries.length} Latin variants to ${outPath}; ` +
+		`${withoutFormat} countries carry no usable fmt`
+)

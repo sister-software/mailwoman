@@ -45,10 +45,27 @@ import {
 	numberLastStreet,
 	SLOTS,
 } from "#address/layout"
-import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
+import {
+	GENERATED_ADDRESS_LAYOUTS,
+	GENERATED_LATIN_ADDRESS_LAYOUTS,
+	GENERATED_LOCAL_ADDRESS_LAYOUTS,
+} from "#address/layouts/generated"
 import type { ComponentTag } from "#component"
 
-export { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
+export {
+	GENERATED_ADDRESS_LAYOUTS,
+	GENERATED_LATIN_ADDRESS_LAYOUTS,
+	GENERATED_LOCAL_ADDRESS_LAYOUTS,
+} from "#address/layouts/generated"
+
+/**
+ * Which script an address is written in, when a country writes two different orders.
+ *
+ * `local` is the country's own script — what libaddressinput's `fmt` states. `latin` is its `lfmt`. Eight of the 252
+ * shipped records carry a distinct pair: CN, HK, JP, KP, KR, MO, TH, TW. Every other country writes one order in both,
+ * so the distinction reads through to the same layout.
+ */
+export type AddressScript = "local" | "latin"
 
 const { attention, venue, house_number, street, dependent_locality, locality, subregion, region, postcode, country } =
 	SLOTS
@@ -78,12 +95,24 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 }
 
 /**
- * Whether the country named by `countryCode` prints the largest unit first.
+ * Whether the country named by `countryCode` prints the largest unit first, in `script`.
+ *
+ * Every country carrying a distinct Latin order writes it smallest-first — all eight of them — so asking for `latin`
+ * answers false wherever a second order exists. That is not a coincidence to encode as a rule: it is read off the
+ * layout, the same way the country answer is.
  */
-export function isLargestFirstSystem(countryCode: string | null | undefined): boolean {
+export function isLargestFirstSystem(countryCode: string | null | undefined, script?: AddressScript): boolean {
 	if (!countryCode) return false
 
-	return LARGEST_FIRST_SYSTEMS.has(countryCode.trim().toUpperCase())
+	const code = countryCode.trim().toUpperCase()
+
+	if (script === "latin") {
+		const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]
+
+		if (latin) return layoutPrintsLargestFirst(latin) === true
+	}
+
+	return LARGEST_FIRST_SYSTEMS.has(code)
 }
 
 /**
@@ -282,19 +311,45 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  * transcription of a dataset. Null is a real answer — 55 of the 252 shipped country records carry no usable `fmt`, and
  * a caller that renders nothing for one of those is reporting absence rather than inventing an order.
  */
-export function layoutForCountry(countryCode: string | null | undefined): AddressLayout | null {
+export function layoutForCountry(countryCode: string | null | undefined, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
 
 	const code = countryCode.trim().toUpperCase()
 
-	return ADDRESS_LAYOUTS[code] ?? GENERATED_ADDRESS_LAYOUTS[code] ?? null
+	if (script === "latin") {
+		const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]
+
+		if (latin) return latin
+	}
+
+	const hand = ADDRESS_LAYOUTS[code]
+	const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
+
+	// A hand-authored entry states ONE order, and where the two scripts disagree it may be stating either. Hong Kong's
+	// is the Latin one, so serving it as the local layout leaves that country's own script unreachable. The two print
+	// orders decide which it is: agreeing means the board-checked entry IS the local order and wins; disagreeing means
+	// it is the other script's, and the skeleton derived from `fmt` is what the local order says.
+	if (script === "local" && hand && local && layoutPrintsLargestFirst(hand) !== layoutPrintsLargestFirst(local)) {
+		return local
+	}
+
+	return hand ?? GENERATED_ADDRESS_LAYOUTS[code] ?? null
 }
 
 /**
- * How the country named by `countryCode` joins its lines for single-line output.
+ * How the country named by `countryCode` joins its lines for single-line output, in `script`.
+ *
+ * The CJK joins belong to the LOCAL script alone. Japan's lines joined with `" "` and Hong Kong's with `""` are right
+ * for `東京都千代田区丸の内1-9-1`, and applying either to a Latin ordering is the state that printed a Chinese field sequence
+ * with Latin separators: the order comes from the layout while the separator came from a country flag, so the two could
+ * name different systems. Asking for a script makes them name one.
  */
-export function lineJoinForCountry(countryCode: string | null | undefined): string {
+export function lineJoinForCountry(countryCode: string | null | undefined, script?: AddressScript): string {
 	if (!countryCode) return ", "
 
-	return LINE_JOINS[countryCode.trim().toUpperCase()] ?? ", "
+	const code = countryCode.trim().toUpperCase()
+
+	if (script === "latin" && GENERATED_LATIN_ADDRESS_LAYOUTS[code]) return ", "
+
+	return LINE_JOINS[code] ?? ", "
 }
