@@ -41,12 +41,16 @@ answered differently.
 
 ## Inputs
 
-| Set |  Rows | Source                                                         |
-| --- | ----: | -------------------------------------------------------------- |
-| FR  | 3,000 | `$MAILWOMAN_DATA_ROOT/scratch-825/gate-v193/fr-coord.jsonl`    |
-| US  | 2,000 | `$MAILWOMAN_DATA_ROOT/scratch-825/gate-v193/us-coord-2k.jsonl` |
-| CZ  |   150 | `$MAILWOMAN_DATA_ROOT/scratch-825/gate-v193/cz-coord.jsonl`    |
-| PL  |   150 | `$MAILWOMAN_DATA_ROOT/scratch-825/gate-v193/pl-coord.jsonl`    |
+| Set |  Rows | Artifact                                   |
+| --- | ----: | ------------------------------------------ |
+| FR  | 3,000 | `$MAILWOMAN_DATA_ROOT/eval/coord/fr.jsonl` |
+| US  | 2,000 | `$MAILWOMAN_DATA_ROOT/eval/coord/us.jsonl` |
+| CZ  |   150 | `$MAILWOMAN_DATA_ROOT/eval/coord/cz.jsonl` |
+| PL  |   150 | `$MAILWOMAN_DATA_ROOT/eval/coord/pl.jsonl` |
+
+Each is a 2026-07 per-locale coordinate set from a scratch directory, renamed into the eval's own row
+shape and republished under `eval/coord/` so this run reproduces without the rename. The rows are
+unchanged: same addresses, same government points.
 
 Read through `admin-global-priority.db` + `postcode-locality-intl.db` with
 `--candidate-db candidate.db`, weights `weights/en-us` (npm 9.1.0). `--default-country none` for the
@@ -136,8 +140,9 @@ mailwoman eval oa-resolver \
   --out-rows <arm>.json
 ```
 
-The eval's rows are `{ input, lat, lon, expected, state, source }`; the `*-coord.jsonl` sets carry
-the same facts under `{ raw, components, country, lat, lon }` and are renamed into that shape.
+The eval's rows are `{ input, lat, lon, expected, state, source }`. The 2026-07 sets carried the same
+facts under `{ raw, components, country, lat, lon }`; the published artifacts above are already in
+the eval's shape.
 
 A refused move now reaches a caller: `GeocodeResult.unfollowed_components` carries the postcode, the
 reason `postcode_move_refused`, and the distance following it would have moved the answer. It is
