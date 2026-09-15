@@ -122,6 +122,18 @@ export interface AddressNode {
 	 * common single-role node. Both completion (#415) and a future concordance decode write into this one slot.
 	 */
 	interpretations?: ReadonlyArray<Interpretation>
+	/**
+	 * The ISO 15924 script this span is written in — the one that writes most of its script-bearing codepoints.
+	 *
+	 * The span is where the question is answerable. A whole input folds to one answer and loses which PART carried which
+	 * writing system: `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority Latin, so a reader of the input's script
+	 * cannot tell that the venue is Han. `Zyyy` is the abstention — a span holding only a house number borrows no
+	 * neighbour's script.
+	 *
+	 * Absent on a tree built without a query shape to read it from, so a consumer treats absence as unknown rather than
+	 * as `Zyyy`.
+	 */
+	script?: string
 }
 
 /**

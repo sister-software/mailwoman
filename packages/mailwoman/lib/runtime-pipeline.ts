@@ -48,6 +48,7 @@ import { $public } from "#env"
 import { rerankByStreetEvidence } from "#kbest-street-rerank"
 import { createPOIExecutor, type POIAncestryEntry } from "#poi/executor"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi/intent"
+import { stampSpanScripts } from "#span-script"
 
 /**
  * Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls.
@@ -566,7 +567,13 @@ export function createRuntimePipeline(
 			effectiveRunOpts = { ...effectiveRunOpts, hardCountrySafelist: opts.hardCountrySafelist }
 		}
 
-		return runPipeline(raw, stages, effectiveRunOpts)
+		const result = await runPipeline(raw, stages, effectiveRunOpts)
+
+		// #2282: stamped on the way out, so every path reaches it — the fast-path tree and the abstaining ones as much as
+		// a classified tree. The offsets index the normalized text, which is what the classifier labelled.
+		stampSpanScripts(result.tree, result.normalized.normalized)
+
+		return result
 	}
 }
 

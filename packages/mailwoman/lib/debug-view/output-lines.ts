@@ -17,7 +17,7 @@
  *   renders {@link ABSENT}.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 
 import { ABSENT } from "#debug-view/trace-rows"
 import type { GeocodeResult } from "#geocode/result"
@@ -86,11 +86,34 @@ function formatMsFixed(ms: number): string {
 }
 
 /**
+ * Whether the per-span script is worth printing: the tree holds more than one writing system.
+ *
+ * On a single-script address the script repeats on every line and says nothing, so the pane stays as it was. On a mixed
+ * one it is the only place the distinction survives — the input folds to whichever script writes most of it, which for
+ * `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is Latin, and the Han venue is the span a reader is looking for.
+ *
+ * `Zyyy` is not a writing system for this purpose. It is what a house number or a postcode answers, so counting it
+ * would make almost every address look mixed.
+ */
+function scriptsWorthShowing(tree: AddressTree): boolean {
+	const scripts = new Set<string>()
+
+	for (const node of walkNodes(tree.roots)) {
+		if (node.script && node.script !== "Zyyy") {
+			scripts.add(node.script)
+		}
+	}
+
+	return scripts.size > 1
+}
+
+/**
  * Depth-first, parents before children, in span order — the order the address reads. Children are indented so a
  * street's prefix/suffix stay visibly subordinate to it rather than looking like siblings of the locality.
  */
 function componentLines(tree: AddressTree): OutputLine[] {
 	const lines: OutputLine[] = []
+	const showScript = scriptsWorthShowing(tree)
 
 	const visit = (node: AddressNode, depth: number): void => {
 		lines.push({
@@ -99,6 +122,7 @@ function componentLines(tree: AddressTree): OutputLine[] {
 			tag: node.tag,
 			value: node.value,
 			confidence: node.confidence,
+			...(showScript && node.script ? { detail: node.script } : {}),
 		})
 
 		for (const child of node.children) {

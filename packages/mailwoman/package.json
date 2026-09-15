@@ -322,6 +322,11 @@
 			"node": "./lib/runtime-pipeline.ts",
 			"default": "./out/runtime-pipeline.js"
 		},
+		"./span-script": {
+			"types": "./out/span-script.d.ts",
+			"node": "./lib/span-script.ts",
+			"default": "./out/span-script.js"
+		},
 		"./admin-coherence": {
 			"types": "./out/admin-coherence.d.ts",
 			"node": "./lib/admin-coherence.ts",
