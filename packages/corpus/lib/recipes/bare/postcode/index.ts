@@ -36,6 +36,7 @@ import { join, type PathBuilderLike } from "path-ts"
 
 import { isReservedBarePostcode } from "#recipes/bare/postcode/eval"
 import { alignAndWrite, type CorpusRecipe, readCSVRecords, sliceSourceID } from "#recipes/scaffold"
+import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-inputs"
 
 /**
  * One country's postcodes: the CSV under the extracted OpenAddresses tree, and the country it covers.
@@ -225,6 +226,13 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		const perCountry = new Map(countries.map((country) => [country, 0]))
 		const codesByCountry = new Map(countries.map((country) => [country, new Set<string>()]))
 
+		// The second held-out register. `BARE_POSTCODE_EVAL_CASES` reserves the strings this recipe's author knew
+		// about; the gauntlet boards are older and separate, and `cz/bare-postcode.jsonl` was authored before this
+		// recipe existed. `100 00` and `110 00` reached the v0.30.0 parquet through that gap, after which those two
+		// board rows measured recall of two strings rather than the capability.
+		const boardInputs = await readGauntletInputs()
+		let boardRefused = 0
+
 		for (const source of SOURCES) {
 			const form = WRITTEN_FORMS.get(source.country)
 
@@ -241,6 +249,17 @@ export const barePostcodeRecipe: CorpusRecipe = {
 				const countryCodes = codesByCountry.get(source.country)!
 
 				if (!compact || isReservedBarePostcode(compact) || countryCodes.has(compact)) {
+					skipped++
+
+					continue
+				}
+
+				// A board row is refused on ANY of its written forms, so the check runs over each surface the recipe
+				// would emit rather than over the compact code alone: the board spells it `100 00` and the recipe
+				// holds `10000`, and `normalizeGauntletSurface` is what makes those one string.
+				if (form.render(compact).some((surface) => boardInputs.has(normalizeGauntletSurface(surface)))) {
+					boardRefused++
+
 					skipped++
 
 					continue
@@ -321,6 +340,14 @@ export const barePostcodeRecipe: CorpusRecipe = {
 					"The postcode columns or the written-form rules changed."
 			)
 		}
+
+		// Reported rather than folded into `skipped`, so a board that grows is visible: a rising count means new rows
+		// were being trained on until this build, and a count of zero where the boards hold postcodes is the check
+		// having stopped reaching them.
+		console.error(
+			`  bare-postcode: ${boardRefused.toLocaleString()} rows refused as gauntlet board inputs ` +
+				`(${boardInputs.size.toLocaleString()} inputs read)`
+		)
 
 		return { read, emitted, skipped }
 	},

@@ -222,6 +222,11 @@
 			"node": "./lib/tools/audit.ts",
 			"default": "./out/tools/audit.js"
 		},
+		"./tools/gauntlet-inputs": {
+			"types": "./out/tools/gauntlet-inputs.d.ts",
+			"node": "./lib/tools/gauntlet-inputs.ts",
+			"default": "./out/tools/gauntlet-inputs.js"
+		},
 		"./tools/gb-title-case": {
 			"types": "./out/tools/gb-title-case.d.ts",
 			"node": "./lib/tools/gb-title-case.ts",
