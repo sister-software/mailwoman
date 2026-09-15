@@ -49,6 +49,7 @@ def export_onnx(
     from mailwoman_train.export.onnx import export_to_onnx
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer
+    from mailwoman_train.train.checkpoint import checkpoint_dir_name
 
     output_dir = output_dir or os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", f"{VOL_MOUNT}/output-v054")
     step = step or os.environ.get("MAILWOMAN_EXPORT_STEP", "100000")
@@ -60,7 +61,7 @@ def export_onnx(
         ck_dir = Path(model_dir)
         out_path = Path(f"{model_dir}/model.onnx")
     else:
-        ck_dir = Path(f"{output_dir}/checkpoints/step-{step}")
+        ck_dir = Path(output_dir) / "checkpoints" / checkpoint_dir_name(step)
         out_path = Path(f"{output_dir}/model.onnx")
     tokenizer = Tokenizer(Path(tokenizer_path))
 

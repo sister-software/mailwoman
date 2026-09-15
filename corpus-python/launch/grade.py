@@ -101,8 +101,9 @@ def eval_de(
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
     from mailwoman_train.tokenizer import Tokenizer, encode_row
+    from mailwoman_train.train.checkpoint import checkpoint_dir_name
 
-    ck = Path(f"{output_dir}/checkpoints/step-{step}")
+    ck = Path(output_dir) / "checkpoints" / checkpoint_dir_name(step)
     tok = Tokenizer(Path(tokenizer_path))
     _orig = torch.load
     torch.load = lambda *a, **kw: _orig(*a, **{**kw, "map_location": "cpu"})
@@ -190,7 +191,9 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     )
     fixture = f"{VOL_MOUNT}/eval/fixtures/ban-fragments-fr.jsonl"
 
-    ck = Path(f"{VOL_MOUNT}/output-v3150-street-type-s42/checkpoints/step-{step:06d}")
+    from mailwoman_train.train.checkpoint import checkpoint_dir_name
+
+    ck = Path(VOL_MOUNT) / "output-v3150-street-type-s42" / "checkpoints" / checkpoint_dir_name(step)
     tok = Tokenizer(Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"))
     model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
     print(f"loaded checkpoint step-{step}; use_street_type_anchor={model.use_street_type_anchor}")
@@ -348,7 +351,9 @@ def grade_evidence_bundle(
     # G8 (run-2 ladder): --fixture points the same instrument at overture-fragments-de.jsonl.
     fixture = f"{VOL_MOUNT}/eval/fixtures/{fixture}"
 
-    ck = Path(f"{VOL_MOUNT}/output-{run}-s42/checkpoints/step-{step:06d}")
+    from mailwoman_train.train.checkpoint import checkpoint_dir_name
+
+    ck = Path(VOL_MOUNT) / f"output-{run}-s42" / "checkpoints" / checkpoint_dir_name(step)
     tok = Tokenizer(Path(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"))
     model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
     print(
