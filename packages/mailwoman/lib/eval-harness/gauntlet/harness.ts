@@ -156,6 +156,11 @@ export interface GauntletResolverPins {
 	 * answer the same way that probe does.
 	 */
 	poiVenueTier?: boolean
+	/**
+	 * #2266 — a span-rescore sub-span may drop CONTEXT but never a word of the name. Library default OFF (D-rule), so the
+	 * `true` pin is the one that carries evidence today; `false` pins the production default explicitly.
+	 */
+	spanRescoreRequireContextRemainder?: boolean
 }
 
 /**
@@ -166,6 +171,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
 	poiVenueTier?: boolean
+	spanRescoreRequireContextRemainder?: boolean
 } {
 	if (!pins) return {}
 
@@ -175,6 +181,9 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 		...(pins.postcodeCountryCoherence === undefined ? {} : { postcodeCountryCoherence: pins.postcodeCountryCoherence }),
 		...(pins.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: pins.adminContainmentRerank }),
 		...(pins.poiVenueTier === undefined ? {} : { poiVenueTier: pins.poiVenueTier }),
+		...(pins.spanRescoreRequireContextRemainder === undefined
+			? {}
+			: { spanRescoreRequireContextRemainder: pins.spanRescoreRequireContextRemainder }),
 	}
 }
 

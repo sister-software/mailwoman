@@ -218,5 +218,7 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		...(options.postcodeConsistencyMaxMoveKm !== undefined
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }
 			: {}),
+		// #2266 is default-off in the library, so an unset pin leaves this eval byte-identical.
+		...((options.spanRescoreRequireContextRemainder ?? false) ? { spanRescoreRequireContextRemainder: true } : {}),
 	}
 }

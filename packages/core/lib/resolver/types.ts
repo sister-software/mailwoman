@@ -579,7 +579,21 @@ export interface ResolveOpts {
 	 * and rejected: it loses `NV Sparks`, `SCT Cumbernauld`, `IN Fort Wayne`, `CA National City` and `IA Council Bluffs`.
 	 * Each of those leaves a subdivision code, so the narrow test keeps them.
 	 *
-	 * **Default OFF** until the measurement carries it; unset, span enumeration is unchanged.
+	 * **Default OFF, and the measurement REFUSED the default rather than failing to reach one.**
+	 *
+	 * Free on every aggregate instrument: six withheld-gold rows on the same-data panel stop inventing an answer from a
+	 * fragment with selection accuracy and wrong-area unchanged to the row; 5,300 real addresses published with their
+	 * government point (FR 3,000, US 2,000, CZ 150, PL 150) are row-for-row identical; the 580-row regression board reads
+	 * 518/580 with the same 62 failures, name for name.
+	 *
+	 * What refused it is the shape none of those three carries: a remainder that is a STREET. `86-300 Grudziądz, Daliowa
+	 * 4` recovers `Grudziądz` from a split parse, and the tokens it leaves behind are `86-300` and `Daliowa 4` — a
+	 * postcode, which {@link remainderIsContext} admits, and a street name, which it does not. The rule refuses the
+	 * recovery and the locality is lost. Every aggregate above resolves such rows at the FIRST tier, so span rescue never
+	 * runs on them and the cost is invisible there; the unit fixtures are what exhibit it.
+	 *
+	 * Widening `remainderIsContext` to admit a remainder the parse already read as a street is the shape of the fix, and
+	 * it is a change to the rule rather than to its default.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**

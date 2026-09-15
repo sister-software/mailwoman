@@ -54,6 +54,16 @@ export const spec = {
 			default: false,
 			description: "Force the containment rerank off",
 		},
+		"span-rescore-require-context-remainder": {
+			type: "boolean",
+			default: false,
+			description: "A span-rescore sub-span may drop context, never a word of the name",
+		},
+		"span-rescore-require-context-remainder-off": {
+			type: "boolean",
+			default: false,
+			description: "Force that refusal off",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -63,7 +73,15 @@ const EvalGauntlet = harnessCommand(
 	async (options) => {
 		// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
 		// ever reaches `runGauntlet` as a field of its own.
-		const { postcodeCountryCoherenceOff, gazetteerPriorOff, adminContainmentRerankOff, components, ...rest } = options
+		const {
+			postcodeCountryCoherenceOff,
+			gazetteerPriorOff,
+			adminContainmentRerankOff,
+			spanRescoreRequireContextRemainderOff,
+			components,
+			...rest
+		} = options
+
 		const { runGauntlet } = await import("#eval-harness/gauntlet/run")
 
 		return (
@@ -89,6 +107,12 @@ const EvalGauntlet = harnessCommand(
 				// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the OFF pin
 				// grades the production default explicitly, and no flag stays "grade whatever production does".
 				adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
+				// #2266: two-sided from day one, same as the two above.
+				spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder
+					? true
+					: spanRescoreRequireContextRemainderOff
+						? false
+						: undefined,
 			})
 		).exitCode
 	},

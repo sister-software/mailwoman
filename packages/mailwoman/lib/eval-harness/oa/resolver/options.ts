@@ -117,9 +117,14 @@ export interface OAResolverEvalOptions {
 	noPostcodeConsistency?: boolean
 	/**
 	 * #2301 pin: how far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point. Unset is the
-	 * library default, which is unbounded and is what ships.
+	 * library default.
 	 */
 	postcodeConsistencyMaxMoveKm?: number
+	/**
+	 * #2266 pin: a span-rescore sub-span may drop CONTEXT but never a word of the name. Default-off in the library until
+	 * a measurement carries it, so an unset pin leaves this eval byte-identical.
+	 */
+	spanRescoreRequireContextRemainder?: boolean
 	/**
 	 * #690/#895 tri-state pin: force normalizeCase ON.
 	 */

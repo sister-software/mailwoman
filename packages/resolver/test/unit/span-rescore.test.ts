@@ -308,6 +308,26 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.place.id).toBe(1)
 	})
 
+	it("#2266: REFUSES a recovery whose remainder is a street, which is why this is not the default", async () => {
+		// The cost no aggregate instrument shows. Six withheld-gold rows on the same-data panel improve, 5,300 real
+		// addresses published with their government point are row-for-row identical, and the 580-row board keeps its
+		// exact 62 failures — because every one of those resolves at the first tier and span rescue never runs on them.
+		// This shape is where the rule bites: `Daliowa 4` is neither a subdivision code nor a number, so
+		// `remainderIsContext` refuses the truncation and the locality is lost.
+		const backend = await makeBackend()
+
+		expect((await findRescoreCandidate("86-300 Grudziądz, Daliowa 4", [], backend, { thresholdKm: 0 }))?.place.id).toBe(
+			1
+		)
+
+		const ruled = await findRescoreCandidate("86-300 Grudziądz, Daliowa 4", [], backend, {
+			thresholdKm: 0,
+			spanRescoreRequireContextRemainder: true,
+		})
+
+		expect(ruled).toBeNull()
+	})
+
 	it("flags a recovery CONDITIONAL when the postcode resolves and the match is within range", async () => {
 		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → conditional.
 		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), {

@@ -229,3 +229,35 @@ describe("adminContainmentRerank pin (#1717 stage 2)", () => {
 		})
 	})
 })
+
+describe("spanRescoreRequireContextRemainder — #2266's pin", () => {
+	it("survives every hop from run options to the resolve, both directions", () => {
+		expect(
+			resolverPinDeps(layerDepsOptions(runLayerOptions({ spanRescoreRequireContextRemainder: true })).pins)
+		).toEqual({ spanRescoreRequireContextRemainder: true })
+
+		expect(
+			resolverPinDeps(layerDepsOptions(runLayerOptions({ spanRescoreRequireContextRemainder: false })).pins)
+		).toEqual({ spanRescoreRequireContextRemainder: false })
+	})
+
+	it("is named in the run banner, both directions, and absent when unset", () => {
+		// An OFF/ON pair whose logs are indistinguishable is not evidence about the pin.
+		expect(describeResolverPins({ spanRescoreRequireContextRemainder: true })).toContain(
+			"spanRescoreRequireContextRemainder=ON"
+		)
+
+		expect(describeResolverPins({ spanRescoreRequireContextRemainder: false })).toContain(
+			"spanRescoreRequireContextRemainder=OFF"
+		)
+
+		expect(describeResolverPins({ adminContainmentRerank: true })).not.toContain("spanRescoreRequireContextRemainder")
+	})
+
+	it("composes with a sibling pin rather than replacing it", () => {
+		expect(resolverPinDeps({ spanRescoreRequireContextRemainder: true, adminContainmentRerank: false })).toEqual({
+			spanRescoreRequireContextRemainder: true,
+			adminContainmentRerank: false,
+		})
+	})
+})

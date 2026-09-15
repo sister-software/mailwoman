@@ -270,4 +270,14 @@ describe("resolveOptsFrom", () => {
 	it("turns the whole pass off on its own pin, which is a different arm from any cap", () => {
 		expect(resolveOptsFrom({ noPostcodeConsistency: true }, "none")).toEqual({ postcodeConsistency: false })
 	})
+
+	it("carries the #2266 span-rescore pin only when it is set", () => {
+		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: true }, "none")).toEqual({
+			spanRescoreRequireContextRemainder: true,
+		})
+
+		// Default-off in the library: forwarding `false` would PIN the shipped behaviour rather than leaving it, which is
+		// the one-sided-forwarding class the gauntlet's tri-states exist for.
+		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: false }, "none")).toEqual({})
+	})
 })

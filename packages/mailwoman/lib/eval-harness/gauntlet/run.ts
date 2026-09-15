@@ -108,6 +108,12 @@ export interface GauntletRunOptions {
 	 */
 	adminContainmentRerank?: boolean
 	/**
+	 * RESOLVER-side pin (#2266): a span-rescore sub-span may drop CONTEXT but never a word of the name. Two-sided like
+	 * the two above — `undefined` grades the production default (OFF), `true` is the evidence pin, `false` pins the
+	 * default explicitly so an OFF-labeled log really graded OFF.
+	 */
+	spanRescoreRequireContextRemainder?: boolean
+	/**
 	 * Ablation: where the map artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>`.
 	 */
 	out?: string
@@ -146,6 +152,9 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 			: { postcodeCountryCoherence: options.postcodeCountryCoherence }),
 		...(options.gazetteerPrior === undefined ? {} : { gazetteerPrior: options.gazetteerPrior }),
 		...(options.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: options.adminContainmentRerank }),
+		...(options.spanRescoreRequireContextRemainder === undefined
+			? {}
+			: { spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder }),
 	}
 
 	// Absent, not empty: `undefined` is what `describeResolverPins` prints as "production defaults", and an empty

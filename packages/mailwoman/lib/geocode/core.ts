@@ -333,6 +333,12 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	adminContainmentRerank?: boolean
 	/**
+	 * Span-rescore context remainder (#2266, `ResolveOpts.spanRescoreRequireContextRemainder`) — a recovered sub-span may
+	 * drop CONTEXT but never a word of the name, so a fragment of a multi-word locality stops being enumerated as a
+	 * candidate in its own right. **Default OFF** (D-rule); pass `true` to opt in.
+	 */
+	spanRescoreRequireContextRemainder?: boolean
+	/**
 	 * Postcode-prefix prior (#31, Mechanism 3, `ResolveOpts.postcodePrefixPrior` + `.postcodePrefixIndex`) — on a
 	 * `postalcode` miss, resolve the code's PREFIX from the injected PFX1 index (GB outward / US section) so an
 	 * ungazetted unit still contributes its district + centroid. **Default OFF** (the PCN1 posture — data + loader +
@@ -867,6 +873,12 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// HERE (and in the session), at the same layer every other promoted change defaults.
 	if (deps.adminContainmentRerank !== false) {
 		opts.adminContainmentRerank = true
+	}
+
+	// #2266: default OFF, so only an explicit `true` pins it. Flipping this to the `!== false` shape above is what a
+	// promotion looks like, and it needs the measurement first.
+	if (deps.spanRescoreRequireContextRemainder === true) {
+		opts.spanRescoreRequireContextRemainder = true
 	}
 
 	if (deps.postcodePrefixPrior === true) {

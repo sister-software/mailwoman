@@ -38,6 +38,7 @@ export const spec = {
 		"postcode-country-coherence-off": booleanOption("Force postcode-country coherence off"),
 		"postcode-consistency-off": booleanOption("Force postcode-disambiguated locality selection off"),
 		"postcode-max-move-km": { type: "number", description: "Cap how far the postcode fallback may move a coordinate" },
+		"span-rescore-require-context-remainder": booleanOption("A sub-span may drop context, never a word of the name"),
 		"hierarchy-completion": booleanOption("Enable hierarchy completion"),
 		"postcode-anchor": booleanOption("Add anchor-coordinate arm"),
 		"postcode-databases": { type: "string", description: "Postcode databases" },
