@@ -327,7 +327,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			`SELECT s.id AS id, s.name AS name, s.placetype AS placetype, s.country AS country,
 				s.latitude AS lat, s.longitude AS lon,
 				s.min_latitude AS mnlat, s.min_longitude AS mnlon, s.max_latitude AS mxlat, s.max_longitude AS mxlon,
-				COALESCE(pp.population,0) AS pop
+				pp.population AS pop
 			 FROM spr s LEFT JOIN place_population pp ON pp.id = s.id
 			 WHERE s.is_current != 0 AND s.is_deprecated = 0`
 		)
@@ -340,9 +340,16 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		// primary country records carried none (measured 2026-08-18, #1650), which ranked those nations
 		// below any namesake hamlet in every prominence race ("Georgia" → Georgia VT). The codex table is
 		// the secondary source; a country absent from it too stays at zero honestly.
-		const wofPop = Number(r.pop) || 0
-		const pop = wofPop === 0 && r.placetype === "country" ? (COUNTRY_POPULATION[String(r.country ?? "")] ?? 0) : wofPop
-		const neg = -Math.log10(pop + 1)
+		// The join carries NULL through rather than COALESCE-ing it to zero: `place_population`'s minimum is 1 over
+		// 1,520,369 rows, so an absent row is the only way a place has no number, and 3,275,445 of the 4,770,674 current
+		// places are absent from it. Every reader already treats null and a non-positive alike, so this changes no
+		// ranking — it stops the artifact asserting a count for two thirds of the gazetteer.
+		const wofPop = r.pop === null || r.pop === undefined ? null : Number(r.pop)
+
+		const pop =
+			wofPop === null && r.placetype === "country" ? (COUNTRY_POPULATION[String(r.country ?? "")] ?? null) : wofPop
+
+		const neg = -Math.log10((pop ?? 0) + 1)
 		const name = String(r.name ?? "")
 		const pkey = normalizeLocalityForKey(name)
 		const lat = r.lat as number

@@ -48,7 +48,9 @@ export function stageCountryDisplayNames(ctx: {
 
 		const held = countryByISO2.get(iso2)
 
-		if (!held || a.pop > held.a.pop) {
+		// An unmeasured population loses to any measured one and ties with another unmeasured, which is what a zero
+		// stand-in did here before the column carried null.
+		if (!held || (a.pop ?? 0) > (held.a.pop ?? 0)) {
 			countryByISO2.set(iso2, { sid, a })
 		}
 	}

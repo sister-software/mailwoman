@@ -85,7 +85,8 @@ export function stampNameRoles(ctx: {
 
 		if (GLOSS_EXCLUDED_PLACETYPES.has(ptNameByID.get(a.ptid) ?? "")) continue
 
-		if (a.pop > 0 || a.imp != null) continue
+		// "Population absent" is null now that the column carries it — the docstring's reading, unchanged.
+		if ((a.pop ?? 0) > 0 || a.imp != null) continue
 		glossSids.push(sid)
 	}
 

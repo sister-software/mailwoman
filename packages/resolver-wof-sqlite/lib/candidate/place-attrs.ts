@@ -23,7 +23,14 @@ export interface PlaceAttrs {
 	mnLon: number
 	mxLat: number
 	mxLon: number
-	pop: number
+	/**
+	 * The place's recorded population, or null when the gazetteer never measured one.
+	 *
+	 * NULL, not zero. `place_population` holds no zero — its minimum over 1,520,369 rows is 1 — so an absent row is the
+	 * only way a place has no number, and 3,275,445 of the gazetteer's 4,770,674 current places are absent from it. A
+	 * zero written for those would be a count nobody made, and the meaning-of-zero rule reads it as one.
+	 */
+	pop: number | null
 	neg: number
 	pkey: string
 	/**
