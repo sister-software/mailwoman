@@ -74,16 +74,13 @@ import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, s
 /**
  * The code an address line in this country writes the region as, or null where the name is written out.
  *
- * The recipe takes its region surface from the tuple's WOF admin NAME, so Canada's regions enter as `Newfoundland and
- * Labrador` and the code form is never attested. Measured over 102 built corpus files, 4,105,140 rows: exactly 1,014
- * carry a bare Canadian province code beside a Canadian postal code, and every one is `ON` — the other twelve appear
- * ZERO times (#2299). `Gander, NL A1V 0A9, Canada` then answers `country: NL`, because the Netherlands is the only
- * reading of those two letters the model was ever shown.
+ * A subdivision belongs here only when its code IS a posted surface. A Canadian province code is (`ca/province.ts`
+ * states the contrast with Germany and France in its own header); a Bundesland or a région is not, and teaching `BY`
+ * for Bayern would attest a form nobody writes. Several Canadian codes collide with ISO alpha-2 country codes — `NL`
+ * with the Netherlands, `PE` with Peru — so a code left unattested here is not merely missing: the model reads it as
+ * the country it does know.
  *
- * Canada only, deliberately. A code belongs here when it IS the surface people post — `ca/province.ts` says so in its
- * own header, and a German Bundesland or a French région is not: teaching `BY` for Bayern would attest a form nobody
- * writes. US state codes are the other real instance and are already attested in volume by the US sources, so adding
- * them here would be a generalization with no measured gap under it.
+ * US state codes are the other genuine instance and already reach the model in volume through the US sources.
  */
 function regionCodeSurface(cc: string, region: string): string | null {
 	return cc.toUpperCase() === "CA" ? lookupCanadianProvince(region) : null
@@ -159,9 +156,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const localitySegment =
 				components["dependent_locality"] === undefined ? bareLocality : `${dependentLocality}, ${bareLocality}`
 
-			// Every third eligible row writes the region as its POSTAL CODE surface rather than its name. Alternating
-			// rather than replacing, because both forms are real and the name form is what the resolver matches on;
-			// a code-only slice would teach the code and un-teach the name it was built from.
+			// A minority of eligible rows write the code. Both forms are posted and the name is what the resolver
+			// matches on, so the code alternates with it rather than replacing it.
 			const regionCode = read % 3 === 2 ? regionCodeSurface(String(t.cc ?? ""), region) : null
 			const regionSurface = regionCode ?? region
 

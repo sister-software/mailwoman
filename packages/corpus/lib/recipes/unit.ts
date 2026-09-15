@@ -101,12 +101,22 @@ const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
  * 85% id-bearing designators, 15% standalone.
  */
 const ID_WEIGHT = 0.85
+
+/**
+ * Share of id-bearing rows written with the `#` sigil instead of a word designator.
+ *
+ * A minority rather than a replacement: `#` reads as a unit designator here and as a private-mailbox leader in
+ * `synthesizers/po-box.ts`, so the token cannot decide between them and the context has to. `US_PMB_LEADERS` excludes
+ * it for the same reason. A promotion check over this slice owes a PO-box arm, since a gain on units can be paid for
+ * with a loss on `PMB #`.
+ */
+const SIGIL_WEIGHT = 0.2
 const SYNTH_IDS: readonly string[] = ["4B", "200", "12", "3", "A", "101", "5", "2A", "310", "B", "7", "1500", "404"]
 
 /**
  * A real US tuple read out of a cached OA zip (number/street/city/postcode + the bare OA unit id).
  */
-interface UnitTuple {
+export interface UnitTuple {
 	house_number: string
 	street: string
 	locality: string
@@ -132,7 +142,7 @@ const title = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1).toLo
 /**
  * Build an injected unit string ("Apt 4B"), varying canonical vs approved-abbrev form per row.
  */
-function makeUnit(random: () => number, oaUnit: string): string {
+export function makeUnit(random: () => number, oaUnit: string): string {
 	const standalone = random() >= ID_WEIGHT
 	const pool = standalone ? STANDALONE_DESIGNATORS : ID_DESIGNATORS
 	const canonical = pick(pool, random)
@@ -142,6 +152,10 @@ function makeUnit(random: () => number, oaUnit: string): string {
 	if (standalone) return designator
 
 	const id = oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : pick(SYNTH_IDS, random)
+
+	// Both spacings: the sign and the id are one component either way, and attesting one surface leaves the other
+	// reachable only by generalization the model does not make here.
+	if (random() < SIGIL_WEIGHT) return random() < 0.5 ? `#${id}` : `# ${id}`
 
 	return `${designator} ${id}`
 }
@@ -167,8 +181,13 @@ const VENUES: readonly string[] = [
  */
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
-// Layouts: 34% full-after, 18% full-first, 16% bare-after, 16% bare-first, 16% venue.
-const FULL_AFTER_CUTOFF = 0.34
+// Layouts: 26% full-after, 8% full-comma, 18% full-first, 16% bare-after, 16% bare-first, 16% venue.
+//
+// A comma before the unit is its own surface — the delimiter decides whether the span reads as a unit at all,
+// independently of which designator sits in it. `full-comma` is carved out of `full-after` alone so every later
+// cutoff keeps the share it had.
+const FULL_AFTER_CUTOFF = 0.26
+const FULL_COMMA_CUTOFF = 0.34
 const FULL_FIRST_CUTOFF = 0.52
 const BARE_AFTER_CUTOFF = 0.68
 const BARE_FIRST_CUTOFF = 0.84
@@ -178,7 +197,7 @@ const BARE_FIRST_CUTOFF = 0.84
  * recipient/venue prefixed on the venue format — so the model learns to RECOGNIZE the designator wherever it sits.
  * Returns {fmt, raw, components}.
  */
-function renderUnit(
+export function renderUnit(
 	random: () => number,
 	base: UnitTuple,
 	unit: string
@@ -204,6 +223,9 @@ function renderUnit(
 
 	if (r < FULL_AFTER_CUTOFF)
 		return { fmt: "full-after", raw: `${road} ${unit}, ${tail(loc, reg, pc)}`, components: full }
+
+	if (r < FULL_COMMA_CUTOFF)
+		return { fmt: "full-comma", raw: `${road}, ${unit}, ${tail(loc, reg, pc)}`, components: full }
 
 	if (r < FULL_FIRST_CUTOFF)
 		return { fmt: "full-first", raw: `${unit}, ${road}, ${tail(loc, reg, pc)}`, components: full }
