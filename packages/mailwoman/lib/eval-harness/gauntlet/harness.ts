@@ -13,7 +13,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
+import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
@@ -161,6 +161,12 @@ export interface GauntletResolverPins {
 	 * `true` pin is the one that carries evidence today; `false` pins the production default explicitly.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
+	/**
+	 * #2264 — which reading of a weak resolution lifts the #685 span-rescore brake. Not a boolean: three readings, and
+	 * the shipped brake is the absence of all of them, so `undefined` is the production arm and there is no OFF pin to
+	 * pair with a `true` one.
+	 */
+	spanRescoreWeakResolution?: WeakResolutionReading
 }
 
 /**
@@ -172,6 +178,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 	adminContainmentRerank?: boolean
 	poiVenueTier?: boolean
 	spanRescoreRequireContextRemainder?: boolean
+	spanRescoreWeakResolution?: WeakResolutionReading
 } {
 	if (!pins) return {}
 
@@ -184,6 +191,9 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 		...(pins.spanRescoreRequireContextRemainder === undefined
 			? {}
 			: { spanRescoreRequireContextRemainder: pins.spanRescoreRequireContextRemainder }),
+		...(pins.spanRescoreWeakResolution === undefined
+			? {}
+			: { spanRescoreWeakResolution: pins.spanRescoreWeakResolution }),
 	}
 }
 
@@ -196,7 +206,11 @@ export function describeResolverPins(pins: GauntletResolverPins | undefined): st
 	// `resolverPinDeps` is pure and so cannot see the artifact-carrying pins; describing only what it returns is how
 	// a pinned run prints as "production defaults" and two different configurations produce identical pin logs. That
 	// is precisely the failure this surface exists to prevent, so every pin is named here, not just the boolean ones.
-	const entries: string[] = Object.entries(resolverPinDeps(pins)).map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`)
+	// A non-boolean pin prints its VALUE. `spanRescoreWeakResolution` has three of them and they grade different
+	// configurations, so collapsing them to ON is the identical-logs failure this function exists to prevent.
+	const entries: string[] = Object.entries(resolverPinDeps(pins)).map(([k, v]) =>
+		typeof v === "boolean" ? `${k}=${v ? "ON" : "OFF"}` : `${k}=${v}`
+	)
 
 	// Printed only when PINNED away from the production default (now ON). An unset pin prints nothing, which is what
 	// keeps "no flag" reading as "grade whatever production does".

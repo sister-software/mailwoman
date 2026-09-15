@@ -331,6 +331,25 @@ export interface CoincidentLocality extends ResolvedPlace {
 }
 
 /**
+ * Which reading of "resolved weakly" lifts the #685 span-rescore brake, or `false` to take a `placeID` at face value.
+ *
+ * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes when the gazetteer records no
+ *   population for it.
+ * - `containment` — `admin_containment` reads `no_contained_candidate`: the query named a qualifier, the probe ran, and
+ *   no candidate sat inside it. `unavailable` is NOT this, because the backend could not answer.
+ * - `either` — either reading.
+ *
+ * The two are different claims about the same pick, so a rule has to say which it acts on. `score` is the reading that
+ * does work: on the regression board all four arms score 524 of 586, `containment` leaves the unpinned failure list
+ * untouched, and `either` leaves one identical to `score`'s, so its second condition fires on no row.
+ *
+ * A reading cannot reach past a country scope. The brake lifts on `Port Louis` under `score` and the answer is
+ * unchanged, because the recovery inherits the resolve's scope — it returns Port Louis (MU) unscoped and `Louis` (US)
+ * under the locale-inferred US one.
+ */
+export type WeakResolutionReading = "score" | "containment" | "either"
+
+/**
  * Options for `resolveTree`. All optional with sensible defaults.
  */
 
@@ -599,18 +618,14 @@ export interface ResolveOpts {
 	 * Which reading of "resolved weakly" lifts the #685 span-rescore brake, or unset to take a `placeID` at face value.
 	 *
 	 * `applySpanRescore` declines whenever any node carries a `placeID`, which is what keeps it from second-guessing a
-	 * working coordinate. `Port Louis` satisfies that with a candidate carrying `resolver_score: 0` — the gazetteer
-	 * records no population for it — and `admin_containment: no_contained_candidate` — the query named a qualifier, the
-	 * probe ran, and nothing sat inside it. The recovery the brake withholds finds Port Louis (MU), population 155,226,
-	 * in place of an answer 9,009 km away.
+	 * working coordinate. The reading names the evidence on which a `placeID` is NOT such a coordinate;
+	 * {@linkcode
+	 * WeakResolutionReading} carries what each one reads and what the regression board measured for it.
 	 *
-	 * `score` and `containment` are different claims about the same pick, and `either` takes both. A rule has to say
-	 * which it acts on: lifting the brake unconditionally is measured and REFUSED — it fixes `Port Louis` and `Queen
-	 * Street, Auckland 1010`, and turns `Newport, Wales` and `Road Town` into different wrong answers.
-	 *
-	 * **Default UNSET**, which is the shipped brake.
+	 * **Default UNSET**, which is the shipped brake. Promoting `score` needs the promotion battery, not the board alone:
+	 * one changed row out of 586 is inside the range a hand-authored panel can produce by construction.
 	 */
-	spanRescoreWeakResolution?: "score" | "containment" | "either"
+	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
 	 * Postal-compound recovery inside the span-rescore tier (#942). The knife-edge no-street query shape ("Kožljek 7,
 	 * 1382 Kožljek") fails as a COMPOUND: the parse globs the trailing city into the postcode span ("1382 Kožljek"),

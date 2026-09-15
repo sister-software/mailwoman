@@ -64,6 +64,11 @@ export const spec = {
 			default: false,
 			description: "Force that refusal off",
 		},
+		"span-rescore-weak-resolution": {
+			type: "string",
+			choices: ["score", "containment", "either"],
+			description: "Which reading of a weak resolution lifts the #685 brake",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -113,6 +118,9 @@ const EvalGauntlet = harnessCommand(
 					: spanRescoreRequireContextRemainderOff
 						? false
 						: undefined,
+				// #2264: three readings rather than two states, so there is no OFF spelling — an absent flag is the
+				// production default, which is to take a `placeID` at face value and never lift the brake.
+				...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 			})
 		).exitCode
 	},

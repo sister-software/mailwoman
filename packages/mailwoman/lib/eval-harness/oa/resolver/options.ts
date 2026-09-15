@@ -5,6 +5,8 @@
  * @file The flag contract for the OpenAddresses real-point resolver eval.
  */
 
+import type { WeakResolutionReading } from "@mailwoman/core/resolver"
+
 /**
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
  * off, tri-states are the paired on/off flags the eval legs pin (`adminCoherence`/`noAdminCoherence`).
@@ -125,6 +127,11 @@ export interface OAResolverEvalOptions {
 	 * a measurement carries it, so an unset pin leaves this eval byte-identical.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
+	/**
+	 * #2264 pin: which reading of a weak resolution lifts the #685 span-rescore brake. Unset is the shipped brake, so an
+	 * unset pin leaves this eval byte-identical.
+	 */
+	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
 	 * #690/#895 tri-state pin: force normalizeCase ON.
 	 */

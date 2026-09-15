@@ -38,6 +38,8 @@
  *   Wire into the release flow as a `before:release` check (RELEASING.md): a non-zero exit blocks the ship.
  */
 
+import type { WeakResolutionReading } from "@mailwoman/core/resolver"
+
 import { type AblationLayerOptions, runAblationLayer } from "#eval-harness/gauntlet/ablation"
 import { describeResolverPins, type GauntletResolverPins } from "#eval-harness/gauntlet/harness"
 import { runHoldoutLayer } from "#eval-harness/gauntlet/holdout"
@@ -114,6 +116,12 @@ export interface GauntletRunOptions {
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
+	 * RESOLVER-side pin (#2264): which reading of a weak resolution lifts the #685 span-rescore brake. Three readings
+	 * rather than two states, so there is no OFF spelling to pair with — `undefined` IS the production default, which
+	 * takes a `placeID` at face value.
+	 */
+	spanRescoreWeakResolution?: WeakResolutionReading
+	/**
 	 * Ablation: where the map artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>`.
 	 */
 	out?: string
@@ -155,6 +163,9 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		...(options.spanRescoreRequireContextRemainder === undefined
 			? {}
 			: { spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder }),
+		...(options.spanRescoreWeakResolution === undefined
+			? {}
+			: { spanRescoreWeakResolution: options.spanRescoreWeakResolution }),
 	}
 
 	// Absent, not empty: `undefined` is what `describeResolverPins` prints as "production defaults", and an empty

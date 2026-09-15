@@ -39,6 +39,11 @@ export const spec = {
 		"postcode-consistency-off": booleanOption("Force postcode-disambiguated locality selection off"),
 		"postcode-max-move-km": { type: "number", description: "Cap how far the postcode fallback may move a coordinate" },
 		"span-rescore-require-context-remainder": booleanOption("A sub-span may drop context, never a word of the name"),
+		"span-rescore-weak-resolution": {
+			type: "string",
+			choices: ["score", "containment", "either"],
+			description: "Which reading of a weak resolution lifts the #685 brake",
+		},
 		"hierarchy-completion": booleanOption("Enable hierarchy completion"),
 		"postcode-anchor": booleanOption("Add anchor-coordinate arm"),
 		"postcode-databases": { type: "string", description: "Postcode databases" },

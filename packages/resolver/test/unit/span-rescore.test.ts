@@ -480,11 +480,48 @@ describe("findRescoreCandidate", () => {
 })
 
 describe("hasResolvedPlace", () => {
+	/**
+	 * A node that resolved, carrying whichever metadata the reading under test looks at.
+	 */
+	const resolvedNode = (metadata: Record<string, unknown> = {}): AddressNode => ({
+		...node({ tag: "locality", value: "x", start: 0, end: 1 }),
+		placeID: "wof:1",
+		metadata,
+	})
+
 	it("detects a resolved node anywhere in the tree", () => {
 		expect(hasResolvedPlace([node({ tag: "locality", value: "x", start: 0, end: 1 })])).toBe(false)
-		const resolved = node({ tag: "locality", value: "x", start: 0, end: 1 })
-		resolved.placeID = "wof:1"
-		expect(hasResolvedPlace([resolved])).toBe(true)
+		expect(hasResolvedPlace([resolvedNode()])).toBe(true)
+	})
+
+	it("#2264: each reading holds the brake on the evidence it does NOT name", () => {
+		const scoreOnly = resolvedNode({ resolver_score: 0 })
+		const containmentOnly = resolvedNode({ admin_containment: "no_contained_candidate" })
+
+		expect(hasResolvedPlace([scoreOnly], "score")).toBe(false)
+		expect(hasResolvedPlace([scoreOnly], "containment")).toBe(true)
+		expect(hasResolvedPlace([containmentOnly], "score")).toBe(true)
+		expect(hasResolvedPlace([containmentOnly], "containment")).toBe(false)
+
+		for (const weak of [scoreOnly, containmentOnly]) {
+			expect(hasResolvedPlace([weak], "either")).toBe(false)
+			// Unset is the shipped brake: a `placeID` at face value, whatever the evidence under it.
+			expect(hasResolvedPlace([weak])).toBe(true)
+		}
+	})
+
+	it("#2264: a backend that could not answer containment is not a weak resolution", () => {
+		// `unavailable` says the probe did not run. Reading it as "nothing sat inside the qualifier" would lift the
+		// brake on every row a backend without the ancestors sidecar touches.
+		expect(hasResolvedPlace([resolvedNode({ admin_containment: "unavailable" })], "either")).toBe(true)
+	})
+
+	it("#2264: a recorded population holds the brake under every reading", () => {
+		const strong = resolvedNode({ resolver_score: 155_226, admin_containment: "contained" })
+
+		for (const reading of ["score", "containment", "either"] as const) {
+			expect(hasResolvedPlace([strong], reading)).toBe(true)
+		}
 	})
 })
 

@@ -43,6 +43,7 @@ import type {
 	PostcodePrefixIndexLike,
 	ResolveOpts,
 	Resolver,
+	WeakResolutionReading,
 } from "@mailwoman/core/resolver"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
@@ -339,6 +340,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
+	 * Weak-resolution reading (#2264, `ResolveOpts.spanRescoreWeakResolution`). **Default UNSET**, the shipped brake.
+	 */
+	spanRescoreWeakResolution?: WeakResolutionReading
+	/**
 	 * Postcode-prefix prior (#31, Mechanism 3, `ResolveOpts.postcodePrefixPrior` + `.postcodePrefixIndex`) — on a
 	 * `postalcode` miss, resolve the code's PREFIX from the injected PFX1 index (GB outward / US section) so an
 	 * ungazetted unit still contributes its district + centroid. **Default OFF** (the PCN1 posture — data + loader +
@@ -587,6 +592,17 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 		opts.capitalLevel = deps.capitalLevel
 	}
 }
+
+/**
+ * The resolver pins a caller opts INTO. Each defaults OFF at the resolver, so an unset dep stays ABSENT rather than
+ * becoming an explicit `false`; a pin promoted to default-on leaves this list for an `!== false` read.
+ */
+const OPT_IN_RESOLVER_PINS = [
+	"postcodeShapeCoherence",
+	"postcodeContainmentCoherence",
+	"spanRescoreRequireContextRemainder",
+	"postcodePrefixPrior",
+] as const satisfies readonly (keyof GeocodeDeps & keyof ResolveOpts)[]
 
 async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
 	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
@@ -850,39 +866,26 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	// #42 postcode-country coherence. Default-ON at the core resolver since 2026-08-05; propagated explicitly here for
-	// the same reason `adminCoherence` is — so `deps.postcodeCountryCoherence: false` stays an effective opt-out rather
-	// than an unset field that re-defaults ON downstream. The resolver owns the verdict (it is the only place that can
-	// test the (postcode, locality) pair against the gazetteer); its answer is read back off the tree below.
+	// #42 postcode-country coherence, default-ON at the core resolver. Propagated explicitly for the same reason
+	// `adminCoherence` is — so `deps.postcodeCountryCoherence: false` stays an effective opt-out rather than an unset
+	// field that re-defaults ON downstream. The resolver owns the verdict, and its answer is read back off the tree.
 	opts.postcodeCountryCoherence = deps.postcodeCountryCoherence !== false
 
-	// #31 postcode-structure arc — the three OPT-IN mechanisms. All default-OFF at the resolver, so this
-	// assembly only ever SETS a field when the dep explicitly requests it (`=== true`); an absent dep field
-	// stays absent and the resolver's byte-stable defaults hold. The prefix index is the exception that rides
-	// with its flag: it is a data artifact, only consulted when `postcodePrefixPrior` is on.
-	if (deps.postcodeShapeCoherence === true) {
-		opts.postcodeShapeCoherence = true
+	for (const pin of OPT_IN_RESOLVER_PINS) {
+		if (deps[pin] === true) {
+			opts[pin] = true
+		}
 	}
 
-	if (deps.postcodeContainmentCoherence === true) {
-		opts.postcodeContainmentCoherence = true
-	}
-
-	// #1717 stage 2, PROMOTED default-ON 2026-08-18: an explicit `false` is the only thing that
-	// withholds it. The resolver core keeps its byte-stable `=== true` read, so the default lives
-	// HERE (and in the session), at the same layer every other promoted change defaults.
+	// #1717 stage 2 is promoted default-ON, so an explicit `false` is the only thing that withholds it. The resolver
+	// core keeps its byte-stable `=== true` read, so the default lives HERE and in the session, where every promotion's does.
 	if (deps.adminContainmentRerank !== false) {
 		opts.adminContainmentRerank = true
 	}
 
-	// #2266: default OFF, so only an explicit `true` pins it. Flipping this to the `!== false` shape above is what a
-	// promotion looks like, and it needs the measurement first.
-	if (deps.spanRescoreRequireContextRemainder === true) {
-		opts.spanRescoreRequireContextRemainder = true
-	}
-
-	if (deps.postcodePrefixPrior === true) {
-		opts.postcodePrefixPrior = true
+	// #2264 is not a boolean: unset IS the shipped brake, so only a named reading pins it.
+	if (deps.spanRescoreWeakResolution) {
+		opts.spanRescoreWeakResolution = deps.spanRescoreWeakResolution
 	}
 
 	if (deps.postcodePrefixIndex) {

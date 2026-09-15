@@ -261,3 +261,37 @@ describe("spanRescoreRequireContextRemainder — #2266's pin", () => {
 		})
 	})
 })
+
+describe("spanRescoreWeakResolution — #2264's pin", () => {
+	it("survives every hop from run options to the resolve, each reading", () => {
+		for (const reading of ["score", "containment", "either"] as const) {
+			expect(resolverPinDeps(layerDepsOptions(runLayerOptions({ spanRescoreWeakResolution: reading })).pins)).toEqual({
+				spanRescoreWeakResolution: reading,
+			})
+		}
+	})
+
+	it("names the READING in the run banner, not an ON", () => {
+		// Three readings that grade different configurations. Collapsing them to ON is how two arms produce identical
+		// pin logs, which is the one thing the banner exists to prevent.
+		expect(describeResolverPins({ spanRescoreWeakResolution: "score" })).toContain("spanRescoreWeakResolution=score")
+
+		expect(describeResolverPins({ spanRescoreWeakResolution: "containment" })).toContain(
+			"spanRescoreWeakResolution=containment"
+		)
+
+		expect(describeResolverPins({ adminContainmentRerank: true })).not.toContain("spanRescoreWeakResolution")
+	})
+
+	it("has no OFF spelling — an unset pin is the shipped brake", () => {
+		expect(resolverPinDeps(layerDepsOptions(runLayerOptions({})).pins)).toEqual({})
+		expect(describeResolverPins(undefined)).toContain("production defaults")
+	})
+
+	it("composes with a sibling pin rather than replacing it", () => {
+		expect(resolverPinDeps({ spanRescoreWeakResolution: "either", spanRescoreRequireContextRemainder: true })).toEqual({
+			spanRescoreWeakResolution: "either",
+			spanRescoreRequireContextRemainder: true,
+		})
+	})
+})

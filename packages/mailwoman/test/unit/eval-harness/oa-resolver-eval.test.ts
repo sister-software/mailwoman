@@ -280,4 +280,12 @@ describe("resolveOptsFrom", () => {
 		// the one-sided-forwarding class the gauntlet's tri-states exist for.
 		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: false }, "none")).toEqual({})
 	})
+
+	it("carries the #2264 weak-resolution reading verbatim, and nothing when unset", () => {
+		expect(resolveOptsFrom({ spanRescoreWeakResolution: "containment" }, "none")).toEqual({
+			spanRescoreWeakResolution: "containment",
+		})
+
+		expect(resolveOptsFrom({}, "none")).toEqual({})
+	})
 })

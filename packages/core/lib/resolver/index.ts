@@ -68,4 +68,5 @@ export type {
 	ResolverBackend,
 	StreetCentroidHit,
 	StreetCentroidLookup,
+	WeakResolutionReading,
 } from "#resolver/types"

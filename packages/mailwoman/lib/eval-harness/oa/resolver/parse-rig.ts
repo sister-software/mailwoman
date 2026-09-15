@@ -220,5 +220,7 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 			: {}),
 		// #2266 is default-off in the library, so an unset pin leaves this eval byte-identical.
 		...((options.spanRescoreRequireContextRemainder ?? false) ? { spanRescoreRequireContextRemainder: true } : {}),
+		// #2264 has no OFF spelling: unset IS the shipped brake, so only a named reading pins it.
+		...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 	}
 }

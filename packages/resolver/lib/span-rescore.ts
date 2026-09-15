@@ -26,7 +26,7 @@
  */
 
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
-import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import type { ResolvedPlace, ResolverBackend, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { isRegionAbbreviationToken } from "@mailwoman/query-shape/region-abbreviations"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -191,21 +191,6 @@ function hasAdminQualifier(roots: readonly AddressNode[]): boolean {
 }
 
 /**
- * Which reading of "resolved weakly" lifts the #685 brake, or `false` to take a `placeID` at face value.
- *
- * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes when the gazetteer records no
- *   population for it.
- * - `containment` — `admin_containment` reads `no_contained_candidate`: the query named a qualifier, the probe ran, and
- *   no candidate sat inside it. `unavailable` is NOT this, because the backend could not answer.
- * - `either` — either reading.
- *
- * The two are different claims and a rule has to say which it acts on. `Port Louis` satisfies both: score 0 and
- * `contained=false`, while the recovery the brake withholds finds Port Louis (MU), population 155,226, in place of an
- * answer 9,009 km away.
- */
-export type WeakResolutionReading = "score" | "containment" | "either"
-
-/**
  * Whether one node's resolution rests on evidence thin enough to re-open, under `reading`.
  */
 function resolvedWeakly(node: AddressNode, reading: WeakResolutionReading): boolean {
@@ -226,9 +211,9 @@ function resolvedWeakly(node: AddressNode, reading: WeakResolutionReading): bool
  * With `weakReading`, a node whose resolution is weak under that reading does NOT hold the brake, so span rescore may
  * run against a tree that nominally resolved.
  *
- * Lifting the brake UNCONDITIONALLY is measured and refused: it fixes `Port Louis` and `Queen Street, Auckland 1010`
- * and turns `Newport, Wales` and `Road Town` into different wrong answers. So the question is never whether to lift it
- * but on which evidence, which is what `weakReading` names.
+ * Lifting the brake UNCONDITIONALLY is measured and refused, so the question is never whether to lift it but on which
+ * evidence — which is what `weakReading` names. {@linkcode WeakResolutionReading} carries what the board measured for
+ * each reading.
  */
 export function hasResolvedPlace(
 	roots: readonly AddressNode[],
