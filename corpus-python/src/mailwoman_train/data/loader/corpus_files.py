@@ -34,6 +34,47 @@ def manifest_slices(data: dict[str, Any]) -> list[dict[str, Any]]:
     return list(data.get(_LEGACY_SLICES_KEY) or [])
 
 
+def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
+    """The local file a stale manifest path names, or ``None`` when no re-rooting reaches one.
+
+    The segment before ``<split>`` is the CORPUS the path belongs to, and it decides which root to re-root under:
+
+    - **The same corpus** → under ``corpus_dir``, the ``<split>/<file>`` tail. This is the corpus's own parts, written
+      with the build machine's data root and read somewhere else.
+    - **A different corpus** → BESIDE ``corpus_dir``, the ``<corpus>/<split>/<file>`` tail under its parent. An
+      overlay's base parts live in a sibling corpus directory, and a manifest that names them by the Modal volume's
+      ``/data/corpus/versioned/`` is unresolvable off that volume while the files sit next to the overlay the whole
+      time. This is what `export --parity-samples` needed: the v8-cjk-regs overlay declares 7 val slices, 6 of them the
+      base corpora's, and a local export raised on all 6 after the graph was already written.
+
+    **Reading the corpus segment is what keeps the two apart, and the aliasing it prevents is silent.** Part files are
+    named by position, so `<base>/val/part-0000.parquet` and `<overlay>/val/part-0000.parquet` differ only in the
+    segment this function reads. Re-rooting a base path under ``corpus_dir`` on tail alone finds the OVERLAY's
+    same-numbered part, and the loader trains on it believing it read the base — no error, wrong rows.
+
+    The roots are derived from ``corpus_dir`` rather than from a ``/data/`` prefix, so the rule holds for a volume, a
+    lab checkout and a temporary directory alike.
+    """
+    parts = raw.parts
+    at = parts.index(split) if split in parts else None
+
+    if at is None:
+        cand = corpus_dir / split / raw.name
+
+        return cand if cand.exists() else None
+
+    # No segment before the split, or one that is the split again: nothing names a corpus, so only the own-corpus
+    # reading is available.
+    if at == 0 or parts[at - 1] == split or parts[at - 1] == corpus_dir.name:
+        cand = corpus_dir / Path(*parts[at:])
+
+        return cand if cand.exists() else None
+
+    cand = corpus_dir.parent / Path(*parts[at - 1 :])
+
+    return cand if cand.exists() else None
+
+
 def _slice_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Resolve train/val/test slice paths via MANIFEST.json (adapter-addition corpora)
     or legacy glob fallback (monolithic corpora).
@@ -71,11 +112,9 @@ def _slice_paths(corpus_dir: Path, split: str) -> list[Path]:
                 # Path is valid as-is (overlay cross-dir ref, or corpus on its build machine).
                 resolved.append(raw)
                 continue
-            # Stale absolute path (corpus moved): re-root the <split>/<file> tail under corpus_dir.
-            parts = raw.parts
-            tail = Path(*parts[parts.index(split) :]) if split in parts else Path(split) / raw.name
-            cand = corpus_dir / tail
-            if cand.exists():
+            # Stale absolute path (corpus moved): re-root under corpus_dir, then beside it.
+            cand = _reroot(raw, corpus_dir, split)
+            if cand is not None:
                 resolved.append(cand)
                 rerooted += 1
             else:

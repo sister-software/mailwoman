@@ -135,6 +135,91 @@ def test_a_pre_rename_manifest_gets_the_partial_resolution_guard_too(tmp_path: P
         _slice_paths(corpus, "train")
 
 
+def test_an_overlays_base_parts_reroot_beside_it(tmp_path: Path) -> None:
+    """#2207: the base corpus is a SIBLING directory, and the manifest names it by the Modal volume.
+
+    `python -m mailwoman_train export --parity-samples` reads val rows through the config's corpus_dir. The
+    v8-cjk-regs overlay declares 7 val slices, 6 of them the base corpora's at `/data/corpus/versioned/<base>/val/…`,
+    and re-rooting only under the overlay's own directory found none of them — so a local export raised after the
+    graph was already on disk. The base parts were beside the overlay the whole time.
+    """
+    versioned = tmp_path / "corpus" / "versioned"
+    overlay = versioned / "v8-cjk-regs"
+    base = versioned / "v8-jp-kana"
+    (overlay / "val").mkdir(parents=True)
+    (base / "val").mkdir(parents=True)
+
+    own = overlay / "val" / "part-0000.parquet"
+    base_part = base / "val" / "part-0000.parquet"
+    own.write_bytes(b"x")
+    base_part.write_bytes(b"x")
+
+    (overlay / "MANIFEST.json").write_text(
+        json.dumps(
+            {
+                "slices": [
+                    {"split": "val", "path": "/data/corpus/versioned/v8-cjk-regs/val/part-0000.parquet"},
+                    {"split": "val", "path": "/data/corpus/versioned/v8-jp-kana/val/part-0000.parquet"},
+                ]
+            }
+        )
+    )
+
+    assert _slice_paths(overlay, "val") == sorted([own, base_part])
+
+
+def test_a_base_part_never_resolves_to_the_overlays_same_numbered_one(tmp_path: Path) -> None:
+    """The aliasing the corpus segment prevents, and the reason it is read rather than the tail alone.
+
+    Part files are named by position, so a base corpus and the overlay layered on it both hold `val/part-0000.parquet`.
+    Re-rooting a base path under the overlay on tail alone finds the OVERLAY's part and resolves — no error, and the
+    loader reports the base slice as read while it holds the overlay's rows. Here the base is absent, so the only way
+    to resolve is by taking the wrong file; the guard must raise instead.
+    """
+    versioned = tmp_path / "corpus" / "versioned"
+    overlay = versioned / "v8-cjk-regs"
+    (overlay / "val").mkdir(parents=True)
+    own = overlay / "val" / "part-0000.parquet"
+    own.write_bytes(b"x")
+
+    (overlay / "MANIFEST.json").write_text(
+        json.dumps(
+            {
+                "slices": [
+                    {"split": "val", "path": "/data/corpus/versioned/v8-cjk-regs/val/part-0000.parquet"},
+                    {"split": "val", "path": "/data/corpus/versioned/v8-jp-kana/val/part-0000.parquet"},
+                ]
+            }
+        )
+    )
+
+    with pytest.raises(FileNotFoundError, match="v8-jp-kana"):
+        _slice_paths(overlay, "val")
+
+
+def test_a_sibling_that_is_not_there_still_raises(tmp_path: Path) -> None:
+    """The second rung widens what resolves, never what passes silently."""
+    versioned = tmp_path / "corpus" / "versioned"
+    overlay = versioned / "v8-cjk-regs"
+    (overlay / "val").mkdir(parents=True)
+    own = overlay / "val" / "part-0000.parquet"
+    own.write_bytes(b"x")
+
+    (overlay / "MANIFEST.json").write_text(
+        json.dumps(
+            {
+                "slices": [
+                    {"split": "val", "path": str(own)},
+                    {"split": "val", "path": "/data/corpus/versioned/v8-absent/val/part-0000.parquet"},
+                ]
+            }
+        )
+    )
+
+    with pytest.raises(FileNotFoundError, match="v8-absent"):
+        _slice_paths(overlay, "val")
+
+
 def test_the_current_key_wins_when_a_manifest_carries_both() -> None:
     both = {"slices": [{"path": "new"}], _LEGACY_SLICES_KEY: [{"path": "old"}]}
 
