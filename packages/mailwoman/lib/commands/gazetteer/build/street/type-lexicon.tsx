@@ -17,14 +17,18 @@ export const spec = {
 	name: "street-type-lexicon",
 	description: "Build the street-type evidence lexicon.",
 	options: {
-		output: { type: "string", description: "Output path (default <repo>/data/gazetteer/street-type-lexicon-v3.json)" },
+		out: {
+			type: "string",
+			description: "Output path (default <repo>/data/gazetteer/street-type-lexicon-v3.json)",
+			deprecatedName: "output",
+		},
 	},
 } as const satisfies CommandSpec
 
 const GazetteerBuildStreetTypeLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildStreetTypeLexicon } = await import("#gazetteer/evidence-lexicons")
-		const built = await buildStreetTypeLexicon({ output: options.output })
+		const built = await buildStreetTypeLexicon({ output: options.out })
 
 		return `${built.path} — ${built.entries} surfaces, max_ngram=${built.maxNgram}`
 	})

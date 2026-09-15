@@ -26,8 +26,9 @@ export const spec = {
 		},
 		count: { type: "number", default: 100, description: "Total seeds to process" },
 		variants: { type: "number", default: 5, description: "Variants requested per seed" },
-		output: {
+		out: {
 			type: "string",
+			deprecatedName: "output",
 			description: "JSONL output path (default data/eval/golden/candidates/expand-<ts>.jsonl)",
 		},
 		provider: { type: "string", choices: ["deepseek", "anthropic"], default: "deepseek", description: "LLM provider" },
@@ -46,7 +47,7 @@ const CorpusGoldenExpand: CommandComponent<typeof spec> = ({ options }) => {
 				corpus: options.corpus,
 				count: options.count,
 				variants: options.variants,
-				output: options.output,
+				output: options.out,
 				provider: options.provider,
 				model: options.model,
 				concurrency: options.concurrency,

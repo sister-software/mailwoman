@@ -16,7 +16,7 @@ export const spec = {
 	description: "Build corpus statistics.",
 	options: {
 		slices: { type: "string", required: true, description: "Comma-separated parquet slice paths or a directory" },
-		output: { type: "string", required: true, description: "Output corpus-stats.json path" },
+		out: { type: "string", required: true, description: "Output corpus-stats.json path", deprecatedName: "output" },
 		"limit-per-slice": { type: "number", description: "Row cap per slice (debug)" },
 	},
 } as const satisfies CommandSpec
@@ -27,7 +27,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 		await buildCorpusStats({
 			slicesArg: options.slices,
-			outputPath: options.output,
+			outputPath: options.out,
 			limitPerSlice: options.limitPerSlice,
 		})
 

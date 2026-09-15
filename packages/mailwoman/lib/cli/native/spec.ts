@@ -20,6 +20,17 @@ interface OptionSpecBase {
 	default?: OptionValue
 	multiple?: boolean
 	required?: boolean
+	/**
+	 * The flag this option used to be spelled as. It keeps working, with a notice on stderr, and never appears in help.
+	 *
+	 * A CLI flag is a contract with whatever scripts already call it, so a rename that removes the old spelling breaks
+	 * them at the moment of the rename with no way to find out first. The notice is what turns that into a warning the
+	 * caller can act on before the alias goes.
+	 *
+	 * Passing both spellings is a usage error rather than a precedence rule: the caller meant one of them and the command
+	 * cannot tell which.
+	 */
+	deprecatedName?: string
 }
 
 interface BooleanOptionSpec extends OptionSpecBase {
@@ -161,6 +172,13 @@ function validateCommandSpec(spec: CommandSpec): void {
 		if (option.short && reservedOptionShortNames.has(option.short)) {
 			throw new TypeError(`Command ${spec.name} cannot declare root-owned option -${option.short}.`)
 		}
+
+		// A retired spelling that is also a live option would delete the live one's value on every run.
+		if (option.deprecatedName && option.deprecatedName in (spec.options ?? {})) {
+			throw new TypeError(
+				`Command ${spec.name} names --${option.deprecatedName} as the old spelling of --${name} while declaring it.`
+			)
+		}
 	}
 }
 
@@ -220,6 +238,15 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			...(option.multiple ? { multiple: true } : {}),
 			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
+
+		// The retired spelling parses, and carries NO default — a default here would make the alias look supplied on
+		// every run and shadow the current flag's own.
+		if (option.deprecatedName) {
+			definitions[option.deprecatedName] = {
+				type: option.type === "boolean" ? "boolean" : "string",
+				...(option.multiple ? { multiple: true } : {}),
+			}
+		}
 	}
 
 	let parsed: ReturnType<typeof parseArguments>
@@ -250,6 +277,26 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 	) as Record<string, OptionValue | undefined>
 
 	for (const [name, option] of Object.entries(spec.options ?? {})) {
+		if (option.deprecatedName) {
+			const retired = values[option.deprecatedName]
+
+			// The retired key never survives into the bag a command reads: leaving it there gives one value two homes,
+			// and a command that reaches for the old one keeps working past the removal it was warned about.
+			values[option.deprecatedName] = undefined
+
+			if (retired !== undefined) {
+				// Both spellings is a usage error rather than a precedence rule: the caller meant one of them and the
+				// command cannot tell which.
+				if (values[name] !== undefined && values[name] !== option.default) {
+					throw new CLIUsageError(`--${option.deprecatedName} is the old name for --${name}; pass one of them.`)
+				}
+
+				console.error(`--${option.deprecatedName} is deprecated and will be removed; use --${name}.`)
+
+				values[name] = retired
+			}
+		}
+
 		const raw = values[name]
 
 		if (values.help !== true && raw === undefined && option.required) {

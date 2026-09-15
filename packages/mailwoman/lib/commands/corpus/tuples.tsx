@@ -35,7 +35,7 @@ export const spec = {
 	description: "Write the trailing-region tuples for a set of countries",
 	options: {
 		countries: { type: "string", description: "ISO-3166 alpha-2 codes, comma-separated (ES,GB)" },
-		output: { type: "string", description: "Output tuples JSONL" },
+		out: { type: "string", description: "Output tuples JSONL", deprecatedName: "output" },
 		source: {
 			type: "string",
 			default: "parent-join",
@@ -65,7 +65,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async (): Promise<TuplesReport> => {
 		if (!options.countries) throw new CommandError("--countries <CC,CC> required")
 
-		if (!options.output) throw new CommandError("--output <tuples.jsonl> required")
+		if (!options.out) throw new CommandError("--out <tuples.jsonl> required")
 
 		const tools = await import("@mailwoman/corpus/tools/postcode-triples")
 		const countries = splitUpperList(options.countries)
@@ -104,7 +104,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 
 		await writeLocalTextFile(
 			kept.map((triple) => stringifyJSON(triple)).join("\n") + (kept.length ? "\n" : ""),
-			options.output
+			options.out
 		)
 
 		const byCountry: Record<string, number> = {}
@@ -115,7 +115,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 			surfaces.add(`${triple.cc} ${triple.region}`)
 		}
 
-		return { written: kept.length, byCountry, regionSurfaces: surfaces.size, output: options.output }
+		return { written: kept.length, byCountry, regionSurfaces: surfaces.size, output: options.out }
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

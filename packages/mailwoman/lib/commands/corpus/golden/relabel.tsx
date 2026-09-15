@@ -24,7 +24,12 @@ export const spec = {
 			required: true,
 			description: "Parent golden version dir (read-only), e.g. data/eval/golden/v0.1.2",
 		},
-		output: { type: "string", required: true, description: "Output golden version dir, e.g. data/eval/golden/v0.1.3" },
+		out: {
+			type: "string",
+			required: true,
+			description: "Output golden version dir, e.g. data/eval/golden/v0.1.3",
+			deprecatedName: "output",
+		},
 		deck: { type: "string", description: "Review-deck JSONL path. Default <output>/REVIEW-DECK.jsonl" },
 		commit: { type: "string", description: "Commit SHA recorded as tool provenance in the manifest" },
 		"split-prefix": {
@@ -42,7 +47,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 		const report = await relabelGoldenDirectory({
 			input: options.input,
-			output: options.output,
+			output: options.out,
 			...(options.deck ? { deck: options.deck } : {}),
 			...(options.commit ? { commit: options.commit } : {}),
 			splitPrefix: options.splitPrefix,

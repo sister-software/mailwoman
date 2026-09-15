@@ -29,7 +29,7 @@ export const spec = {
 	name: "affix-relabel",
 	description: "Export the street-affix relabel lexicon.",
 	options: {
-		output: { type: "string", description: "Output path" },
+		out: { type: "string", description: "Output path", deprecatedName: "output" },
 	},
 } as const satisfies CommandSpec
 
@@ -40,7 +40,7 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 
 		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
-		const output = options.output ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json"))
+		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json"))
 
 		// Directionals: every SINGLE-TOKEN surface variant → canonical abbreviation. The codex maps are
 		// Maps keyed by the Pub-28 spaced names ("NORTH WEST"); real US streets use the one-word form

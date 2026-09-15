@@ -16,7 +16,7 @@ export const spec = {
 	description: "Align a canonical corpus slice.",
 	options: {
 		input: { type: "string", required: true, description: "Canonical jsonl input" },
-		output: { type: "string", required: true, description: "Labeled jsonl output" },
+		out: { type: "string", required: true, description: "Labeled jsonl output", deprecatedName: "output" },
 		"corpus-version": { type: "string", required: true, description: "Corpus version stamp for the emitted rows" },
 	},
 } as const satisfies CommandSpec
@@ -27,7 +27,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 		await alignCanonicalSlice({
 			input: options.input,
-			output: options.output,
+			output: options.out,
 			corpusVersion: options.corpusVersion,
 		})
 

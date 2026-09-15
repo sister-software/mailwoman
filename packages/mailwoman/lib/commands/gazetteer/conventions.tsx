@@ -47,7 +47,7 @@ export const spec = {
 	description: "Compile authored convention profiles",
 	options: {
 		src: { type: "string", default: "data/conventions/conventions.json", description: "Authored convention profiles" },
-		output: { type: "string", description: "Compiled SQLite path" },
+		out: { type: "string", description: "Compiled SQLite path", deprecatedName: "output" },
 	},
 } as const satisfies CommandSpec
 
@@ -113,7 +113,7 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
 
 		const src = options.src
-		const output = resolvePath(options.output ?? dataRootPath("wof", "conventions.db"))
+		const output = resolvePath(options.out ?? dataRootPath("wof", "conventions.db"))
 
 		const rows = await readLocalJSONFile<AuthoredConvention[]>(src)
 

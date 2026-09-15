@@ -64,12 +64,21 @@ describe("corpus run option validation", () => {
 		expect(() => parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y", "--limit", "10"])).not.toThrow()
 	})
 
-	test("input + output are required; corpusVersion defaults to 0.1.0-dev", () => {
-		expect(() => parseCommand(runSpec, ["adapter", "--output", "y"])).toThrow(/input/)
-		expect(() => parseCommand(runSpec, ["adapter", "--input", "x"])).toThrow(/output/)
-		const parsed = parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y"])
+	test("input + out are required; corpusVersion defaults to 0.1.0-dev", () => {
+		expect(() => parseCommand(runSpec, ["adapter", "--out", "y"])).toThrow(/input/)
+		expect(() => parseCommand(runSpec, ["adapter", "--input", "x"])).toThrow(/out/)
+		const parsed = parseCommand(runSpec, ["adapter", "--input", "x", "--out", "y"])
 		expect(parsed.values["corpus-version"]).toBe("0.1.0-dev")
 		expect(parsed.values["progress-every"]).toBe(1000)
+	})
+
+	test("the retired --output still satisfies the requirement it used to", () => {
+		// The alias is checked HERE and not only in the spec unit test, because `out` is `required` and the required
+		// check reads the current key: an alias folded in after that check would make every existing caller fail with
+		// "Missing required option: --out" while passing a destination.
+		const parsed = parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y"])
+
+		expect(parsed.values.out).toBe("y")
 	})
 })
 

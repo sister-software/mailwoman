@@ -21,7 +21,7 @@ export const spec = {
 	description: "Convert labeled-row JSONL to a Parquet corpus database.",
 	options: {
 		input: { type: "string", required: true, description: "The labeled-row JSONL to convert" },
-		output: { type: "string", required: true, description: "The parquet database to write" },
+		out: { type: "string", required: true, description: "The parquet database to write", deprecatedName: "output" },
 		"row-group-size": { type: "number", default: 50_000, description: "Parquet row-group size" },
 	},
 } as const satisfies CommandSpec
@@ -31,7 +31,7 @@ const DevJSONLToParquet: CommandComponent<typeof spec> = ({ options }) => {
 		const { jsonlToParquet } = await import("@mailwoman/corpus/tools")
 
 		return jsonlToParquet(
-			{ input: options.input, output: options.output, rowGroupSize: options.rowGroupSize },
+			{ input: options.input, output: options.out, rowGroupSize: options.rowGroupSize },
 			reportToStderr
 		)
 	})

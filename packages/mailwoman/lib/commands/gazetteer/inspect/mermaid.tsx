@@ -53,7 +53,11 @@ export const spec = {
 	],
 	options: {
 		roles: { type: "string", description: `Comma-separated role filter: ${PlacetypeRoles.join(", ")}` },
-		output: { type: "string", description: "Path to write the Mermaid markup to. Defaults to stdout." },
+		out: {
+			type: "string",
+			description: "Path to write the Mermaid markup to. Defaults to stdout.",
+			deprecatedName: "output",
+		},
 		interpolator: {
 			type: "string",
 			description: "d3-scale-chromatic sequential interpolator, such as viridis or turbo",
@@ -107,8 +111,8 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 
 		const chart = generateMermaidMarkup(placetype, { roles, edgeInterpolator: interpolator })
 
-		if (options.output) {
-			await writeLocalFile(chart + "\n", options.output)
+		if (options.out) {
+			await writeLocalFile(chart + "\n", options.out)
 		} else {
 			// Write Mermaid directly to stdout so long classDef / linkStyle lines aren't
 			// word-wrapped by Ink's <Text> renderer — Mermaid won't parse a broken line.
@@ -120,11 +124,11 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 
 	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
-	if (options.output) {
+	if (options.out) {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					Wrote Mermaid markup for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.output}</Text>.
+					Wrote Mermaid markup for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.out}</Text>.
 				</Text>
 			</Box>
 		)

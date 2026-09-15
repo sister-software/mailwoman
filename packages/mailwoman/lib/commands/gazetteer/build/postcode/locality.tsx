@@ -29,7 +29,7 @@ export const spec = {
 	description: "Build a postcode-to-locality table.",
 	options: {
 		recipe: { type: "string", required: true, choices: ["base", "jp", "kr", "tw"], description: "Build recipe" },
-		output: { type: "string", required: true, description: "Output database" },
+		out: { type: "string", required: true, description: "Output database", deprecatedName: "output" },
 		country: { type: "string", description: "ISO-2 country" },
 		"admin-repo": { type: "string", description: "WOF admin repo" },
 		"postcode-db": { type: "string", description: "Postcode database" },
@@ -58,7 +58,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 					await import("#gazetteer/postcode/locality/base")
 
 				if (options.finalize) {
-					await finalizePostcodeLocality(options.output)
+					await finalizePostcodeLocality(options.out)
 
 					break
 				}
@@ -67,7 +67,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 					country: need("country", options.country),
 					adminRepo: need("admin-repo", options.adminRepo),
 					postcodeDB: need("postcode-db", options.postcodeDB),
-					output: options.output,
+					output: options.out,
 					radiusKM: options.radiusKM ?? 10,
 					maxCandidates: options.maxCandidates ?? 4,
 					finalize: false,
@@ -83,7 +83,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 					postalNames: need("postal-names", options.postalNames),
 					geonames: need("geonames", options.geonames),
 					adminDB: need("admin-db", options.adminDB),
-					output: options.output,
+					output: options.out,
 				})
 
 				break
@@ -94,7 +94,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 				await buildPostcodeLocalityKR({
 					geonames: need("geonames", options.geonames),
 					adminDB: need("admin-db", options.adminDB),
-					output: options.output,
+					output: options.out,
 				})
 
 				break
@@ -106,14 +106,14 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 					postalXML: need("postal-xml", options.postalXML),
 					divisions: need("divisions", options.divisions),
 					adminDB: need("admin-db", options.adminDB),
-					output: options.output,
+					output: options.out,
 				})
 
 				break
 			}
 		}
 
-		return `postcode-locality (${options.recipe}): ${options.output} — sealed 0444`
+		return `postcode-locality (${options.recipe}): ${options.out} — sealed 0444`
 	})
 
 	return <CommandTaskResult state={state} />

@@ -24,7 +24,11 @@ export const spec = {
 			description: "Comma-separated child placetypes (default locality,localadmin,neighbourhood)",
 		},
 		db: { type: "string", description: "WOF admin DB (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)" },
-		output: { type: "string", description: "Output path (default $MAILWOMAN_DATA_ROOT/gazetteer/…-v5.json)" },
+		out: {
+			type: "string",
+			description: "Output path (default $MAILWOMAN_DATA_ROOT/gazetteer/…-v5.json)",
+			deprecatedName: "output",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -36,7 +40,7 @@ const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof spec> = ({ o
 			countries: options.countries === undefined ? undefined : splitList(options.countries),
 			placetypes: options.placetypes === undefined ? undefined : splitList(options.placetypes),
 			dbPath: options.db,
-			output: options.output,
+			output: options.out,
 			onProgress: (line) => console.error(line),
 		})
 

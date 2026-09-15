@@ -28,8 +28,8 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	/**
 	 * The value to print as JSON, or `undefined` to print nothing.
 	 *
-	 * The OPTIONS are passed so the gate is named at the call site rather than assumed here: a command that prints under
-	 * `--json` writes `(result, options) => (options.json ? result.report : undefined)`, which keeps the flag that
+	 * The OPTIONS are passed so the condition is named at the call site rather than assumed here: a command that prints
+	 * under `--json` writes `(result, options) => (options.json ? result.report : undefined)`, which keeps the flag that
 	 * decides it in the file that declares it. A command whose task narrates on stdout omits this entirely — most of the
 	 * commands under `commands/eval/` do, and rendering anything would duplicate their output.
 	 */

@@ -39,7 +39,7 @@ export const spec = {
 	positionals: [{ name: "recipe", description: "Recipe name" }],
 	options: {
 		list: { type: "boolean", default: false, description: "List recipes" },
-		output: stringOption("Output JSONL path"),
+		out: { ...stringOption("Output JSONL path"), deprecatedName: "output" },
 		input: stringOption("Input tuples JSONL"),
 		count: stringOption("Rows to generate"),
 		variants: { type: "string", default: "1", description: "Variants per tuple" },
@@ -83,7 +83,7 @@ const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 				"recipes:",
 				...listSliceRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
 				"",
-				"usage: mailwoman corpus slice <recipe> --output <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
+				"usage: mailwoman corpus slice <recipe> --out <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
 			]
 		}
 
@@ -94,7 +94,7 @@ const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 			throw new CommandError(`unknown recipe "${name}". Run \`mailwoman corpus slice --list\`.`)
 		}
 
-		if (!options.output) throw new CommandError("--output <out.jsonl> required")
+		if (!options.out) throw new CommandError("--out <out.jsonl> required")
 
 		if (recipe.mode === "tuples" && !options.input)
 			throw new CommandError(`recipe "${name}" needs --input <tuples.jsonl>`)
@@ -104,7 +104,7 @@ const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 		const seed = options.seed != null ? Number(options.seed) : Date.now()
 
 		const opts: SliceRecipeOpts = {
-			output: options.output,
+			output: options.out,
 			seed,
 			variants: countOption(options.variants, 1),
 			input: options.input,
@@ -136,9 +136,9 @@ const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 			negativeFraction: num(options.negativeFraction),
 		}
 
-		console.error(`▸ slice recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
+		console.error(`▸ slice recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)
 
-		const stream = openWriteStream(options.output, { encoding: "utf8" })
+		const stream = openWriteStream(options.out, { encoding: "utf8" })
 
 		const write = createRecipeLineWriter(stream)
 
@@ -151,7 +151,7 @@ const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		return [
 			`recipe: ${name}`,
-			`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""}${stats.contaminated ? `, ${stats.contaminated.toLocaleString()} board-reserved` : ""} → ${options.output}`,
+			`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""}${stats.contaminated ? `, ${stats.contaminated.toLocaleString()} board-reserved` : ""} → ${options.out}`,
 		]
 	})
 

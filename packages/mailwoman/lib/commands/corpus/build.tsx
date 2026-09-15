@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus build --version 0.1.0 --output /data/corpus/versioned/ --inputs '{ "wof-admin":
+ *   `mailwoman corpus build --version 0.1.0 --out /data/corpus/versioned/ --inputs '{ "wof-admin":
  *   "/data/wof/admin.db", "wof-postalcode": "/data/wof/post.db" }'`
  *
  *   End-to-end corpus build. Drives every registered adapter (or the filtered subset) per `--inputs`,
  *   runs synthesis + alignment, computes the locality-holdout split, and writes the final JSONL
- *   slices + per-stage manifests under `<output>/corpus-v<version>/`.
+ *   slices + per-stage manifests under `<out>/corpus-v<version>/`.
  *
  *   Adapters whose id is missing from `--inputs` are skipped (and noted in the manifest); this is how
  *   the CLI handles partial builds during development.
@@ -36,7 +36,7 @@ export const spec = {
 	description: "Build a versioned corpus.",
 	options: {
 		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
-		output: { type: "string", required: true, description: "Output root" },
+		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
 		inputs: { type: "string", required: true, description: "Adapter input JSON map" },
 		synthesize: { type: "boolean", default: true, description: "Enable augmentation" },
 		"rows-per-slice": {
@@ -97,7 +97,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const adapters = defaultAdapterRegistry.list()
 
 		const m = await buildCorpus({
-			outputDir: options.output,
+			outputDir: options.out,
 			corpusVersion: options.corpusVersion,
 			adapters,
 			adapterInputs,
@@ -125,7 +125,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 					corpus-v{options.corpusVersion}: <Text color="green">{done.total}</Text> rows ({done.adapters} adapters,{" "}
 					<Text dimColor>{done.quarantined} quarantined</Text>)
 				</Text>
-				<Text dimColor>{options.output}</Text>
+				<Text dimColor>{options.out}</Text>
 			</Box>
 		)
 	}

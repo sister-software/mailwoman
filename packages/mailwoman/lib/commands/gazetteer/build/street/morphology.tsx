@@ -27,8 +27,9 @@ export const spec = {
 			type: "string",
 			description: "Comma-separated locale subfolders (default: every locale with a street_types.txt)",
 		},
-		output: {
+		out: {
 			type: "string",
+			deprecatedName: "output",
 			description: "Output path (default: $MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin)",
 		},
 	},
@@ -41,7 +42,7 @@ const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
 			locales: options.locales === undefined ? undefined : splitList(options.locales),
-			output: options.output,
+			output: options.out,
 			onProgress: (line) => console.error(line),
 		})
 

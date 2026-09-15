@@ -24,7 +24,12 @@ export const spec = {
 	name: "anchor-lookup",
 	description: "Build the postcode-to-anchor lookup.",
 	options: {
-		output: { type: "string", required: true, description: "Output JSON path (e.g. pilot-anchor-lookup.json)" },
+		out: {
+			type: "string",
+			required: true,
+			description: "Output JSON path (e.g. pilot-anchor-lookup.json)",
+			deprecatedName: "output",
+		},
 		zcta: { type: "string", description: "Census ZCTA Gazetteer file for the US placeholder fill" },
 		include: {
 			type: "string",
@@ -39,13 +44,13 @@ const GazetteerBuildAnchorLookup: CommandComponent<typeof spec> = ({ options }) 
 		const { buildAnchorLookup } = await import("#gazetteer/anchor-lookup")
 
 		const stats = await buildAnchorLookup({
-			output: options.output,
+			output: options.out,
 			zcta: options.zcta,
 			include: options.include === undefined ? undefined : splitList(options.include),
 			gbOutward: options.gbOutward,
 		})
 
-		return `anchor lookup → ${options.output} (${stats.total} keys, ${stats.letterBearing} letter-bearing)`
+		return `anchor lookup → ${options.out} (${stats.total} keys, ${stats.letterBearing} letter-bearing)`
 	})
 
 	return <CommandTaskResult state={state} />

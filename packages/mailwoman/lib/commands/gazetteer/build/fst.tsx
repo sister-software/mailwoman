@@ -23,7 +23,11 @@ export const spec = {
 	options: {
 		locales: { type: "string", description: "Comma-separated locales (default: all shipped FST locales)" },
 		db: { type: "string", description: "WOF admin DB (default: $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)" },
-		output: { type: "string", description: "Output dir (default: $MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated)" },
+		out: {
+			type: "string",
+			description: "Output dir (default: $MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated)",
+			deprecatedName: "output",
+		},
 		uncurated: { type: "boolean", default: false, description: "A/B control build: same DB, no curation" },
 	},
 } as const satisfies CommandSpec
@@ -35,7 +39,7 @@ const GazetteerBuildFST: CommandComponent<typeof spec> = ({ options }) => {
 		const built = await buildLocaleFSTs({
 			locales: options.locales === undefined ? undefined : splitList(options.locales),
 			dbPath: options.db,
-			outputDir: options.output,
+			outputDir: options.out,
 			uncurated: options.uncurated,
 			onProgress: (line) => console.error(line),
 		})

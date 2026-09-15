@@ -38,7 +38,7 @@ export const spec = {
 	],
 	options: {
 		roles: { type: "string", description: `Role filter: ${PlacetypeRoles.join(", ")}` },
-		output: { type: "string", description: "Output JSON" },
+		out: { type: "string", description: "Output JSON", deprecatedName: "output" },
 		compact: { type: "boolean", default: false, description: "Emit compact JSON" },
 	},
 } as const satisfies CommandSpec
@@ -66,8 +66,8 @@ const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, optio
 		const graph = generatePlacetypeGraph(placetype, roles)
 		const serialized = options.compact ? stringifyJSON(graph) : prettyJSON(graph)
 
-		if (options.output) {
-			await writeLocalFile(serialized + "\n", options.output)
+		if (options.out) {
+			await writeLocalFile(serialized + "\n", options.out)
 		} else {
 			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
 			// lines (compact mode is one very long line; pretty mode is fine either way).
@@ -77,11 +77,11 @@ const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, optio
 
 	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
-	if (options.output) {
+	if (options.out) {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					Wrote node-link graph for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.output}</Text>.
+					Wrote node-link graph for placetype <Text bold>{placetypeName!}</Text> to <Text bold>{options.out}</Text>.
 				</Text>
 			</Box>
 		)

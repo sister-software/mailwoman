@@ -51,7 +51,11 @@ export const spec = {
 	name: "anchor-lexicon",
 	description: "Build the shared anchor lexicon",
 	options: {
-		output: { type: "string", description: "Output path. Default <repo>/data/gazetteer/anchor-lexicon-v1.json" },
+		out: {
+			type: "string",
+			description: "Output path. Default <repo>/data/gazetteer/anchor-lexicon-v1.json",
+			deprecatedName: "output",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -83,7 +87,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 
 		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
-		const output = options.output ?? String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
+		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
 
 		// surface → bits, split across the two match-rule maps.
 		const entries = new Map<string, number>() // lowercase key

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus run <adapter-id> --input <path> --output <dir> [--country XX] [--limit N]`
+ *   `mailwoman corpus run <adapter-id> --input <path> --out <dir> [--country XX] [--limit N]`
  *
  *   CLI shim around `runAdapter` from `@mailwoman/corpus`. Resolves `<adapter-id>` against the
  *   default registry; refuses with a clear, non-zero exit if the id isn't known (and lists the
@@ -33,7 +33,7 @@ export const spec = {
 	positionals: [{ name: "adapter-id", required: true, description: "Adapter id" }],
 	options: {
 		input: { type: "string", required: true, description: "Adapter input" },
-		output: { type: "string", required: true, description: "Output root" },
+		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
 		country: {
 			type: "string",
 			validate: (value) => /^[A-Z]{2}$/u.test(value),
@@ -72,12 +72,12 @@ const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) =
 			adapter,
 			adapterOptions: {
 				inputPath: options.input,
-				outputDir: options.output,
+				outputDir: options.out,
 				country: options.country,
 				limit: options.limit,
 				signal: ac.signal,
 			},
-			outputDir: options.output,
+			outputDir: options.out,
 			corpusVersion: options.corpusVersion,
 			progressEvery: options.progressEvery,
 			onProgress: (snap) => {
