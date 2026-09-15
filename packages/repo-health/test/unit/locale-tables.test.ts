@@ -13,7 +13,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { findLocaleTables, localeTablesCheck, shippingLocales } from "@mailwoman/repo-health/checks/locale/tables"
+import { findLocaleTables, localeTablesCheck } from "@mailwoman/repo-health/checks/locale/tables"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -63,21 +63,6 @@ async function plant(options: {
 	return { repoRoot, trackedFiles: Object.keys(files).filter((file) => file.endsWith(".ts")) }
 }
 
-describe("shippingLocales", () => {
-	it("takes the Latin list and every character-path family's overlays", () => {
-		const locales = shippingLocales({
-			locales: ["en-us", "fr-fr"],
-			charWeights: { cjk: { overlays: ["ja-jp", "zh-cn"] } },
-		})
-
-		expect([...locales].toSorted()).toEqual(["en-us", "fr-fr", "ja-jp", "zh-cn"])
-	})
-
-	it("survives a config with no character-path family", () => {
-		expect([...shippingLocales({ locales: ["en-us"] })]).toEqual(["en-us"])
-	})
-})
-
 describe("findLocaleTables", () => {
 	it("finds a table nobody registered, which is why it discovers rather than lists", async () => {
 		const context = await plant({
@@ -115,20 +100,19 @@ describe("findLocaleTables", () => {
 })
 
 describe("localeTablesCheck", () => {
-	it("reports a shipping locale the census table does not name", async () => {
+	it("no longer asks completeness of any table, because the one it bound is now derived", async () => {
+		// `WEIGHTS_PACKAGE_BY_COUNTRY` was a hand-written copy of `release.config.json`'s two lists, which is why it
+		// could omit `ja-jp` and `zh-cn`. `@mailwoman/core/release-config`'s `weightsPackageByCountry` derives it from
+		// that config now, and the invariant moved to that derivation's own test.
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"], charWeights: { cjk: { overlays: ["ja-jp", "zh-cn"] } } },
+			weights: [
+				["US", "en-us"],
+				["FR", "fr-fr"],
+			],
 		})
 
-		const diagnostics = await localeTablesCheck.run(context)
-
-		expect(diagnostics).toHaveLength(2)
-
-		const message = diagnostics.map((diagnostic) => diagnostic.message).join("\n")
-
-		expect(message).toContain("ships ja-jp")
-		expect(message).toContain("ships zh-cn")
-		expect(diagnostics.every((diagnostic) => diagnostic.file === CENSUS)).toBe(true)
+		expect(await localeTablesCheck.run(context)).toEqual([])
 	})
 
 	it("reports a country key that disagrees with its locale's region, in any table", async () => {
@@ -149,7 +133,7 @@ describe("localeTablesCheck", () => {
 		expect(diagnostics[0]!.file).toBe(ROUTING)
 	})
 
-	it("admits a deliberate subset, and asks completeness only of the census table", async () => {
+	it("admits a deliberate subset", async () => {
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr", "es-es"] },
 			weights: [
@@ -185,15 +169,12 @@ describe("localeTablesCheck", () => {
 		expect(await localeTablesCheck.run(context)).toEqual([])
 	})
 
-	it("reports the census table missing rather than passing a tree without it", async () => {
+	it("passes a tree with no census table, because it no longer binds one", async () => {
 		const context = await plant({
 			config: { locales: ["en-us"] },
 			extra: { [CENSUS]: "export const SOMETHING_ELSE = buildIt()\n" },
 		})
 
-		const diagnostics = await localeTablesCheck.run(context)
-
-		expect(diagnostics).toHaveLength(1)
-		expect(diagnostics[0]!.message).toContain("was not found as a country→locale map")
+		expect(await localeTablesCheck.run(context)).toEqual([])
 	})
 })

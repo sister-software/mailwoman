@@ -78,6 +78,52 @@ export async function readReleaseConfig(repoRoot: PathBuilderLike = repoRootPath
 }
 
 /**
+ * Every locale package the config ships, Latin and character-path alike.
+ *
+ * `locales` and `charWeights[].overlays` are two halves of one list: an overlay under `charWeights` ships beside the
+ * Latin ones and is invisible to a reader that consults only the first. A census that reads one half reports a country
+ * with a shipping overlay as having none.
+ *
+ * Lives here rather than beside a consumer because a reader that lives outside this package is unreachable from one,
+ * which is how a package comes to hardcode what the config names.
+ */
+export function shippingLocales(config: Pick<ReleaseConfig, "locales" | "charWeights">): Set<string> {
+	const locales = new Set(config.locales)
+
+	for (const family of Object.values(config.charWeights ?? {})) {
+		for (const overlay of family.overlays ?? []) {
+			locales.add(overlay)
+		}
+	}
+
+	return locales
+}
+
+/**
+ * Country → the locale package that scopes it, DERIVED from {@link shippingLocales} rather than restated.
+ *
+ * The region subtag of a locale package IS the country it scopes — `en-au` scopes AU, `zh-cn` scopes CN — so a
+ * hand-written table is a second copy of `release.config.json`'s two lists, and the copy is what goes stale when a
+ * locale ships. `repo-health`'s `locale-tables` check exists because that copy existed.
+ *
+ * Existence is not training: a country here has a package that SCOPES it, which says nothing about whether the corpus
+ * carries rows for it. A tag with no region subtag contributes nothing rather than a blank key.
+ */
+export function weightsPackageByCountry(config: Pick<ReleaseConfig, "locales" | "charWeights">): Map<string, string> {
+	const out = new Map<string, string>()
+
+	for (const locale of shippingLocales(config)) {
+		const region = locale.split("-")[1]
+
+		if (region) {
+			out.set(region.toUpperCase(), locale)
+		}
+	}
+
+	return out
+}
+
+/**
  * The lexicons that are COMMITTED to the repository, by the name they take in a weights package and the `softFeed` key
  * that names their repo-relative source. The locality-surface lexicon is not here: it is built, lives in the data root,
  * and is resolved by `softFeed.localitySurfaceLexicon` against that root instead.

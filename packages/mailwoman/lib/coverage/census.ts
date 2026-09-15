@@ -38,6 +38,7 @@ import {
 } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { streamParquetRows } from "@mailwoman/corpus/utils/parquet"
 import { allRows } from "@mailwoman/core/utils"
@@ -411,25 +412,6 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
  */
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
-/**
- * Locale packages that ship, mapped to the country they scope. Existence is not training — see the file header.
- */
-export const WEIGHTS_PACKAGE_BY_COUNTRY: ReadonlyMap<string, string> = new Map([
-	["US", "en-us"],
-	["FR", "fr-fr"],
-	["GB", "en-gb"],
-	["AU", "en-au"],
-	["NZ", "en-nz"],
-	["DE", "de-de"],
-	["ES", "es-es"],
-	["IT", "it-it"],
-	["IN", "en-in"],
-	// The character-path overlays ship beside the Latin ones, under `charWeights` rather than `locales` in
-	// `release.config.json`. A census that reads only the Latin list reports a country with a shipping overlay as
-	// having none — `repo-health`'s `locale-tables` check holds this table against both halves of the config.
-	["JP", "ja-jp"],
-	["CN", "zh-cn"],
-])
 
 export interface CensusCoverageOptions {
 	/**
@@ -475,13 +457,17 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const board = await readBoardCoverage(options.casesRoot)
 	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("wof", "candidate.db"))
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
+	// DERIVED from `release.config.json` rather than restated here. This was a hand-written eleven-entry table, and
+	// `repo-health`'s `locale-tables` check exists because it was a second copy of the config's two lists; the check
+	// still holds every OTHER country→locale table against the config, and this one can no longer disagree with it.
+	const weightsPackages = weightsPackageByCountry(await readReleaseConfig())
 
 	const all = new Set<string>([
 		...Object.keys(census.rows),
 		...admitted,
 		...board.keys(),
 		...gazetteer.keys(),
-		...WEIGHTS_PACKAGE_BY_COUNTRY.keys(),
+		...weightsPackages.keys(),
 	])
 
 	all.delete("??")
@@ -497,7 +483,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			corpusRows: census.rows[cc] ?? 0,
 			corpusStreetRows: census.streetRows[cc] ?? 0,
 			admitted: admitted.has(cc),
-			...(WEIGHTS_PACKAGE_BY_COUNTRY.has(cc) ? { weightsPackage: WEIGHTS_PACKAGE_BY_COUNTRY.get(cc) } : {}),
+			...(weightsPackages.has(cc) ? { weightsPackage: weightsPackages.get(cc) } : {}),
 			gazetteerPlaces,
 			geocodeTier: ROOFTOP_PUBLISHED.has(cc) ? "rooftop-published" : gazetteerPlaces > 0 ? "locality" : "none",
 			boardRows: boardEntry?.rows ?? 0,

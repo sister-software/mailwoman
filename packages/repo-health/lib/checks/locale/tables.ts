@@ -15,14 +15,14 @@
  *   since two pairs alone admits a table of something else carrying a couple, and the ratio alone admits a
  *   two-entry map of anything. The rule finds seven where the first version named four.
  *
- *   TWO INVARIANTS, chosen because each has a failure nothing else reports.
+ *   ONE INVARIANT. There were two, and the other is gone because the table it bound is gone.
  *
- *   COMPLETENESS binds one table. `WEIGHTS_PACKAGE_BY_COUNTRY` answers "which locale package scopes this country"
- *   for the coverage census, so a shipping locale missing from it is reported to the operator as a country with no
- *   weights. `ja-jp` and `zh-cn` were in that state: both are in the release list, both ship, and the census named
- *   neither. Every other country→locale map is a deliberate SUBSET — the gauntlet's overlay routing excludes the
- *   base locale, the invariance suite lists the countries its fixture rows carry, and the autocomplete ladder's
- *   FST table is country-scoped by construction — so completeness is not asked of them.
+ *   COMPLETENESS bound `WEIGHTS_PACKAGE_BY_COUNTRY` — the coverage census's answer to "which locale package scopes
+ *   this country", where a missing shipping locale reads to the operator as a country with no weights (`ja-jp` and
+ *   `zh-cn` were in exactly that state). That table was a hand-written copy of this config's two lists, which is why
+ *   it could disagree at all. It is now DERIVED by `@mailwoman/core/release-config`'s `weightsPackageByCountry`, so
+ *   it cannot, and the invariant moved to that derivation's own test. Retired here rather than left binding nothing:
+ *   a completeness check whose one table has been deleted reports a clean run.
  *
  *   AGREEMENT binds every one. A country key must equal its locale's region subtag: `GB` takes `en-GB`, never
  *   `de-DE`. A table is read by key, so a transposed pair routes a whole country's rows through another country's
@@ -38,23 +38,12 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { readReleaseConfig } from "@mailwoman/core/release-config"
+import { readReleaseConfig, shippingLocales } from "@mailwoman/core/release-config"
 import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
-
-/**
- * The one table that must name every shipping locale, by name.
- *
- * Completeness is a claim about this table specifically: it answers "which locale package scopes this country" for the
- * coverage census, so a shipping locale missing from it is reported to the operator as a country with no weights. Every
- * other country→locale map in the tree is a deliberate subset — the gauntlet's overlay routing excludes the base
- * locale, the invariance suite lists the countries its fixture rows carry, the autocomplete ladder's FST table is
- * country-scoped by construction — so completeness is not asked of them.
- */
-const MUST_NAME_EVERY_SHIPPING_LOCALE = "WEIGHTS_PACKAGE_BY_COUNTRY"
 
 /**
  * A country code, and a locale tag whose region half a country code can be read out of.
@@ -198,25 +187,6 @@ export async function findLocaleTables(context: {
 }
 
 /**
- * Every locale `release.config.json` ships: the Latin list plus each character-path family's overlays. The two halves
- * are separate fields, and a reader that takes only `locales` misses the CJK overlays entirely.
- */
-export function shippingLocales(config: {
-	locales: string[]
-	charWeights?: Record<string, { overlays?: string[] }>
-}): Set<string> {
-	const locales = new Set(config.locales)
-
-	for (const family of Object.values(config.charWeights ?? {})) {
-		for (const overlay of family.overlays ?? []) {
-			locales.add(overlay)
-		}
-	}
-
-	return locales
-}
-
-/**
  * The `locale-tables` check: one error per shipping locale a complete table omits, and one per entry whose country key
  * disagrees with its locale's region subtag.
  */
@@ -244,31 +214,11 @@ export const localeTablesCheck: RepoCheck = {
 			}
 		}
 
-		const census = tables.find((table) => table.name === MUST_NAME_EVERY_SHIPPING_LOCALE)
-
-		if (!census) {
-			return [
-				...diagnostics,
-				{
-					severity: DiagnosticSeverity.Error,
-					message: `${MUST_NAME_EVERY_SHIPPING_LOCALE} was not found as a country→locale map — the one table completeness is asked of is unreadable, so its absence would pass silently`,
-				},
-			]
-		}
-
-		const named = new Set(census.entries.map((entry) => entry.locale.toLowerCase()))
-
-		for (const locale of [...shipping].toSorted()) {
-			if (named.has(locale.toLowerCase())) continue
-
-			diagnostics.push({
-				severity: DiagnosticSeverity.Error,
-				message: `release.config.json ships ${locale} and ${census.name} does not name it — every consumer reads the absence as a country with no weights package rather than as a missing row`,
-				file: census.file,
-				line: census.line,
-			})
-		}
-
+		// COMPLETENESS is no longer asked of any table here — see the file header. It bound
+		// `WEIGHTS_PACKAGE_BY_COUNTRY`, which is now derived from this same config by
+		// `@mailwoman/core/release-config`'s `weightsPackageByCountry` and cannot disagree with it. The invariant moved to
+		// that derivation's own test, where a shipping locale it fails to name is a failing assertion rather than a lint
+		// finding about a copy nobody should write again.
 		return diagnostics
 	},
 }

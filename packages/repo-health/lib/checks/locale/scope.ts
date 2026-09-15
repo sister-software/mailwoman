@@ -27,12 +27,11 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { readReleaseConfig } from "@mailwoman/core/release-config"
+import { readReleaseConfig, shippingLocales } from "@mailwoman/core/release-config"
 import { readScopeConfig, SCOPE_TIER_KEYS, tieredCountries } from "@mailwoman/core/scope-config"
 import { resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
-import { shippingLocales } from "#checks/locale/tables"
 
 const DECLARATION = "docs/engineering/SCOPE.mdx"
 const REGISTER = "scope.config.json"
