@@ -228,7 +228,7 @@ const CORPUS_SIZE = 987
  * purpose. Every built `regression.db` carrying the old stamp is now stale and a runner will refuse to grade against it
  * until it is rebuilt — also by design, and the reason this is prose-only rather than bundled with a row change.
  */
-const CORPUS_HASH = "2ef0646e4736bd74930ea5b4de77d09cb7e9a616d4fed7418033309e3e58527c"
+const CORPUS_HASH = "c2d2e1ff7a04765b209654bcf23885647bba3202f675f9f98114ec1821388c19"
 
 /**
  * `ablationBoardID` of the corpus.
