@@ -75,8 +75,13 @@ describe("the never-stale shim", () => {
 	it(
 		"restarts the worker mid-session and keeps serving — the property the split exists for",
 		async () => {
+			interface Status {
+				pid: number
+				boot_tree_fingerprint: string
+			}
+
 			const before = await client.callTool({ name: "mwdev_daemon", arguments: { action: "status" } })
-			const beforePID = (before.structuredContent as { pid: number }).pid
+			const beforeStatus = before.structuredContent as Status
 
 			const restart = await client.callTool({ name: "mwdev_restart", arguments: {} })
 
@@ -88,17 +93,27 @@ describe("the never-stale shim", () => {
 				tools_changed: boolean
 			}
 
-			expect(report.previous_pid).toBe(beforePID)
-			expect(report.new_pid).not.toBe(beforePID)
-			// The tree did not move between forks, so the fingerprints must agree — a restart is not a source change.
-			expect(report.new_boot_fingerprint).toBe(report.previous_boot_fingerprint)
+			expect(report.previous_pid).toBe(beforeStatus.pid)
+			expect(report.new_pid).not.toBe(beforeStatus.pid)
+			// A restart is not a source change: the same tree yields the same TOOL SET.
+			//
+			// Deliberately not `new_boot_fingerprint === previous_boot_fingerprint`. That digest covers the newest
+			// source mtime and `git status --porcelain` (`tree-fingerprint.ts`), so it moves whenever anything writes
+			// into the checkout — and under `yarn test` 866 other files run alongside this one, at least one of which
+			// re-populates the weights overlay by design. The assertion held only while nothing else touched the tree,
+			// which is true in isolation and false in the suite it runs in.
 			expect(report.tools_changed).toBe(false)
+
+			// The plumbing each fork owns, which IS load-independent: a worker reports the fingerprint it booted
+			// against, and the restart report carries each fork's own value rather than re-reading one for both.
+			expect(report.previous_boot_fingerprint).toBe(beforeStatus.boot_tree_fingerprint)
 
 			// The fresh worker serves: same client, same session, new module graph.
 			const after = await client.callTool({ name: "mwdev_daemon", arguments: { action: "status" } })
-			const afterPID = (after.structuredContent as { pid: number }).pid
+			const afterStatus = after.structuredContent as Status
 
-			expect(afterPID).toBe(report.new_pid)
+			expect(afterStatus.pid).toBe(report.new_pid)
+			expect(afterStatus.boot_tree_fingerprint).toBe(report.new_boot_fingerprint)
 		},
 		BOOT_TIMEOUT_MS
 	)
