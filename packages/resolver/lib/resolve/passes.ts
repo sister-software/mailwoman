@@ -375,6 +375,7 @@ export async function applySpanRescore(
 			thresholdKm: opts.spanRescoreThresholdKm,
 			// Default-ON (promoted 2026-07-03); explicit `false` opts out — the spanRescore idiom.
 			postalCompoundRecovery: opts.postalCompoundRecovery !== false,
+			spanRescoreRequireContextRemainder: opts.spanRescoreRequireContextRemainder,
 		})
 	} catch {
 		return

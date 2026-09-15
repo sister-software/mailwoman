@@ -76,6 +76,11 @@ export interface SpanRescoreOptions {
 	 * makes the country effectively hard again without changing the code path; 0 removes the locale's say entirely.
 	 */
 	bareToponymCountryWeight?: number
+	/**
+	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code or a number — see
+	 * `remainderIsContext` in this module for the rule and the five rows a blanket refusal would lose. Default false.
+	 */
+	spanRescoreRequireContextRemainder?: boolean
 }
 
 /**
@@ -426,6 +431,28 @@ export async function findRescoreCandidate(
 		return isRegionAbbreviationToken(token, { maxLetters: 3 }) ? token : undefined
 	}
 
+	/**
+	 * Whether every token a sub-span leaves behind is CONTEXT rather than identity.
+	 *
+	 * A sub-span probe truncates the input, and whether that is a recovery or a corruption turns on what it dropped. A
+	 * subdivision code or a postcode qualifies the name and can be discarded once the backend is told about it through
+	 * `regionQualifier` — `WA Sammamish` → `Sammamish`, `16 Sillod` → `Sillod`. A word of the name itself cannot: `Fort
+	 * Worth` → `Worth` answers Worth, Illinois, population 10,494, 1,304 km away, and the token that carried the identity
+	 * is the one thrown out.
+	 *
+	 * The blanket form of this rule — refuse every proper sub-span of a multi-token locality — was measured on the frozen
+	 * fixture and REJECTED: it also refuses `NV Sparks`, `SCT Cumbernauld`, `IN Fort Wayne`, `CA National City` and `IA
+	 * Council Bluffs`, each correct today. All five leave a subdivision code behind, which is why the test is on what the
+	 * remainder IS rather than on the span being proper.
+	 */
+	const remainderIsContext = (span: { start: number; end: number }): boolean => {
+		const outside = toks.filter((t) => t.end <= span.start || t.start >= span.end)
+
+		if (!outside.length) return true
+
+		return outside.every((t) => isRegionAbbreviationToken(t.text, { maxLetters: 3 }) || /^\d+[\d-]*$/.test(t.text))
+	}
+
 	const softCountry = opts.bareToponymSoftCountry !== false
 	const countryWeight = opts.bareToponymCountryWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT
 	const qualified = !!postcode || hasAdminQualifier(roots)
@@ -443,6 +470,11 @@ export async function findRescoreCandidate(
 		// rows: الرياض / Frankfurt am Main), and conflating the two checks cost exactly those rows on the
 		// 2026-08-15 board before this line split them.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
+
+		// A sub-span that drops a word of the name is a corruption, not a recovery. Opt-in until measured; see
+		// `remainderIsContext`.
+		if (opts.spanRescoreRequireContextRemainder && !wholeSpan && !remainderIsContext(sp)) continue
+
 		const bare = softCountryEligible && wholeSpan
 		const qualifier = wholeSpan ? undefined : qualifierRemainder(sp)
 

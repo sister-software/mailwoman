@@ -203,6 +203,18 @@ const PLACES: FixturePlace[] = [
 		score: 4,
 		exactMatch: true,
 	},
+	// #2266: `Worth` exists, `Fort Worth` does not — the shape of every row the context-remainder rule catches.
+	// Worth, Illinois carries a recorded population, so it wins its own name outright once `Fort` is discarded.
+	{
+		id: 60,
+		name: "Worth",
+		placetype: "locality",
+		country: "US",
+		lat: 41.687259,
+		lon: -87.791282,
+		score: 4,
+		exactMatch: true,
+	},
 ]
 
 async function makeBackend(): Promise<ResolverBackend> {
@@ -257,6 +269,43 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.text).toBe("Sammamish")
 		expect(hit?.place.id).toBe(51)
+	})
+
+	it("#2266: a sub-span dropping a NAME word is refused under spanRescoreRequireContextRemainder", async () => {
+		// `Fort Worth` is absent from this fixture, as it was from the withheld-gold stratum. Shipped, the probe
+		// falls through to `Worth` and answers Worth, Illinois. The remainder `Fort` is a word of the name, not a
+		// subdivision code, so the rule refuses the truncation and the recovery abstains.
+		const backend = await makeBackend()
+
+		const shipped = await findRescoreCandidate("Fort Worth", [], backend, { thresholdKm: 0 })
+		expect(shipped?.place.id).toBe(60)
+
+		const ruled = await findRescoreCandidate("Fort Worth", [], backend, {
+			thresholdKm: 0,
+			spanRescoreRequireContextRemainder: true,
+		})
+
+		expect(ruled).toBeNull()
+	})
+
+	it("#2266: the rule keeps a sub-span whose remainder is a subdivision code", async () => {
+		// The five rows a blanket sub-span refusal would have lost all have this shape.
+		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), {
+			thresholdKm: 0,
+			spanRescoreRequireContextRemainder: true,
+		})
+
+		expect(hit?.text).toBe("Sammamish")
+		expect(hit?.place.id).toBe(51)
+	})
+
+	it("#2266: the rule keeps a sub-span whose remainder is a number", async () => {
+		const hit = await findRescoreCandidate("86-300 Grudziądz", [], await makeBackend(), {
+			thresholdKm: 0,
+			spanRescoreRequireContextRemainder: true,
+		})
+
+		expect(hit?.place.id).toBe(1)
 	})
 
 	it("flags a recovery CONDITIONAL when the postcode resolves and the match is within range", async () => {

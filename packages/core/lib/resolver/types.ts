@@ -567,6 +567,22 @@ export interface ResolveOpts {
 	 */
 	spanRescoreThresholdKm?: number
 	/**
+	 * Refuse a span-rescore sub-span whose remainder carries part of the NAME rather than context.
+	 *
+	 * Span rescore measures success as "a gazetteer row matched", never "the query was explained", so a probe may drop a
+	 * word of a two-token name and answer with whatever the fragment hits: `Fort Worth` → `Worth` answers Worth,
+	 * Illinois, population 10,494, 1,304 km from Fort Worth. With this set, a proper sub-span is admitted only when every
+	 * token it leaves behind is a subdivision code or a number — the two kinds of remainder the backend can be told about
+	 * through `regionQualifier`, or that carry no identity at all.
+	 *
+	 * The blanket version — refuse every proper sub-span of a multi-token locality — was measured on the frozen fixture
+	 * and rejected: it loses `NV Sparks`, `SCT Cumbernauld`, `IN Fort Wayne`, `CA National City` and `IA Council Bluffs`.
+	 * Each of those leaves a subdivision code, so the narrow test keeps them.
+	 *
+	 * **Default OFF** until the measurement carries it; unset, span enumeration is unchanged.
+	 */
+	spanRescoreRequireContextRemainder?: boolean
+	/**
 	 * Postal-compound recovery inside the span-rescore tier (#942). The knife-edge no-street query shape ("Kožljek 7,
 	 * 1382 Kožljek") fails as a COMPOUND: the parse globs the trailing city into the postcode span ("1382 Kožljek"),
 	 * which then (a) resolves as neither postcode nor locality and (b) BLOCKS its own city tokens from span-rescore's
