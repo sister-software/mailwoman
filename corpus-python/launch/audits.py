@@ -3,6 +3,7 @@
     modal run -m launch.train_remote::audit_epoch_mixture --config-name <recipe>.yaml
     modal run -m launch.train_remote::census_opening_token --config-name <recipe>.yaml
     modal run -m launch.train_remote::census_region_code_token --config-name <recipe>.yaml
+    modal run -m launch.train_remote::census_comma_segment_number --config-name <recipe>.yaml
     modal run -m launch.train_remote::audit_suffix_feed --config-name <recipe>.yaml
 
 Each is a thin wrapper: the audit itself lives in `mailwoman_train.audits`, where it is unit-tested
@@ -130,6 +131,36 @@ def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml",
     from mailwoman_train.audits.region_code_token import run
 
     json_path = Path(f"{AUDITS}/region-code-token-{config_path.stem}.json")
+    run(config_path, json_path=json_path, draws=draws or None)
+    vol.commit()
+    print(f"\nCensus committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
+def census_comma_segment_number(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0) -> None:
+    """Count what a bare number standing alone between commas teaches.
+
+    `301 College Ave, 101, Athens, GA 30601` is the surface #2298 proposes to teach as a unit, and it
+    carries no token that decides the reading — the same surface is already attested as a house
+    number and as a postcode. Leading and later positions are counted apart, because only the later
+    one is in competition with the proposed unit.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = _config_path(config_name)
+
+    from mailwoman_train.audits.comma_segment_number import run
+
+    json_path = Path(f"{AUDITS}/comma-segment-number-{config_path.stem}.json")
     run(config_path, json_path=json_path, draws=draws or None)
     vol.commit()
     print(f"\nCensus committed to volume: {json_path}")
