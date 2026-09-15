@@ -651,9 +651,19 @@ export interface ResolveOpts {
 	 * was written names wherever it now points. Neither is detectable from the code alone; disagreement with the other
 	 * components is the available signal.
 	 *
-	 * Default UNBOUNDED, which is the shipped behaviour. #370's fallback was operator-promoted on a measured panel (FI
-	 * 231 wins / 0 losses, SI 37/6, CZ 47/2), and a cap below the distances that earned those wins would undo them. Set
-	 * it explicitly to measure a value; it becomes a default only if the measurement carries it.
+	 * **Default 300 km.** The pass does two separable things — re-pick the same-named candidate nearest the postcode,
+	 * then, failing that, fall the coordinate onto the postcode point — and only the second is bounded here. Measured
+	 * across 5,300 real addresses published with their government point (FR 3,000, US 2,000, CZ 150, PL 150), the pass
+	 * changes 213 answers and the FALLBACK changes none of them: every arm from a cap of zero upward is row-for-row
+	 * identical to unbounded. So a cap does not undo #370's wins on that population, because they are re-picks.
+	 *
+	 * 300 km is where the two available bounds meet. Postcode-to-settlement distance for agreeing pairs (800,762 rows, 33
+	 * countries, admin1 corroborating) reads p95 25.0 km and p99 153.3 km, so 300 km admits every relocation a correct
+	 * postcode could require; on the frozen same-data panel it takes contradictory wrong-area from 67.0% to 19.0% with
+	 * selection accuracy flat at 71.7%. Record: `docs/records/evals/2026-09-15-postcode-move-cap.md`.
+	 *
+	 * Set `Infinity` for the pre-2026-09-15 unbounded behaviour. FI and SI carried two of #370's three promotion counts
+	 * and no coordinate set for either survives, so neither was re-measured under the cap.
 	 *
 	 * {@link postcodeCountryCoherence} closes the same disagreement across a border. This is the within-country half,
 	 * which country scoping does not reach.

@@ -170,6 +170,21 @@ export async function buildParseRig(
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
 	// `--default-country <ISO|none>`; `none` disables the filter so ranking alone decides.
 	const dc = options.defaultCountry || "US"
+	const resolveOpts = resolveOptsFrom(options, dc)
+
+	return { neural, resolver, localityMatches, parseOpts, defaultCountry: dc, resolveOpts, lookupCensus }
+}
+
+/**
+ * The `ResolveOpts` a run's flags pin, as a pure function of them.
+ *
+ * Separate from {@link buildParseRig} so a test can assert the mapping without a model and a gazetteer. A pin the rig
+ * silently ignores does not fail — it reports the library default's numbers under the arm's name, and a measuring
+ * tool's false negative is indistinguishable from a real absence.
+ *
+ * Every tri-state resolves to `undefined` when neither flag is passed, leaving the library default in force.
+ */
+export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: string): Record<string, unknown> {
 	// `--hierarchy-completion` (#405, generalizes #387's `--city-state-fallback`): recover the locality
 	// the parser drops for a DUAL-ROLE place (city-state or capital-seat province), via the precomputed
 	// coincident-roles relation (#403). Opt-in, default-off → by default this eval is byte-identical;
@@ -191,12 +206,17 @@ export async function buildParseRig(
 				? false
 				: undefined
 
-	const resolveOpts = {
-		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
+	return {
+		...(defaultCountry && defaultCountry.toLowerCase() !== "none" ? { defaultCountry } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
+		// #370 is default-ON and #2301's cap is default-unbounded, so neither pin set leaves this eval byte-identical.
+		// The cap is passed through at ZERO as well as at a distance — zero refuses every fall, which is the arm that
+		// separates the pass's re-pick from its coordinate fallback.
+		...((options.noPostcodeConsistency ?? false) ? { postcodeConsistency: false } : {}),
+		...(options.postcodeConsistencyMaxMoveKm !== undefined
+			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }
+			: {}),
 	}
-
-	return { neural, resolver, localityMatches, parseOpts, defaultCountry: dc, resolveOpts, lookupCensus }
 }

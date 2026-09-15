@@ -36,6 +36,8 @@ export const spec = {
 		"admin-coherence-off": booleanOption("Force admin coherence off"),
 		"postcode-country-coherence": booleanOption("Force postcode-country coherence on"),
 		"postcode-country-coherence-off": booleanOption("Force postcode-country coherence off"),
+		"postcode-consistency-off": booleanOption("Force postcode-disambiguated locality selection off"),
+		"postcode-max-move-km": { type: "number", description: "Cap how far the postcode fallback may move a coordinate" },
 		"hierarchy-completion": booleanOption("Enable hierarchy completion"),
 		"postcode-anchor": booleanOption("Add anchor-coordinate arm"),
 		"postcode-databases": { type: "string", description: "Postcode databases" },
@@ -63,7 +65,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 const EvalOAResolver: CommandComponent<typeof spec> = ({ options }) => {
-	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
+	const { adminCoherenceOff, adminFst, postcodeConsistencyOff, postcodeCountryCoherenceOff, ...rest } = options
 
 	const state = useCommandTask(async () => {
 		const { oaResolverEval } = await import("#eval-harness/oa/resolver/eval")
@@ -71,6 +73,7 @@ const EvalOAResolver: CommandComponent<typeof spec> = ({ options }) => {
 		return await oaResolverEval({
 			...rest,
 			noAdminCoherence: adminCoherenceOff,
+			noPostcodeConsistency: postcodeConsistencyOff,
 			noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
 			// CLI kebab derivation forces the lowercase-acronym prop above; the harness option keeps
 			// the house spelling, so the rename happens here rather than in the eval's own contract.

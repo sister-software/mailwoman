@@ -12,7 +12,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
-import { createWOFResolver } from "@mailwoman/resolver/resolve"
+import { createWOFResolver, DEFAULT_POSTCODE_MAX_MOVE_KM } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 
 const PC = {
@@ -97,11 +97,14 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 
 	it("falls the coordinate back to the postcode when no same-named instance reconciles", async () => {
 		// Only the FAR Saint-Pierre exists — no alternative within the radius → demote to the postcode point.
+		// SP_FAR sits ~577 km from PC, past the 300 km default, so the unbounded configuration is named here; the
+		// default's refusal on this same pair is the next case but one.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
 			defaultCountry: "FR",
 			postcodeConsistency: true,
+			postcodeConsistencyMaxMoveKm: Infinity,
 		})
 
 		const loc = out.roots.find((n) => n.tag === "locality")!
@@ -130,6 +133,25 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		expect(loc.metadata?.postcode_city_mismatch).toBe(true)
 		expect(loc.metadata?.coordinate_source).toBeUndefined()
 		expect(loc.metadata?.postcode_move_refused_km).toBeGreaterThan(200)
+	})
+
+	it("DEFAULTS the cap to 300 km, so an unset option refuses this 577 km move", async () => {
+		// The default changed from unbounded on 2026-09-15. Measured on 5,300 real addresses the pass's wins are all
+		// step-2 re-picks, so no arm from a cap of zero upward differs from unbounded by a row
+		// (docs/records/evals/2026-09-15-postcode-move-cap.md).
+		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
+
+		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
+			defaultCountry: "FR",
+			postcodeConsistency: true,
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+
+		expect(loc.placeID).toBe("wof:1")
+		expect(loc.metadata?.postcode_city_mismatch).toBe(true)
+		expect(loc.metadata?.coordinate_source).toBeUndefined()
+		expect(loc.metadata?.postcode_move_refused_km).toBeGreaterThan(DEFAULT_POSTCODE_MAX_MOVE_KM)
 	})
 
 	it("admits the fallback when the move is inside the cap", async () => {

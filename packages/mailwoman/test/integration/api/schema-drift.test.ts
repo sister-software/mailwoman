@@ -138,6 +138,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	admin_coherence: true,
 	authoritative: true,
 	dropped_components: true,
+	unfollowed_components: true,
 } satisfies Record<keyof GeocodeResult, true>
 
 test("GeocodeOutcomeSchema field set matches GeocodeResult (runtime backstop — the compile-time pin above, via `yarn compile`, is the primary alarm; see file header)", () => {

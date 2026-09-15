@@ -9,6 +9,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { regionMatches } from "mailwoman/eval-harness/oa/resolver/admin-match"
+import { resolveOptsFrom } from "mailwoman/eval-harness/oa/resolver/parse-rig"
 import {
 	collectResolved,
 	findAddressPointHit,
@@ -247,5 +248,26 @@ describe("street-level preconditions", () => {
 			houseNumber: "12",
 			postcode: undefined,
 		})
+	})
+})
+
+describe("resolveOptsFrom", () => {
+	it("passes no pin through when no flag is set, so the arm grades the library default", () => {
+		expect(resolveOptsFrom({}, "none")).toEqual({})
+		expect(resolveOptsFrom({}, "US")).toEqual({ defaultCountry: "US" })
+	})
+
+	it("carries a ZERO cap, which is the arm that separates the re-pick from the coordinate fallback", () => {
+		// `0` is falsy and the surrounding pins are presence-tested; a truthiness check here would drop the one arm that
+		// refuses every fall, and the run would report the shipped numbers under the arm's name.
+		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 0 }, "none")).toEqual({ postcodeConsistencyMaxMoveKm: 0 })
+
+		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 300 }, "none")).toEqual({
+			postcodeConsistencyMaxMoveKm: 300,
+		})
+	})
+
+	it("turns the whole pass off on its own pin, which is a different arm from any cap", () => {
+		expect(resolveOptsFrom({ noPostcodeConsistency: true }, "none")).toEqual({ postcodeConsistency: false })
 	})
 })

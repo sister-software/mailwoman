@@ -74,6 +74,8 @@ import {
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
  * `PlaceLookup` — e.g. `new WOFSQLitePlaceLookup({ databasePath }).asResolverBackend()` or a fake for tests.
  */
+export { DEFAULT_POSTCODE_MAX_MOVE_KM } from "#resolve/passes"
+
 export function createWOFResolver(backend: ResolverBackend): Resolver {
 	return new WOFResolver(backend)
 }

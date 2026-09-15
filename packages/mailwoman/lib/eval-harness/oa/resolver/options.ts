@@ -107,6 +107,20 @@ export interface OAResolverEvalOptions {
 	 */
 	noPostcodeCountryCoherence?: boolean
 	/**
+	 * #370 tri-state pin: force postcodeConsistency OFF — the configuration before the pass was promoted.
+	 *
+	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices #2301's cap without a sweep: the rows whose answer
+	 * differs between this arm and the shipped one are exactly the rows the pass touched, and the distance between the
+	 * two coordinates is how far its fallback moved each one. A cap at K removes the moves above K, so one pair of runs
+	 * prices every K, and the truth coordinate says which of them were wins.
+	 */
+	noPostcodeConsistency?: boolean
+	/**
+	 * #2301 pin: how far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point. Unset is the
+	 * library default, which is unbounded and is what ships.
+	 */
+	postcodeConsistencyMaxMoveKm?: number
+	/**
 	 * #690/#895 tri-state pin: force normalizeCase ON.
 	 */
 	normalizeCase?: boolean

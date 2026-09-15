@@ -478,6 +478,16 @@ async function recoverPostcodeNode(
 }
 
 /**
+ * How far step 3 below may move a coordinate before the answer keeps the locality it selected instead.
+ *
+ * Above the 99th percentile (153.3 km) of postcode-to-settlement distance for pairs that AGREE — 800,762 rows across 33
+ * countries, admin1 corroborating — so a correct postcode is never refused. Measured on 5,300 real addresses published
+ * with their government point, no arm from a cap of zero upward differs from unbounded by a single row, because the
+ * pass's wins there are all step-2 re-picks: `docs/records/evals/2026-09-15-postcode-move-cap.md`.
+ */
+export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
+
+/**
  * Postcode-disambiguated locality selection (#370 "Change A"). The single biggest miss on the EU/AU panel is a
  * same-named town resolved to the WRONG instance — "06260 Saint-Pierre" lands 617 km off — while the postcode that
  * would disambiguate it (06260 → Alpes-Maritimes) sits resolved in the same tree, discarded because the
@@ -494,9 +504,10 @@ async function recoverPostcodeNode(
  *
  * Step 3 rests on the postcode being the more reliable of the two, which holds while the postcode is CORRECT. A
  * postcode carries no checksum, so a transposed one is a valid code naming a real place and the step relocates the
- * answer there; `maxMoveKm` bounds that relocation. Past the bound the coordinate stays on the selected locality and
- * the node is still flagged, because the components did disagree — what changes is which one the answer follows.
- * Without it the step is unbounded: `Nawāda, 744301` moved 1,914 km onto Port Blair while keeping Nawada's place id.
+ * answer there; `maxMoveKm` bounds that relocation, at {@link DEFAULT_POSTCODE_MAX_MOVE_KM} unless a caller names one.
+ * Past the bound the coordinate stays on the selected locality and the node is still flagged, because the components
+ * did disagree — what changes is which one the answer follows. Unbounded, the step moved `Nawāda, 744301` 1,914 km onto
+ * Port Blair while keeping Nawada's place id.
  *
  * Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) — add a country's
  * postcodes and this immediately disambiguates its same-named towns. **Default-ON** since the #370 operator promotion
@@ -506,7 +517,7 @@ async function recoverPostcodeNode(
 export function applyPostcodeConsistency(
 	roots: readonly AddressNode[],
 	thresholdKm: number,
-	maxMoveKm = Infinity
+	maxMoveKm = DEFAULT_POSTCODE_MAX_MOVE_KM
 ): void {
 	// The resolved postcode anchor (first one with a real coordinate).
 	let anchor: { lat: number; lon: number } | null = null

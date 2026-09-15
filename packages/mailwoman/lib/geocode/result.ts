@@ -31,6 +31,24 @@ import { assembleStreetName } from "#street/name-assembly"
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
+ * One component the parse kept and the answer did not follow.
+ *
+ * `reason` names the resolver decision rather than describing it, so a consumer can branch. The only value today is
+ * `postcode_move_refused`: the postcode resolved to a point more than `postcodeConsistencyMaxMoveKm` from the locality
+ * the walk selected, and the answer stayed on the locality — a postcode carries no checksum, so a transposed one is a
+ * valid code naming a real place, and disagreement with the other components is the available signal.
+ */
+export interface UnfollowedComponent {
+	tag: ComponentTag
+	value: string
+	reason: "postcode_move_refused"
+	/**
+	 * How far following this component would have moved the answer.
+	 */
+	distance_km: number
+}
+
+/**
  * The geocode-core result shape — the engine returns this verbatim (passthrough) to `/v1/geocode` and `/v1/batch`.
  */
 export interface GeocodeResult {
@@ -49,6 +67,15 @@ export interface GeocodeResult {
 	 * rule applied to a component. A consumer rendering an answer can now say which happened.
 	 */
 	dropped_components?: DroppedSpan[]
+	/**
+	 * Components the parse KEPT and the answer did not follow, present only when there were any (#2301).
+	 *
+	 * Distinct from {@link dropped_components}, which names a span the flat projection deleted. Here the value is in
+	 * `components` and reads as if it were honoured: `Nawāda, 744301` returns both the locality and the postcode, and
+	 * nothing in the result says the two name places 1,914 km apart or which one the coordinate followed. A consumer that
+	 * cannot see the disagreement cannot lower its confidence for it.
+	 */
+	unfollowed_components?: UnfollowedComponent[]
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
@@ -210,6 +237,27 @@ export interface GeocodeResult {
  * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
+/**
+ * Read the resolver's refusals off the walked tree.
+ *
+ * The resolver records a refused postcode move on the LOCALITY it declined to leave — that node holds the distance,
+ * because it is the one that knows the gap — so the component reported here is the postcode, read from the tree. A row
+ * with no refusal produces an empty array and the field is omitted from the result entirely.
+ */
+function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedComponent[] {
+	const refusedKm = allNodes
+		.map((node) => node.metadata?.["postcode_move_refused_km"])
+		.find((km): km is number => typeof km === "number")
+
+	if (refusedKm === undefined) return []
+
+	const postcode = allNodes.find((node) => node.tag === "postcode")
+
+	if (!postcode) return []
+
+	return [{ tag: "postcode", value: postcode.value, reason: "postcode_move_refused", distance_km: refusedKm }]
+}
+
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
 	// `includeDropped` is not optional here even though the flag is: a span the projection deleted is the ONE thing a
 	// caller cannot reconstruct from the result, and #1755 is what its absence cost — the #1748 trailing region is
@@ -219,6 +267,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	// Grounded spans first, then text order — the order `decodeAsJSON` used for `components` above, so a named slot
 	// and the flat map name the same span when a tag occurs twice (tree-shape.ts explains the rule).
 	const allNodes = slotNodes(tree.roots)
+	const unfollowed = unfollowedComponents(allNodes)
 
 	const streetNode = allNodes.find((n) => n.tag === "street")
 
@@ -410,6 +459,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		input,
 		components,
 		...(dropped?.length ? { dropped_components: dropped } : {}),
+		...(unfollowed.length ? { unfollowed_components: unfollowed } : {}),
 		lat,
 		lon,
 		resolution_tier: tier,

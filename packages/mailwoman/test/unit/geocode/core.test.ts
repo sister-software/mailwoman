@@ -122,6 +122,50 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 	})
 })
 
+describe("extractGeocodeResult — a component the answer did not follow (#2301)", () => {
+	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk selects Nawada in Bihar, and the
+	// resolver refuses to relocate the coordinate 1,914 km onto Port Blair. Both components are still in the result;
+	// without this field nothing in it says they name different places.
+	const refused = (): AddressTree => ({
+		raw: "Nawāda, 744301",
+		roots: [
+			node({
+				tag: "locality",
+				value: "Nawāda",
+				lat: 24.88,
+				lon: 85.53,
+				placeID: "wof:1",
+				metadata: { resolver_name: "Nawada", postcode_city_mismatch: true, postcode_move_refused_km: 1914.2 },
+			}),
+			node({ tag: "postcode", value: "744301", start: 8, end: 14 }),
+		],
+	})
+
+	it("reports the refused postcode with the distance following it would have moved the answer", () => {
+		const r = extractGeocodeResult("Nawāda, 744301", refused())
+
+		expect(r.unfollowed_components).toEqual([
+			{ tag: "postcode", value: "744301", reason: "postcode_move_refused", distance_km: 1914.2 },
+		])
+
+		// The component itself is KEPT, which is what separates this from `dropped_components`.
+		expect(r.components.postcode).toBe("744301")
+		expect(r.dropped_components).toBeUndefined()
+	})
+
+	it("omits the field entirely when the answer followed everything it parsed", () => {
+		const agreeing: AddressTree = {
+			raw: "Paris, 75008",
+			roots: [
+				node({ tag: "locality", value: "Paris", lat: 48.8566, lon: 2.3522, placeID: "wof:1" }),
+				node({ tag: "postcode", value: "75008", start: 7, end: 12 }),
+			],
+		}
+
+		expect(extractGeocodeResult("Paris, 75008", agreeing).unfollowed_components).toBeUndefined()
+	})
+})
+
 describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () => {
 	it("surfaces the resolved primary plus its alternatives, self first", () => {
 		const tree: AddressTree = {

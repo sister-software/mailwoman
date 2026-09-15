@@ -359,6 +359,21 @@ export const GeocodeOutcomeLikeSchema = z.object({
 			})
 		)
 		.optional(),
+	// #2301: a component the parse KEPT and the answer did not follow. The value is in `components` and reads as if it
+	// were honoured — `Nawāda, 744301` returns both the locality and the postcode, and nothing else in the result says
+	// they name places 1,914 km apart. Absent when the answer followed everything it parsed.
+	unfollowed_components: z
+		.array(
+			z.object({
+				tag: ComponentTagSchema,
+				value: z.string(),
+				// Named rather than described, so a consumer branches on it.
+				reason: z.literal("postcode_move_refused"),
+				// How far following the component would have moved the answer.
+				distance_km: z.number(),
+			})
+		)
+		.optional(),
 })
 
 export type GeocodeOutcomeLike = z.infer<typeof GeocodeOutcomeLikeSchema>
