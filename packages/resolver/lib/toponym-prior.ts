@@ -79,10 +79,10 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially; the blended prior's job is the
  * cross-country question — which country's bearer a bare query meant.
  *
- * **0.02 is a HELD LINE, not a fitted threshold, and the class it cuts through is known to be inseparable.** A band
- * enforces the referential policy up to a fixed gap and abandons it past one, so every same-country pair whose
- * importance and population disagree by more than 0.02 is decided against the policy on purpose. Censused over the
- * shipped artifact: 31,975 of 220,370 contested pools disagree past the band, 151 of them in the shape below.
+ * **0.02 is a HELD LINE, not a fitted threshold, and the class it divides is known to be inseparable.** A band enforces
+ * the referential policy up to a fixed gap and abandons it past one, so every same-country pair whose importance and
+ * population disagree by more than 0.02 is decided against the policy on purpose. Censused over the shipped artifact:
+ * 31,975 of 220,370 contested pools disagree past the band, 151 of them in the shape below.
  *
  * The two ends of that class, and why neither widening the band nor scoping importance to cross-country pairs was
  * taken:
