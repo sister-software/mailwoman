@@ -26,49 +26,19 @@ import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailw
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
+import { EVAL_SOURCE, TRAIN_SOURCES, type UnitSource } from "#recipes/unit/sources"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
-/**
- * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
- */
 
 /**
  * Longest OpenAddresses unit id reused verbatim. Longer values are building codes or free text, so a synthetic id is
  * substituted instead.
  */
 const MAX_REAL_UNIT_ID_LENGTH = 6
-
-interface UnitSource {
-	zip: PathBuilderLike
-	csv: string
-	region: string
-}
-
-/**
- * OA REGION is empty for US per-state extracts — the region is implied by the file. Train sources are every NON-Vermont
- * state cached; eval is Vermont only (the corpus holdout).
- */
-const TRAIN_SOURCES: readonly UnitSource[] = [
-	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
-	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
-]
-
-const EVAL_SOURCE: UnitSource = {
-	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
-	csv: "us/vt/statewide.csv",
-	region: "VT",
-}
 
 /**
  * USPS Pub-28 C2 designators that take a secondary identifier ("Apt 4B"). Weighted toward the common ones the v0-parity
