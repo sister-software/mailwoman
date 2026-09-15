@@ -104,14 +104,12 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
  * — the artifact speaks for itself, and a country absent from the artifact's table fails open exactly like an absent
  * key here. This constant is the fallback for artifacts predating the manifest; grow the manifest record, not this.
  *
- * A box must contain the country's OUTLYING territory, not its populated core. Trimming one to the mainland turns the
- * guard from coarse into wrong: it would refuse the Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT. Where a
- * country's extent crosses the antimeridian a single box cannot express it, so NZ spans the full longitude range and is
- * a LATITUDE guard alone — inert against a wrong-hemisphere longitude, which is the honest degradation, and still
- * catching a northern-hemisphere answer.
+ * A box bounds the country's outlying territory, not its populated core: one trimmed to the mainland refuses the
+ * Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT. A country whose extent crosses the antimeridian cannot be
+ * expressed as one box, so NZ spans the full longitude range and constrains latitude only.
  *
- * Every country whose locale ships weights owes a box; `plausibility.test.ts` reads `release.config.json` and fails
- * when one does not, because an absent key fails OPEN and so a missing box is indistinguishable from a passing guard.
+ * Every country whose locale ships weights has a box, checked in `plausibility.test.ts` against `release.config.json`.
+ * An absent key fails open, so a missing box and a passing guard are the same answer here.
  */
 export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
 	US: [18, 72, -180, -66],

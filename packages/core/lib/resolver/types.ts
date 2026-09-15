@@ -625,22 +625,22 @@ export interface ResolveOpts {
 	 * flagged `postcode_city_mismatch` without `coordinate_source`, so the disagreement is still reported and the answer
 	 * still names one place.
 	 *
-	 * {@link postcodeConsistencyThresholdKm} bounds whether the fallback FIRES; nothing bounds how far it then moves the
-	 * answer. `Nawāda, 744301` is the measured case: `744301` is an Andaman and Nicobar Islands code, the walk selects
-	 * Nawada in Bihar correctly, and the fallback relocates its coordinate 1,914 km to Port Blair while the result keeps
-	 * Nawada's place id — an answer whose id and coordinate name different places.
+	 * {@link postcodeConsistencyThresholdKm} bounds whether the fallback fires; without this, nothing bounds how far it
+	 * then moves the answer. `Nawāda, 744301` is the measured case: `744301` is an Andaman and Nicobar Islands code, the
+	 * walk selects Nawada in Bihar, and the fallback relocates the coordinate 1,914 km to Port Blair while the result
+	 * keeps Nawada's place id, so the id and the coordinate name different places.
 	 *
 	 * The fallback's premise is that "a postcode is unambiguous within a country in a way a town name is not". A postcode
 	 * carries no checksum, so a transposed one is a valid code naming a real place, and a code retired since the address
-	 * was written names wherever it now points. Neither is detectable from the code alone — disagreement with the other
-	 * components is the only signal, which makes this cap the detector rather than a guard on top of one.
+	 * was written names wherever it now points. Neither is detectable from the code alone; disagreement with the other
+	 * components is the available signal.
 	 *
-	 * **Default UNBOUNDED**, which is the shipped behaviour: #370's fallback was operator-promoted on a measured panel
-	 * (FI 231 wins / 0 losses, SI 37/6, CZ 47/2) and a cap set below the distances that earned those wins would undo
-	 * them. Set it explicitly to measure a value; it becomes a default only if the measurement carries it.
+	 * Default UNBOUNDED, which is the shipped behaviour. #370's fallback was operator-promoted on a measured panel (FI
+	 * 231 wins / 0 losses, SI 37/6, CZ 47/2), and a cap below the distances that earned those wins would undo them. Set
+	 * it explicitly to measure a value; it becomes a default only if the measurement carries it.
 	 *
-	 * {@link postcodeCountryCoherence} is the same defect ACROSS a border and is already closed. This is the within-
-	 * country half, which country scoping cannot reach.
+	 * {@link postcodeCountryCoherence} closes the same disagreement across a border. This is the within-country half,
+	 * which country scoping does not reach.
 	 */
 	postcodeConsistencyMaxMoveKm?: number
 	/**

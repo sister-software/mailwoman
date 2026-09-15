@@ -113,7 +113,7 @@ describe("trailing-region Canadian province codes", () => {
 		const coded = rows.filter((row) => row.raw.includes(", NL A1V 0A9"))
 
 		expect(coded.length).toBeGreaterThan(0)
-		expect(coded.every((row) => row.components["region"] === "NL")).toBe(true)
+		expect(coded.every((row) => row.components?.["region"] === "NL")).toBe(true)
 	})
 
 	it("covers every province and territory", async () => {

@@ -3,19 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   BOARD COVERAGE: how many rows each country holds that can FAIL, beside how much of the world it owns.
+ *   Board rows per country that can fail, beside the country's gazetteer share.
  *
- *   A board row's `status` decides whether it is an instrument or a note. `pass` CHECKS — a regression there
- *   produces a failing row. `improvement_target` TRACKS — it records a known-wrong answer, and a regression moves
- *   a number nobody is watching. Reporting a single row count conflates the two, and a country whose board is all
- *   trackers reads as covered while holding nothing that can go red.
+ *   A row's `status` decides whether it checks or tracks. `pass` fails the run when its answer moves;
+ *   `improvement_target` records a known-wrong answer and fails nothing. A single row count conflates them, so a
+ *   country whose board is entirely trackers reports the same coverage as one that can go red.
  *
- *   The gazetteer share is the denominator that makes a count mean something. Two checking rows is thin coverage
- *   for any country and it is a different claim for India, whose `spr` rows number over a million, than for a
- *   country holding a few thousand.
+ *   The gazetteer share is the denominator: two checking rows is a different claim for India's 1,113,550 places
+ *   than for a country holding a few thousand.
  *
  *   The loader walks two-letter directories only, so `generalization/` — parked passes — is outside every number
- *   here by construction, the same scope every gauntlet run sees.
+ *   here, which is the scope a gauntlet run sees.
  *
  *   Usage:
  *     node packages/mailwoman/lib/dev-tools/board-coverage-census.run.ts

@@ -25,11 +25,11 @@
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts sweep
  *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
  *
- *   `record --withhold-every-denoting-row` removes every row DENOTING the gold settlement instead of every id the
- *   concordance links. That is a different stratum, not a better one: the gazetteer carries 10.6% of its populated
- *   localities at two admin tiers, and under the concorded-id rule an arm answering the twin is graded as selecting
- *   where no correct candidate exists. A fixture recorded that way is a SUCCESSOR benchmark — the receipt says so —
- *   because `benchmark-freeze.json` refuses a rule edited after a result is visible.
+ *   `record --withhold-every-denoting-row` removes every row denoting the gold settlement instead of every id the
+ *   concordance links. The gazetteer carries 10.6% of its populated localities at two admin tiers, so under the
+ *   concorded-id rule an arm answering the twin is graded as selecting where no correct candidate exists. The two
+ *   rules define different strata and their rates are not comparable. `benchmark-freeze.json` admits a rule change
+ *   only as a successor definition, so the receipt records which rule produced the fixture.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -164,11 +164,8 @@ async function recordPhase(): Promise<void> {
 
 	const parse = (query: string): Promise<AddressTree> => scorer.parse(query, { postcodeRepair: true })
 
-	// `--withhold-every-denoting-row` changes what the withheld-gold stratum MEANS: it removes every row denoting the
-	// gold settlement rather than every id the concordance links, which is the rule `same-data-resolver-v1` was NOT
-	// frozen under. `benchmark-freeze.json` states why that cannot be a version bump — a rule editable after a result
-	// is visible asserts nothing — so a fixture recorded this way belongs to a SUCCESSOR benchmark id, and the receipt
-	// below records which construction produced it.
+	// The withheld-gold stratum under a rule `same-data-resolver-v1` was not frozen under, so a fixture recorded this
+	// way belongs to a successor benchmark id rather than to v1.
 	const withholdEveryDenotingRow = values["withhold-every-denoting-row"] === true
 
 	if (withholdEveryDenotingRow) {
@@ -203,8 +200,8 @@ async function recordPhase(): Promise<void> {
 		{
 			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
-			// WHICH withheld-gold construction produced this fixture. A receipt that named only the benchmark id would
-			// let two incomparable runs read as the same benchmark.
+			// Which withheld-gold rule produced this fixture. The two rules define different strata, so the benchmark id
+			// alone does not identify a run.
 			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),

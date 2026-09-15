@@ -79,22 +79,20 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially; the blended prior's job is the
  * cross-country question — which country's bearer a bare query meant.
  *
- * **0.02 is a HELD LINE, not a fitted threshold, and the class it divides is known to be inseparable.** A band enforces
- * the referential policy up to a fixed gap and abandons it past one, so every same-country pair whose importance and
- * population disagree by more than 0.02 is decided against the policy on purpose. Censused over the shipped artifact:
- * 31,975 of 220,370 contested pools disagree past the band, 151 of them in the shape below.
+ * A band enforces the referential policy up to a fixed gap only, so every same-country pair whose importance and
+ * population disagree by more than 0.02 is decided against that policy. Censused over the shipped artifact: 31,975 of
+ * 220,370 contested pools disagree past the band, 151 of them in the shape below.
  *
- * The two ends of that class, and why neither widening the band nor scoping importance to cross-country pairs was
- * taken:
+ * Two ends of that class, and why neither widening the band nor scoping importance to cross-country pairs was taken:
  *
  * - `Irvington` — NJ (population 61,323, importance 0.4258) against NY (6,417, 0.4565), a 0.0307 gap. The policy wants
- *   the town of 61,323 and the band is 0.011 too narrow to give it.
- * - `Aurangabad` — regresses under a per-country arm that would have satisfied Irvington, while 15 of the 16 ratified
- *   bare rows hold.
+ *   the town of 61,323 and the band is 0.011 too narrow to reach it.
+ * - `Aurangabad` — regresses under a per-country arm that would satisfy Irvington, while 15 of the 16 ratified bare rows
+ *   hold.
  *
- * No measured feature separates them, so widening to cover Irvington breaks Aurangabad and the scoped arm breaks it
- * too. Moving this number needs a feature that tells the two apart, not a better-fitting threshold — a threshold
- * refitted over the rows that are currently wrong would be measuring their shared cause.
+ * No measured feature separates them: widening to cover Irvington breaks Aurangabad, and so does the scoped arm. Moving
+ * 0.02 requires such a feature. A threshold refitted over the rows that are wrong today would measure their shared
+ * cause instead.
  */
 const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
 

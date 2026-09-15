@@ -63,12 +63,11 @@ export function normalizePostcodeName(raw: string): string {
 export type PostcodePoint = readonly [number, number]
 
 /**
- * A medoid with how much the group it came from actually held.
+ * A medoid and the size of the group it came from.
  *
- * The counts are deliberately NOT stated in `@mailwoman/evidence`'s vocabulary. That package's `EpistemicStatus` says
- * what may be CLAIMED about a value and belongs to the answering path, where `epistemicStatusFor` derives it; these two
- * integers are a property of the source dump, and naming them `observed`/`derived` here would mint a second, private
- * version of a word the repository already assigns one meaning.
+ * The counts are not stated in `@mailwoman/evidence`'s vocabulary. `EpistemicStatus` says what may be claimed about a
+ * value and belongs to the answering path, where `epistemicStatusFor` derives it; these two integers describe the
+ * source dump. Naming them `observed` / `derived` here would give those words a second, local meaning.
  */
 export interface MedoidSupport {
 	/**
@@ -89,18 +88,18 @@ export interface MedoidSupport {
 /**
  * Collapse a group to its distinct points before any geometric consensus reads it.
  *
- * Rows sharing a coordinate to the digit are not independent measurements of the same place — in a derived source they
- * are one value inherited by every row that matched it. GeoNames states this of its own postal file: coordinates are
- * matched from place names and admin divisions, and averaged from neighbouring codes where the match fails.
+ * Rows sharing a coordinate to the digit are not independent measurements. GeoNames computes a postal coordinate by
+ * matching the code against place names and admin divisions, averaging neighbouring codes where the match fails, so one
+ * computed value reaches every row that matched it.
  *
- * Measured across the 109 country dumps: 72,610 postcodes are carried by more than one row, and **18,279 of those
- * (25.2%) have every member at one identical point**. Thailand is 88.4% of its multi-row codes, Japan 99.0%, Ukraine
- * 51.2%, India 37.1%. TH 10230 is the worked case — `Lat Phrao` and `Khanna Yao`, both Bangkok districts, both
- * published at 14.3333 / 99.9167, about 90 km from either.
+ * Measured across the 109 country dumps: 72,610 postcodes are carried by more than one row, and 18,279 of those (25.2%)
+ * have every member at one identical point. Thailand is 88.4% of its multi-row codes, Japan 99.0%, Ukraine 51.2%, India
+ * 37.1%. TH 10230 is the worked case — `Lat Phrao` and `Khanna Yao`, both Bangkok districts, both published at 14.3333
+ * / 99.9167, about 90 km from either.
  *
- * Exact equality, not a proximity radius — `collapseCoincident` in the gauntlet ablation is the nearby-looking
- * neighbour and answers a different question (which ranked candidates are the same physical place, within
- * `COINCIDENT_PLACE_KM`). Two genuinely surveyed settlements 200 m apart are two points here and must stay two.
+ * Exact equality, not a proximity radius. `collapseCoincident` in the gauntlet ablation answers a different question —
+ * which ranked candidates are the same physical place, within `COINCIDENT_PLACE_KM` — and two surveyed settlements 200
+ * m apart are two points here.
  */
 function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoint[] {
 	const seen = new Set<string>()
@@ -126,11 +125,10 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  * fail SK/SI/HR at 1.10–1.94 km CI: the mean displaced coordinates that were already correct. The medoid stays on a
  * real observation, so a single-member group is exactly its own point and a multi-member group is one of its members.
  *
- * The law's guarantee — "stays on a real observation" — holds only while the members ARE distinct. Duplicate points are
- * collapsed first for that reason: a group of N rows at one coordinate carries one value, and letting it vote N times
- * would weight it by how many settlements happened to inherit it. Collapsing changes no answer where the points differ
- * (the mean of distinct points is the mean the law intends) and makes the degenerate case state its own thinness
- * through {@link MedoidSupport.distinctPoints} rather than presenting it as agreement.
+ * That guarantee holds only while the members are distinct, so duplicate points are collapsed first: N rows at one
+ * coordinate carry one value, and counting them separately weights it by how many settlements inherited it. Collapsing
+ * changes no answer where the points differ — the mean of distinct points is the mean the law intends — and
+ * {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
  *
  * Distance is squared-Euclidean in DEGREES, not haversine. At the scale a postcode spans, the ranking the two produce
  * is the same, and this one carries no trig into a per-group inner loop. Ties go to the earliest member, which makes

@@ -104,14 +104,13 @@ const BBOX_SOURCE = "2026-07-15 coordinate-parity receipt harness (scratchpad/co
 
 /**
  * The reviewed guard-B bounding-box record — the structured form of `COUNTRY_BBOX` (`resolver/plausibility.ts`),
- * DERIVED from that constant rather than retyped beside it.
+ * derived from that constant rather than declared beside it.
  *
- * The two were maintained as separate literals and a test asserted them byte-identical, which held only the numbers a
- * test can compare and not the membership: four shipping locales were missing from both, and a matching pair of
- * incomplete tables reads exactly like a correct one. One declaration cannot disagree with itself, and
- * `plausibility.test.ts` is where a locale without a box now fails.
+ * The two were separate literals with a test asserting them equal. That test compared the numbers and not the
+ * membership, and both tables were missing the same four shipping locales. Membership is checked in
+ * `plausibility.test.ts` against `release.config.json` instead.
  *
- * `source` is stamped here because provenance belongs to the artifact record, not to the fallback constant.
+ * `source` is stamped here: provenance belongs to the artifact record, not to the fallback constant.
  */
 export const MEASURED_COUNTRY_BBOXES: readonly CountryBBoxFact[] = Object.entries(COUNTRY_BBOX).map(
 	([country, [latMin, latMax, lonMin, lonMax]]): CountryBBoxFact => ({

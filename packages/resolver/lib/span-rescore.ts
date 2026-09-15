@@ -434,16 +434,14 @@ export async function findRescoreCandidate(
 	/**
 	 * Whether every token a sub-span leaves behind is CONTEXT rather than identity.
 	 *
-	 * A sub-span probe truncates the input, and whether that is a recovery or a corruption turns on what it dropped. A
-	 * subdivision code or a postcode qualifies the name and can be discarded once the backend is told about it through
-	 * `regionQualifier` — `WA Sammamish` → `Sammamish`, `16 Sillod` → `Sillod`. A word of the name itself cannot: `Fort
-	 * Worth` → `Worth` answers Worth, Illinois, population 10,494, 1,304 km away, and the token that carried the identity
-	 * is the one thrown out.
+	 * A sub-span probe truncates the input, and what it dropped decides whether the result is a recovery. A subdivision
+	 * code or a postcode qualifies the name and survives being dropped, since `regionQualifier` carries it to the backend
+	 * — `WA Sammamish` → `Sammamish`, `16 Sillod` → `Sillod`. A word of the name does not: `Fort Worth` → `Worth` answers
+	 * Worth, Illinois, population 10,494, 1,304 km away.
 	 *
-	 * The blanket form of this rule — refuse every proper sub-span of a multi-token locality — was measured on the frozen
-	 * fixture and REJECTED: it also refuses `NV Sparks`, `SCT Cumbernauld`, `IN Fort Wayne`, `CA National City` and `IA
-	 * Council Bluffs`, each correct today. All five leave a subdivision code behind, which is why the test is on what the
-	 * remainder IS rather than on the span being proper.
+	 * The test is on what the remainder is, not on the span being proper. Refusing every proper sub-span of a multi-token
+	 * locality was measured on the frozen fixture and rejected: it also refuses `NV Sparks`, `SCT Cumbernauld`, `IN Fort
+	 * Wayne`, `CA National City` and `IA Council Bluffs`, each correct, and each leaving a subdivision code behind.
 	 */
 	const remainderIsContext = (span: { start: number; end: number }): boolean => {
 		const outside = toks.filter((t) => t.end <= span.start || t.start >= span.end)
