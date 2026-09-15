@@ -94,6 +94,10 @@ training_image = (
         "numpy>=1.26,<3",
         "datasets>=2.19",
         "tqdm>=4.66",
+        # `mailwoman_train.env` reads it for the platform data root, and `paths.py` imports env at
+        # module scope. Nothing imports either one until the anchor painter reaches
+        # `features/postcode_shapes.py`, so the absence surfaces mid-training rather than at startup.
+        "platformdirs>=4.3",
         # Optional experiment tracking — streamed to a Hugging Face Space dashboard when
         # the run config sets train.trackio_enabled (best-effort, see trackio_logging.py).
         "trackio",

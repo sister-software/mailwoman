@@ -125,6 +125,34 @@ def _pins_from_modal() -> dict[str, str]:
     return out
 
 
+def _requirement_name(spec: str) -> str:
+    """The package name of a requirement string, normalized the way pip compares names."""
+    name = re.split(r"[\[=><!~;\s]", spec.strip(), maxsplit=1)[0]
+
+    return name.lower().replace("_", ".").replace(".", "-")
+
+
+def _base_requirements() -> set[str]:
+    """The names under `[project] dependencies` — what merely importing `mailwoman_train` needs."""
+    data = tomllib.loads(PYPROJECT.read_text())
+
+    return {_requirement_name(spec) for spec in data["project"]["dependencies"]}
+
+
+def _modal_packages() -> set[str]:
+    """Every package the Modal image installs, pinned or floored.
+
+    Comment lines are stripped before the string literals are read: the pin block's prose quotes
+    version specifiers in passing, and a package name read out of a comment would make a missing
+    install look present.
+    """
+    text = MODAL_IMAGE.read_text()
+    block = text[text.index(".pip_install(") : text.index(".add_local_python_source")]
+    code = "\n".join(line for line in block.splitlines() if not line.lstrip().startswith("#"))
+
+    return {_requirement_name(m.group(1)) for m in re.finditer(r'"([A-Za-z0-9_.-]+[^"]*)"', code)}
+
+
 def _ruff_dev_pin() -> str | None:
     data = tomllib.loads(PYPROJECT.read_text())
     for spec in data["project"]["optional-dependencies"]["dev"]:
@@ -182,6 +210,17 @@ def main() -> int:
             problems.append(f"{dep}: pyproject pins =={py} but Modal image pins =={md}")
         elif py and md is None:
             problems.append(f"{dep}: pinned =={py} in pyproject but absent from the Modal image pins")
+
+    # Every base requirement must be installed in the image. A missing one raises inside the
+    # container at the first import that reaches it, which for `platformdirs` was the anchor painter
+    # — hours of queue and a GPU allocation past the point where a startup failure would have shown.
+    missing_from_image = sorted(_base_requirements() - _modal_packages())
+    if missing_from_image:
+        problems.append(
+            "the Modal image does not install "
+            + ", ".join(missing_from_image)
+            + " — `mailwoman_train` imports these, so a run fails inside the container rather than here"
+        )
 
     # 3: the export opset must hold the <= 17 mobile-Safari invariant.
     opset = _export_opset()

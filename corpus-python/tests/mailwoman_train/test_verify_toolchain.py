@@ -35,6 +35,25 @@ def test_pyproject_and_modal_pins_agree():
         assert py[dep] == md.get(dep), f"{dep}: pyproject {py[dep]} != modal {md.get(dep)}"
 
 
+def test_every_base_requirement_is_installed_in_the_modal_image():
+    # A base requirement absent from the image raises inside the container at the first import that
+    # reaches it. `platformdirs` reached the anchor painter, so the run had already taken a GPU.
+    vt = _load()
+    missing = sorted(vt._base_requirements() - vt._modal_packages())
+    assert not missing, f"the Modal image does not install: {missing}"
+
+
+def test_modal_package_names_are_read_from_code_not_comments():
+    # The pin block's prose quotes version specifiers in passing, and a name read out of a comment
+    # would make a missing install look present.
+    vt = _load()
+    packages = vt._modal_packages()
+    assert "torch" in packages
+    assert "platformdirs" in packages
+    assert vt._requirement_name("platformdirs>=4.3") == "platformdirs"
+    assert vt._requirement_name("onnxruntime==1.29.0") == "onnxruntime"
+
+
 def test_export_opset_holds_safari_invariant():
     vt = _load()
     opset = vt._export_opset()
