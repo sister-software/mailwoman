@@ -2,6 +2,7 @@
 
     modal run -m launch.train_remote::audit_epoch_mixture --config-name <recipe>.yaml
     modal run -m launch.train_remote::census_opening_token --config-name <recipe>.yaml
+    modal run -m launch.train_remote::census_region_code_token --config-name <recipe>.yaml
     modal run -m launch.train_remote::audit_suffix_feed --config-name <recipe>.yaml
 
 Each is a thin wrapper: the audit itself lives in `mailwoman_train.audits`, where it is unit-tested
@@ -96,6 +97,39 @@ def census_opening_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", dra
     from mailwoman_train.audits.opening_token import run
 
     json_path = Path(f"{AUDITS}/opening-token-{config_path.stem}.json")
+    run(config_path, json_path=json_path, draws=draws or None)
+    vol.commit()
+    print(f"\nCensus committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
+def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml", draws: int = 0) -> None:
+    """Count what a two-letter uppercase token teaches: a country, or a region.
+
+    Settles which reading of a contested code the mixture attests more — `NL` is a Canadian province
+    and the Netherlands, `PE` a Canadian province and Peru — so a dose meant to outweigh the country
+    attestations has a count to be set against. No code list is typed: every two-letter uppercase
+    token is counted, and the contested set falls out of the data.
+
+    The emitted pass matters more than usual here, because `augment_region_prob` writes region
+    surfaces onto rows that did not carry one.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = _config_path(config_name)
+
+    from mailwoman_train.audits.region_code_token import run
+
+    json_path = Path(f"{AUDITS}/region-code-token-{config_path.stem}.json")
     run(config_path, json_path=json_path, draws=draws or None)
     vol.commit()
     print(f"\nCensus committed to volume: {json_path}")
