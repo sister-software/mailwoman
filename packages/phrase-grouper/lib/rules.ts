@@ -536,7 +536,7 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
  * measure the run this cap will clamp anyway, so letting it range further is work whose result is discarded, and it is
  * quadratic on a long capitalized run where every start index walks to the end.
  */
-const MAX_LOCALITY_PHRASE_TOKENS = 6
+export const MAX_LOCALITY_PHRASE_TOKENS = 6
 
 export function scoreLocalityPhrase(
 	tokens: ReadonlyArray<SegmentToken>,

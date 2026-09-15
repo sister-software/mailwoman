@@ -3,24 +3,33 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `groupPhrasesSync` must stay LINEAR in segment length, including on the input shape that makes it work
+ *   Every per-segment rule must stay LINEAR in segment length, including on the input shape that makes it work
  *   hardest: a long run of capitalized tokens, every one of which is candidate place-name content.
  *
- *   `scoreLocalityPhrase` walks forward from each start index to measure the run it could propose. That walk
- *   has to stay bounded by {@link MAX_LOCALITY_PHRASE_TOKENS}, because the proposals it feeds are clamped to
- *   that length anyway — unbounded, every start index walks to the end of the run and the segment costs
- *   quadratic time for an identical result.
+ *   `scoreLocalityPhrase` walks forward from each start index to measure the run it could propose. That walk has to
+ *   stay bounded by {@link MAX_LOCALITY_PHRASE_TOKENS}, because the proposals it feeds are clamped to that length
+ *   anyway — unbounded, every start index walks to the end of the run and the segment costs quadratic time for an
+ *   identical result.
  *
- *   Correctness tests cannot catch that: bounded and unbounded walks emit the same proposals, which is what
- *   makes the waste invisible. Only the growth curve separates them, so the assertion is on the ratio rather
- *   than on absolute milliseconds — a millisecond budget would flake on a loaded runner while a complexity
- *   regression is exactly what changes the ratio.
+ *   Correctness tests cannot catch that: bounded and unbounded walks emit the same proposals, which is what makes the
+ *   waste invisible. Only the growth curve separates them. The curve is measured by OPERATION COUNT — the number of
+ *   token reads a rule makes, observed through a `Proxy` over the token array — rather than by wall clock: a token
+ *   read is what the walk spends, it is exact, and it does not move with whatever else the host is running — a
+ *   wall-clock ratio on a shared host cannot tell a load change between its two measurements from a complexity change.
  */
 
-import { normalize } from "@mailwoman/normalize"
-import { groupPhrasesSync } from "@mailwoman/phrase-grouper"
-import { computeQueryShape } from "@mailwoman/query-shape"
-import { expect, test } from "vitest"
+import {
+	MAX_LOCALITY_PHRASE_TOKENS,
+	scoreHyphenatedCompound,
+	scoreLocalityPhrase,
+	scoreNumeric,
+	scoreRegionAbbreviation,
+	scoreStreetPhrase,
+	scoreVenuePhrase,
+	tokenizeSegment,
+	type SegmentToken,
+} from "@mailwoman/phrase-grouper/rules"
+import { describe, expect, test } from "vitest"
 
 /**
  * Every token is capitalized place-name content and nothing terminates the run — the worst case for a forward walk, and
@@ -29,51 +38,94 @@ import { expect, test } from "vitest"
 const CAPS_RUN_UNIT = "Aa "
 
 /**
- * Timing samples per size. Three is enough for the minimum to skip a transient spike without making the test slow.
+ * A doubled input doubles a linear read count and quadruples a quadratic one. The bound sits well below the midpoint:
+ * the only departure from 2.0 a linear rule shows is the run's tail, where the last few start indices find fewer tokens
+ * to read, and that shortfall shrinks as the input grows.
  */
-const TIMING_SAMPLES = 3
+const MAX_LINEAR_GROWTH = 2.2
 
 /**
- * Best of {@link TIMING_SAMPLES} runs.
- *
- * Contention can only ever ADD time to a sample, never remove it, so the minimum is the run least polluted by whatever
- * else the machine was doing. A mean or a single sample inherits every load spike, which on a shared CI runner is the
- * difference between measuring the algorithm and measuring the neighbours.
+ * Token reads the locality walk may spend per start index. The head is read three times before the walk, the walk looks
+ * ahead at most `MAX_LOCALITY_PHRASE_TOKENS - 1` tokens, and each of the `MAX_LOCALITY_PHRASE_TOKENS` proposal lengths
+ * reads its two endpoints — 3 + 5 + 12 = 20 at the shipped cap. Four reads per cap token leaves room for the shape of
+ * those reads to change without letting the walk range past the cap.
  */
-function timeAt(chars: number): number {
-	const input = CAPS_RUN_UNIT.repeat(Math.ceil(chars / CAPS_RUN_UNIT.length))
-	const normalized = normalize(input)
-	const shape = computeQueryShape(normalized)
+const MAX_LOCALITY_READS_PER_TOKEN = 4 * MAX_LOCALITY_PHRASE_TOKENS
 
-	// Warm once so a cold JIT on the smaller sample does not inflate the ratio.
-	groupPhrasesSync(normalized, shape)
-
-	const start = performance.now()
-
-	groupPhrasesSync(normalized, shape)
-
-	return performance.now() - start
+interface CountingTokens {
+	readonly tokens: ReadonlyArray<SegmentToken>
+	readonly reads: () => number
 }
 
-function bestOf(chars: number): number {
-	let best = Number.POSITIVE_INFINITY
+/**
+ * The token array behind a `Proxy` that counts every indexed read. A rule that walks further reads more, so the count
+ * is the walk's length in the unit the walk is paid in.
+ */
+function countingTokens(tokens: ReadonlyArray<SegmentToken>): CountingTokens {
+	let reads = 0
 
-	for (let i = 0; i < TIMING_SAMPLES; i++) {
-		best = Math.min(best, timeAt(chars))
-	}
+	const proxied = new Proxy(tokens, {
+		get(target, property, receiver) {
+			if (typeof property === "string" && /^\d+$/.test(property)) {
+				reads++
+			}
 
-	return best
+			return Reflect.get(target, property, receiver)
+		},
+	})
+
+	return { tokens: proxied, reads: () => reads }
 }
 
-test("groupPhrasesSync stays linear on a long capitalized run", () => {
-	const small = bestOf(10_000)
-	const large = bestOf(20_000)
-	const ratio = large / Math.max(small, 0.001)
+function capsRun(chars: number): { text: string; tokens: SegmentToken[] } {
+	const text = CAPS_RUN_UNIT.repeat(Math.ceil(chars / CAPS_RUN_UNIT.length))
+
+	return { text, tokens: tokenizeSegment(text, 0) }
+}
+
+const RULES: ReadonlyArray<{
+	name: string
+	run: (tokens: ReadonlyArray<SegmentToken>, text: string) => unknown
+}> = [
+	{ name: "scoreNumeric", run: (tokens, text) => scoreNumeric(tokens, text) },
+	{ name: "scoreRegionAbbreviation", run: (tokens, text) => scoreRegionAbbreviation(tokens, text, true) },
+	{ name: "scoreHyphenatedCompound", run: (tokens, text) => scoreHyphenatedCompound(tokens, text) },
+	{ name: "scoreStreetPhrase", run: (tokens, text) => scoreStreetPhrase(tokens, text) },
+	{ name: "scoreLocalityPhrase", run: (tokens, text) => scoreLocalityPhrase(tokens, text, true) },
+	{ name: "scoreVenuePhrase", run: (tokens, text) => scoreVenuePhrase(tokens, text, true) },
+]
+
+function readsAt(chars: number, run: (typeof RULES)[number]["run"]): { reads: number; tokenCount: number } {
+	const { text, tokens } = capsRun(chars)
+	const counting = countingTokens(tokens)
+
+	run(counting.tokens, text)
+
+	return { reads: counting.reads(), tokenCount: tokens.length }
+}
+
+describe("every per-segment rule reads a linear number of tokens on a long capitalized run", () => {
+	test.each(RULES)("$name", ({ run }) => {
+		const small = readsAt(10_000, run)
+		const large = readsAt(20_000, run)
+		const growth = large.reads / small.reads
+
+		expect(
+			growth,
+			`doubling the input multiplied the token reads by ${growth.toFixed(2)}x ` +
+				`(${small.reads} reads over ${small.tokenCount} tokens -> ${large.reads} over ${large.tokenCount}). ` +
+				`Linear is 2x; quadratic is 4x. A walk in phrase-grouper/rules.ts ranges with the segment length.`
+		).toBeLessThan(MAX_LINEAR_GROWTH)
+	})
+})
+
+test("the locality walk reads no further than MAX_LOCALITY_PHRASE_TOKENS from each start index", () => {
+	const { reads, tokenCount } = readsAt(10_000, RULES.find((rule) => rule.name === "scoreLocalityPhrase")!.run)
+	const readsPerToken = reads / tokenCount
 
 	expect(
-		ratio,
-		`doubling the input multiplied the cost by ${ratio.toFixed(2)}x (${small.toFixed(1)}ms -> ${large.toFixed(1)}ms). ` +
-			`Linear is ~2x; quadratic is ~4x. A forward walk in phrase-grouper/rules.ts has most likely stopped ` +
-			`respecting MAX_LOCALITY_PHRASE_TOKENS.`
-	).toBeLessThan(3)
+		readsPerToken,
+		`scoreLocalityPhrase read ${readsPerToken.toFixed(2)} tokens per start index over ${tokenCount} tokens. ` +
+			`The forward walk has most likely stopped respecting MAX_LOCALITY_PHRASE_TOKENS.`
+	).toBeLessThanOrEqual(MAX_LOCALITY_READS_PER_TOKEN)
 })
