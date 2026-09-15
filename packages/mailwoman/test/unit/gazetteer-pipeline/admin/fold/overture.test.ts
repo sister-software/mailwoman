@@ -15,7 +15,7 @@ import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { assignSyntheticIDs, prepareInserts } from "mailwoman/gazetteer-pipeline/admin/fold/overture"
+import { assignSyntheticIDs, foldedPlacetype, prepareInserts } from "mailwoman/gazetteer-pipeline/admin/fold/overture"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -138,5 +138,29 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 		expect(db.prepare("SELECT COUNT(*) AS n FROM spr WHERE id = ?").get(id)).toEqual({ n: 1 })
 		expect(db.prepare("SELECT name FROM spr WHERE id = ?").get(id)).toEqual({ name: "After" })
+	})
+})
+
+describe("foldedPlacetype", () => {
+	test("Singapore's planning areas become boroughs, which a locality query already reaches", () => {
+		// `PLACETYPE_FILTER_GROUPS.locality` expands to locality|borough|localadmin and never to `county`, so every one
+		// of the 55 planning areas was unreachable by any admin tag a parse produces.
+		expect(foldedPlacetype("county", "SG")).toBe("borough")
+		expect(foldedPlacetype("county", "sg")).toBe("borough")
+	})
+
+	test("leaves every other country's county alone, including the two that look like Singapore", () => {
+		// KW 137 county places against 13 localities and QA 79 against 46 both clear the count test and fail the name
+		// test: Kuwait's county names are underscore-joined ASCII while its Arabic names sit on `locality`, and Qatar's
+		// are Doha's zone NUMBERS. Admitting either would attest surfaces nobody writes.
+		expect(foldedPlacetype("county", "KW")).toBe("county")
+		expect(foldedPlacetype("county", "QA")).toBe("county")
+		expect(foldedPlacetype("county", "US")).toBe("county")
+	})
+
+	test("passes every non-county subtype through untouched, Singapore included", () => {
+		for (const subtype of ["country", "region", "locality", "localadmin"]) {
+			expect(foldedPlacetype(subtype, "SG")).toBe(subtype)
+		}
 	})
 })

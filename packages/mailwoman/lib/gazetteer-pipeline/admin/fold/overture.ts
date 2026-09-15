@@ -26,6 +26,37 @@ import { sql } from "kysely"
 export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
 
 /**
+ * Countries whose Overture `county` divisions ARE the addressable settlement tier, and the placetype they take instead.
+ *
+ * Overture's subtype is its own taxonomy, and the fold otherwise writes it through verbatim. Singapore's 55 planning
+ * areas — Ang Mo Kio, Bedok, Bukit Timah, Jurong East — arrive as `county`, which no admin tag queries:
+ * `DEFAULT_PLACETYPE_MAP` sends both `locality` and `dependent_locality` to WOF `locality`, and
+ * `PLACETYPE_FILTER_GROUPS` expands that to locality|borough|localadmin. So every planning area was unreachable, and
+ * Singapore's own `locality` row — the city-state plus four villages — was the only thing a query could answer with.
+ *
+ * `borough` is the projection because a borough is a first-class locality answer by that group's own rule (Brooklyn),
+ * and a city-state's planning area is its borough.
+ *
+ * DECLARED RATHER THAN DERIVED, because the derived rule is refused by the rows it would admit. Counted over every
+ * country in the promoted candidate table, three hold more `county` places than tag-reachable ones — KW 137/13, QA
+ * 79/46, SG 55/5 — and their names say they are different problems. Kuwait's county names are underscore-joined ASCII
+ * (`Abdulla_Al-Salem`, `Airport_District`) while its Arabic names sit on `locality`; Qatar's are bare NUMBERS (`13`,
+ * `14`, `18-19`) — Doha's zones, and admitting them would make every stray integer a candidate place. Only Singapore's
+ * county tier carries names a person writes.
+ */
+const COUNTY_IS_SETTLEMENT_TIER: ReadonlyMap<string, string> = new Map([["SG", "borough"]])
+
+/**
+ * The placetype a division row is written at: its Overture subtype, unless {@link COUNTY_IS_SETTLEMENT_TIER} names
+ * another for this country.
+ */
+export function foldedPlacetype(subtype: string, country: string): string {
+	if (subtype !== "county") return subtype
+
+	return COUNTY_IS_SETTLEMENT_TIER.get(country.trim().toUpperCase()) ?? subtype
+}
+
+/**
  * Width of the id range reserved for Overture rows — `OVERTURE_ID_BASE` up to the GeoNames fold's base at 9e12.
  */
 const OVERTURE_ID_SPAN = 1_000_000_000_000
@@ -296,8 +327,10 @@ export async function ingestOvertureDivisions(
 		const pgers = r.parent_division_id == null ? null : String(r.parent_division_id)
 		const pid = (pgers && idmap.get(pgers)) || -1
 		const name = String(r.name)
-		const subtype = String(r.subtype)
 		const country = String(r.country ?? "").toUpperCase()
+		// The row's own placetype, which is its Overture subtype except where that taxonomy puts a country's settlements
+		// on a tier no admin tag queries.
+		const placetype = foldedPlacetype(String(r.subtype), country)
 
 		// SELECT aliases: min_lat=ymin, min_lon=xmin, max_lat=ymax, max_lon=xmax → spr (lat, lon,
 		// min_latitude, min_longitude, max_latitude, max_longitude).
@@ -305,7 +338,7 @@ export async function ingestOvertureDivisions(
 			nid,
 			pid,
 			name,
-			subtype,
+			placetype,
 			country,
 			num(r.lat),
 			num(r.lon),
@@ -321,7 +354,7 @@ export async function ingestOvertureDivisions(
 			0
 		)
 
-		namesInsert.run(nid, name, subtype, country, "", 0, 0)
+		namesInsert.run(nid, name, placetype, country, "", 0, 0)
 
 		// Multilingual aliases (names.common — language→name) so a place resolves by every name it is called,
 		// in every script those names are written in. The candidate build explodes each into its own
@@ -337,7 +370,7 @@ export async function ingestOvertureDivisions(
 				for (const [lang, alias] of Object.entries(common)) {
 					if (typeof alias === "string" && !seen.has(alias) && isDivisionName(alias)) {
 						seen.add(alias)
-						namesInsert.run(nid, alias, subtype, country, lang, isOfficialLanguage(country, lang) ? 1 : 0, 0)
+						namesInsert.run(nid, alias, placetype, country, lang, isOfficialLanguage(country, lang) ? 1 : 0, 0)
 					}
 				}
 			}
