@@ -363,7 +363,10 @@ export async function applySpanRescore(
 	backend: ResolverBackend,
 	opts: ResolveOpts
 ): Promise<void> {
-	if (hasResolvedPlace(roots)) return // already resolved — never second-guess a working coordinate
+	// Already resolved — never second-guess a working coordinate. `spanRescoreWeakResolution` narrows what counts as
+	// working: a pick the gazetteer recorded no population for, or one that failed the query's own containment check,
+	// is not a coordinate the brake was written to protect.
+	if (hasResolvedPlace(roots, opts.spanRescoreWeakResolution ?? false)) return
 	// Default-ON since 2026-06-25, so this runs on every unresolved tree — a backend hiccup here must
 	// degrade to no-rescore, never crash the resolve (the same fall-through the main walk gives).
 	let hit

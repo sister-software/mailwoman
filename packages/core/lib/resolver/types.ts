@@ -583,6 +583,22 @@ export interface ResolveOpts {
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
+	 * Which reading of "resolved weakly" lifts the #685 span-rescore brake, or unset to take a `placeID` at face value.
+	 *
+	 * `applySpanRescore` declines whenever any node carries a `placeID`, which is what keeps it from second-guessing a
+	 * working coordinate. `Port Louis` satisfies that with a candidate carrying `resolver_score: 0` — the gazetteer
+	 * records no population for it — and `admin_containment: no_contained_candidate` — the query named a qualifier, the
+	 * probe ran, and nothing sat inside it. The recovery the brake withholds finds Port Louis (MU), population 155,226,
+	 * in place of an answer 9,009 km away.
+	 *
+	 * `score` and `containment` are different claims about the same pick, and `either` takes both. A rule has to say
+	 * which it acts on: lifting the brake unconditionally is measured and REFUSED — it fixes `Port Louis` and `Queen
+	 * Street, Auckland 1010`, and turns `Newport, Wales` and `Road Town` into different wrong answers.
+	 *
+	 * **Default UNSET**, which is the shipped brake.
+	 */
+	spanRescoreWeakResolution?: "score" | "containment" | "either"
+	/**
 	 * Postal-compound recovery inside the span-rescore tier (#942). The knife-edge no-street query shape ("Kožljek 7,
 	 * 1382 Kožljek") fails as a COMPOUND: the parse globs the trailing city into the postcode span ("1382 Kožljek"),
 	 * which then (a) resolves as neither postcode nor locality and (b) BLOCKS its own city tokens from span-rescore's

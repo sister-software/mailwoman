@@ -191,10 +191,52 @@ function hasAdminQualifier(roots: readonly AddressNode[]): boolean {
 }
 
 /**
- * True if any node in the tree already carries a resolved place id — the #685 brake.
+ * Which reading of "resolved weakly" lifts the #685 brake, or `false` to take a `placeID` at face value.
+ *
+ * - `score` — the pick carries `resolver_score: 0`, which the candidate backend writes when the gazetteer records no
+ *   population for it.
+ * - `containment` — `admin_containment` reads `no_contained_candidate`: the query named a qualifier, the probe ran, and
+ *   no candidate sat inside it. `unavailable` is NOT this, because the backend could not answer.
+ * - `either` — either reading.
+ *
+ * The two are different claims and a rule has to say which it acts on. `Port Louis` satisfies both: score 0 and
+ * `contained=false`, while the recovery the brake withholds finds Port Louis (MU), population 155,226, in place of an
+ * answer 9,009 km away.
  */
-export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
-	return firstNodeWhere(roots, (n) => Boolean(n.placeID)) !== undefined
+export type WeakResolutionReading = "score" | "containment" | "either"
+
+/**
+ * Whether one node's resolution rests on evidence thin enough to re-open, under `reading`.
+ */
+function resolvedWeakly(node: AddressNode, reading: WeakResolutionReading): boolean {
+	const metadata = node.metadata ?? {}
+	const weakScore = metadata["resolver_score"] === 0
+	const weakContainment = metadata["admin_containment"] === "no_contained_candidate"
+
+	if (reading === "score") return weakScore
+
+	if (reading === "containment") return weakContainment
+
+	return weakScore || weakContainment
+}
+
+/**
+ * True if any node in the tree already carries a resolved place id — the #685 brake.
+ *
+ * With `weakReading`, a node whose resolution is weak under that reading does NOT hold the brake, so span rescore may
+ * run against a tree that nominally resolved.
+ *
+ * Lifting the brake UNCONDITIONALLY is measured and refused: it fixes `Port Louis` and `Queen Street, Auckland 1010`
+ * and turns `Newport, Wales` and `Road Town` into different wrong answers. So the question is never whether to lift it
+ * but on which evidence, which is what `weakReading` names.
+ */
+export function hasResolvedPlace(
+	roots: readonly AddressNode[],
+	weakReading: WeakResolutionReading | false = false
+): boolean {
+	return (
+		firstNodeWhere(roots, (n) => Boolean(n.placeID) && !(weakReading && resolvedWeakly(n, weakReading))) !== undefined
+	)
 }
 
 /**
