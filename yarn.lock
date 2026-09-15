@@ -6435,7 +6435,6 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
   languageName: unknown
   linkType: soft
