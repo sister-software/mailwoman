@@ -10,8 +10,9 @@
  * rather than the country's, destroying the city. A probe that rendered only one shape would report one of them as
  * passing.
  *
- * The postal codes are real, read from `postalcode-ca-overture.db` — the highest-address-point code in each province,
- * so a row that resolves is resolving somewhere a person lives.
+ * The postal codes are real, read from `postalcode-ca-overture.db`, and each is the one NEAREST its seat — the distance
+ * rides in the output so a reader can see the city and the code name the same town. Selecting the province's busiest
+ * code instead paired `Winnipeg` with `R0C 2Z0`, which is Stonewall, 30 km away.
  *
  * Run:
  *
@@ -24,6 +25,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 
@@ -80,17 +82,19 @@ const POSTAL_PREFIXES: Readonly<Record<string, readonly string[]>> = {
 	YT: ["Y"],
 }
 
-/**
- * A Canadian postal code, unspaced as the artifact stores it — `A1V0A9`. The artifact also holds forward sortation
- * areas, which are three characters, and those name no deliverable point.
- */
-const POSTAL_CODE_LENGTH = 6
-
 interface ProbeRow {
 	code: string
 	province: string
 	input: string
 	withPostcode: boolean
+	/**
+	 * How far the chosen code's point sits from the seat, on the rows that carry one.
+	 *
+	 * Reported because the pairing is the probe's own construction: a row whose city and code name different towns grades
+	 * a contradiction the model never had to answer, and a reader cannot tell one from a real failure without this
+	 * number.
+	 */
+	postcodeKm: number | null
 	country: string | null
 	region: string | null
 	locality: string | null
@@ -100,20 +104,51 @@ interface ProbeRow {
 using db = new DatabaseClient<WOFDatabase>(values["postcode-db"]!)
 
 /**
- * The busiest postal code in a province, spaced the way an address writes it.
+ * The postal code NEAREST the seat, spaced the way an address writes it, with the distance it sits at.
+ *
+ * Nearest rather than busiest, and the distance is reported rather than assumed. Ranking a province's codes by
+ * address-point count selects a RURAL code every time: a rural code spans a whole district and holds thousands of
+ * points, while a downtown code covers one block and holds single digits. Manitoba's twelve busiest are all `R0x`, and
+ * the busiest of them, `R0C 2Z0` at 2,381 points, is Stonewall — 30 km from Winnipeg, which is the seat it was being
+ * paired with. `Winnipeg, MB R0C 2Z0` is then an address whose city and postal code name different towns, and a model
+ * that declines to commit on it is behaving correctly while the probe records a failure.
+ *
+ * The seat's own coordinate comes from the no-postcode arm this probe already runs, so nothing here needs a second
+ * gazetteer and the pairing is checkable from the output.
  */
-async function postcodeFor(code: string): Promise<string | null> {
+async function postcodeNearest(code: string, seat: { lat: number; lon: number }): Promise<PostcodePick | null> {
+	let best: PostcodePick | null = null
+
 	for (const prefix of POSTAL_PREFIXES[code] ?? []) {
 		const rows = await sql<{
 			name: string
-		}>`SELECT name FROM spr WHERE name LIKE ${`${prefix}%`} ORDER BY point_count DESC LIMIT 1`.execute(db)
+			latitude: number
+			longitude: number
+			// GLOB the full A1A1A1 shape rather than counting characters. The artifact stores some names with their space
+			// already in, so a length test admits `Y1A R6` — five significant characters — and spacing it again writes
+			// `Y1A  R6`, an address no Canadian writes and no model should be asked to read.
+		}>`SELECT name, latitude, longitude FROM spr WHERE name LIKE ${`${prefix}%`} AND name GLOB ${"[A-Z][0-9][A-Z][0-9][A-Z][0-9]"}`.execute(
+			db
+		)
 
-		const name = rows.rows[0]?.name
+		for (const row of rows.rows) {
+			const km = haversineKm(seat.lat, seat.lon, row.latitude, row.longitude)
 
-		if (name && name.length === POSTAL_CODE_LENGTH) return `${name.slice(0, 3)} ${name.slice(3)}`
+			if (!best || km < best.km) {
+				best = { postcode: `${row.name.slice(0, 3)} ${row.name.slice(3)}`, km }
+			}
+		}
 	}
 
-	return null
+	return best
+}
+
+/**
+ * A chosen code and how far its point sits from the seat it is paired with.
+ */
+interface PostcodePick {
+	postcode: string
+	km: number
 }
 
 // A probe written to price a corpus change has to be able to point at the model that change produced; without this it
@@ -126,13 +161,19 @@ for (const { code, name } of Object.values(CA_PROVINCES)) {
 
 	if (!locality) continue
 
-	const postcode = await postcodeFor(code)
+	// The bare arm runs first because its coordinate is what makes the postcode arm's pairing coherent.
+	const seatResult = await deps.geocode(`${locality}, ${code}, Canada`, {})
+
+	const pick =
+		typeof seatResult.lat === "number" && typeof seatResult.lon === "number"
+			? await postcodeNearest(code, { lat: seatResult.lat, lon: seatResult.lon })
+			: null
 
 	for (const withPostcode of [false, true]) {
-		if (withPostcode && !postcode) continue
+		if (withPostcode && !pick) continue
 
-		const input = withPostcode ? `${locality}, ${code} ${postcode}, Canada` : `${locality}, ${code}, Canada`
-		const result = await deps.geocode(input, {})
+		const input = withPostcode ? `${locality}, ${code} ${pick!.postcode}, Canada` : `${locality}, ${code}, Canada`
+		const result = withPostcode ? await deps.geocode(input, {}) : seatResult
 
 		// The row is correct when the country is Canada AND the region is the code AND the locality survived. A country
 		// answered as the province's own code is the contradiction; a locality answered as the code is the other failure.
@@ -141,6 +182,7 @@ for (const { code, name } of Object.values(CA_PROVINCES)) {
 			province: name,
 			input,
 			withPostcode,
+			postcodeKm: withPostcode ? pick!.km : null,
 			country: result.countryCode ?? null,
 			region: result.region ?? null,
 			locality: result.locality ?? null,
@@ -169,12 +211,12 @@ const collisions = Object.values(CA_PROVINCES)
 
 console.log(`#2299 province-code probe — ${report.length} rows over ${Object.keys(SEATS).length} provinces`)
 console.log(`codes that are also a country: ${collisions.join(", ")}\n`)
-console.log(`| code | postcode | country | region | locality |`)
+console.log(`| code | code↔seat | country | region | locality |`)
 console.log(`| --- | --- | --- | --- | --- |`)
 
 for (const row of report) {
 	const mark = row.correct ? "" : "  ←"
-	const shape = row.withPostcode ? "yes" : "no"
+	const shape = row.withPostcode ? `${row.postcodeKm!.toFixed(1)} km` : "no"
 
 	console.log(
 		`| ${row.code} | ${shape} | ${row.country ?? "—"} | ${row.region ?? "—"} | ${row.locality ?? "—"} |${mark}`

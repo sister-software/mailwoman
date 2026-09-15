@@ -75,19 +75,25 @@ for (const row of rows) {
 const panel = values.limit ? [...byCity.values()].slice(0, Number(values.limit)) : [...byCity.values()]
 
 /**
+ * One panel city — the four surfaces below are four ways of writing it.
+ */
+type City = (typeof panel)[number]
+
+/**
  * The four surfaces, and what a correct answer looks like in each.
  *
  * `street_only` is the reverse arm and is graded INVERTED: the street must not be read as a locality, so a row with no
  * locality at all is the pass.
  */
 const ARMS = [
-	{ name: "bare", render: (c: (typeof panel)[number]) => `${c.locality}, ${c.region} ${c.postcode}` },
-	{ name: "with_country", render: (c: (typeof panel)[number]) => `${c.locality}, ${c.region} ${c.postcode}, USA` },
+	{ name: "bare", inverted: false, render: (c: City) => `${c.locality}, ${c.region} ${c.postcode}` },
+	{ name: "with_country", inverted: false, render: (c: City) => `${c.locality}, ${c.region} ${c.postcode}, USA` },
 	{
 		name: "with_street",
-		render: (c: (typeof panel)[number]) => `123 Main St, ${c.locality}, ${c.region} ${c.postcode}`,
+		inverted: false,
+		render: (c: City) => `123 Main St, ${c.locality}, ${c.region} ${c.postcode}`,
 	},
-	{ name: "street_only", render: (c: (typeof panel)[number]) => `${c.street}, ${c.region} ${c.postcode}` },
+	{ name: "street_only", inverted: true, render: (c: City) => `${c.street}, ${c.region} ${c.postcode}` },
 ] as const
 
 /**
@@ -116,8 +122,15 @@ for (const arm of ARMS) {
 
 		if (locality === city.locality) {
 			matched++
-		} else if (examples.length < EXAMPLES_PER_ARM) {
-			examples.push(`${input} → locality ${stringifyJSON(locality)}`)
+		}
+
+		// What counts as a failure differs by arm, so the examples have to ask the arm. `street_only` is graded
+		// inverted, and listing rows whose locality is not the city's would print its PASSES under a "misses" heading —
+		// every one of them `null`, which is the answer that arm wants.
+		const failed = arm.inverted ? locality !== null : locality !== city.locality
+
+		if (failed && examples.length < EXAMPLES_PER_ARM) {
+			examples.push(`${input} → locality ${stringifyJSON(locality)} (city ${stringifyJSON(city.locality)})`)
 		}
 	}
 
