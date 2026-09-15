@@ -71,9 +71,8 @@ function withAugmentation(
 	}
 }
 
-// ===========================================================================
-// Locale-agnostic augmentations
-// ===========================================================================
+// The augmentations below apply to any locale: they read the raw string and its components without consulting a
+// country table, so adding a locale never touches them.
 
 /**
  * Upper-case raw + every component value. Returns null if already all-upper.
@@ -279,9 +278,8 @@ export const typoInject: Augmentation = (row) => {
 	return withAugmentation(row, "typo-inject", newRaw, { ...row.components, [tag]: typed })
 }
 
-// ===========================================================================
-// US-specific augmentations
-// ===========================================================================
+// The augmentations below read US tables — state names, USPS suffixes, ZIP shapes — so each one is correct for a US
+// row and wrong for any other. `AUGMENTATIONS` is what scopes them; none checks the country itself.
 
 /**
  * US state full ↔ alpha-2 mapping. Two-way: `STATE_TO_ABBR["Oregon"] = "OR"`.
@@ -611,9 +609,8 @@ export const zipPlus4DashDrop: Augmentation = (row) => {
 	return withAugmentation(row, "zip-plus4-dash-drop", newRaw, { ...row.components, postcode: noDash })
 }
 
-// ===========================================================================
-// FR-specific augmentations
-// ===========================================================================
+// The French augmentations, on the same footing as the US ones above: they read French orthography and are scoped by
+// the registry rather than by a country check of their own.
 
 /**
  * FR: drop the article particle from a street ("Rue de la République" → "Rue République").
@@ -634,9 +631,8 @@ export const particleStrip: Augmentation = (row) => {
 	return withAugmentation(row, "particle-strip", newRaw, newComponents)
 }
 
-// ===========================================================================
-// Registry + default policies
-// ===========================================================================
+// The registry below is the only thing that scopes the augmentations above to a locale, and the id it keys them by is
+// what a corpus row records, so renaming one rewrites history rather than a table.
 
 /**
  * Stable id → augmentation table.
@@ -806,9 +802,7 @@ export function countryToLocale(country: string): string {
 	return "en-US"
 }
 
-// ===========================================================================
-// Compositional synthesis (Phase 1.6 §2.1)
-// ===========================================================================
+// Compositional synthesis, which is a different operation from everything above.
 //
 // The single-row augmentations above transform one `CanonicalRow` into another with `raw` and
 // `components` moved in lockstep, leaving alignment to derive labels downstream. Composition is

@@ -525,9 +525,7 @@ describe("registry + defaults", () => {
 	})
 })
 
-// ===========================================================================
-// Raw-surface punctuation survival (#519 / PR #534 open question 3)
-// ===========================================================================
+// Raw-surface punctuation survival.
 //
 // Every augmentation transforms `raw` by direct string splicing (replace/case-map on the raw
 // itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow` on each
@@ -690,10 +688,6 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		expect(slice("street")).toBe("MAIN ST")
 	})
 })
-
-// ===========================================================================
-// composeAdversarialRow (Phase 1.6 §2.1)
-// ===========================================================================
 
 describe("composeAdversarialRow", () => {
 	it("emits a LabeledRow that round-trips through the BIO label vocabulary", () => {
