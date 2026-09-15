@@ -24,10 +24,8 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Pre-registered coverage-qualified absence-observation probe (#1965)"
 
@@ -49,41 +47,32 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalAbsenceObservationProbe: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { printAbsenceProbeReceipt, runAbsenceObservationProbe } =
-				await import("#eval-harness/absence-observation/run")
+const EvalAbsenceObservationProbe = harnessCommand(
+	spec,
+	async (options) => {
+		const { printAbsenceProbeReceipt, runAbsenceObservationProbe } =
+			await import("#eval-harness/absence-observation/run")
 
-			const receipt = await runAbsenceObservationProbe({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				coverageDatabasePath: options.coverage,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-			})
+		const receipt = await runAbsenceObservationProbe({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			coverageDatabasePath: options.coverage,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+		})
 
-			if (options.out) {
-				await writeLocalJSONFile(receipt, options.out)
-			}
+		if (options.out) {
+			await writeLocalJSONFile(receipt, options.out)
+		}
 
-			if (!options.json) {
-				printAbsenceProbeReceipt(receipt)
-			}
+		if (!options.json) {
+			printAbsenceProbeReceipt(receipt)
+		}
 
-			return { receipt }
-		},
-		() => 0
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.receipt)}</Text>
-	}
-
-	return null
-}
+		return { receipt }
+	},
+	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : undefined) }
+)
 
 export default EvalAbsenceObservationProbe

@@ -22,10 +22,8 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Pre-registered geographic-model semantic-utility probe (#1928)"
 
@@ -52,41 +50,32 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalSemanticUtilityProbe: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { printProbeReceipt, runSemanticUtilityProbe } = await import("#eval-harness/semantic-utility/run")
+const EvalSemanticUtilityProbe = harnessCommand(
+	spec,
+	async (options) => {
+		const { printProbeReceipt, runSemanticUtilityProbe } = await import("#eval-harness/semantic-utility/run")
 
-			const receipt = await runSemanticUtilityProbe({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-				arm: options.arm,
-				semanticObservation: options.semanticObservation,
-			})
+		const receipt = await runSemanticUtilityProbe({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+			arm: options.arm,
+			semanticObservation: options.semanticObservation,
+		})
 
-			if (options.out) {
-				await writeLocalJSONFile(receipt, options.out)
-			}
+		if (options.out) {
+			await writeLocalJSONFile(receipt, options.out)
+		}
 
-			if (!options.json) {
-				printProbeReceipt(receipt)
-			}
+		if (!options.json) {
+			printProbeReceipt(receipt)
+		}
 
-			return { receipt }
-		},
-		() => 0
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.receipt)}</Text>
-	}
-
-	return null
-}
+		return { receipt }
+	},
+	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : undefined) }
+)
 
 export default EvalSemanticUtilityProbe

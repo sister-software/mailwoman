@@ -10,7 +10,7 @@
  *   mangle + fragment campaign's progress.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 /**
  * Largest disagreement sample that keeps parity output reviewable.
@@ -52,33 +52,28 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalParity: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runParityEval } = await import("#eval-harness/parity-corpus")
+// The runner narrates its tables + verdict on stdout, so no `json`.
+const EvalParity = harnessCommand(
+	spec,
+	async (options) => {
+		const { runParityEval } = await import("#eval-harness/parity-corpus")
 
-			return (
-				await runParityEval({
-					locale: options.locale,
-					modelPath: options.model,
-					tokenizerPath: options.tokenizer,
-					modelCardPath: options.card,
-					fixturesPath: options.fixtures,
-					weightsCacheRoot: options.weightsCache,
-					streetMorphology: options.streetMorphology,
-					gazetteerPrior: options.gazetteerPriorOff ? false : undefined,
-					wordConsistency: options.wordConsistency,
-					failing: options.failing,
-				})
-			).exitCode
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its tables + verdict on stdout.
-	return null
-}
+		return (
+			await runParityEval({
+				locale: options.locale,
+				modelPath: options.model,
+				tokenizerPath: options.tokenizer,
+				modelCardPath: options.card,
+				fixturesPath: options.fixtures,
+				weightsCacheRoot: options.weightsCache,
+				streetMorphology: options.streetMorphology,
+				gazetteerPrior: options.gazetteerPriorOff ? false : undefined,
+				wordConsistency: options.wordConsistency,
+				failing: options.failing,
+			})
+		).exitCode
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalParity

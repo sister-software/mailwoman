@@ -17,7 +17,7 @@
  *   residuals (a row whose critical components the baseline never parsed at all).
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description =
 	"Metamorphic invariance mini-suite (comma-drop/abbrev/case/idempotence) — standing probe guard"
@@ -46,20 +46,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalInvariance: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runInvarianceCommand } = await import("#eval-harness/invariance/command")
+// The runner narrates its own report + verdict lines, so no `json` — rendering anything here would duplicate it.
+const EvalInvariance = harnessCommand(
+	spec,
+	async (options) => {
+		const { runInvarianceCommand } = await import("#eval-harness/invariance/command")
 
-			return await runInvarianceCommand(options)
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its own report + verdict lines — rendering anything here would duplicate it.
-	return null
-}
+		return await runInvarianceCommand(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalInvariance

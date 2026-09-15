@@ -11,7 +11,7 @@
  *   Informational (always exits 0) — the standing floors stay on `eval parity`.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"
 
@@ -32,27 +32,22 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalFragmentBoard: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runFragmentBoard } = await import("#eval-harness/fragment/board")
+// The runner narrates its table on stdout, so no `json`.
+const EvalFragmentBoard = harnessCommand(
+	spec,
+	async (options) => {
+		const { runFragmentBoard } = await import("#eval-harness/fragment/board")
 
-			return (
-				await runFragmentBoard({
-					locale: options.locale,
-					weightsCacheRoot: options.weightsCache,
-					fixturesPath: options.fixtures,
-					klass: options.klass,
-				})
-			).exitCode
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its table on stdout.
-	return null
-}
+		return (
+			await runFragmentBoard({
+				locale: options.locale,
+				weightsCacheRoot: options.weightsCache,
+				fixturesPath: options.fixtures,
+				klass: options.klass,
+			})
+		).exitCode
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalFragmentBoard

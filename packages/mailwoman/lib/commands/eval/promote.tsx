@@ -12,7 +12,7 @@
  *   the exit code.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Promotion check (#479) — eval battery + check-spec floors → verdict.json"
 
@@ -36,20 +36,16 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalPromote: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runPromotionEval } = await import("#eval-harness/promotion/eval/index")
+// `promotion-eval.ts` narrates its own verdict lines, so no `json` — rendering anything here would pollute the
+// captured report.
+const EvalPromote = harnessCommand(
+	spec,
+	async (options) => {
+		const { runPromotionEval } = await import("#eval-harness/promotion/eval/index")
 
-			return await runPromotionEval(options)
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// `promotion-eval.ts` narrates its own verdict lines — rendering anything here would pollute the captured report.
-	return null
-}
+		return await runPromotionEval(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalPromote

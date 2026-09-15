@@ -9,7 +9,7 @@
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Append a promotion-eval run to evals/scores-by-version.json (#885)"
 
@@ -48,20 +48,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalLedgerAppend: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { ledgerAppend } = await import("#eval-harness/ledger-append")
+// `ledgerAppend` narrates its own ✓/✗ lines, so no `json`.
+const EvalLedgerAppend = harnessCommand(
+	spec,
+	async (options) => {
+		const { ledgerAppend } = await import("#eval-harness/ledger-append")
 
-			return await ledgerAppend(options)
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// ledgerAppend narrates its own ✓/✗ lines.
-	return null
-}
+		return await ledgerAppend(options)
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalLedgerAppend

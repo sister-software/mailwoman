@@ -19,10 +19,7 @@
  *   ships.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
-
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
 
@@ -49,36 +46,27 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalPoiBoard: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runPOIBoard } = await import("#eval-harness/poi/board")
+// Without `--json` the runner narrates its table on stdout directly.
+const EvalPoiBoard = harnessCommand(
+	spec,
+	async (options) => {
+		const { runPOIBoard } = await import("#eval-harness/poi/board")
 
-			const { report, exitCode } = await runPOIBoard({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				fixturesPath: options.fixtures,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-				semanticObservation: options.semanticObservation,
-				quiet: options.json,
-				enforce: options.enforce,
-			})
+		const { report, exitCode } = await runPOIBoard({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			fixturesPath: options.fixtures,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+			semanticObservation: options.semanticObservation,
+			quiet: options.json,
+			enforce: options.enforce,
+		})
 
-			return { report, exitCode }
-		},
-		({ exitCode }) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.report)}</Text>
-	}
-
-	// Non-json mode: the runner narrates its table on stdout directly.
-	return null
-}
+		return { report, exitCode }
+	},
+	{ exitCode: ({ exitCode }) => exitCode, json: ({ report }, options) => (options.json ? report : undefined) }
+)
 
 export default EvalPoiBoard

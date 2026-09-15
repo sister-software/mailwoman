@@ -16,7 +16,7 @@
  *   instruction.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Every committed conformance-law suite, through the Gauntlet's deps"
 
@@ -36,27 +36,22 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalConformance: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runConformanceCommand } = await import("#eval-harness/conformance/command")
+// The runner narrates its own report + verdict lines, so no `json` — rendering anything here would duplicate it.
+const EvalConformance = harnessCommand(
+	spec,
+	async (options) => {
+		const { runConformanceCommand } = await import("#eval-harness/conformance/command")
 
-			return runConformanceCommand({
-				...(options.suite ? { suite: options.suite } : {}),
-				...(options.candidate ? { modelPath: options.candidate } : {}),
-				...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
-				...(options.card ? { modelCardPath: options.card } : {}),
-				...(options.weightsCache ? { weightsCacheRoot: options.weightsCache } : {}),
-				...(options.candidateDB ? { candidateDB: options.candidateDB } : {}),
-			})
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The runner narrates its own report + verdict lines — rendering anything here would duplicate it.
-	return null
-}
+		return runConformanceCommand({
+			...(options.suite ? { suite: options.suite } : {}),
+			...(options.candidate ? { modelPath: options.candidate } : {}),
+			...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
+			...(options.card ? { modelCardPath: options.card } : {}),
+			...(options.weightsCache ? { weightsCacheRoot: options.weightsCache } : {}),
+			...(options.candidateDB ? { candidateDB: options.candidateDB } : {}),
+		})
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalConformance

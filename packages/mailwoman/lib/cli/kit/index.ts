@@ -5,6 +5,7 @@
  */
 
 export * from "#cli/kit/shared"
+export * from "#cli/kit/harness-command"
 export * from "#cli/kit/engine-stamp"
 export * from "#cli/kit/metadata"
 export * from "#cli/native/spec"

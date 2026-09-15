@@ -10,7 +10,7 @@
  *   (#582). `eval promote` runs it automatically when the spec declares `requires_conventions`.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Mask-regression check (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
@@ -37,20 +37,15 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalMaskRegression: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { maskRegressionCheck } = await import("#eval-harness/mask-regression")
+// The check narrates its own ✓ PASS / ✗ FAIL lines on stderr, so no `json`.
+const EvalMaskRegression = harnessCommand(
+	spec,
+	async (options) => {
+		const { maskRegressionCheck } = await import("#eval-harness/mask-regression")
 
-			return (await maskRegressionCheck(options)).pass
-		},
-		(pass) => (pass ? 0 : 1)
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The check narrates its own ✓ PASS / ✗ FAIL lines on stderr.
-	return null
-}
+		return (await maskRegressionCheck(options)).pass
+	},
+	{ exitCode: (pass) => (pass ? 0 : 1) }
+)
 
 export default EvalMaskRegression

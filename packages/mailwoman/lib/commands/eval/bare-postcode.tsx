@@ -7,7 +7,7 @@
  *   classifier. Exit 0 requires every first token to decode as postcode.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Read the 56 reserved bare-postcode capability cases with one warm classifier"
 
@@ -26,19 +26,14 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalBarePostcode: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { runBarePostcodeCapability } = await import("#eval-harness/bare-postcode-capability")
+const EvalBarePostcode = harnessCommand(
+	spec,
+	async (options) => {
+		const { runBarePostcodeCapability } = await import("#eval-harness/bare-postcode-capability")
 
-			return runBarePostcodeCapability({ weightsCacheRoot: options.weightsCache, label: options.label })
-		},
-		(result) => (result.pass ? 0 : 1)
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	return null
-}
+		return runBarePostcodeCapability({ weightsCacheRoot: options.weightsCache, label: options.label })
+	},
+	{ exitCode: (result) => (result.pass ? 0 : 1) }
+)
 
 export default EvalBarePostcode

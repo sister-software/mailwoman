@@ -20,10 +20,8 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Pre-registered phase-2 decision ruler (#1967)"
 
@@ -45,40 +43,31 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalPhase2Decision: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(
-		async () => {
-			const { printPhase2Receipt, runPhase2Decision } = await import("#eval-harness/phase-2-decision/run")
+const EvalPhase2Decision = harnessCommand(
+	spec,
+	async (options) => {
+		const { printPhase2Receipt, runPhase2Decision } = await import("#eval-harness/phase-2-decision/run")
 
-			const receipt = await runPhase2Decision({
-				locale: options.locale,
-				weightsCacheRoot: options.weightsCache,
-				db: options.db,
-				resolveDB: options.resolveDB,
-				candidateDB: options.candidateDB,
-				coverageDatabasePath: options.coverage,
-			})
+		const receipt = await runPhase2Decision({
+			locale: options.locale,
+			weightsCacheRoot: options.weightsCache,
+			db: options.db,
+			resolveDB: options.resolveDB,
+			candidateDB: options.candidateDB,
+			coverageDatabasePath: options.coverage,
+		})
 
-			if (options.out) {
-				await writeLocalJSONFile(receipt, options.out)
-			}
+		if (options.out) {
+			await writeLocalJSONFile(receipt, options.out)
+		}
 
-			if (!options.json) {
-				printPhase2Receipt(receipt)
-			}
+		if (!options.json) {
+			printPhase2Receipt(receipt)
+		}
 
-			return { receipt }
-		},
-		() => 0
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json && state.status === "done") {
-		return <Text>{prettyJSON(state.result.receipt)}</Text>
-	}
-
-	return null
-}
+		return { receipt }
+	},
+	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : undefined) }
+)
 
 export default EvalPhase2Decision

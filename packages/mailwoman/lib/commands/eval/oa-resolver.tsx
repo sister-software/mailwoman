@@ -9,7 +9,7 @@
  *   for the two-tier metric and every arm's rationale.
  */
 
-import { booleanOption, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { booleanOption, type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
@@ -64,27 +64,20 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalOAResolver: CommandComponent<typeof spec> = ({ options }) => {
+// The eval prints its own markdown report on stdout, so no `json`.
+const EvalOAResolver = harnessCommand(spec, async (options) => {
 	const { adminCoherenceOff, adminFst, postcodeConsistencyOff, postcodeCountryCoherenceOff, ...rest } = options
+	const { oaResolverEval } = await import("#eval-harness/oa/resolver/eval")
 
-	const state = useCommandTask(async () => {
-		const { oaResolverEval } = await import("#eval-harness/oa/resolver/eval")
-
-		return await oaResolverEval({
-			...rest,
-			noAdminCoherence: adminCoherenceOff,
-			noPostcodeConsistency: postcodeConsistencyOff,
-			noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
-			// CLI kebab derivation forces the lowercase-acronym prop above; the harness option keeps
-			// the house spelling, so the rename happens here rather than in the eval's own contract.
-			...(adminFst ? { adminFST: adminFst } : {}),
-		})
+	return await oaResolverEval({
+		...rest,
+		noAdminCoherence: adminCoherenceOff,
+		noPostcodeConsistency: postcodeConsistencyOff,
+		noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
+		// CLI kebab derivation forces the lowercase-acronym prop above; the harness option keeps
+		// the house spelling, so the rename happens here rather than in the eval's own contract.
+		...(adminFst ? { adminFST: adminFst } : {}),
 	})
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The eval prints its own markdown report on stdout.
-	return null
-}
+})
 
 export default EvalOAResolver

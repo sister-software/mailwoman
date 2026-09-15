@@ -9,10 +9,8 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Autocomplete ladder (#2154) — first-hit rung, stability, latency and abstention per prefix"
 
@@ -37,8 +35,9 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalAutocomplete: CommandComponent<typeof spec> = ({ options }) => {
-	const state = useCommandTask(async () => {
+const EvalAutocomplete = harnessCommand(
+	spec,
+	async (options) => {
 		const { printAutocompleteLadder, runAutocompleteLadder } = await import("#eval-harness/autocomplete-ladder")
 
 		const report = await runAutocompleteLadder({
@@ -60,15 +59,8 @@ const EvalAutocomplete: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		return { report }
-	})
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	if (options.json) {
-		return <Text>{prettyJSON(state.result.report)}</Text>
-	}
-
-	return null
-}
+	},
+	{ json: ({ report }, options) => (options.json ? report : undefined) }
+)
 
 export default EvalAutocomplete

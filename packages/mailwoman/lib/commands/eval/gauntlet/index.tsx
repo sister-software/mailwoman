@@ -19,7 +19,7 @@
  *   substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, harnessCommand, splitList } from "#cli-kit"
 
 export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
 
@@ -57,48 +57,42 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const EvalGauntlet: CommandComponent<typeof spec> = ({ options }) => {
-	// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
-	// ever reaches `runGauntlet` as a field of its own.
-	const { postcodeCountryCoherenceOff, gazetteerPriorOff, adminContainmentRerankOff, components, ...rest } = options
+// The layers narrate their own verdict lines on stdout, so no `json`.
+const EvalGauntlet = harnessCommand(
+	spec,
+	async (options) => {
+		// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
+		// ever reaches `runGauntlet` as a field of its own.
+		const { postcodeCountryCoherenceOff, gazetteerPriorOff, adminContainmentRerankOff, components, ...rest } = options
+		const { runGauntlet } = await import("#eval-harness/gauntlet/run")
 
-	const state = useCommandTask(
-		async () => {
-			const { runGauntlet } = await import("#eval-harness/gauntlet/run")
-
-			return (
-				await runGauntlet({
-					...rest,
-					weightsCacheRoot: options.weightsCache,
-					// ablation only. An absent flag must stay absent (→ every ablatable tag), so an empty string
-					// never becomes an empty filter — which would silently measure nothing and print a map of one
-					// header row.
-					...(components ? { components: splitList(components) } : {}),
-					// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
-					// `false` default for BOTH halves, and forwarding one verbatim would pin the change forever — which is
-					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
-					// flag set keeps "no flag" meaning "grade whatever production does".
-					postcodeCountryCoherence: options.postcodeCountryCoherence
-						? true
-						: postcodeCountryCoherenceOff
-							? false
-							: undefined,
-					// #1497: two-sided since the 2026-08-16 default-on promotion. There IS a production default to
-					// preserve now, so an unset flag must stay unset rather than pinning the change either way.
-					gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
-					// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the OFF pin
-					// grades the production default explicitly, and no flag stays "grade whatever production does".
-					adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
-				})
-			).exitCode
-		},
-		(exitCode) => exitCode
-	)
-
-	if (state.status !== "done") return <CommandTaskResult state={state} />
-
-	// The layers narrate their own verdict lines on stdout.
-	return null
-}
+		return (
+			await runGauntlet({
+				...rest,
+				weightsCacheRoot: options.weightsCache,
+				// ablation only. An absent flag must stay absent (→ every ablatable tag), so an empty string
+				// never becomes an empty filter — which would silently measure nothing and print a map of one
+				// header row.
+				...(components ? { components: splitList(components) } : {}),
+				// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
+				// `false` default for BOTH halves, and forwarding one verbatim would pin the change forever — which is
+				// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
+				// flag set keeps "no flag" meaning "grade whatever production does".
+				postcodeCountryCoherence: options.postcodeCountryCoherence
+					? true
+					: postcodeCountryCoherenceOff
+						? false
+						: undefined,
+				// #1497: two-sided since the 2026-08-16 default-on promotion. There IS a production default to
+				// preserve now, so an unset flag must stay unset rather than pinning the change either way.
+				gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
+				// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the OFF pin
+				// grades the production default explicitly, and no flag stays "grade whatever production does".
+				adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
+			})
+		).exitCode
+	},
+	{ exitCode: (exitCode) => exitCode }
+)
 
 export default EvalGauntlet
