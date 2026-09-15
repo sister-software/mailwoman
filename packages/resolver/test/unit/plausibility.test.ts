@@ -9,6 +9,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { readReleaseConfig } from "@mailwoman/core/release-config"
 import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 import {
 	COUNTRY_BBOX,
@@ -163,5 +164,74 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 
 		// An artifact WITHOUT a US box → fail-open, overriding the constant.
 		expect(isImplausibleResolution(t, { expectedCountry: "US", countryBBoxes: new Map() }).implausible).toBe(false)
+	})
+})
+
+describe("COUNTRY_BBOX covers every shipping locale", () => {
+	test("a locale that ships weights has a box", async () => {
+		// An absent key fails OPEN, so a locale without a box is indistinguishable from one the guard cleared. Read
+		// from `release.config.json` rather than a list here, so the next locale to ship is covered by this test
+		// instead of passing against a copy of the old set.
+		const config = await readReleaseConfig()
+
+		const countries = new Set(
+			[...config.locales, ...Object.values(config.charWeights ?? {}).flatMap((w) => w.overlays ?? [])].map((locale) =>
+				locale.split("-").at(-1)!.toUpperCase()
+			)
+		)
+
+		expect([...countries].filter((cc) => !(cc in COUNTRY_BBOX))).toEqual([])
+	})
+
+	test("every box contains its country's own capital", () => {
+		// The failure a hand-written box invites is a trimmed one, and a box that has lost territory has usually lost
+		// it at an edge. A capital is the cheapest point every box must hold.
+		const capitals: ReadonlyArray<readonly [string, number, number]> = [
+			["US", 38.9072, -77.0369],
+			["AU", -35.2809, 149.13],
+			["BR", -15.7939, -47.8828],
+			["CN", 39.9042, 116.4074],
+			["CZ", 50.0755, 14.4378],
+			["DE", 52.52, 13.405],
+			["ES", 40.4168, -3.7038],
+			["FR", 48.8566, 2.3522],
+			["GB", 51.5074, -0.1278],
+			["HR", 45.815, 15.9819],
+			["IN", 28.6139, 77.209],
+			["IT", 41.9028, 12.4964],
+			["JP", 35.6762, 139.6503],
+			["NL", 52.3676, 4.9041],
+			["NO", 59.9139, 10.7522],
+			["NZ", -41.2865, 174.7762],
+			["PL", 52.2297, 21.0122],
+			["PT", 38.7223, -9.1393],
+			["RO", 44.4268, 26.1025],
+			["SE", 59.3293, 18.0686],
+			["SK", 48.1486, 17.1077],
+			["SI", 46.0569, 14.5058],
+		]
+
+		expect(capitals.map(([cc]) => cc).toSorted()).toEqual(Object.keys(COUNTRY_BBOX).toSorted())
+
+		for (const [cc, lat, lon] of capitals) {
+			expect(outsideExpectedCountry(cc, lat, lon), `${cc} capital outside its own box`).toBe(false)
+		}
+	})
+
+	test("the outlying territory the docstring names is inside its box", () => {
+		// Trimming a box to the populated core is the way a coarse guard becomes a wrong one.
+		expect(outsideExpectedCountry("NZ", -29.2665, -177.9159), "Raoul Island, Kermadecs").toBe(false)
+		expect(outsideExpectedCountry("NZ", -43.9535, -176.5597), "Chatham Islands").toBe(false)
+		expect(outsideExpectedCountry("JP", 24.2867, 153.9807), "Minamitorishima").toBe(false)
+		expect(outsideExpectedCountry("JP", 45.5228, 141.9364), "Wakkanai, Hokkaido").toBe(false)
+		expect(outsideExpectedCountry("IT", 35.5017, 12.6067), "Lampedusa").toBe(false)
+		expect(outsideExpectedCountry("CN", 53.4874, 122.3405), "Mohe").toBe(false)
+	})
+
+	test("a box still refuses the other side of the world", () => {
+		expect(outsideExpectedCountry("JP", 39.0997, -94.5786), "Kansas City under a JP expectation").toBe(true)
+		expect(outsideExpectedCountry("NZ", 51.5074, -0.1278), "London under an NZ expectation").toBe(true)
+		expect(outsideExpectedCountry("IT", -33.8688, 151.2093), "Sydney under an IT expectation").toBe(true)
+		expect(outsideExpectedCountry("CN", 40.7128, -74.006), "New York under a CN expectation").toBe(true)
 	})
 })

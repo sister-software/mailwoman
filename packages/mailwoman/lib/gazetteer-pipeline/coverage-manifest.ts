@@ -31,6 +31,7 @@ import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resol
 // resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) — runtime
 // imports are DYNAMIC inside the functions; type-only imports are erased and safe at module level.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
+import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
@@ -101,40 +102,27 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
  */
 const BBOX_SOURCE = "2026-07-15 coordinate-parity receipt harness (scratchpad/coord-parity.mjs) — deliberately coarse"
 
-const bbox = (country: string, latMin: number, latMax: number, lonMin: number, lonMax: number): CountryBBoxFact => ({
-	country,
-	latMin,
-	latMax,
-	lonMin,
-	lonMax,
-	source: BBOX_SOURCE,
-})
-
 /**
  * The reviewed guard-B bounding-box record — the structured form of `COUNTRY_BBOX` (`resolver/plausibility.ts`),
- * asserted byte-identical to that constant in `coverage-manifest.test.ts`. Same growth discipline as
- * {@link MEASURED_COUNTRY_COVERAGE}: add boxes HERE; the constant is only the pre-manifest fallback.
+ * DERIVED from that constant rather than retyped beside it.
+ *
+ * The two were maintained as separate literals and a test asserted them byte-identical, which held only the numbers a
+ * test can compare and not the membership: four shipping locales were missing from both, and a matching pair of
+ * incomplete tables reads exactly like a correct one. One declaration cannot disagree with itself, and
+ * `plausibility.test.ts` is where a locale without a box now fails.
+ *
+ * `source` is stamped here because provenance belongs to the artifact record, not to the fallback constant.
  */
-export const MEASURED_COUNTRY_BBOXES: readonly CountryBBoxFact[] = [
-	bbox("US", 18, 72, -180, -66),
-	bbox("AU", -44, -10, 112, 154),
-	bbox("BR", -34, 6, -74, -34),
-	bbox("CZ", 48, 51.5, 12, 19),
-	bbox("DE", 47, 55.5, 5.5, 15.5),
-	bbox("ES", 35, 44, -10, 5),
-	bbox("FR", 41, 51.5, -5.5, 9.8),
-	bbox("GB", 49, 61, -8.7, 2),
-	bbox("HR", 42, 46.6, 13, 19.5),
-	bbox("IN", 6, 36, 68, 98),
-	bbox("NL", 50.7, 53.7, 3.3, 7.3),
-	bbox("NO", 57, 71.5, 4, 31),
-	bbox("PL", 49, 55, 14, 24.2),
-	bbox("PT", 36.5, 42.2, -9.6, -6.1),
-	bbox("RO", 43.5, 48.3, 20, 30),
-	bbox("SE", 55, 69.1, 10.9, 24.2),
-	bbox("SK", 47.7, 49.7, 16.8, 22.6),
-	bbox("SI", 45.4, 46.9, 13.3, 16.6),
-]
+export const MEASURED_COUNTRY_BBOXES: readonly CountryBBoxFact[] = Object.entries(COUNTRY_BBOX).map(
+	([country, [latMin, latMax, lonMin, lonMax]]): CountryBBoxFact => ({
+		country,
+		latMin,
+		latMax,
+		lonMin,
+		lonMax,
+		source: BBOX_SOURCE,
+	})
+)
 
 export interface EmitCoverageManifestOptions {
 	/**

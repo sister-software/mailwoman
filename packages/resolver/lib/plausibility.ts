@@ -103,11 +103,21 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
  * caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}), those REPLACE this table wholesale
  * — the artifact speaks for itself, and a country absent from the artifact's table fails open exactly like an absent
  * key here. This constant is the fallback for artifacts predating the manifest; grow the manifest record, not this.
+ *
+ * A box must contain the country's OUTLYING territory, not its populated core. Trimming one to the mainland turns the
+ * guard from coarse into wrong: it would refuse the Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT. Where a
+ * country's extent crosses the antimeridian a single box cannot express it, so NZ spans the full longitude range and is
+ * a LATITUDE guard alone — inert against a wrong-hemisphere longitude, which is the honest degradation, and still
+ * catching a northern-hemisphere answer.
+ *
+ * Every country whose locale ships weights owes a box; `plausibility.test.ts` reads `release.config.json` and fails
+ * when one does not, because an absent key fails OPEN and so a missing box is indistinguishable from a passing guard.
  */
 export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
 	US: [18, 72, -180, -66],
 	AU: [-44, -10, 112, 154],
 	BR: [-34, 6, -74, -34],
+	CN: [15.7, 53.6, 73.4, 135.1],
 	CZ: [48, 51.5, 12, 19],
 	DE: [47, 55.5, 5.5, 15.5],
 	ES: [35, 44, -10, 5],
@@ -115,8 +125,11 @@ export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, num
 	GB: [49, 61, -8.7, 2],
 	HR: [42, 46.6, 13, 19.5],
 	IN: [6, 36, 68, 98],
+	IT: [35.4, 47.1, 6.6, 18.6],
+	JP: [20.2, 45.7, 122.8, 154.1],
 	NL: [50.7, 53.7, 3.3, 7.3],
 	NO: [57, 71.5, 4, 31],
+	NZ: [-52.7, -29.1, -180, 180],
 	PL: [49, 55, 14, 24.2],
 	PT: [36.5, 42.2, -9.6, -6.1],
 	RO: [43.5, 48.3, 20, 30],
