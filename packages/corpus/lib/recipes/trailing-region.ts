@@ -67,6 +67,7 @@
  */
 
 import { lookupCanadianProvince } from "@mailwoman/codex/ca"
+import { lookupUSState } from "@mailwoman/codex/us"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
@@ -75,15 +76,23 @@ import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, s
  * The code an address line in this country writes the region as, or null where the name is written out.
  *
  * A subdivision belongs here only when its code IS a posted surface. A Canadian province code is (`ca/province.ts`
- * states the contrast with Germany and France in its own header); a Bundesland or a région is not, and teaching `BY`
- * for Bayern would attest a form nobody writes. Several Canadian codes collide with ISO alpha-2 country codes — `NL`
- * with the Netherlands, `PE` with Peru — so a code left unattested here is not merely missing: the model reads it as
- * the country it does know.
+ * states the contrast with Germany and France in its own header), and so is a US state's; a Bundesland or a région is
+ * not, and teaching `BY` for Bayern would attest a form nobody writes.
  *
- * US state codes are the other genuine instance and already reach the model in volume through the US sources.
+ * Several Canadian codes collide with ISO alpha-2 country codes — `NL` with the Netherlands, `PE` with Peru — so a code
+ * left unattested here is not merely missing: the model reads it as the country it does know.
+ *
+ * US state codes reach the model in volume through the US sources, but only ever with a STREET in front of the city.
+ * Measured on 604 distinct cities through the production path, `Washington, DC 20003` answers a locality 54.3% of the
+ * time against 99.7% for `123 Main St, Washington, DC 20003` (#2303) — so the code is attested and the SURFACE this
+ * recipe writes is not.
  */
 function regionCodeSurface(cc: string, region: string): string | null {
-	return cc.toUpperCase() === "CA" ? lookupCanadianProvince(region) : null
+	const country = cc.toUpperCase()
+
+	if (country === "CA") return lookupCanadianProvince(region)
+
+	return country === "US" ? lookupUSState(region) : null
 }
 
 /**

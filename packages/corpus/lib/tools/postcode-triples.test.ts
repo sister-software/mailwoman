@@ -120,6 +120,24 @@ describe("readTriplesFromGeonames", () => {
 		expect(row?.locale).toBe("en-IN")
 	})
 
+	it("takes the CITY from the column that country's export puts it in, which is inverted for the US", async () => {
+		// `US 94901 San Rafael California CA Marin` — column 3 is the city and admin2 is the COUNTY, the inverse of
+		// PT/MX/IN. The default mapping would emit `Marin` as the locality and train a county as a city, which is the
+		// `Mahatma Gandhi Road` defect this reader's header records, from the other direction.
+		const path = await writeExport("us.txt", [
+			["US", "94901", "San Rafael", "California", "Marin"],
+			["US", "60639", "Chicago", "Illinois", "Cook"],
+		])
+
+		const triples = await readTriplesFromGeonames("US", path, "United States", acceptAll)
+
+		expect(triples.map((t) => t.locality)).toEqual(["San Rafael", "Chicago"])
+		// A US county is not a segment the address line writes, so it is dropped rather than carried as a dependent
+		// locality the way a colonia is.
+		expect(triples.every((t) => t.dependentLocality === undefined)).toBe(true)
+		expect(triples.every((t) => t.postcodePlacement === "after_region" && t.locale === "en-US")).toBe(true)
+	})
+
 	it("emits NOTHING for a country whose placement nothing attests", async () => {
 		// Not a failure — extracting AU with a guessed placement would teach a convention AU may not use.
 		const path = await writeExport("au.txt", [["AU", "2000", "The Rocks", "New South Wales", "Sydney"]])
@@ -206,6 +224,34 @@ describe("applyCountryBudget", () => {
 		const triples = [make("FR", "a", "1"), make("FR", "b", "2"), make("MX", "c", "3")]
 
 		expect(applyCountryBudget(triples, 1).map((row) => row.cc)).toEqual(["FR", "MX"])
+	})
+
+	it("spends the budget ACROSS regions, because source order is postcode order and a postcode sorts geographically", () => {
+		// The defect this replaced, measured on the tuples the tool had already produced: the US took its 16,000 from 23
+		// of 56 states, Mexico 7 regions, Portugal 5, India 24 of 36 — one corner of each country.
+		const row = (region: string, n: number) => ({ ...make("US", `city-${region}-${n}`, String(n)), region })
+
+		const triples = [
+			...Array.from({ length: 10 }, (_, i) => row("Alabama", i)),
+			...Array.from({ length: 10 }, (_, i) => row("Wyoming", i)),
+		]
+
+		const kept = applyCountryBudget(triples, 4)
+
+		expect(kept.map((r) => r.region)).toEqual(["Alabama", "Wyoming", "Alabama", "Wyoming"])
+	})
+
+	it("keeps source order WITHIN a region, so the same budget selects the same rows", () => {
+		const row = (region: string, postcode: string) => ({ ...make("US", "city", postcode), region })
+		const triples = [row("Alabama", "35203"), row("Alabama", "36104"), row("Wyoming", "82001")]
+
+		expect(applyCountryBudget(triples, 3).map((r) => r.postcode)).toEqual(["35203", "82001", "36104"])
+	})
+
+	it("survives rows carrying no region, which is what an admin-pair caller passes", () => {
+		const triples = [make("FR", "Lyon", "69000"), make("FR", "Nice", "06000")]
+
+		expect(applyCountryBudget(triples, 1).map((r) => r.locality)).toEqual(["Lyon"])
 	})
 })
 

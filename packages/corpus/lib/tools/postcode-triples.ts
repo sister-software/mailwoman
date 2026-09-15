@@ -75,6 +75,23 @@ export interface PostcodeTriple {
 }
 
 /**
+ * Which GeoNames postal column carries the LOCALITY for a country.
+ *
+ * `admin2` is the default and what every {@link POSTCODE_CONVENTIONS} entry omitting it means: for PT, MX and IN,
+ * column 3 is a sub-locality — a colonia, a street — and admin2 is the city. **For the US it is the inverse**, and
+ * taking the default would train counties as cities:
+ *
+ *     US  94901  San Rafael     California    CA  Marin      ← column 3 is the city, admin2 the county
+ *     US  60639  Chicago        Illinois      IL  Cook
+ *     US  57107  Sioux Falls    South Dakota  SD  Minnehaha
+ *
+ * This is the same defect {@link readTriplesFromGeonames}'s own header records from the other direction, where column 3
+ * taught `Mahatma Gandhi Road` as a city. The column a country's city sits in is DATA about that country's export, so
+ * it is declared per country rather than inferred.
+ */
+export type GeonamesLocalityColumn = "place" | "admin2"
+
+/**
  * Where a country writes the postcode, and the locale tag its rows carry.
  *
  * A country is in this table only when a gauntlet board row ATTESTS its surface. An absent country is not an oversight
@@ -87,7 +104,10 @@ export interface PostcodeTriple {
  * writes it; and ZA's `14 Long St, Green Point, Cape Town, 8001` carries no REGION, which this slice requires — a fact
  * its GeoNames export agrees with, at 100% place and 0% admin1.
  */
-export const POSTCODE_CONVENTIONS: ReadonlyMap<string, { placement: PostcodePlacement; locale: string }> = new Map([
+export const POSTCODE_CONVENTIONS: ReadonlyMap<
+	string,
+	{ placement: PostcodePlacement; locale: string; localityColumn?: GeonamesLocalityColumn }
+> = new Map([
 	// `Rue de l'Église, 3, 29217 Plougonvelin, Bretagne, France` and its siblings — `fr_structured`, `de_structured`,
 	// `es_structured`, `it_structured`, `pt_structured`, `mx_supermanzana`, `nl-op4-p-r-sloterdijk`.
 	["FR", { placement: "leading", locale: "fr-FR" }],
@@ -104,6 +124,11 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<string, { placement: PostcodePlac
 	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` — three `in_*` rows, and `AGENTS.md` says the same
 	// ("en-IN is absent BECAUSE the PIN goes last"). The one trailing placement with real data behind it.
 	["IN", { placement: "after_region", locale: "en-IN" }],
+	// `Washington, DC 20003` — the #2303 class, and the same placement as IN. Attested by the four
+	// `us_city_state_postcode` board rows, which is the bar this table sets; the US had no entry here at all, so no
+	// recipe emitted a US city in front of a state code and a ZIP without a street ahead of it, and the model reads
+	// the bare city as a street 45.7% of the time. `localityColumn` is what keeps it from training counties.
+	["US", { placement: "after_region", locale: "en-US", localityColumn: "place" }],
 ])
 
 /**
@@ -150,25 +175,56 @@ export function applyLocalityQuota<T extends { cc: string; locality: string }>(
  *
  * Applied AFTER {@link applyLocalityQuota}, so a country's budget is spent on breadth (many localities) rather than on
  * one city's postcode list.
+ *
+ * SPENT BY REGION, in rounds. Source order is postcode order, and a postcode sorts geographically, so spending the
+ * budget in file order buys one corner of a country. Measured on the tuples this tool had already produced: the US took
+ * its 16,000 from 23 of 56 states (`AK` through the alphabet and stop), Mexico 7 regions, Portugal 5, India 24 of 36. A
+ * round-robin over the region takes one row from each before any region takes a second, so a cap smaller than the
+ * source still reaches every region the source has.
+ *
+ * Within a region the source order is kept, so the same budget selects the same rows.
  */
-export function applyCountryBudget<T extends { cc: string }>(
+export function applyCountryBudget<T extends { cc: string; region?: string }>(
 	triples: readonly T[],
 	budget: number | ReadonlyMap<string, number>
 ): T[] {
-	const spent = new Map<string, number>()
-	const kept: T[] = []
+	const byRegion = new Map<string, T[]>()
+	const order: string[] = []
 
 	for (const triple of triples) {
 		const cap = typeof budget === "number" ? budget : budget.get(triple.cc)
 
 		if (cap === undefined) continue
 
-		const n = spent.get(triple.cc) ?? 0
+		const key = `${triple.cc} ${triple.region ?? ""}`
+		const bucket = byRegion.get(key)
 
-		if (n >= cap) continue
+		if (bucket) {
+			bucket.push(triple)
+		} else {
+			byRegion.set(key, [triple])
+			order.push(key)
+		}
+	}
 
-		spent.set(triple.cc, n + 1)
-		kept.push(triple)
+	const spent = new Map<string, number>()
+	const kept: T[] = []
+	const deepest = Math.max(0, ...[...byRegion.values()].map((bucket) => bucket.length))
+
+	for (let round = 0; round < deepest; round++) {
+		for (const key of order) {
+			const triple = byRegion.get(key)![round]
+
+			if (!triple) continue
+
+			const cap = typeof budget === "number" ? budget : budget.get(triple.cc)!
+			const n = spent.get(triple.cc) ?? 0
+
+			if (n >= cap) continue
+
+			spent.set(triple.cc, n + 1)
+			kept.push(triple)
+		}
 	}
 
 	return kept
@@ -549,16 +605,24 @@ export async function readTriplesFromGeonames(
 	const out: PostcodeTriple[] = []
 	const seen = new Set<string>()
 
+	// Which column the CITY sits in is a property of the country's export — see {@link GeonamesLocalityColumn}. The
+	// other column becomes the dependent locality, which is a sub-locality for PT/MX/IN and a county for the US.
+	const localityIsPlace = convention.localityColumn === "place"
+
 	for await (const cells of TSVSpliterator.fromAsync(path, { header: false }) as AsyncIterable<string[]>) {
 		const postcode = (cells[GEONAMES_POSTAL_COLUMNS.postcode] ?? "").trim()
-		const dependentLocality = (cells[GEONAMES_POSTAL_COLUMNS.place] ?? "").trim()
-		const locality = (cells[GEONAMES_POSTAL_COLUMNS.admin2Name] ?? "").trim()
+		const place = (cells[GEONAMES_POSTAL_COLUMNS.place] ?? "").trim()
+		const admin2 = (cells[GEONAMES_POSTAL_COLUMNS.admin2Name] ?? "").trim()
+		const locality = localityIsPlace ? place : admin2
+		const dependentLocality = localityIsPlace ? "" : place
 		const region = (cells[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? "").trim()
 
 		if (!postcode || !locality || !region) continue
 
-		// The check applies to the LOCALITY — admin2 — not to the fine-grained name, which is expected to be a street or
-		// a colonia and is emitted as the dependent locality rather than dropped.
+		// The check applies to the LOCALITY, not to the other column — which for PT/MX/IN is expected to be a street or a
+		// colonia and is emitted as the dependent locality rather than dropped. A US county is NOT emitted as a dependent
+		// locality: it is an administrative tier the address line does not write, and teaching it as one would attest a
+		// segment nobody types.
 		if (!isKnownLocality(locality)) continue
 
 		// A dependent locality that merely repeats its parent teaches a doubled segment, not a boundary.

@@ -137,6 +137,28 @@ describe("trailing-region Canadian province codes", () => {
 
 		expect(rows.every((row) => row.raw.includes("Illes Balears"))).toBe(true)
 	})
+
+	it("writes the US state code too, which is the surface #2303 measured missing", async () => {
+		// The code reaches the model in volume through the US sources, but only ever with a STREET in front of the city.
+		// This recipe's `after_region` surface is the bare one: `Washington, DC 20003`.
+		const us = (region: string) => ({
+			locality: "Washington",
+			region,
+			country: "United States",
+			cc: "US",
+			locale: "en-US",
+			postcode: "20003",
+			postcodePlacement: "after_region",
+		})
+
+		const { rows } = await run(repeat(us("District of Columbia"), 12), [])
+		const coded = rows.filter((row) => row.raw.includes(", DC 20003"))
+
+		expect(coded.length).toBeGreaterThan(0)
+		expect(coded.every((row) => row.components?.["region"] === "DC")).toBe(true)
+		// Both forms are posted for the US, so the name keeps its share rather than being replaced.
+		expect(rows.some((row) => row.raw.includes("District of Columbia"))).toBe(true)
+	})
 })
 
 describe("trailing-region source labelling", () => {

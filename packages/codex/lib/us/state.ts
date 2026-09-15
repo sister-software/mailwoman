@@ -10,7 +10,13 @@
  *   the point of the codex being a zero-runtime-dep package the browser-pure parser can consume.
  *   The full FIPS-keyed table still lives in `@mailwoman/tiger` (`tiger/state.ts`) and in the
  *   corpus TIGER adapter; folding those onto this set is a deliberate follow-up, not a v1 concern.
+ *
+ *   Like a Canadian province code, a US state's two-letter abbreviation IS a posted surface rather than only a
+ *   resolver key — `ca/province.ts` states the contrast with Germany and France in its own header — so this module
+ *   carries the name→abbreviation direction too.
  */
+
+import { foldName } from "#normalize"
 
 /**
  * USPS two-letter abbreviations: the 50 states, the District of Columbia, and the five primary territories (Puerto
@@ -158,3 +164,35 @@ export const US_STATE_BY_ABBREVIATION = {
  * The full state/territory names, derived from {@link US_STATE_BY_ABBREVIATION}.
  */
 export const US_STATE_NAMES: readonly string[] = Object.values(US_STATE_BY_ABBREVIATION)
+
+/**
+ * Folded state/territory name, or the abbreviation itself, → the USPS abbreviation. Built diacritic-insensitive so a
+ * source that writes the name plainly resolves the same as one that does not.
+ */
+const US_STATE_NAME_TO_ABBREVIATION: ReadonlyMap<string, USStateAbbreviation> = (() => {
+	const out = new Map<string, USStateAbbreviation>()
+
+	for (const abbreviation of US_STATE_ABBREVIATIONS) {
+		out.set(foldName(US_STATE_BY_ABBREVIATION[abbreviation]), abbreviation)
+		out.set(abbreviation.toLowerCase(), abbreviation)
+	}
+
+	return out
+})()
+
+/**
+ * Resolve a US state/territory surface form (USPS abbreviation or full name) to its abbreviation; null if unknown.
+ *
+ * The mirror of `lookupCanadianProvince`, and it exists for the same reason: the two-letter code IS the surface an
+ * address line writes, so a source that publishes the name (GeoNames' postal export writes `California`, never `CA`)
+ * has to be turned into the posted form before it can attest one.
+ */
+export function lookupUSState(input: string | null | undefined): USStateAbbreviation | null {
+	if (!input || typeof input !== "string") return null
+
+	const upper = input.trim().toUpperCase()
+
+	if (isUSStateAbbreviation(upper)) return upper
+
+	return US_STATE_NAME_TO_ABBREVIATION.get(foldName(input)) ?? null
+}
