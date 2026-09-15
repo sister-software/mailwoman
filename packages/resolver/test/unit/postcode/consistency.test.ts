@@ -111,6 +111,59 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 		expect(loc.metadata?.coordinate_source).toBe("postcode_fallback")
 	})
 
+	it("refuses the fallback past postcodeConsistencyMaxMoveKm and keeps the selected locality", async () => {
+		// SP_FAR sits ~577 km from PC, so the unbounded pass relocates it onto the postcode. Under a 200 km cap the
+		// postcode is the likelier error and the answer stays on the locality the walk selected — still flagged,
+		// because the two components did disagree.
+		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
+
+		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
+			defaultCountry: "FR",
+			postcodeConsistency: true,
+			postcodeConsistencyMaxMoveKm: 200,
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+		expect(loc.placeID).toBe("wof:1")
+		expect(loc.lat).toBeCloseTo(44)
+		expect(loc.lon).toBeCloseTo(5)
+		expect(loc.metadata?.postcode_city_mismatch).toBe(true)
+		expect(loc.metadata?.coordinate_source).toBeUndefined()
+		expect(loc.metadata?.postcode_move_refused_km).toBeGreaterThan(200)
+	})
+
+	it("admits the fallback when the move is inside the cap", async () => {
+		// The same pair under a cap wider than the gap behaves exactly as the uncapped pass does.
+		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
+
+		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
+			defaultCountry: "FR",
+			postcodeConsistency: true,
+			postcodeConsistencyMaxMoveKm: 1000,
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+		expect(loc.lat).toBeCloseTo(48.86)
+		expect(loc.metadata?.coordinate_source).toBe("postcode_fallback")
+		expect(loc.metadata?.postcode_move_refused_km).toBeUndefined()
+	})
+
+	it("a cap never blocks the re-pick, which moves to a same-named instance rather than the postcode", async () => {
+		// Step 2 chooses among the locality's OWN alternatives, so it cannot produce an id/coordinate disagreement
+		// and the cap has no business refusing it.
+		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
+
+		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
+			defaultCountry: "FR",
+			postcodeConsistency: true,
+			postcodeConsistencyMaxMoveKm: 1,
+		})
+
+		const loc = out.roots.find((n) => n.tag === "locality")!
+		expect(loc.placeID).toBe("wof:2")
+		expect(loc.metadata?.postcode_repicked).toBe(true)
+	})
+
 	it("leaves a locality already consistent with the postcode untouched", async () => {
 		// NEAR is the only/top candidate and it's within the radius → no change.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_NEAR]))

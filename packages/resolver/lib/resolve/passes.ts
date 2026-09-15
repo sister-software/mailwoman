@@ -488,12 +488,22 @@ async function recoverPostcodeNode(
  * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to the postcode point
  *    (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
+ * Step 3 rests on the postcode being the more reliable of the two, which holds while the postcode is CORRECT. A
+ * postcode carries no checksum, so a transposed one is a valid code naming a real place and the step relocates the
+ * answer there; `maxMoveKm` bounds that relocation. Past the bound the coordinate stays on the selected locality and
+ * the node is still flagged, because the components did disagree — what changes is which one the answer follows.
+ * Without it the step is unbounded: `Nawāda, 744301` moved 1,914 km onto Port Blair while keeping Nawada's place id.
+ *
  * Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) — add a country's
  * postcodes and this immediately disambiguates its same-named towns. **Default-ON** since the #370 operator promotion
  * (2026-07-04, commit `0010bb8c`) — `opts.postcodeConsistency: false` opts out, and the pass is byte-stable on every
  * tree with no resolved postcode point (the `!anchor` early return below).
  */
-export function applyPostcodeConsistency(roots: readonly AddressNode[], thresholdKm: number): void {
+export function applyPostcodeConsistency(
+	roots: readonly AddressNode[],
+	thresholdKm: number,
+	maxMoveKm = Infinity
+): void {
 	// The resolved postcode anchor (first one with a real coordinate).
 	let anchor: { lat: number; lon: number } | null = null
 
@@ -512,7 +522,9 @@ export function applyPostcodeConsistency(roots: readonly AddressNode[], threshol
 	for (const node of walkNodes(roots)) {
 		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
 
-		if (haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!) <= thresholdKm) continue // already consistent
+		const gapKm = haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!)
+
+		if (gapKm <= thresholdKm) continue // already consistent
 
 		// Re-pick: the same-named candidate nearest the postcode, within the radius. `alternatives` is
 		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they ARE the
@@ -541,6 +553,14 @@ export function applyPostcodeConsistency(roots: readonly AddressNode[], threshol
 			const rest = alts.filter((a) => a !== reconciling.a)
 			decorateNode(node, reconciling.a, [displaced, ...rest])
 			node.metadata = { ...node.metadata, postcode_repicked: true }
+
+			continue
+		}
+
+		// Past the cap the postcode is the likelier error of the two, so the answer keeps the locality it selected. The
+		// disagreement is still reported; `coordinate_source` is absent because the coordinate was not moved.
+		if (gapKm > maxMoveKm) {
+			node.metadata = { ...node.metadata, postcode_city_mismatch: true, postcode_move_refused_km: gapKm }
 
 			continue
 		}
