@@ -171,15 +171,6 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], order: (measure
 }
 
 /**
- * The importance ordering over MEASURED rows, with the {@link SAME_COUNTRY_IMPORTANCE_TIE_BAND} applied.
- *
- * Same-country bearers whose adjacent importance gaps sit inside the band chain into one cluster (transitive on purpose
- * — otherwise the boundary would depend on comparison order), and a cluster orders its members referentially (size
- * DESC). Clusters — including every cross-country row, which is always its own cluster — rank by their most important
- * member, then head size, then input order. A cluster therefore moves as a unit: a same-country near-tie cannot be
- * split by a foreign row falling between its members' scores.
- */
-/**
  * A bearer the gazetteer actually counted. Absence is UNMEASURED — the backend emits `population` only for a row
  * carrying one, so there is no zero to confuse this with.
  */
@@ -193,9 +184,21 @@ const counted = (c: Rankable): boolean => typeof c.population === "number" && c.
  * This is the meaning-of-zero rule applied to ranking. `blendImportance` bounds the encyclopedic channel against the
  * referential one — except at `referential <= 0`, where it returns the article score UNCAPPED, because a constant cap
  * would demote every famous place WOF records no population for. That exemption is right across borders and wrong
- * inside one: it lets a row the gazetteer never counted outrank every bearer it did. Measured on
- * `candidate-global-2026-09-09-sg.db`, 20,301 of the 31,975 same-country pools the fame prior reorders are won by a row
- * with no recorded population — 63%.
+ * inside one: it lets a row the gazetteer never counted outrank every bearer it did.
+ *
+ * The census that sets the bar, over `candidate-global-2026-09-09-sg.db` — primary-name locality pools of up to 5 in
+ * the backend's population order, through the shipped ranking:
+ *
+ *     220,370   same-country pools where importance can reorder at all
+ *      31,975   pools whose head moves off the population winner
+ *      20,301   of those, won by a row with NO recorded population — 63%
+ *       3,008   of the 20,301, the two sit within 10 km: one place carried as two records
+ *      17,293   a distinct place
+ *          72   a distinct place displacing a bearer of at least 10,000
+ *           0   a distinct place displacing a bearer of at least 50,000
+ *
+ * The 3,008 twin moves are why a board re-run reports placeID and coordinate separately: a twin swap changes the id and
+ * not the answer, and reading it as a regression would refuse a correct change.
  *
  * Deliberately NOT a cap in `blendImportance`: that is a gazetteer rebuild, and it would reach the cross-country pools
  * the cap's own docstring protects, where an article-only score is the only evidence there is.
@@ -230,6 +233,18 @@ function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] 
 	return out
 }
 
+/**
+ * The importance ordering over MEASURED rows, with the {@link SAME_COUNTRY_IMPORTANCE_TIE_BAND} applied.
+ *
+ * Same-country bearers whose adjacent importance gaps sit inside the band chain into one cluster (transitive on purpose
+ * — otherwise the boundary would depend on comparison order), and a cluster orders its members referentially (size
+ * DESC). Clusters — including every cross-country row, which is always its own cluster — rank by their most important
+ * member, then head size, then input order. A cluster therefore moves as a unit: a same-country near-tie cannot be
+ * split by a foreign row falling between its members' scores.
+ *
+ * {@link countedFirstWithinCountry} runs last, so a row the gazetteer never counted holds its cluster's slot rather
+ * than its country's head.
+ */
 function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] {
 	// Group by country in first-appearance order; a row without a country can never substantiate a
 	// same-country tie, so it stays a singleton.
