@@ -317,7 +317,17 @@ export async function oaResolverEval(
 			outRows.push({
 				input: row.input,
 				expected: row.expected,
-				neural: { loc: ns.locMatch, reg: ns.regMatch, resolved: ns.resolved, err: ns.err },
+				// `resolvedLoc` is what separates a PARSE miss from a RESOLVE miss on a failing row: absent means no span
+				// reached the locality tier at all, a different name means the walk picked another place. Without it a
+				// dump can say a row failed and not which half of the pipeline to look in.
+				neural: {
+					loc: ns.locMatch,
+					reg: ns.regMatch,
+					resolved: ns.resolved,
+					err: ns.err,
+					...(ns.resolvedLoc === undefined ? {} : { resolvedLoc: ns.resolvedLoc }),
+					...(ns.resolvedReg === undefined ? {} : { resolvedReg: ns.resolvedReg }),
+				},
 			})
 		}
 
