@@ -308,19 +308,43 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.place.id).toBe(1)
 	})
 
-	it("#2266: REFUSES a recovery whose remainder is a street, which is why this is not the default", async () => {
-		// The cost no aggregate instrument shows. Six withheld-gold rows on the same-data panel improve, 5,300 real
-		// addresses published with their government point are row-for-row identical, and the 580-row board keeps its
-		// exact 62 failures — because every one of those resolves at the first tier and span rescue never runs on them.
-		// This shape is where the rule bites: `Daliowa 4` is neither a subdivision code nor a number, so
-		// `remainderIsContext` refuses the truncation and the locality is lost.
-		const backend = await makeBackend()
+	it("#2266: keeps a sub-span whose remainder the PARSE read as a street", async () => {
+		// `Daliowa 4` is neither a subdivision code nor a number, and a bare-text reading of the remainder refuses the
+		// truncation and loses the locality. The parse says what it is: a `street` node of its own, disjoint from the
+		// span under test, which is context the same way a subdivision code is.
+		const raw = "86-300 Grudziądz, Daliowa 4"
 
-		expect((await findRescoreCandidate("86-300 Grudziądz, Daliowa 4", [], backend, { thresholdKm: 0 }))?.place.id).toBe(
-			1
-		)
+		const roots: AddressNode[] = [
+			node({ tag: "postcode", value: "86-300", start: 0, end: 6 }),
+			node({ tag: "locality", value: "Grudziądz", start: 7, end: 16 }),
+			node({
+				tag: "street",
+				value: "Daliowa",
+				start: 18,
+				end: 25,
+				children: [node({ tag: "house_number", value: "4", start: 26, end: 27 })],
+			}),
+		]
 
-		const ruled = await findRescoreCandidate("86-300 Grudziądz, Daliowa 4", [], backend, {
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), {
+			thresholdKm: 0,
+			spanRescoreRequireContextRemainder: true,
+		})
+
+		expect(hit?.place.id).toBe(1)
+	})
+
+	it("#2266: a street node OVERLAPPING the span is not context — the `Fort Worth` shape", async () => {
+		// The model reads a bare famous name as a street, so the dropped word and the surviving fragment sit in ONE
+		// street node. Admitting that remainder would readmit the corruption the rule exists to refuse.
+		const raw = "86-300 Grudziądz, Daliowa 4"
+
+		const roots: AddressNode[] = [
+			node({ tag: "postcode", value: "86-300", start: 0, end: 6 }),
+			node({ tag: "street", value: "Grudziądz, Daliowa", start: 7, end: 25 }),
+		]
+
+		const ruled = await findRescoreCandidate(raw, roots, await makeBackend(), {
 			thresholdKm: 0,
 			spanRescoreRequireContextRemainder: true,
 		})

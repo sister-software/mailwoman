@@ -572,8 +572,9 @@ export interface ResolveOpts {
 	 * Span rescore measures success as "a gazetteer row matched", never "the query was explained", so a probe may drop a
 	 * word of a two-token name and answer with whatever the fragment hits: `Fort Worth` → `Worth` answers Worth,
 	 * Illinois, population 10,494, 1,304 km from Fort Worth. With this set, a proper sub-span is admitted only when every
-	 * token it leaves behind is a subdivision code or a number — the two kinds of remainder the backend can be told about
-	 * through `regionQualifier`, or that carry no identity at all.
+	 * token it leaves behind is a subdivision code, a number, or a STREET the parse read as its own non-overlapping
+	 * component — the remainders the backend can be told about through `regionQualifier`, that carry no identity at all,
+	 * or that belong to a different component of the same address.
 	 *
 	 * The blanket version — refuse every proper sub-span of a multi-token locality — was measured on the frozen fixture
 	 * and rejected: it loses `NV Sparks`, `SCT Cumbernauld`, `IN Fort Wayne`, `CA National City` and `IA Council Bluffs`.
@@ -581,19 +582,17 @@ export interface ResolveOpts {
 	 *
 	 * **Default OFF, and the measurement REFUSED the default rather than failing to reach one.**
 	 *
-	 * Free on every aggregate instrument: six withheld-gold rows on the same-data panel stop inventing an answer from a
-	 * fragment with selection accuracy and wrong-area unchanged to the row; 5,300 real addresses published with their
-	 * government point (FR 3,000, US 2,000, CZ 150, PL 150) are row-for-row identical; the 580-row regression board reads
-	 * 518/580 with the same 62 failures, name for name.
+	 * Free on the instruments that measure inventing an answer from a fragment: on the frozen same-data fixture the
+	 * false-selection rate falls from 74.0% (71/96) to 71.9% (69/96) with selection accuracy and wrong-area unchanged to
+	 * the row, and 5,300 real addresses published with their government point (FR 3,000, US 2,000, CZ 150, PL 150) are
+	 * row-for-row identical. The 996-case regression board reads 524/586 either way, with the same 62 failures name for
+	 * name.
 	 *
-	 * What refused it is the shape none of those three carries: a remainder that is a STREET. `86-300 Grudziądz, Daliowa
-	 * 4` recovers `Grudziądz` from a split parse, and the tokens it leaves behind are `86-300` and `Daliowa 4` — a
-	 * postcode, which {@link remainderIsContext} admits, and a street name, which it does not. The rule refuses the
-	 * recovery and the locality is lost. Every aggregate above resolves such rows at the FIRST tier, so span rescue never
-	 * runs on them and the cost is invisible there; the unit fixtures are what exhibit it.
-	 *
-	 * Widening `remainderIsContext` to admit a remainder the parse already read as a street is the shape of the fix, and
-	 * it is a change to the rule rather than to its default.
+	 * What refuses the default is a shape none of those carries in its counted rows: a remainder that is ANOTHER PLACE
+	 * NAME. `Lagoa da Conceição, Florianópolis` and `Morro Dois Irmãos, Rio de Janeiro` recover the city from the last
+	 * segment, and the remainder is a neighbourhood or a venue — not a qualifier the rule can admit, and not a word of
+	 * the recovered name either. Both lose their locality with this on. Three other tracked rows trade a wrong coordinate
+	 * for an abstention, which is the rule working as intended.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**

@@ -292,6 +292,33 @@ interface ConfidentRanges {
 	affix: Array<[number, number]>
 }
 
+/**
+ * The character ranges the parse read as STREET material.
+ *
+ * A street the parse already accounted for is context the way a subdivision code is: `86-300 Grudziądz, Daliowa 4`
+ * recovers `Grudziądz` and leaves `Daliowa 4` behind, and that remainder is not a word of the locality's name — it is a
+ * different component of the same address.
+ *
+ * The range is only context when it does NOT overlap the span under test. A street node overlapping the span is the
+ * `Fort Worth` case from the inside: the model reads a bare famous name as a street, so `Worth` and the `Fort` it drops
+ * sit in one street node, and admitting that remainder would readmit exactly the corruption the rule exists to refuse.
+ */
+function streetRanges(roots: readonly AddressNode[]): Array<[number, number]> {
+	const out: Array<[number, number]> = []
+
+	for (const n of walkNodes(roots)) {
+		if (
+			(n.tag === "street" || n.tag === "street_prefix" || n.tag === "street_suffix") &&
+			Number.isFinite(n.start) &&
+			Number.isFinite(n.end)
+		) {
+			out.push([n.start, n.end])
+		}
+	}
+
+	return out
+}
+
 function confidentRanges(
 	roots: readonly AddressNode[],
 	threshold: number,
@@ -382,6 +409,7 @@ export async function findRescoreCandidate(
 
 	const toks = tokenizeRaw(raw)
 	const avoid = confidentRanges(roots, threshold, raw, opts.postalCompoundRecovery ?? false)
+	const streets = streetRanges(roots)
 
 	// A span touching a hard range is refused. A span touching an AFFIX is refused unless it strictly
 	// contains that affix — which is what separates `Ave` (the span IS the suffix) from `Eden Prairie`
@@ -484,13 +512,23 @@ export async function findRescoreCandidate(
 	 * The test is on what the remainder is, not on the span being proper. Refusing every proper sub-span of a multi-token
 	 * locality was measured on the frozen fixture and rejected: it also refuses `NV Sparks`, `SCT Cumbernauld`, `IN Fort
 	 * Wayne`, `CA National City` and `IA Council Bluffs`, each correct, and each leaving a subdivision code behind.
+	 *
+	 * A street the parse read as its own component is context too — see {@link streetRanges} for why only a
+	 * NON-OVERLAPPING one is.
 	 */
 	const remainderIsContext = (span: { start: number; end: number }): boolean => {
 		const outside = toks.filter((t) => t.end <= span.start || t.start >= span.end)
 
 		if (!outside.length) return true
 
-		return outside.every((t) => isRegionAbbreviationToken(t.text, { maxLetters: 3 }) || /^\d+[\d-]*$/.test(t.text))
+		const streetContext = streets.filter(([start, end]) => end <= span.start || start >= span.end)
+
+		return outside.every(
+			(t) =>
+				isRegionAbbreviationToken(t.text, { maxLetters: 3 }) ||
+				/^\d+[\d-]*$/.test(t.text) ||
+				streetContext.some(([start, end]) => t.start >= start && t.end <= end)
+		)
 	}
 
 	const softCountry = opts.bareToponymSoftCountry !== false

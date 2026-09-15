@@ -437,6 +437,9 @@ const KNOB_ARMS: Array<[string, ResolveOpts]> = [
 	["minWinningScore 5", { minWinningScore: 5 }],
 	["spanRescore off", { spanRescore: false }],
 	["minWinningScore 4 + spanRescore off", { minWinningScore: 4, spanRescore: false }],
+	// The narrower refusal beside the blanket one: span rescore still runs, and a sub-span that drops a word of the
+	// NAME is refused while one that drops a qualifier, a number or a street the parse read is kept.
+	["spanRescore context remainder", { spanRescoreRequireContextRemainder: true }],
 ]
 
 async function knobPhase(): Promise<void> {
