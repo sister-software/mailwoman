@@ -147,17 +147,49 @@ const VENUES: readonly string[] = [
 ]
 
 /**
- * Address tail: "City, ST 12345" (or no postcode).
+ * Share of tails that write a comma before the postcode — `Athens, GA, 30601`.
+ *
+ * This is the COUNTER-READING of the bare unit below, and it is here because nothing else in the corpus carries it.
+ * Counted over one epoch of the shipped mixture, a bare number standing alone in a LATER comma segment appears zero
+ * times at either level, so the position is unattested in both directions: teaching `…, 101, …` as a unit without this
+ * would make the unit reading the only evidence a model has for a segment users also write a postcode into.
  */
-const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
+const COMMA_POSTCODE_WEIGHT = 0.15
 
-// Layouts: 26% full-after, 8% full-comma, 18% full-first, 16% bare-after, 16% bare-first, 16% venue.
+/**
+ * Address tail: "City, ST 12345" (or no postcode), with the postcode occasionally on its own comma segment.
+ */
+const tail = (random: () => number, loc: string, reg: string, pc: string): string => {
+	if (!pc) return `${loc}, ${reg}`
+
+	return random() < COMMA_POSTCODE_WEIGHT ? `${loc}, ${reg}, ${pc}` : `${loc}, ${reg} ${pc}`
+}
+
+/**
+ * The identifier inside a rendered unit, when the unit has one.
+ *
+ * A standalone designator ("Basement") has none, and neither does a letter-only id: a bare `A` between commas is not a
+ * shape worth attesting, while `4B` and `101` are.
+ */
+function unitIdentifier(unit: string): string | undefined {
+	const last = unit.replace(/^#\s*/, "").split(/\s+/).at(-1)
+
+	return last && /\d/.test(last) ? last : undefined
+}
+
+// Layouts: 26% full-after, 5% full-comma, 3% full-comma-bare, 18% full-first, 16% bare-after, 16% bare-first, 16%
+// venue.
 //
 // A comma before the unit is its own surface — the delimiter decides whether the span reads as a unit at all,
 // independently of which designator sits in it. `full-comma` is carved out of `full-after` alone so every later
-// cutoff keeps the share it had.
+// cutoff keeps the share it had, and `full-comma-bare` out of `full-comma` for the same reason.
+//
+// `full-comma-bare` writes the identifier with NO designator at all — `301 College Ave, 101, Athens, GA 30601` — which
+// is the one unit surface carrying no token that decides its reading. It is deliberately the smallest share and
+// confined to the comma layout: a bare id anywhere else is indistinguishable from a house number.
 const FULL_AFTER_CUTOFF = 0.26
-const FULL_COMMA_CUTOFF = 0.34
+const FULL_COMMA_CUTOFF = 0.31
+const FULL_COMMA_BARE_CUTOFF = 0.34
 const FULL_FIRST_CUTOFF = 0.52
 const BARE_AFTER_CUTOFF = 0.68
 const BARE_FIRST_CUTOFF = 0.84
@@ -192,13 +224,29 @@ export function renderUnit(
 	const r = random()
 
 	if (r < FULL_AFTER_CUTOFF)
-		return { fmt: "full-after", raw: `${road} ${unit}, ${tail(loc, reg, pc)}`, components: full }
+		return { fmt: "full-after", raw: `${road} ${unit}, ${tail(random, loc, reg, pc)}`, components: full }
 
 	if (r < FULL_COMMA_CUTOFF)
-		return { fmt: "full-comma", raw: `${road}, ${unit}, ${tail(loc, reg, pc)}`, components: full }
+		return { fmt: "full-comma", raw: `${road}, ${unit}, ${tail(random, loc, reg, pc)}`, components: full }
+
+	if (r < FULL_COMMA_BARE_CUTOFF) {
+		const identifier = unitIdentifier(unit)
+
+		// A standalone designator has no identifier to write bare, so it keeps the designator form rather than
+		// disappearing from the layout.
+		if (identifier) {
+			return {
+				fmt: "full-comma-bare",
+				raw: `${road}, ${identifier}, ${tail(random, loc, reg, pc)}`,
+				components: { ...full, unit: identifier },
+			}
+		}
+
+		return { fmt: "full-comma", raw: `${road}, ${unit}, ${tail(random, loc, reg, pc)}`, components: full }
+	}
 
 	if (r < FULL_FIRST_CUTOFF)
-		return { fmt: "full-first", raw: `${unit}, ${road}, ${tail(loc, reg, pc)}`, components: full }
+		return { fmt: "full-first", raw: `${unit}, ${road}, ${tail(random, loc, reg, pc)}`, components: full }
 
 	if (r < BARE_AFTER_CUTOFF)
 		return { fmt: "bare-after", raw: `${road} ${unit}`, components: { house_number: hn, street, unit } }
@@ -208,7 +256,11 @@ export function renderUnit(
 
 	const v = pick(VENUES, random)
 
-	return { fmt: "venue", raw: `${v}, ${road} ${unit}, ${tail(loc, reg, pc)}`, components: { venue: v, ...full } }
+	return {
+		fmt: "venue",
+		raw: `${v}, ${road} ${unit}, ${tail(random, loc, reg, pc)}`,
+		components: { venue: v, ...full },
+	}
 }
 
 /**
@@ -253,9 +305,12 @@ export const unitRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const unit = makeUnit(random, base.oaUnit)
 			const { raw, components } = renderUnit(random, base, unit)
+			// The RENDERED component, not the designator form handed in: `full-comma-bare` writes the identifier alone,
+			// so checking the pre-render string would refuse every row of that layout.
+			const rendered = components.unit
 
 			// The unit must survive verbatim in raw, else alignment can't label it.
-			if (!raw.includes(unit)) {
+			if (!rendered || !raw.includes(rendered)) {
 				skipped++
 
 				continue
