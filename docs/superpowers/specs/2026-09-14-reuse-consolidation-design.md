@@ -131,11 +131,13 @@ per-command legibility for lines, so this lane is taken only where a group is co
 `locale` / `weights-cache` / `db` / `resolve-db` / `candidate-db`), not key by key.
 
 A2 also surfaces a naming split worth fixing while the files are open: `out` (56) beside `output` (23), and
-`country` (14) beside `countries` (14).
+`country` (14) beside `countries` (14). Read afterwards under #2280, only the first was a drift — see the outcome
+section.
 
 **A3. The repeated command shape.** Every harness command runs `useCommandTask`, returns `<CommandTaskResult>`
 while pending, prints `prettyJSON` under `--json`, and otherwise returns `null`. A factory or a wrapper component
-collapses it. Estimated 61 files × ~12 lines.
+collapses it. Estimated 61 files × ~12 lines. TAKEN under #2280 — see the outcome section for what it cost and
+which files kept the hook.
 
 ### Lane B — the authority-layer kit
 
@@ -256,16 +258,30 @@ agreeing near zero is that enforcement reporting success.
    `sampleAgreementPoints`) and belong to lane B.
 3. **B** — **closed as already done.** See the outcome section above.
 4. **C**, **E**, **G** — closed for the same reason, verified by sampling.
-5. **A2**, **A3**, **H** — not taken. A2 is 450 option declarations restating a key another command declares, at
-   ~707 lines, but the repetition is broad rather than deep (`out` appears 56 times in 77 lines) and consolidating
-   trades per-command legibility for lines. A3 is ~700 lines across the 61-file eval-command family.
+5. **A2**, **H** — not taken. A2 is 450 option declarations restating a key another command declares, at ~707
+   lines, but the repetition is broad rather than deep (`out` appears 56 times in 77 lines) and consolidating
+   trades per-command legibility for lines.
+6. **A3** — **taken** under #2280 (`f2ebed800`). `harnessCommand` in `packages/mailwoman/lib/cli/kit/`; twenty-two
+   of the twenty-six `commands/eval/` files use it, at 404 insertions against 480 deletions across 24 files. Four
+   keep the hook for a reason the factory does not cover: `pins` and `premise-linkage` pass extra props to
+   `CommandTaskResult`, `score-trends` renders its own done frame, `gauntlet/build` has a custom shape.
 
-A2 and A3 are the only reuse work left with more than a few hundred lines in it, and both trade legibility for
-count. They are a decision rather than a backlog item.
+A2 is the only reuse work left with more than a few hundred lines in it, and it trades legibility for count. It is
+a decision rather than a backlog item.
 
-Two findings from A2's census are worth fixing whenever those files are open, independent of any line count: the
-tree spells the same option two ways, `out` (56 commands) beside `output` (23), and `country` (14) beside
-`countries` (14).
+**The 15% target is dropped**, and the arithmetic above is the reason rather than a judgment: the reuse ceiling
+across the tree is ~4,400 lines, 1.4% of the 317,429-line denominator, of which #2270 delivered 1,208. Reaching
+47,614 lines means relocating the 36,088 lines of declared table literals out of TypeScript — a real project, and
+one chosen for conformance with the rule that reference data is provenance-tracked immutable SQLite, never for a
+line count.
+
+Of A2's two naming findings, one was a drift and one was not. `out` (56 commands) beside `output` (22) was the same
+option spelled two ways, and is now `out` everywhere, with `deprecatedName` on the option spec keeping the retired
+flag working behind a notice (#2280, `ebd389ba7`). `country` (13) beside `countries` (14) is NOT a drift: all 27
+sites were read, every `country` carries one ISO code and every `countries` a comma-separated list, and two files
+declare both because they name different sources at different arities (`corpus/fetch.tsx`: the OpenAddresses
+country against the GeoNames postal countries; `gazetteer/build/poi/index.tsx`: the OSM country against the
+Overture countries). Renaming either would merge two sources into one flag.
 
 ## Verification
 
