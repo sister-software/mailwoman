@@ -186,6 +186,9 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
+    # QUOTED, because YAML 1.1 reads a bare NO as the boolean false — the key then never matches a
+    # row's `country`, and `synth-no-fragment` (33,203 rows, all NO) becomes unselectable.
+    "NO": 1.0
     NZ: 1.0
     OM: 1.0
     PE: 1.0
