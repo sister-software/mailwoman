@@ -34,6 +34,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -89,6 +90,7 @@ const { values, positionals } = parseArguments({
 		gazetteer: { type: "string" },
 		backend: { type: "string" },
 		out: { type: "string" },
+		panel: { type: "string" },
 		limit: { type: "string" },
 		"withhold-every-denoting-row": { type: "boolean" },
 	},
@@ -107,7 +109,15 @@ const GAZETTEER = values.gazetteer || dataRootPath("wof", "admin-global-priority
 const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
-const PANEL_PATH = `${OUT}/same-data-panel.jsonl`
+/**
+ * The panel, named separately from `--out` so a SUCCESSOR construction can read the frozen panel while writing its own
+ * fixture elsewhere.
+ *
+ * One path for both would force a successor to overwrite the frozen artifacts to change the withheld-gold rule, which
+ * is the one thing `benchmark-freeze.json` exists to refuse. Comparability runs the other way too: a successor that
+ * re-executed the selection rules would be measuring a different panel and a different rule at once.
+ */
+const PANEL_PATH = values.panel || `${OUT}/same-data-panel.jsonl`
 const FIXTURE_PATH = `${OUT}/same-data-candidates.jsonl`
 const RESULTS_PATH = `${OUT}/same-data-results.jsonl`
 const RECEIPT_PATH = `${OUT}/same-data-receipt.json`
@@ -274,11 +284,31 @@ const BOOTSTRAP = { resamples: 10_000, seed: 20_260_913 } as const
  */
 const REQUIRED_MARGIN_POINTS = 8
 
+/**
+ * What the RECEIPT says about the fixture these results came from, or a stated absence.
+ *
+ * Read rather than assumed, because the two withheld-gold rules define different strata and their abstention rates are
+ * not comparable. The definition alone names neither, so a report headed by the definition would label a successor's
+ * numbers with the frozen benchmark's id — two constructions, one heading, and a reader with no way to tell them
+ * apart.
+ */
+async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule: string }> {
+	const receipt = await tryReadLocalJSONFile<{ benchmarkID?: string; withheldGoldRule?: string }>(RECEIPT_PATH)
+
+	return {
+		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
+		// A fixture recorded before the rule was named carries no field; that is the v1 rule, and saying so is not the
+		// same as saying nothing.
+		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
+	}
+}
+
 async function scorePhase(): Promise<void> {
-	const { definition, panel, results } = await allKeyed({
+	const { definition, panel, results, recorded } = await allKeyed({
 		definition: loadSameDataDefinition(),
 		panel: JSONSpliterator.fromAsync<SameDataPanelRow>(PANEL_PATH).toArray(),
 		results: JSONSpliterator.fromAsync<ArmRowResult>(RESULTS_PATH).toArray(),
+		recorded: recordedUnder(),
 	})
 
 	const panelByID = new Map(panel.map((row) => [row.id, row]))
@@ -306,7 +336,9 @@ async function scorePhase(): Promise<void> {
 	const verdict = evaluateVerdict(pooled, byStratum, REQUIRED_MARGIN_POINTS)
 
 	const lines = [
-		`# Same-data resolver benchmark — ${definition.benchmarkID} ${definition.version}`,
+		`# Same-data resolver benchmark — ${recorded.benchmarkID} ${definition.version}`,
+		"",
+		`Withheld-gold rule: \`${recorded.withheldGoldRule}\`. Ruler: \`${definition.benchmarkID}\` ${definition.version}.`,
 		"",
 		"## Per-stratum and pooled",
 		"",

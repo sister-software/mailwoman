@@ -1,0 +1,19 @@
+{
+	"benchmarkID": "same-data-resolver-v1-denoting",
+	"definitionVersion": "1.2.0",
+	"withheldGoldRule": "every-denoting-row",
+	"recordedAt": "2026-09-15T15:43:00Z",
+	"gitHead": "ec048cef02534750ab2874f01183d0ccbe381176",
+	"weights": {
+		"weightsLocale": "en-US",
+		"weightsModelPath": "/mnt/playpen/mailwoman-data/weights/en-us/model.onnx",
+		"weightsVersion": "9.1.0"
+	},
+	"backendPath": "/mnt/playpen/mailwoman-data/wof/candidate.db",
+	"rows": 453,
+	"fixtureDigest": "dc73aa360edc93517d5e4e731f7b41cc2b14a37f30169d5025860b401beb0526",
+	"lookupsTotal": 1467,
+	"candidatesTotal": 2045,
+	"goldCandidatesRemoved": 213,
+	"rowsWithRecordingError": 0
+}
