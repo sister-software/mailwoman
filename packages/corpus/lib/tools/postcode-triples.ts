@@ -120,12 +120,12 @@ export const DEFAULT_LOCALITY_QUOTA = 24
  * Order matters and is the caller's to choose: both readers below walk their source in id / file order, which is stable
  * across runs, so the same quota selects the same rows.
  */
-export function applyLocalityQuota(
-	triples: readonly PostcodeTriple[],
+export function applyLocalityQuota<T extends { cc: string; locality: string }>(
+	triples: readonly T[],
 	quota: number = DEFAULT_LOCALITY_QUOTA
-): PostcodeTriple[] {
+): T[] {
 	const seen = new Map<string, number>()
-	const kept: PostcodeTriple[] = []
+	const kept: T[] = []
 
 	for (const triple of triples) {
 		const key = `${triple.cc} ${triple.locality}`
@@ -151,12 +151,12 @@ export function applyLocalityQuota(
  * Applied AFTER {@link applyLocalityQuota}, so a country's budget is spent on breadth (many localities) rather than on
  * one city's postcode list.
  */
-export function applyCountryBudget(
-	triples: readonly PostcodeTriple[],
+export function applyCountryBudget<T extends { cc: string }>(
+	triples: readonly T[],
 	budget: number | ReadonlyMap<string, number>
-): PostcodeTriple[] {
+): T[] {
 	const spent = new Map<string, number>()
-	const kept: PostcodeTriple[] = []
+	const kept: T[] = []
 
 	for (const triple of triples) {
 		const cap = typeof budget === "number" ? budget : budget.get(triple.cc)
@@ -196,12 +196,17 @@ interface PreferredNames {
  * 53,078 ES rows teaching `Balearic Islands` (2,872 `Andalusia`, 5,680 `Castile and Leon`) against 4 rows of `Illes
  * Balears`, and every province with its accent gone (`Cordoba`, `Leon`). A Spanish user writes `Islas Baleares` or
  * `Illes Balears`; the exonym stays as ONE surface among them because a user may write it too.
+ *
+ * A {@link BILINGUAL_JOINED} `spr.name` yields BOTH halves. Nine regions carry one — `New Brunswick /
+ * Nouveau-Brunswick`, `Koper / Capodistria`, `Naannoo Hararii / ሐረሪ ሕዝብ ክልል` — and the joined string is a label the
+ * gazetteer composes rather than a name an address is written in, so taking it whole attests a surface nobody writes
+ * AND withholds the two that everybody does.
  */
 export function regionWrittenForms(sprName: string, names: PreferredNames): string[] {
 	const out: string[] = []
 
-	for (const raw of [...names.official, ...names.coOfficial, sprName]) {
-		const name = raw.replace(PROVINCE_GENERIC, "")
+	for (const raw of [...names.official, ...names.coOfficial, ...sprName.split(BILINGUAL_JOINED)]) {
+		const name = raw.trim().replace(PROVINCE_GENERIC, "")
 
 		if (name && !out.includes(name)) {
 			out.push(name)
@@ -210,6 +215,14 @@ export function regionWrittenForms(sprName: string, names: PreferredNames): stri
 
 	return out
 }
+
+/**
+ * The separator Who's On First joins a region's two co-official names with.
+ *
+ * Spaces are required on both sides. Nine of the gazetteer's current regions carry the form and every one of them is
+ * bilingual (SI 7, CA 1, ET 1); a slash with no surrounding spaces appears inside single names and must not split.
+ */
+const BILINGUAL_JOINED = / \/ /
 
 /**
  * The provincial generic Who's On First keeps in a province's Catalan and Asturian preferred names (`Província de
@@ -269,15 +282,73 @@ export async function readTriplesFromParentJoin(
 		ORDER BY p.id
 	`)
 
+	const surfaces = createSurfaceReader(db)
+	const out: PostcodeTriple[] = []
+
+	for (const cc of countries) {
+		const convention = POSTCODE_CONVENTIONS.get(cc)
+
+		if (!convention) continue
+
+		for (const row of statement.all(cc) as Array<{
+			postcode: string | null
+			locality_id: number
+			locality: string | null
+			region_id: number
+			region: string | null
+			country: string | null
+		}>) {
+			if (!row.postcode || !row.locality || !row.region) continue
+
+			const locality = surfaces.locality(cc, row.locality_id, row.locality)
+
+			for (const region of surfaces.region(cc, row.region_id, row.region)) {
+				out.push({
+					postcode: row.postcode,
+					locality,
+					region,
+					country: row.country ?? "",
+					cc,
+					locale: convention.locale,
+					postcodePlacement: convention.placement,
+				})
+			}
+		}
+	}
+
+	return out
+}
+
+/**
+ * Reads the surfaces a place is written as, against one open admin gazetteer, caching each place's preferred names by
+ * id so a gazetteer walk that meets a region once per locality reads it once in total.
+ */
+interface SurfaceReader {
+	/**
+	 * Every surface the region is written as, in the order {@link regionWrittenForms} defines.
+	 */
+	region: (cc: string, id: number, sprName: string) => string[]
+	/**
+	 * The one surface the locality is written as — see {@link localityWrittenForm} for why it is one and not a fan-out.
+	 */
+	locality: (cc: string, id: number, sprName: string) => string
+}
+
+/**
+ * Bind {@link regionWrittenForms} and {@link localityWrittenForm} to an open gazetteer.
+ *
+ * Both extractions below reach the same two questions from different starting rows — one walks up from a postcode, the
+ * other down from a country — so the preferred-name read, its per-id cache and the codex language selection live here
+ * rather than in each caller. The languages come from the codex and never from the names table's own language list,
+ * whose "preferred" name in a language not spoken in the region is often the parent's (`Zamora` → `Castella i Lleó`).
+ */
+function createSurfaceReader(db: DatabaseClient<WOFDatabase>): SurfaceReader {
 	const preferredStatement = db.prepare(
 		`SELECT language, name FROM names WHERE id = ? AND privateuse = 'preferred' AND language IS NOT NULL ORDER BY language, name`
 	)
 
 	const preferredByID = new Map<number, Map<string, string[]>>()
 
-	/**
-	 * Preferred names of one place, grouped by language, read once per id.
-	 */
 	const preferredNames = (id: number): Map<string, string[]> => {
 		let byLanguage = preferredByID.get(id)
 
@@ -300,53 +371,91 @@ export async function readTriplesFromParentJoin(
 	const namesIn = (byLanguage: Map<string, string[]>, languages: readonly string[]): string[] =>
 		languages.flatMap((language) => byLanguage.get(language) ?? [])
 
-	const out: PostcodeTriple[] = []
+	return {
+		region(cc, id, sprName) {
+			const officialLanguages = officialLanguagesAlpha3(cc)
+			const official = namesIn(preferredNames(id), officialLanguages)
+			// The co-official table is keyed by the region's name in the first official language; a region the names
+			// table has no such name for is looked up by its `spr.name`, which for a monolingual country is the same string.
+			const regionLanguages = regionLanguagesAlpha3(cc, official[0] ?? sprName)
+			const coOfficialLanguages = regionLanguages.filter((language) => !officialLanguages.includes(language))
+
+			return regionWrittenForms(sprName, { official, coOfficial: namesIn(preferredNames(id), coOfficialLanguages) })
+		},
+		locality(cc, id, sprName) {
+			const official = namesIn(preferredNames(id), officialLanguagesAlpha3(cc))
+
+			return localityWrittenForm(sprName, { official, coOfficial: [] })
+		},
+	}
+}
+
+/**
+ * One extracted `(locality, region, country)` pair, carrying no postcode.
+ */
+export type AdminPair = Omit<PostcodeTriple, "postcode" | "postcodePlacement">
+
+/**
+ * Read `(locality, region, country)` pairs for a country straight from the admin gazetteer, with no postcode.
+ *
+ * The postcode-bearing readers each need a source that pairs a code with a place, and for a country that publishes no
+ * such source there is nothing they can return. Canada is the worked example: GeoNames publishes 1,657 CA rows, every
+ * postcode a three-character FSA and column 3 an area label (`Vancouver (North Grandview-Woodlands)`) rather than a
+ * locality, while `postalcode-ca-overture.db` carries 843,739 full codes with `parent_id = -1` on every row. Neither
+ * reader yields a single CA tuple, so `trailing-region`'s Canadian region-code surface has never had one to act on.
+ *
+ * The admin gazetteer answers the pair without a postcode — 12,995 CA localities carry a region ancestor — and the
+ * recipe's BARE form needs no postcode. That form is what the failure reads on: `St. John's, NL, Canada` answers
+ * `country: NL` (the Netherlands) with `Canada` dropped, because `NL` is a curated country surface form and no row
+ * attests it as a region.
+ *
+ * A pair per REGION SURFACE, the same rule {@link readTriplesFromParentJoin} follows. No postcode is synthesized: a
+ * postcode asserts a fact about a place and a locality's own is not derivable from this source.
+ */
+export async function readPairsFromAdmin(
+	countries: readonly string[],
+	options: { adminDB?: string; locale?: (cc: string) => string } = {}
+): Promise<AdminPair[]> {
+	const adminDB = options.adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
+
+	if (!(await pathExists(adminDB))) return []
+
+	using db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
+
+	const statement = db.prepare(`
+		SELECT a.id AS locality_id, a.name AS locality, r.id AS region_id, r.name AS region, c.name AS country
+		FROM spr a
+		JOIN ancestors anc ON anc.id = a.id AND anc.ancestor_placetype = 'region'
+		JOIN spr r ON r.id = anc.ancestor_id
+		JOIN ancestors cnc ON cnc.id = a.id AND cnc.ancestor_placetype = 'country'
+		JOIN spr c ON c.id = cnc.ancestor_id
+		WHERE a.country = ? AND a.placetype IN ('locality', 'localadmin') AND a.is_current != 0 AND a.is_deprecated = 0
+		ORDER BY a.id
+	`)
+
+	const surfaces = createSurfaceReader(db)
+	const out: AdminPair[] = []
 
 	for (const cc of countries) {
-		const convention = POSTCODE_CONVENTIONS.get(cc)
-
-		if (!convention) continue
-
-		const officialLanguages = officialLanguagesAlpha3(cc)
+		const locale = options.locale?.(cc) ?? "und"
 
 		for (const row of statement.all(cc) as Array<{
-			postcode: string | null
 			locality_id: number
 			locality: string | null
 			region_id: number
 			region: string | null
 			country: string | null
 		}>) {
-			if (!row.postcode || !row.locality || !row.region) continue
+			if (!row.locality || !row.region) continue
 
-			const regionOfficial = namesIn(preferredNames(row.region_id), officialLanguages)
-			// The co-official table is keyed by the region's name in the first official language; a region the names
-			// table has no such name for is looked up by its `spr.name`, which for a monolingual country is the same string.
-			const regionLanguages = regionLanguagesAlpha3(cc, regionOfficial[0] ?? row.region)
-			const regionCoOfficialLanguages = regionLanguages.filter((language) => !officialLanguages.includes(language))
+			const locality = surfaces.locality(cc, row.locality_id, row.locality)
 
-			const regionNames: PreferredNames = {
-				official: regionOfficial,
-				coOfficial: namesIn(preferredNames(row.region_id), regionCoOfficialLanguages),
-			}
+			for (const region of surfaces.region(cc, row.region_id, row.region)) {
+				// A pair whose region repeats its locality teaches nothing about the boundary the recipe exists for, and the
+				// recipe drops it anyway — dropping it here keeps the country budget from being spent on rows that vanish.
+				if (region === locality) continue
 
-			const localityNames: PreferredNames = {
-				official: namesIn(preferredNames(row.locality_id), officialLanguages),
-				coOfficial: [],
-			}
-
-			const locality = localityWrittenForm(row.locality, localityNames)
-
-			for (const region of regionWrittenForms(row.region, regionNames)) {
-				out.push({
-					postcode: row.postcode,
-					locality,
-					region,
-					country: row.country ?? "",
-					cc,
-					locale: convention.locale,
-					postcodePlacement: convention.placement,
-				})
+				out.push({ locality, region, country: row.country ?? "", cc, locale })
 			}
 		}
 	}

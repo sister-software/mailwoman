@@ -17,6 +17,7 @@ import {
 	localityWrittenForm,
 	POSTCODE_CONVENTIONS,
 	type PostcodeTriple,
+	readPairsFromAdmin,
 	readTriplesFromGeonames,
 	readTriplesFromParentJoin,
 	regionWrittenForms,
@@ -224,6 +225,18 @@ describe("regionWrittenForms", () => {
 		expect(regionWrittenForms("Corunna", corunna)).toEqual(["La Coruña", "A Coruña", "Corunna"])
 		expect(regionWrittenForms("Highland", { official: [], coOfficial: [] })).toEqual(["Highland"])
 	})
+
+	it("splits a bilingual joined name into both halves and leaves an unspaced slash alone", () => {
+		const none = { official: [], coOfficial: [] }
+
+		expect(regionWrittenForms("New Brunswick / Nouveau-Brunswick", none)).toEqual([
+			"New Brunswick",
+			"Nouveau-Brunswick",
+		])
+
+		expect(regionWrittenForms("Koper / Capodistria", none)).toEqual(["Koper", "Capodistria"])
+		expect(regionWrittenForms("Schwedt/Oder", none)).toEqual(["Schwedt/Oder"])
+	})
 })
 
 describe("localityWrittenForm", () => {
@@ -308,6 +321,57 @@ describe("readTriplesFromParentJoin", () => {
 
 		expect(lines).toEqual(expected)
 		expect(triples.every((t) => t.cc === "ES" && t.locale === "es-ES" && t.postcodePlacement === "leading")).toBe(true)
+	})
+})
+
+describe("readPairsFromAdmin", () => {
+	it("answers the pair for a country no postcode source reaches, and splits the bilingual joined region name", async () => {
+		const adminDB = String(root.resolve("admin-ca.db"))
+
+		{
+			using admin = new DatabaseClient<WOFDatabase>(adminDB)
+			await createUnifiedSchema(admin)
+
+			const spr = admin.prepare(
+				"INSERT INTO spr (id, parent_id, name, placetype, country, is_current, is_deprecated) VALUES (?, ?, ?, ?, ?, ?, ?)"
+			)
+
+			spr.run(1, -1, "Canada", "country", "CA", 1, 0)
+			spr.run(10, 1, "Newfoundland and Labrador", "region", "CA", 1, 0)
+			spr.run(11, 1, "New Brunswick / Nouveau-Brunswick", "region", "CA", 1, 0)
+			spr.run(100, 10, "St. John's", "locality", "CA", 1, 0)
+			spr.run(101, 11, "Moncton", "locality", "CA", 1, 0)
+			spr.run(102, 10, "Gander", "locality", "CA", 0, 0)
+
+			const ancestors = admin.prepare("INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)")
+
+			for (const [id, region] of [
+				[100, 10],
+				[101, 11],
+				[102, 10],
+			] as const) {
+				ancestors.run(id, region, "region")
+				ancestors.run(id, 1, "country")
+			}
+		}
+
+		const pairs = await readPairsFromAdmin(["CA"], { adminDB, locale: () => "en-CA" })
+
+		expect(pairs.map((p) => `${p.locality}, ${p.region}, ${p.country}`)).toEqual([
+			"St. John's, Newfoundland and Labrador, Canada",
+			"Moncton, New Brunswick, Canada",
+			"Moncton, Nouveau-Brunswick, Canada",
+		])
+
+		expect(pairs.every((p) => p.cc === "CA" && p.locale === "en-CA")).toBe(true)
+		// No postcode field at all — a postcode asserts a fact about a place, and this source does not carry one.
+		expect(pairs.every((p) => !("postcode" in p))).toBe(true)
+	})
+
+	it("stamps `und` when the caller names no locale, rather than guessing one from the country", async () => {
+		const pairs = await readPairsFromAdmin(["CA"], { adminDB: String(root.resolve("admin-ca.db")) })
+
+		expect(pairs.every((p) => p.locale === "und")).toBe(true)
 	})
 })
 

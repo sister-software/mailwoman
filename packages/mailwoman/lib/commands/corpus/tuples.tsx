@@ -12,6 +12,11 @@
  *   gazetteer and emits one tuple per REGION SURFACE in the languages the region's addresses are written in (#1673);
  *   the `geonames` source reads a fetched GeoNames postal export. Both stamp the country's attested postcode placement
  *   and refuse a country whose placement nothing attests.
+ *
+ *   The `admin-pairs` source answers the pair WITHOUT a postcode, straight from the admin gazetteer, for a country no
+ *   postcode source reaches — the recipe's bare `«locality», «region»[, «country»]` form needs none. It stamps the
+ *   `--locale` the caller names, because the gazetteer says which languages a country writes and not which one a given
+ *   region surface came from.
  */
 
 import { countryDisplayNames } from "@mailwoman/codex/country"
@@ -34,8 +39,13 @@ export const spec = {
 		source: {
 			type: "string",
 			default: "parent-join",
-			choices: ["parent-join", "geonames"],
-			description: "parent-join (postalcode-intl.db → admin gazetteer) or geonames (fetched postal export)",
+			choices: ["parent-join", "geonames", "admin-pairs"],
+			description:
+				"parent-join (postalcode-intl.db → admin gazetteer), geonames (fetched postal export) or admin-pairs (gazetteer only, no postcode)",
+		},
+		locale: {
+			type: "string",
+			description: "BCP-47 tag stamped on admin-pairs rows (the other sources carry their country's own)",
 		},
 		quota: { type: "number", description: "Postcodes one locality may contribute (default: the tool's)" },
 		budget: { type: "number", description: "Tuples one country may contribute" },
@@ -59,9 +69,19 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 
 		const tools = await import("@mailwoman/corpus/tools/postcode-triples")
 		const countries = splitUpperList(options.countries)
-		let triples: Awaited<ReturnType<typeof tools.readTriplesFromParentJoin>>
 
-		if (options.source === "geonames") {
+		type Extracted =
+			| Awaited<ReturnType<typeof tools.readTriplesFromParentJoin>>[number]
+			| Awaited<ReturnType<typeof tools.readPairsFromAdmin>>[number]
+
+		let triples: Extracted[]
+
+		if (options.source === "admin-pairs") {
+			triples = await tools.readPairsFromAdmin(countries, {
+				...(options.adminDB ? { adminDB: options.adminDB } : {}),
+				...(options.locale ? { locale: () => options.locale as string } : {}),
+			})
+		} else if (options.source === "geonames") {
 			triples = []
 
 			for (const cc of countries) {
