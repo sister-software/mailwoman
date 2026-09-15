@@ -286,6 +286,12 @@ describe("the script a row renders in", () => {
 		expect(formatAddressRow(HK_LOCAL, "HK", { singleLine: true })?.script).toBe("local")
 	})
 
+	it("prints the Chinese register area-first: the area, then the district, then the street", () => {
+		// A largest-first system prints 九龍 (Kowloon, the area) above 佐敦 (Jordan, the district). The inverse reads
+		// as a district that contains its own area.
+		expect(formatAddress(HK_LOCAL, "HK", { singleLine: true })).toBe("九龍佐敦佐敦道21號")
+	})
+
 	it("carries the separator the chosen order takes, not the country's", () => {
 		// The defect this closes: the order came from the layout and the separator from a country flag, so a Latin
 		// Hong Kong address could print in Latin order with the unseparated Chinese join.

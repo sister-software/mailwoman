@@ -155,12 +155,32 @@ function layoutSource(
 	// The sub-locality line is AUTHORED wherever `%D` is absent, because the formatter this table replaces printed one
 	// for 202 of its 213 countries. It goes directly above the locality, which is where every template that has one
 	// puts it; `NO_SUB_LOCALITY_LINE_COUNTRIES` names the eleven that print none.
+	//
+	// "Above" is the envelope's sense — nearer the street than the locality is — and which side of the locality line
+	// that is depends on the skeleton's direction. A smallest-first skeleton prints the street before the locality, so
+	// the line goes before the locality; a largest-first one prints the locality before the street, so the line goes
+	// after it — and after the whole line, since a skeleton like `%S%C` keeps the region and the locality together,
+	// and a district spliced ahead of that line would print above the region. A skeleton that puts the street and the
+	// locality on ONE line (`%A %C`) takes the slot inside that line, between the two, for the same reason.
 	if (!NO_SUB_LOCALITY_LINE_COUNTRIES.has(code) && !named.has("dependent_locality")) {
+		const street = `\${${streetNode}}`
 		const localityLine = lines.findIndex((line) => line.includes("${locality}"))
+		const streetLine = lines.findIndex((line) => line.includes(street))
 
 		if (localityLine !== -1) {
 			named.add("dependent_locality")
-			lines.splice(localityLine, 0, "${dependent_locality}")
+
+			if (streetLine === localityLine) {
+				const line = lines[localityLine]!
+				const streetLeads = line.indexOf(street) < line.indexOf("${locality}")
+
+				lines[localityLine] = line.replace(
+					"${locality}",
+					streetLeads ? "${dependent_locality} ${locality}" : "${locality} ${dependent_locality}"
+				)
+			} else {
+				lines.splice(streetLine > localityLine ? localityLine + 1 : localityLine, 0, "${dependent_locality}")
+			}
 		}
 	}
 

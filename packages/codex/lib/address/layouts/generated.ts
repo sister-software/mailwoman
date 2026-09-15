@@ -280,8 +280,7 @@ ${country}`,
 	// %N%n%O%n%X %A %C %X
 	CI: addr`${attention}
 ${venue}
-${dependent_locality}
-${cedex} ${numberFirstStreet} ${locality} ${cedex}
+${cedex} ${numberFirstStreet} ${dependent_locality} ${locality} ${cedex}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C%n%S
@@ -494,8 +493,7 @@ ${country}`,
 	// %N%n%O%n%Z %A %C
 	GN: addr`${attention}
 ${venue}
-${dependent_locality}
-${postcode} ${numberFirstStreet} ${locality}
+${postcode} ${numberFirstStreet} ${dependent_locality} ${locality}
 ${country}`,
 
 	// %O%n%N%n%A%n%Z %C %X
@@ -583,8 +581,8 @@ ${country}`,
 	// %N%n%O%n%C%n%A%n%Z
 	HU: addr`${attention}
 ${venue}
-${dependent_locality}
 ${locality}
+${dependent_locality}
 ${numberLastStreet}
 ${postcode}
 ${country}`,
@@ -732,8 +730,8 @@ ${country}`,
 	KP: addr`${country}
 ${postcode}
 ${region}
-${dependent_locality}
 ${locality}
+${dependent_locality}
 ${numberLastStreet}
 ${venue}
 ${attention}`,
@@ -765,8 +763,8 @@ ${country}`,
 	KZ: addr`${country}
 ${postcode}
 ${region}
-${dependent_locality}
 ${locality}
+${dependent_locality}
 ${numberLastCommaStreet}
 ${venue}
 ${attention}`,
@@ -1431,8 +1429,8 @@ ${country}`,
 	// %Z%n%S%C%n%A%n%O%n%N
 	TW: addr`${country}
 ${postcode}
-${dependent_locality}
 ${region}${locality}
+${dependent_locality}
 ${numberLastStreet}
 ${venue}
 ${attention}`,
@@ -1664,8 +1662,8 @@ ${attention}`,
 	// %S%n%C%n%A%n%O%n%N
 	HK: addr`${country}
 ${region}
-${dependent_locality}
 ${locality}
+${dependent_locality}
 ${hanStreet}
 ${venue}
 ${attention}`,
@@ -1682,8 +1680,8 @@ ${attention}`,
 	KP: addr`${country}
 ${postcode}
 ${region}
-${dependent_locality}
 ${locality}
+${dependent_locality}
 ${numberLastStreet}
 ${venue}
 ${attention}`,
@@ -1713,8 +1711,8 @@ ${country}`,
 	// %Z%n%S%C%n%A%n%O%n%N
 	TW: addr`${country}
 ${postcode}
-${dependent_locality}
 ${region}${locality}
+${dependent_locality}
 ${hanStreet}
 ${venue}
 ${attention}`,

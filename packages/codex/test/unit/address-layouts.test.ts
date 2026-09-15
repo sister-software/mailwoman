@@ -21,6 +21,7 @@ import {
 	isSlot,
 	SLOTS,
 	type AddressAtom,
+	type AddressLayout,
 } from "@mailwoman/codex/address-layout"
 import {
 	ADDRESS_LAYOUTS,
@@ -33,6 +34,7 @@ import {
 	lineJoinForCountry,
 } from "@mailwoman/codex/address-layouts"
 import { joinRendering, renderAddress } from "@mailwoman/codex/address-render"
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -278,5 +280,89 @@ describe("a country that writes two orders carries both", () => {
 		expect(lineJoinForCountry("CN")).toBe("")
 		expect(lineJoinForCountry("CN", "local")).toBe("")
 		expect(lineJoinForCountry("US")).toBe(", ")
+	})
+})
+
+describe("the admin run keeps its tier order in every layout", () => {
+	/**
+	 * `layoutPrintsLargestFirst` asks whether a layout runs large to small overall, and an inversion between two adjacent
+	 * admin tiers leaves that answer unchanged: a Hong Kong layout printing the district above the area is still
+	 * largest-first. The order between tiers is a relation between tags, so it is asserted as one.
+	 *
+	 * The sub-locality is the tier the generator AUTHORS wherever a `fmt` names no `%D`, and the one relation it has to
+	 * get right is which side of the locality it lands on: the sub-locality sits between the street and the locality in
+	 * either direction. Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality;
+	 * that order is transcribed from the dataset rather than authored, and this check does not judge it.
+	 */
+	const TABLES = {
+		hand: ADDRESS_LAYOUTS,
+		generated: GENERATED_ADDRESS_LAYOUTS,
+		latin: GENERATED_LATIN_ADDRESS_LAYOUTS,
+		local: GENERATED_LOCAL_ADDRESS_LAYOUTS,
+	} as const
+
+	const FULL_ADDRESS = {
+		attention: "ATTENTION",
+		venue: "VENUE",
+		house_number: "NUMBER",
+		street: "STREET",
+		dependent_locality: "DEPENDENT",
+		locality: "LOCALITY",
+		subregion: "SUBREGION",
+		region: "REGION",
+		postcode: "POSTCODE",
+		country: "COUNTRY",
+	}
+
+	/**
+	 * The tags a layout prints, in print order, read off a render of a full address so an alternation or a nested street
+	 * node contributes what it prints rather than what it declares.
+	 */
+	function printedOrder(layout: AddressLayout): string[] {
+		return renderAddress(layout, FULL_ADDRESS)
+			.pieces.map((piece) => piece.tag)
+			.filter((tag): tag is ComponentTag => tag !== null)
+	}
+
+	it("prints the sub-locality between the street and the locality, in every table", () => {
+		const outside: string[] = []
+		let judged = 0
+
+		for (const [table, layouts] of Object.entries(TABLES)) {
+			for (const [country, layout] of Object.entries(layouts)) {
+				const order = printedOrder(layout)
+				const street = order.findIndex((tag) => tag === "street" || tag === "house_number")
+				const locality = order.indexOf("locality")
+				const dependent = order.indexOf("dependent_locality")
+
+				if (street === -1 || locality === -1 || dependent === -1) continue
+
+				judged++
+
+				const nearer = Math.min(street, locality)
+				const farther = Math.max(street, locality)
+
+				if (dependent < nearer || dependent > farther) {
+					outside.push(`${table}/${country}: ${order.join(" → ")}`)
+				}
+			}
+		}
+
+		// The count states the population, so an empty `outside` cannot be a reader that found nothing to read.
+		expect(judged).toBeGreaterThan(190)
+		expect(outside).toEqual([])
+	})
+
+	it("prints Hong Kong's own script area-first, then the district", () => {
+		expect(printedOrder(layoutForCountry("HK", "local")!)).toEqual([
+			"country",
+			"region",
+			"locality",
+			"dependent_locality",
+			"street",
+			"house_number",
+			"venue",
+			"attention",
+		])
 	})
 })

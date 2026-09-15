@@ -49,24 +49,25 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * The skeleton a layout prints: field names per line, street line collapsed to one marker.
  *
- * Two single-slot lines drop out. Both are AUTHORED rather than transcribed, so comparing them against the source would
- * report every country carrying one as a departure and say nothing:
+ * Two slots drop out. Both are AUTHORED rather than transcribed, so comparing them against the source would report
+ * every country carrying one as a departure and say nothing:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's consumers add the destination country
  *   themselves.
  * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14 of the 197 shipped `fmt`
- *   strings, and a country that really has the line still needs it.
+ *   strings, and a country that really has the line still needs it. It takes a line of its own beside the locality, or
+ *   a place inside the locality's line where that line also carries the street, so it is dropped wherever it sits
+ *   rather than only as a line; WHERE the generator put it is what `address-layouts.test.ts` checks.
  */
-const AUTHORED_LINES = new Set(["country", "dependent_locality"])
+const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 
 function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
-	// A line counts as authored only when the SOURCE does not name its slot. The 14 `fmt` strings that carry `%D` are
+	// A slot counts as authored only when the SOURCE does not name it. The 14 `fmt` strings that carry `%D` are
 	// compared like any other line, so a transcription error there still fails.
 	const inSource = new Set(source.flat())
+	const transcribed = (name: string): boolean => !AUTHORED_SLOTS.has(name) || inSource.has(name)
 
-	return layout.lines
-		.map((line) => line.flatMap(nameOf))
-		.filter((line) => !(line.length === 1 && AUTHORED_LINES.has(line[0]!) && !inSource.has(line[0]!)))
+	return layout.lines.map((line) => line.flatMap(nameOf).filter(transcribed)).filter((line) => line.length > 0)
 }
 
 function nameOf(atom: AddressAtom): string[] {
