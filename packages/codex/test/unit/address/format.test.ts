@@ -258,6 +258,102 @@ describe("formatAddressRow", () => {
 	})
 })
 
+describe("the script a row renders in", () => {
+	/**
+	 * The same Hong Kong address in both registers. Rendering either through one country-keyed layout prints one of them
+	 * in an order nobody writes, which is the whole reason the selection exists.
+	 */
+	const HK_LATIN: ComponentDict = {
+		street: "Jordan Road",
+		house_number: "21",
+		dependent_locality: "Jordan",
+		locality: "Kowloon",
+	}
+
+	const HK_LOCAL: ComponentDict = {
+		street: "佐敦道",
+		house_number: "21號",
+		dependent_locality: "佐敦",
+		locality: "九龍",
+	}
+
+	it("reads the register off the components, and says which it chose", () => {
+		expect(formatAddressRow(HK_LATIN, "HK", { singleLine: true })).toMatchObject({
+			script: "latin",
+			raw: "21 Jordan Road, Jordan, Kowloon",
+		})
+
+		expect(formatAddressRow(HK_LOCAL, "HK", { singleLine: true })?.script).toBe("local")
+	})
+
+	it("carries the separator the chosen order takes, not the country's", () => {
+		// The defect this closes: the order came from the layout and the separator from a country flag, so a Latin
+		// Hong Kong address could print in Latin order with the unseparated Chinese join.
+		expect(formatAddress(HK_LATIN, "HK", { singleLine: true })).toContain(", ")
+		expect(formatAddress(HK_LOCAL, "HK", { singleLine: true })).not.toContain(", ")
+	})
+
+	it("flips Korea to the romanized order on romanized values", () => {
+		const latin = formatAddress(
+			{ region: "Seoul", locality: "Jongno-gu", dependent_locality: "Cheongun-dong", house_number: "52-1" },
+			"KR",
+			{ singleLine: true }
+		)
+
+		const local = formatAddress(
+			{ region: "서울특별시", locality: "종로구", dependent_locality: "청운동", house_number: "52-1" },
+			"KR",
+			{ singleLine: true }
+		)
+
+		expect(latin).toBe("52-1, Cheongun-dong, Jongno-gu, Seoul")
+		expect(local).toBe("서울특별시 종로구청운동 52-1")
+	})
+
+	it("lets the caller override what the values say", () => {
+		// A caller holding a parse tree knows more than the values do: every span carries the script it is written in.
+		expect(formatAddressRow(HK_LATIN, "HK", { singleLine: true, script: "local" })?.script).toBe("local")
+		expect(formatAddressRow(HK_LOCAL, "HK", { singleLine: true, script: "latin" })?.script).toBe("latin")
+	})
+
+	it("holds Japan at its own order, because the Latin one would drop two components", () => {
+		const romanized: ComponentDict = {
+			region: "Tokyo",
+			locality: "Chiyoda",
+			dependent_locality: "Marunouchi",
+			house_number: "1-9-1",
+			postcode: "100-0005",
+		}
+
+		// Seven of the eight two-order countries place slot for slot. Japan's Latin skeleton has no slot below the
+		// prefecture, so deriving there would trade an order nobody writes for `locality` and `dependent_locality`.
+		const derived = formatAddressRow(romanized, "JP", { singleLine: true })
+
+		expect(derived?.script).toBe("local")
+		expect(derived?.unplaced).toEqual([])
+
+		// The caller can still ask for it, and then the loss is theirs to see — it is reported, not silent.
+		expect(formatAddressRow(romanized, "JP", { singleLine: true, script: "latin" })?.unplaced).toEqual([
+			"locality",
+			"dependent_locality",
+		])
+	})
+
+	it("abstains on a dict with no letters rather than reading digits as Latin", () => {
+		// The meaning-of-zero rule: no letters is not evidence of a register, so the country's own default stands.
+		const digits = formatAddressRow({ house_number: "21", postcode: "100-0005" }, "JP", { singleLine: true })
+
+		expect(digits?.script).toBe("local")
+	})
+
+	it("leaves a one-order country reading through to its only layout", () => {
+		expect(formatAddressRow(US_ADDRESS, "US", { singleLine: true })).toMatchObject({
+			script: "latin",
+			raw: "123 Main St, Portland, OR 97201",
+		})
+	})
+})
+
 describe("componentsPresentIn", () => {
 	it("keeps only the components whose value occurs in the string", () => {
 		const components: ComponentDict = { locality: "Paris", region: "Île-de-France", postcode: "75008" }

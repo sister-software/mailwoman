@@ -18,9 +18,14 @@
  *   never writes a connector around an absent one.
  */
 
-import { layoutForCountry, lineJoinForCountry } from "#address/layouts/index"
+import {
+	defaultScriptForCountry,
+	layoutForCountry,
+	lineJoinForCountry,
+	type AddressScript,
+} from "#address/layouts/index"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
-import type { ComponentTag } from "#component"
+import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
 export type { ComponentDict } from "#address/render"
 
@@ -42,12 +47,110 @@ export interface FormatAddressOptions {
 	 * printed backwards. `separator` wins when both are given.
 	 */
 	singleLine?: boolean
+
+	/**
+	 * Which of the country's two orders to render in, or unset to read it off the components themselves.
+	 *
+	 * Eight countries write an address two ways, and which one a dict wants is a property of the VALUES, not of the
+	 * country: `21 Jordan Road, Jordan, Kowloon` is the English register and `九龍佐敦佐敦道21號` is the Chinese one, both Hong
+	 * Kong. Rendering either through one country-keyed layout prints one of them in an order nobody writes.
+	 *
+	 * A caller holding a parse tree has the better answer and should pass it — every span carries the script it is
+	 * written in. This option is that hand-off.
+	 */
+	script?: AddressScript
 }
 
-function separatorFor(country: string, opts: FormatAddressOptions): string {
+function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
 	if (opts.separator !== undefined) return opts.separator
 
-	return opts.singleLine ? lineJoinForCountry(country) : "\n"
+	return opts.singleLine ? lineJoinForCountry(country, script) : "\n"
+}
+
+/**
+ * The components consulted to decide the script, in the order they are asked.
+ *
+ * The street leads because it is the line that distinguishes the two registers while the rest of the address often does
+ * not: a Hong Kong dict can carry `Kowloon` under either, and `佐敦道` under only one. The admin tiers follow as the
+ * fallback for a dict with no street, and the postcode is never asked — a postal code is digits in both registers and
+ * would abstain on every input.
+ */
+const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "dependent_locality", "region", "venue"]
+
+/**
+ * Whether a string carries a letter written in something other than the Latin alphabet.
+ *
+ * This is NOT script classification, which `@mailwoman/query-shape` owns and answers in full ISO 15924. The question
+ * here is binary and already scoped by the country: the eight records carrying two orders all pair a Latin register
+ * with a non-Latin one, so "is this the Latin register" is the whole question a layout choice asks. Depending on
+ * query-shape to ask it would give this package its first runtime dependency for one predicate.
+ */
+function carriesNonLatinLetter(value: string): boolean {
+	return /\p{Letter}/u.test(value) && !/^[^\p{Letter}]*(?:\p{Script=Latin}[^\p{Letter}]*)+$/u.test(value)
+}
+
+/**
+ * The script `components` are written in, read off the first witness that carries a letter.
+ *
+ * A dict whose witnesses are all digits or absent answers `undefined`, which leaves the country's own default in force
+ * rather than guessing — the meaning-of-zero rule: no letters is not evidence of Latin.
+ */
+// repo-health-ignore export-name-affix -- core's `scriptOf` takes a CODEPOINT and answers its ISO 15924 script; this
+// takes a dict and answers which of a country's two orders it is written for. Importing it is also impossible: this
+// package carries no runtime dependency, and core is 11 MB of shipped data.
+export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
+	for (const tag of SCRIPT_WITNESSES) {
+		const value = components[tag]?.trim()
+
+		if (!value || !/\p{Letter}/u.test(value)) continue
+
+		return carriesNonLatinLetter(value) ? "local" : "latin"
+	}
+
+	return undefined
+}
+
+/**
+ * A dict naming every tag once, used to enumerate the slots a layout actually has.
+ *
+ * The enumeration is a RENDER rather than a walk of the layout structure, because a layout's alternatives and
+ * connectors decide which slots are reachable and only the renderer resolves them.
+ */
+const EVERY_TAG: ComponentDict = Object.fromEntries(COMPONENT_TAGS.map((tag) => [tag, tag]))
+
+/**
+ * Per country: whether its Latin order places everything its local order does.
+ */
+const slotParity = new Map<string, boolean>()
+
+/**
+ * Whether reading the script off the components can cost `country` a component.
+ *
+ * Seven of the eight countries carrying two orders place slot for slot, so deriving the script drops no component.
+ * Japan does not: its Latin skeleton has no slot below the prefecture, because the source models a romanized Japanese
+ * address as prefecture plus undifferentiated address lines. A dict tagging `locality` and `dependent_locality`
+ * separately loses both, which trades an order nobody writes for two components nobody gets.
+ *
+ * Computed from the layouts rather than listed, so a country whose Latin skeleton gains the missing slots starts
+ * deriving with no edit here, and one that loses them stops.
+ */
+function scriptIsFreeToDerive(country: string): boolean {
+	const code = country.trim().toUpperCase()
+	const known = slotParity.get(code)
+
+	if (known !== undefined) return known
+
+	const latin = layoutForCountry(code, "latin")
+	const local = layoutForCountry(code, "local")
+
+	const parity =
+		!latin || !local || latin === local
+			? true
+			: renderAddress(local, EVERY_TAG).placed.every((tag) => renderAddress(latin, EVERY_TAG).placed.includes(tag))
+
+	slotParity.set(code, parity)
+
+	return parity
 }
 
 /**
@@ -79,6 +182,15 @@ export interface AddressRow {
 	 * absorbing a region into its postcode line is the common case.
 	 */
 	readonly unplaced: readonly ComponentTag[]
+	/**
+	 * Which of the country's orders this row was rendered in — the caller's `script`, else the one read off the
+	 * components, else the country's own default.
+	 *
+	 * Reported rather than inferred, because on a country with two orders the rendering alone does not say: a dict with
+	 * no street and one admin tier prints the same string either way, and a corpus row that cannot name its register
+	 * cannot be graded against one.
+	 */
+	readonly script: AddressScript
 }
 
 /**
@@ -95,7 +207,12 @@ export function formatAddressRow(
 	country: string,
 	opts: FormatAddressOptions = {}
 ): AddressRow | null {
-	const layout = layoutForCountry(country)
+	// The components decide, unless the caller does. Two abstentions leave the country's own default in force: a dict
+	// with no letters attests no register, and a country whose Latin order would drop a component is not worth the
+	// order. An explicit `script` overrides both — the caller holding a parse tree knows more than either test.
+	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : undefined
+	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
+	const layout = layoutForCountry(country, script)
 
 	if (!layout) return null
 
@@ -103,7 +220,7 @@ export function formatAddressRow(
 
 	if (!rendering.placed.length) return null
 
-	const raw = joinRendering(rendering, separatorFor(country, opts))
+	const raw = joinRendering(rendering, separatorFor(country, script, opts))
 
 	if (!raw) return null
 
@@ -117,7 +234,7 @@ export function formatAddressRow(
 		}
 	}
 
-	return { raw, components: placed, unplaced: rendering.unplaced }
+	return { raw, components: placed, unplaced: rendering.unplaced, script }
 }
 
 /**

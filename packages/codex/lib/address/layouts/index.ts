@@ -370,7 +370,8 @@ export function lineJoinForCountry(countryCode: string | null | undefined, scrip
  * before, the order came from the layout and the separator from a country flag, so the two could name different
  * systems.
  */
-function defaultScriptForCountry(code: string): AddressScript {
+export function defaultScriptForCountry(countryCode: string): AddressScript {
+	const code = countryCode.trim().toUpperCase()
 	const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
 	const chosen = ADDRESS_LAYOUTS[code] ?? GENERATED_ADDRESS_LAYOUTS[code]
 
