@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `sg-register` slice recipe — the forms a person in Singapore types, rendered over the Overture-SG register rows
+ *   `sg-register` recipe — the forms a person in Singapore types, rendered over the Overture-SG register rows
  *   (#2204 §4). The base `overture` source carries the register's own shape, `990 OLD CHOA CHU KANG ROAD, 699814,
  *   Singapore`, and the Latin model has no register for the three forms that dominate typed Singapore addresses:
  *
@@ -27,7 +27,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { titlecase } from "#au/adapters/gnaf/assemble"
-import { alignAndWrite, type CorpusRecipe, readTuples, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
 
 const SOURCE = "synth-sg-register"
 
@@ -183,7 +183,7 @@ export function renderSGRegister(row: SGRow, random: () => number, register?: SG
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the registers and why each is here.
+ * Recipe registered with the corpus builder — see the file header for the registers and why each is here.
  */
 export const sgRegisterRecipe: CorpusRecipe = {
 	name: "sg-register",
@@ -244,7 +244,7 @@ export const sgRegisterRecipe: CorpusRecipe = {
 					country: "SG",
 					locale: "en-SG",
 					source,
-					source_id: sliceSourceID(source, { raw: rendering.raw }),
+					source_id: recipeSourceID(source, { raw: rendering.raw }),
 					corpus_version: "0.1.0",
 					license:
 						"CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",

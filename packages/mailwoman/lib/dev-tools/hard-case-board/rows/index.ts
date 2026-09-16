@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-slice board's FRAGMENT-REGISTER rows — inputs whose difficulty is their SHAPE.
+ *   The hard-case board's FRAGMENT-REGISTER rows — inputs whose difficulty is their SHAPE.
  *
- *   Split out of `build-hard-slice-board.run.ts` because the two halves change for different reasons and
+ *   Split out of `build/hard-case-board.run.ts` because the two halves change for different reasons and
  *   at different rates: the builder is implementation (read a WOF point, walk two FST binaries, emit JSONL),
  *   while this file is the editorial content — which inputs pin which discrimination case, and why. A row
  *   here carries NO coordinates and NO bias numbers on purpose; those are measured at build time from
@@ -16,12 +16,12 @@
  *   punctuation to segment it. `comma_control` is its twin with the comma restored — same truth, same
  *   expected place — so a move on one and not the other localizes the effect to the missing
  *   punctuation rather than to the toponym. The toponym-ambiguity half of the board lives in
- *   `hard-slice-rows-toponym.ts`; both are concatenated by the builder.
+ *   `rows/toponym.ts`; both are concatenated by the builder.
  *
  *   Every entry's `note` is the row's justification and ends up verbatim in the emitted board.
  */
 
-import type { HardSliceClass } from "#eval-harness/hard-slice-board"
+import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
  * A curated row before its numbers are filled in. `expectID` is a WOF place id; the builder reads the point.
@@ -31,7 +31,7 @@ export interface Curated {
 	input: string
 	locale: string
 	country: string
-	class: HardSliceClass
+	class: HardCaseClass
 	probeSurface: string
 	probeTag?: string
 	expectID?: number

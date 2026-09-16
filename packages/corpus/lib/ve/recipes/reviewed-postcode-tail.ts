@@ -12,7 +12,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
-import { alignAndWrite, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
  * A separate sampler bucket so a receipt measures these reviewed after-locality rows and no other postcode placement.
@@ -164,7 +164,7 @@ export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 
 		for (const tuple of tuples) {
 			for (const variant of reviewedPostcodeTailVariants(tuple)) {
-				const sourceID = sliceSourceID(REVIEWED_POSTCODE_TAIL_SOURCE, { tuple: tuple.id, variant: variant.id })
+				const sourceID = recipeSourceID(REVIEWED_POSTCODE_TAIL_SOURCE, { tuple: tuple.id, variant: variant.id })
 
 				const canonical = {
 					raw: variant.raw,

@@ -95,7 +95,7 @@ export async function externalArenas(
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<void> {
-	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash `| tail` did.
+	// zx: capture output ourselves (don't echo the full stream) and trim the way the bash `| tail` did.
 	$.verbose = false
 
 	const outDir = options.outDir ?? tempRootPath("external-arenas")

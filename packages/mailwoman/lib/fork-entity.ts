@@ -126,8 +126,8 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 }
 
 /**
- * The slice of the geocode outcome a forked answer writes — structural, so this module does not import the outcome type
- * back out of `geocode-core` (which imports the probe from here).
+ * The subset of the geocode outcome a forked answer writes — structural, so this module does not import the outcome
+ * type back out of `geocode-core` (which imports the probe from here).
  */
 export interface ForkEntityAnswerTarget {
 	lat: number | null

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus audit <corpus-dir>` — per-source slice-count vs source_weight diagnostic.
+ *   `mailwoman corpus audit <corpus-dir>` — per-source parquet-file count vs `source_weight` diagnostic.
  *   Pair with `--config` to weight the counts by a training YAML's source_weights block.
  */
 
@@ -14,16 +14,20 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  */
 export const spec = {
 	name: "audit",
-	description: "Audit corpus slice counts against source weights.",
+	description: "Audit corpus parquet-file counts against source weights.",
 	positionals: [
-		{ name: "corpus-dir", required: true, description: "Corpus directory (MANIFEST.json or train/val/test slices)" },
+		{
+			name: "corpus-dir",
+			required: true,
+			description: "Corpus directory (MANIFEST.json or train/val/test parquet files)",
+		},
 	],
 	options: {
-		config: { type: "string", description: "Training YAML whose source_weights pair with the slice counts" },
+		config: { type: "string", description: "Training YAML whose source_weights pair with the file counts" },
 		sample: {
 			type: "number",
 			default: 100,
-			description: "Max slices sampled per split when scanning without a MANIFEST",
+			description: "Max parquet files sampled per split when scanning without a MANIFEST",
 		},
 	},
 } as const satisfies CommandSpec

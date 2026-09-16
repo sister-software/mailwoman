@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `po-box` slice recipe — synthetic PO box rows: tuples → {@link synthesizePoBoxRow} → aligned
+ *   `po-box` recipe — synthetic PO box rows: tuples → {@link synthesizePoBoxRow} → aligned
  *   LabeledRow, plus optional self-contained US military/diplomatic rows (#517) at
- *   `--military-ratio`. Region is required EXCEPT region-less locales (NZ). Ported from
- *   scripts/build-po-box-slice.mjs.
+ *   `--military-ratio`. Region is required EXCEPT region-less locales (NZ). Ported from the root
+ *   build script it replaced.
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
@@ -14,15 +14,15 @@ import { makeLcg } from "@mailwoman/core/utils"
 import {
 	alignAndWrite,
 	readTuples,
-	sliceSourceID,
+	recipeSourceID,
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,
 	type CorpusRecipe,
 } from "#recipes/scaffold"
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "#synthesizers/po-box"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const poBoxRecipe: CorpusRecipe = {
 	name: "po-box",
@@ -37,9 +37,9 @@ export const poBoxRecipe: CorpusRecipe = {
 		const random = makeLcg(opts.seed)
 		const pmbRatio = opts.pmbRatio ?? 0.15
 		const militaryRatio = opts.militaryRatio ?? 0
-		// `--source-name` so a slice built for one class carries its own source label and its own dose. A
-		// military-only slice (`--variants 0 --military-ratio 1`) is otherwise indistinguishable from the
-		// leader-template rows in the mixture, and the two are dosed for different reasons (#517).
+		// `--source-name` so an output built for one class carries its own source label and its own reps per row. A
+		// military-only output (`--variants 0 --military-ratio 1`) is otherwise indistinguishable from the
+		// leader-template rows in the mixture, and the two are weighted for different reasons (#517).
 		const source = opts.sourceName ?? "synth-po-box"
 		let read = 0
 		let emitted = 0
@@ -69,7 +69,7 @@ export const poBoxRecipe: CorpusRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source,
-						source_id: sliceSourceID(source, {
+						source_id: recipeSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,
 							postcode: tuple.postcode,
@@ -102,7 +102,7 @@ export const poBoxRecipe: CorpusRecipe = {
 						country: "US",
 						locale: mil.locale,
 						source,
-						source_id: sliceSourceID(source, {
+						source_id: recipeSourceID(source, {
 							po_box: mil.components.po_box,
 							locality: mil.components.locality,
 							region: mil.components.region,

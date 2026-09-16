@@ -11,7 +11,7 @@
  *   exactly where the model wobbles, so a retrain learns the boundary from context, not the
  *   lexeme.
  *
- *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the slice never
+ *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the recipe output never
  *   introduces tokens the base corpus lacks (the #511 base-consistency lint flagged an earlier
  *   AU-bearing draft: AU 4-digit postcodes collide with US house numbers, and AU localities are
  *   absent from the US/FR/DE base — a real contradiction). Each component is a whitespace-separated
@@ -32,7 +32,7 @@
  *   Two BALANCING shapes (added 2026-06-18 after the v1.6.0 probes). The first pass at weight 1.0
  *   lifted the boundaries but over-fit a NARROW distribution — every row was a clean, full,
  *   structured address — so the model regressed on out-of-distribution real rows (held-out US
- *   locality 66.3→58.2%). These two widen the distribution the slice teaches over, per the
+ *   locality 66.3→58.2%). These two widen the distribution the recipe output teaches over, per the
  *   diagnosis (scripts/eval/locality-regression-probe): 5. `bare-locality` — locality with NO
  *   street (`Public Library, Lisbon ND`, `75003 Paris`), the ship-blocker: 84% of the v1.6.0
  *   locality regression was DROPPED locality on bare "City, STATE" rows, because every other shape
@@ -45,8 +45,8 @@
  *   AU/NZ/UK slash unit-convention (`4/2A` → unit+house_number). The slash labels cleanly (the
  *   tokenizer splits `/`) and is the worst within-token class — but it inherently requires non-base
  *   AU/NZ/UK locales, which contradict the US/FR/DE base (the lint catch). It belongs in a
- *   separately-scoped AU/NZ/UK boundary-coverage slice that ALSO adds AU base coverage, not in this
- *   base-locale slice. `synthesizers/boundary-stress.test.ts` proves the alignments.
+ *   separately-scoped AU/NZ/UK boundary-coverage recipe that ALSO adds AU base coverage, not in this
+ *   base-locale recipe. `synthesizers/boundary-stress.test.ts` proves the alignments.
  */
 
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
@@ -65,7 +65,7 @@ export type BoundaryStressTemplate =
 	| "comma-less-city-state"
 	| "fr-prefix"
 	| "house-number-after-street"
-	// Added 2026-06-18 after the v1.6.0 probes (the slice's NARROW distribution over-fit "full structured
+	// Added 2026-06-18 after the v1.6.0 probes (the recipe output's NARROW distribution over-fit "full structured
 	// address" and regressed OOD). These two re-balance the contexts the model actually sees:
 	| "bare-locality" // the ship-blocker fix: locality with NO street (the 84%-dropped "City, STATE" rows)
 	| "house-number-before-street"
@@ -82,7 +82,7 @@ export interface BoundaryStressBaseTuple {
 export interface BoundaryStressSynthesisOpts {
 	random?: () => number
 	/**
-	 * Force a specific shape (tests + balanced slice composition).
+	 * Force a specific shape (tests + balanced recipe-output composition).
 	 */
 	forceTemplate?: BoundaryStressTemplate
 }
@@ -97,8 +97,8 @@ export interface SynthesizedBoundaryStressRow {
 /**
  * Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the name. Single-word
  * names alone teach nothing about the suffix edge. Multi-word names are what make the suffix boundary BITE (the model
- * must not read the trailing suffix word as part of the name). Kept diverse so the slice teaches the boundary, not the
- * lexeme.
+ * must not read the trailing suffix word as part of the name). Kept diverse so the recipe output teaches the boundary,
+ * not the lexeme.
  */
 const MULTIWORD_STREETS = [
 	"Country Club",
@@ -224,7 +224,7 @@ const SUFFIXES = [
 ] as const
 
 // Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
-// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped slice bytes.
+// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
@@ -280,12 +280,12 @@ const FR_NAMES = [
  * PUBLIC LIBRARY, …, Lisbon ND"; "Alburg Health Center"). Teaching the locality WITH a leading venue keeps the model
  * emitting it on facility-style addresses (NPPES/HRSA shapes). `venue` is a base ComponentTag. #511-LINTED 2026-06-18
  * (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token here is venue-DOMINANT in the base,
- * so the slice agrees with it. The first draft was naive — 9 terms were dropped because their tokens are dominantly
- * street/locality and would CONTRADICT the base the way Madison-as-street did (#511): "Fire" 93% street, "Veterans" 94%
- * street, "City" 68% locality, "Hall" 63% street, "Memorial"/"Hospital" 62-63% street, "Recreation" 79% street, "Town"
- * 48% locality, "Library" 51% street, "County" 68% street, "Arts"/"Courthouse"/"Municipal" dependent_locality. Kept
- * tokens: Clinic 98%, Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%, Department 90%, Group 87%,
- * Center 65%, School 70%, Public 89%, Elementary/Family 97% (all venue).
+ * so the recipe output agrees with it. The first draft was naive — 9 terms were dropped because their tokens are
+ * dominantly street/locality and would CONTRADICT the base the way Madison-as-street did (#511): "Fire" 93% street,
+ * "Veterans" 94% street, "City" 68% locality, "Hall" 63% street, "Memorial"/"Hospital" 62-63% street, "Recreation" 79%
+ * street, "Town" 48% locality, "Library" 51% street, "County" 68% street, "Arts"/"Courthouse"/"Municipal"
+ * dependent_locality. Kept tokens: Clinic 98%, Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%,
+ * Department 90%, Group 87%, Center 65%, School 70%, Public 89%, Elementary/Family 97% (all venue).
  */
 const VENUES = [
 	"Community Center",
@@ -306,9 +306,9 @@ const VENUES = [
 
 /**
  * Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the training data
- * (B-locality ≫ I-street), so the slice agrees with the base instead of fighting it. The night's targeted scan caught
- * the prior vocab (Madison, Portland, Springfield IL…) at 92–100% STREET in the base ("Madison Ave"), the "5th Avenue
- * Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
+ * (B-locality ≫ I-street), so the recipe output agrees with the base instead of fighting it. The night's targeted scan
+ * caught the prior vocab (Madison, Portland, Springfield IL…) at 92–100% STREET in the base ("Madison Ave"), the "5th
+ * Avenue Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
  */
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Albuquerque", region: "NM", postcode: "87102", country: "US" },
@@ -342,11 +342,11 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 ]
 
 /**
- * FR localities DERIVED from the FR (ban) slices specifically — where these famous cities are 95–99% locality-DOMINANT
- * (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-slice scan falsely flagged them
- * street-dominant by undersampling the FR block (parts 180–209) and mixing in US street-contexts; the FR-block scan is
- * the honest distribution. Dept-diverse (28 depts), region empty (French addresses carry no region token; the
- * generator's region-optional path handles it).
+ * FR localities DERIVED from the FR (ban) parquet files specifically — where these famous cities are 95–99%
+ * locality-DOMINANT (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-files scan falsely
+ * flagged them street-dominant by undersampling the FR block (parts 180–209) and mixing in US street-contexts; the
+ * FR-block scan is the honest distribution. Dept-diverse (28 depts), region empty (French addresses carry no region
+ * token; the generator's region-optional path handles it).
  */
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
@@ -371,7 +371,7 @@ const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 
 // NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"), and the base yielded
 // zero locality-dominant DE towns in the scan, so house-number-after-street is FR-only here. DE's
-// native-order number-after-street is covered by the dedicated synth-german slice.
+// native-order number-after-street is covered by the dedicated `german` recipe (source `synth-german`).
 const houseNumber = (random: () => number): string => String(1 + Math.floor(random() * 4999))
 const localeFor: Record<string, string> = { US: "en-US", FR: "fr-FR", DE: "de-DE" }
 

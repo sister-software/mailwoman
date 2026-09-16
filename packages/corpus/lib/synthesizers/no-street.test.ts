@@ -143,7 +143,7 @@ describe("synthesizeNoStreetRow", () => {
 			counts[row!.template]++
 		}
 
-		// venue-adversarial is the critical slice — should be the largest single bucket.
+		// venue-adversarial is the critical pattern — should be the largest single bucket.
 		expect(counts["venue-adversarial"]).toBeGreaterThan(counts["venue-plain"])
 
 		// All templates should fire at least once at this sample size.

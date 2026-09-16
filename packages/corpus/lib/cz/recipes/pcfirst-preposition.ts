@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `cz-pcfirst-preposition` — the Czech pc-first prepositional-locality slice, fourth orthography
+ *   `cz-pcfirst-preposition` — the Czech pc-first prepositional-locality recipe, fourth orthography
  *   of the #901 leading-name-boundary family. The #897 close-out read all 8 residual CZ rows as one
  *   class: a LEADING postcode mis-assigned as house_number while the multi-word "nad/pod/u X"
  *   locality shatters ("51244 Rokytnice nad Jizerou, Dolní Rokytnice 111" → street
  *   'RokytnicenadJizerou' + house_number '51244'). That leading-5-digit confusion is the
- *   anchor-pollution class whose decode-time OVERRIDE was correctly killed in #723 — this slice is
+ *   anchor-pollution class whose decode-time OVERRIDE was correctly killed in #723 — this recipe is
  *   the model-first fix as DATA: real prepositional localities in the order that breaks, so the
  *   model learns that a leading postcode before a multi-word name is a postcode. pc-first leads the
  *   cycle (the lesson); canonical and city-first keep the polarity balanced (the v1.9.9 lesson).
@@ -16,7 +16,7 @@
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 /**
  * The order-cycle slot for the STREET-LESS form (`«city» «pc», Česko`) — the exact surface of the
  * `cz-full-praha-100-00` board row, whose absence from the street-bearing orders was the v4.5.0 no-promote's measured
@@ -25,8 +25,8 @@ import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#re
 const STREETLESS_ORDER = 3
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 	name: "cz-pcfirst-preposition",
@@ -81,7 +81,7 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				raw = `${city} ${postcodeSurface}, Česko`
 			}
 
-			const source_id = sliceSourceID("synth-cz-pcfirst-preposition", {
+			const source_id = recipeSourceID("synth-cz-pcfirst-preposition", {
 				...components,
 				o: String(order),
 				s: spaced ? "1" : "0",

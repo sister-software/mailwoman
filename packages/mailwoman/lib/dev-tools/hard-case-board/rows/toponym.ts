@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-slice board's TOPONYM-REGISTER rows — inputs whose difficulty is the NAME, not the shape.
+ *   The hard-case board's TOPONYM-REGISTER rows — inputs whose difficulty is the NAME, not the shape.
  *
  *   The four classes here are the ways one surface can mean several places, ordered by what decides:
  *
@@ -14,10 +14,10 @@
  *   - `street_head_control` — the surface is a toponym in street-head position and must NOT be pulled to
  *       locality (#1142). These are the arm comparison's cost side: where a bigger bias is dangerous.
  *
- *   The shape-driven half lives in `hard-slice-rows.ts`; both are concatenated by the builder.
+ *   The shape-driven half lives in `rows/index.ts`; both are concatenated by the builder.
  */
 
-import { ADMIN_TOL, CITY_TOL, type Curated } from "#dev-tools/hard/slice/rows/index"
+import { ADMIN_TOL, CITY_TOL, type Curated } from "#dev-tools/hard-case-board/rows/index"
 
 /**
  * See the file header — the four toponym-ambiguity classes, grouped by what disambiguates them.

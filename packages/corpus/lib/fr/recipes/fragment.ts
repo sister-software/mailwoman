@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-fragment` slice recipe (#727 T2) — the HOUSE-NUMBER-LICENCE change.
+ *   `fr-fragment` recipe (#727 T2) — the HOUSE-NUMBER-LICENCE change.
  *
  *   The measured problem (T1c, `2026-07-16-t1c-fragment-board-verdict.md`): the shipped model scores
  *   **0.925** on `<n> Rue X` and **0.215** on `Rue X`. Same streets, same model; the only difference
@@ -43,7 +43,7 @@
  *   FORM 7 IS NOT OPTIONAL. T1c's standing prediction: the board's `bare-locality` cell reads 0.980
  *   for the WRONG REASON — the model calls everything without a house number a locality, and on bare
  *   localities that is accidentally right. Teach bare streets alone and the model has every incentive
- *   to flip that default rather than learn the distinction, trading a 0.215 for a 0.980. The slice
+ *   to flip that default rather than learn the distinction, trading a 0.215 for a 0.980. The recipe
  *   must show BOTH bare forms so the discriminating evidence is the designator, which is the only
  *   thing that actually distinguishes them. This is the same counter-distribution principle
  *   {@link noStreetRecipe} established after synth-street pushed the model into "decompose mode".
@@ -53,26 +53,26 @@
  *   skipped — source-disjoint by normalized street SURFACE, never by record row. Row-disjoint leaks
  *   the surface across the boundary and measures memorization of `Rue de Rivoli` while claiming
  *   generalization to unseen streets. The recipe REFUSES to run without the list rather than
- *   silently minting a contaminated slice.
+ *   silently minting a contaminated recipe output.
  *
- *   MIX. The slice is ~145K rows off a 120K-tuple draw; the intended corpus mix is **5–10%**, set at
- *   assembly time by slice weight rather than by row count. Keep the cap: a slice that fixes fragments
- *   by degrading full addresses has moved the failure, not fixed it — which is what
+ *   MIX. The recipe output is ~145K rows off a 120K-tuple draw; the intended corpus mix is **5–10%**,
+ *   set at assembly time by source weight rather than by row count. Keep the cap: a recipe output that
+ *   fixes fragments by degrading full addresses has moved the failure, not fixed it — which is what
  *   `street-housenumber` / `alnum-housenumber` on the fragment board and the global parity floor are
- *   there to catch. `date-name` is ~0.5% of the slice because BAN only holds ~1,418 date-name streets
+ *   there to catch. `date-name` is ~0.5% of the output because BAN only holds ~1,418 date-name streets
  *   after filtering and the tuple extractor already takes every one; if that class needs more, the
- *   change is slice weight, not invented data.
+ *   change is source weight, not invented data.
  *
  *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe TEACHES FR `street_prefix`.
  *   The conventions loss-mask forbids it for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss
- *   blow-up). Disable that mask for any run including this slice.
+ *   blow-up). Disable that mask for any run including this recipe's output.
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
-import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 
 /**
@@ -88,8 +88,8 @@ const HOUSE_NUMBERS = [
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
-// Recipe-fidelity: this accent-STRIPPING fold is the surface key every committed fr-fragment slice and the fragment
-// board's reserved list were built with — not the diacritic-KEEPING `foldNOSurface` the Norwegian slices share.
+// Recipe-fidelity: this accent-STRIPPING fold is the surface key every committed fr-fragment recipe output and the
+// fragment board's reserved list were built with — not the diacritic-KEEPING `foldNOSurface` the Norwegian recipes share.
 const norm = (value: string): string =>
 	value
 		.normalize("NFD")
@@ -102,10 +102,10 @@ const norm = (value: string): string =>
  * French commune convention: capitalize each element, leave the joining particles lowercase. `saint-jean-de-luz` →
  * `Saint-Jean-de-Luz`, not `Saint-Jean-De-Luz`.
  *
- * Needed because BAN's sliced DBs keep only `locality_base` — normalized, lowercase, accent-stripped. Emitting that
- * verbatim would teach the counter-distribution that a lowercase accent-stripped string is a locality, which is not a
- * fact about French and would not match the fragment board (which reconstructs the same casing). The accents are gone
- * from the source and cannot be recovered here; the casing can.
+ * Needed because BAN's per-region extract databases keep only `locality_base` — normalized, lowercase, accent-stripped.
+ * Emitting that verbatim would teach the counter-distribution that a lowercase accent-stripped string is a locality,
+ * which is not a fact about French and would not match the fragment board (which reconstructs the same casing). The
+ * accents are gone from the source and cannot be recovered here; the casing can.
  */
 const FR_LOWER = new Set([
 	"le",
@@ -155,8 +155,8 @@ const DATEISH =
 const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",
@@ -184,7 +184,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 		if (!excludePath) {
 			throw new Error(
 				"fr-fragment: --exclude-surfaces is REQUIRED. Pass the fragment board's reserved list " +
-					"(mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt) or this slice trains on its own eval set. " +
+					"(mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt) or this recipe trains on its own eval set. " +
 					"Source-disjoint by street SURFACE is the split discipline; there is no safe default."
 			)
 		}
@@ -266,7 +266,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 				klass = alnum ? "alnum-housenumber" : "street-housenumber"
 			}
 
-			const sourceID = sliceSourceID("synth-fr-fragment", { ...components, v: String(read) })
+			const sourceID = recipeSourceID("synth-fr-fragment", { ...components, v: String(read) })
 
 			if (
 				alignAndWrite(
@@ -301,7 +301,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 			// BAN gives `locality_base` normalized; restore the casing the fragment board also
 			// reconstructs, so train and eval show the model the same shape of French.
 			const name = frTitleCase(pick(pool, random))
-			const sourceID = sliceSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
+			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
 
 			if (
 				alignAndWrite(

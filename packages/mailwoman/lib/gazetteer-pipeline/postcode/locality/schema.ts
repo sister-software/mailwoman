@@ -54,7 +54,7 @@ export interface PostcodeLocalityDatabase {
 }
 
 /**
- * The slice of a Kysely handle the DDL below touches — the parameter type the builders take.
+ * The subset of a Kysely handle the DDL below touches — the parameter type the builders take.
  */
 export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>, "schema">
 

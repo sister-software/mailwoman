@@ -25,7 +25,7 @@ import {
 import type { AUTuple, NZTuple, Rendered, USTuple } from "#recipes/po/box/cedex/types"
 import { renderPmbUs, renderPoBoxUs } from "#recipes/po/box/cedex/us"
 import { CLASS_MIX } from "#recipes/po/box/cedex/vocabulary"
-import { sliceSourceID, type CanonicalSliceRow, type CorpusRecipe } from "#recipes/scaffold"
+import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeMilitaryPoBoxRow } from "#synthesizers/po-box"
 import { pick } from "#synthesizers/utils"
 import { alignRow } from "#utils"
@@ -166,13 +166,13 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 				continue
 			}
 
-			const canonical: CanonicalSliceRow = {
+			const canonical: CanonicalRecipeRow = {
 				raw,
 				components: orderComponents(components),
 				country,
 				locale,
 				source,
-				source_id: sliceSourceID(source, components),
+				source_id: recipeSourceID(source, components),
 				corpus_version: "0.4.0",
 				license:
 					country === "CA"

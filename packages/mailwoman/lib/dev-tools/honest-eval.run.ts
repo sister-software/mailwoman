@@ -8,7 +8,7 @@
  *   The yardstick the rest of the roadmap is graded on. Random OA evaluation flatters us: the model
  *   trains on a corpus that COVERS the same streets OA tests, and the legacy locality NAME-match
  *   metric is blind to picking the right name in the WRONG place. This harness measures only the
- *   LEAKAGE-FREE slice (OA rows in corpus-held-out geography the model never trained on) and
+ *   LEAKAGE-FREE held-out set (OA rows in corpus-held-out geography the model never trained on) and
  *   reports the NON-GAMEABLE coordinate truth: region-match, coordinate error (p50/p90), and
  *   PIP-containment (gold OA point inside the resolved WOF polygon) — the last reported WITH a
  *   polygon-coverage denominator, since WOF point-geometry localities can never PIP-contain and
@@ -18,10 +18,10 @@
  *   transparent to polygon coverage); treat locality-PIP as a coverage-adjusted secondary. See
  *   docs/articles/evals/experiments/2026-06-08-honest-eval.md.
  *
- *   Held-out slices (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
+ *   Held-out sets (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
  *   Lozère/Creuse. Only US/VT clears the 1000-row trust floor in the current samples (FR held-out
  *   départements = 16 rows; DE has no manifest holdout). Abort/de-risk per the plan: a held-out
- *   slice below 1000 rows is reported as UNTRUSTED, not scored.
+ *   set below 1000 rows is reported as UNTRUSTED, not scored.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/honest-eval.run.ts\
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\
@@ -46,7 +46,7 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 const PIP_CONTAINMENT_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "pip-containment.run.ts")
 
 async function main() {
-	// zx: capture output ourselves and slice/parse in JS the way the bash awk/jq/grep pipes did.
+	// zx: capture output ourselves and trim/parse in JS the way the bash awk/jq/grep pipes did.
 	$.verbose = false
 
 	let MODEL = "packages/neural-weights-en-us/model.onnx"
@@ -111,29 +111,29 @@ async function main() {
 	const US_HELD_REGIONS = ["VT", "WY", "ND"] // corpus defaultHoldouts() for US
 	const TRUST_FLOOR = 1000
 
-	// Build the leakage-free US held-out slice.
-	const US_SLICE = `${TMP}/us-heldout.jsonl`
-	await writeLocalTextFile("", US_SLICE)
+	// Build the leakage-free US held-out set.
+	const US_HELD_OUT = `${TMP}/us-heldout.jsonl`
+	await writeLocalTextFile("", US_HELD_OUT)
 
-	// : > "$US_SLICE"
+	// : > "$US_HELD_OUT"
 	for (const st of US_HELD_REGIONS) {
 		const r = await $({ nothrow: true })`jq -c --arg st ${st} ${"select((.state|ascii_upcase) == $st)"} ${US_SAMPLE}`
 
 		if (r.stdout) {
-			await appendLocalTextFile(r.stdout, US_SLICE)
+			await appendLocalTextFile(r.stdout, US_HELD_OUT)
 		}
 	}
 
-	const US_N = ((await readLocalTextFile(US_SLICE)).match(/\n/g) || []).length
+	const US_N = ((await readLocalTextFile(US_HELD_OUT)).match(/\n/g) || []).length
 
-	console.error(`US held-out slice (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)
+	console.error(`US held-out set (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)
 
 	/**
-	 * Run_locale <name> <slice.jsonl> <default-country> <out-tag> Returns a TSV row: name n regionMatch localityMatch
+	 * Run_locale <name> <held-out.jsonl> <default-country> <out-tag> Returns a TSV row: name n regionMatch localityMatch
 	 * coordP50 coordP90 pipAll pipPoly polyCov
 	 */
-	const runLocale = async (name: string, slice: string, cc: string, tag: string): Promise<string> => {
-		const n = ((await pathExists(slice)) ? (await readLocalTextFile(slice)).match(/\n/g) || [] : []).length
+	const runLocale = async (name: string, heldOut: string, cc: string, tag: string): Promise<string> => {
+		const n = ((await pathExists(heldOut)) ? (await readLocalTextFile(heldOut)).match(/\n/g) || [] : []).length
 
 		if (n < TRUST_FLOOR) {
 			return `${name}\t${n}\tUNTRUSTED\t-\t-\t-\t-\t-\t-`
@@ -147,7 +147,7 @@ async function main() {
 
 		await oaResolverEval(
 			{
-				eval: slice,
+				eval: heldOut,
 				model: MODEL,
 				modelCard: CARD,
 				tokenizer: TOK,
@@ -193,7 +193,7 @@ async function main() {
 
 	console.error(`== honest eval (label=${LABEL}, wof=${WOF}) ==`)
 
-	const US_ROW = await runLocale("US/VT held-out", US_SLICE, "US", `honest-us-${LABEL}`)
+	const US_ROW = await runLocale("US/VT held-out", US_HELD_OUT, "US", `honest-us-${LABEL}`)
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One nine-field row `runLocale` just built in memory.
 	const u = US_ROW.split("\t")

@@ -71,7 +71,7 @@ const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 			return
 		}
 
-		// Step 1: Download v0.4.0 adapter slices
+		// Step 1: Download the v0.4.0 adapter parquet files
 		updateStep(1, { status: "running" })
 
 		try {

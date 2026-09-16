@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-lieudit` slice recipe — FR lieu-dit (hamlet/place) `dependent_locality` coverage
+ *   `fr-lieudit` recipe — FR lieu-dit (hamlet/place) `dependent_locality` coverage
  *   (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22). Streams every BAN
  *   `adresses-<dept>.csv` dump under `--ban-dir` through `@mailwoman/ban/sdk`'s
  *   `extractBANAddrPoints`, which now surfaces a cleaned `lieuDit` per record (junk/dup filtering
@@ -63,8 +63,8 @@ interface LieuDitTuple {
  * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, ONE path per département. Excludes the `merged`/`france`
  * aggregates (they duplicate the per-département rows) and, when both a `.csv` and a `.csv.gz` exist for the same dept
  * (observed on disk for 13/2A/48/69/75 — a stale re-fetch artifact), prefers the uncompressed `.csv` — mirrors
- * `ban/scripts/build-address-point-slice.ts`'s `departementFiles`, which hit and fixed this exact double-count trap
- * first.
+ * `packages/ban/lib/scripts/build/address-point-database.ts`'s `departementFiles`, which hit and fixed this exact
+ * double-count trap first.
  */
 async function departementFiles(banDir: PathBuilderLike): Promise<string[]> {
 	const byDept = new Map<string, string>()
@@ -141,8 +141,8 @@ function composeHouseNumber(numero: string, rep: string | null): string {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const frLieuditRecipe: CorpusRecipe = {
 	name: "fr-lieudit",

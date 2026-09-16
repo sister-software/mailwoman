@@ -8,7 +8,7 @@
  *
  *   WHY THIS EXISTS AND `no-street-led` DOES NOT SUFFICE. Board 3 (the NO digit board) measured that
  *   `synth-no-street-led`'s three forms — all carrying postcode+city — are ALREADY at 0.940-0.968 on
- *   a model with zero Norwegian rows. The headroom is in the forms that slice never emits:
+ *   a model with zero Norwegian rows. The headroom is in the forms that recipe never emits:
  *
  *     bare-street-hn   "Hallingrudveien 32"     0.693   — no postcode competing, still fails 31%
  *     slash-hn         "Øvrabø 124/1"           0.650   — cadastral gnr/bnr, ONE component
@@ -28,8 +28,8 @@
  *       board 3 bare-pc negative class (1.000) must HOLD.
  *
  *   SLASH HAZARD, pinned deliberately: NO `124/1` is ONE house_number (cadastral gnr/bnr). AU
- *   `12/345` is TWO (unit + house_number). This slice teaches the Norwegian reading; a future AU
- *   intra-word-split slice (B5) must not generalize over it. The two are locale-restricted by design.
+ *   `12/345` is TWO (unit + house_number). This recipe teaches the Norwegian reading; a future AU
+ *   intra-word-split recipe (B5) must not generalize over it. The two are locale-restricted by design.
  *
  *   SPLIT: `--exclude-surfaces` REQUIRED (throws otherwise) — the digit board's reserved surface
  *   list. Diacritic-KEEPING normalizer, matching the board (see the norm docstring).
@@ -38,7 +38,7 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
  * Title-case a Kartverket ALL-CAPS locality (HELLVIK -> Hellvik); #690, all-caps is OOD.
@@ -50,8 +50,8 @@ const titleNO = (value: string): string =>
 		.join(" ")
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const noFragmentRecipe: CorpusRecipe = {
 	name: "no-fragment",
@@ -89,7 +89,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		if (!excludePath) {
 			throw new Error(
 				"no-fragment: --exclude-surfaces is REQUIRED. Pass the NO digit board's reserved list " +
-					"(mailwoman/eval-harness/fixtures/no-digits.surfaces.txt) or this slice trains on its own eval set. " +
+					"(mailwoman/eval-harness/fixtures/no-digits.surfaces.txt) or this recipe trains on its own eval set. " +
 					"Source-disjoint by street SURFACE is the split discipline; there is no safe default."
 			)
 		}
@@ -125,7 +125,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const emit = (raw: string, components: Record<string, string>, klass: string): void => {
 			// emitSeq keeps every emit distinct — knob 3 emits N copies of one long-number row, and
 			// (components, read) alone would collide their source_id and let downstream dedup drop the boost.
-			const source_id = sliceSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
+			const source_id = recipeSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
 
 			const canonical = {
 				raw,

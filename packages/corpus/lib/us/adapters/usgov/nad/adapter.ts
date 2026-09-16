@@ -10,8 +10,8 @@
  *   city/locality) and NPPES (~7M provider-centric venues), NAD covers the entire residential +
  *   commercial address space with full structured components.
  *
- *   The adapter consumes NDJSON slices produced by `fetch-nad.ts`'s featureserver mode (operator
- *   pre-downloads via `mailwoman corpus fetch nad`). Each slice is per-OID-range
+ *   The adapter consumes NDJSON files produced by `fetch-nad.ts`'s featureserver mode (operator
+ *   pre-downloads via `mailwoman corpus fetch nad`). Each file is per-OID-range
  *   `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`. Adapter iterates every `.ndjson`
  *   in the input directory, skipping the `quarantined-bash-bug/` subdir (legacy of the bash-
  *   fetcher's silent-page-failure bug).
@@ -234,19 +234,19 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				throw new Error(`usgov-nad adapter: only US supported, got country=${opts.country}`)
 			}
 
-			// inputPath is a directory of NDJSON slices (per fetch-nad.ts featureserver output).
+			// inputPath is a directory of NDJSON files (per fetch-nad.ts featureserver output).
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
-			// featureserver slice pattern is the primary distribution.
-			const slices = await Globerator.files("ndjson", { cwd: opts.inputPath, absolute: false }).toSorted()
+			// featureserver per-OID-range file pattern is the primary distribution.
+			const files = await Globerator.files("ndjson", { cwd: opts.inputPath, absolute: false }).toSorted()
 
 			let emitted = 0
-			outer: for (const slice of slices) {
+			outer: for (const file of files) {
 				if (opts.signal?.aborted) break
 				// TextSpliterator streams string lines; the per-line tryParsingJSON below keeps the reader
 				// tolerant of malformed rows (skip silently), so TextSpliterator + a non-throwing parse —
 				// not JSONSpliterator, which would throw. The path string lets the lib own + dispose each
-				// slice's file handle, including on the `break outer` early exit.
-				const lines = TextSpliterator.fromAsync(join(opts.inputPath, slice))
+				// file's handle, including on the `break outer` early exit.
+				const lines = TextSpliterator.fromAsync(join(opts.inputPath, file))
 
 				for await (const line of lines) {
 					if (opts.signal?.aborted) break outer
@@ -298,7 +298,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 					const sourceID = record.UUID
 						? `${USGOV_NAD_ADAPTER_ID}-${record.UUID}`
-						: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${slice}:${emitted}`}`
+						: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${file}:${emitted}`}`
 
 					yield {
 						raw,

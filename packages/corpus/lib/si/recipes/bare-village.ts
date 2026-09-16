@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `si-bare-village` — the Slovenian no-street counter-slice (#901 run-2). Slovenia's rural
+ *   `si-bare-village` — the Slovenian no-street counter-recipe (#901 run-2). Slovenia's rural
  *   addressing has NO street line: the village name is the street-level token and repeats as the
- *   locality ("Zabiče 8, 6250 Zabiče"). The v1.9.8 check FALSIFIED the fr-bare-street slice alone on
+ *   locality ("Zabiče 8, 6250 Zabiče"). The v1.9.8 check FALSIFIED the fr-bare-street recipe alone on
  *   exactly this class (SI resolve −3.4pp; "Apače 108" split into street "Apače 10" + house "8") —
  *   the bare-street boundary lesson generalizes onto a form where the leading name must keep its
- *   number whole and the trailing mention must stay locality-bound. This slice is the paired
+ *   number whole and the trailing mention must stay locality-bound. This recipe is the paired
  *   counter-distribution: same lesson ("name before number, comma, then admin"), opposite polarity
  *   on the trailing mention.
  *
@@ -26,11 +26,11 @@
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const siBareVillageRecipe: CorpusRecipe = {
 	name: "si-bare-village",
@@ -73,7 +73,7 @@ export const siBareVillageRecipe: CorpusRecipe = {
 				raw = `${postcode} ${village}, ${village} ${number}`
 			}
 
-			const source_id = sliceSourceID("synth-si-bare-village", { ...components, o: String(order), v: String(read) })
+			const source_id = recipeSourceID("synth-si-bare-village", { ...components, o: String(order), v: String(read) })
 
 			const canonical = {
 				raw,

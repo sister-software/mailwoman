@@ -76,7 +76,7 @@ import { latLngToCell } from "h3-js"
 import { readCommittedModel } from "#observations/committed-model"
 import { resolvePOISearchCenter } from "#poi/executor"
 /**
- * The relation an affordance is asserted under — the one the frozen vertical slice defines, and the only one this route
+ * The relation an affordance is asserted under — the one the frozen vertical defines, and the only one this route
  * reads. The semantic route reads the same relation for the opposite direction (phrase → category); this one reads it
  * from the category back to the activity it affords.
  */
@@ -294,7 +294,7 @@ interface AffordingCategory {
  *
  * A category reaching more than one affordance is not resolved here — the first in concept code-point order is taken
  * and the count is not hidden, because choosing among affordances would be a preference this program does not author.
- * The frozen slice reaches exactly one.
+ * The frozen vertical reaches exactly one.
  */
 function indexAffordingCategories(model: CompiledGeographicModel): Map<string, AffordingCategory> {
 	const byExternalID = new Map<string, AffordingCategory>()

@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `intersection` slice recipe — the REAL-pair intersection training slice (#487). The model scored
+ *   `intersection` recipe — the REAL-pair intersection training recipe (#487). The model scored
  *   0.0 on intersection_a/b because the training mix had ZERO intersection-labeled rows. This is
- *   the missing data. Ported from scripts/build-intersection-slice.mjs.
+ *   the missing data. Ported from the root build script it replaced.
  *
  *   STREET PAIRS ARE REAL: the same TIGER 2023 EDGES extraction as the eval builder
  *   (scripts/eval/build-intersection-real.ts) — a node where two road edges (MTFCC S1*) with
  *   distinct FULLNAMEs meet is a real crossing. Real pairs avoid teaching fake street-street
  *   co-occurrences.
  *
- *   LEAKAGE POLICY (mirrors the affix slice's VT discipline):
+ *   LEAKAGE POLICY (mirrors the affix recipe's VT discipline):
  *
  *   - TRAIN counties: Cook IL (grid city) + Morris NJ (suburb).
  *   - GOLDEN (`--golden`) county: Washington VT (rural) ONLY — the corpus defaultHoldout state.
@@ -375,7 +375,7 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 		errors.push(`span count ${span_tags.length} != components ${compCount}`)
 	}
 
-	// Raw-surface reconstruction: each component's single span slices raw to the component verbatim.
+	// Raw-surface reconstruction: each component's single span selects the component verbatim out of raw.
 	for (const [tag, value] of Object.entries(components)) {
 		if (value == null) continue
 		const indices = span_tags.map((t, i) => (t === tag ? i : -1)).filter((i) => i >= 0)
@@ -430,8 +430,8 @@ function auditRow(row: LabeledRow, components: Partial<Record<ComponentTag, stri
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const intersectionRecipe: CorpusRecipe = {
 	name: "intersection",
@@ -444,7 +444,7 @@ export const intersectionRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Legacy build-intersection-slice.mjs seeded `mulberry32(opts.seed)`.
+		// The root build script this recipe replaced seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 40_000
 		const source = opts.sourceName ?? "synth-intersection"

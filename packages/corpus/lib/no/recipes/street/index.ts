@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `no-street` slice recipe — synthetic NO-street counter-example rows: tuples →
+ *   `no-street` recipe — synthetic NO-street counter-example rows: tuples →
  *   {@link synthesizeNoStreetRow} → aligned LabeledRow. The corpus-side counterweight to the
- *   synth-street slice that drove v0.6.1's `dependent_locality` regression — venue+admin and
- *   admin-only rows with explicit absence of any street-side component. Ported from
- *   scripts/build-no-street-slice.mjs.
+ *   synth-street source that drove v0.6.1's `dependent_locality` regression — venue+admin and
+ *   admin-only rows with explicit absence of any street-side component. Ported from the root build
+ *   script it replaced.
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
@@ -15,15 +15,15 @@ import { makeLcg } from "@mailwoman/core/utils"
 import {
 	alignAndWrite,
 	readTuples,
-	sliceSourceID,
+	recipeSourceID,
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,
 	type CorpusRecipe,
 } from "#recipes/scaffold"
 import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "#synthesizers/no-street"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const noStreetRecipe: CorpusRecipe = {
 	name: "no-street",
@@ -31,7 +31,7 @@ export const noStreetRecipe: CorpusRecipe = {
 	mode: "tuples",
 	async run(opts, write) {
 		if (!opts.input) throw new Error("no-street recipe requires --input <tuples.jsonl>")
-		// Legacy build-no-street-slice.mjs seeded the LCG via makeRandom(opts.seed) (s = seed).
+		// The legacy build script seeded the LCG via makeRandom(opts.seed) (s = seed).
 		const random = makeLcg(opts.seed)
 		const source = opts.sourceName ?? "synth-no-street"
 		let read = 0
@@ -64,7 +64,7 @@ export const noStreetRecipe: CorpusRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source,
-						source_id: sliceSourceID(source, {
+						source_id: recipeSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,
 							postcode: tuple.postcode,

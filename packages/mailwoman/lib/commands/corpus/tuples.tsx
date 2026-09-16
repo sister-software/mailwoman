@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus tuples` — write the `(postcode, locality, region, country)` tuples the `trailing-region` slice
+ *   `mailwoman corpus tuples` — write the `(postcode, locality, region, country)` tuples the `trailing-region`
  *   recipe reads, one JSON line per tuple.
  *
  *   The extraction lived as a one-off whose output survived and whose code did not; `@mailwoman/corpus/tools`'s

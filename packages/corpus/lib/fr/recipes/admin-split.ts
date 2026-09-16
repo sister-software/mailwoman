@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-admin-split` slice recipe — the FR admin-split coverage slice (night 2026-06-19,
+ *   `fr-admin-split` recipe — the FR admin-split coverage recipe (night 2026-06-19,
  *   surpass-v1.5.0). Teaches the model to SPLIT the département out of the locality on
  *   bare/space/comma-delimited French place rows — the admin-deciding failure class the pre-GPU
  *   self-validation proved moves the resolved coordinate (collision communes −61%; see
- *   docs/articles/evals/experiments/2026-06-19-fr-admin-split-prevalidation.md). Ported from
- *   scripts/build-fr-admin-split-slice.mjs.
+ *   docs/articles/evals/experiments/2026-06-19-fr-admin-split-prevalidation.md). Ported from the
+ *   root build script it replaced.
  *
  *   Failure shapes (the model currently mis-handles all of these):
  *
@@ -133,7 +133,7 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 		out = { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
 	}
 
-	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 slice's bare rows carried NO country
+	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows carried NO country
 	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
 	// explicit "France" + a `country` component — the model relearns to emit country WHEN the token is
 	// present without over-firing it on the (still-majority) country-less rows. Substring invariant holds.
@@ -149,8 +149,8 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const frAdminSplitRecipe: CorpusRecipe = {
 	name: "fr-admin-split",
@@ -160,7 +160,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 		{ flag: "--communes <tsv>", description: "BAN commune+postcode+coord TSV. Default /tmp/reg/fr-communes.tsv" },
 	],
 	async run(opts, write) {
-		// Legacy build-fr-admin-split-slice.mjs seeded `mulberry32(opts.seed)`.
+		// The legacy build script seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 60_000
 		const source = opts.sourceName ?? "synth-fr-admin-split"
@@ -194,7 +194,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				// Held-out eval slice for the centroid check — carries the truth coordinate.
+				// Held-out eval set for the centroid check — carries the truth coordinate.
 				write(stringifyJSON({ raw, components, country: "FR", lat: Number(base.lat), lon: Number(base.lon) }))
 
 				emitted++

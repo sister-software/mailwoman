@@ -35,7 +35,7 @@ import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { isReservedBarePostcode } from "#recipes/bare/postcode/eval"
-import { alignAndWrite, type CorpusRecipe, readCSVRecords, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readCSVRecords, recipeSourceID } from "#recipes/scaffold"
 import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-inputs"
 
 /**
@@ -186,12 +186,13 @@ export function detectedAsPostcode(surface: string): boolean {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const barePostcodeRecipe: CorpusRecipe = {
 	name: "bare-postcode",
-	description: "A postcode alone, in its country's written form — the shape no slice carries (CZ/SK/SE/NL)",
+	description:
+		"A postcode alone, in its country's written form — the shape no other recipe output carries (CZ/SK/SE/NL)",
 	mode: "generate",
 	options: [
 		{
@@ -303,7 +304,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 						country,
 						locale: form.locale,
 						source: "synth-bare-postcode",
-						source_id: sliceSourceID("synth-bare-postcode", {
+						source_id: recipeSourceID("synth-bare-postcode", {
 							...components,
 							c: country,
 						}),

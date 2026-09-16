@@ -3,17 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #511 base-consistency lint, GENERALIZED + COUNTRY-SCOPED (v2) — any synthetic slice vs the base.
+ *   #511 base-consistency lint, GENERALIZED + COUNTRY-SCOPED (v2) — any synthetic recipe output vs
+ *   the base.
  *
- *   Ported from scripts/lint-slice-vocab.py (pyarrow → @duckdb/node-api); behavior preserved
+ *   Ported from the Python original (pyarrow → @duckdb/node-api); behavior preserved
  *   byte-for-byte (same flags, same stdout, same verdicts). The base-root default routes through
  *   `dataRootPath` so the lab `/mnt/playpen` literal stays in its one home
  *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored; with the env unset it equals
  *   the Python default.
  *
- *   The #511 lesson: a synthetic slice must not label a token a tag the BASE dominantly labels
- *   something else, or training gets conflicting gradients on the same token and the minority (the
- *   slice) loses. This reads a slice's own (token -> tag) and checks each token against the base.
+ *   The #511 lesson: a synthetic recipe output must not label a token a tag the BASE dominantly
+ *   labels something else, or training gets conflicting gradients on the same token and the minority
+ *   (the recipe output) loses. This reads a recipe output's own (token -> tag) and checks each token
+ *   against the base.
  *
  *   WHY v2 IS COUNTRY-SCOPED + FULL-COUNT (the night-2026-06-18 lesson, learned the hard way over
  *   three tries): a token's correct tag is COUNTRY-specific — "Paris" is locality in FR data and
@@ -23,13 +25,13 @@
  *        retry both false-flagged FR cities as "street" from US street-contexts).
  *   2. A SMALL sample is street-BIASED regardless, because the street sources (tiger 39 + nad 378 parts)
  *        dwarf the locality sources (a small US-scoped spot-check read Indianapolis 54% street vs
- *        its true 219700:29 LOCALITY). The fix: tally each slice token's base tag SCOPED to the
- *        country the slice uses it in (the base has a `country` column), over a LARGE/FULL scan
- *        (`fraction`, default 1.0). Pure-numeric tokens excluded (house_number/postcode are
- *        context-determined). An affix-split flag (slice street_suffix/_prefix vs base "street") is
- *        EXPECTED — the loader's affix-relabel handles it; weigh those separately.
+ *        its true 219700:29 LOCALITY). The fix: tally each recipe-output token's base tag SCOPED to
+ *        the country the recipe output uses it in (the base has a `country` column), over a
+ *        LARGE/FULL scan (`fraction`, default 1.0). Pure-numeric tokens excluded (house_number/postcode
+ *        are context-determined). An affix-split flag (recipe output street_suffix/_prefix vs base
+ *        "street") is EXPECTED — the loader's affix-relabel handles it; weigh those separately.
  *
- *   Usage: mailwoman dev lint slice-vocab --slice <slice.parquet>
+ *   Usage: mailwoman dev lint slice-vocab --slice <recipe-output.parquet>
  *   [--base-version v0.5.0] [--base-root <dir>] [--fraction 1.0] [--threshold 0.7] [--min-count
  *   50]
  */
@@ -43,7 +45,7 @@ import { Globerator } from "spliterator/node/fs"
 import { connectDuckDB, type DuckDBConnection } from "#utils/parquet"
 
 /**
- * A column-projected base/slice row: parallel token + label lists plus the row's country.
+ * A column-projected base or recipe-output row: parallel token + label lists plus the row's country.
  */
 interface CorpusRow {
 	tokens: string[]
@@ -159,7 +161,7 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 }
 
 /**
- * Read just the first row's `source` value — used to group base parts for a proportional slice.
+ * Read just the first row's `source` value — used to group base parts for a proportional sample.
  */
 async function readSource(con: DuckDBConnection, path: string): Promise<string> {
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
@@ -169,11 +171,12 @@ async function readSource(con: DuckDBConnection, path: string): Promise<string> 
 }
 
 /**
- * Options for {@linkcode lintSliceVocab}.
+ * Options for {@linkcode lintSliceVocab}. `slice` is the property name the `mailwoman dev lint slice-vocab` command
+ * passes, and moves with that command.
  */
-export interface LintSliceVocabOptions {
+export interface LintRecipeVocabOptions {
 	/**
-	 * The slice parquet to lint.
+	 * The recipe output parquet to lint.
 	 */
 	slice: string
 	/**
@@ -193,20 +196,20 @@ export interface LintSliceVocabOptions {
 	 */
 	minCount?: number
 	/**
-	 * Fraction of base parts to scan (proportional per-source slice below 1.0). Default 1.0.
+	 * Fraction of base parts to scan (proportional per-source sample below 1.0). Default 1.0.
 	 */
 	fraction?: number
 }
 
 /**
- * One contradiction row: token, slice tag, base tag, base fraction, base total.
+ * One contradiction row: token, recipe-output tag, base tag, base fraction, base total.
  */
-export type SliceVocabRow = [token: string, sliceTag: string, baseTag: string, baseFrac: number, baseTotal: number]
+export type VocabRow = [token: string, outputTag: string, baseTag: string, baseFrac: number, baseTotal: number]
 
 /**
  * Findings summary returned by {@linkcode lintSliceVocab}.
  */
-export interface LintSliceVocabSummary {
+export interface LintRecipeVocabSummary {
 	/**
 	 * Real contradictions — the command exits 1 when nonzero.
 	 */
@@ -215,13 +218,13 @@ export interface LintSliceVocabSummary {
 	 * Affix-split rows (EXPECTED — the loader's affix-relabel handles them).
 	 */
 	warnings: number
-	findings: { contradictions: SliceVocabRow[]; affixSplits: SliceVocabRow[] }
+	findings: { contradictions: VocabRow[]; affixSplits: VocabRow[] }
 }
 
 /**
- * Lint a synthetic slice's (token → tag) vocabulary against the base corpus, country-scoped.
+ * Lint a synthetic recipe output's (token → tag) vocabulary against the base corpus, country-scoped.
  */
-export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<LintSliceVocabSummary> {
+export async function lintSliceVocab(options: LintRecipeVocabOptions): Promise<LintRecipeVocabSummary> {
 	const baseVersion = options.baseVersion ?? "v0.5.0"
 	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")
 	const threshold = options.threshold ?? 0.7
@@ -230,12 +233,12 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 
 	const con = await connectDuckDB()
 
-	// 1. the slice's own (token -> dominant tag) + the COUNTRIES it uses each token in
-	const sliceRows = await readRows(con, options.slice)
-	const sliceTags = new Map<string, Map<string, number>>()
-	const sliceCountries = new Map<string, Set<string | null>>()
+	// 1. the recipe output's own (token -> dominant tag) + the COUNTRIES it uses each token in
+	const outputRows = await readRows(con, options.slice)
+	const outputTags = new Map<string, Map<string, number>>()
+	const outputCountries = new Map<string, Set<string | null>>()
 
-	for (const { tokens, labels, country } of sliceRows) {
+	for (const { tokens, labels, country } of outputRows) {
 		const n = Math.min(tokens.length, labels.length)
 
 		for (let i = 0; i < n; i++) {
@@ -243,23 +246,23 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 			const l = labels[i]!
 
 			if (isDigit(w)) continue // numbers are context-determined (house_number/postcode), not lexical vocab
-			bump(sliceTags, w, stripBIO(l))
-			let set = sliceCountries.get(w)
+			bump(outputTags, w, stripBIO(l))
+			let set = outputCountries.get(w)
 
 			if (!set) {
 				set = new Set()
-				sliceCountries.set(w, set)
+				outputCountries.set(w, set)
 			}
 
 			set.add(country)
 		}
 	}
 
-	const sliceVocab = new Set(sliceTags.keys())
+	const outputVocab = new Set(outputTags.keys())
 
-	console.log(`slice: ${sliceRows.length} rows, ${sliceVocab.size} unique tokens`)
+	console.log(`recipe output: ${outputRows.length} rows, ${outputVocab.size} unique tokens`)
 
-	// 2. base parts — FULL by default; fraction<1 takes a proportional per-source slice (still big)
+	// 2. base parts — FULL by default; fraction<1 takes a proportional per-source sample (still big)
 	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
@@ -288,24 +291,24 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 			list.push(p)
 		}
 
-		const sliced: string[] = []
+		const sampled: string[] = []
 
 		for (const ps of bysrc.values()) {
 			const take = Math.max(2, pyRound(ps.length * fraction))
 
 			for (const p of ps.slice(0, take)) {
-				sliced.push(p)
+				sampled.push(p)
 			}
 		}
 
-		parts = sliced
+		parts = sampled
 	}
 
 	console.log(
 		`base ${baseVersion}: scanning ${parts.length} parts (fraction=${formatPyFloat(fraction)}), COUNTRY-scoped`
 	)
 
-	// 3. tally each slice token's base tag, SCOPED to the country the slice uses it in
+	// 3. tally each recipe-output token's base tag, SCOPED to the country the recipe output uses it in
 	const baseTags = new Map<string, Map<string, number>>()
 
 	for (let i = 0; i < parts.length; i++) {
@@ -317,7 +320,7 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 			for (let j = 0; j < n; j++) {
 				const w = tokens[j]!
 
-				if (sliceVocab.has(w) && sliceCountries.get(w)!.has(country)) {
+				if (outputVocab.has(w) && outputCountries.get(w)!.has(country)) {
 					bump(baseTags, w, stripBIO(labels[j]!))
 				}
 			}
@@ -329,15 +332,15 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 	}
 
 	// 4. compare; flag contradictions (affix-split is expected — surfaced but tagged)
-	const flagged: SliceVocabRow[] = []
-	const affix: SliceVocabRow[] = []
+	const flagged: VocabRow[] = []
+	const affix: VocabRow[] = []
 
-	for (const w of sliceVocab) {
-		const [sTag] = dominant(sliceTags.get(w)!)
+	for (const w of outputVocab) {
+		const [sTag] = dominant(outputTags.get(w)!)
 		const [bTag, bTotal, bFrac] = dominant(baseTags.get(w) ?? new Map())
 
 		if (bTotal < minCount || !bTag || bTag === sTag || bFrac < threshold) continue
-		const row: SliceVocabRow = [w, sTag, bTag, bFrac, bTotal]
+		const row: VocabRow = [w, sTag, bTag, bFrac, bTotal]
 
 		if ((sTag === "street_suffix" || sTag === "street_prefix") && bTag === "street") {
 			affix.push(row)
@@ -346,7 +349,7 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 		}
 	}
 
-	const sections: Array<[string, SliceVocabRow[]]> = [
+	const sections: Array<[string, VocabRow[]]> = [
 		["CONTRADICTION", flagged],
 		["affix-split (EXPECTED — affix-relabel handles)", affix],
 	]
@@ -358,13 +361,13 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 		console.log(`\n${label.startsWith("CONTRA") ? "⚠️ " : "· "}${rows.length} ${label}:`)
 
 		for (const [w, sTag, bTag, bFrac, bTotal] of rows) {
-			console.log(`  ${pad(w, 18)} slice=${pad(sTag, 14)} base=${bTag} (${pct(bFrac)}, n=${bTotal})`)
+			console.log(`  ${pad(w, 18)} output=${pad(sTag, 14)} base=${bTag} (${pct(bFrac)}, n=${bTotal})`)
 		}
 	}
 
 	if (!flagged.length) {
 		console.log(
-			`\n✅ NO real contradictions (country-scoped, threshold ${pct(threshold)}, support ${minCount}) — slice base-consistent`
+			`\n✅ NO real contradictions (country-scoped, threshold ${pct(threshold)}, support ${minCount}) — recipe output base-consistent`
 		)
 	}
 

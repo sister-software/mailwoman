@@ -3,18 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Extract `(postcode, locality, region, country)` tuples for the `trailing-region` slice.
+ *   Extract `(postcode, locality, region, country)` tuples for the `trailing-region` recipe.
  *
  *   This step used to be a one-off. Its output survived — 17,908 rows at
  *   `$MAILWOMAN_DATA_ROOT/corpus/tuples/trailing-region-structured-tuples.jsonl` — but the code that produced it did
  *   not, so a note describing the join was the only record and it did not match what the databases contain. That is the
- *   reason this file exists: the slice is unbuildable for a new country without it.
+ *   reason this file exists: the recipe output is unbuildable for a new country without it.
  *
  *   ## Two sources, because one route does not reach every country
  *
  *   - **`postalcode-intl.db`** carries a real `parent_id` that resolves in the admin gazetteer. Measured share of rows
  *     with a parent: NL 97.5%, FR 90.7%, DE 66.1%, ES 34.9%, IT 27.4%; of those, 93.8–100% land on a `locality` or
- *     `localadmin`, and the region comes from that place's own ancestry. It is the ONLY slice with this — every
+ *     `localadmin`, and the region comes from that place's own ancestry. It is the ONLY postcode database with this —
+ *     every
  *     `postalcode-geonames-*` and `postalcode-<cc>-overture.db` row reads `parent_id = 0`.
  *   - **GeoNames postal exports** carry the place and admin1 NAMES in columns 3 and 4, so there is nothing to join.
  *     `mailwoman corpus fetch geonames-postal` puts them on disk.
@@ -26,7 +27,8 @@
  *   ## The hub cap is PER COUNTRY, because a pooled one is a mixture
  *
  *   A few localities act as catch-all parents — `Schwedt/Oder` claims 9,222 DE postcodes against a DE median of 1. Left
- *   in, a handful of places dominate the slice. But the distribution differs so much by country that one threshold is
+ *   in, a handful of places dominate the recipe output. But the distribution differs so much by country that one
+ *   threshold is
  *   not one rule: a p99 pooled across the five countries lands at 522, which keeps 100% of ES and IT, 83% of FR, 49% of
  *   NL and 19% of DE.
  *
@@ -60,10 +62,11 @@ import { escapeSQLString } from "#utils/parquet"
 export interface PostcodeTriple {
 	postcode: string
 	/**
-	 * The segment before the locality, when the source has one. A slice whose every row begins with the locality teaches
-	 * that the first named segment IS the locality, and that flips the model's default. Measured on the v4.8.0 candidate,
-	 * which had no such segment — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`
-	 * with the venue and the street both gone, and 11 of its 25 regressions were venue-led rows across seven countries.
+	 * The segment before the locality, when the source has one. A recipe output whose every row begins with the locality
+	 * teaches that the first named segment IS the locality, and that flips the model's default. Measured on the v4.8.0
+	 * candidate, which had no such segment — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye
+	 * Three Lords"` with the venue and the street both gone, and 11 of its 25 regressions were venue-led rows across
+	 * seven countries.
 	 */
 	dependentLocality?: string
 	locality: string
@@ -101,7 +104,7 @@ export type GeonamesLocalityColumn = "place" | "admin2"
  *
  * AU and ZA are the worked examples of the bar. Both look like obvious additions and neither qualifies: the board's AU
  * rows are bare-city (`Melbourne`, `Sydney, Australia`) and carry no postcode at all, so nothing here says where AU
- * writes it; and ZA's `14 Long St, Green Point, Cape Town, 8001` carries no REGION, which this slice requires — a fact
+ * writes it; and ZA's `14 Long St, Green Point, Cape Town, 8001` carries no REGION, which this recipe requires — a fact
  * its GeoNames export agrees with, at 100% place and 0% admin1.
  */
 export const POSTCODE_CONVENTIONS: ReadonlyMap<
@@ -135,7 +138,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
  * How many postcodes one locality may contribute.
  *
  * A quota rather than a cutoff — see the header. It bounds repetition without deleting a locality: a city with 9,222
- * postcodes contributes this many and stays in the slice.
+ * postcodes contributes this many and stays in the recipe output.
  */
 export const DEFAULT_LOCALITY_QUOTA = 24
 
@@ -170,8 +173,8 @@ export function applyLocalityQuota<T extends { cc: string; locality: string }>(
  *
  * A per-locality quota bounds how often one place repeats; it cannot bound a country. IN has 128,152 distinct
  * localities, so even at a quota of ONE it contributes 63,533 rows against 39,790 from the other seven combined — the
- * slice would teach the trailing surface as an Indian fact rather than a general one, and at 103,323 rows it would take
- * 30% of an 8,000-step run's sample budget at three reps per row.
+ * recipe would teach the trailing surface as an Indian fact rather than a general one, and at 103,323 rows it would
+ * take 30% of an 8,000-step run's sample budget at three reps per row.
  *
  * Applied AFTER {@link applyLocalityQuota}, so a country's budget is spent on breadth (many localities) rather than on
  * one city's postcode list.
@@ -562,8 +565,8 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
  * COLUMN 3 IS NOT THE LOCALITY. It is the finest-grained named place for the code, and for `560001` that is `Mahatma
  * Gandhi Road` — a STREET — while the city, `Bengaluru`, is column 5 (admin2). MX is the same shape (`Roma Norte` is a
  * colonia inside `Cuauhtémoc`) and so is PT (`Abrigada` inside `Alenquer`). Reading column 3 as the locality is how the
- * v4.8.0 slice came to teach street names as cities. So `admin2` is the locality, `admin1` the region, and column 3 the
- * DEPENDENT locality — which is also the left context the slice needs.
+ * v4.8.0 recipe output came to teach street names as cities. So `admin2` is the locality, `admin1` the region, and
+ * column 3 the DEPENDENT locality — which is also the left context the recipe needs.
  *
  * WHICH COUNTRIES THIS READER CAN SERVE. It needs `admin2` (the city) and `admin1` (the region), and a country can
  * publish one without the other. Measured 2026-08-23 across the exports on disk:
@@ -579,8 +582,8 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
  * | ZA         | 3,920     | **0%** | —      | NO                              |
  *
  * A country in the NO rows yields zero from this reader, and that is the correct outcome rather than a gap to route
- * around: taking column 3 as the locality is what made the v4.8.0 slice train `Mahatma Gandhi Road` as a city. If one
- * of them is wanted, it needs a city column from somewhere else, not a relaxed mapping.
+ * around: taking column 3 as the locality is what made the v4.8.0 recipe output train `Mahatma Gandhi Road` as a city.
+ * If one of them is wanted, it needs a city column from somewhere else, not a relaxed mapping.
  *
  * NOT PUBLISHED AT ALL by GeoNames, checked the same day: VE, VN, NP, MM, KH. Those are acquisition questions, and for
  * VE specifically OpenAddresses 404s too — see the arc retrospective.
@@ -588,7 +591,7 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
  * Three source properties a caller cannot see from a row count, all handled here. Hyphen-format countries publish each
  * code TWICE (`3750-000` and `3750000`, exactly 2.00× for PT and PL), so the first surface of a code wins and its twin
  * is dropped. Some countries populate the place but not admin1 — ZA is 100% place, 0% region — which yields nothing
- * this slice can use, so those rows are dropped rather than emitted with a blank region. And the "place name" is often
+ * this recipe can use, so those rows are dropped rather than emitted with a blank region. And the "place name" is often
  * a SUB-locality, which {@link createKnownLocalityCheck} filters.
  */
 export async function readTriplesFromGeonames(

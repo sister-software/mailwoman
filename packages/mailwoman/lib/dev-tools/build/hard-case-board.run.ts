@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Emit `eval-harness/fixtures/hard-slice-board.jsonl` (ROAD_TO_V9 §3). The board's SELECTION is curated by
+ *   Emit `eval-harness/fixtures/hard-case-board.jsonl` (ROAD_TO_V9 §3). The board's SELECTION is curated by
  *   hand — every row below pins one discrimination case and says why — but its NUMBERS are machine-filled
  *   from primary data, and that split is the point:
  *
@@ -19,7 +19,7 @@
  *   `gauntlet/cases/<cc>/regression.jsonl` — same input, same coordinate, same tolerance — so the board and
  *   the corpus cannot drift apart on a row they share.
  *
- *   Run: node packages/mailwoman/lib/dev-tools/build/hard-slice-board.run.ts [--out <path>]
+ *   Run: node packages/mailwoman/lib/dev-tools/build/hard-case-board.run.ts [--out <path>]
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -34,13 +34,13 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { JSONSpliterator } from "spliterator"
 
-import { FRAGMENT_ROWS } from "#dev-tools/hard/slice/rows/index"
-import { TOPONYM_ROWS } from "#dev-tools/hard/slice/rows/toponym"
-import { SWEEP_ROWS } from "#dev-tools/hard/slice/sweep-rows"
-import { canonicalizeHardSliceCase, type HardSliceCase, HARD_SLICE_BOARD_PATH } from "#eval-harness/hard-slice-board"
+import { FRAGMENT_ROWS } from "#dev-tools/hard-case-board/rows/index"
+import { TOPONYM_ROWS } from "#dev-tools/hard-case-board/rows/toponym"
+import { SWEEP_ROWS } from "#dev-tools/hard-case-board/sweep-rows"
+import { canonicalizeHardCase, type HardCase, HARD_CASE_BOARD_PATH } from "#eval-harness/hard-case-board"
 
 const { values } = parseArguments({ options: { out: { type: "string" } } })
-const OUT = values.out ?? HARD_SLICE_BOARD_PATH
+const OUT = values.out ?? HARD_CASE_BOARD_PATH
 
 const ADDED_AT = "2026-08-06"
 const WOF_DB = String(dataRootPath("wof", "fst-staging-2026-08-05", "admin-global-priority-importance.db"))
@@ -120,7 +120,7 @@ async function sweepRow(cc: string, caseID: string): Promise<Record<string, unkn
 	return row
 }
 
-const out: HardSliceCase[] = []
+const out: HardCase[] = []
 
 for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 	const { pop, imp } = await matchers(c.locale)
@@ -152,7 +152,7 @@ for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 					expectToleranceM: c.toleranceM,
 				}
 			: {}),
-		source: "hard-slice-board:2026-08-06",
+		source: "hard-case-board:2026-08-06",
 		addedAt: ADDED_AT,
 		...(c.bugRef ? { bugRef: c.bugRef } : {}),
 		note: c.note,
@@ -191,7 +191,7 @@ for (const s of SWEEP_ROWS) {
 		impBias: round4(impTags.get("locality") ?? 0),
 		probeTag: "locality",
 		...(hasCoord ? { expectLat: round4(lat), expectLon: round4(lon), expectToleranceM: tol } : {}),
-		source: `hard-slice-board:2026-08-06 (verbatim from cases/${s.cc}/regression.jsonl:${s.caseID})`,
+		source: `hard-case-board:2026-08-06 (verbatim from cases/${s.cc}/regression.jsonl:${s.caseID})`,
 		addedAt: ADDED_AT,
 		bugRef: "#1513",
 		note: `${s.note} Input, coordinate and tolerance are the corpus row's, unchanged.`,
@@ -199,7 +199,7 @@ for (const s of SWEEP_ROWS) {
 }
 
 const sorted = out.toSorted((a, b) => a.id.localeCompare(b.id))
-await writeLocalTextFile(`${sorted.map((c) => stringifyJSON(canonicalizeHardSliceCase(c))).join("\n")}\n`, OUT)
+await writeLocalTextFile(`${sorted.map((c) => stringifyJSON(canonicalizeHardCase(c))).join("\n")}\n`, OUT)
 
 const inReach = sorted.filter((c) => c.fstReach === "in").length
 const moved = sorted.filter((c) => c.popBias !== c.impBias).length

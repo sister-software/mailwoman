@@ -138,13 +138,13 @@ export async function* readPermitDirectory(
 }
 
 /**
- * One aligned string as a row in the CJK slice schema.
+ * One aligned string as a row in the CJK corpus schema.
  *
  * The token labels are derived from the spans rather than carried beside them: a token is `B-<tag>` when its FIRST
  * character falls inside a span, `O` otherwise. A span covering several tokens therefore labels only the token it
  * starts in, which is what the char-path trainer reads the spans for.
  */
-export function alignedToSliceRow(aligned: Aligned): Record<string, unknown> {
+export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
 	const raw = aligned.raw
 	const tokens: string[] = []
 	const labels: string[] = []

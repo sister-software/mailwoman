@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The HARD-SLICE BOARD (ROAD_TO_V9 §3) — the curated slice that makes an FST/importance change
- *   MEASURABLE. Schema, zod shadow, and loader for `fixtures/hard-slice-board.jsonl`.
+ *   The HARD-CASE BOARD (ROAD_TO_V9 §3) — the curated set of inputs that makes an FST/importance change
+ *   MEASURABLE. Schema, zod shadow, and loader for `fixtures/hard-case-board.jsonl`.
  *
  *   WHY IT EXISTS. Three arms — no FST, the shipped population-proxy FSTs, the staged real-importance
  *   set — score byte-identically on the OA board, because a well-formed address ("1600 Pennsylvania Ave
@@ -14,8 +14,8 @@
  *   fragments, and namesake confounds.
  *
  *   WHAT A ROW IS. Every row pins ONE discrimination case and declares, in the row itself, why it
- *   should discriminate: {@linkcode HardSliceCase.probeSurface} is the token whose gazetteer bias is
- *   under test, and {@linkcode HardSliceCase.popBias} / {@linkcode HardSliceCase.impBias} are that
+ *   should discriminate: {@linkcode HardCase.probeSurface} is the token whose gazetteer bias is
+ *   under test, and {@linkcode HardCase.popBias} / {@linkcode HardCase.impBias} are that
  *   surface's MEASURED max-importance under each FST arm (see `dev-tools/probe-fst-bias.run.ts`). A row
  *   whose two biases are EQUAL is a negative control — it must not move — and one whose biases differ
  *   sharply but ties anyway is a finding about the FST's reach, not a reason to add rows.
@@ -23,7 +23,7 @@
  *   THE REACH FIELD IS required, AND IT IS NOT ABOUT WHETHER BIAS APPLIES. `fst-<locale>.bin` is
  *   country-scoped (`FST_LOCALES` in `gazetteer-pipeline/fst.ts`: en-us→US, fr-fr→FR, en-gb→GB,
  *   de-de→DE), and the arm loads a binary by LOCALE, not by the answer's country. So
- *   {@linkcode HardSliceCase.fstReach} says whether the row's EXPECTED PLACE is inside the loaded
+ *   {@linkcode HardCase.fstReach} says whether the row's EXPECTED PLACE is inside the loaded
  *   gazetteer's scope:
  *
  *   - `in` — the answer is a place the FST knows, so bias can push the parse toward it.
@@ -39,7 +39,7 @@
  *
  *   MEANING OF ZERO, ON TOLERANCES. A coordinate assertion is all-or-nothing and NEVER defaulted: a row
  *   either carries `expectLat` + `expectLon` + `expectToleranceM` together, or asserts no coordinate at
- *   all. {@linkcode HardSliceCaseSchema} refuses every partial combination. A silently-defaulted
+ *   all. {@linkcode HardCaseSchema} refuses every partial combination. A silently-defaulted
  *   tolerance is a number nobody chose, and a row with a coordinate but no tolerance would inherit a bar
  *   it was never graded against — the absence of a coordinate is ABSENCE, not zero, and not a
  *   permissive default.
@@ -59,7 +59,7 @@ import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertio
  * What a row is testing. The tag is the reporting axis — per-class deltas are how an arm's effect is localized to a
  * register, rather than averaged into a single number that hides both wins and losses.
  */
-export const HARD_SLICE_CLASSES = [
+export const HARD_CASE_CLASSES = [
 	/**
 	 * Bare single toponym, namesake-prone, with a dominant referential answer ("Bordeaux").
 	 */
@@ -94,7 +94,7 @@ export const HARD_SLICE_CLASSES = [
 	"fst_out_of_reach",
 ] as const
 
-export type HardSliceClass = (typeof HARD_SLICE_CLASSES)[number]
+export type HardCaseClass = (typeof HARD_CASE_CLASSES)[number]
 
 /**
  * Whether this row's country is inside the shipped FST country scope. See the file header — a row marked `out` is
@@ -105,12 +105,12 @@ export const FST_REACH = ["in", "out"] as const
 export type FSTReach = (typeof FST_REACH)[number]
 
 /**
- * One row of the hard-slice board.
+ * One row of the hard-case board.
  *
- * Field order is required: {@linkcode HARD_SLICE_KEY_ORDER} mirrors it so every emitted row keys identically and a diff
+ * Field order is required: {@linkcode HARD_CASE_KEY_ORDER} mirrors it so every emitted row keys identically and a diff
  * shows content, never a re-shuffle.
  */
-export interface HardSliceCase {
+export interface HardCase {
 	id: string
 	input: string
 	/**
@@ -121,7 +121,7 @@ export interface HardSliceCase {
 	 * ISO-3166 alpha-2 of the expected answer's country.
 	 */
 	country: string
-	class: HardSliceClass
+	class: HardCaseClass
 	fstReach: FSTReach
 	/**
 	 * The token whose gazetteer bias is under test — the reason this row is on the board.
@@ -156,10 +156,10 @@ export interface HardSliceCase {
 }
 
 /**
- * Canonical key order — {@linkcode HardSliceCase}'s declaration order. Emission re-keys through this so the board's diff
+ * Canonical key order — {@linkcode HardCase}'s declaration order. Emission re-keys through this so the board's diff
  * means something.
  */
-export const HARD_SLICE_KEY_ORDER = [
+export const HARD_CASE_KEY_ORDER = [
 	"id",
 	"input",
 	"locale",
@@ -179,7 +179,7 @@ export const HARD_SLICE_KEY_ORDER = [
 	"addedAt",
 	"bugRef",
 	"note",
-] as const satisfies readonly (keyof HardSliceCase)[]
+] as const satisfies readonly (keyof HardCase)[]
 
 /**
  * How many fields a coordinate assertion is made of — `expectLat`, `expectLon`, `expectToleranceM`. The refinement
@@ -191,13 +191,13 @@ const COORDINATE_ASSERTION_FIELDS = 3
  * The runtime shadow. `strictObject`, and the coordinate triple is refined as ALL-OR-NOTHING: a typo'd `expectLon` that
  * silently read as "coordinate not asserted" is exactly the input-tail defect this board exists to make loud.
  */
-export const HardSliceCaseSchema = zod
+export const HardCaseSchema = zod
 	.strictObject({
 		id: zod.string().min(1),
 		input: zod.string().min(1),
 		locale: zod.string().min(1),
 		country: zod.string().length(2),
-		class: zod.enum(HARD_SLICE_CLASSES),
+		class: zod.enum(HARD_CASE_CLASSES),
 		fstReach: zod.enum(FST_REACH),
 		probeSurface: zod.string().min(1),
 		popBias: zod.number().min(0),
@@ -226,17 +226,17 @@ export const HardSliceCaseSchema = zod
 	)
 
 /**
- * The compile-time bridge: add a field to one of {@linkcode HardSliceCase} / {@linkcode HardSliceCaseSchema} and not the
- * other, and `tsc` stops here.
+ * The compile-time bridge: add a field to one of {@linkcode HardCase} / {@linkcode HardCaseSchema} and not the other, and
+ * `tsc` stops here.
  */
-export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof HardSliceCaseSchema>, HardSliceCase>
+export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof HardCaseSchema>, HardCase>
 
 /**
- * The third leg: {@linkcode HARD_SLICE_KEY_ORDER} must list EVERY key, not merely valid ones.
+ * The third leg: {@linkcode HARD_CASE_KEY_ORDER} must list EVERY key, not merely valid ones.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
-	(typeof HARD_SLICE_KEY_ORDER)[number],
-	keyof HardSliceCase
+	(typeof HARD_CASE_KEY_ORDER)[number],
+	keyof HardCase
 >
 
 // Probe the DIRECTORY, not the board file: the builder that WRITES the board resolves this constant
@@ -246,22 +246,22 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 /**
  * The committed board, named from the package root — tsc emits no `.jsonl` into `out/`.
  */
-export const HARD_SLICE_BOARD_PATH: string = resolvePackagePath(
+export const HARD_CASE_BOARD_PATH: string = resolvePackagePath(
 	"mailwoman",
 	"lib",
 	"eval-harness",
 	"fixtures",
-	"hard-slice-board.jsonl"
+	"hard-case-board.jsonl"
 )
 
 /**
- * Re-key a case into {@linkcode HARD_SLICE_KEY_ORDER}, dropping absent optionals — used by any emitter so the board's
+ * Re-key a case into {@linkcode HARD_CASE_KEY_ORDER}, dropping absent optionals — used by any emitter so the board's
  * content hash is a function of CONTENT, not of literal ordering.
  */
-export function canonicalizeHardSliceCase(c: HardSliceCase): HardSliceCase {
-	const out: Partial<HardSliceCase> = {}
+export function canonicalizeHardCase(c: HardCase): HardCase {
+	const out: Partial<HardCase> = {}
 
-	for (const key of HARD_SLICE_KEY_ORDER) {
+	for (const key of HARD_CASE_KEY_ORDER) {
 		const value = c[key]
 
 		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write target to the intersection of
@@ -271,7 +271,7 @@ export function canonicalizeHardSliceCase(c: HardSliceCase): HardSliceCase {
 		}
 	}
 
-	return out as HardSliceCase
+	return out as HardCase
 }
 
 /**
@@ -281,18 +281,18 @@ export function canonicalizeHardSliceCase(c: HardSliceCase): HardSliceCase {
  * Throws on the first invalid row with its 1-based line number: a board that silently drops a malformed row would
  * under-report its own size, and the arm comparison would be run on a set nobody declared.
  */
-export async function loadHardSliceBoard(path: string = HARD_SLICE_BOARD_PATH): Promise<HardSliceCase[]> {
-	const cases: HardSliceCase[] = []
+export async function loadHardCaseBoard(path: string = HARD_CASE_BOARD_PATH): Promise<HardCase[]> {
+	const cases: HardCase[] = []
 	const ids = new Set<string>()
 	let index = 0
 
 	for await (const row of JSONSpliterator.fromAsync<unknown>(path)) {
 		index++
-		const parsed = HardSliceCaseSchema.safeParse(row)
+		const parsed = HardCaseSchema.safeParse(row)
 
 		if (!parsed.success) {
 			throw new Error(
-				`${path}:${index} — invalid hard-slice row: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+				`${path}:${index} — invalid hard-case row: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
 			)
 		}
 

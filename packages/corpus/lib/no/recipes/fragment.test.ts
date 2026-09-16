@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `no-fragment` slice (Track B — the NO house-number-licence change).
+ *   Tests for the `no-fragment` recipe (Track B — the NO house-number-licence change).
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
@@ -15,10 +15,10 @@
  */
 
 import { noFragmentRecipe } from "@mailwoman/corpus/no/recipes/fragment"
-import { scratch, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { scratch, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("no-fragment", noFragmentRecipe, 901)
+const run = recipeRunner("no-fragment", noFragmentRecipe, 901)
 
 const TUPLES = [
 	{ street: "Tømmerlien", locality: "dokka", number: "3", postcode: "2870" },
@@ -51,7 +51,7 @@ describe("no-fragment", () => {
 
 	it("emits the SIGNAL — a street with NO postcode/locality partner", async () => {
 		// counterProb 0 so every non-reserved row is a street fragment; bareStreetProb 0 so it carries
-		// its number. The point of the slice: the street stands alone.
+		// its number. The point of the recipe: the street stands alone.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 0, bareProb: 0 })
 		const signal = rows.filter((r) => r.components!.street)
 

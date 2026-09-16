@@ -11,7 +11,7 @@ the data that trains `@mailwoman/neural-weights-*`.
 // The corpus pipeline is primarily build-time CLI tooling.
 // Key entry points:
 import { expandGolden } from "@mailwoman/corpus" // Expand reference addresses
-import { synthesizeSlice } from "@mailwoman/corpus" // Generate synthetic training rows
+import { buildCorpus } from "@mailwoman/corpus" // Drive the end-to-end corpus build
 import { alignRow } from "@mailwoman/corpus" // Align raw address → BIO tokens
 import { validateCorpus } from "@mailwoman/corpus" // Validate corpus integrity
 ```
@@ -41,7 +41,7 @@ training pipeline (`corpus-python/`).
 | **`validate.ts`**       | Validate corpus integrity, label coverage, subset balance        |
 | **`synthesizers/*.ts`** | Synthetic row generators (boundary stress, order variants, etc.) |
 | **`ingest/`**           | Overture Maps + NAD ingestion                                    |
-| **`slice-registry.ts`** | Subset metadata and composition                                  |
+| **`recipes/index.ts`**  | The synthetic-corpus recipe registry (`CorpusRecipe` by name)    |
 | **`stats.ts`**          | Per-subset and per-tag statistics                                |
 
 ## Layout
@@ -67,8 +67,8 @@ The corpus is assembled via scripts in `scripts/`:
 # Validate the corpus
 node scripts/validate-corpus.mjs
 
-# Rebuild slices
-node scripts/build-boundary-stress-slice.mjs
+# Build one recipe's output
+mailwoman corpus slice boundary-stress --count 10000 --out /tmp/boundary-stress.jsonl
 
 # Corpus statistics
 node scripts/corpus-stats.mjs

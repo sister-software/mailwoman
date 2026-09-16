@@ -15,7 +15,7 @@ import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { frLieuditRecipe } from "@mailwoman/corpus/fr/recipes/lieudit"
 import type { SliceRecipeOpts } from "@mailwoman/corpus/recipes/scaffold"
-import type { SliceRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import type { RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -56,7 +56,7 @@ describe("fr-lieudit recipe", () => {
 
 		expect(stats.emitted).toBe(1)
 		expect(stats.skipped).toBe(0)
-		const parsed = parseJSONStrict<SliceRow>(lines[0]!)
+		const parsed = parseJSONStrict<RecipeRow>(lines[0]!)
 		expect(parsed.components!.dependent_locality).toBe("Le Bourg")
 		expect(parsed.components!.locality).toBe("Altier")
 		expect(parsed.raw).toBe("6 Route de Pomaret\nLe Bourg\n48800 Altier")
@@ -83,7 +83,7 @@ describe("fr-lieudit recipe", () => {
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), (l) => lines.push(l))
 
 		expect(stats.emitted).toBe(1)
-		expect(parseJSONStrict<SliceRow>(lines[0]!).components!.dependent_locality).toBe("Le Bourg")
+		expect(parseJSONStrict<RecipeRow>(lines[0]!).components!.dependent_locality).toBe("Le Bourg")
 	})
 
 	it("is deterministic under a fixed seed (same output twice)", async () => {
@@ -112,7 +112,7 @@ describe("fr-lieudit recipe", () => {
 
 		await frLieuditRecipe.run(baseOpts({ banDir, countryFraction: 1 }), (l) => lines.push(l))
 
-		const parsed = parseJSONStrict<SliceRow>(lines[0]!)
+		const parsed = parseJSONStrict<RecipeRow>(lines[0]!)
 		expect(parsed.components!.country).toBeDefined()
 		expect(parsed.raw.endsWith(parsed.components!.country!)).toBe(true)
 	})
@@ -129,7 +129,7 @@ describe("fr-lieudit recipe", () => {
 		await frLieuditRecipe.run(baseOpts({ banDir }), (l) => lines.push(l))
 
 		for (const l of lines) {
-			expect(parseJSONStrict<SliceRow>(l).components!.country).toBeUndefined()
+			expect(parseJSONStrict<RecipeRow>(l).components!.country).toBeUndefined()
 		}
 	})
 
@@ -142,7 +142,7 @@ describe("fr-lieudit recipe", () => {
 
 		await frLieuditRecipe.run(baseOpts({ banDir, sourceName: "synth-fr-lieudit-test" }), (l) => lines.push(l))
 
-		expect(parseJSONStrict<SliceRow>(lines[0]!).source).toBe("synth-fr-lieudit-test")
+		expect(parseJSONStrict<RecipeRow>(lines[0]!).source).toBe("synth-fr-lieudit-test")
 	})
 
 	it("throws when no BAN dept files are found", async () => {

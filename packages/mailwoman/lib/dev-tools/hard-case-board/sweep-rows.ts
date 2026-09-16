@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-slice board's SWEEP-DERIVED rows — the half that is lifted rather than authored.
+ *   The hard-case board's SWEEP-DERIVED rows — the half that is lifted rather than authored.
  *
- *   Separate from `hard-slice-rows.ts` because the editorial responsibility is different. Those rows are
+ *   Separate from `rows/index.ts` because the editorial responsibility is different. Those rows are
  *   written; these are CITATIONS. Each entry names a case id in `gauntlet/cases/<cc>/regression.jsonl`
  *   and the builder copies that row's input, coordinate and tolerance verbatim, so the board and the
  *   corpus cannot disagree about a row they share. The only things curated here are the CLASS the row
@@ -17,10 +17,10 @@
  *   - `country_structure` — the 2026-08-05 sweep's highest-hit class (13/31 = 42%): the addressing
  *       structures nothing in the corpus had ever exercised.
  *   - `fst_out_of_reach` — family-C namesake rows whose ANSWER no FST covers, though their QUERY surface
- *       is usually in the en-us gazetteer. See `hard-slice-board.ts` on why that is the interesting part.
+ *       is usually in the en-us gazetteer. See `eval-harness/hard-case-board.ts` on why that is the interesting part.
  */
 
-import type { HardSliceClass } from "#eval-harness/hard-slice-board"
+import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
  * Sweep rows lifted VERBATIM. `class` is assigned by the curator; everything else — input, coordinate, tolerance —
@@ -29,7 +29,7 @@ import type { HardSliceClass } from "#eval-harness/hard-slice-board"
 export const SWEEP_ROWS: Array<{
 	cc: string
 	caseID: string
-	class: HardSliceClass
+	class: HardCaseClass
 	probeSurface: string
 	note: string
 }> = [

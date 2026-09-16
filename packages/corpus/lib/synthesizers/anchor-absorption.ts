@@ -17,7 +17,7 @@
  *       leading tokens are real ZIPs (so the painted anchor fires on both); only the surrounding
  *       context separates them. The model attends to the trailing token to decide the leading one.
  *
- *   Slice mix (the A0 learning sets a HEAVY CASE-P floor so the default doesn't flip — DeepSeek's
+ *   Template mix (the A0 learning sets a HEAVY CASE-P floor so the default doesn't flip — DeepSeek's
  *   ≥35% CASE-P; here CASE-P total = 35%): H-adversarial 30% US street, leading real-ZIP house# +
  *   TRAILING postcode → house_number P-us-rural 20% US rural, leading postcode, NO trailing →
  *   postcode (the A0-erosion fix) P-de 15% German leading postcode "{pc} {city}, {street} {hn}" →
@@ -232,7 +232,7 @@ export function synthesizeAnchorAbsorptionRow(
 	if (template === "h-no-trailing-locality") {
 		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with NO trailing
 		// postcode → the leading number is the HOUSE NUMBER. The CONTRAST to p-us-rural (same no-trailing,
-		// state-bearing shape) is the LOCALITY: present here, absent there. The A2 slice lacked this slice,
+		// state-bearing shape) is the LOCALITY: present here, absent there. The A2 recipe output lacked this template,
 		// so p-us-rural's "leading-number + STATE → postcode" rule over-generalized to 98 golden house#
 		// rows ("36 Oxbow Dr, Bradford, VT" → postcode). The house# spans 1-4 digits AND real 5-digit ZIPs
 		// (the hard case: 5-digit + locality is STILL a house number, distinct from p-us-rural's no-locality).
@@ -262,20 +262,20 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 }
 
-// Weighted template bag — the slice mix. Expanded to a flat array so `pick` draws at the target
+// Weighted template bag — the template mix. Expanded to a flat array so `pick` draws at the target
 // frequencies (matches the boundary-stress ALL_TEMPLATES idiom).
 //
-// A3 (#220, after the per-row diagnostic on the A2 probe): A1/A2 both held SLICE-H (100) + postcode
+// A3 (#220, after the per-row diagnostic on the A2 probe): A1/A2 both held CASE-H (100) + postcode
 // (~98) but cost house_number (95.8->92.8), and the A2 mix-rebalance did NOT move it — so it was never a
 // CASE-P-quantity problem. The row-by-row v192-vs-A2 diff (hn-regression-diff.ts) pinned it: 132/132 house#
 // regressions were house#->POSTCODE on "{house#} {street}, {locality}, {STATE}" no-trailing rows — the
-// p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") OVER-GENERALIZED because the slice
-// had NO counter-slice for the common locality-bearing house# case. A3 ADDS h-no-trailing-locality (15%)
+// p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") OVER-GENERALIZED because the recipe output
+// had NO counter-template for the common locality-bearing house# case. A3 ADDS h-no-trailing-locality (15%)
 // to teach the LOCALITY discriminator (present -> house#, absent + 5-digit -> postcode = p-us-rural) and
-// trims p-us-rural 16->13. Goal: house_number recovers WITHOUT re-eroding postcode/SLICE-H. CASE-P = 26%.
+// trims p-us-rural 16->13. Goal: house_number recovers WITHOUT re-eroding postcode/CASE-H. CASE-P = 26%.
 /**
- * Every anchor-absorption template, in one list for the slice runner to sample from. Each covers a way a venue or
- * landmark name can swallow the street token that follows it.
+ * Every anchor-absorption template, in one list for the recipe to sample from. Each covers a way a venue or landmark
+ * name can swallow the street token that follows it.
  */
 export const ALL_TEMPLATES: ReadonlyArray<AnchorAbsorptionTemplate> = [
 	...new Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),

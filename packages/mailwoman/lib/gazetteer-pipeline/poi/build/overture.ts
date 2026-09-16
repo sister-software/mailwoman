@@ -61,9 +61,9 @@ export interface CountryExpression {
  *
  * Deviation to note at the call site: under the `addresses`-based expression, a row with a NULL/empty `addresses` list
  * has `addresses[1]` evaluate to NULL, so `addresses[1].country = '<cc>'` is NULL (never true) and the row is dropped
- * from every country slice — rows with no address struct are simply excluded from country-filtered ingests. Acceptable
- * for v1; the excluded-row count is visible as the delta between a country slice's row count and an unfiltered
- * `COUNT(*)` over the same Parquet, if this ever needs auditing.
+ * from every per-country subset — rows with no address struct are simply excluded from country-filtered ingests.
+ * Acceptable for v1; the excluded-row count is visible as the delta between a per-country subset's row count and an
+ * unfiltered `COUNT(*)` over the same Parquet, if this ever needs auditing.
  */
 export function chooseCountryExpression(describeRows: readonly DescribeColumn[]): CountryExpression {
 	if (describeRows.some((r) => r.column_name === "country")) {

@@ -58,10 +58,10 @@ export interface LocaleTemplate {
 }
 
 /**
- * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so slice builders
- * (scripts/build-po-box-cedex-slice.mjs) can reuse THIS list as the single source of truth for non-US leaders instead
- * of re-deriving it — the US slice additionally has `@mailwoman/codex/us` `US_PO_BOX_DESIGNATORS`/`isPOBox` as its
- * matcher-side truth.
+ * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so recipes (the
+ * `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`) can reuse THIS list as the single source of truth for non-US
+ * leaders instead of re-deriving it — the US recipe additionally has `@mailwoman/codex/us`
+ * `US_PO_BOX_DESIGNATORS`/`isPOBox` as its matcher-side truth.
  */
 export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 	{

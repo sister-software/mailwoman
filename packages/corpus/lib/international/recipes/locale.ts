@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `locale` slice recipe — the multi-locale generalization of the `german` recipe. Reads REAL
+ *   `locale` recipe — the multi-locale generalization of the `german` recipe. Reads REAL
  *   OpenAddresses tuples for a `--country` (DE/FR/NL/IT/ES), renders each via
  *   {@link synthesizeLocaleRow} in BOTH orders (`--intl-fraction`, default 0.4 international / the
  *   rest country-native), aligns to BIO, and emits a labeled JSONL. Generate-mode: it STREAMS each
  *   source CSV (a streamed zip member for cached zips, plain `createReadStream` for extracted CSVs) and
  *   reservoir-samples to {@link RESERVOIR_CAP} (so FR/ES countrywide work in bounded memory), then
- *   draws `--count` rows from the pool with the passed `random`. Ported from
- *   scripts/build-locale-slice.mjs.
+ *   draws `--count` rows from the pool with the passed `random`. Ported from the root build script
+ *   it replaced.
  *
  *   The reservoir uses its OWN seeded PRNG ({@link makeMulberry32}, per part), independent of the
  *   emit `random`, so the input sample is reproducible WITHOUT perturbing the synth/order draws.
@@ -74,8 +74,8 @@ export interface LocaleCountrySource {
 	source: string
 	parts: LocalePart[]
 	/**
-	 * The `corpus_version` stamped on emitted rows. DE/FR keep the historical `0.4.0` (regenerating those slices must
-	 * stay lineage-identical); ES/IT/NL are the #241 staging lineage (`v0.9.9-es-it-nl`).
+	 * The `corpus_version` stamped on emitted rows. DE/FR keep the historical `0.4.0` (regenerating those recipe outputs
+	 * must stay lineage-identical); ES/IT/NL are the #241 staging lineage (`v0.9.9-es-it-nl`).
 	 */
 	corpusVersion: string
 	/**
@@ -125,7 +125,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		source: "synth-es",
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
-		// Pedanía slice (`synth-es-pedania`, `--district-as-locality`). Reads the RAW (un-conformed) CNIG export
+		// Pedanía source (`synth-es-pedania`, `--district-as-locality`). Reads the RAW (un-conformed) CNIG export
 		// cached at oa-cache/es__countrywide.zip — the `parts` CSV above lost `poblacion` in OA's own conform step
 		// (see {@link LocalePart.cnigRaw}). districtAsLocality is pinned true here (this part only exists to be
 		// read pedanía-style); the CLI override still applies harmlessly on top.
@@ -201,7 +201,7 @@ const NL_GLUED_POSTCODE_FRACTION = 0.5
  *   `de`/`di` makes them full names, unlike the German glued-abbreviation class.
  * - ES bilingual slash names (`Laudio/Llodio`; 2.16%): official co-names — the eval expects them verbatim.
  * - IT ALL-CAPS city casing (98.79% of the source, and the eval's observed form): casing is the #829 case-augmentation
- *   change, not this slice's.
+ *   change, not this recipe's.
  */
 export function cleanCityNoise(city: string): string | null {
 	if (/,|\d{4}/.test(city)) return null
@@ -430,8 +430,8 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const localeRecipe: CorpusRecipe = {
 	name: "locale",
@@ -452,7 +452,7 @@ export const localeRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Emit PRNG: the legacy build-locale-slice.mjs seeded mulberry32(opts.seed). The reservoir uses a
+		// Emit PRNG: the legacy build script seeded mulberry32(opts.seed). The reservoir uses a
 		// SEPARATE per-part mulberry32 (below) so input sampling never perturbs this emit stream.
 		const random = makeMulberry32(opts.seed)
 		const country = (opts.country ?? "DE").toUpperCase()

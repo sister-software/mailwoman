@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `unit` slice recipe — US secondary-unit coverage (#451, the v0-parity `unit` gap). Onto REAL US
+ *   `unit` recipe — US secondary-unit coverage (#451, the v0-parity `unit` gap). Onto REAL US
  *   OpenAddresses skeletons (cached zips under `$MAILWOMAN_DATA_ROOT/oa-cache`) it INJECTS a USPS Pub-28 Appendix
  *   C2 secondary-unit designator (the `@mailwoman/codex/us` table), varying the surface form
  *   (canonical "Apartment" vs approved "Apt") AND the unit's POSITION (after-street / unit-first /
  *   bare / venue-prefixed) per row, so the model learns to RECOGNIZE the designator wherever it
  *   sits. The inline synthesis (the OA-CSV reader, the designator tables, `makeUnit`/`renderUnit`)
- *   is ported faithfully from scripts/build-unit-slice.mjs.
+ *   is ported faithfully from the root build script it replaced.
  *
  *   `--golden`: a held-out eval over the VERMONT source only (the corpus `defaultHoldout`, never
  *   trained) with a different seed, emitting `{raw, components, country}` for per-locale-f1. Train
@@ -77,7 +77,7 @@ const ID_WEIGHT = 0.85
  *
  * A minority rather than a replacement: `#` reads as a unit designator here and as a private-mailbox leader in
  * `synthesizers/po-box.ts`, so the token cannot decide between them and the context has to. `US_PMB_LEADERS` excludes
- * it for the same reason. A promotion check over this slice owes a PO-box arm, since a gain on units can be paid for
+ * it for the same reason. A promotion check over this recipe owes a PO-box arm, since a gain on units can be paid for
  * with a loss on `PMB #`.
  */
 const SIGIL_WEIGHT = 0.2
@@ -116,7 +116,7 @@ export function makeUnit(random: () => number, oaUnit: string): string {
 	const standalone = random() >= ID_WEIGHT
 	const pool = standalone ? STANDALONE_DESIGNATORS : ID_DESIGNATORS
 	const canonical = pick(pool, random)
-	// Vary the surface form 50/50 (this is the #454 expand/abbreviate variety, baked into the slice).
+	// Vary the surface form 50/50 (this is the #454 expand/abbreviate variety, baked into the recipe output).
 	const designator = random() < 0.5 ? title(canonical) : title(US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical])
 
 	if (standalone) return designator
@@ -264,18 +264,18 @@ export function renderUnit(
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const unitRecipe: CorpusRecipe = {
 	name: "unit",
 	description: "US secondary-unit rows (#451): real OA skeletons + injected USPS Pub-28 C2 unit designators",
 	mode: "generate",
-	options: [{ flag: "--golden", description: "Emit the held-out VT eval slice ({raw, components, country})" }],
+	options: [{ flag: "--golden", description: "Emit the held-out VT eval set ({raw, components, country})" }],
 	async run(opts, write) {
 		if (opts.count == null) throw new Error("unit recipe requires --count <N>")
 		const count = opts.count
-		// Legacy build-unit-slice.mjs seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
+		// The root build script this recipe replaced seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-unit"
 		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES

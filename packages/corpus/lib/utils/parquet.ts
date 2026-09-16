@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Final output sliceer for the corpus pipeline.
+ *   Final parquet writer for the corpus pipeline.
  *
- *   Phase 1 (#9) shipped JSONL slices + a Python (PyArrow) converter as the path to binary Parquet —
+ *   Phase 1 (#9) shipped JSONL files + a Python (PyArrow) converter as the path to binary Parquet —
  *   bridging until the JS toolchain caught up. Phase 1.5 (#18 §4) replaced that with a native JS
  *   writer. The build pipeline no longer touches Python at all in its hot path; the only remaining
  *   Python is the one-shot `train_tokenizer.py` SentencePiece step.
@@ -29,9 +29,9 @@
  *     part-0000.parquet
  * ```
  *
- *   Each slice caps at `rowsPerSlice` (default 1_000_000); within a slice, DuckDB writes row
+ *   Each parquet file caps at `rowsPerFile` (default 1_000_000); within a file, DuckDB writes row
  *   groups every `ROW_GROUP_SIZE` (50_000) rows per the issue spec. The MANIFEST captures every
- *   slice's path, row count, byte size, and SHA-256 (computed by re-reading the slice once after
+ *   file's path, row count, byte size, and SHA-256 (computed by re-reading the file once after
  *   close — cheap relative to writing it).
  */
 
@@ -50,7 +50,7 @@ import type { LabeledRow } from "#types"
 import type { SplitName } from "#utils/split"
 
 /**
- * Row groups are written at this cadence within a slice.
+ * Row groups are written at this cadence within a parquet file.
  */
 export const ROW_GROUP_SIZE = 50_000
 
@@ -79,14 +79,14 @@ export async function connectDuckDB(): Promise<import("@duckdb/node-api").DuckDB
 }
 
 /**
- * Snappy is the codec selected for corpus slices.
+ * Snappy is the codec selected for corpus parquet files.
  */
-export const SLICE_COMPRESSION = "SNAPPY" as const
+export const PARQUET_COMPRESSION = "SNAPPY" as const
 
 export interface ParquetFieldDefinition {
 	// oxlint-disable-next-line unicorn/text-encoding-identifier-case -- Parquet logical type name.
 	type: "UTF8" | "INT32"
-	compression: typeof SLICE_COMPRESSION
+	compression: typeof PARQUET_COMPRESSION
 	repeated?: boolean
 	optional?: boolean
 }
@@ -117,7 +117,7 @@ export interface ParquetRow {
 }
 
 /**
- * Column names emitted into every slice. Matches `ParquetRow`.
+ * Column names emitted into every parquet file. Matches `ParquetRow`.
  */
 export const PARQUET_COLUMNS = [
 	"raw",
@@ -145,23 +145,23 @@ export const PARQUET_COLUMNS = [
  * tokens/labels arrays. Compression is per-column SNAPPY.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
-	raw: { type: "UTF8", compression: SLICE_COMPRESSION },
-	tokens: { type: "UTF8", repeated: true, compression: SLICE_COMPRESSION },
-	labels: { type: "UTF8", repeated: true, compression: SLICE_COMPRESSION },
+	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	tokens: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
+	labels: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
 	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units,
 	// [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string,
 	// and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
-	span_starts: { type: "INT32", repeated: true, compression: SLICE_COMPRESSION },
-	span_ends: { type: "INT32", repeated: true, compression: SLICE_COMPRESSION },
-	span_tags: { type: "UTF8", repeated: true, compression: SLICE_COMPRESSION },
-	country: { type: "UTF8", compression: SLICE_COMPRESSION },
-	locale: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
-	source: { type: "UTF8", compression: SLICE_COMPRESSION },
-	source_id: { type: "UTF8", compression: SLICE_COMPRESSION },
-	corpus_version: { type: "UTF8", compression: SLICE_COMPRESSION },
-	license: { type: "UTF8", compression: SLICE_COMPRESSION },
-	synth_method: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
-	synth_base_id: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
+	span_starts: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
+	span_ends: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
+	span_tags: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
+	country: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	locale: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	source: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	source_id: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	corpus_version: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	license: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	synth_method: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	synth_base_id: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
 }
 
 const stringListType = new List(new Field("item", new Utf8(), true))
@@ -256,7 +256,7 @@ export async function writeParquetRows(rows: readonly ParquetRow[], path: string
 		.build()
 
 	// parquet-wasm serializes key-value metadata through a hash map, whose order is not stable between writes.
-	// Slice identity and provenance live in MANIFEST.json, so omitting file metadata preserves deterministic bytes.
+	// File identity and provenance live in MANIFEST.json, so omitting file metadata preserves deterministic bytes.
 	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
 }
 
@@ -354,36 +354,38 @@ async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void
 }
 
 /**
- * Per-slice metadata captured in `MANIFEST.json`.
+ * Per-file metadata captured in `MANIFEST.json`, one entry per `.parquet` file of a split. The `slices` key it sits
+ * under is the wire contract the Python loader reads (`manifest_files` in `corpus_files.py`, with its pre-rename
+ * fallback); every corpus on disk carries it, so the key name is not the writer's to change.
  */
-export interface SliceDescriptor {
+export interface ParquetFileDescriptor {
 	split: SplitName
 	path: string
 	format: "parquet"
-	compression: typeof SLICE_COMPRESSION
+	compression: typeof PARQUET_COMPRESSION
 	rows: number
 	bytes: number
 	sha256: string
 	first_source_id: string
 	last_source_id: string
 	/**
-	 * The slice's corpus source slug, when the writer knows it. `audit.ts` prefers this over inferring the source from
-	 * `first_source_id`'s prefix; `writeSlices` itself writes multi-source slices and leaves it unset.
+	 * The file's corpus source slug, when the writer knows it. `audit.ts` prefers this over inferring the source from
+	 * `first_source_id`'s prefix; `writeParquetFiles` itself writes multi-source files and leaves it unset.
 	 */
 	source?: string
 }
 
-export interface SliceManifest {
+export interface ParquetManifest {
 	corpus_version: string
 	schema: readonly string[]
 	rows_per_slice: number
 	row_group_size: number
-	slices: SliceDescriptor[]
+	slices: ParquetFileDescriptor[]
 	counts: Record<SplitName, number>
 	total_rows: number
 }
 
-export interface WriteSlicesOptions {
+export interface WriteParquetFilesOptions {
 	/**
 	 * Root output directory; corpus version dir is created beneath.
 	 */
@@ -395,9 +397,9 @@ export interface WriteSlicesOptions {
 	corpusVersion: string
 
 	/**
-	 * Max rows per `.parquet` slice. Default 1_000_000 per the Phase 1 plan.
+	 * Max rows per `.parquet` file. Default 1_000_000 per the Phase 1 plan.
 	 */
-	rowsPerSlice?: number
+	rowsPerFile?: number
 }
 
 /**
@@ -405,7 +407,7 @@ export interface WriteSlicesOptions {
  * time via `splitForRow` and route rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n)
  * lookup table.
  *
- * Splits with no rows can be omitted (or passed as an empty iterable); `writeSlices` skips them.
+ * Splits with no rows can be omitted (or passed as an empty iterable); `writeParquetFiles` skips them.
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
@@ -413,7 +415,7 @@ export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
  * Project a labeled row to the Parquet schema.
  *
  * The span triple is REQUIRED here (#519): `alignRow` emits it on every labeled row, so a row arriving without it came
- * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the slice (the "builders
+ * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the file (the "builders
  * before parquet = silent loss" hazard). Loud failure, naming the row, instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
@@ -456,20 +458,23 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 }
 
 /**
- * Stream labeled rows into `.parquet` slices, one set of slices per split. Splits are processed sequentially so that
- * only one slice is open at a time. Rows are staged to newline-delimited JSON with backpressure, then DuckDB writes the
+ * Stream labeled rows into `.parquet` files, one set of files per split. Splits are processed sequentially so that only
+ * one file is open at a time. Rows are staged to newline-delimited JSON with backpressure, then DuckDB writes the
  * Parquet file from disk.
  *
  * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior `splitFor(sourceID)` callback is gone
  * because pre-partitioning at the caller eliminates the O(n) `Map<source_id, SplitName>` it required. See `buildCorpus`
  * for the new wire-up.
  */
-export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptions): Promise<SliceManifest> {
-	const rowsPerSlice = opts.rowsPerSlice ?? 1_000_000
+export async function writeParquetFiles(
+	perSplit: PerSplitRows,
+	opts: WriteParquetFilesOptions
+): Promise<ParquetManifest> {
+	const rowsPerFile = opts.rowsPerFile ?? 1_000_000
 	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
 	await makeDirectories(corpusDir)
 
-	const slices: SliceDescriptor[] = []
+	const files: ParquetFileDescriptor[] = []
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let totalRows = 0
 
@@ -480,27 +485,27 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 
 		await using staging = await temporaryDirectory(`mailwoman-parquet-${split}-`)
 
-		let sliceIndex = 0
+		let fileIndex = 0
 		let path = ""
 		let stagePath = ""
-		let sliceRows = 0
+		let fileRows = 0
 		let stage: WriteStream | null = null
 		let firstSourceID = ""
 		let lastSourceID = ""
 
-		const openSlice = async (): Promise<void> => {
+		const openFile = async (): Promise<void> => {
 			const splitDir = join(corpusDir, split)
 			await makeDirectories(splitDir)
-			path = join(splitDir, `part-${String(sliceIndex).padStart(4, "0")}.parquet`)
+			path = join(splitDir, `part-${String(fileIndex).padStart(4, "0")}.parquet`)
 
-			stagePath = staging.resolve(`part-${String(sliceIndex).padStart(4, "0")}.ndjson`)
+			stagePath = staging.resolve(`part-${String(fileIndex).padStart(4, "0")}.ndjson`)
 			stage = staging.use(openWriteStream(stagePath))
-			sliceRows = 0
+			fileRows = 0
 			firstSourceID = ""
 			lastSourceID = ""
 		}
 
-		const closeSlice = async (): Promise<void> => {
+		const closeFile = async (): Promise<void> => {
 			const activeStage = stage
 
 			if (!activeStage) return
@@ -509,18 +514,18 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 				activeStage.end((error?: Error | null) => (error ? reject(error) : resolve()))
 			})
 
-			if (sliceRows) {
+			if (fileRows) {
 				await writeStagedParquet(stagePath, path)
 
 				const fileStat = await tryStat(path)
 				const sha256 = await sha256File(path)
 
-				slices.push({
+				files.push({
 					split,
 					path,
 					format: "parquet",
-					compression: SLICE_COMPRESSION,
-					rows: sliceRows,
+					compression: PARQUET_COMPRESSION,
+					rows: fileRows,
 					bytes: fileStat?.size ?? 0,
 					sha256,
 					first_source_id: firstSourceID,
@@ -529,22 +534,22 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 			}
 
 			stage = null
-			sliceRows = 0
+			fileRows = 0
 		}
 
 		for await (const row of rows) {
 			if (!path) {
-				await openSlice()
+				await openFile()
 			}
 
 			const pq = rowToParquet(row)
 
-			if (!stage) throw new Error("Parquet slice writer was not opened")
+			if (!stage) throw new Error("Parquet file writer was not opened")
 			await writeStagedRow(stage, pq)
 
-			sliceRows++
+			fileRows++
 
-			if (sliceRows === 1) {
+			if (fileRows === 1) {
 				firstSourceID = row.source_id
 			}
 
@@ -554,25 +559,25 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 
 			totalRows++
 
-			if (sliceRows >= rowsPerSlice) {
-				await closeSlice()
+			if (fileRows >= rowsPerFile) {
+				await closeFile()
 
-				sliceIndex++
+				fileIndex++
 				path = ""
 			}
 		}
 
-		await closeSlice()
+		await closeFile()
 	}
 
-	slices.sort((a, b) => (a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)))
+	files.sort((a, b) => (a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)))
 
-	const manifest: SliceManifest = {
+	const manifest: ParquetManifest = {
 		corpus_version: opts.corpusVersion,
 		schema: PARQUET_COLUMNS,
-		rows_per_slice: rowsPerSlice,
+		rows_per_slice: rowsPerFile,
 		row_group_size: ROW_GROUP_SIZE,
-		slices,
+		slices: files,
 		counts,
 		total_rows: totalRows,
 	}

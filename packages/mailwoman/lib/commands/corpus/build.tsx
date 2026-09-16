@@ -8,7 +8,7 @@
  *
  *   End-to-end corpus build. Drives every registered adapter (or the filtered subset) per `--inputs`,
  *   runs synthesis + alignment, computes the locality-holdout split, and writes the final JSONL
- *   slices + per-stage manifests under `<out>/corpus-v<version>/`.
+ *   parquet files + per-stage manifests under `<out>/corpus-v<version>/`.
  *
  *   Adapters whose id is missing from `--inputs` are skipped (and noted in the manifest); this is how
  *   the CLI handles partial builds during development.
@@ -39,12 +39,13 @@ export const spec = {
 		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
 		inputs: { type: "string", required: true, description: "Adapter input JSON map" },
 		synthesize: { type: "boolean", default: true, description: "Enable augmentation" },
-		"rows-per-slice": {
+		"rows-per-file": {
 			type: "number",
 			default: 1_000_000,
 			validate: (value) => Number.isInteger(value) && value > 0,
-			validationMessage: "--rows-per-slice must be a positive integer.",
-			description: "Max rows per slice",
+			validationMessage: "--rows-per-file must be a positive integer.",
+			description: "Max rows per parquet file",
+			deprecatedName: "rows-per-slice",
 		},
 	},
 } as const satisfies CommandSpec
@@ -102,7 +103,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			adapters,
 			adapterInputs,
 			synthesize: options.synthesize,
-			rowsPerSlice: options.rowsPerSlice,
+			rowsPerSlice: options.rowsPerFile,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 

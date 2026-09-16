@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The READ half of the `sub-venue` slice recipe (#35 step 4): which surfaces a locale may emit,
+ *   The READ half of the `sub-venue` recipe (#35 step 4): which surfaces a locale may emit,
  *   what identifier follows them in that region, and which real names become the confound negatives.
  *   `sub-venue.ts` owns the WRITE half (line rendering + the emit loop) and the recipe registration;
  *   split because the two halves together run past the 750-line file cap, and this is the split — one
@@ -294,7 +294,7 @@ export function isSignIdentifier(value: string): boolean {
 }
 
 /**
- * Does a real extract name exercise `promoted` in one of the two shapes this slice teaches?
+ * Does a real extract name exercise `promoted` in one of the two shapes this recipe teaches?
  *
  * Only `<phrase> <identifier>` and (English legs) `<modifier> <phrase>` qualify. That is stricter than "contains the
  * phrase", and the 2026-08-05 smoke is why: the loose test put `Glasgow Clyde College - Langside Campus`, `Terminal de
@@ -639,7 +639,7 @@ export async function readExtractPools(path: string, query: PoolQuery): Promise<
  * The venue set is the transport + institution categories whose rows name a whole venue — exactly what
  * `overture-subvenue.ts` REJECTED as a lexicon source ("4,071 of them are the token `airport` in the aerodrome's own
  * name") and exactly what a venue slot wants. The confound set is that file's rejection list read as a source of
- * negatives: `shoe_store` contributes 708 hits of `wing` because Red Wing sells boots, and that is the row this slice
+ * negatives: `shoe_store` contributes 708 hits of `wing` because Red Wing sells boots, and that is the row this recipe
  * needs to see with `wing` NOT tagged `unit`.
  */
 const POI_VENUE_CATEGORIES: readonly string[] = [

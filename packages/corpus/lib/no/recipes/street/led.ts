@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `no-street-led` — the Norwegian street-led slice, third orthography of the #901
+ *   `no-street-led` — the Norwegian street-led recipe, third orthography of the #901
  *   leading-name-boundary family. The post-#920 NO row-read measured the residual as
  *   ORDER-SENSITIVE decode: street-led forms ("Tangavegen 40, 5620 Tørvikbygd") carry a 30%
  *   residual vs pc-first's 7% — the diacritic street head (…vegen/…veien with ø/å/æ) is the same
@@ -19,11 +19,11 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const noStreetLedRecipe: CorpusRecipe = {
 	name: "no-street-led",
@@ -40,7 +40,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
 
-		// THE SPLIT (ported from fr-fragment, #727 T2). Without it this slice trains on all 10,697
+		// THE SPLIT (ported from fr-fragment, #727 T2). Without it this recipe trains on all 10,697
 		// NO surfaces, 1,952 of which the digit board reserves — so a Norway retrain would grade
 		// memorization of `Hallingrudveien` while claiming to measure the boundary form. There is no
 		// safe default: source-disjoint by street SURFACE is the discipline, so the flag throws.
@@ -49,7 +49,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 		if (!excludePath) {
 			throw new Error(
 				"no-street-led: --exclude-surfaces is REQUIRED. Pass the NO digit board's reserved list " +
-					"(mailwoman/eval-harness/fixtures/no-digits.surfaces.txt) or this slice trains on its own eval set. " +
+					"(mailwoman/eval-harness/fixtures/no-digits.surfaces.txt) or this recipe trains on its own eval set. " +
 					"Source-disjoint by street SURFACE is the split discipline; there is no safe default."
 			)
 		}
@@ -109,7 +109,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 				raw = `${postcode} ${city}, ${street} ${number}`
 			}
 
-			const source_id = sliceSourceID("synth-no-street-led", { ...components, o: String(order), v: String(read) })
+			const source_id = recipeSourceID("synth-no-street-led", { ...components, o: String(order), v: String(read) })
 
 			const canonical = {
 				raw,

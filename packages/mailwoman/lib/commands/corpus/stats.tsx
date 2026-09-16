@@ -15,9 +15,18 @@ export const spec = {
 	name: "stats",
 	description: "Build corpus statistics.",
 	options: {
-		slices: { type: "string", required: true, description: "Comma-separated parquet slice paths or a directory" },
+		parquet: {
+			type: "string",
+			required: true,
+			description: "Comma-separated parquet file paths or a directory",
+			deprecatedName: "slices",
+		},
 		out: { type: "string", required: true, description: "Output corpus-stats.json path", deprecatedName: "output" },
-		"limit-per-slice": { type: "number", description: "Row cap per slice (debug)" },
+		"limit-per-file": {
+			type: "number",
+			description: "Row cap per parquet file (debug)",
+			deprecatedName: "limit-per-slice",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -26,9 +35,9 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
 
 		await buildCorpusStats({
-			slicesArg: options.slices,
+			slicesArg: options.parquet,
 			outputPath: options.out,
-			limitPerSlice: options.limitPerSlice,
+			limitPerSlice: options.limitPerFile,
 		})
 
 		return "done"

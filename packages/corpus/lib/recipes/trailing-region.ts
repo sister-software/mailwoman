@@ -18,9 +18,9 @@
  *   The recipe is country-agnostic; the country tail surface comes from the tuple's `country`
  *   field ("Spain", "United Kingdom") so one recipe serves every extraction.
  *
- *   POSTCODE-PREFIXED FORMS (2026-08-20, #1748). The two bare forms above were the whole slice, and the
+ *   POSTCODE-PREFIXED FORMS (2026-08-20, #1748). The two bare forms above were the whole recipe, and the
  *   board row this recipe was written for is NOT bare — it reads `…, 07691 Portopetro, Illes Balears,
- *   Spain`. Measured over both built slices: 88,904 rows, zero containing a postcode. So the model
+ *   Spain`. Measured over both built recipe outputs: 88,904 rows, zero containing a postcode. So the model
  *   learned the bare tail correctly and had never once seen the shape it was failing on, which is why no
  *   decode change moved it.
  *
@@ -32,10 +32,10 @@
  *
  *   A postcode alone drops the region (every locale measured); a house number then displaces the
  *   locality. So the added surfaces are postcode-prefixed and house-number-plus-postcode-prefixed, and
- *   the slice still needs no street names.
+ *   the recipe still needs no street names.
  *
  *   POSTCODE PLACEMENT. The three surfaces above are the LEADING form, and for a long time they were the
- *   only one, so this slice taught only the countries that write the postcode first. That is a real gap
+ *   only one, so this recipe taught only the countries that write the postcode first. That is a real gap
  *   and not a stylistic one, because the same digits change TAG with position. Measured on the shipped
  *   model: `Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality
  *   into the street, while `6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers
@@ -49,7 +49,7 @@
  *   so a tuples file written before the field existed produces the rows it always did.
  *
  *   LEFT CONTEXT (v25). A tuple may carry a `dependentLocality`, and when it does the surface becomes
- *   `«dep_locality», «locality»…`. This is not decoration: without it EVERY row in the slice begins with
+ *   `«dep_locality», «locality»…`. This is not decoration: without it EVERY row in the recipe output begins with
  *   the locality, and at a 9.4% share that taught the model the first named segment is the locality.
  *   Measured on the v4.8.0 candidate — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back
  *   `locality: "Ye Three Lords"` with venue and street both gone, `Le Colimaçon, 44 Rue Vieille du
@@ -70,7 +70,7 @@ import { lookupCanadianProvince } from "@mailwoman/codex/ca"
 import { lookupUSState } from "@mailwoman/codex/us"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
  * The code an address line in this country writes the region as, or null where the name is written out.
@@ -96,8 +96,8 @@ function regionCodeSurface(cc: string, region: string): string | null {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const trailingRegionRecipe: CorpusRecipe = {
 	name: "trailing-region",
@@ -119,7 +119,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const dependentLocality = String(t.dependentLocality ?? "").trim()
 
 			// A pair whose region EQUALS its locality (Santa Cruz de Tenerife inside Santa Cruz de
-			// Tenerife) teaches nothing about the boundary this slice exists for.
+			// Tenerife) teaches nothing about the boundary this recipe exists for.
 			if (!locality || !region || locality === region) {
 				skipped++
 
@@ -129,7 +129,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const withCountry = read % 2 === 0 && country.length > 0
 			const postcode = String(t.postcode ?? "").trim()
 
-			// A tuple carrying a postcode emits the STRUCTURED tail — the shape the bare-only slice never
+			// A tuple carrying a postcode emits the STRUCTURED tail — the shape the bare-only recipe output never
 			// contained. Every fourth such row also carries a house number, which is the second trigger:
 			// the postcode discards the region, the house number then displaces the locality.
 			const withHouseNumber = postcode.length > 0 && read % 4 === 1
@@ -137,7 +137,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 
 			const components: Record<string, string> = { locality, region }
 
-			// LEFT CONTEXT. Without it every row begins with the locality, and the slice teaches that the first named
+			// LEFT CONTEXT. Without it every row begins with the locality, and the recipe teaches that the first named
 			// segment IS the locality — measured on the v4.8.0 candidate: `Ye Three Lords, 27 Minories, London EC3N 1DE`
 			// came back `locality: "Ye Three Lords"` with the venue and street gone, and 11 of its 25 regressions were
 			// venue-led rows across seven countries. The house-number prefix does not supply it, because a NUMBER before
@@ -187,12 +187,12 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const raw = `${head}${tail}`
 			// A DISTINCT source for the structured rows. The sampler buckets by `source` and weights each bucket,
 			// so emitting these under `synth-trailing-region` would pool them with the 88,904 bare rows and make
-			// the new surface unweightable — the dose would silently be whatever the bare slice's weight bought.
-			// `--source-name` overrides both, and for the same reason one rung up: a rebuild of one country's
-			// surfaces (#1673's corrected Spanish names) pooled under the shipped label would be dosed at
-			// whatever the rows it was built to outweigh are already drawing.
+			// the new surface unweightable — its reps per row would silently be whatever the bare source's weight
+			// bought. `--source-name` overrides both, and for the same reason one rung up: a rebuild of one country's
+			// surfaces (#1673's corrected Spanish names) pooled under the shipped label would draw exactly the reps
+			// per row the rows it was built to outweigh are already drawing.
 			const sourceLabel = postcode ? structuredSource : bareSource
-			const source_id = sliceSourceID(sourceLabel, { ...components, v: String(read) })
+			const source_id = recipeSourceID(sourceLabel, { ...components, v: String(read) })
 
 			const canonical = {
 				raw,

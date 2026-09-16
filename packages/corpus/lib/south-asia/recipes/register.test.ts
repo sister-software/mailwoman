@@ -11,11 +11,11 @@ import {
 	pkRegisterRecipe,
 	renderSouthAsiaRegister,
 } from "@mailwoman/corpus/south-asia/recipes/register"
-import { type SliceRow, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { type RecipeRow, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const runPK = sliceRunner("pk-register", pkRegisterRecipe, 5)
-const runBD = sliceRunner("bd-register", bdRegisterRecipe, 5)
+const runPK = recipeRunner("pk-register", pkRegisterRecipe, 5)
+const runBD = recipeRunner("bd-register", bdRegisterRecipe, 5)
 
 const PK_ROWS = [
 	{ street: "Street 25", number: "4", city: "Islamabad" },
@@ -107,7 +107,7 @@ describe("pk-register recipe", () => {
 
 		expect(stats).toMatchObject({ read: 5, emitted: 3, skipped: 2 })
 
-		for (const row of rows as Array<SliceRow & { country?: string; locale?: string; license?: string }>) {
+		for (const row of rows as Array<RecipeRow & { country?: string; locale?: string; license?: string }>) {
 			expect(row.country).toBe("PK")
 			expect(row.locale).toBe("en-PK")
 			expect(row.license).toBe("ODbL-1.0")

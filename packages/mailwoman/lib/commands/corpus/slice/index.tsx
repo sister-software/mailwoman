@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus slice <recipe>` — build a synthetic training-corpus slice from a registered
- *   recipe (the durable replacement for the 16 `scripts/build-*-slice.mjs` scripts). `--list`
- *   prints the registry. Recipes are `tuples` (read `--input` JSONL of
+ *   `mailwoman corpus slice <recipe>` — run a registered corpus recipe and write its output, the
+ *   durable replacement for the sixteen one-off build scripts that preceded the recipe registry.
+ *   `--list` prints the registry. Recipes are `tuples` (read `--input` JSONL of
  *   (locality,region,postcode,country) tuples) or `generate` (self-generate `--count` rows). Output
- *   is aligned LabeledRow JSONL ready for the parquet slicing step (`mailwoman corpus ...`). See
- *   corpus/src/recipes.
+ *   is aligned LabeledRow JSONL ready for the parquet step (`mailwoman corpus build`). The registry
+ *   lives in `packages/corpus/lib/recipes/`.
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
@@ -26,7 +26,7 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 /**
- * Bare `mailwoman corpus slice` stays the recipe runner now that `slice/` hosts subcommands.
+ * Bare `mailwoman corpus slice` stays the recipe runner now that this directory hosts subcommands.
  */
 export const isDefault = true
 
@@ -35,7 +35,7 @@ export const isDefault = true
  */
 export const spec = {
 	name: "slice",
-	description: "Build a synthetic corpus slice",
+	description: "Run a corpus recipe and write its output",
 	positionals: [{ name: "recipe", description: "Recipe name" }],
 	options: {
 		list: { type: "boolean", default: false, description: "List recipes" },
@@ -74,7 +74,7 @@ export const spec = {
 
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 
-const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
+const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { getSliceRecipe, listSliceRecipes } = await import("@mailwoman/corpus")
 
@@ -136,7 +136,7 @@ const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 			negativeFraction: num(options.negativeFraction),
 		}
 
-		console.error(`▸ slice recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)
+		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)
 
 		const stream = openWriteStream(options.out, { encoding: "utf8" })
 
@@ -170,4 +170,4 @@ const CorpusSlice: CommandComponent<typeof spec> = ({ options, args }) => {
 	return null
 }
 
-export default CorpusSlice
+export default CorpusRecipeRun

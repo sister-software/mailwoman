@@ -26,7 +26,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { splitCNUnitChain } from "@mailwoman/core/locale/zh-cn-units"
 
-import { type CorpusRecipe, readTuples, sliceSourceID } from "#recipes/scaffold"
+import { type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
 import { alignRow } from "#utils/align"
 import { cjkAwareTokenizer } from "#utils/tokenize"
 
@@ -119,7 +119,7 @@ function tailWithoutCommas(tail: string): string[] {
 const SOURCE = "coarse-placer-cn-units"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the rows it labels and why every label is a
+ * Recipe registered with the corpus builder — see the file header for the rows it labels and why every label is a
  * reading of a generic rather than a guess.
  */
 export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
@@ -170,13 +170,13 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 				country: "CN",
 				locale: "zh-CN",
 				source: opts.sourceName ?? SOURCE,
-				source_id: sliceSourceID(opts.sourceName ?? SOURCE, { raw }),
+				source_id: recipeSourceID(opts.sourceName ?? SOURCE, { raw }),
 				corpus_version: "0.4.0",
 				license:
 					"CC-BY-4.0 — GeoNames populated places, INFERRED from the `<name>, <admin1>, <country>` row shape; data/coarse-placer carries no per-row source",
 			}
 
-			// Verbatim only: every value above was sliced out of `raw`, so an edit-distance match would mean this file
+			// Verbatim only: every value above is a substring of `raw`, so an edit-distance match would mean this file
 			// has a bug, not that the source spells something differently.
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0], { tokenizer, maxEditDistance: 0 })
 

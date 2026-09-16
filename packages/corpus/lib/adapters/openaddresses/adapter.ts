@@ -125,7 +125,7 @@ export interface OpenaddressesAdapterOptions {
 
 /**
  * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. a PDDL-only state slice).
+ * known to carry a single license throughout (e.g. a PDDL-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE

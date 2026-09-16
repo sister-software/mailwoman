@@ -15,7 +15,7 @@ postcode-to-place join unchanged.
 
 ## `sub-venue-lexicon.json` — the sub-venue designator lexicon (#35, waves 1–2)
 
-The vocabulary a corpus slice (and eventually the span proposer) reads to recognize `Terminal 5`,
+The vocabulary a corpus recipe (and eventually the span proposer) reads to recognize `Terminal 5`,
 `North Terminal`, `Concourse B`, `第1ターミナル` as venue-interior structure. Generated, **not
 hand-edited**. See `docs/engineering/sub-venue-corpus-task.mdx` for why this exists — the short
 version is that the `unit` tag was never taught the modifier+designator shape, so closing the class by
@@ -68,13 +68,13 @@ The extract JSONLs and the `.osm.pbf` files are build inputs under
 | OpenStreetMap   | Geofabrik `japan-latest.osm.pbf`                   | ODbL                | 183,999 |
 | Overture Places | `poi.db` spatial layer, vintage `2026-05-20.0`     | CDLA-Permissive-2.0 | 9,219   |
 
-**The ODbL question, unchanged from wave 1 and still open for the slice.** The committed artifact
+**The ODbL question, unchanged from wave 1 and still open for the recipe output.** The committed artifact
 contains no OSM geometry and no OSM row. What survives the OSM leg is surface COUNTS — that the token
 `ターミナル` appears in 1,215 Japanese feature names — plus the `identifierShapes` distribution, whose
 `examples` are gate reference strings (`B32`, `1A`, `16-18`). Facts and short factual strings are not
 a substantial extraction from a database, so this table is not treated as a Derived Database. That
-reading matches `osm/README.md`'s posture that the ODbL obligation rides on the built slice rather
-than on code. **A corpus slice built from OSM rows IS a derived work, and that question is still not
+reading matches `osm/README.md`'s posture that the ODbL obligation rides on the built recipe output
+rather than on code. **A corpus recipe output built from OSM rows IS a derived work, and that question is still not
 settled** — it gates step 4, not this table.
 
 ### What the sources are FOR, and what each cannot do
@@ -82,7 +82,7 @@ settled** — it gates step 4, not this table.
 Overture and OSM fail differently, which is why both are read.
 
 - **Overture (`poi.db`)** is curated venue-interior naming. `concourse` appears 35 times in its
-  `airport_terminal` slice against 4 in the whole Great Britain OSM extract, and 3 of those 4 are a
+  `airport_terminal` category against 4 in the whole Great Britain OSM extract, and 3 of those 4 are a
   street called CONCOURSE WAY. **But poi.db is four countries** — US 11,521,612 / CA 794,418 /
   FR 721,352 / MX 644,316, and nothing else (measured 2026-08-05). It can attest en-US, en-CA, fr-FR
   and es-MX and nothing else, so a zero count in it is evidence of absence in four countries, not in
@@ -189,9 +189,9 @@ list.
 
 **A rejection of a SHIPPED designator is advisory.** `neural/venue-structure.ts` carries a flat
 English vocabulary with no locale gate, and `wing`, `terminal` and `concourse` are in it. This table
-cannot un-ship them: the `wing` / en-US rejection tells a slice author which locale to leave out of a
+cannot un-ship them: the `wing` / en-US rejection tells a recipe author which locale to leave out of a
 generated line, and it does nothing to stop the span proposer firing on "Red Wing". Giving the shipped
-vocabulary a per-locale gate is step 4's problem, and it is the single largest thing the slice will
+vocabulary a per-locale gate is step 4's problem, and it is the single largest thing the recipe will
 want that does not exist yet.
 
 The mechanism does hold for anything the lexicon adds. `pier` is promoted for en-GB and rejected for
@@ -203,7 +203,7 @@ en-US, and because it is not in the shipped list, the rejection has teeth: the r
 `Gate A12` is a rendering, not a string anyone wrote down: all 658 Great Britain `aeroway=gate`
 features but 13 are unnamed and carry only a `ref`. The table therefore carries a distribution rather
 than a phrase list — and the distribution turns out to differ by country far more than the shared
-vocabulary suggests, so a slice generating `Gate <ref>` for a French address has to sample France's:
+vocabulary suggests, so a recipe generating `Gate <ref>` for a French address has to sample France's:
 
 | region | gate refs | most common shape      |           second | third           |
 | ------ | --------: | ---------------------- | ---------------: | --------------- |
@@ -224,4 +224,4 @@ produces a plausible string that is wrong about Spain.
 lists are re-declared in `sub-venue-lexicon.ts`. That is a drift surface, and
 `sub-venue-lexicon.test.ts` pins both lists literally so a change in either place fails a test rather
 than passing silently. The right move is still the reverse direction: have `neural/venue-structure.ts`
-read a committed lexicon slice and delete both copies.
+read a committed lexicon extract and delete both copies.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `pk-register` and `bd-register` slice recipes — the typed forms of Pakistan and Bangladesh the country templates do
+ *   `pk-register` and `bd-register` recipes — the typed forms of Pakistan and Bangladesh the country templates do
  *   not render, over the OpenStreetMap corpus JSONL the `osm` adapter reads (#1744, the F8 family). The adapter's own
  *   rows carry the template shape (`4 38th Street, DHA Phase 6, Karachi`; `24 Road 104, Dhaka - 1207`); these two carry
  *   the register:
@@ -28,7 +28,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
-import { alignAndWrite, type CorpusRecipe, readTuples, type SliceRecipeOpts, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readTuples, type SliceRecipeOpts, recipeSourceID } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -168,7 +168,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 						country,
 						locale,
 						source: sourceName,
-						source_id: sliceSourceID(sourceName, { raw: rendering.raw }),
+						source_id: recipeSourceID(sourceName, { raw: rendering.raw }),
 						corpus_version: "0.1.0",
 						license: OSM_LICENSE,
 					},

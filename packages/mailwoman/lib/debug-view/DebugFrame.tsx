@@ -35,7 +35,7 @@
  *     is invisible to a plain output-line-count check. Verified in `DebugFrame.test.tsx` by filling every frame cell
  *     with a marker character and counting marked lines against `cellSize.rows`, plus asserting the title and
  *     attribution both still appear.
- *   - The output pane slices its own line list to what fits ({@link outputPaneCapacity}) rather than letting Ink drop
+ *   - The output pane trims its own line list to what fits ({@link outputPaneCapacity}) rather than letting Ink drop
  *     the overflow, for the same reason: a dropped row is invisible, and this one scrolls.
  */
 
@@ -96,7 +96,7 @@ export interface DebugFrameProps {
 	 */
 	errorNote?: string | null
 	/**
-	 * First visible line of the output pane's list. The pane owns the slice so the caller's `data` identity stays stable
+	 * First visible line of the output pane's list. The pane owns the window so the caller's `data` identity stays stable
 	 * across a scroll — which is what keeps the map frame from re-rendering on an arrow key.
 	 */
 	scrollOffset?: number

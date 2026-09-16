@@ -36,7 +36,7 @@ afterEach(async () => {
 })
 
 describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
-	it("produces top-level MANIFEST.json + parquet slices + splits + quarantine pile", async () => {
+	it("produces top-level MANIFEST.json + parquet files + splits + quarantine pile", async () => {
 		const outDir = scratch.resolve("build")
 		const stages: BuildStage[] = []
 
@@ -50,7 +50,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		})
 
 		// Stages fire in order
-		expect(stages).toEqual(expect.arrayContaining(["adapter-run", "align", "split", "slice", "manifest"]))
+		expect(stages).toEqual(expect.arrayContaining(["adapter-run", "align", "split", "parquet", "manifest"]))
 
 		expect(manifest.corpus_version).toBe("0.1.0")
 		expect(manifest.adapters).toHaveLength(1)
@@ -79,12 +79,12 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(splitManifest.corpus_version).toBe("0.1.0")
 		expect(splitManifest.holdouts.US).toContain("Vermont")
 
-		// At least one `.parquet` slice exists and round-trips through DuckDB.
-		const trainSlice = corpusManifest.slices.find((s) => s.split === "train")!
-		expect(trainSlice).toBeDefined()
-		expect(trainSlice.format).toBe("parquet")
-		expect(trainSlice.path).toMatch(/\.parquet$/)
-		const firstRow = (await streamParquetRows<ParquetRow>(trainSlice.path).next()).value ?? null
+		// At least one `.parquet` file exists and round-trips through DuckDB.
+		const trainFile = corpusManifest.slices.find((s) => s.split === "train")!
+		expect(trainFile).toBeDefined()
+		expect(trainFile.format).toBe("parquet")
+		expect(trainFile.path).toMatch(/\.parquet$/)
+		const firstRow = (await streamParquetRows<ParquetRow>(trainFile.path).next()).value ?? null
 
 		expect(firstRow).not.toBeNull()
 		expect(firstRow!.corpus_version).toBe("0.1.0")

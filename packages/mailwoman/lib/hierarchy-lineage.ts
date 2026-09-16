@@ -26,7 +26,7 @@
  */
 
 /**
- * One link of the winner's stamped lineage — the id-bearing slice of `@mailwoman/core`'s `Ancestor` (declared locally
+ * One link of the winner's stamped lineage — the id-bearing subset of `@mailwoman/core`'s `Ancestor` (declared locally
  * so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
  */
 interface LineageAncestor {
@@ -34,7 +34,7 @@ interface LineageAncestor {
 }
 
 /**
- * A resolved-tree node slice the assembly reads — structurally satisfied by the decorated `AddressNode`.
+ * The subset of a resolved-tree node the assembly reads — structurally satisfied by the decorated `AddressNode`.
  */
 export interface HierarchySourceNode {
 	tag: string

@@ -545,7 +545,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		expect(aligned.kind, `${id} copy should align (got ${stringifyJSON(aligned.row)})`).toBe("labeled")
 
 		if (aligned.kind !== "labeled") throw new Error("unreachable")
-		// Every span must address the augmented raw exactly: its slice IS the component surface.
+		// Every span must address the augmented raw exactly: its substring IS the component surface.
 		const { raw, span_starts, span_ends, span_tags } = aligned.row
 
 		for (let i = 0; i < span_tags!.length; i++) {
@@ -556,7 +556,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 	}
 
 	/**
-	 * The dotted po_box surface on the augmented copy — slice the span, not the tokens.
+	 * The dotted po_box surface on the augmented copy — the span's substring, not the tokens.
 	 */
 	const poBoxSurface = (row: LabeledRow): string => {
 		const i = row.span_tags!.indexOf("po_box")
@@ -678,14 +678,14 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		if (aligned.kind !== "labeled") return
 		const { raw, span_starts, span_ends, span_tags } = aligned.row
 
-		const slice = (tag: ComponentTag) => {
+		const surface = (tag: ComponentTag) => {
 			const i = span_tags!.indexOf(tag)
 
 			return raw.slice(span_starts![i]!, span_ends![i]!)
 		}
 
-		expect(slice("po_box")).toBe("P.O. BOX 5")
-		expect(slice("street")).toBe("MAIN ST")
+		expect(surface("po_box")).toBe("P.O. BOX 5")
+		expect(surface("street")).toBe("MAIN ST")
 	})
 })
 

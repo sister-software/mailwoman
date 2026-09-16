@@ -14,7 +14,8 @@
  *
  *   This module takes the middle path:
  *
- *   1. **Seeds come from corpus-v0.2.0 test slice** — already through the alignment pipeline, so labels
+ *   1. **Seeds come from the corpus-v0.2.0 test split's parquet files** — already through the alignment pipeline, so
+ *        labels
  *        are pipeline-verified.
  *   2. **LLM only varies the surface form** — case, abbreviations, reordering, dropped components. The
  *        component VALUES (locality string, postcode digits, etc.) are preserved verbatim.
@@ -108,7 +109,7 @@ interface GoldenCandidate {
 
 export interface ExpandGoldenOptions {
 	/**
-	 * Corpus test slice path(s), comma-separated. Default: the v0.2.0 test slice under the data root.
+	 * Corpus test-split parquet path(s), comma-separated. Default: the v0.2.0 test parquet file under the data root.
 	 */
 	corpus?: string
 	/**
@@ -207,15 +208,15 @@ async function loadSeeds(
 		.map((p) => p.trim())
 		.filter(isPresent)
 
-	report?.(`reading seeds from ${paths.length} slice(s) (target: ${count}, stratified)`)
+	report?.(`reading seeds from ${paths.length} parquet file(s) (target: ${count}, stratified)`)
 
 	if (includeSources) {
 		report?.(`  include-sources filter: ${Array.from(includeSources).join(", ")}`)
 	}
 
-	// Stratified sampling: read all rows from all slices, group by source. Bounded by per-source
+	// Stratified sampling: read all rows from all parquet files, group by source. Bounded by per-source
 	// reservoir: keep at most max(2*count, 5000) rows per source so we don't blow memory on train
-	// slices (1M rows × many slices). Sampling later is uniform within each pool.
+	// parquet files (1M rows × many files). Sampling later is uniform within each pool.
 	const bySource = new Map<string, Seed[]>()
 	const PER_SOURCE_CAP = Math.max(2 * count, 5000)
 	let scanned = 0
@@ -258,7 +259,7 @@ async function loadSeeds(
 	}
 
 	report?.(
-		`  scanned ${scanned} rows across ${paths.length} slice(s); thin-components dropped: ${skippedThinComponents}`
+		`  scanned ${scanned} rows across ${paths.length} parquet file(s); thin-components dropped: ${skippedThinComponents}`
 	)
 
 	report?.(`  per-source pool sizes:`)
@@ -282,7 +283,7 @@ async function loadSeeds(
 		const pool = bySource.get(src)!
 		const target = perSource + (i < remainder ? 1 : 0)
 
-		// Subsample without replacement — shuffle, then slice.
+		// Subsample without replacement — shuffle, then take the head.
 		random.shuffle(pool)
 
 		const take = Math.min(target, pool.length)

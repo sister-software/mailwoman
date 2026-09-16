@@ -7,34 +7,33 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  *
  * ## Why this exists
  *
- * Most synthetic slices are GENERATED on demand by a `build-*-slice` recipe (parametrized by --count), so re-emitting
- * them in a new label format is just a re-run. A few slices are FIXED corpora with a hand/DeepSeek-authored canonical
- * source that is never regenerated — notably `deepseek-kryptonite` (the adversarial hard-case set) and the
- * `deepseek-translit-*` variants. Their committed parquets carry whatever label format was current when they were first
- * built.
+ * Most synthetic recipe outputs are GENERATED on demand by a recipe (parametrized by --count), so re-emitting them in a
+ * new label format is just a re-run. A few are FIXED corpora with a hand/DeepSeek-authored canonical source that is
+ * never regenerated — notably `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*`
+ * variants. Their committed parquets carry whatever label format was current when they were first built.
  *
- * When the corpus label format changes (the v0.5.0 char-offset triple, #519), those fixed slices must be RE-ALIGNED,
+ * When the corpus label format changes (the v0.5.0 char-offset triple, #519), those fixed corpora must be RE-ALIGNED,
  * not regenerated — feed the canonical source back through the same `alignRow` the from-source build uses, so the spans
  * land in the new format with zero drift. That is exactly what this does: canonical jsonl in → labeled jsonl out, one
  * `alignRow` per row, quarantine on miss.
  *
- * It is the uniform counterpart to corpus/src/tools/slice-kryptonite.ts (which couples to a base manifest and writes
- * parquet directly). Output goes to jsonl so it joins the SAME jsonl-to-parquet path every other overlay slice uses.
+ * It is the uniform counterpart to `tools/overlay/kryptonite.ts` (which couples to a base manifest and writes parquet
+ * directly). Output goes to jsonl so it joins the SAME jsonl-to-parquet path every other overlay uses.
  *
- * Usage: node scripts/align-canonical-slice.ts\
+ * Usage: mailwoman corpus align-slice\
  * --input /path/canonical-kryptonite.jsonl\
- * --output /tmp/kryptonite-labeled.jsonl\
+ * --out /tmp/kryptonite-labeled.jsonl\
  * --corpus-version 0.5.0
  */
 import { alignRow } from "#utils"
 
-export interface AlignSliceOptions {
+export interface AlignCanonicalOptions {
 	input: string
 	output: string
 	corpusVersion: string
 }
 
-export async function alignCanonicalSlice(args: AlignSliceOptions): Promise<void> {
+export async function alignCanonicalSlice(args: AlignCanonicalOptions): Promise<void> {
 	await using outStream = createNewlineWriter(args.output)
 	let labeled = 0
 	let quarantined = 0
@@ -57,7 +56,7 @@ export async function alignCanonicalSlice(args: AlignSliceOptions): Promise<void
 	}
 
 	console.error(
-		`align-canonical-slice: ${labeled} labeled, ${quarantined} quarantined → ${args.output}\n` +
+		`align-canonical: ${labeled} labeled, ${quarantined} quarantined → ${args.output}\n` +
 			`  quarantine reasons: ${stringifyJSON(quarantineReasons)}`
 	)
 }

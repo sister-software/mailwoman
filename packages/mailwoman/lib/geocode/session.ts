@@ -69,7 +69,7 @@ import {
 //#region Contract
 
 /**
- * The slice of the geocode command's parsed options a session reads.
+ * The subset of the geocode command's parsed options a session reads.
  *
  * Declared structurally because the session is the lower layer; importing the CLI specification here would point the
  * dependency the wrong way. The command hands over its whole parsed options object and structural typing accepts the
@@ -146,7 +146,7 @@ export interface GeocodeSessionOptions {
 	adminContainmentRerank?: boolean
 	/**
 	 * DEPRECATED NO-OP, removed at the next major. The Decision-A retry rider it controlled was retired 2026-08-19 under
-	 * the #486 repair-retirement policy with a measured record of exactly zero effect (the board, its failure slice, and
+	 * the #486 repair-retirement policy with a measured record of exactly zero effect (the board, its failure subset, and
 	 * 600 fresh register records — #1694 holds the receipts). Accepted so existing callers keep compiling; ignored,
 	 * because single-pass is now the only behavior.
 	 */

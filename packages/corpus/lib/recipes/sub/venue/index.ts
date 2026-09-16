@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `sub-venue` slice recipe (#35 step 4) — teach the `unit` tag the venue-INTERIOR shapes it was
+ *   `sub-venue` recipe (#35 step 4) — teach the `unit` tag the venue-INTERIOR shapes it was
  *   never taught, so the modifier+designator class wins at the shipped `venueStructureBiasScale` of
  *   6.0 instead of needing ~11 nats. `docs/engineering/sub-venue-corpus-task.mdx` is the spec; the
  *   vocabulary is `corpus/data/sub-venue-lexicon.json` (v0.2.0) and the curation ledger is
@@ -44,7 +44,7 @@
  *   ── LABELS ───────────────────────────────────────────────────────────────────────────────────────
  *   Sub-venue is `unit`; the container is `venue`. That is the spec's wording and it invents nothing:
  *   `block` / `sub_block` exist in the `ComponentTag` union but are JP-char-model-only and outside
- *   `ACTIVE_TAGS` (STAGE3), so they are not reachable from a Latin slice.
+ *   `ACTIVE_TAGS` (STAGE3), so they are not reachable from a Latin-script recipe output.
  *
  *   ── WHAT IS DELIBERATELY NOT HERE ────────────────────────────────────────────────────────────────
  *   1. **A modifier+designator form outside English.** `VENUE_STRUCTURE_MODIFIERS` is an English
@@ -53,11 +53,12 @@
  *        be inventing a vocabulary with no confound board behind it, which is the exact failure the
  *        promotion ledger exists to prevent. Non-English legs get designator+identifier only.
  *   2. **A ja-JP leg.** `ターミナル` is promoted (1,213 real of 1,215). The one non-Latin
- *        surface the task named, but Japanese addresses train through `build_jp_slice.py` against the
- *        `stage3-jp` 47-label head, where the interior tags are `block`/`sub_block`/`building_number`
- *        — a different model, a different label set, and a different builder. A katakana `unit` row
- *        in this (Latin) feed would in any case be dropped by `country_weights`, which carries no
- *        `JP` key. The JP extract is harvested and ready; the leg belongs to the JP slice.
+ *        surface the task named, but Japanese addresses train through the JP corpus builder
+ *        (`corpus-python/src/mailwoman_train/countries/jp/corpora/`) against the `stage3-jp` 47-label
+ *        head, where the interior tags are `block`/`sub_block`/`building_number` — a different model, a
+ *        different label set, and a different builder. A katakana `unit` row in this (Latin) feed
+ *        would in any case be dropped by `country_weights`, which carries no `JP` key. The JP extract
+ *        is harvested and ready; the leg belongs to the JP corpus.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -67,7 +68,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"
 import {
 	buildIdentifierModel,
@@ -97,7 +98,7 @@ export * from "#recipes/sub/venue/context"
 //#region Plan
 
 /**
- * One locale's leg of the slice.
+ * One locale's leg of the recipe.
  *
  * `positiveShare` / `negativeShare` are relative weights, normalized at run time — they do not have to sum to 1.
  */
@@ -134,7 +135,7 @@ export interface SubVenueLeg {
  * En-GB and en-US carry the most because they are where the eval board lives (28 of the 30 confound rows are GB or US
  * addresses) and because the English shipped vocabulary is the only one with a modifier grammar — the target class.
  * fr-FR, de-DE and es-ES exist because the ledger promoted surfaces there (169, 19+32 and 190 real hits respectively)
- * and a slice that skipped them would leave every non-English promotion untrained. ca-ES is small on purpose: its
+ * and a recipe that skipped them would leave every non-English promotion untrained. ca-ES is small on purpose: its
  * promotion is 15 hits and its line differs from es-ES only in the Catalan street vocabulary the postal-prefix filter
  * selects for.
  *
@@ -205,32 +206,32 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
 //#region Tunables
 
 /**
- * The row count this slice is built at, and the arithmetic behind it. `--count` overrides; this is the number to use
- * absent a reason.
+ * The row count this recipe output is built at, and the arithmetic behind it. `--count` overrides; this is the number
+ * to use absent a reason.
  *
  * The training sampler (`corpus-python/src/mailwoman_train/data_loader.py`, `_raw_row_stream`) draws SOURCES from a
  * multinomial over `source_weights` and yields the next row from that source's iterator. Two consequences set the
  * size:
  *
  * 1. A source's share of an epoch is `weight / Σweights`, independent of how many rows it has.
- * 2. **A source that exhausts is DELETED from the multinomial** — there is no cycling. Under-size the slice and its
- *    nominal dose is fiction for the rest of the epoch.
+ * 2. **A source that exhausts is DELETED from the multinomial** — there is no cycling. Under-size the recipe output and
+ *    its nominal reps per row are fiction for the rest of the epoch.
  *
- * Measured against the shipped `v4.1.0-gb-venue-l1e4-2k` weight table: 33 sources summing to 144.5. At the dose the B11
- * GB-venue exercise settled on for a hard rare class — 12.0, the value `synth-fr-bare-street`, `synth-si-bare-village`,
- * `synth-cz-pcfirst-preposition`, `synth-fr-fragment` and `synth-no-fragment` all carry — the share is `12 / 156.5 =
- * 7.67%`, and `train_rows_per_epoch` is 1,000,000. So the epoch draws **76,677 rows** from this slice, and anything
- * smaller runs dry mid-epoch. 120,000 clears that with room for a config that drops a source or raises the dose. (For
- * contrast: `synth-fr-bare-street` is 10,803 rows at dose 12.0, so it exhausts 14% into its own nominal share every
- * epoch — a precedent for the dose, not for the size.)
+ * Measured against the shipped `v4.1.0-gb-venue-l1e4-2k` weight table: 33 sources summing to 144.5. At the reps per row
+ * the B11 GB-venue exercise settled on for a hard rare class — 12.0, the value `synth-fr-bare-street`,
+ * `synth-si-bare-village`, `synth-cz-pcfirst-preposition`, `synth-fr-fragment` and `synth-no-fragment` all carry — the
+ * share is `12 / 156.5 = 7.67%`, and `train_rows_per_epoch` is 1,000,000. So the epoch draws **76,677 rows** from this
+ * recipe output, and anything smaller runs dry mid-epoch. 120,000 clears that with room for a config that drops a
+ * source or raises the reps. (For contrast: `synth-fr-bare-street` is 10,803 rows at 12.0 reps per row, so it exhausts
+ * 14% into its own nominal share every epoch — a precedent for the reps, not for the size.)
  */
 export const RECOMMENDED_ROW_COUNT = 120_000
 
 /**
  * Share of emitted rows that are NEGATIVES (the confound classes, carrying no `unit`).
  *
- * The spec's instruction is structural: "include the confound shapes as NEGATIVES in the same slice, or the model
- * learns the surface rather than the structure". 0.3 is the dose the `no-fragment` recipe settled on for its own
+ * The spec's instruction is structural: "include the confound shapes as NEGATIVES in the same recipe output, or the
+ * model learns the surface rather than the structure". 0.3 is the share the `no-fragment` recipe settled on for its own
  * counter-distribution and there is no measurement here that beats it; `--negative-fraction` moves it.
  */
 const DEFAULT_NEGATIVE_FRACTION = 0.3
@@ -257,15 +258,15 @@ const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
 //#region Board reservation
 
 /**
- * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl` — the 30-row board this slice
+ * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl` — the 30-row board this recipe
  * has to hold. A row containing any of these is DROPPED and counted in `contaminated`.
  *
  * The `--exclude-surfaces` precedent from `fr-fragment` / `no-fragment`, applied by hand rather than by file because
  * the board lives in `mailwoman/` and `@mailwoman/corpus` cannot reach across that workspace boundary at run time. Keep
- * it in sync when the board grows; a slice that trains on its own eval set measures memorization.
+ * it in sync when the board grows; a recipe output that trains on its own eval set measures memorization.
  *
  * Note what this costs and why it is still right: reserving `east gate` / `west gate` removes the two GB surfaces the
- * board uses for its `modifier-designator-street` class, so the slice teaches that class from the OTHER real ones its
+ * board uses for its `modifier-designator-street` class, so the recipe teaches that class from the OTHER real ones its
  * sources carry (`North Gate`, `South Gate`, `East Hall`, `West Hall`, `Lower Hall`, `East Campus`, …). The class is
  * taught; the board's own strings are not.
  */
@@ -331,7 +332,7 @@ type Group = Piece[]
 
 /**
  * Surface register. Every eval in this repo gets a lowercase leg because lowercase is the register users type — Google
- * Maps taught them — so every slice has to carry one.
+ * Maps taught them — so every recipe output has to carry one.
  */
 const Register = {
 	Canonical: "canonical",
@@ -659,7 +660,7 @@ function emitRow(
 		country: leg.country,
 		locale: leg.locale,
 		source: context.source,
-		source_id: sliceSourceID(context.source, { ...components, ...disambiguator }),
+		source_id: recipeSourceID(context.source, { ...components, ...disambiguator }),
 		corpus_version: CORPUS_VERSION,
 		license: LICENSE,
 	})
@@ -893,8 +894,8 @@ function emptyStats(leg: SubVenueLeg, pools: LegPools, promotedCount: number): S
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const subVenueRecipe: CorpusRecipe = {
 	name: "sub-venue",

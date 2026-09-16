@@ -25,7 +25,12 @@ export const spec = {
 			description: "Remote path of --new-dir, e.g. /data/corpus/versioned/<version>/corpus-<version>",
 		},
 		"corpus-version": { type: "string", required: true, description: "New corpus version" },
-		"slice-parquet": { type: "string", required: true, description: "Slice parquets to add, comma-separated" },
+		parquet: {
+			type: "string",
+			required: true,
+			description: "Parquet files to add, comma-separated",
+			deprecatedName: "slice-parquet",
+		},
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
 		note: { type: "string", required: true, description: "Manifest note" },
 	},
@@ -35,12 +40,12 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
 
-		const parquets = splitList(options.sliceParquet)
+		const parquets = splitList(options.parquet)
 		const sources = splitList(options.source)
 
 		if (parquets.length !== sources.length) {
 			throw new CommandError(
-				`--slice-parquet names ${parquets.length} parquets and --source ${sources.length} labels; one label per parquet`
+				`--parquet names ${parquets.length} parquet files and --source ${sources.length} labels; one label per file`
 			)
 		}
 

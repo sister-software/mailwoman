@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `country-balanced` slice recipe — the BALANCED, MODEL-FIRST country-coverage slice (#464). The
+ *   `country-balanced` recipe — the BALANCED, MODEL-FIRST country-coverage recipe (#464). The
  *   shipped model is STARVED on `country` (P=R=F1=0 on the homograph eval), so this fills the void
- *   the way the `unit` slice did, but built to AVOID over-firing "trailing token ⇒ country". Three
- *   ingredients, ported faithfully from scripts/build-country-slice-balanced.mjs:
+ *   the way the `unit` recipe did, but built to AVOID over-firing "trailing token ⇒ country". Three
+ *   ingredients, ported faithfully from the root build script it replaced:
  *
  *   1. Breadth/recall — real OA skeletons (US/DE/FR/IT/NL) with a country token in a varied surface form
  *        from `@mailwoman/codex/country` (canonical / endonym / ISO code), + ~30% country-ABSENT
@@ -405,18 +405,18 @@ const HOMOGRAPH_FRAC = 0.22
 const ABBREV_FRAC = 0.08
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const countryBalancedRecipe: CorpusRecipe = {
 	name: "country-balanced",
 	description: "Balanced model-first country rows (#464): OA skeletons + ISO surface forms + homograph contrast pairs",
 	mode: "generate",
-	options: [{ flag: "--golden", description: "Emit the held-out VT+Berlin eval slice" }],
+	options: [{ flag: "--golden", description: "Emit the held-out VT+Berlin eval set" }],
 	async run(opts, write) {
 		if (opts.count == null) throw new Error("country-balanced recipe requires --count <N>")
 		const count = opts.count
-		// Legacy build-country-slice-balanced.mjs seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
+		// The root build script this recipe replaced seeded mulberry32 with the raw seed: `const random = mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-country"
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES

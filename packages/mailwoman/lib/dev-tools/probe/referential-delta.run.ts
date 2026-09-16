@@ -41,7 +41,7 @@ import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { loadHardSliceBoard } from "#eval-harness/hard-slice-board"
+import { loadHardCaseBoard } from "#eval-harness/hard-case-board"
 import { existingWOFDatabasePaths } from "#resolver-backend"
 
 const { values } = parseArguments({ options: { board: { type: "string" } } })
@@ -123,7 +123,7 @@ if (!wofPaths.length) {
 } else {
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	using lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
-	const board = await loadHardSliceBoard(values.board)
+	const board = await loadHardCaseBoard(values.board)
 
 	// Board inputs AND their probe surfaces: the input is what a user types, the surface is the token
 	// whose namesakes are actually in contention. Both go through the ranking.

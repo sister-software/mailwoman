@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `house-venue` slice recipe — synthetic house_number+venue+street co-occurrence rows: tuples →
+ *   `house-venue` recipe — synthetic house_number+venue+street co-occurrence rows: tuples →
  *   {@link synthesizeHouseVenueRow} → aligned LabeledRow. The v0.6.3 corrective companion to the
- *   no-street slice: every row carries BOTH house_number AND venue, restoring the house_number
- *   signal that no-street's distributional shift cost the model. Ported from
- *   scripts/build-house-venue-slice.mjs.
+ *   no-street recipe: every row carries BOTH house_number AND venue, restoring the house_number
+ *   signal that no-street's distributional shift cost the model. Ported from the root build script
+ *   it replaced.
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
@@ -15,15 +15,15 @@ import { makeLcg } from "@mailwoman/core/utils"
 import {
 	alignAndWrite,
 	readTuples,
-	sliceSourceID,
+	recipeSourceID,
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,
 	type CorpusRecipe,
 } from "#recipes/scaffold"
 import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "#synthesizers/house-venue"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const houseVenueRecipe: CorpusRecipe = {
 	name: "house-venue",
@@ -31,7 +31,7 @@ export const houseVenueRecipe: CorpusRecipe = {
 	mode: "tuples",
 	async run(opts, write) {
 		if (!opts.input) throw new Error("house-venue recipe requires --input <tuples.jsonl>")
-		// Legacy build-house-venue-slice.mjs seeded the LCG via makeRandom(opts.seed) (s = seed).
+		// The root build script this recipe replaced seeded the LCG via makeRandom(opts.seed) (s = seed).
 		const random = makeLcg(opts.seed)
 		const source = opts.sourceName ?? "synth-house-venue"
 		let read = 0
@@ -66,7 +66,7 @@ export const houseVenueRecipe: CorpusRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source,
-						source_id: sliceSourceID(source, {
+						source_id: recipeSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,
 							postcode: tuple.postcode,

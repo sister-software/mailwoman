@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `street-bare` slice recipe — BARE-street rows (the v0.8.0 harness change, 2026-06-05). The
+ *   `street-bare` recipe — BARE-street rows (the v0.8.0 harness change, 2026-06-05). The
  *   `functional.test.ts` cluster (bare street names — "10th Ave", "Main St", "1 Main Pl") was
  *   mislabeled `locality` because {@link synthesizeStreetRow} only ever emitted streets WITH a ",
  *   City, ST ZIP" tail. This recipe emits streets BARE (`--bare-prob`, default 0.6) — no tail, only
  *   `street_prefix`/`street`/`street_suffix` (+ optional `house_number` at `--hn-prob`, default
  *   0.85) — over the built-in {@link DEFAULT_US_BASES} pool (round-robin). Generate-mode, US-only,
- *   in-distribution (no German-collapse risk). Ported from scripts/build-street-bare-slice.mjs.
+ *   in-distribution (no German-collapse risk). Ported from the root build script it replaced.
  *
  *   Byte-fidelity: the legacy script seeded its own mulberry32 from `--seed`
  *   (`mulberry32(opts.seed)`); this recipe re-creates the SAME generator
@@ -20,14 +20,14 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { sliceSourceID, type CanonicalSliceRow, type CorpusRecipe } from "#recipes/scaffold"
+import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { DEFAULT_US_BASES } from "#synthesizers/intersection"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { alignRow } from "#utils"
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const streetBareRecipe: CorpusRecipe = {
 	name: "street-bare",
@@ -65,13 +65,13 @@ export const streetBareRecipe: CorpusRecipe = {
 
 			const isBare = synth.components.region === undefined
 
-			const canonical: CanonicalSliceRow = {
+			const canonical: CanonicalRecipeRow = {
 				raw: synth.raw,
 				components: synth.components,
 				country: base.country,
 				locale: synth.locale,
 				source,
-				source_id: sliceSourceID(source, {
+				source_id: recipeSourceID(source, {
 					street: synth.components.street,
 					street_suffix: synth.components.street_suffix,
 					house_number: synth.components.house_number,

@@ -10,7 +10,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { readTuples as readLocaleTuples, type LocalePart } from "#international/recipes/locale"
-import { readTuples as readSliceTuples } from "#recipes/scaffold"
+import { readTuples as readRecipeTuples } from "#recipes/scaffold"
 import type { LocaleBaseTuple } from "#synthesizers/locale"
 
 //#region Address context
@@ -34,8 +34,8 @@ const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 
 /**
  * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue v3 tuples (the same 176,519 real
- * rows the `synth-house-venue` slice is built from, so the two slices' address halves are drawn from one pool), DE and
- * ES streamed out of OpenAddresses.
+ * rows the `synth-house-venue` recipe output is built from, so the two recipes' address halves are drawn from one
+ * pool), DE and ES streamed out of OpenAddresses.
  */
 export async function loadContextTuples(
 	tuplesPath: PathBuilderLike,
@@ -43,7 +43,7 @@ export async function loadContextTuples(
 ): Promise<Map<string, LocaleBaseTuple[]>> {
 	const byCountry = new Map<string, LocaleBaseTuple[]>()
 
-	for await (const tuple of readSliceTuples(tuplesPath)) {
+	for await (const tuple of readRecipeTuples(tuplesPath)) {
 		const country = String(tuple.country ?? "")
 
 		if (!country || !tuple.locality || !tuple.street) continue

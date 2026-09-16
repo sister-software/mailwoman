@@ -59,7 +59,7 @@ export interface AuthoritativeAssertion {
 }
 
 /**
- * The slice of a geocode result this module reads to build the provider's query. Structural, so the helper never
+ * The subset of a geocode result this module reads to build the provider's query. Structural, so the helper never
  * imports the result type and the dependency stays one-way.
  */
 export interface AuthoritativeEvidence {

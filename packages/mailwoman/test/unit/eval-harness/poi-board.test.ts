@@ -420,13 +420,13 @@ describe("the committed poi-board fixture set", () => {
 })
 
 describe("evaluateFloors — breach detection", () => {
-	// Synthetic slice counts → a FloorInput, mirroring `runPOIBoard`'s `byExpectKind` + `overallPassRate`.
-	function report(slices: Record<string, { total: number; pass: number }>): FloorInput {
+	// Synthetic per-kind counts → a FloorInput, mirroring `runPOIBoard`'s `byExpectKind` + `overallPassRate`.
+	function report(kinds: Record<string, { total: number; pass: number }>): FloorInput {
 		const byExpectKind: FloorInput["byExpectKind"] = {}
 		let total = 0
 		let pass = 0
 
-		for (const [kind, s] of Object.entries(slices)) {
+		for (const [kind, s] of Object.entries(kinds)) {
 			byExpectKind[kind] = { total: s.total, pass: s.pass, rate: s.total > 0 ? s.pass / s.total : 0 }
 			total += s.total
 			pass += s.pass
@@ -500,7 +500,7 @@ describe("evaluateFloors — breach detection", () => {
 		expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(false)
 	})
 
-	it("treats an absent category slice as UNMET (a 100% floor can't be vacuously cleared)", () => {
+	it("treats an absent category kind as UNMET (a 100% floor can't be vacuously cleared)", () => {
 		const evaluation = evaluateFloors(report({ results: { total: 37, pass: 37 } }))
 
 		expect(evaluation.breached).toBe(true)

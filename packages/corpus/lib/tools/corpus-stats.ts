@@ -5,15 +5,16 @@
  *
  *   Pre-compute corpus-wide token + bigram label distributions for the corpus linter.
  *
- *   Reads one or more Parquet slices, builds per-(token, label) and per-(bigram, label-bigram)
- *   histograms, and serializes them as JSON. The output file is consumed by `lint-corpus-slice.ts`
- *   as the baseline against which a new slice is compared.
+ *   Reads one or more parquet files, builds per-(token, label) and per-(bigram, label-bigram)
+ *   histograms, and serializes them as JSON. The output file is consumed by `lint/recipe-output/index.ts`
+ *   as the baseline against which a new recipe output is compared.
  *
  *   Stats are cheap to compute (~5–30s per 100K rows) but expensive enough that we cache them between
- *   linter invocations. Re-run this script whenever the corpus changes substantially (a new
- *   mainline slice added, a source-pool re-weighted, etc.).
+ *   linter invocations. Re-run this whenever the corpus changes substantially (a new mainline
+ *   recipe output added, a source-pool re-weighted, etc.).
  *
- *   Output schema:
+ *   Output schema (`slice_paths` is the stats file's own key; a stats file already on disk carries it,
+ *   so the linter reads it under that spelling):
  *
  *   ```ts
  *   interface CorpusStats {
@@ -26,14 +27,13 @@
  *   }
  * ```
  *
- *   Usage: node scripts/build-corpus-stats.ts\
+ *   Usage: mailwoman corpus stats\
  *   --slices <glob-pattern-or-dir>\
- *   --output <stats.json>
+ *   --out <stats.json>
  *
- *   For a quick local-corpus baseline (limited but useful for linter testing): node
- *   scripts/build-corpus-stats.ts\
+ *   For a quick local-corpus baseline (limited but useful for linter testing): mailwoman corpus stats\
  *   --slices $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/train/\
- *   --output /tmp/corpus-stats-local.json
+ *   --out /tmp/corpus-stats-local.json
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -42,39 +42,49 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { Globerator } from "spliterator/node/fs"
 
-import { accumulateCooccurrences, createCooccurrenceStats, streamTokenLabelRows } from "#utils/slice-stats"
+import { accumulateCooccurrences, createCooccurrenceStats, streamTokenLabelRows } from "#utils/cooccurrence-stats"
 
 const MIN_BIGRAM_COUNT = 2
 
+/**
+ * Options for {@linkcode buildCorpusStats}. The property names are the ones the `mailwoman corpus stats` command passes,
+ * and move with that command.
+ */
 export interface CorpusStatsOptions {
+	/**
+	 * A directory of parquet files, one parquet file, or a literal path.
+	 */
 	slicesArg: string
 	outputPath: string
+	/**
+	 * Read at most this many rows per parquet file.
+	 */
 	limitPerSlice?: number
 }
 
-async function discoverSlices(slicesArg: string): Promise<string[]> {
-	const stat = await statPath(slicesArg)
+async function discoverParquetFiles(pathArg: string): Promise<string[]> {
+	const stat = await statPath(pathArg)
 
 	if (stat.isDirectory()) {
-		return await Globerator.files("parquet", { cwd: slicesArg }).toArray()
+		return await Globerator.files("parquet", { cwd: pathArg }).toArray()
 	}
 
-	if (stat.isFile() && slicesArg.endsWith(".parquet")) return [slicesArg]
+	if (stat.isFile() && pathArg.endsWith(".parquet")) return [pathArg]
 
 	// Otherwise treat as a literal path list (one per line if it's stdin-friendly).
-	return [slicesArg]
+	return [pathArg]
 }
 
 export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> {
-	const slicePaths = await discoverSlices(args.slicesArg)
+	const parquetPaths = await discoverParquetFiles(args.slicesArg)
 
-	console.error(`Discovered ${slicePaths.length} parquet slice(s)`)
+	console.error(`Discovered ${parquetPaths.length} parquet file(s)`)
 
 	const stats = createCooccurrenceStats()
 	const { tokens: tokenStats, bigrams: bigramStats } = stats
 	let totalRows = 0
 
-	for (const path of slicePaths) {
+	for (const path of parquetPaths) {
 		console.error(`Reading ${path}...`)
 
 		const before = totalRows
@@ -115,7 +125,7 @@ export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> 
 
 	const out = {
 		row_count: totalRows,
-		slice_paths: slicePaths,
+		slice_paths: parquetPaths,
 		tokens: {} as Record<string, Record<string, number>>,
 		bigrams: {} as Record<string, Record<string, number>>,
 	}

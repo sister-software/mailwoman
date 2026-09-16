@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-bare-street` slice recipe (#251) — the postcode-anchoring-imbalance change. BAN (and every
+ *   `fr-bare-street` recipe (#251) — the postcode-anchoring-imbalance change. BAN (and every
  *   other comprehensive FR source) is postcode-COMPLETE, so the model learned the French
  *   street→locality boundary as "the token after the 5-digit postcode," never as "comma + city." Strip
  *   the postcode and it leaks the street's proper-noun tokens into the following locality ("Rue René
  *   Cassin, Paris" → street="Rue Ren", locality="Cassin"). This recipe mints the MISSING distribution:
  *   the BARE comma form, NO postcode, real `(street, number, city)` tuples from BAN (Licence Ouverte —
- *   permissive; the model stays clean of ODbL, unlike the opt-in OSM rooftop slices).
+ *   permissive; the model stays clean of ODbL, unlike the opt-in OSM rooftop sources).
  *
  *   Each tuple → `<n> <Rue/Avenue/…> <proper-noun name>, <City>` with the FR prefix split
  *   ({@link decomposeFrStreet}: "Rue" → street_prefix, the rest → street). Tuples whose street carries
@@ -17,14 +17,14 @@
  *
  *   ⚠ Convention loss-mask: this recipe TEACHES FR `street_prefix`. The conventions loss-mask forbids it
  *   for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss blow-up). Disable that mask for any
- *   run including this slice.
+ *   run including this recipe's output.
  */
 
 import { FR_VOIE_TYPES } from "@mailwoman/codex/fr"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
-import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
  * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation, from the codex table's first
@@ -41,8 +41,8 @@ const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
 const BARE_STREET_ONLY_FORM = 3
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const frBareStreetRecipe: CorpusRecipe = {
 	name: "fr-bare-street",
@@ -83,7 +83,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 						country: "FR",
 						locale: "fr-FR",
 						source: "synth-fr-bare-street",
-						source_id: sliceSourceID("synth-fr-bare-street", {
+						source_id: recipeSourceID("synth-fr-bare-street", {
 							street: fullStreet,
 							f: "bare-nonvoie",
 							v: String(read),
@@ -111,7 +111,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 			// original change; the COMMA-FREE form is the colloquial register users actually type
 			// ('12 rue de Rome Paris' — the street↔locality boundary with NO delimiter, the fr-fr
 			// panel's named loss); the ABBREVIATED form is the typeahead register the geocoder-tester
-			// FR slice attests at scale; and the BARE-STREET-ONLY form is the absence counterweight —
+			// FR sample attests at scale; and the BARE-STREET-ONLY form is the absence counterweight —
 			// without it, every delimiter-free surface in the mix ENDS in a locality, the model learns
 			// "trailing span = locality" as categorical, and bare street names across locales flip to
 			// locality wholesale (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá',
@@ -145,7 +145,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 						? `${prefix} ${street}`
 						: `${number} ${prefixSurface} ${street} ${locality}`
 
-			const source_id = sliceSourceID("synth-fr-bare-street", { ...components, f: String(form), v: String(read) })
+			const source_id = recipeSourceID("synth-fr-bare-street", { ...components, f: String(form), v: String(read) })
 
 			const canonical = {
 				raw,

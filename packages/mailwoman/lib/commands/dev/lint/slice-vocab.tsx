@@ -3,11 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman dev lint database-vocab --database <database.parquet>` — the #511 base-consistency lint,
- *   country-scoped (v2): flags any token a synthetic database labels one tag while the BASE corpus
- *   dominantly labels it another. Affix-split rows (database street_suffix/_prefix vs base "street")
- *   are surfaced separately — the loader's affix-relabel handles them. Exits 1 on any real
+ *   `mailwoman dev lint slice-vocab --parquet <recipe-output.parquet>` — the #511 base-consistency lint,
+ *   country-scoped (v2): flags any token a synthetic recipe output labels one tag while the BASE corpus
+ *   dominantly labels it another. Affix-split rows (the recipe output's street_suffix/_prefix vs base
+ *   "street") are surfaced separately — the loader's affix-relabel handles them. Exits 1 on any real
  *   contradiction.
+ *
+ *   The command keeps its name: the router resolves a command by its file path, and a renamed command has no
+ *   `deprecatedName` the way a flag does, so the scripts and runbooks that type it would break silently.
  */
 
 import { Text } from "ink"
@@ -18,10 +21,15 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * Native command-line contract consumed by the filesystem command router.
  */
 export const spec = {
-	name: "database-vocab",
-	description: "Lint a synthetic database against base-corpus token labels.",
+	name: "slice-vocab",
+	description: "Lint a synthetic recipe output against base-corpus token labels.",
 	options: {
-		slice: { type: "string", required: true, description: "The database parquet to lint" },
+		parquet: {
+			type: "string",
+			required: true,
+			description: "The recipe-output parquet to lint",
+			deprecatedName: "slice",
+		},
 		"base-version": { type: "string", default: "v0.5.0", description: "Base corpus version" },
 		"base-root": { type: "string", description: "Base corpus root (default $MAILWOMAN_DATA_ROOT/corpus/versioned)" },
 		threshold: { type: "number", default: 0.7, description: "Base-majority confidence floor for a contradiction" },
@@ -34,13 +42,13 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const DevLintSliceVocab: CommandComponent<typeof spec> = ({ options }) => {
+const DevLintRecipeOutputVocab: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { lintSliceVocab } = await import("@mailwoman/corpus/tools")
 
 			return lintSliceVocab({
-				slice: options.slice,
+				slice: options.parquet,
 				baseVersion: options.baseVersion,
 				baseRoot: options.baseRoot,
 				threshold: options.threshold,
@@ -64,4 +72,4 @@ const DevLintSliceVocab: CommandComponent<typeof spec> = ({ options }) => {
 	return null
 }
 
-export default DevLintSliceVocab
+export default DevLintRecipeOutputVocab

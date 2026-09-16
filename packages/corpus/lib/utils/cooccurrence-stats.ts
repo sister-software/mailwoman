@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Token/label co-occurrence accounting shared by the corpus-stats builder (`tools/corpus-stats.ts`)
- *   and the slice linter (`tools/lint-slice.ts`). The two sides MUST agree on the bigram key format:
- *   the linter looks its slice's bigrams up in the stats file's `bigrams` table, and a key built with
+ *   and the recipe-output linter (`tools/lint/recipe-output/index.ts`). The two sides MUST agree on the bigram key
+ *   format: the linter looks its recipe output's bigrams up in the stats file's `bigrams` table, and a key built with
  *   a different separator never matches — which silently blanks the bigram-collision check.
  */
 
@@ -13,9 +13,9 @@ import { streamParquetRows } from "#utils/parquet"
 
 /**
  * Separator inside a bigram key (`tok1␟tok2`) and a label-bigram value (`lab1␟lab2`): U+001F UNIT SEPARATOR, a
- * character no address token contains. Render a key for humans with `key.split(SLICE_STATS_SEP).join(" ")`.
+ * character no address token contains. Render a key for humans with `key.split(COOCCURRENCE_KEY_SEP).join(" ")`.
  */
-export const SLICE_STATS_SEP = ""
+export const COOCCURRENCE_KEY_SEP = ""
 
 /**
  * Nested tally: outer key → (inner key → count). Token → label counts, or bigram key → label-bigram counts.
@@ -64,13 +64,13 @@ export function accumulateCooccurrences(
 		bump(stats.tokens, tk, lb)
 
 		if (i + 1 < tokens.length) {
-			bump(stats.bigrams, tk + SLICE_STATS_SEP + tokens[i + 1]!, lb + SLICE_STATS_SEP + labels[i + 1]!)
+			bump(stats.bigrams, tk + COOCCURRENCE_KEY_SEP + tokens[i + 1]!, lb + COOCCURRENCE_KEY_SEP + labels[i + 1]!)
 		}
 	}
 }
 
 /**
- * A slice row projected to the two columns the co-occurrence pass reads.
+ * A parquet row projected to the two columns the co-occurrence pass reads.
  */
 export interface TokenLabelRow {
 	tokens: string[]
@@ -79,15 +79,15 @@ export interface TokenLabelRow {
 }
 
 /**
- * Stream a slice's `tokens`/`labels` columns.
+ * Stream a parquet file's `tokens`/`labels` columns.
  *
  * Projected rather than read whole: parquet is columnar, so the unused columns are never touched. `limit` stops the
  * iteration rather than filtering afterwards, so a capped run reads only the row groups it needs.
  */
-export async function* streamTokenLabelRows(slicePath: string, limit?: number): AsyncIterable<TokenLabelRow> {
+export async function* streamTokenLabelRows(parquetPath: string, limit?: number): AsyncIterable<TokenLabelRow> {
 	let emitted = 0
 
-	for await (const row of streamParquetRows<TokenLabelRow>(slicePath, ["tokens", "labels"], { limit })) {
+	for await (const row of streamParquetRows<TokenLabelRow>(parquetPath, ["tokens", "labels"], { limit })) {
 		yield row
 
 		emitted++

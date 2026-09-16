@@ -109,7 +109,7 @@ export interface StreetRerankResult {
 }
 
 /**
- * Slice the street surface (raw text) of a segmentation hypothesis from the trace's per-token char offsets.
+ * Extract the street surface (raw text) of a segmentation hypothesis from the trace's per-token char offsets.
  */
 function hypothesisStreetSurface(
 	hyp: SegmentationHypothesis,

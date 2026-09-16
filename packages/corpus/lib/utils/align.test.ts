@@ -44,7 +44,7 @@ describe("whitespaceTokenizer", () => {
 		expect(t).toEqual([])
 	})
 
-	it("token spans align to the original string slice", () => {
+	it("token spans align to the original string's substrings", () => {
 		const raw = "Paris, France"
 		const t = whitespaceTokenizer().tokenize(raw)
 
@@ -282,7 +282,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		if (result.kind !== "labeled") return
 		// Token path untouched.
 		expect(result.row.tokens).toHaveLength(result.row.labels.length)
-		// Span triple: parallel, sorted by start, each slice round-trips to the component surface.
+		// Span triple: parallel, sorted by start, each substring round-trips to the component surface.
 		expect(result.row.span_tags).toEqual(["house_number", "street", "locality", "region", "postcode"])
 		expect(result.row.span_starts).toEqual([0, 5, 26, 38, 41])
 		expect(result.row.span_ends).toEqual([4, 24, 36, 40, 46])
@@ -410,7 +410,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Umak/AK bug)", () => {
 	it("a short region value does not claim the inside of an earlier word", () => {
 		// Pre-fix, leftmost-substring let region "AK" (case-insensitive) match inside "Umak",
-		// scrambling every later span — 0.088% of the pilot slice, 46 natural rows.
+		// scrambling every later span — 0.088% of the pilot corpus, 46 natural rows.
 		const result = alignRow(
 			baseRow({
 				raw: "Umak Cir, AK 99546",
@@ -489,8 +489,8 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 		const { raw, span_starts, span_ends, span_tags } = result.row
 
 		for (let i = 0; i < span_tags!.length; i++) {
-			const slice = raw.slice(span_starts![i]!, span_ends![i]!)
-			expect(slice.trim()).toBe(slice) // no span carries edge whitespace
+			const surface = raw.slice(span_starts![i]!, span_ends![i]!)
+			expect(surface.trim()).toBe(surface) // no span carries edge whitespace
 		}
 
 		const regionIdx = span_tags!.indexOf("region")

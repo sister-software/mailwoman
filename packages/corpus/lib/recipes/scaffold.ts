@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared scaffolding for the synthetic-corpus SLICE RECIPES — the common bits the 16
- *   `build-*-slice.mjs` scripts each re-implemented: the seeded LCG PRNG, the tuple reader, and the
+ *   Shared scaffolding for the synthetic-corpus RECIPES — the common bits the 16 root-level build
+ *   scripts each re-implemented: the seeded LCG PRNG, the tuple reader, and the
  *   canonical → `alignRow` → `LabeledRow` JSONL emit step. A recipe ({@link CorpusRecipe}) supplies
  *   only its synthesis + filter; the `mailwoman corpus slice <recipe>` command supplies the I/O.
  */
@@ -23,7 +23,7 @@ import { alignRow } from "#utils"
  * {@link stableSourceIDFromParts} under the name the recipes use: arbitrary disambiguator keys (e.g. a variant index
  * `v`) that aren't `ComponentTag`s, which is how the legacy builders kept per-variant ids unique.
  */
-export function sliceSourceID(adapterID: string, parts: Record<string, string | undefined>): string {
+export function recipeSourceID(adapterID: string, parts: Record<string, string | undefined>): string {
 	return stableSourceIDFromParts(adapterID, parts)
 }
 
@@ -33,7 +33,7 @@ export function sliceSourceID(adapterID: string, parts: Record<string, string | 
  * Position changes the tag assigned to the same digits. On the shipped model, `Heladería Frappé Manía, Avenida Country
  * Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality into the street,
  * while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers `locality:
- * Barcelona`. So a slice emitting one placement teaches one family of countries.
+ * Barcelona`. So a recipe emitting one placement teaches one family of countries.
  *
  * Each is attested by a gauntlet board row, which is the bar for adding another:
  *
@@ -49,12 +49,12 @@ export type PostcodePlacement = "leading" | "after_locality" | "after_region"
 /**
  * A (locality, region, postcode, country) source tuple — the input to tuples-mode recipes.
  */
-export interface SliceTuple {
+export interface RecipeTuple {
 	locality?: string
 	/**
-	 * The segment before the locality, when the source has one. A slice whose every row BEGINS with the locality teaches
-	 * that the first named segment is the locality, which flips the model's default — measured on the v4.8.0 candidate,
-	 * where `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`.
+	 * The segment before the locality, when the source has one. A recipe output whose every row BEGINS with the locality
+	 * teaches that the first named segment is the locality, which flips the model's default — measured on the v4.8.0
+	 * candidate, where `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`.
 	 */
 	dependentLocality?: string
 	region?: string
@@ -69,8 +69,8 @@ export interface SliceTuple {
 }
 
 /**
- * The two seeded generators the legacy `build-*-slice` scripts used, re-exported from their home in
- * `@mailwoman/core/utils` so a recipe keeps importing everything it needs from this one scaffold module.
+ * The two seeded generators the legacy build scripts used, re-exported from their home in `@mailwoman/core/utils` so a
+ * recipe keeps importing everything it needs from this one scaffold module.
  *
  * - `makeLcg` (`s = s*1664525 + 1013904223 mod 2^32`) — what the street/po-box/anchor builders seeded.
  * - `makeMulberry32` — what the MAJORITY of them used (german, locale, boundary-stress, unit, fr-order, country-balanced,
@@ -95,9 +95,9 @@ export type CSVRecord = Record<string, string | undefined>
  * the source's line break is not part of it) without emitting a training row with a newline inside it.
  *
  * Only `\r` and `\n`, deliberately — NOT `\s`. Runs of spaces and tabs pass through exactly as the source wrote them
- * (OA's IA extract writes `NORTH`, three spaces, `MAIN STREET`), because those could always appear and every slice
- * built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at all.
- * `scaffold.test.ts` pins both halves.
+ * (OA's IA extract writes `NORTH`, three spaces, `MAIN STREET`), because those could always appear and every recipe
+ * output built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at
+ * all. `scaffold.test.ts` pins both halves.
  *
  * This is what a CSV reader here still owns. Quote handling, object rows, and lower-case keys are `CSVSpliterator`'s
  * defaults, so a recipe reads a source with `CSVSpliterator.fromAsync(source).map(withoutLineBreaks)` and needs nothing
@@ -154,19 +154,19 @@ export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: st
 }
 
 /**
- * License stamped on the synthetic tuple-derived slices (`po-box`, `no-street`, `house-venue`): the output is
+ * License stamped on the synthetic tuple-derived recipe outputs (`po-box`, `no-street`, `house-venue`): the output is
  * generated, but it inherits the terms of the real tuples it is derived from, so the attribution travels with it.
  */
 export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
 /**
- * The surface key shared by the Norwegian slices (`no-fragment`, `no-street-led`).
+ * The surface key shared by the Norwegian recipes (`no-fragment`, `no-street-led`).
  *
  * MUST match the NO digit board's `norm_surface`: NFC, lowercase, collapse whitespace — and KEEP diacritics.
  * fr-fragment's norm strips them (NFD + combining-mark removal), which is right for French but would collapse
- * `Tømmerlien` → `tommerlien` here, so a slice's exclusion check would never match the board's reserved `tømmerlien`
+ * `Tømmerlien` → `tommerlien` here, so a recipe's exclusion check would never match the board's reserved `tømmerlien`
  * and the train/eval split would leak silently. Diacritic street heads (…vegen/…veien with ø/å/æ) are the whole point
- * of those slices' boundary; folding them away is not an option.
+ * of those recipes' boundary; folding them away is not an option.
  */
 export const foldNOSurface = (value: string): string =>
 	value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
@@ -214,7 +214,7 @@ export interface ReadOATuplesOptions<T> {
 /**
  * Stream distinct tuples out of a cached OA zip — the reader the OA-skeleton recipes (`street-affix`, `unit`,
  * `country-balanced`, `fr-order`) share. Field reads, filters, dedup keys and row order are exactly what each recipe's
- * local copy did, so a recipe's slice stays byte-identical.
+ * local copy did, so a recipe's output stays byte-identical.
  *
  * @category CSV
  */
@@ -252,14 +252,14 @@ export async function readOATuples<T>(source: OATupleSource, options: ReadOATupl
 /**
  * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).
  */
-export function readTuples(input: PathBuilderLike): AsyncSequence<SliceTuple> {
+export function readTuples(input: PathBuilderLike): AsyncSequence<RecipeTuple> {
 	// TextSpliterator (not JSONSpliterator) keeps the reader's established tolerance: malformed lines are skipped rather
 	// than rejecting the sequence. These operators fuse into the source's pull loop instead of adding an async-generator
 	// frame per tuple.
 	return TextSpliterator.fromAsync(input)
 		.map((line) => line.trim())
 		.filter((line) => Boolean(line))
-		.map((line) => tryParsingJSON<SliceTuple>(line))
+		.map((line) => tryParsingJSON<RecipeTuple>(line))
 		.filter((tuple) => tuple !== null)
 		.map((tuple) => tuple!)
 }
@@ -267,7 +267,7 @@ export function readTuples(input: PathBuilderLike): AsyncSequence<SliceTuple> {
 /**
  * A canonical row as the recipes assemble it, before `alignRow` turns it into a `LabeledRow`.
  */
-export interface CanonicalSliceRow {
+export interface CanonicalRecipeRow {
 	raw: string
 	components: Record<string, string>
 	country: string
@@ -311,7 +311,7 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
-	canonical: CanonicalSliceRow,
+	canonical: CanonicalRecipeRow,
 	synthMethod: string,
 	synthBaseID: string | null = null
 ): boolean {
@@ -324,7 +324,8 @@ export function alignAndWrite(
 }
 
 /**
- * Parsed options a recipe's `run` receives. Common fields + the union of recipe-specific flags.
+ * Parsed options a recipe's `run` receives. Common fields + the union of recipe-specific flags. The name is the one the
+ * `mailwoman corpus slice` command imports, and moves with that command.
  */
 export interface SliceRecipeOpts {
 	output: string
@@ -364,7 +365,7 @@ export interface SliceRecipeOpts {
 	/**
 	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping for this invocation. `undefined` (flag
 	 * absent) leaves each `COUNTRY_SOURCES` part's own value untouched — every existing locale build stays
-	 * byte-identical. `true`/`false` forces that value on every part read this run. ES's pedanía slice
+	 * byte-identical. `true`/`false` forces that value on every part read this run. ES's pedanía recipe output
 	 * (`synth-es-pedania`) additionally uses `true` to select {@link LocaleCountrySource.pedaniaParts} instead of the
 	 * default `parts` — see `locale.ts`.
 	 */
@@ -379,7 +380,7 @@ export interface SliceRecipeOpts {
 	multilocaleCount?: number
 	/**
 	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list. REQUIRED for those
-	 * recipes — a slice that trains on its own eval set measures memorization. See their docstrings.
+	 * recipes — a recipe output that trains on its own eval set measures memorization. See their docstrings.
 	 */
 	excludeSurfaces?: string
 	/**
@@ -407,7 +408,7 @@ export interface SliceRecipeOpts {
 	extractsDir?: string
 	/**
 	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound pools (the two of poi.db's
-	 * four countries this slice has legs for). Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
+	 * four countries this recipe has legs for). Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
 	 */
 	poiDB?: string
 	/**
@@ -424,7 +425,7 @@ export interface SliceRecipeOpts {
 /**
  * Tally a recipe returns.
  */
-export interface SliceStats {
+export interface RecipeStats {
 	read?: number
 	emitted: number
 	skipped: number
@@ -439,13 +440,13 @@ export interface SliceStats {
 /**
  * A single declared recipe-specific option flag (for the command's --help).
  */
-export interface SliceRecipeOption {
+export interface RecipeOption {
 	flag: string
 	description: string
 }
 
 /**
- * A slice recipe: its identity, input mode, and its synthesis `run`.
+ * A corpus recipe: its identity, input mode, and its synthesis `run`.
  */
 export interface CorpusRecipe {
 	/**
@@ -463,10 +464,10 @@ export interface CorpusRecipe {
 	/**
 	 * Recipe-specific flags this recipe honors (documentation only).
 	 */
-	options?: SliceRecipeOption[]
+	options?: RecipeOption[]
 	/**
 	 * Do the build: create the recipe's PRNG from `opts.seed` (its LEGACY generator — `makeLcg` or `makeMulberry32` — for
 	 * byte-reproducibility), synthesize, and emit each row via `write`.
 	 */
-	run(opts: SliceRecipeOpts, write: WriteRecipeLine): Promise<SliceStats>
+	run(opts: SliceRecipeOpts, write: WriteRecipeLine): Promise<RecipeStats>
 }

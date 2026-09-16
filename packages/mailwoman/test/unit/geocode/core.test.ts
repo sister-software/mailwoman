@@ -652,7 +652,7 @@ describe("the #404 lineage-attachment wiring (#1717)", () => {
 })
 
 // The Decision-A retry rider's suite lived here until 2026-08-19 — retired with the rider (#1694, the
-// #486 policy): measured zero effect on the board, its failure slice, and 600 fresh register records.
+// #486 policy): measured zero effect on the board, its failure subset, and 600 fresh register records.
 // Single-pass behavior is pinned structurally by test/geocode-core-single-parse.test.ts.
 
 describe("#1537: a famous namesake the model reads as a `street` keeps its candidate list", () => {

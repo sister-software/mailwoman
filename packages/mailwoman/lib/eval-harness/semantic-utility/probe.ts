@@ -71,8 +71,8 @@ export const POI_OUTCOME_SHAPES = [
 export type POIOutcomeShape = (typeof POI_OUTCOME_SHAPES)[number]
 
 /**
- * Read the outcome shape off one pipeline result slice. Total over the vocabulary above — every reachable combination
- * of `path` and `poiIntent` names exactly one shape, so a caller never has to represent "could not tell".
+ * Read the outcome shape off the projection of one pipeline result. Total over the vocabulary above — every reachable
+ * combination of `path` and `poiIntent` names exactly one shape, so a caller never has to represent "could not tell".
  */
 export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 	if (outcome.path !== "poi" || !outcome.poiIntent) return "no_poi_branch"

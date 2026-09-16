@@ -203,7 +203,7 @@ export interface DivisionPolygon {
 }
 
 /**
- * Load the district polygons fetched from the Overture divisions theme (subtype=locality slice).
+ * Load the district polygons fetched from the Overture divisions theme (the subtype=locality rows).
  */
 export async function loadDistrictPolygons(path: string): Promise<DivisionPolygon[]> {
 	const out: DivisionPolygon[] = []

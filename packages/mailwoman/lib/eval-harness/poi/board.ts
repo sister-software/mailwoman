@@ -198,7 +198,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 }
 
 /**
- * The slice of a `PipelineResult` grading needs — kept narrow so tests can hand in a fake without building a tree.
+ * The subset of a `PipelineResult` grading needs — kept narrow so tests can hand in a fake without building a tree.
  */
 export interface POIBoardOutcome {
 	path: PipelineResult["path"]
@@ -464,7 +464,7 @@ export interface FloorLine {
 	 */
 	label: string
 	/**
-	 * Observed pass rate (0..1) for this slice.
+	 * Observed pass rate (0..1) for this kind.
 	 */
 	observed: number
 	/**
@@ -472,11 +472,11 @@ export interface FloorLine {
 	 */
 	floor: number
 	/**
-	 * `observed >= floor` — a missing slice (no cases of that kind) counts as NOT met.
+	 * `observed >= floor` — an absent kind (no cases of it) counts as NOT met.
 	 */
 	met: boolean
 	/**
-	 * `pass/total` for the slice (or `0/0` when the slice is absent), for the printed line.
+	 * `pass/total` for the kind (or `0/0` when the kind is absent), for the printed line.
 	 */
 	fraction: string
 }
@@ -490,7 +490,7 @@ export interface FloorEvaluation {
 }
 
 /**
- * The slice of a report `evaluateFloors` reads — kept narrow so tests can hand in a synthetic result set.
+ * The subset of a report `evaluateFloors` reads — kept narrow so tests can hand in a synthetic result set.
  */
 export interface FloorInput {
 	overallPassRate: number
@@ -499,8 +499,8 @@ export interface FloorInput {
 
 /**
  * Grade a report against {@link POI_BOARD_FLOORS}. Pure — no I/O, no pipeline — so breach detection is unit-tested
- * against synthetic reports (`poi-board.test.ts`) without a live board run. A category floor over an absent slice (zero
- * cases of that kind) is treated as UNMET, not vacuously met.
+ * against synthetic reports (`poi-board.test.ts`) without a live board run. A category floor over an absent kind (zero
+ * cases of it) is treated as UNMET, not vacuously met.
  */
 export function evaluateFloors(report: FloorInput): FloorEvaluation {
 	const categoryLine = (key: "abstain" | "address", label: string): FloorLine => {
@@ -508,7 +508,7 @@ export function evaluateFloors(report: FloorInput): FloorEvaluation {
 		const floor = POI_BOARD_FLOORS[key]
 		const total = bucket?.total ?? 0
 		const pass = bucket?.pass ?? 0
-		// An absent slice can't clear a 100% floor — grading nothing is not the same as grading everything right.
+		// An absent kind can't clear a 100% floor — grading nothing is not the same as grading everything right.
 		const observed = total > 0 ? pass / total : 0
 
 		return { key, label, observed, floor, met: total > 0 && observed >= floor, fraction: `${pass}/${total}` }
@@ -547,7 +547,7 @@ export interface POIBoardReport {
 	 */
 	trackedCases: number
 	/**
-	 * Per-expect-kind slices over the COUNTED rows only, which is what the floors read.
+	 * Per-expect-kind strata over the COUNTED rows only, which is what the floors read.
 	 */
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
 	/**

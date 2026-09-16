@@ -77,9 +77,9 @@ import { streamDownload, writeManifest } from "#tools/fetch/download/index"
 const HTTP_OK = 200
 
 /**
- * Smallest plausible OpenAddresses slice. Below 10 KiB the file is a stub or an error body.
+ * Smallest plausible OpenAddresses country archive. Below 10 KiB the file is a stub or an error body.
  */
-const MIN_PLAUSIBLE_SLICE_BYTES = 10_240
+const MIN_PLAUSIBLE_ARCHIVE_BYTES = 10_240
 
 const OA_BASE = "https://batch.openaddresses.io"
 
@@ -297,7 +297,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	const size = (await statPath(outputFile)).size
 
-	if (size < MIN_PLAUSIBLE_SLICE_BYTES) {
+	if (size < MIN_PLAUSIBLE_ARCHIVE_BYTES) {
 		report?.(`ERROR: File is suspiciously small (${size} bytes) — likely an error response.`)
 
 		return fail(country)

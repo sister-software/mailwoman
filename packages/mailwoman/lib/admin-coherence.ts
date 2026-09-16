@@ -87,7 +87,7 @@ export interface ParsedAdminQualifiers {
 
 /**
  * One link of the winner's containment lineage, as the resolver stamped it (`metadata.ancestors`, the #404 opt-in) — a
- * structural slice of `@mailwoman/core`'s `Ancestor`.
+ * structural subset of `@mailwoman/core`'s `Ancestor`.
  */
 interface AdminAncestor {
 	placetype: string
@@ -244,8 +244,8 @@ export function assessAdminCoherence(
 }
 
 /**
- * A resolved-tree node slice the assembly adapter reads — structurally satisfied by `@mailwoman/core`'s `AddressNode`,
- * declared locally so the pure module carries no decoder import.
+ * The subset of a resolved-tree node the assembly adapter reads — structurally satisfied by `@mailwoman/core`'s
+ * `AddressNode`, declared locally so the pure module carries no decoder import.
  */
 export interface AdminCoherenceSourceNode {
 	tag: string

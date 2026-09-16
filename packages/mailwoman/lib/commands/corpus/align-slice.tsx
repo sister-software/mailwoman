@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Align one corpus slice with the current tokenizer.
+ *   Align one canonical recipe output with the current tokenizer.
  */
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -13,7 +13,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  */
 export const spec = {
 	name: "align-slice",
-	description: "Align a canonical corpus slice.",
+	description: "Align a canonical recipe output with the current tokenizer.",
 	options: {
 		input: { type: "string", required: true, description: "Canonical jsonl input" },
 		out: { type: "string", required: true, description: "Labeled jsonl output", deprecatedName: "output" },

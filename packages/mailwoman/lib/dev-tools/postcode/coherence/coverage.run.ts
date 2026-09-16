@@ -16,7 +16,8 @@
  *      whether the pair was therefore coherent. This is the number that decides whether the pass can speak.
  *
  *   The candidate SET is bounded by codex, not by the gazetteer: `candidateSystemsForPostcode` only knows the systems
- *   in `SYSTEM_CODES`, so a country with no codex slice can never be proposed however many rows it has. The probe
+ *   in `SYSTEM_CODES`, so a country with no codex address system can never be proposed however many rows it has. The
+ *   probe
  *   therefore walks exactly those systems, one real pair each.
  *
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/postcode/coherence/coverage.run.ts <fts|candidate>`

@@ -111,7 +111,7 @@ export interface BundleArtifact {
 }
 
 /**
- * A named, downloadable slice of Mailwoman's public data — what `mailwoman data pull <name>` fetches.
+ * A named, downloadable subset of Mailwoman's public data — what `mailwoman data pull <name>` fetches.
  */
 export interface DataBundle {
 	name: string

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Score the HARD-SLICE BOARD (ROAD_TO_V9 §3) across the three FST arms and report whether they
+ *   Score the HARD-CASE BOARD (ROAD_TO_V9 §3) across the three FST arms and report whether they
  *   SEPARATE. This is the board's own acceptance test: "an unmeasurable change is an unshippable
  *   change" (§2 R3), so the first thing this runner has to establish is that the instrument moves at all.
  *
@@ -45,7 +45,7 @@
  *        gauntlet stores these and never checks them; this board checks them, so a right-coordinate /
  *        wrong-place answer (a namesake landing inside a metro tolerance) is visible rather than credited.
  *
- *   Usage: node packages/mailwoman/lib/dev-tools/score/hard-slice-board.run.ts [--arms none,pop,imp] [--out-json <p>]
+ *   Usage: node packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts [--arms none,pop,imp] [--out-json <p>]
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -59,7 +59,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { type HardSliceCase, loadHardSliceBoard } from "#eval-harness/hard-slice-board"
+import { type HardCase, loadHardCaseBoard } from "#eval-harness/hard-case-board"
 import { collectResolved, mostSpecific, type Resolved } from "#eval-harness/oa/resolver/tree-hits"
 import { createRuntimePipeline } from "#index"
 import { createResolverBackend, existingWOFDatabasePaths } from "#resolver-backend"
@@ -89,7 +89,7 @@ for (const arm of arms) {
 	if (!(arm in ARM_DIRS)) throw new Error(`unknown arm "${arm}" — known: ${Object.keys(ARM_DIRS).join(", ")}`)
 }
 
-const board = await loadHardSliceBoard(values.board)
+const board = await loadHardCaseBoard(values.board)
 const locales = [...new Set(board.map((c) => c.locale))].toSorted()
 
 console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
@@ -176,7 +176,7 @@ const norm = (s: string): string =>
 		.replaceAll(/[̀-ͯ]/gu, "")
 		.trim()
 
-function score(c: HardSliceCase, resolved: Resolved[]): Outcome {
+function score(c: HardCase, resolved: Resolved[]): Outcome {
 	const best = mostSpecific(resolved)
 
 	const errKm =
@@ -265,7 +265,7 @@ function tally(rows: RowResult[], arm: string): { pass: number; total: number } 
 	return { pass: rows.filter((r) => r.byArm[arm]!.pass).length, total: rows.length }
 }
 
-console.log(`\n## Hard-slice board — three-arm FST comparison\n`)
+console.log(`\n## Hard-case board — three-arm FST comparison\n`)
 console.log(`Board: ${board.length} rows · arms: ${arms.join(" / ")}\n`)
 
 // Overall + per-class.

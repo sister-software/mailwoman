@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Overture Places source for the sub-venue lexicon (#35 wave 2) — read the sub-venue-bearing
- *   category slices of `poi.db` (spatial layer #1, `$MAILWOMAN_DATA_ROOT/poi/poi.db`) and yield
+ *   category subsets of `poi.db` (spatial layer #1, `$MAILWOMAN_DATA_ROOT/poi/poi.db`) and yield
  *   {@link SubVenueHarvestRow}s the lexicon builder consumes exactly like an OSM extract.
  *
  *   ── WHY OVERTURE AT ALL, when the OSM extractor already exists ────────────────────────────────────
@@ -57,7 +57,7 @@ import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
  * - `jehovahs_witness_place_of_worship` (2,334) — every hit is "Kingdom Hall of Jehovah's Witnesses".
  * - `shoe_store` (909, of which 708 `wing`) — Red Wing. This one is a CONFOUND BOARD entry, not a source.
  * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution; `campus_building` is the
- *   interior slice and is kept instead.
+ *   interior subset and is kept instead.
  * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's own name. Venue tier,
  *   already covered by OurAirports, and it drowns the interior signal.
  * - `transport_interchange` (1 row), `rail_facility_or_service` (81 rows, 2 hits) — too small to matter.
@@ -155,7 +155,7 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
 }
 
 /**
- * Read the sub-venue-bearing category slices of `poi.db`.
+ * Read the sub-venue-bearing category subsets of `poi.db`.
  *
  * Cold path, already async, no interface constraint — so Kysely, per the repo's inline-SQL rule.
  *

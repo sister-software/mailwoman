@@ -219,7 +219,7 @@ const CORPUS_SIZE = 996
  *
  * Moved 2026-09-01 — `9151f474…` → `8eacc945…` — by PROSE ONLY, which makes it the first move here that changes no
  * measurement. Twelve `note` fields carried the retired four-way word; each now names what it meant (a per-state or
- * per-country database, the LINZ promote, a training slice). Row count stays 651 and every `id`, `input`,
+ * per-country database, the LINZ promote, a corpus recipe output). Row count stays 651 and every `id`, `input`,
  * `expectComponents`, `expectLat`/`expectLon` and tolerance is byte-identical, so the board id below does NOT move —
  * the same reason it held across the 2026-08-06 `expectPlaceName` edit.
  *

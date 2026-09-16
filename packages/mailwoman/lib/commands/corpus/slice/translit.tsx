@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus slice translit` — build per-script parquet slices from the DeepSeek-generated
- *   transliteration JSONL (one slice per `deepseek-translit-<slug>` source) and emit the combined
- *   corpus MANIFEST. Sibling of `corpus slice kryptonite`; also canonicalizes legacy base-slice
- *   paths (`$MAILWOMAN_DATA_ROOT/…` → `/data/…`).
+ *   `mailwoman corpus slice translit` — build per-script parquet files from the DeepSeek-generated
+ *   transliteration JSONL (one file per `deepseek-translit-<slug>` source) and emit the combined
+ *   corpus MANIFEST. Sibling of `corpus slice kryptonite`; also canonicalizes the base corpus's
+ *   legacy parquet paths (`$MAILWOMAN_DATA_ROOT/…` → `/data/…`).
  */
 
 import { Text } from "ink"
@@ -18,33 +18,33 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  */
 export const spec = {
 	name: "translit",
-	description: "Build transliteration corpus slices and their combined manifest.",
+	description: "Build transliteration corpus parquet files and their combined manifest.",
 	options: {
-		jsonl: { type: "string", required: true, description: "Canonical transliteration JSONL to slice" },
+		jsonl: { type: "string", required: true, description: "Canonical transliteration JSONL to convert" },
 		"base-manifest": {
 			type: "string",
 			required: true,
-			description: "Base corpus MANIFEST.json whose slices carry forward",
+			description: "Base corpus MANIFEST.json whose parquet files carry forward",
 		},
 		"out-dir": {
 			type: "string",
 			required: true,
-			description: "Output directory (slices land under corpus-v<version>/train/)",
+			description: "Output directory (parquet files land under corpus-v<version>/train/)",
 		},
 		"corpus-version": { type: "string", default: "0.4.0", description: "Corpus version stamped into rows + MANIFEST" },
 		"canonical-path-prefix": {
 			type: "string",
 			default: "/data/",
-			description: "Prefix replacing legacy base-slice paths",
+			description: "Prefix replacing the base corpus's legacy parquet paths",
 		},
 		"legacy-path-prefix": {
 			type: "string",
-			description: "Legacy base-slice path prefix to rewrite (default: $MAILWOMAN_DATA_ROOT)",
+			description: "Legacy base-corpus parquet path prefix to rewrite (default: $MAILWOMAN_DATA_ROOT)",
 		},
 	},
 } as const satisfies CommandSpec
 
-const CorpusSliceTranslit: CommandComponent<typeof spec> = ({ options }) => {
+const CorpusTranslitParquet: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildTranslitSlice } = await import("@mailwoman/corpus/tools")
 
@@ -63,9 +63,10 @@ const CorpusSliceTranslit: CommandComponent<typeof spec> = ({ options }) => {
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	if (state.status === "done") return <Text color="green">✓ transliteration slices built → {options.outDir}</Text>
+	if (state.status === "done")
+		return <Text color="green">✓ transliteration parquet files built → {options.outDir}</Text>
 
 	return null
 }
 
-export default CorpusSliceTranslit
+export default CorpusTranslitParquet

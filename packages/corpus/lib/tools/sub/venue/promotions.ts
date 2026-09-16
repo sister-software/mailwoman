@@ -88,9 +88,9 @@ export interface SubVenuePromotion {
  *
  * ── A rejection of a SHIPPED designator is ADVISORY ──────────────────────────────────────────────
  * `neural/venue-structure.ts` ships `wing`, `terminal`, `concourse` and six more as a FLAT English vocabulary with no
- * locale gate. Nothing in this table can un-ship them: the `wing` / en-US rejection below tells a slice author which
+ * locale gate. Nothing in this table can un-ship them: the `wing` / en-US rejection below tells a recipe author which
  * locale to exclude from a generated line, and does not stop the span proposer from firing on "Red Wing". Giving the
- * shipped vocabulary a per-locale gate is the largest thing the slice will want that does not exist yet.
+ * shipped vocabulary a per-locale gate is the largest thing the recipe will want that does not exist yet.
  */
 export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	// ── wing ────────────────────────────────────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		real: 0,
 		confound: 26,
 		confoundNote:
-			"Wing Chun and Wing Tsun martial-arts clubs, 15 of 26. Nothing in the French slice of the layer is a " +
+			"Wing Chun and Wing Tsun martial-arts clubs, 15 of 26. Nothing in the French partition of the layer is a " +
 			"building wing.",
 		census: "poi.db 2026-05-20.0, full scan 2026-08-05 (FR partition, 721,352 rows)",
 	},
@@ -271,7 +271,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 
 	// ── terminal ────────────────────────────────────────────────────────────────────────────────────
 	// The English surface already ships. These promote the LOCALIZED forms, which is what a non-English
-	// slice line needs and what wave 1 had none of.
+	// recipe line needs and what wave 1 had none of.
 	{
 		designatorID: "terminal",
 		phrase: "terminal",

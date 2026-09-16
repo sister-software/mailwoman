@@ -91,9 +91,9 @@ import { localeToCountry } from "#country-scope"
 import { readCommittedModel } from "#observations/committed-model"
 
 /**
- * The relation the frozen vertical slice defines, and the only one this route reads. An assertion under any other
- * relation is not an affordance, and the route refuses an artifact that does not define this one rather than answering
- * "no kinds afford it" — an unreadable relation and an unasserted one are different findings.
+ * The relation the frozen vertical defines, and the only one this route reads. An assertion under any other relation is
+ * not an affordance, and the route refuses an artifact that does not define this one rather than answering "no kinds
+ * afford it" — an unreadable relation and an unasserted one are different findings.
  */
 const AFFORDS_RELATION = "affords"
 

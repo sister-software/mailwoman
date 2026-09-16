@@ -683,7 +683,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 }
 
 /**
- * The slice of the assembled result the Gauntlet asserts on.
+ * The projection of the assembled result the Gauntlet asserts on.
  */
 export interface GauntletResult {
 	/**
@@ -747,7 +747,7 @@ export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletG
 }
 
 /**
- * Project an assembled geocode into the slice the graders assert on.
+ * Project an assembled geocode into the projection the graders assert on.
  *
  * Separate from {@linkcode runOne} so a caller holding its own warm session — `@mailwoman/dev-mcp` does — grades through
  * THIS mapping rather than a second copy of it. The projection is the part that must not drift: a field renamed here

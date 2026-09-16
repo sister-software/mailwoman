@@ -28,8 +28,8 @@ export async function applyStreetMissFallback(
 		tree: AddressTree
 		opts: ResolveOpts
 		/**
-		 * The slice of GeocodeDeps this retry reads — structural, so this module needs no geocode-core import (the no-cycle
-		 * rule; `extract` is injected for the same reason).
+		 * The subset of GeocodeDeps this retry reads — structural, so this module needs no geocode-core import (the
+		 * no-cycle rule; `extract` is injected for the same reason).
 		 */
 		deps: {
 			resolver?: { resolveTree(tree: AddressTree, opts: ResolveOpts): Promise<AddressTree> }

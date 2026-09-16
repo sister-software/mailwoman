@@ -45,7 +45,7 @@ describe("renderBarePostcode", () => {
 		// Two separate facts, and collapsing them would lose one. The SHAPE is known — `gr_postcode` is
 		// `NNN NN`, same as its three neighbours — so the rendering answers. The DATA is absent: the
 		// archive's only Greek member declares a postcode column holding nothing across 10,877 rows, so
-		// `SOURCES` names no Greek file and the slice emits no row claiming to be Greek.
+		// `SOURCES` names no Greek file and the recipe emits no row claiming to be Greek.
 		expect(renderBarePostcode("GR", "55131")).toEqual(["551 31", "55131"])
 	})
 

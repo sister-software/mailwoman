@@ -6,7 +6,7 @@
  *   Fixture rung of the `sub-venue` recipe's verification ladder (fixtures → smoke → full build).
  *
  *   What is pinned here is the part no downstream count can catch. A composition report tells you the
- *   slice has 84,000 positives; it cannot tell you that one of them is a bare `Halle`, which the
+ *   recipe output has 84,000 positives; it cannot tell you that one of them is a bare `Halle`, which the
  *   de-DE board says is a city of 240,000 people. So the promotion gate, the `identifier-required`
  *   shape constraint, the per-REGION identifier draw and the word-boundary rule that separates
  *   `Gate` from `Briggate` are asserted directly, against the committed lexicon.
@@ -86,7 +86,7 @@ describe("promotedSurfacesFor", () => {
 		expect(promotedSurfacesFor("es-ES", lexicon).map((s) => s.phrase)).toEqual(["terminal"])
 	})
 
-	it("covers every promote decision in the ledger except the ja-JP one this slice excludes", () => {
+	it("covers every promote decision in the ledger except the ja-JP one this recipe excludes", () => {
 		const promoted = SUBVENUE_PROMOTIONS.filter((p) => p.decision === "promote")
 
 		const covered = new Set(
@@ -310,7 +310,7 @@ describe("buildPositiveForms", () => {
 		}
 	})
 
-	it("uses an attested string when one is offered, at roughly the seasoning dose", () => {
+	it("uses an attested string when one is offered, at roughly the seasoning rate", () => {
 		const leg = legFor("en-GB")
 		const promoted = promotedSurfacesFor("en-GB", lexicon)
 		const model = buildIdentifierModel(lexicon, "GB")
@@ -336,7 +336,7 @@ describe("isBoardReserved", () => {
 		expect(isBoardReserved("12 Briggate, Leeds, LS1 6ER")).toBe(true)
 		expect(isBoardReserved("Gate House, 1 Farringdon Street")).toBe(true)
 		expect(isBoardReserved("12 East Gate, Warwick")).toBe(true)
-		// A different -gate street of the same class is exactly what the slice is allowed to teach.
+		// A different -gate street of the same class is exactly what the recipe is allowed to teach.
 		expect(isBoardReserved("14 Stonegate, York")).toBe(false)
 	})
 })

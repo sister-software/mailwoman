@@ -438,19 +438,19 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 		rows.push(...countryRows)
 
 		for (const currencyClass of [CurrencyClass.DeprecatedNoSuccessor, CurrencyClass.NotCurrentUnstated]) {
-			const slice = countryRows.filter((r) => r.currencyClass === currencyClass)
+			const classRows = countryRows.filter((r) => r.currencyClass === currencyClass)
 
-			if (!slice.length) continue
+			if (!classRows.length) continue
 
-			const uncovered = slice.filter((r) => r.coverage === CoverageVerdict.Uncovered)
+			const uncovered = classRows.filter((r) => r.coverage === CoverageVerdict.Uncovered)
 
 			summary.push({
 				country,
 				currencyClass,
-				total: slice.length,
-				coveredExact: slice.filter((r) => r.coverage === CoverageVerdict.CoveredExact).length,
-				coveredCrossBand: slice.filter((r) => r.coverage === CoverageVerdict.CoveredCrossBand).length,
-				coveredContainment: slice.filter((r) => r.coverage === CoverageVerdict.CoveredContainment).length,
+				total: classRows.length,
+				coveredExact: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredExact).length,
+				coveredCrossBand: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredCrossBand).length,
+				coveredContainment: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredContainment).length,
 				uncovered: uncovered.length,
 				...(attestors ? { uncoveredAttested: uncovered.filter((r) => r.attestation.state === "attested").length } : {}),
 			})

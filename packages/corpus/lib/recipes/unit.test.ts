@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `unit` — the surfaces the slice must attest, and the layout shares it must preserve.
+ * @file `unit` — the surfaces the recipe must attest, and the layout shares it must preserve.
  *
- *   The recipe reads real OpenAddresses zips, so the slice is not drivable here. `makeUnit` and `renderUnit` are the
+ *   The recipe reads real OpenAddresses zips, so the recipe is not drivable here. `makeUnit` and `renderUnit` are the
  *   two pure functions that decide the surface, and they are what these assert.
  */
 

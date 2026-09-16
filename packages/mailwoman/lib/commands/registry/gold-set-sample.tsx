@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman registry gold-set-sample` — sample the HARD co-located name-collision slice (#625
+ *   `mailwoman registry gold-set-sample` — sample the HARD co-located name-collision stratum (#625
  *   gold-set P3) as JSONL rows for adjudication. Without `--out-jsonl` the first 10 rows print to
  *   stdout.
  */

@@ -525,7 +525,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 	// The Decision-A retry rider (a zero-hit in a DERIVED register earned one attempt in the flipped one)
 	// lived here from 2026-07-28 to 2026-08-19 and was retired under the #486 repair-retirement policy with
-	// a measured record of exactly zero: no effect on the full board, none on its 199-row failure slice
+	// a measured record of exactly zero: no effect on the full board, none on its 199-row failure subset
 	// (counterfactual sweep), and none on 300 fresh BAN + 300 fresh FDIC register records — the misrouted-
 	// record class it was specced for. #1694 holds the receipts.
 	return geocodeAddressOnce(input, deps)

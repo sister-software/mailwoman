@@ -33,7 +33,7 @@ export interface InputState {
 	/**
 	 * UTF-16 offset the cursor sits BEFORE, in `[0, value.length]`, and never INSIDE a surrogate pair — every move and
 	 * every delete in this module steps by whole codepoints, so `value.slice(cursor)` is always a valid string. (Ink
-	 * measures and slices in UTF-16 too; keeping the offset in the same units as the render is what makes the two agree.
+	 * measures and indexes in UTF-16 too; keeping the offset in the same units as the render is what makes the two agree.
 	 * See {@link stepLeft}.)
 	 */
 	cursor: number

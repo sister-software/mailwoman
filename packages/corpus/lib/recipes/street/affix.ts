@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `street-affix` slice recipe — the US street-affix coverage slice (the v0-parity `street_prefix` /
+ *   `street-affix` recipe — the US street-affix coverage recipe (the v0-parity `street_prefix` /
  *   `street_suffix` gap — both ~0% F1 in the #15 assessment, collapsed into `street`). Raises
  *   PREVALENCE of affix-split streets with format diversity so the model learns to split "N Main
  *   St" → street_prefix="N" + street="Main" + street_suffix="St", and (negative space) sharpens
- *   `street` itself. Ported from scripts/build-street-affix-slice.mjs.
+ *   `street` itself. Ported from the root build script it replaced.
  *
  *   Reads REAL US OpenAddresses tuples and SPLITS the OA `street` field via the codex:
  *   `matchLeadingDirectional` (USPS Pub-28 C1) for the prefix, `matchTrailingSuffix` (Pub-28 C2
@@ -23,7 +23,7 @@
  *
  *   Multi-locale BALANCE (`--multilocale-count`, opts.multilocaleCount > 0): appends NO-affix
  *   native-order rows (FR/DE/IT/NL) AFTER the US affix rows, riding the same source weight, purely
- *   to keep the postcode-ORDER distribution multi-locale so a US-heavy affix slice doesn't dilute
+ *   to keep the postcode-ORDER distribution multi-locale so a US-heavy affix output doesn't dilute
  *   FR/DE postcode (the v0.9.8 blemish).
  */
 
@@ -44,12 +44,12 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { readCSVRecords, readOATuples, sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// Same OA cache as the unit slice. Train = every NON-Vermont state; eval = Vermont (the holdout).
+// Same OA cache as the unit recipe. Train = every NON-Vermont state; eval = Vermont (the holdout).
 
 interface USSource {
 	zip: PathBuilderLike
@@ -74,8 +74,8 @@ const EVAL_SOURCE: USSource = {
 }
 
 // Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry NO affix split — they exist
-// only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors
-// build-country-slice-balanced.mjs: FR = number-street, postcode-city; DE/IT/NL = street-number,
+// only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors the
+// `country-balanced` recipe: FR = number-street, postcode-city; DE/IT/NL = street-number,
 // postcode-city. `order` drives the body.
 interface BalanceSource {
 	zip: PathBuilderLike
@@ -299,11 +299,11 @@ const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Mari
 
 /**
  * Real-venue pool for the suffix-boundary v2 venue shell (corpus 0.19.0). The 2026-08-10 recipe review found the
- * v0.18.x slice's venue-led rows detectable as templates (six fixed venue strings), and the frozen B1 board's failures
- * concentrate in exactly that shell (rich rows 5/43 vs bare 53/65 at v4.3.3 step-40k). HRSA's health-center site file
- * supplies thousands of REAL US facility names ('Alburg Health Center'-register), US-government public domain, already
- * a corpus source (`usgov-hrsa-fqhc`). Kept verbatim (including the ~11% all-caps names — real register diversity);
- * comma-carrying names are dropped because the venue layout uses commas as its field delimiter.
+ * v0.18.x recipe output's venue-led rows detectable as templates (six fixed venue strings), and the frozen B1 board's
+ * failures concentrate in exactly that shell (rich rows 5/43 vs bare 53/65 at v4.3.3 step-40k). HRSA's health-center
+ * site file supplies thousands of REAL US facility names ('Alburg Health Center'-register), US-government public
+ * domain, already a corpus source (`usgov-hrsa-fqhc`). Kept verbatim (including the ~11% all-caps names — real register
+ * diversity); comma-carrying names are dropped because the venue layout uses commas as its field delimiter.
  */
 const VENUE_POOL_CSV = dataRootPath(
 	"corpus",
@@ -417,7 +417,7 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
 
 /**
  * Render a non-US BALANCE row in native order — NO affix split, NO country token. `street` is the OA value verbatim.
- * The sole job is to put a postcode in its native position so the slice doesn't pull the model US-ward.
+ * The sole job is to put a postcode in its native position so the recipe output doesn't pull the model US-ward.
  */
 function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const { house_number: hn, street, locality: loc, postcode: pc, order } = t
@@ -434,8 +434,8 @@ function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<R
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const streetAffixRecipe: CorpusRecipe = {
 	name: "street-affix",
@@ -448,7 +448,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Legacy build-street-affix-slice.mjs seeded `mulberry32(opts.seed)`.
+		// The root build script this recipe replaced seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 50_000
 		const source = opts.sourceName ?? "synth-affix"
@@ -602,7 +602,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 					source,
 					source_id: stableSourceID(source, components),
 					corpus_version: "0.4.0",
-					license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix slice)",
+					license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix recipe)",
 				}
 
 				const aligned = alignRow(canonical)
@@ -638,7 +638,7 @@ const VENUE_POOL_MIN_SIZE = 500
 const TERMINAL_ONLY_SHARE = 0.8
 
 /**
- * #1569 root-fix slice. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
+ * #1569 root-fix recipe. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
  * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row TRAIN sample only 4→11
  * while contrast was already 95/100 before training (93/100 after). Post-run audit found that the global affix relabel
  * pass corrupts many already-decomposed target rows into double suffixes; do not retrain this recipe until relabel is
@@ -648,7 +648,7 @@ const TERMINAL_ONLY_SHARE = 0.8
  * V2 (corpus 0.19.0, 2026-08-10 recipe review): the v4.3.3 board split (rich venue-led rows 5/43 vs bare 53/65) showed
  * the model separating template rows from real ones, and the venue shell was the giveaway — six fixed venue strings. v2
  * draws the venue shell from thousands of REAL HRSA facility names and raises its share (venue 30%, full 35%, bare 20%,
- * street-only 15%). Dose policy moved to the recipe's config side: weight ≤4 effective passes per run (Muennighoff
+ * street-only 15%). Reps policy moved to the recipe's config side: weight ≤4 effective passes per run (Muennighoff
  * 2023's repetition knee) and the source is excluded from the augmentation pool — see the v4.4.0 config.
  */
 export const suffixBoundaryRecipe: CorpusRecipe = {
@@ -723,7 +723,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 				country: "US",
 				locale: "en-US",
 				source,
-				source_id: sliceSourceID(source, { ...components, class: rowClass, n: String(emitted) }),
+				source_id: recipeSourceID(source, { ...components, class: rowClass, n: String(emitted) }),
 				corpus_version: "0.19.0",
 				license:
 					"OpenAddresses US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
@@ -777,7 +777,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 			// ('Menlo Park' + 'Road'), also emit the SAME stem without its true suffix as a
 			// contrast row ('Menlo' + 'Park' under the canonical last-token rule). Sharing the stem
 			// forces the model to key on the licensing evidence — the trailing true suffix — rather
-			// than on name identity. Dose-neutral: these fill the existing 20% contrast target.
+			// than on name identity. Reps-neutral: these fill the existing 20% contrast target.
 			if (
 				rowClass === "terminal-only" &&
 				classCounts["terminal-contrast"] < classTargets["terminal-contrast"] &&

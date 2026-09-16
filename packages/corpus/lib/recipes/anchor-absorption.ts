@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `anchor-absorption` slice recipe (#220/#723, Probe A1) — self-generates `--count` rows from
- *   {@link synthesizeAnchorAbsorptionRow}'s 6-slice mix (CASE-H / CASE-P-us-rural / CASE-P-de /
+ *   `anchor-absorption` recipe (#220/#723, Probe A1) — self-generates `--count` rows from
+ *   {@link synthesizeAnchorAbsorptionRow}'s six-template mix (CASE-H / CASE-P-us-rural / CASE-P-de /
  *   anchor-fp / locale-ambig / standard), aligns each to BIO, and emits a labeled JSONL. The
  *   LEADING 5-digit on CASE-H/anchor-fp/locale-ambig is sampled from the REAL US ZIPs in the
  *   postcode-anchor lookup, so the shaped-painted anchor fires on it exactly as inference does —
- *   teaching the model to OVERRIDE a present anchor from context. Ported from
- *   scripts/build-anchor-absorption-slice.mjs.
+ *   teaching the model to OVERRIDE a present anchor from context. Ported from the root build
+ *   script it replaced.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -18,7 +18,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { makeLcg } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
 import { alignRow } from "#utils"
 
@@ -45,15 +45,15 @@ async function loadRealUsZips(path: PathBuilderLike): Promise<string[]> {
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const anchorAbsorptionRecipe: CorpusRecipe = {
 	name: "anchor-absorption",
-	description: "Anchor-absorption counter-augmentation (#220/#723): 6-slice mix → synthesizeAnchorAbsorptionRow",
+	description: "Anchor-absorption counter-augmentation (#220/#723): six-template mix → synthesizeAnchorAbsorptionRow",
 	mode: "generate",
 	async run(opts, write) {
-		// Emit PRNG: the legacy build-anchor-absorption-slice.mjs seeded an LCG (lcg(opts.seed)).
+		// Emit PRNG: the root build script this recipe replaced seeded an LCG (lcg(opts.seed)).
 		const random = makeLcg(opts.seed)
 		const source = opts.sourceName ?? "synth-anchor-absorption"
 		const count = opts.count ?? 50_000
@@ -76,7 +76,7 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 				country,
 				locale: synth.locale,
 				source,
-				source_id: sliceSourceID(source, { v: String(i) }),
+				source_id: recipeSourceID(source, { v: String(i) }),
 			}
 
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
@@ -94,7 +94,7 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 		}
 
 		console.error(`\nwrote ${written} rows (${quarantined} quarantined)`)
-		console.error("  by slice:", stringifyJSON(byTemplate))
+		console.error("  by template:", stringifyJSON(byTemplate))
 
 		return { emitted: written, skipped: quarantined }
 	},

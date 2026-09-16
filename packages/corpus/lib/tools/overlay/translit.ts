@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build per-script parquet slices from the DeepSeek-generated transliteration JSONL and emit the
- *   corpus-v0.4.0 MANIFEST that combines them with the existing kryptonite + v0.3.0 slices.
+ *   Build per-script parquet files from the DeepSeek-generated transliteration JSONL and emit the
+ *   corpus-v0.4.0 MANIFEST that combines them with the existing kryptonite + v0.3.0 files.
  *
- *   Sibling to `slice-kryptonite.ts`. The two modules share the same composition pattern: take a
- *   base MANIFEST, append new slices, write a combined MANIFEST. Differences specific to
+ *   Sibling to `kryptonite.ts`. The two modules share the same composition pattern: take a
+ *   base MANIFEST, append new parquet files, write a combined MANIFEST. Differences specific to
  *   transliteration:
  *
  *   - One JSONL contains rows from N target scripts (source = `deepseek-translit-<slug>`). We bucket by
- *       `source` and write one slice per script so `audit.ts` can attribute each slice to its
+ *       `source` and write one parquet file per script so `audit.ts` can attribute each file to its
  *       synthetic source without relying on filename-prefix inference.
- *   - Each slice is written to `train/part-translit-<slug>.parquet` (distinct from kryptonite's
+ *   - Each file is written to `train/part-translit-<slug>.parquet` (distinct from kryptonite's
  *       `part-0000.parquet`, which v0.4.0's first builder already produced).
- *   - Inherits the path-canonicalization fix flagged in Thread B's postmortem: v0.3.0 slice paths are
+ *   - Inherits the path-canonicalization fix flagged in Thread B's postmortem: v0.3.0 file paths are
  *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined MANIFEST so
  *       all paths share one container-friendly form.
  *
@@ -36,10 +36,10 @@ import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"
-import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, rowToParquet, SLICE_COMPRESSION, writeParquetRows } from "#utils"
-import type { SliceDescriptor, SliceManifest } from "#utils"
+import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, rowToParquet, PARQUET_COMPRESSION, writeParquetRows } from "#utils"
+import type { ParquetFileDescriptor, ParquetManifest } from "#utils"
 
-export interface SliceTranslitOptions {
+export interface TranslitOverlayOptions {
 	jsonl: string
 	baseManifest: string
 	outDir: string
@@ -52,8 +52,8 @@ export interface SliceTranslitOptions {
 	 */
 	canonicalPathPrefix?: string
 	/**
-	 * Prefix the base manifest's slice paths currently carry, to be rewritten to
-	 * {@link SliceTranslitOptions.canonicalPathPrefix}. Defaults to `mailwomanDataRoot()` with a trailing slash — the
+	 * Prefix the base manifest's file paths currently carry, to be rewritten to
+	 * {@link TranslitOverlayOptions.canonicalPathPrefix}. Defaults to `mailwomanDataRoot()` with a trailing slash — the
 	 * root that WROTE those paths. Pass it explicitly when translating a manifest generated under a different
 	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
 	 */
@@ -75,10 +75,14 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 }
 
 /**
- * Write one slice for a single source slug. Returns the populated SliceDescriptor + a list of quarantine reasons for
- * rows that failed alignment.
+ * Write one parquet file for a single source slug. Returns the populated ParquetFileDescriptor + a list of quarantine
+ * reasons for rows that failed alignment.
  */
-async function writeOneSlice(rows: readonly LabeledRow[], outPath: string, source: string): Promise<SliceDescriptor> {
+async function writeOneFile(
+	rows: readonly LabeledRow[],
+	outPath: string,
+	source: string
+): Promise<ParquetFileDescriptor> {
 	let firstSourceID = ""
 	let lastSourceID = ""
 
@@ -99,25 +103,25 @@ async function writeOneSlice(rows: readonly LabeledRow[], outPath: string, sourc
 		split: "train",
 		path: outPath,
 		format: "parquet",
-		compression: SLICE_COMPRESSION,
+		compression: PARQUET_COMPRESSION,
 		rows: rows.length,
 		bytes: fileStat?.size ?? 0,
 		sha256,
 		first_source_id: firstSourceID,
 		last_source_id: lastSourceID,
-		// Stamp source so audit.ts attributes the slice without falling back to filename-prefix inference.
+		// Stamp source so audit.ts attributes the file without falling back to filename-prefix inference.
 		source,
 	}
 }
 
-function canonicalizeSlicePath(path: string, legacyPrefix: string, canonicalPrefix: string): string {
+function canonicalizeFilePath(path: string, legacyPrefix: string, canonicalPrefix: string): string {
 	if (path.startsWith(legacyPrefix)) return canonicalPrefix + path.slice(legacyPrefix.length)
 
 	return path
 }
 
 export async function buildTranslitSlice(
-	options: SliceTranslitOptions,
+	options: TranslitOverlayOptions,
 	report?: (line: string) => void
 ): Promise<void> {
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
@@ -160,15 +164,15 @@ export async function buildTranslitSlice(
 
 	report?.(`read ${totalIn} rows; ${quarantine.length} quarantined; ${buckets.size} script buckets`)
 
-	const newSlices: SliceDescriptor[] = []
+	const newFiles: ParquetFileDescriptor[] = []
 	const sortedKeys = [...buckets.keys()].toSorted()
 
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
 		const outPath = join(trainDir, `part-translit-${slug}.parquet`)
-		const descriptor = await writeOneSlice(rows, outPath, source)
-		newSlices.push(descriptor)
+		const descriptor = await writeOneFile(rows, outPath, source)
+		newFiles.push(descriptor)
 		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}
 
@@ -178,24 +182,24 @@ export async function buildTranslitSlice(
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
 
-	// Compose final MANIFEST: rewrite base.slices paths from /mnt/playpen/... → /data/... and append
-	// the new translit slices. Kryptonite slice already lives in the base manifest (it was written
+	// Compose final MANIFEST: rewrite the base's file paths from the data root → /data/... and append
+	// the new translit files. The kryptonite file already lives in the base manifest (it was written
 	// there by Thread B).
-	const base = await readLocalJSONFile<SliceManifest>(options.baseManifest)
+	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)
 
-	const rewrittenBase = base.slices.map((sh) => ({
-		...sh,
-		path: canonicalizeSlicePath(sh.path, legacyPathPrefix, canonicalPathPrefix),
+	const rewrittenBase = base.slices.map((file) => ({
+		...file,
+		path: canonicalizeFilePath(file.path, legacyPathPrefix, canonicalPathPrefix),
 	}))
 
-	const newTrainRows = newSlices.reduce((sum, sh) => sum + sh.rows, 0)
+	const newTrainRows = newFiles.reduce((sum, file) => sum + file.rows, 0)
 
-	const combined: SliceManifest = {
+	const combined: ParquetManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
 		rows_per_slice: base.rows_per_slice,
 		row_group_size: base.row_group_size ?? ROW_GROUP_SIZE,
-		slices: [...rewrittenBase, ...newSlices],
+		slices: [...rewrittenBase, ...newFiles],
 		counts: {
 			train: base.counts.train + newTrainRows,
 			val: base.counts.val,
@@ -208,11 +212,11 @@ export async function buildTranslitSlice(
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)
-	report?.(`  slices=${combined.slices.length} (base=${base.slices.length}, added=${newSlices.length})`)
-	report?.(`  compression=${SLICE_COMPRESSION}`)
+	report?.(`  files=${combined.slices.length} (base=${base.slices.length}, added=${newFiles.length})`)
+	report?.(`  compression=${PARQUET_COMPRESSION}`)
 	const pathFix = rewrittenBase.filter((s, i) => s.path !== base.slices[i]!.path).length
 
 	if (pathFix > 0) {
-		report?.(`  path-canonicalized base slices: ${pathFix} (legacy '${legacyPathPrefix}' → '${canonicalPathPrefix}')`)
+		report?.(`  path-canonicalized base files: ${pathFix} (legacy '${legacyPathPrefix}' → '${canonicalPathPrefix}')`)
 	}
 }

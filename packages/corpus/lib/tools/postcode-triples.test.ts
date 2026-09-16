@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `postcode-triples` — the extraction that feeds the `trailing-region` slice.
+ * @file `postcode-triples` — the extraction that feeds the `trailing-region` recipe.
  *
- *   Every test here is about a row that must NOT be emitted, because each one corresponds to something the slice would
+ *   Every test here is about a row that must NOT be emitted, because each one corresponds to something the recipe would
  *   otherwise teach wrongly: a code counted twice, a sub-locality labelled `locality`, a blank region, or a country
  *   whose postcode placement nothing attests.
  */
@@ -64,7 +64,7 @@ const acceptAll = { isKnownLocality: () => true }
 describe("readTriplesFromGeonames", () => {
 	it("keeps ONE row for a code published both hyphenated and bare", async () => {
 		// PT and PL publish every code twice — exactly 2.00× on both. Keeping both doubles the country's weight in the
-		// slice while adding no fact.
+		// recipe output while adding no fact.
 		const path = await writeExport("pt.txt", [
 			["PT", "3750-000", "Borralha", "Aveiro", "Águeda"],
 			["PT", "3750000", "Borralha", "Aveiro", "Águeda"],
@@ -195,7 +195,7 @@ describe("applyCountryBudget", () => {
 
 	it("bounds a country a per-locality quota cannot", () => {
 		// IN has 128,152 distinct localities, so even a quota of ONE leaves it contributing 63,533 rows against 39,790
-		// from the other seven combined. Without this the slice teaches the trailing surface as an Indian fact.
+		// from the other seven combined. Without this the recipe teaches the trailing surface as an Indian fact.
 		const triples = [
 			...Array.from({ length: 50 }, (_, i) => make("IN", `village-${i}`, String(i))),
 			...Array.from({ length: 5 }, (_, i) => make("FR", `commune-${i}`, String(i))),
@@ -214,7 +214,7 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("drops a country the budget does not name, rather than letting it through uncapped", () => {
-		// An unnamed country is one nobody sized. Passing it through is how a source silently dominates a slice.
+		// An unnamed country is one nobody sized. Passing it through is how a source silently dominates a recipe output.
 		const triples = [make("FR", "Lyon", "69000"), make("MX", "Puebla", "72000")]
 
 		expect(applyCountryBudget(triples, new Map([["FR", 10]])).map((row) => row.cc)).toEqual(["FR"])

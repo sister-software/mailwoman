@@ -2,21 +2,21 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `trailing-region` — POSTCODE PLACEMENT, the surface that decides which countries this slice can teach.
+ * @file `trailing-region` — POSTCODE PLACEMENT, the surface that decides which countries this recipe can teach.
  *
  *   The same digits change TAG with position. Measured on the shipped model, `Barcelona 6001, Anzoátegui, Venezuela`
  *   tags `6001` as `house_number` and loses the locality into the street, while `6001 Barcelona, Anzoátegui, Venezuela`
- *   tags it `postcode` and recovers `locality: Barcelona`. So a slice emitting one placement teaches one family of
+ *   tags it `postcode` and recovers `locality: Barcelona`. So a recipe emitting one placement teaches one family of
  *   countries, and the tests below pin which surface each placement writes — including that an ABSENT placement still
  *   means `leading`, because a tuples file written before the field existed must produce the rows it always did.
  */
 
 import { CA_PROVINCES } from "@mailwoman/codex/ca"
 import { trailingRegionRecipe } from "@mailwoman/corpus/recipes/trailing-region"
-import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("trailing-region", trailingRegionRecipe, 901)
+const run = recipeRunner("trailing-region", trailingRegionRecipe, 901)
 
 /**
  * One tuple repeated with each placement. Same locality, region, country and code throughout, so any difference in the
@@ -67,7 +67,7 @@ describe("trailing-region postcode placement", () => {
 
 	it("still labels every postcode-carrying row as the STRUCTURED source, whatever the placement", async () => {
 		// The sampler weights by `source`. A placement that leaked rows back into `synth-trailing-region` would make the
-		// new surface share the bare slice's dose and become unweightable.
+		// new surface share the bare source's reps per row and become unweightable.
 		const { rows } = await run(
 			[
 				{ ...base, postcode: "07691", postcodePlacement: "leading" },
@@ -81,7 +81,7 @@ describe("trailing-region postcode placement", () => {
 	})
 
 	it("leaves a tuple with no postcode alone under every placement", async () => {
-		// The bare admin tail is the slice's original surface and the placements must not touch it.
+		// The bare admin tail is the recipe's original surface and the placements must not touch it.
 		for (const placement of ["leading", "after_locality", "after_region"] as const) {
 			const { rows } = await run(repeat({ ...base, postcodePlacement: placement }), [])
 
@@ -162,10 +162,10 @@ describe("trailing-region Canadian province codes", () => {
 })
 
 describe("trailing-region source labelling", () => {
-	it("takes `--source-name`, so a rebuilt slice can be dosed apart from the rows it must outweigh", async () => {
+	it("takes `--source-name`, so a rebuilt output can be weighted apart from the rows it must outweigh", async () => {
 		// The sampler buckets by `source` and weights each bucket. #1673's corrected Spanish surfaces are the same
 		// recipe over the same shape as the rows they exist to outweigh, so emitting them under the shipped label
-		// would have dosed them at exactly whatever those rows already draw — no treatment at all.
+		// would have given them exactly the reps per row those rows already draw — no treatment at all.
 		const tuples = repeat({ ...base, postcode: "07691", postcodePlacement: "leading" })
 		const { rows } = await run(tuples, [], { sourceName: "synth-trailing-region-es-v28" })
 
@@ -174,7 +174,7 @@ describe("trailing-region source labelling", () => {
 
 	it("keeps the structured and bare rows apart under an overridden name too", async () => {
 		// The split exists because pooling the structured rows with the 88,904 bare ones makes the new surface
-		// unweightable; an override that collapsed the two would reintroduce that on the renamed slice.
+		// unweightable; an override that collapsed the two would reintroduce that under the renamed source.
 		const { rows } = await run(repeat({ ...base }), [], { sourceName: "synth-trailing-region-es-v28" })
 
 		expect(rows.every((row) => row.source === "synth-trailing-region-es-v28-bare")).toBe(true)

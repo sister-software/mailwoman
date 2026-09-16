@@ -3,32 +3,32 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Corpus linter. Compares a new slice against pre-computed corpus statistics and flags patterns
- *   that would cause the class of failure we hit with v0.6.2's "5th Avenue Theatre" adversarial
- *   venue templates.
+ *   Corpus linter. Compares a new recipe output (one parquet file) against pre-computed corpus
+ *   statistics and flags patterns that would cause the class of failure we hit with v0.6.2's
+ *   "5th Avenue Theatre" adversarial venue templates.
  *
  *   Per DeepSeek turn 9 design (2026-05-29). v1 checks:
  *
- *   1. **Token-label distribution outliers.** For each token in the new slice, compare the slice's
- *        majority label to the corpus's majority label. Flag when the corpus has a
- *        confidently-established majority (>66%) AND the slice's majority differs AND both have
- *        non-trivial counts (slice ≥ 50, corpus ≥ 200).
+ *   1. **Token-label distribution outliers.** For each token in the new recipe output, compare the
+ *        output's majority label to the corpus's majority label. Flag when the corpus has a
+ *        confidently-established majority (>66%) AND the output's majority differs AND both have
+ *        non-trivial counts (output ≥ 50, corpus ≥ 200).
  *   2. **Label-vacuum tokens.** Token labeled with a tag that has ZERO instances in the corpus for that
  *        token, despite the token being well-represented in the corpus. Stronger signal than #1 —
  *        we're introducing a novel association, not shifting a distribution.
- *   3. **Bigram-label collisions.** Identical (token_bigram, label_bigram) appears in slice while the
- *        same token_bigram has a DIFFERENT majority label_bigram in the corpus. The "5th Avenue"
+ *   3. **Bigram-label collisions.** Identical (token_bigram, label_bigram) appears in the output while
+ *        the same token_bigram has a DIFFERENT majority label_bigram in the corpus. The "5th Avenue"
  *        with [B-venue, I-venue] vs corpus's [B-house_number, I-street] case.
  *   4. **Common-form anti-pattern rules.** Applies `lint-rules.json` — token-regex → forbidden-labels
  *        mappings — flagging matches.
- *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of slice.
+ *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of the output.
  *
  *   Output: markdown report on stdout, optional JSON sidecar via `outJSON`. The command exits 0 if
- *   no errors, 1 if any errors (warnings don't check). Per the design, the MANIFEST entry for a
- *   flagged slice should require `lint_acknowledged: true` before training consumes it.
+ *   no errors, 1 if any errors (warnings don't refuse). Per the design, the MANIFEST entry for a
+ *   flagged recipe output should require `lint_acknowledged: true` before training consumes it.
  *
  *   Usage: mailwoman dev lint corpus-slice\
- *   --slice <new-slice.parquet>\
+ *   --slice <new-recipe-output.parquet>\
  *   --stats <corpus-stats.json>\
  *   [--rules <rules.json>]\
  *   [--out-md /tmp/lint-report.md]\
@@ -42,10 +42,10 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	accumulateCooccurrences,
 	createCooccurrenceStats,
-	SLICE_STATS_SEP as SEP,
+	COOCCURRENCE_KEY_SEP as SEP,
 	streamTokenLabelRows,
-	type TokenLabelRow as SliceRow,
-} from "#utils/slice-stats"
+	type TokenLabelRow as RecipeOutputRow,
+} from "#utils/cooccurrence-stats"
 
 /**
  * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
@@ -62,9 +62,9 @@ const MAX_LISTED_EXAMPLES = 20
  * numbers miss.
  */
 const CORPUS_CONFIDENCE_FLOOR = 0.66
-const SLICE_MIN_COUNT = 50
+const OUTPUT_MIN_COUNT = 50
 const CORPUS_MIN_COUNT = 200
-const VACUUM_SLICE_MIN_COUNT = 20
+const VACUUM_OUTPUT_MIN_COUNT = 20
 const VACUUM_CORPUS_MIN_COUNT = 100
 const BIGRAM_MIN_COUNT = 10
 const ALL_O_RATIO_CEILING = 0.9
@@ -80,11 +80,12 @@ function defaultRulesPath(): string {
 }
 
 /**
- * Options for {@linkcode lintCorpusSlice}.
+ * Options for {@linkcode lintCorpusSlice}. `slicePath` is the property name the `mailwoman dev lint corpus-slice`
+ * command passes, and moves with that command.
  */
-export interface LintCorpusSliceOptions {
+export interface LintRecipeOutputOptions {
 	/**
-	 * The new slice parquet to lint.
+	 * The new recipe output parquet to lint.
 	 */
 	slicePath: string
 	/**
@@ -125,7 +126,7 @@ interface LintRulesFile {
 	rules: LintRule[]
 }
 
-interface SliceStats {
+interface RecipeOutputStats {
 	rowCount: number
 	tokens: Map<string, Map<string, number>>
 	bigrams: Map<string, Map<string, number>>
@@ -133,10 +134,10 @@ interface SliceStats {
 	allORows: number
 }
 
-async function statsFromSlice(rows: AsyncIterable<SliceRow>): Promise<SliceStats> {
+async function statsFromRecipeOutput(rows: AsyncIterable<RecipeOutputRow>): Promise<RecipeOutputStats> {
 	const co = createCooccurrenceStats()
 
-	const out: SliceStats = {
+	const out: RecipeOutputStats = {
 		rowCount: 0,
 		tokens: co.tokens,
 		bigrams: co.bigrams,
@@ -189,14 +190,14 @@ function majorityLabel(distribution: Map<string, number> | Record<string, number
 /**
  * One lint flag emitted by a check.
  */
-export interface LintSliceFlag {
+export interface LintFlag {
 	check: string
 	severity: "error" | "warn"
 	token?: string
 	bigram?: string
-	sliceLabel?: string
+	outputLabel?: string
 	corpusLabel?: string
-	sliceCount?: number
+	outputCount?: number
 	corpusCount?: number
 	detail: string
 	ruleID?: string
@@ -205,41 +206,41 @@ export interface LintSliceFlag {
 /**
  * Findings summary returned by {@linkcode lintCorpusSlice}.
  */
-export interface LintCorpusSliceSummary {
+export interface LintRecipeOutputSummary {
 	errors: number
 	warnings: number
-	findings: LintSliceFlag[]
+	findings: LintFlag[]
 	/**
 	 * The rendered markdown report (also printed to stdout).
 	 */
 	report: string
 }
 
-function checkDistributionOutliers(slice: SliceStats, corpus: CorpusStats): LintSliceFlag[] {
-	const flags: LintSliceFlag[] = []
+function checkDistributionOutliers(output: RecipeOutputStats, corpus: CorpusStats): LintFlag[] {
+	const flags: LintFlag[] = []
 
-	for (const [token, sliceLabelMap] of slice.tokens) {
+	for (const [token, outputLabelMap] of output.tokens) {
 		const corpusLabelMap = corpus.tokens[token]
 
 		if (!corpusLabelMap) continue
-		const sliceMaj = majorityLabel(sliceLabelMap)
+		const outputMaj = majorityLabel(outputLabelMap)
 		const corpusMaj = majorityLabel(corpusLabelMap)
 
 		if (
 			corpusMaj.confidence >= CORPUS_CONFIDENCE_FLOOR &&
-			sliceMaj.label !== corpusMaj.label &&
-			sliceMaj.count >= SLICE_MIN_COUNT &&
+			outputMaj.label !== corpusMaj.label &&
+			outputMaj.count >= OUTPUT_MIN_COUNT &&
 			corpusMaj.total >= CORPUS_MIN_COUNT
 		) {
 			flags.push({
 				check: "distribution-outlier",
 				severity: "error",
 				token,
-				sliceLabel: sliceMaj.label,
+				outputLabel: outputMaj.label,
 				corpusLabel: corpusMaj.label,
-				sliceCount: sliceMaj.count,
+				outputCount: outputMaj.count,
 				corpusCount: corpusMaj.count,
-				detail: `Token "${token}": slice majority is ${sliceMaj.label} (${sliceMaj.count}/${sliceMaj.total}, ${(sliceMaj.confidence * 100).toFixed(0)}%), corpus majority is ${corpusMaj.label} (${corpusMaj.count}/${corpusMaj.total}, ${(corpusMaj.confidence * 100).toFixed(0)}%).`,
+				detail: `Token "${token}": recipe-output majority is ${outputMaj.label} (${outputMaj.count}/${outputMaj.total}, ${(outputMaj.confidence * 100).toFixed(0)}%), corpus majority is ${corpusMaj.label} (${corpusMaj.count}/${corpusMaj.total}, ${(corpusMaj.confidence * 100).toFixed(0)}%).`,
 			})
 		}
 	}
@@ -247,10 +248,10 @@ function checkDistributionOutliers(slice: SliceStats, corpus: CorpusStats): Lint
 	return flags
 }
 
-function checkLabelVacuum(slice: SliceStats, corpus: CorpusStats): LintSliceFlag[] {
-	const flags: LintSliceFlag[] = []
+function checkLabelVacuum(output: RecipeOutputStats, corpus: CorpusStats): LintFlag[] {
+	const flags: LintFlag[] = []
 
-	for (const [token, sliceLabelMap] of slice.tokens) {
+	for (const [token, outputLabelMap] of output.tokens) {
 		const corpusLabelMap = corpus.tokens[token]
 
 		if (!corpusLabelMap) continue
@@ -258,18 +259,18 @@ function checkLabelVacuum(slice: SliceStats, corpus: CorpusStats): LintSliceFlag
 
 		if (corpusTotal < VACUUM_CORPUS_MIN_COUNT) continue
 
-		for (const [label, sliceCount] of sliceLabelMap) {
-			if (sliceCount < VACUUM_SLICE_MIN_COUNT) continue
+		for (const [label, outputCount] of outputLabelMap) {
+			if (outputCount < VACUUM_OUTPUT_MIN_COUNT) continue
 
 			if (corpusLabelMap[label] === undefined || corpusLabelMap[label] === 0) {
 				flags.push({
 					check: "label-vacuum",
 					severity: "error",
 					token,
-					sliceLabel: label,
-					sliceCount,
+					outputLabel: label,
+					outputCount,
 					corpusCount: corpusTotal,
-					detail: `Token "${token}": slice labels it ${label} ${sliceCount} times, but the corpus (${corpusTotal} instances of this token) has ZERO instances of this label.`,
+					detail: `Token "${token}": the recipe output labels it ${label} ${outputCount} times, but the corpus (${corpusTotal} instances of this token) has ZERO instances of this label.`,
 				})
 			}
 		}
@@ -278,34 +279,34 @@ function checkLabelVacuum(slice: SliceStats, corpus: CorpusStats): LintSliceFlag
 	return flags
 }
 
-function checkBigramCollisions(slice: SliceStats, corpus: CorpusStats): LintSliceFlag[] {
-	const flags: LintSliceFlag[] = []
+function checkBigramCollisions(output: RecipeOutputStats, corpus: CorpusStats): LintFlag[] {
+	const flags: LintFlag[] = []
 
-	for (const [bigram, sliceLabelMap] of slice.bigrams) {
+	for (const [bigram, outputLabelMap] of output.bigrams) {
 		const corpusLabelMap = corpus.bigrams[bigram]
 
 		if (!corpusLabelMap) continue
-		const sliceMaj = majorityLabel(sliceLabelMap)
+		const outputMaj = majorityLabel(outputLabelMap)
 		const corpusMaj = majorityLabel(corpusLabelMap)
 
 		if (
-			sliceMaj.label !== corpusMaj.label &&
-			sliceMaj.count >= BIGRAM_MIN_COUNT &&
+			outputMaj.label !== corpusMaj.label &&
+			outputMaj.count >= BIGRAM_MIN_COUNT &&
 			corpusMaj.count >= BIGRAM_MIN_COUNT
 		) {
 			const renderBigram = bigram.split(SEP).join(" ")
-			const renderSliceLabel = sliceMaj.label.split(SEP).join(" → ")
+			const renderOutputLabel = outputMaj.label.split(SEP).join(" → ")
 			const renderCorpusLabel = corpusMaj.label.split(SEP).join(" → ")
 
 			flags.push({
 				check: "bigram-collision",
 				severity: "error",
 				bigram: renderBigram,
-				sliceLabel: renderSliceLabel,
+				outputLabel: renderOutputLabel,
 				corpusLabel: renderCorpusLabel,
-				sliceCount: sliceMaj.count,
+				outputCount: outputMaj.count,
 				corpusCount: corpusMaj.count,
-				detail: `Bigram "${renderBigram}": slice label-bigram is [${renderSliceLabel}] (${sliceMaj.count}×), corpus label-bigram is [${renderCorpusLabel}] (${corpusMaj.count}×). Same surface text, different structural reading.`,
+				detail: `Bigram "${renderBigram}": recipe-output label-bigram is [${renderOutputLabel}] (${outputMaj.count}×), corpus label-bigram is [${renderCorpusLabel}] (${corpusMaj.count}×). Same surface text, different structural reading.`,
 			})
 		}
 	}
@@ -313,15 +314,15 @@ function checkBigramCollisions(slice: SliceStats, corpus: CorpusStats): LintSlic
 	return flags
 }
 
-function checkRules(slice: SliceStats, rulesFile: LintRulesFile): LintSliceFlag[] {
-	const flags: LintSliceFlag[] = []
+function checkRules(output: RecipeOutputStats, rulesFile: LintRulesFile): LintFlag[] {
+	const flags: LintFlag[] = []
 
 	const compiled = rulesFile.rules.map((r) => ({
 		rule: r,
 		regex: new RegExp(r.pattern, r.pattern_case_sensitive ? "" : "i"),
 	}))
 
-	for (const [token, labelMap] of slice.tokens) {
+	for (const [token, labelMap] of output.tokens) {
 		for (const { rule, regex } of compiled) {
 			if (!regex.test(token)) continue
 
@@ -332,8 +333,8 @@ function checkRules(slice: SliceStats, rulesFile: LintRulesFile): LintSliceFlag[
 						severity: rule.severity,
 						ruleID: rule.id,
 						token,
-						sliceLabel: label,
-						sliceCount: count,
+						outputLabel: label,
+						outputCount: count,
 						detail: `Token "${token}" matched rule ${rule.id} and is labeled ${label} ${count} time(s). Rule message: ${rule.message}`,
 					})
 				}
@@ -344,24 +345,24 @@ function checkRules(slice: SliceStats, rulesFile: LintRulesFile): LintSliceFlag[
 	return flags
 }
 
-function checkSanity(slice: SliceStats): LintSliceFlag[] {
-	const flags: LintSliceFlag[] = []
+function checkSanity(output: RecipeOutputStats): LintFlag[] {
+	const flags: LintFlag[] = []
 
-	if (slice.truncatedRows > 0) {
+	if (output.truncatedRows > 0) {
 		flags.push({
 			check: "truncated-rows",
 			severity: "error",
-			detail: `${slice.truncatedRows} row(s) have tokens.length !== labels.length. Pipeline alignment bug.`,
+			detail: `${output.truncatedRows} row(s) have tokens.length !== labels.length. Pipeline alignment bug.`,
 		})
 	}
 
-	const allORatio = slice.allORows / Math.max(1, slice.rowCount)
+	const allORatio = output.allORows / Math.max(1, output.rowCount)
 
 	if (allORatio >= ALL_O_RATIO_CEILING) {
 		flags.push({
-			check: "all-O-slice",
+			check: "all-O-output",
 			severity: "warn",
-			detail: `${slice.allORows}/${slice.rowCount} rows (${(allORatio * 100).toFixed(0)}%) are entirely O-labeled. Slice contributes no signal.`,
+			detail: `${output.allORows}/${output.rowCount} rows (${(allORatio * 100).toFixed(0)}%) are entirely O-labeled. The recipe output contributes no signal.`,
 		})
 	}
 
@@ -369,9 +370,9 @@ function checkSanity(slice: SliceStats): LintSliceFlag[] {
 }
 
 function renderReport(
-	opts: { slicePath: string; statsPath: string; rulesPath: string },
-	slice: SliceStats,
-	flags: LintSliceFlag[]
+	opts: { outputPath: string; statsPath: string; rulesPath: string },
+	output: RecipeOutputStats,
+	flags: LintFlag[]
 ): string {
 	const errors = flags.filter((f) => f.severity === "error")
 	const warns = flags.filter((f) => f.severity === "warn")
@@ -380,14 +381,14 @@ function renderReport(
 	const lines: string[] = [
 		`# Corpus Lint: ${verdict}`,
 		"",
-		`- **Slice:** \`${opts.slicePath}\``,
+		`- **Recipe output:** \`${opts.outputPath}\``,
 		`- **Corpus stats:** \`${opts.statsPath}\``,
 		`- **Rules:** \`${opts.rulesPath}\``,
-		`- **Slice rows:** ${slice.rowCount}`,
-		`- **Unique tokens:** ${slice.tokens.size}`,
-		`- **Unique bigrams:** ${slice.bigrams.size}`,
+		`- **Recipe output rows:** ${output.rowCount}`,
+		`- **Unique tokens:** ${output.tokens.size}`,
+		`- **Unique bigrams:** ${output.bigrams.size}`,
 		"",
-		`**Errors:** ${errors.length} (checks the slice's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`,
+		`**Errors:** ${errors.length} (refuses the recipe output's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`,
 		`**Warnings:** ${warns.length} (advisory)`,
 		"",
 	]
@@ -398,7 +399,7 @@ function renderReport(
 		return lines.join("\n")
 	}
 
-	const byCheck = new Map<string, LintSliceFlag[]>()
+	const byCheck = new Map<string, LintFlag[]>()
 
 	for (const f of flags) {
 		const arr = byCheck.get(f.check) ?? []
@@ -409,8 +410,8 @@ function renderReport(
 	for (const [check, list] of byCheck) {
 		lines.push(`## ${check} (${list.length})`)
 		lines.push("")
-		// Sort by sliceCount desc — highest-volume issues first
-		list.sort((a, b) => (b.sliceCount ?? 0) - (a.sliceCount ?? 0))
+		// Highest-volume issues first.
+		list.sort((a, b) => (b.outputCount ?? 0) - (a.outputCount ?? 0))
 
 		for (const f of list.slice(0, 20)) {
 			lines.push(`- **[${f.severity.toUpperCase()}]** ${f.detail}`)
@@ -427,40 +428,44 @@ function renderReport(
 }
 
 /**
- * Lint a slice against corpus stats + the anti-pattern rules; print the markdown report to stdout.
+ * Lint a recipe output against corpus stats + the anti-pattern rules; print the markdown report to stdout.
  */
 export async function lintCorpusSlice(
-	options: LintCorpusSliceOptions,
+	options: LintRecipeOutputOptions,
 	report?: (line: string) => void
-): Promise<LintCorpusSliceSummary> {
+): Promise<LintRecipeOutputSummary> {
 	const rulesPath = options.rulesPath ?? defaultRulesPath()
 	report?.(`Reading corpus stats from ${options.statsPath}...`)
 	const corpus = await readLocalJSONFile<CorpusStats>(options.statsPath)
 
 	report?.(
-		`  ${corpus.row_count} rows from ${corpus.slice_paths.length} slice(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
+		`  ${corpus.row_count} rows from ${corpus.slice_paths.length} parquet file(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
 	)
 
-	report?.(`Reading slice from ${options.slicePath}...`)
+	report?.(`Reading recipe output from ${options.slicePath}...`)
 
-	const slice = await statsFromSlice(streamTokenLabelRows(options.slicePath))
+	const output = await statsFromRecipeOutput(streamTokenLabelRows(options.slicePath))
 
-	report?.(`  ${slice.rowCount} rows`)
+	report?.(`  ${output.rowCount} rows`)
 
 	report?.(`Loading rules from ${rulesPath}...`)
 	const rulesFile = await readLocalJSONFile<LintRulesFile>(rulesPath)
 
 	report?.(`Running checks...`)
 
-	const flags: LintSliceFlag[] = [
-		...checkDistributionOutliers(slice, corpus),
-		...checkLabelVacuum(slice, corpus),
-		...checkBigramCollisions(slice, corpus),
-		...checkRules(slice, rulesFile),
-		...checkSanity(slice),
+	const flags: LintFlag[] = [
+		...checkDistributionOutliers(output, corpus),
+		...checkLabelVacuum(output, corpus),
+		...checkBigramCollisions(output, corpus),
+		...checkRules(output, rulesFile),
+		...checkSanity(output),
 	]
 
-	const rendered = renderReport({ slicePath: options.slicePath, statsPath: options.statsPath, rulesPath }, slice, flags)
+	const rendered = renderReport(
+		{ outputPath: options.slicePath, statsPath: options.statsPath, rulesPath },
+		output,
+		flags
+	)
 
 	console.log(rendered)
 
@@ -471,7 +476,7 @@ export async function lintCorpusSlice(
 	if (options.outJSON) {
 		await writeLocalJSONFile(
 			{
-				slice: options.slicePath,
+				recipe_output: options.slicePath,
 				stats: options.statsPath,
 				flags,
 				summary: {

@@ -11,11 +11,11 @@ import {
 	cnOrganizationalUnitsRecipe,
 	labelCNOrganizationalRow,
 } from "@mailwoman/corpus/cn/recipes/organizational-units"
-import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { cjkAwareTokenizer } from "@mailwoman/corpus/utils/tokenize"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("cn-units", cnOrganizationalUnitsRecipe, 11)
+const run = recipeRunner("cn-units", cnOrganizationalUnitsRecipe, 11)
 
 describe("labelCNOrganizationalRow", () => {
 	it("labels the farm ladder under a province and a city", () => {
@@ -139,7 +139,7 @@ describe("cjkAwareTokenizer", () => {
 		expect(tokens).toEqual(["赵", "光", "三", "分", "场", "Heilongjiang"])
 	})
 
-	it("keeps offsets that slice the source back out", () => {
+	it("keeps offsets that read the source back out as substrings", () => {
 		const source = "六连 Xinjiang"
 
 		for (const token of cjkAwareTokenizer().tokenize(source)) {

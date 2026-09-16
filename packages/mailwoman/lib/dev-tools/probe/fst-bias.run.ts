@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Report, per surface, the gazetteer bias each FST arm hands the decoder. This is the curation
- *   instrument behind the hard-slice board (`build-hard-slice-board.run.ts` calls the same collapse) and
+ *   instrument behind the hard-case board (`build/hard-case-board.run.ts` calls the same collapse) and
  *   the first thing to reach for when an arm comparison moves and you need to know whether the FST
  *   could have caused it.
  *

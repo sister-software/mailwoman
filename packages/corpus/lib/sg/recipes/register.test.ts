@@ -12,10 +12,10 @@ import {
 	sgRegisterRecipe,
 	titleCaseSGName,
 } from "@mailwoman/corpus/sg/recipes/register"
-import { type SliceRow, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
+import { type RecipeRow, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
-const run = sliceRunner("sg-register", sgRegisterRecipe, 7)
+const run = recipeRunner("sg-register", sgRegisterRecipe, 7)
 
 const ROWS = [
 	{
@@ -145,7 +145,7 @@ describe("sg-register recipe", () => {
 		expect(stats).toMatchObject({ read: 7, emitted: 5, skipped: 2 })
 		expect(rows).toHaveLength(5)
 
-		for (const row of rows as Array<SliceRow & { country?: string; locale?: string }>) {
+		for (const row of rows as Array<RecipeRow & { country?: string; locale?: string }>) {
 			expect(row.country).toBe("SG")
 			expect(row.locale).toBe("en-SG")
 			expect(row.source).toBe("synth-sg-register")

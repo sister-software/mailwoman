@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `german` slice recipe — German coverage rows from REAL OpenAddresses tuples (Berlin + Saxony,
+ *   `german` recipe — German coverage rows from REAL OpenAddresses tuples (Berlin + Saxony,
  *   cached zips). Each sampled tuple is rendered via {@link synthesizeGermanRow} in BOTH orders —
  *   `--intl-fraction` (default 0.4) in international order (house-first / postcode-after-city), the
  *   rest in idiomatic German order — then aligned to BIO. Generate-mode: it builds a tuple pool
  *   from the cached zips, then draws `--count` rows from it with the passed `random` (so the emit
- *   stream matches the legacy reservoir-sample loop). Ported from scripts/build-german-slice.mjs.
+ *   stream matches the legacy reservoir-sample loop). Ported from the root build script it replaced.
  *
- *   ORDER ROBUSTNESS (2026-06-06): mixing the two renderings stops a native-only slice from teaching
+ *   ORDER ROBUSTNESS (2026-06-06): mixing the two renderings stops a native-only recipe output from teaching
  *   German order so well it reads the US/feed-order eval as a "collapse". See
  *   docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md (the order-artifact correction).
  *
@@ -194,8 +194,8 @@ async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]
 }
 
 /**
- * Slice recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
+ * `description` below for the surface form it generates.
  */
 export const germanRecipe: CorpusRecipe = {
 	name: "german",
@@ -219,7 +219,7 @@ export const germanRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Emit PRNG: the legacy build-german-slice.mjs seeded mulberry32(opts.seed).
+		// Emit PRNG: the legacy build script seeded mulberry32(opts.seed).
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-german"
 		const intlFraction = opts.intlFraction ?? 0.4

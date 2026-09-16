@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a parquet slice from the DeepSeek-generated kryptonite JSONL and emit the corpus-v0.4.0
- *   MANIFEST. corpus-v0.4.0 is a pure adapter-addition revision: it points at every slice from
- *   v0.3.0 plus the new kryptonite slice(s). No v0.3.0 bytes are touched or re-shuffled.
+ *   Build a parquet file from the DeepSeek-generated kryptonite JSONL and emit the corpus-v0.4.0
+ *   MANIFEST. corpus-v0.4.0 is a pure adapter-addition revision: it points at every parquet file from
+ *   v0.3.0 plus the new kryptonite file(s). No v0.3.0 bytes are touched or re-shuffled.
  *
  *   See docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the why; that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the JSONL.
@@ -22,10 +22,10 @@ import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"
-import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SLICE_COMPRESSION, writeSlices } from "#utils"
-import type { SliceManifest } from "#utils"
+import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, PARQUET_COMPRESSION, writeParquetFiles } from "#utils"
+import type { ParquetManifest } from "#utils"
 
-export interface SliceKryptoniteOptions {
+export interface KryptoniteOverlayOptions {
 	jsonl: string
 	baseManifest: string
 	outDir: string
@@ -71,7 +71,7 @@ async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog:
 }
 
 export async function buildKryptoniteSlice(
-	options: SliceKryptoniteOptions,
+	options: KryptoniteOverlayOptions,
 	report?: (line: string) => void
 ): Promise<void> {
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
@@ -85,13 +85,13 @@ export async function buildKryptoniteSlice(
 
 	const quarantine: string[] = []
 
-	const newManifest = await writeSlices(
+	const newManifest = await writeParquetFiles(
 		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
 		{ outputDir: options.outDir, corpusVersion }
 	)
 
 	report?.(
-		`wrote ${newManifest.total_rows} rows into ${newManifest.slices.length} slice(s); ` +
+		`wrote ${newManifest.total_rows} rows into ${newManifest.slices.length} parquet file(s); ` +
 			`quarantined ${quarantine.length}`
 	)
 
@@ -101,17 +101,17 @@ export async function buildKryptoniteSlice(
 		report?.(`quarantine log → ${qPath}`)
 	}
 
-	// Stamp the new slice's source field for audit.ts (which prefers slice.source over
+	// Stamp the new file's source field for audit.ts (which prefers the descriptor's `source` over
 	// first_source_id-prefix inference). Without this, deepseek-kryptonite IDs would have
 	// to match a prefix in KNOWN_SOURCE_PREFIXES — we add it there too as a belt-and-braces.
-	for (const sh of newManifest.slices) {
-		sh.source = source
+	for (const file of newManifest.slices) {
+		file.source = source
 	}
 
-	// Compose the final corpus-v0.4.0 manifest: every slice from base + the new slice(s).
-	const base = await readLocalJSONFile<SliceManifest>(options.baseManifest)
+	// Compose the final corpus-v0.4.0 manifest: every parquet file from base + the new file(s).
+	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)
 
-	const combined: SliceManifest = {
+	const combined: ParquetManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
 		rows_per_slice: base.rows_per_slice,
@@ -125,13 +125,12 @@ export async function buildKryptoniteSlice(
 		total_rows: base.total_rows + newManifest.total_rows,
 	}
 
-	// Stamp source on the legacy v0.3.0 slices too, so audit's slice.source path is the
-	// authoritative one. v0.3.0 slices mix sources; we use the first_source_id-prefix
-	// inference for them (audit.ts will re-derive on its own when slice.source is absent).
+	// The v0.3.0 files carry no `source`: they mix sources, so audit.ts falls back to its
+	// first_source_id-prefix inference for them (it re-derives on its own when `source` is absent).
 	const combinedPath = join(options.outDir, `corpus-v${corpusVersion}`, "MANIFEST.json")
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)
-	report?.(`  slices=${combined.slices.length} (base=${base.slices.length}, added=${newManifest.slices.length})`)
-	report?.(`  compression=${SLICE_COMPRESSION}`)
+	report?.(`  files=${combined.slices.length} (base=${base.slices.length}, added=${newManifest.slices.length})`)
+	report?.(`  compression=${PARQUET_COMPRESSION}`)
 }
