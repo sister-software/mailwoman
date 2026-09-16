@@ -1,17 +1,23 @@
 /**
- * The four surfaces #2303 is decided on, over the same US cities, through the production path.
+ * The four surfaces #2303 is decided on, over the same US localities, through the production path.
  *
  * `Washington, DC 20003` answers a locality far less often than `123 Main St, Washington, DC 20003` does, and the
- * corpus reason is that no US recipe ever put a city in front of a state code and a ZIP without a street ahead of it.
- * This renders one set of real cities four ways and reports the locality-match rate of each, so the three-arm table on
- * the issue and the REVERSE risk are one measurement rather than two.
+ * corpus reason is that no US recipe ever put a locality in front of a region code and a postcode without a street
+ * ahead of it. This renders one set of real localities four ways and reports the locality-match rate of each, so the
+ * three-arm table on the issue and the REVERSE risk are one measurement rather than two.
  *
- * The reverse arm is the half a three-arm table cannot show. Teaching `«city», «ST» «ZIP»` risks the inverse — a
- * genuine street before a state code read as a locality — and the only way to see it is to ask for a street in that
- * exact position and count how often it comes back tagged `locality`. A row whose locality is null there is CORRECT.
+ * The reverse arm is the half a three-arm table cannot show. Teaching `«locality», «region» «postcode»` risks the
+ * inverse — a genuine street before a region code read as a locality — and the only way to see it is to ask for a
+ * street in that exact position and count how often it comes back tagged `locality`. A row whose locality is null there
+ * is CORRECT.
  *
- * The panel is derived from the US coordinate set, one row per distinct city, and the street arm reuses that row's own
- * street so no arm invents an address that does not exist.
+ * The panel is derived from the US coordinate set, one row per distinct locality, and the street arm reuses that row's
+ * own street so no arm invents an address that does not exist.
+ *
+ * Three of the four arms render through `formatAddress` and the codex layouts (#2313) and differ only in which
+ * components the dict carries. `street_only` is the one that cannot: it puts a street name where a locality belongs,
+ * and a renderer that produces well-formed addresses cannot express a deliberate malformation. That arm keeps its
+ * literal and says so in place.
  *
  * Each arm's rate ships with a per-name-shape and a per-tail-word table beside it, because one rate hides the split
  * this panel exists to show. Read the per-word table for its ROW COUNTS first: 24 of the 34 tail words carry one or two
@@ -20,8 +26,8 @@
  *
  * Run:
  *
- *     node packages/mailwoman/lib/dev-tools/us/city-state-postcode-arms.run.ts
- *     node packages/mailwoman/lib/dev-tools/us/city-state-postcode-arms.run.ts --out-json <path>
+ *     node packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts
+ *     node packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts --out-json <path>
  */
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
@@ -30,8 +36,8 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
-import { JSONSpliterator } from "spliterator"
 
+import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#dev-tools/coord-panel"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
 const { values } = parseArguments({
@@ -39,20 +45,19 @@ const { values } = parseArguments({
 		"out-json": { type: "string" },
 		"weights-cache": { type: "string" },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
+		// Which codex layout the three well-formed arms are written through. The default matches the default panel; a
+		// different panel needs its own country, because a layout is what makes the surface idiomatic rather than a
+		// template that happens to suit one country.
+		country: { type: "string", default: "US" },
 		limit: { type: "string" },
 	},
 })
 
-interface CoordRow {
-	input: string
-	expected?: { locality?: string; region?: string; postcode?: string }
-}
-
 /**
  * The street of a coordinate row, with its house number removed.
  *
- * The reverse arm needs a street that stands where a city would, and a house number in front of it is the very cue that
- * makes the shape unambiguous — leaving it in would measure the arm that already works.
+ * The reverse arm needs a street that stands where a locality would, and a house number in front of it is the very cue
+ * that makes the shape unambiguous — leaving it in would measure the arm that already works.
  */
 function streetWithoutNumber(input: string): string | undefined {
 	const head = input.split(",")[0]?.trim()
@@ -64,26 +69,22 @@ function streetWithoutNumber(input: string): string | undefined {
 	return rest && rest !== head ? rest : undefined
 }
 
-const rows = await Array.fromAsync(JSONSpliterator.fromAsync<CoordRow>(values.eval!))
-const byCity = new Map<string, { locality: string; region: string; postcode: string; street: string }>()
-
-for (const row of rows) {
-	const locality = row.expected?.locality?.trim()
-	const region = row.expected?.region?.trim()
-	const postcode = row.expected?.postcode?.trim()
-	const street = streetWithoutNumber(row.input)
-
-	if (!locality || !region || !postcode || !street || byCity.has(locality)) continue
-
-	byCity.set(locality, { locality, region, postcode, street })
-}
-
-const panel = values.limit ? [...byCity.values()].slice(0, Number(values.limit)) : [...byCity.values()]
+const { localities, qualifiersStripped } = await readCoordPanel(values.eval!, {
+	country: values.country,
+	...(values.limit ? { limit: Number(values.limit) } : {}),
+})
 
 /**
- * One panel city — the four surfaces below are four ways of writing it.
+ * One panel locality, with the street the reverse arm stands in place of it. A row whose own input carries no usable
+ * street is dropped: that arm would otherwise have to invent one.
  */
-type City = (typeof panel)[number]
+type ArmRow = PanelLocality & { street: string }
+
+const panel: ArmRow[] = localities.flatMap((place) => {
+	const street = streetWithoutNumber(place.input)
+
+	return street ? [{ ...place, street }] : []
+})
 
 /**
  * The four surfaces, and what a correct answer looks like in each.
@@ -92,14 +93,29 @@ type City = (typeof panel)[number]
  * locality at all is the pass.
  */
 const ARMS = [
-	{ name: "bare", inverted: false, render: (c: City) => `${c.locality}, ${c.region} ${c.postcode}` },
-	{ name: "with_country", inverted: false, render: (c: City) => `${c.locality}, ${c.region} ${c.postcode}, USA` },
+	{
+		name: "bare",
+		inverted: false,
+		render: (row: ArmRow) => renderAdmin(row),
+	},
+	{
+		name: "with_country",
+		inverted: false,
+		render: (row: ArmRow) => renderAdmin(row, { country: "USA" }),
+	},
 	{
 		name: "with_street",
 		inverted: false,
-		render: (c: City) => `123 Main St, ${c.locality}, ${c.region} ${c.postcode}`,
+		render: (row: ArmRow) => renderAdmin(row, { house_number: "123", street: "Main St" }),
 	},
-	{ name: "street_only", inverted: true, render: (c: City) => `${c.street}, ${c.region} ${c.postcode}` },
+	{
+		// The ONE arm no layout can write, and that is the point: it puts a street name where a LOCALITY belongs, to
+		// check the model does not read it as one. A renderer that produces well-formed addresses cannot express a
+		// deliberate malformation, so this arm keeps its literal and says why.
+		name: "street_only",
+		inverted: true,
+		render: (row: ArmRow) => `${row.street}, ${row.region} ${row.postcode}`,
+	},
 ] as const
 
 /**
@@ -108,35 +124,17 @@ const ARMS = [
 const EXAMPLES_PER_ARM = 5
 
 /**
- * The city's last word, when that word is a USPS suffix — the collision this panel splits on.
- *
- * One arm rate hides a 34× split: over the 581 cities the bare arm reads 91.4%, while the 76 rows whose name ends in a
- * table word read 40.8% against 1.2% for the 420 single-word rows. So the stratified table below ships beside the rate
- * rather than being derivable from it.
- *
- * Membership is `US_STREET_SUFFIX_LOOKUP` — every Pub-28 canonical AND every variant — not the curated name-prone
- * subset. The narrower list moves rows between buckets and moves both rates with them, so the bucket a row lands in is
- * a property of the word list, and the word list has to be the table.
- */
-function suffixTail(locality: string): string | undefined {
-	const last = locality
-		.trim()
-		.split(/\s+/)
-		.at(-1)
-		?.toLowerCase()
-		.replaceAll(/[^a-z]/g, "")
-
-	return last && US_STREET_SUFFIX_LOOKUP.has(last) ? last : undefined
-}
-
-/**
  * One row's outcome, carried into the JSON so a per-word reading needs no second run.
  */
 interface RowOutcome {
 	arm: string
 	input: string
-	city: string
-	locality: string | null
+	/**
+	 * The locality the panel names, and the one the run answered. Both are localities, so neither is `locality` alone — a
+	 * field named for the tag says which tag, never which side of the comparison.
+	 */
+	expected: string
+	answered: string | null
 	matched: boolean
 	suffixTail: string | null
 	nameProne: boolean
@@ -154,45 +152,53 @@ for (const arm of ARMS) {
 	let noLocality = 0
 	const examples: string[] = []
 
-	for (const city of panel) {
-		const input = arm.render(city)
-		const result = await deps.geocode(input, { defaultCountry: "US" })
+	for (const place of panel) {
+		const input = arm.render(place)
+		// The same country the arms were WRITTEN in. A run that renders through the FR layout and then resolves under a
+		// hardcoded US scope grades a French surface against American candidates.
+		const result = await deps.geocode(input, { defaultCountry: place.country })
 		const locality = result.locality ?? null
-		const tail = suffixTail(city.locality)
+		const tail = suffixTail(place.locality)
 
 		outcomes.push({
 			arm: arm.name,
 			input,
-			city: city.locality,
-			locality,
-			matched: locality === city.locality,
+			expected: place.locality,
+			answered: locality,
+			matched: locality === place.locality,
 			suffixTail: tail ?? null,
 			nameProne: tail ? NAME_PRONE_US_SUFFIXES.has(US_STREET_SUFFIX_LOOKUP.get(tail)!) : false,
-			words: city.locality.trim().split(/\s+/).length,
+			words: place.locality.trim().split(/\s+/).length,
 		})
 
 		if (locality === null) {
 			noLocality++
 		}
 
-		if (locality === city.locality) {
+		if (locality === place.locality) {
 			matched++
 		}
 
 		// What counts as a failure differs by arm, so the examples have to ask the arm. `street_only` is graded
-		// inverted, and listing rows whose locality is not the city's would print its PASSES under a "misses" heading —
+		// inverted, and listing rows whose answer is not the expected locality would print its PASSES under "misses" —
 		// every one of them `null`, which is the answer that arm wants.
-		const failed = arm.inverted ? locality !== null : locality !== city.locality
+		const failed = arm.inverted ? locality !== null : locality !== place.locality
 
 		if (failed && examples.length < EXAMPLES_PER_ARM) {
-			examples.push(`${input} → locality ${stringifyJSON(locality)} (city ${stringifyJSON(city.locality)})`)
+			examples.push(`${input} → answered ${stringifyJSON(locality)}, expected ${stringifyJSON(place.locality)}`)
 		}
 	}
 
 	report[arm.name] = { matched, noLocality, total: panel.length, examples }
 }
 
-console.log(`#2303 arms — ${panel.length} distinct US cities, production path\n`)
+console.log(
+	`#2303 arms — ${panel.length} distinct US localities, production path` +
+		(qualifiersStripped
+			? `\n${qualifiersStripped} expected string(s) carried a trailing parenthetical qualifier, stripped before grading.`
+			: "") +
+		"\n"
+)
 console.log(`| arm | locality matched | no locality at all |`)
 console.log(`| --- | --: | --: |`)
 

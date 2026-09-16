@@ -8,7 +8,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *   candidate emits a DIFFERENT locality string (grain mismatch) or the SAME string that stopped
  *   resolving (boundary/anchor), or drops the locality entirely. Verify-before-verdict, not assurance.
  *
- *   Run: node packages/mailwoman/lib/dev-tools/locality-emit-diff.run.ts \
+ *   Run: node packages/mailwoman/lib/dev-tools/locality/emit-diff.run.ts \
  *     --base out/v180/model.onnx --cand out/v190-int8/model.onnx \
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */

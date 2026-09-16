@@ -19,13 +19,20 @@
  *   coordinate, never by what the run answered — reading the answer back would make every row reachable by
  *   construction.
  *
+ *   The QUESTION is not American, so neither is the rendering. A row is written through
+ *   `formatAddress(components, country, { singleLine: true })` — the per-country layouts in `@mailwoman/codex` — rather
+ *   than a template literal. `${locality}, ${region} ${postcode}` is the United States postal order and nothing else:
+ *   it prints Japan's admin run backwards, drops the country's own separator convention, and puts a postcode after a
+ *   region in the 60-odd systems that lead with it. A country whose layout names no `country` slot renders nothing and
+ *   the row is reported as unrenderable, which is a measured absence rather than an invented order.
+ *
  *   Usage:
  *
- *       node packages/mailwoman/lib/dev-tools/us/locality-reachability.run.ts
- *       node packages/mailwoman/lib/dev-tools/us/locality-reachability.run.ts --weights-cache <dir> --out-json <path>
+ *       node packages/mailwoman/lib/dev-tools/locality/reachability.run.ts
+ *       node packages/mailwoman/lib/dev-tools/locality/reachability.run.ts --country FR --eval <panel.jsonl>
+ *       node packages/mailwoman/lib/dev-tools/locality/reachability.run.ts --weights-cache <dir> --out-json <path>
  */
 
-import { US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -35,8 +42,8 @@ import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate
 import { type NameKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { JSONSpliterator } from "spliterator"
 
+import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#dev-tools/coord-panel"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
 const { values } = parseArguments({
@@ -45,24 +52,12 @@ const { values } = parseArguments({
 		"weights-cache": { type: "string" },
 		"candidate-db": { type: "string", default: String(dataRootPath("wof", "candidate.db")) },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
+		// The country a panel row belongs to, when the panel does not carry one per row. It selects the codex layout
+		// the row is written through, so it is a rendering decision before it is a scope one.
+		country: { type: "string", default: "US" },
 		limit: { type: "string" },
 	},
 })
-
-interface CoordRow {
-	input: string
-	lat?: number
-	lon?: number
-	expected?: { locality?: string; region?: string; postcode?: string }
-}
-
-interface PanelCity {
-	locality: string
-	region: string
-	postcode: string
-	lat: number
-	lon: number
-}
 
 /**
  * How a row's locality lookup ended, in the two-cause vocabulary this probe exists to separate.
@@ -72,34 +67,20 @@ interface PanelCity {
  */
 type Verdict = "matched" | "reachable_not_picked" | "unreachable" | "not_asked" | "gold_not_found"
 
-const rows = await Array.fromAsync(JSONSpliterator.fromAsync<CoordRow>(values.eval!))
-const byCity = new Map<string, PanelCity>()
-
-for (const row of rows) {
-	const locality = row.expected?.locality?.trim()
-	const region = row.expected?.region?.trim()
-	const postcode = row.expected?.postcode?.trim()
-
-	// Keyed by name AND region: 30 states hold a Springfield, and a name-only key would collapse them into one row and
-	// silently shrink the panel. Reading a 5,703-row source, that key dropped 639 rows.
-	const id = `${locality}|${region}`
-
-	if (!locality || !region || !postcode || row.lat == null || row.lon == null || byCity.has(id)) continue
-
-	byCity.set(id, { locality, region, postcode, lat: row.lat, lon: row.lon })
-}
-
-const panel = values.limit ? [...byCity.values()].slice(0, Number(values.limit)) : [...byCity.values()]
+const { localities: panel, qualifiersStripped } = await readCoordPanel(values.eval!, {
+	country: values.country,
+	...(values.limit ? { limit: Number(values.limit) } : {}),
+})
 
 using db = new DatabaseClient<CandidateDatabase>(values["candidate-db"]!)
 
 /**
  * How far a candidate row may sit from the panel's own coordinate and still be that row's gold place.
  *
- * Wide enough for a centroid-vs-rooftop offset on a large city, narrow enough to refuse a namesake in the next state —
- * 21 US localities are named Ramsey, and the panel coordinate is the only thing that says which one a row means. A city
- * the panel cannot identify within it is reported as `gold_not_found` rather than folded into a miss, because "we could
- * not name the right answer" and "the run named the wrong one" are different findings.
+ * Wide enough for a centroid-vs-rooftop offset on a large locality, narrow enough to refuse a namesake one region over
+ * — 21 US localities are named Ramsey, and the panel coordinate is the only thing that says which one a row means. A
+ * place the panel cannot identify within it is reported as `gold_not_found` rather than folded into a miss, because "we
+ * could not name the right answer" and "the run named the wrong one" are different findings.
  */
 const GOLD_MAX_KM = 25
 
@@ -109,14 +90,14 @@ const GOLD_MAX_KM = 25
 const LOCALITY_PLACETYPE_ID = 3
 
 /**
- * The gold place for one panel city: the US locality row whose key is the city's own name and whose coordinate is
- * nearest the panel's.
+ * The gold place for one panel row: the locality whose key is the row's own name and whose coordinate is nearest the
+ * panel's.
  *
  * Nearest-by-coordinate rather than highest-population, because the panel row IS the disambiguation — 21 US localities
  * are named Ramsey, and the one this row means is the one at its coordinate.
  */
-async function goldPlace(city: PanelCity): Promise<number | null> {
-	const key = normalizeLocalityForKey(city.locality)
+async function goldPlace(place: PanelLocality): Promise<number | null> {
+	const key = normalizeLocalityForKey(place.locality)
 
 	if (!key) return null
 
@@ -132,7 +113,7 @@ async function goldPlace(city: PanelCity): Promise<number | null> {
 	for (const row of candidates) {
 		if (row.latitude == null || row.longitude == null) continue
 
-		const km = haversineKm(city.lat, city.lon, row.latitude, row.longitude)
+		const km = haversineKm(place.lat, place.lon, row.latitude, row.longitude)
 
 		if (!best || km < best.km) {
 			best = { id: Number(row.spr_id), km }
@@ -156,25 +137,18 @@ async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 	return row !== undefined
 }
 
-/**
- * The city's last word, when that word is a USPS suffix — the collision #2308 measures, carried on each outcome so a
- * verdict can be read against it rather than joined by hand afterwards.
- */
-function suffixTail(locality: string): string | undefined {
-	const last = locality
-		.trim()
-		.split(/\s+/)
-		.at(-1)
-		?.toLowerCase()
-		.replaceAll(/[^a-z]/g, "")
-
-	return last && US_STREET_SUFFIX_LOOKUP.has(last) ? last : undefined
-}
-
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 
+/**
+ * Rows whose country has no layout able to write them. Counted and reported rather than dropped: a panel that shrank
+ * silently would move every rate below it without saying why.
+ */
+let unrenderable = 0
+
 const outcomes: Array<{
-	city: string
+	locality: string
+	country: string
+	region: string
 	input: string
 	askedValue: string | null
 	askedKey: string | null
@@ -185,19 +159,28 @@ const outcomes: Array<{
 	words: number
 }> = []
 
-for (const city of panel) {
-	const input = `${city.locality}, ${city.region} ${city.postcode}`
-	const { result, resolver } = await deps.geocodeTraced(input, { defaultCountry: "US" })
+for (const place of panel) {
+	const input = renderAdmin(place)
+
+	// A country whose layout writes nothing answers "" rather than an invented order. A row nobody can write is
+	// reported as its own class, never graded as a miss.
+	if (!input) {
+		unrenderable++
+
+		continue
+	}
+
+	const { result, resolver } = await deps.geocodeTraced(input, { defaultCountry: place.country })
 	const lookup = resolver.find((record) => record.tag === "locality")
 	const answered = result.locality ?? null
-	const goldID = await goldPlace(city)
+	const goldID = await goldPlace(place)
 
 	const askedValue = lookup?.value ?? null
 	const askedKey = askedValue ? normalizeLocalityForKey(askedValue) : null
 
 	let verdict: Verdict
 
-	if (answered === city.locality) {
+	if (answered === place.locality) {
 		verdict = "matched"
 	} else if (!lookup) {
 		verdict = "not_asked"
@@ -210,32 +193,45 @@ for (const city of panel) {
 	}
 
 	outcomes.push({
-		city: city.locality,
+		locality: place.locality,
+		country: place.country,
+		region: place.region,
 		input,
 		askedValue,
 		askedKey,
 		goldID,
 		answered,
 		verdict,
-		suffixTail: suffixTail(city.locality) ?? null,
-		words: city.locality.trim().split(/\s+/).length,
+		suffixTail: suffixTail(place.locality) ?? null,
+		words: place.locality.trim().split(/\s+/).length,
 	})
 }
 
+const countriesSeen = new Set(panel.map((place) => place.country))
 const tally = new Map<Verdict, number>()
 
 for (const row of outcomes) {
 	tally.set(row.verdict, (tally.get(row.verdict) ?? 0) + 1)
 }
 
-console.log(`#2309 locality reachability — ${panel.length} distinct US cities, bare \`«city», «ST» «ZIP»\` arm\n`)
+console.log(
+	`#2309 locality reachability — ${outcomes.length} localities in ${countriesSeen.size} country/countries` +
+		` (${[...countriesSeen].toSorted().join(", ")}), bare admin arm written through each country's codex layout` +
+		(qualifiersStripped
+			? `\n${qualifiersStripped} expected string(s) carried a trailing parenthetical qualifier, stripped before grading.`
+			: "") +
+		(unrenderable ? `\n${unrenderable} row(s) belong to a country whose layout writes nothing; not graded.` : "") +
+		"\n"
+)
 console.log(`| verdict | rows | share |`)
 console.log(`| --- | --: | --: |`)
 
 for (const verdict of ["matched", "reachable_not_picked", "unreachable", "not_asked", "gold_not_found"] as const) {
 	const n = tally.get(verdict) ?? 0
 
-	console.log(`| ${verdict} | ${n} | ${formatPercent(n, panel.length)} |`)
+	// Denominated on GRADED rows, not on the panel: an unrenderable row was never asked and counting it would move
+	// every share below by an amount the table does not explain.
+	console.log(`| ${verdict} | ${n} | ${formatPercent(n, outcomes.length)} |`)
 }
 
 const missed = outcomes.filter((row) => row.verdict !== "matched")
@@ -265,7 +261,7 @@ for (const [name, bucket] of shapes) {
 }
 
 /**
- * Rows below this are not reported per word: a rate over fewer cities than this reads the draw rather than the word,
+ * Rows below this are not reported per word: a rate over fewer places than this reads the draw rather than the word,
  * and the 581-row panel this replaced had 24 of its 34 tail words at one or two rows.
  */
 const MIN_ROWS_PER_WORD = 10
@@ -314,7 +310,16 @@ for (const row of missed.filter((r) => r.verdict === "reachable_not_picked").sli
 }
 
 if (values["out-json"]) {
-	await writeLocalJSONFile({ panel: panel.length, rows: outcomes }, values["out-json"])
+	await writeLocalJSONFile(
+		{
+			panel: panel.length,
+			graded: outcomes.length,
+			unrenderable,
+			countries: [...countriesSeen].toSorted(),
+			rows: outcomes,
+		},
+		values["out-json"]
+	)
 
 	console.log(`\nwrote ${values["out-json"]}`)
 }
