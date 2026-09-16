@@ -14,7 +14,7 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
-from .corpus_files import _first_source, _parquet_paths
+from .corpus_files import _parquet_paths, file_source_counts
 from .parquet import _file_row_iter, _source_iter
 
 logger = logging.getLogger(__name__)
@@ -41,12 +41,15 @@ def _stream_held_out(
     rng.shuffle(order)
     for s in order:
         # Keep the --golden misuse check the bucketing path used to provide: a label-less
-        # golden file (source=None) scoring as val would produce garbage metrics silently.
-        if _first_source(s) is None:
+        # golden file scoring as val would produce garbage metrics silently. `file_source_counts` raises on the
+        # non-string cell such a file carries, which is the same reading one level down.
+        try:
+            file_source_counts(s)
+        except TypeError as exc:
             raise ValueError(
                 f"parquet file {s} has no `source` field — likely a --golden (label-less) file used as a "
                 f"{split!r} file. Rebuild it WITHOUT --golden so rows carry source + labels."
-            )
+            ) from exc
         yield from _file_row_iter(
             s,
             expected_source=None,
@@ -58,25 +61,35 @@ def _stream_held_out(
 
 
 def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
-    """Bucket parquet files by their single `source` value, reading one row group per file.
+    """Bucket parquet files by EVERY `source` they carry.
 
-    Corpus v0.2.0 parquet files are 100% source-segregated, so the first row identifies the whole file. A
-    file that is missing or unreadable is skipped and named; one with a None source raises, because
-    that is a --golden (label-less) file used as a train file and it used to fail later with a
-    cryptic "'<' not supported between NoneType and str" from `sorted()`.
+    A file appears under each of its sources, and `_file_row_iter` filters per row against the one it was asked
+    for, so a file carrying two is read twice and yields each source only its own rows. That per-row filter has
+    always been there — the defect this replaced was upstream of it: taking the first row's source as the whole
+    file's meant a source that never OPENS a file was invisible to the index, to `_apply_source_weights`' unnamed
+    guard, and to the epoch audit alike. Measured on `v0.31.0-region-code-and-unit`: 8 of 718 train files carry
+    more than one source, one carries four, and two sources appear in no other file.
+
+    A file that is missing or unreadable is skipped and named; one with a non-string source raises, because that is
+    a --golden (label-less) file used as a train file and it used to fail later with a cryptic "'<' not supported
+    between NoneType and str" from `sorted()`.
     """
     by_source: dict[str, list[Path]] = {}
     skipped: list[tuple[Path, str]] = []
+    multi: list[tuple[Path, list[str]]] = []
     for s in paths:
         if not s.exists():
             skipped.append((s, "file not found"))
             continue
         try:
-            src = _first_source(s)
+            per_source = file_source_counts(s)
         except Exception as exc:
             skipped.append((s, str(exc)))
             continue
-        by_source.setdefault(src, []).append(s)
+        if len(per_source) > 1:
+            multi.append((s, sorted(per_source)))
+        for src in per_source:
+            by_source.setdefault(src, []).append(s)
 
     if skipped:
         logger.warning(
@@ -84,11 +97,11 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
             len(skipped),
             "\n  ".join(f"{p}: {reason}" for p, reason in skipped[:10]),
         )
-    if any(src is None for src in by_source):
-        n_none = sum(len(s) for src, s in by_source.items() if src is None)
-        raise ValueError(
-            f"{n_none} parquet files have no `source` field — likely a --golden (label-less) file used as a "
-            "train/val file. Rebuild it WITHOUT --golden so rows carry source + labels."
+    if multi:
+        logger.info(
+            "%d parquet file(s) carry more than one source; each is indexed under all of them:\n  %s",
+            len(multi),
+            "\n  ".join(f"{p.name}: {', '.join(srcs)}" for p, srcs in multi[:10]),
         )
     logger.info(
         "Source index: %s",

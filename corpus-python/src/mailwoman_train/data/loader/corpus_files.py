@@ -1,8 +1,8 @@
 """Which parquet files a split has, and how many rows each source holds.
 
-Everything here reads paths and footers. No row group is opened except the one
-`_first_source` needs to learn a file's source, which is the same one-time cost the row
-stream already pays at index time.
+Everything here reads paths and footers, except `file_source_counts`, which reads one dictionary-encoded string
+column to learn which sources a file carries — the same one-time cost per file the row stream already pays at
+index time.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 #: The manifest key that listed a corpus's parquet files before the 2026-09-01 vocabulary rename. Every corpus
@@ -144,19 +145,35 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
     return paths
 
 
-def _first_source(path: Path) -> str:
-    """Return the ``source`` value of the first row in a parquet file.
+def file_source_counts(path: Path) -> dict[str, int]:
+    """Rows per ``source`` in one parquet file.
 
-    Corpus v0.2.0 parquet files are 100% source-segregated (one source per file), so reading
-    the first row's source identifies the file's source. Costs ~50 ms / file at index
-    time; called once per file when ``_raw_row_stream`` starts.
+    A FILE IS NOT ONE SOURCE. This read used to take the first row's source as the whole file's, on the stated
+    ground that the corpus is source-segregated. It is not: the writer caps a file at ``rowsPerFile`` rows and a
+    source boundary falls wherever it falls, so 8 of the 718 train files in ``v0.31.0-region-code-and-unit`` carry
+    two, and one carries four. ``_file_row_iter`` has always filtered per row against the source it was asked for,
+    so the ROWS were right; what the first-row reading got wrong is which sources exist at all — two of them appear
+    in no other file and were invisible to every caller.
+
+    Reading every source costs less than reading the first one did. The column is dictionary-encoded and the
+    grouping happens inside Arrow, so a 1,000,000-row file takes 30 ms where the first-row read was documented at
+    50 ms; the four-source file takes 45 ms.
+
+    Raises on a non-string cell, which is a ``--golden`` (label-less) file used as a train file; it used to fail
+    later with a cryptic ``'<' not supported between NoneType and str`` from ``sorted()``.
     """
-    pf = pq.ParquetFile(path)
-    rg = pf.read_row_group(0, columns=["source"])
-    raw = rg["source"][0].as_py()
-    if not isinstance(raw, str):
-        raise TypeError(f"source column cell is {type(raw).__name__}, expected str")
-    return raw
+    column = pq.ParquetFile(path).read(columns=["source"])["source"]
+    counts: dict[str, int] = {}
+
+    # `value_counts` groups inside Arrow. Walking `to_pylist()` instead materializes one Python string per ROW, and
+    # on a 1,000,000-row file that alone is the difference between 67 ms and 200 ms.
+    for pair in pc.value_counts(column.combine_chunks()):
+        value = pair["values"].as_py()
+        if not isinstance(value, str):
+            raise TypeError(f"source column cell is {type(value).__name__}, expected str")
+        counts[value] = pair["counts"].as_py()
+
+    return counts
 
 
 def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
@@ -168,9 +185,9 @@ def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
     weight (1.0) got 165 reps per row, 33x the exposure of sources weighted six times higher, because 277 rows
     divided into a 0.60% share is still 165 passes over every row. Nobody picks 165.
 
-    Metadata-only by construction: ``ParquetFile.metadata.num_rows`` reads the footer, so this costs a
-    stat and a seek per file rather than a scan. Source identification still reads one row group per
-    file, the same one-time cost ``_raw_row_stream`` already pays at index time.
+    Counted per SOURCE rather than per file. Attributing a whole file to its first row's source overstated that
+    source and lost the others entirely, and reps per row is a ratio — an overstated numerator understates the
+    reps, which is the direction that hides the defect this audit exists to find.
     """
     counts: dict[str, int] = {}
 
@@ -178,13 +195,11 @@ def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
         if not path.exists():
             continue
         try:
-            src = _first_source(path)
+            per_source = file_source_counts(path)
         except Exception:  # nosec B112 — deliberately skip unreadable files (rationale below)
-            # A file whose source cannot be read is skipped rather than counted under a guessed name —
-            # an inflated row count understates reps per row, which is the direction that hides the defect.
+            # A file whose sources cannot be read is skipped rather than counted under a guessed name.
             continue
-        if src is None:
-            continue
-        counts[src] = counts.get(src, 0) + pq.ParquetFile(path).metadata.num_rows
+        for src, rows in per_source.items():
+            counts[src] = counts.get(src, 0) + rows
 
     return counts

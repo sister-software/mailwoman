@@ -58,9 +58,8 @@ from ...labels import IGNORE_INDEX
 from .anchors import load_anchor_lookup
 from .batch import collate, iter_batches
 from .corpus_files import _PRE_RENAME_MANIFEST_KEY as _PRE_RENAME_MANIFEST_KEY
-from .corpus_files import _first_source as _first_source
 from .corpus_files import _parquet_paths as _parquet_paths
-from .corpus_files import manifest_files, source_row_counts
+from .corpus_files import file_source_counts, manifest_files, source_row_counts
 from .encode import iter_encoded
 from .example import EncodedExample
 from .mixture import _raw_row_stream as _raw_row_stream
@@ -71,6 +70,7 @@ __all__ = [
     "EncodedExample",
     "IGNORE_INDEX",
     "collate",
+    "file_source_counts",
     "iter_batches",
     "iter_encoded",
     "iter_rows",

@@ -13,8 +13,13 @@ that each concern fires more than once, and asserts three things a rewrite must 
 - the final weights, per parameter, which pins the optimizer trajectory itself.
 
 The weight checksums come from `train-loop-reference.json` beside this file. Regenerate it with
-`uv run python tests/mailwoman_train/test_train_loop_trace.py` and read the diff: a change there is
-a change to what the model learns, never a formatting detail.
+`PYTHONPATH=. uv run python tests/mailwoman_train/train/test_train_loop_trace.py` and read the diff: a change
+there is a change to what the model learns, never a formatting detail.
+
+BOTH ROWS SIT IN ONE PARQUET FILE, AND THEY CARRY DIFFERENT SOURCES. That makes this fixture a multi-source file,
+which the loader has to index under both — `coarse-placer-cn-units` and `overture-jp` — for the train split to see
+two rows. It read one for as long as the source index took a file's first row as the whole file's, and the
+trajectory pinned below was the trajectory of a one-row train over a corpus this docstring calls two-row.
 """
 
 from __future__ import annotations
