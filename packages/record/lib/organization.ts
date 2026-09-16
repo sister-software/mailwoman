@@ -5,37 +5,9 @@
  *
  *   Organization-name canonicalization — reduce a company name to a stable, comparable key.
  *
- *   Winkler's record-linkage recipe: words of little distinguishing power (the legal designation —
- *   `Corporation`, `Limited`, `LLC`) are normalized away before matching, so `Acme Corp` and `Acme
- *   Corporation, LLC` collapse to the same key. We also split off a `doing business as` clause and
- *   normalize connectives (`&` → `and`), punctuation, accents, and a leading `The`.
- *
- *   **The collision problem (#668).** A legal-form token in one jurisdiction is a meaningful word in
- *   another domain. `PT` is Indonesia's `Perseroan Terbatas` (its LLC) — and US-healthcare
- *   shorthand for _Physical Therapy_. `SCA` / `SCS` are French/Belgian/Luxembourg commandite forms
- *   — and, in a clinic's name, _Sudden Cardiac Arrest_ / _Spinal Cord Stimulator_. A single
- *   universal strip-list can't be right for both: strip `PT` and you corrupt `Lakeside PT`; keep it
- *   and you leave the legal form on an Indonesian company. So the strip-set is computed on **two
- *   axes**:
- *
- *   - **jurisdiction** (ISO 3166-1 alpha-2, e.g. from the resolved address country) — _adds_ the legal
- *       forms valid in that country. Collision-prone forms (`pt`, `sca`, `scs`) live here, admitted only
- *       behind a known jurisdiction, NOT in the universal base.
- *   - **domain** (an ingest-config tag, e.g. `healthcare`) — _protects_ domain-meaningful tokens from
- *       ever being stripped, even when a jurisdiction pack would add them. Domain protection wins.
- *
- *   `effective = (base ∪ jurisdiction-pack) − domain-protect-pack`. With no options the set is the
- *   universal base and behavior is byte-for-byte unchanged — the new axes are strictly opt-in.
- *
- *   Evidence honesty (per the name-canonicalization research pass): the PERSON-name side is well
- *   sourced; the ORGANIZATION side is a known evidence gap. This is a solid _canonicalization_
- *   baseline (the strip-designations principle is Winkler-grounded; the designation list draws on
- *   the ISO 20275 Entity Legal Forms register and `cleanco`). The jurisdiction/domain packs below
- *   are grounded seeds, not exhaustive — extend them per ISO 20275 as locales are added. The harder
- *   org-_matching_ problems — acronym ↔ expansion (`IBM` ↔ `International Business Machines`),
- *   DBA/alias resolution beyond the simple clause, subsidiary/parent, and TF-IDF n-gram token
- *   matching — are deferred to a follow-up (a dedicated org-matching research pass + the matcher
- *   epic).
+ *   Removes legal designations and normalizes DBA clauses, punctuation, accents, connectives, and a
+ *   leading article. Jurisdiction adds legal forms; domain protection prevents ambiguous terms from
+ *   being stripped.
  */
 
 import { foldForKey } from "@mailwoman/codex/address-key"

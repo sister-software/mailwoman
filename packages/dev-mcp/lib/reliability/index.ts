@@ -3,16 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does a confidence mean anything? — the curve, the eval table, and the surfaces that can answer.
- *
- *   Every other tool here asks whether an ANSWER is right. This asks whether the number attached to the answer predicts
- *   that. The two are independent: a model can be accurate and uninformative (every answer at 0.99, right 80% of the
- *   time) or inaccurate and well-calibrated, and only the second is safe to condition on. Nothing else in this server can
- *   see the difference, because every other measurement collapses the confidence away before grading.
- *
- *   This file is the MATH ONLY — no engine, no filesystem, no corpus — so the part that is easy to get subtly and
- *   invisibly wrong is the part that is trivially testable. Where the graded confidences come from is
- *   `reliability-surfaces.ts`, one function per surface.
+ *   Reliability curves compare reported confidence with observed correctness. This module is pure;
+ *   surface-specific confidence collection lives in `reliability-surfaces.ts`.
  */
 
 /**

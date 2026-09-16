@@ -35,7 +35,7 @@ import { SqliteDialect } from "#dialect/index"
  * whatever connection it was given, so a shared handle has two owners and the first `destroy()` closes it under the
  * other. One construction gives one schema, one owner, and a lifetime `using` can end.
  *
- * `exec` and `prepare` reach the same connection for the work Kysely does not model. See `core/db/schema.ts`.
+ * `exec` and `prepare` reach the same connection for work Kysely does not model.
  */
 /**
  * A connection's non-Kysely surface: the statements Kysely does not model, plus ending the connection.

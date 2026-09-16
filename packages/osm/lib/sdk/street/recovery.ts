@@ -3,14 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #250 street recovery — recover the street for an OSM `addr:housenumber` point that carries no
- *   `addr:street` (58% of IDF points; they're not `addr:place` hamlets, they're street addresses missing
- *   the tag). The recovery is a nearest-named-highway spatial join: assign the name of the closest named
- *   highway within a tight radius. A grid index over densified highway vertices keeps it O(points).
- *
- *   ⚠ A wrong recovery can create a false-positive rooftop (a point keyed under the wrong street), so the
- *   radius is tight and the whole thing is conditioned on the held-out Gauntlet (does FR coverage rise WITHOUT
- *   accuracy falling). Validate accuracy on the points that DO have `addr:street` (ground truth) first.
+ *   Recovers a missing `addr:street` from the nearest named highway within a bounded radius.
  */
 
 import { haversineKm } from "@mailwoman/spatial"

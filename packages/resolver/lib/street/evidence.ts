@@ -3,28 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #727 stage-2 phase 4c — street-NAME existence as the k-best arbiter signal.
- *
- *   Phase 4a measured the planned arbiter (full-geocode resolution tier) at exactly ZERO collected
- *   headroom: the failing class is context-free fragments, which never reach rooftop layers, so
- *   every hypothesis ties at admin tier. The corrected signal is street-NAME existence — "does this
- *   hypothesis's street surface exist as a street name in the national register?" — which IS
- *   queryable for a bare fragment. Measured on the FR fragment board over the v3.10.1 8k span model:
- *   the rerank collects +6.0pp street@1 (0.791 → 0.851), 96 fixes / 3 breaks (32:1), the value
- *   concentrated on the date-name class (+16.7pp). Receipts:
- *   `docs/articles/evals/2026-07-17-v3101-span-head-8k-result.md`, spec
- *   `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`.
- *
- *   THE ANTI-PELIAS RULE (shared with `rerank.ts`): ONE bit of evidence, not a score. We do NOT
- *   blend the name signal into the parse scores — those already share a partition function and rank
- *   fine within an input. The reranker's only job is to prefer a sibling hypothesis whose street the
- *   world confirms exists, over a rank-1 whose street it does not. Positive evidence only: the
- *   ABSENCE of a name is never evidence against a parse (index incompleteness is the default state
- *   of the world), so the policy always fails open to the model's own ranking.
- *
- *   This module is PURE — the interface + the fold + the measured pick policy, no SQLite. The FR BAN
- *   backend lives in `@mailwoman/resolver-wof-sqlite` (`SQLiteStreetNameLookup`); callers inject it,
- *   mirroring the `PlaceLookup` pattern.
+ *   Street-name existence is positive-only evidence for choosing between sibling parses. It never
+ *   changes the model score and a missing lookup result leaves the model ranking unchanged.
  */
 
 import type { Exclusion } from "@mailwoman/evidence"
@@ -55,9 +35,7 @@ export interface StreetEvidenceScope {
 }
 
 /**
- * The fold CONTRACT — the index builder and every runtime prober MUST share this exact function, or lookups silently
- * miss (the 4 v1-policy breaks were fold mismatches: `pillet-will` stored unhyphenated). NFD strip-diacritics,
- * lowercase, hyphen/apostrophe → space, whitespace-collapse. Import this beside the interface; never re-implement it.
+ * Shared index-build and lookup fold: strip diacritics, lowercase, replace hyphens and apostrophes, and collapse space.
  */
 export function foldStreetSurface(surface: string): string {
 	return surface

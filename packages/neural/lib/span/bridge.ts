@@ -3,35 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Punctuation-gap span bridging — the v4.4.0 corrective (and the long-deferred Saint-Albans
- *   span-merge, scoped to where it is provably safe).
- *
- *   The corpus alignment tokenizer drops standalone punctuation (corpus/src/tokenize.ts), so NO
- *   training row can label the periods inside "P.O. Box" — the model learns the tag perfectly
- *   (every letter piece at 0.93+ confidence) but emits it as fragments split at each dot, and span
- *   assembly surfaces only the first fragment ("p"). Measured on the v1.3.0 check: dotted po_box
- *   leaders failed 98%, ALL truncations, while plain leaders passed — a structural expressivity
- *   limit of the label format, not a learning failure.
- *
- *   The fix is deterministic: AFTER decode, merge adjacent same-label spans whose gap consists only
- *   of punctuation/whitespace, contains at least one non-space character, and is short (≤ 3 chars).
- *   The non-space requirement is essential — space-only gaps ("Saint Paul" as two locality spans)
- *   are NOT bridged, because a space between two same-tag spans is often a real boundary (the
- *   Saint-Albans fragmentation wants this fix too, but it must come with its own evidence; this
- *   pass stays conservative by construction).
- *
- *   Runs beside the postcode/unit repair passes in the classifier, before tree-building.
+ *   Merges same-label spans separated by a short punctuation gap after decoding. Whitespace-only
+ *   gaps remain separate because they can mark a component boundary.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 /**
- * Gap text qualifies when short, made only of INTRA-TOKEN punctuation (period/hyphen/slash/ apostrophe) plus
- * whitespace, with at least one non-space char. Separator punctuation (comma, semicolon) is EXCLUDED — measured
- * 2026-06-11: the comma form merged "47110, 9016"-style postcode
- *
- * - House-number fragments on six FR golden rows (the model double-labels the number; the comma is the only thing keeping
- *   the spans honest). A comma between same-tag spans is a list/separator, never the inside of a surface form.
+ * Gap text qualifies when it is at most three characters of punctuation and whitespace, with at least one punctuation
+ * character. Commas and semicolons remain separators.
  */
 /**
  * Tokens a gap may span and still be bridged. Wider gaps are separate spans, not one interrupted span.

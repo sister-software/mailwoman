@@ -8,9 +8,8 @@ import type { KnownFormat, KnownFormatHit, TokenClass } from "#types"
 
 /**
  * Universal postcode + PO-box patterns. Each entry is a regex that matches a token (or a small sequence of tokens
- * joined by a single space) and the format it represents.
- *
- * Bitter-lesson-safe boundary: this set grows ~1 pattern per new locale, not 50K dictionary entries.
+ * joined by a single space) and the format it represents. Keep these patterns structural; place-name dictionaries
+ * belong elsewhere.
  */
 interface FormatPattern {
 	format: KnownFormat
@@ -37,10 +36,7 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}$/i, tokenSpan: 2, confidence: 0.9 },
 	{ format: "ca_postcode", pattern: /^[A-Z]\d[A-Z] \d[A-Z]\d$/i, tokenSpan: 2, confidence: 0.9 },
-	// NL postcode is 4 digits + 2 letters ("1012 LG"), 2 tokens spaced / 1 unspaced. WITHOUT this the
-	// model fragments it as house_number(1012) + street(LG) and the street context pulls the locality
-	// into the US situs tier (#924: "1012 LG Amsterdam" → Amsterdam, NY). The `\d{4} [A-Z]{2}` shape is
-	// unambiguous — no house-number+street pair reads this way — so it's a high-confidence postcode prior.
+	// NL postcode: four digits followed by two letters.
 	{ format: "nl_postcode", pattern: /^\d{4} [A-Z]{2}$/i, tokenSpan: 2, confidence: 0.9 },
 	{ format: "nl_postcode", pattern: /^\d{4}[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
 	// Ambiguous 5-digit (US/FR/DE). Tag as us_zip with reduced confidence; caller disambiguates by

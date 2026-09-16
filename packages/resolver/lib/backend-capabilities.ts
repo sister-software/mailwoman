@@ -6,15 +6,8 @@
  *   Which optional {@link ResolverBackend} methods the loaded backend does not implement, and what each absence
  *   silently costs.
  *
- *   `ancestors` and `coincidentLocalitiesFor` are optional on the backend contract, so a backend that omits them is
- *   valid — but the resolver passes that lack through as a guard that simply returns. The option those guards serve
- *   (`hierarchyCompletion`) defaults to ON, so a caller who never touched it gets a feature that reports success while
- *   doing nothing. That is absence read as a negative answer, and the rule is that a magnitude never carries its own
- *   absence: the gap has to be stated somewhere a caller can read it.
- *
- *   This module states it. `describeCapabilityGaps` is pure and cheap enough to run at construction; the resolver
- *   exposes the result on `Resolver.capabilityGaps` and warns once so the gap appears in a log without a caller having
- *   to ask. It changes no resolution behavior — a gap that was silent is now legible, nothing more.
+ *   Optional backend methods can make default-on resolver features no-op. This module exposes and
+ *   reports those gaps without changing resolution behavior.
  */
 
 import type { BackendCapabilityGap, ResolverBackend } from "@mailwoman/core/resolver"
@@ -75,8 +68,7 @@ const reported = new Set<string>()
 
 /**
  * Report a backend's gaps to stderr the first time this process sees them. The gaps are data on
- * `Resolver.capabilityGaps` regardless; this exists so they also reach an operator who never thought to look. The line
- * disappears on its own once the backend implements the methods, so it cannot become permanent wallpaper.
+ * `Resolver.capabilityGaps` regardless; this also reports them to an operator.
  */
 export function reportCapabilityGaps(gaps: readonly BackendCapabilityGap[]): void {
 	const [first] = gaps

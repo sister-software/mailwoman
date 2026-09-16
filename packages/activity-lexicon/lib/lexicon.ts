@@ -5,20 +5,8 @@
  *
  *   Reader and audit for the reviewed activity-phrase lexicon.
  *
- *   WHY THIS IS ITS OWN VOCABULARY. `@mailwoman/poi-taxonomy`'s phrases are venue nouns and each names ONE category;
- *   an activity is afforded by a SET of entity kinds, and the set is country-conditional. A phrase naming an activity
- *   therefore cannot be a synonym in that table without saying something the table has no field for. It is equally not
- *   part of the compiled world model: that artifact carries concepts, relations, mappings and provenance, and a phrase
- *   is none of those — it is how a person says the thing, which is recognition rather than knowledge.
- *
- *   THE AUDIT REFUSES RATHER THAN DEGRADES. Every problem {@linkcode auditActivityLexicon} reports is a record that
- *   would answer nothing while reading as though it answered: a phrase declared twice, a phrase scoped to no locale, a
- *   derived form whose base is absent or is itself derived so the chain never reaches a committed record. Each of those
- *   produces a lexicon that looks complete and is short, and a consumer measuring recognition breadth would read the
- *   shortfall as the world rather than as the file. So {@linkcode readActivityLexicon} throws.
- *
- *   A LIGHT GRAPH, deliberately: a vocabulary any package may read must not drag one behind it — only
- *   `@mailwoman/core`'s file plumbing and `@mailwoman/variant-aliases`' locale-scope rule come along.
+ *   Activities differ from POI categories because they can apply to multiple, locale-dependent entity kinds.
+ *   Invalid or incomplete entries cause {@linkcode readActivityLexicon} to throw.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -48,9 +36,7 @@ export const ACTIVITY_LEXICON_PATH: string = await resolvePackagedDataPath(modul
 /**
  * Normalize a phrase for comparison: NFKC, trimmed, whitespace collapsed, lowercased.
  *
- * `toLowerCase` rather than `toLocaleLowerCase`, deliberately: the locale-sensitive form folds a dotted capital `I` to
- * `i̇` under a Turkish host locale, which would make the same query answer differently on two machines. Locale SCOPING
- * is a property of the entry and is decided by {@linkcode resolveActivityPhraseLocale}; it never reaches the text.
+ * Uses locale-independent lowercasing; locale scope is resolved separately.
  */
 export function normalizeActivityPhrase(phrase: string): string {
 	return phrase.normalize("NFKC").trim().replaceAll(/\s+/g, " ").toLowerCase()
@@ -60,8 +46,7 @@ export function normalizeActivityPhrase(phrase: string): string {
  * Decide whether an entry answers under a locale, delegating to `@mailwoman/variant-aliases`'
  * {@linkcode resolveLocaleScope} — the owner of these semantics.
  *
- * A scoped entry does not match when the locale is unknown. That is the containment: a phrasing declared regional
- * cannot be reached without knowing the region, or the record means something different from what it says.
+ * A scoped entry does not match when the locale is unknown.
  */
 export function resolveActivityPhraseLocale(
 	entry: ActivityPhraseEntry,
