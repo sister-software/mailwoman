@@ -40,6 +40,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { accumulateCooccurrences, createCooccurrenceStats, streamTokenLabelRows } from "#utils/cooccurrence-stats"
@@ -65,7 +66,9 @@ async function discoverParquetFiles(pathArg: string): Promise<string[]> {
 	const stat = await statPath(pathArg)
 
 	if (stat.isDirectory()) {
-		return await Globerator.files("parquet", { cwd: pathArg, recursive: false }).toArray()
+		const names = await Globerator.files("parquet", { cwd: pathArg, recursive: false }).toSorted()
+
+		return names.map((name) => join(pathArg, name))
 	}
 
 	if (stat.isFile() && pathArg.endsWith(".parquet")) return [pathArg]

@@ -57,7 +57,6 @@ export async function runCommentInventory(
 	const discovered = new Set(
 		await Globerator.files(["ts", "tsx", "py"], {
 			cwd: context.repoRoot,
-			absolute: false,
 			throwIfDirectoryMissing: false,
 		}).toArray()
 	)
