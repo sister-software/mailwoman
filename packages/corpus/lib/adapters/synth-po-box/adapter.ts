@@ -26,7 +26,7 @@ import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import {
-	countryToLocale,
+	poBoxTemplateLocale,
 	REGION_OPTIONAL_LOCALES,
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
@@ -118,7 +118,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 				// Region is required EXCEPT for region-less locales (NZ: `Private Bag 12, Auckland 1010`
 				// has no region token, #517). synthesizePoBoxRow handles region absence; the guard just
 				// must not discard those tuples as "missing region".
-				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(countryToLocale(input.country)) : false
+				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(poBoxTemplateLocale(input.country)) : false
 
 				if (!input.locality || !input.postcode || !input.country || (!input.region && !regionOptional)) {
 					skipped++

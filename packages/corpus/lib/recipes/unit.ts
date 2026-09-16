@@ -25,12 +25,12 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import { EVAL_SOURCE, TRAIN_SOURCES, type UnitSource } from "#recipes/unit/sources"
-import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -115,13 +115,13 @@ const title = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1).toLo
 export function makeUnit(random: () => number, oaUnit: string): string {
 	const standalone = random() >= ID_WEIGHT
 	const pool = standalone ? STANDALONE_DESIGNATORS : ID_DESIGNATORS
-	const canonical = pick(pool, random)
+	const canonical = sample(pool, random)
 	// Vary the surface form 50/50 (this is the #454 expand/abbreviate variety, baked into the recipe output).
 	const designator = random() < 0.5 ? title(canonical) : title(US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical])
 
 	if (standalone) return designator
 
-	const id = oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : pick(SYNTH_IDS, random)
+	const id = oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : sample(SYNTH_IDS, random)
 
 	// Both spacings: the sign and the id are one component either way, and attesting one surface leaves the other
 	// reachable only by generalization the model does not make here.
@@ -254,7 +254,7 @@ export function renderUnit(
 	if (r < BARE_FIRST_CUTOFF)
 		return { fmt: "bare-first", raw: `${unit} ${road}`, components: { house_number: hn, street, unit } }
 
-	const v = pick(VENUES, random)
+	const v = sample(VENUES, random)
 
 	return {
 		fmt: "venue",

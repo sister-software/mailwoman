@@ -49,9 +49,13 @@
  *   base-locale recipe. `synthesizers/boundary-stress.test.ts` proves the alignments.
  */
 
-import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because every tuple this
+   synthesizer draws from is `US_TUPLES`, a hardcoded US list. The comma-less arm is a deliberate malformation of that
+   order, which a layout cannot express: it exists to stress the segmentation cue the commas carry. */
 
-import { pick } from "#synthesizers/utils"
+import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+import { sample } from "@mailwoman/core/random"
+
 import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -224,7 +228,7 @@ const SUFFIXES = [
 ] as const
 
 // Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
-// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped recipe-output bytes.
+// runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
@@ -394,15 +398,15 @@ export function synthesizeBoundaryStressRow(
 	opts: BoundaryStressSynthesisOpts = {}
 ): SynthesizedBoundaryStressRow {
 	const random = opts.random ?? Math.random
-	const template = opts.forceTemplate ?? pick(ALL_TEMPLATES, random)
+	const template = opts.forceTemplate ?? sample(ALL_TEMPLATES, random)
 
 	if (template === "bare-locality") {
 		// The v1.6.0 ship-blocker fix: locality was DROPPED on bare/short "City, STATE" rows (84% of the
 		// regression) because every prior shape placed a street before the city, so the model learned "the
 		// city follows a street" and stopped emitting locality without one. Teach the locality with NO street,
 		// across the forms real data carries it — bare, comma-LESS, postcode'd, and venue/org-prefixed.
-		const b = base ?? (random() < 0.3 ? pick(FR_TUPLES, random) : pick(US_TUPLES, random))
-		const venue = random() < 0.45 ? pick(VENUES, random) : ""
+		const b = base ?? (random() < 0.3 ? sample(FR_TUPLES, random) : sample(US_TUPLES, random))
+		const venue = random() < 0.45 ? sample(VENUES, random) : ""
 		// ~12% carry a trailing country token — the v1.7.1 country patch (DeepSeek 2026-06-18). The pure
 		// "City, STATE" bare rows carry NO country token, which cost ~4pp on us.country_homograph in v1.7.0;
 		// teaching "…, USA"/"…, France" recovers it as a single-variable additive without diluting locality.
@@ -452,8 +456,8 @@ export function synthesizeBoundaryStressRow(
 		template === "house-number-before-street"
 	) {
 		// FR-only (no base-consistent DE locality vocab; see the DE_TUPLES note above).
-		const b = base ?? pick(FR_TUPLES, random)
-		const name = pick(FR_NAMES, random)
+		const b = base ?? sample(FR_TUPLES, random)
+		const name = sample(FR_NAMES, random)
 		const hn = houseNumber(random)
 
 		if (template === "house-number-before-street") {
@@ -473,7 +477,7 @@ export function synthesizeBoundaryStressRow(
 		}
 
 		if (template === "fr-prefix") {
-			const prefix = pick(FR_PREFIXES, random)
+			const prefix = sample(FR_PREFIXES, random)
 			// "{hn} {prefix} {name}, {postcode} {locality}" — postcode-first, prefix split from the name.
 			const raw = `${hn} ${prefix} ${name}, ${b.postcode} ${b.locality}`
 
@@ -504,11 +508,11 @@ export function synthesizeBoundaryStressRow(
 
 	// en-US street shapes (street-eats-affix + comma-less). US-only — US zips are base-consistent and
 	// the boundary these teach is locale-agnostic; no need to introduce a non-base locale.
-	const b = base ?? pick(US_TUPLES, random)
+	const b = base ?? sample(US_TUPLES, random)
 	const hn = houseNumber(random)
-	const dir = random() < 0.4 ? pick(DIRECTIONALS, random) : ""
-	const name = random() < 0.7 ? pick(MULTIWORD_STREETS, random) : pick(SINGLE_STREETS, random)
-	const suffix = pick(SUFFIXES, random)
+	const dir = random() < 0.4 ? sample(DIRECTIONALS, random) : ""
+	const name = random() < 0.7 ? sample(MULTIWORD_STREETS, random) : sample(SINGLE_STREETS, random)
+	const suffix = sample(SUFFIXES, random)
 	const streetCore = `${dir ? `${dir} ` : ""}${name} ${suffix}`
 
 	const components: CanonicalRow["components"] = {

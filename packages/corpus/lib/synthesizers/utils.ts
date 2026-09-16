@@ -35,7 +35,7 @@ import {
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
 import { isPresent } from "@mailwoman/core/objects"
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32, sample } from "@mailwoman/core/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
@@ -243,7 +243,7 @@ export const typoInject: Augmentation = (row) => {
 	)
 
 	if (!eligible.length) return null
-	const [tag, value] = pick(eligible, rng)
+	const [tag, value] = sample(eligible, rng)
 	// Interior alpha positions only — keep the first char (most real typos are interior) + a right neighbour.
 	const positions: number[] = []
 
@@ -253,7 +253,7 @@ export const typoInject: Augmentation = (row) => {
 		}
 
 	if (!positions.length) return null
-	const i = pick(positions, rng)
+	const i = sample(positions, rng)
 	const ch = value[i]!
 	let typed: string
 
@@ -706,13 +706,6 @@ export function* synthesizeRow(
 }
 
 /**
- * One element of `arr`, drawn with the supplied unit-interval source. TODO: Rename to "sample" for clarity.
- */
-export function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
-}
-
-/**
  * One element of `items`, drawn with probability proportional to `weightOf(item)`.
  *
  * One `random()` draw per call. `inclusive` (the default) keeps an item whose cumulative weight lands exactly on the
@@ -773,8 +766,10 @@ export function tieredNumber(random: () => number, bands: readonly TieredNumberB
  * The primary locale a synthesizer renders for a country — ISO-3166-1 alpha-2, alpha-3, or the English display name,
  * case- and whitespace-tolerant. Unknown countries render as `en-US`.
  *
- * The PO-box synthesizer keeps its own template-scoped `countryToLocale` on top of this one: it maps any locale WITHOUT
- * a PO-box template back to `en-US` (so `DE` still renders the en-US box vocabulary there).
+ * `poBoxTemplateLocale` in `#synthesizers/po-box` narrows this one: it maps any locale WITHOUT a PO-box template back
+ * to `en-US`, so `DE` still renders the en-US box vocabulary there. It carries its own name rather than shadowing this
+ * one, because two exports called `countryToLocale` in one directory leave an importer's answer to which module they
+ * happened to reach.
  */
 export function countryToLocale(country: string): string {
 	const c = country.trim().toUpperCase()

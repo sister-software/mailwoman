@@ -68,12 +68,12 @@
  *   blow-up). Disable that mask for any run including this recipe's output.
  */
 
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
 
 /**
  * House numbers, weighted toward the small values that dominate real BAN rows.
@@ -251,9 +251,9 @@ export const frFragmentRecipe: CorpusRecipe = {
 			let klass = DATEISH.test(street) ? "date-name" : PARTICLE.test(street) ? "street-particle" : "bare-street"
 
 			if (carriesNumber) {
-				const number = pick(HOUSE_NUMBERS, random)
+				const number = sample(HOUSE_NUMBERS, random)
 				const alnum = random() < ALNUM_HOUSE_NUMBER_SHARE
-				const suffix = pick(ALNUM_SUFFIXES, random)
+				const suffix = sample(ALNUM_SUFFIXES, random)
 
 				const houseNumber = alnum
 					? suffix === "bis" || suffix === "ter"
@@ -300,7 +300,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 		for (let i = 0; i < wanted && pool.length; i++) {
 			// BAN gives `locality_base` normalized; restore the casing the fragment board also
 			// reconstructs, so train and eval show the model the same shape of French.
-			const name = frTitleCase(pick(pool, random))
+			const name = frTitleCase(sample(pool, random))
 			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
 
 			if (

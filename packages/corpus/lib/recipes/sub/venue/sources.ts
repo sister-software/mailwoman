@@ -27,12 +27,13 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { sample } from "@mailwoman/core/random"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import type { LocaleBaseTuple } from "#synthesizers/locale"
-import { pick, weightedPick } from "#synthesizers/utils"
+import { weightedPick } from "#synthesizers/utils"
 import {
 	classifyIdentifier,
 	readSubVenueJSONL,
@@ -503,7 +504,7 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 	// `inclusive: false` keeps this draw's original strict `r < 0` boundary, so the bucket stream is unchanged.
 	const bucket = weightedPick(buckets, random, (b) => b.observations, { inclusive: false })
 
-	return pick(bucket.examples, random)
+	return sample(bucket.examples, random)
 }
 
 //#endregion

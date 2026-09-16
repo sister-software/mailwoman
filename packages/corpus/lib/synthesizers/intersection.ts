@@ -19,9 +19,13 @@
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
 
-import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
+   refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
+   string for the only country that reaches it, and would read as though the file served more. */
 
-import { pick } from "#synthesizers/utils"
+import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+import { sample } from "@mailwoman/core/random"
+
 import type { CanonicalRow } from "#types"
 
 /**
@@ -88,7 +92,7 @@ const ORDINALS = [
 const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkwy", "Ter", "Cir"] as const
 
 // Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
-// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped recipe-output bytes.
+// runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
@@ -122,16 +126,16 @@ export interface IntersectionSynthesisOpts {
  */
 function buildStreetName(random: () => number): string {
 	// ~20% bare proper-noun street (no suffix), else directional? + core/ordinal + suffix.
-	if (random() < 0.2) return pick(BARE_NAMES, random)
+	if (random() < 0.2) return sample(BARE_NAMES, random)
 
 	const parts: string[] = []
 
 	if (random() < 0.35) {
-		parts.push(pick(DIRECTIONALS, random))
+		parts.push(sample(DIRECTIONALS, random))
 	}
 
-	parts.push(random() < 0.45 ? pick(ORDINALS, random) : pick(STREET_CORES, random))
-	parts.push(pick(SUFFIXES, random))
+	parts.push(random() < 0.45 ? sample(ORDINALS, random) : sample(STREET_CORES, random))
+	parts.push(sample(SUFFIXES, random))
 
 	return parts.join(" ")
 }
@@ -159,7 +163,7 @@ export function synthesizeIntersectionRow(
 
 	if (b === a || a.includes(b) || b.includes(a)) return null
 
-	const connector = pick(CONNECTORS, random)
+	const connector = sample(CONNECTORS, random)
 	// "corner of" prefix variant (~20%) — still labels the two streets identically.
 	const cornerPrefix = random() < 0.2 ? "corner of " : ""
 

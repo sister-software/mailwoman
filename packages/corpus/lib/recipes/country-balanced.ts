@@ -29,12 +29,12 @@ import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -178,7 +178,7 @@ function pickCountry(random: () => number): string | null {
 	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
 	const pool = random() < SURFACE_FORM_SHARE ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
 
-	return pick(pool, random)
+	return sample(pool, random)
 }
 
 // Country-bearing rows: 80% full, 12% full-nl, 8% bare.
@@ -333,13 +333,13 @@ function renderHomograph(random: () => number): {
 	components: Partial<Record<ComponentTag, string>>
 	iso2: string
 } {
-	const h = pick(HOMOGRAPHS, random)
+	const h = sample(HOMOGRAPHS, random)
 
 	const hn = houseNo(random),
-		street = pick(STREET_POOL, random)
+		street = sample(STREET_POOL, random)
 
 	if (random() < 0.5) {
-		const city = pick(h.cities, random)
+		const city = sample(h.cities, random)
 		const withStreet = random() < HOMOGRAPH_WITH_STREET_SHARE
 		const raw = withStreet ? `${hn} ${street}, ${city}, ${h.surface}` : `${city}, ${h.surface}`
 
@@ -350,7 +350,7 @@ function renderHomograph(random: () => number): {
 		return { fmt: "homograph-country", raw, components, iso2: h.iso2 }
 	}
 
-	const pc = pick(h.us.postcodes, random)
+	const pc = sample(h.us.postcodes, random)
 
 	if (h.us.role === "region") {
 		// surface is the US STATE: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
@@ -380,12 +380,12 @@ function renderAbbrevRegion(random: () => number): {
 	components: Partial<Record<ComponentTag, string>>
 	iso2: string
 } {
-	const a = pick(ABBREV_REGIONS, random)
+	const a = sample(ABBREV_REGIONS, random)
 
 	const hn = houseNo(random),
-		street = pick(STREET_POOL, random),
-		locality = pick(a.localities, random),
-		postcode = pick(a.postcodes, random)
+		street = sample(STREET_POOL, random),
+		locality = sample(a.localities, random),
+		postcode = sample(a.postcodes, random)
 
 	return {
 		fmt: "abbrev-region",

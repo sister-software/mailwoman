@@ -7,7 +7,7 @@
 import { makeLcg } from "@mailwoman/core/random"
 import {
 	composePoBoxPhrase,
-	countryToLocale,
+	poBoxTemplateLocale,
 	maybeNoisifyBoxNumber,
 	supportedLocales,
 	synthesizeMilitaryPoBoxRow,
@@ -126,13 +126,29 @@ describe("synthesizePoBoxRow", () => {
 		expect(row!.components.house_number).toBeUndefined()
 	})
 
-	it("unknown country falls back to en-US locale", () => {
+	it("refuses a country no layout names, rather than writing it in US order", () => {
+		// The box VOCABULARY still folds an unknown country to en-US, which is what `poBoxTemplateLocale` decides. The ORDER
+		// comes from the country's own layout, and 55 of the 252 shipped country records carry no usable skeleton — so a
+		// row for one of those is absent rather than invented.
+		expect(poBoxTemplateLocale("ZZ")).toBe("en-US")
+
 		const row = synthesizePoBoxRow(
 			{ locality: "Somewhere", region: "??", postcode: "00000", country: "ZZ" },
 			{ random: makeLcg(3), pickNumber: () => "1" }
 		)
 
-		expect(row!.locale).toBe("en-US")
+		expect(row).toBeNull()
+	})
+
+	it("writes each country's own order: FR puts the postcode first and drops the region", () => {
+		const row = synthesizePoBoxRow(
+			{ locality: "Paris", region: "Île-de-France", postcode: "75001", country: "FR" },
+			{ random: () => 0.5, pickNumber: () => "123" }
+		)
+
+		expect(row!.raw).toBe("Boîte Postale 123, 75001 Paris")
+		expect(row!.components.region).toBeUndefined()
+		expect(row!.components.postcode).toBe("75001")
 	})
 
 	it("po_box span includes leader and number for downstream BIO alignment", () => {
@@ -210,29 +226,29 @@ describe("maybeNoisifyBoxNumber", () => {
 	})
 })
 
-describe("countryToLocale", () => {
+describe("poBoxTemplateLocale", () => {
 	it("maps US/USA/United States", () => {
-		expect(countryToLocale("US")).toBe("en-US")
-		expect(countryToLocale("USA")).toBe("en-US")
-		expect(countryToLocale("United States")).toBe("en-US")
+		expect(poBoxTemplateLocale("US")).toBe("en-US")
+		expect(poBoxTemplateLocale("USA")).toBe("en-US")
+		expect(poBoxTemplateLocale("United States")).toBe("en-US")
 	})
 
 	it("maps FR variants", () => {
-		expect(countryToLocale("FR")).toBe("fr-FR")
-		expect(countryToLocale("France")).toBe("fr-FR")
+		expect(poBoxTemplateLocale("FR")).toBe("fr-FR")
+		expect(poBoxTemplateLocale("France")).toBe("fr-FR")
 	})
 
 	it("maps ES variants", () => {
-		expect(countryToLocale("ES")).toBe("es-ES")
-		expect(countryToLocale("Spain")).toBe("es-ES")
+		expect(poBoxTemplateLocale("ES")).toBe("es-ES")
+		expect(poBoxTemplateLocale("Spain")).toBe("es-ES")
 	})
 
 	it("stays template-scoped: a locale without a PO-box template falls back to en-US", () => {
 		// The shared synthesizers/utils map resolves DE to de-DE, but PO_BOX_LOCALE_TEMPLATES carries no
 		// de-DE entry — the wrapper folds it back to en-US so DE tuples keep the en-US box vocabulary.
 		expect(supportedLocales()).not.toContain("de-DE")
-		expect(countryToLocale("DE")).toBe("en-US")
-		expect(countryToLocale("Germany")).toBe("en-US")
+		expect(poBoxTemplateLocale("DE")).toBe("en-US")
+		expect(poBoxTemplateLocale("Germany")).toBe("en-US")
 	})
 })
 

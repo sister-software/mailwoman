@@ -6,10 +6,11 @@ import { normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNZDeliveryService } from "@mailwoman/codex/nz"
 import { isUSPoBoxDesignator, matchPOBox } from "@mailwoman/codex/us"
+import { sample } from "@mailwoman/core/random"
 
 import { CA_INTERIOR_LETTERS } from "#recipes/po/box/cedex/vocabulary"
 import { maybeNoisifyBoxNumber } from "#synthesizers/po-box"
-import { pick, tieredNumber } from "#synthesizers/utils"
+import { tieredNumber } from "#synthesizers/utils"
 
 const BOX_TWO_DIGIT_CUTOFF = 0.3
 const BOX_THREE_DIGIT_CUTOFF = 0.7
@@ -40,10 +41,10 @@ export function makePoBoxPhrase(
 	leaders: ReadonlyArray<string>,
 	rareLeaders?: ReadonlyArray<string>
 ): string {
-	let leader = pick(leaders, random)
+	let leader = sample(leaders, random)
 
 	if (rareLeaders && random() < RARE_LEADER_SHARE) {
-		leader = pick(rareLeaders, random)
+		leader = sample(rareLeaders, random)
 	}
 
 	const number = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
@@ -76,10 +77,10 @@ export function makeAuNZPoBoxPhrase(
 	rareLeaders: ReadonlyArray<string>,
 	validate: (input: unknown) => boolean
 ): string {
-	let leader = pick(leaders, random)
+	let leader = sample(leaders, random)
 
 	if (random() < RARE_LEADER_SHARE) {
-		leader = pick(rareLeaders, random)
+		leader = sample(rareLeaders, random)
 	}
 
 	let number = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
@@ -100,7 +101,7 @@ export function makeAuNZPoBoxPhrase(
 export function makeCaPostcode(random: () => number, fsaLetters: string[]): string {
 	const letter = () => CA_INTERIOR_LETTERS[Math.floor(random() * CA_INTERIOR_LETTERS.length)]!
 	const digit = () => String(Math.floor(random() * 10))
-	const postcode = `${pick(fsaLetters, random)}${digit()}${letter()} ${digit()}${letter()}${digit()}`
+	const postcode = `${sample(fsaLetters, random)}${digit()}${letter()} ${digit()}${letter()}${digit()}`
 
 	if (!normalizeCaPostalCode(postcode)) throw new Error(`generated an invalid CA postcode: ${postcode}`)
 

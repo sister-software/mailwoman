@@ -30,7 +30,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { shuffleWith } from "@mailwoman/core/random"
+import { sample, shuffleWith } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -38,7 +38,6 @@ import { Globerator } from "spliterator/node/fs"
 import { stableSourceID } from "#adapters/utils"
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import type { CorpusRecipe } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -225,7 +224,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 			// from `random`, so the byte-stream is unaffected when the flag is unset.
 			if (countryFraction > 0 && random() < countryFraction) {
 				const forms = COUNTRY_SURFACE_FORMS.FR
-				const form = pick(forms, random)
+				const form = sample(forms, random)
 				raw = `${raw}, ${form}`
 				components.country = form
 

@@ -37,7 +37,11 @@
  *   `po-box.ts`; the same `NoStreetBaseTuple` shape is consumed.
  */
 
-import { countryToLocale, pick } from "#synthesizers/utils"
+import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address-format"
+import { countryCodeForTable } from "@mailwoman/codex/country"
+import { sample } from "@mailwoman/core/random"
+
+import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 //#region Types
@@ -190,69 +194,60 @@ export function synthesizeNoStreetRow(
 
 	const template: NoStreetTemplate = opts.forceTemplate ?? pickTemplate(random)
 
+	// A tuple's `country` is whatever its source wrote — `ES`, `ESP` or `Spain` — and a layout is keyed by the alpha-2
+	// code.
+	const iso2 = countryCodeForTable(base.country)
+
+	if (!iso2) return null
+
+	/**
+	 * Write `extra` on top of the base tuple's admin components through the country's own layout.
+	 *
+	 * The layout decides the order, the separators and which components it has a slot for, and reports the subset it
+	 * PRINTED. France absorbs the region into its postcode line, so a row that emitted `region` regardless would carry a
+	 * label whose text is not in `raw`, and the aligner would have nothing to attach it to.
+	 */
+	const render = (
+		extra: ComponentDict,
+		carry: { locality?: boolean; region?: boolean; postcode?: boolean }
+	): SynthesizedNoStreetRow | null => {
+		const dict: ComponentDict = { ...extra }
+
+		if (carry.locality && base.locality) {
+			dict.locality = base.locality
+		}
+
+		if (carry.region && base.region?.trim()) {
+			dict.region = base.region
+		}
+
+		if (carry.postcode && base.postcode) {
+			dict.postcode = base.postcode
+		}
+
+		const rendered = formatAddressRow(dict, iso2, { singleLine: true })
+
+		if (!rendered) return null
+
+		return { raw: rendered.raw, components: rendered.components, locale, template }
+	}
+
 	switch (template) {
 		case "venue-plain": {
-			const venue = pick(PLAIN_VENUES, random)
-			const raw = `${venue}, ${base.locality}, ${base.region} ${base.postcode}`
-
-			return {
-				raw,
-				components: {
-					venue,
-					locality: base.locality,
-					region: base.region,
-					postcode: base.postcode,
-				},
-				locale,
-				template,
-			}
+			return render({ venue: sample(PLAIN_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}
 		case "venue-adversarial": {
 			// The venue-adversarial template name is descriptive — when selected, this branch
 			// always draws from the adversarial pool. The `adversarialVenueRatio` opt is what
 			// the OUTER template picker uses to bias toward this template versus the plain one;
 			// once we're inside this branch the choice is already made.
-			const venue = pick(ADVERSARIAL_VENUES, random)
-			const raw = `${venue}, ${base.locality}, ${base.region} ${base.postcode}`
-
-			return {
-				raw,
-				components: {
-					venue,
-					locality: base.locality,
-					region: base.region,
-					postcode: base.postcode,
-				},
-				locale,
-				template,
-			}
+			return render({ venue: sample(ADVERSARIAL_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}
 		case "locality-region-postcode": {
-			const raw = `${base.locality}, ${base.region} ${base.postcode}`
-
-			return {
-				raw,
-				components: {
-					locality: base.locality,
-					region: base.region,
-					postcode: base.postcode,
-				},
-				locale,
-				template,
-			}
+			return render({}, { locality: true, region: true, postcode: true })
 		}
 		case "locality-region": {
-			const raw = `${base.locality}, ${base.region}`
-
-			return {
-				raw,
-				components: {
-					locality: base.locality,
-					region: base.region,
-				},
-				locale,
-				template,
-			}
+			return render({}, { locality: true, region: true })
 		}
 		case "postcode-only": {
 			return {
@@ -264,7 +259,7 @@ export function synthesizeNoStreetRow(
 		}
 		case "country-only": {
 			const names = COUNTRY_NAMES.get(base.country) ?? [base.country]
-			const country = pick(names, random)
+			const country = sample(names, random)
 
 			return {
 				raw: country,

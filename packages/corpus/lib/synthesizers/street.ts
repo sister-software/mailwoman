@@ -19,9 +19,14 @@
  *   adapter.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because this synthesizer
+   refuses a non-US tuple outright (`if (base.country !== "US") return null`). A layout call would answer the same
+   string for the only country that reaches it, and would read as though the file served more. */
 
-import { pick, tieredNumber } from "#synthesizers/utils"
+import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
+
+import { tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 
@@ -214,10 +219,10 @@ export function synthesizeStreetRow(
 
 	if (base.country !== "US") return null
 
-	const prefix = pick(DIRECTIONAL_PREFIXES, random)
-	const name = pick(STREET_NAMES, random)
-	const suffix = pick(STREET_SUFFIXES, random)
-	const trailing = pick(TRAILING_DIRECTIONALS, random)
+	const prefix = sample(DIRECTIONAL_PREFIXES, random)
+	const name = sample(STREET_NAMES, random)
+	const suffix = sample(STREET_SUFFIXES, random)
+	const trailing = sample(TRAILING_DIRECTIONALS, random)
 
 	// Build the "full" street string the adapter would receive from TIGER FULLNAME.
 	const parts = [prefix, name, suffix, trailing].filter(isPresent)

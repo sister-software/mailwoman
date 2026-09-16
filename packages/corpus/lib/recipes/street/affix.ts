@@ -40,12 +40,12 @@ import {
 } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -263,7 +263,7 @@ function renderStreet(
 	let prefix = parsed.prefix
 
 	if (!prefix && random() < INJECT_PREFIX_PROB) {
-		const m = lookupDirectional(pick(DIRECTIONAL_ABBRS, random))!
+		const m = lookupDirectional(sample(DIRECTIONAL_ABBRS, random))!
 		prefix = { canonical: m.directional, abbreviation: m.abbreviation }
 	}
 
@@ -388,7 +388,7 @@ export function renderRow(
 	if (r < bareCutoff) return { fmt: "bare", raw: road, components: withRoad }
 
 	if (r < streetOnlyCutoff) return { fmt: "street-only", raw: street, components: { ...streetComponents } }
-	const v = pick(venues, random)
+	const v = sample(venues, random)
 
 	return {
 		fmt: "venue",
@@ -762,7 +762,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 						: "terminal-only"
 
 			const classPool = pool[rowClass]
-			const base = pick(classPool, random)
+			const base = sample(classPool, random)
 			const parsed = parseStreet(base.street, { allowNameProneTail: rowClass === "terminal-only" })
 
 			if (!parsed) {

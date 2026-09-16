@@ -14,7 +14,6 @@
  *       source data has no native primary key (CSV, GeoJSON).
  *   - `HOUSE_NUMBER_PREFIX` + `splitStreetLine(line)`: the one house-number/street split every
  *       US CSV adapter uses.
- *   - `composeRaw(parts)`: the envelope-style raw line every US CSV adapter renders.
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
  *       Adapter-internal dedup; cross-adapter dedup is the runner's job.
  *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash JSONL output as it
@@ -28,7 +27,6 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex, createHash, type Hash } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { TextSpliterator } from "spliterator"
 
@@ -175,45 +173,6 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
 	if (match) return { house_number: match[1], street: match[2]!.trim() }
 
 	return { street: trimmed }
-}
-
-/**
- * Parts of the envelope-style raw line {@link composeRaw} renders. Every field is dropped when empty, so a caller only
- * supplies what its source carries.
- */
-export interface ComposeRawParts {
-	venue?: string
-	houseNumber?: string
-	street?: string
-	/**
-	 * A street line already joined by the caller (e.g. a PO-box phrase) — used INSTEAD of `houseNumber`/`street`/`unit`
-	 * when present.
-	 */
-	streetLine?: string
-	unit?: string
-	locality: string
-	region?: string
-	postcode: string
-}
-
-/**
- * Compose the envelope-style raw address line the US CSV adapters share:
- *
- * `"<venue>, <house> <street> <unit>, <city>, <state> <postcode>"`
- *
- * The venue leads (US conventional addressee-then-address ordering) so a downstream model sees the
- * venue-prefix-then-address shape users actually type into geocoders. Empty segments drop out rather than leaving a
- * dangling separator.
- */
-export function composeRaw(parts: ComposeRawParts): string {
-	const streetLine =
-		parts.streetLine ?? [parts.houseNumber, parts.street, parts.unit].filter(isPresent).join(" ").trim()
-
-	const tail = [parts.locality.trim(), [parts.region, parts.postcode].filter(isPresent).join(" ").trim()]
-		.filter(isPresent)
-		.join(", ")
-
-	return [parts.venue, streetLine || undefined, tail].filter(isPresent).join(", ")
 }
 
 /**

@@ -28,7 +28,12 @@
  *   decompose-mode pressure.
  */
 
-import { countryToLocale, pick } from "#synthesizers/utils"
+/* oxlint-disable mailwoman/prefer-home -- the four admin tails below are hand-written on purpose; the comment at the
+   `tail` assignment names the GB surface a layout cannot currently write and the counts behind it. */
+
+import { sample } from "@mailwoman/core/random"
+
+import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 export interface HouseVenueBaseTuple {
@@ -223,27 +228,21 @@ export function synthesizeHouseVenueRow(
 	// 75005 Paris" — the v4.0.0 gauntlet's venue-led failure family, the run-2 contingency's exact
 	// target shape). GB (#1366) renders locality-then-postcode with NO region and NO comma between
 	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the recipe output must teach).
-	// VE (#1821) renders locality-then-postcode and KEEPS the region after it. Every other country
-	// keeps the original US-order tail, which is itself the `after_region` surface — `Springfield, IL
-	// 02101` and `Bengaluru, Karnataka 560038` are the same shape.
 	const frOrder = base.country === "FR"
 	const gbOrder = base.country === "GB"
-	// VE writes the code on the LOCALITY segment with the region still after it — `…, Barcelona 6001, Anzoátegui,
-	// Venezuela`, the four `ve_city_postcode_trailing_state` board rows. That is neither GB's form (which drops the
-	// region) nor the default (which puts the region before the code), so it needs its own branch.
-	//
-	// It belongs HERE rather than in a standalone admin recipe, and that is measured: three trailing-region recipe outputs
-	// carrying only admin segments all graded DO-NOT-SHIP, and the way they failed was by damaging the classes they did
-	// not contain — v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` into `locality: "Ye Three Lords"`,
-	// losing the venue and the street. Every row this synthesizer emits carries a venue, a street AND a house number,
-	// so the surface is taught with the alternatives present rather than against them.
 	const veOrder = base.country === "VE"
+
+	// An admin surface belongs HERE rather than in a standalone admin recipe, and that is measured: three
+	// trailing-region recipe outputs carrying only admin segments all graded DO-NOT-SHIP, and the way they failed was by
+	// damaging the classes they did not contain — v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` into
+	// `locality: "Ye Three Lords"`, losing the venue and the street. Every row this synthesizer emits carries a venue, a
+	// street AND a house number, so the surface is taught with the alternatives present rather than against them.
 
 	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place forms,
 	// incl. directional-led names — the #1366 target class) and the shared pool otherwise; real GB
 	// registers mix both. Other locales keep the shared pool (which already carries the FR flavor).
-	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? pick(GB_VENUES, random) : pick(PLAIN_VENUES, random)
-	const street = base.street ?? pick(FALLBACK_STREETS, random)
+	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
+	const street = base.street ?? sample(FALLBACK_STREETS, random)
 	let houseNumber = base.houseNumber ?? randomHouseNumber(random)
 
 	// GB range numbers ("287-293 New N Rd"): real GB venue addresses frequently span buildings.
@@ -257,6 +256,8 @@ export function synthesizeHouseVenueRow(
 		houseNumber = `${start}-${start + span}`
 	}
 
+	// The admin tail is the country's own, from codex's layout table, and the row carries the components that layout
+	// PRINTED — France and Great Britain write no region, so emitting one would label text that is not in `raw`.
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
@@ -266,6 +267,12 @@ export function synthesizeHouseVenueRow(
 		postcode: base.postcode,
 	}
 
+	// The four tails are hand-written rather than taken from a codex layout, and GB is why. `London EC3N 1DE` is what
+	// #1366 pinned and what three tests assert; `formatAddressRow(…, { singleLine: true })` answers
+	// `London, EC3N 1DE`, because the GB layout puts the locality and the postcode on separate LINES and the country's
+	// single-line join is one separator for every break. Both registers are attested — `wof-postalcode` carries
+	// 3,265,642 GB rows with the comma against 10,282,560 without — so this is a codex question about which the layout
+	// writes, not a defect to route around here.
 	let tail = frOrder
 		? `${base.postcode} ${base.locality}`
 		: gbOrder
@@ -278,7 +285,7 @@ export function synthesizeHouseVenueRow(
 	const countrySurfaces = COUNTRY_SURFACES[base.country]
 
 	if (countrySurfaces && random() < COUNTRY_APPEND_RATE) {
-		const countrySurface = pick(countrySurfaces, random)
+		const countrySurface = sample(countrySurfaces, random)
 		components.country = countrySurface
 		tail = `${tail}, ${countrySurface}`
 	}

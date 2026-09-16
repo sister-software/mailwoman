@@ -82,6 +82,22 @@ export function shuffleWith<T>(array: T[], random: () => number): void {
 }
 
 /**
+ * One element of `array`, drawn with the supplied unit-interval source — the single-draw companion to
+ * {@link shuffleWith}, taking the same `() => number` shape so a caller threads one generator through both.
+ *
+ * {@link SeededRandom.choice} answers the same question for a caller holding the generator as an object. This free
+ * function is for the ones threading a thunk, which is most of the corpus synthesizers.
+ *
+ * Raises on an empty array rather than answering `undefined`: a sampler that returns nothing has no element to report,
+ * and a caller that reads that as a value writes it into a row.
+ */
+export function sample<T>(array: ReadonlyArray<T>, random: () => number): T {
+	if (!array.length) throw new Error("sample: the array is empty, so there is no element to draw")
+
+	return array[Math.floor(random() * array.length)]!
+}
+
+/**
  * The multiplier and increment glibc's `rand()` uses. Two generators below share them and are NOT the same stream, so
  * the constants live here once rather than being re-typed beside each.
  */

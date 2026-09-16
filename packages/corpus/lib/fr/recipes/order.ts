@@ -34,11 +34,11 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
-import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -88,7 +88,7 @@ async function readTuples(limit: number): Promise<FrTuple[]> {
  */
 function maybeAddOrdinal(random: () => number, house_number: string): string {
 	if (random() >= ORDINAL_PROB) return house_number
-	const suffix = pick(ORDINAL_SUFFIXES, random)
+	const suffix = sample(ORDINAL_SUFFIXES, random)
 
 	// Vary suffix case: "bis" (lower) vs "BIS" (upper) — a real-world split in the golden.
 	return `${house_number} ${random() < 0.5 ? suffix : suffix.toUpperCase()}`

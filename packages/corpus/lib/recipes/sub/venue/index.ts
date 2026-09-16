@@ -61,15 +61,15 @@
  *        is harvested and ready; the leg belongs to the JP corpus.
  */
 
-import type { ComponentTag } from "@mailwoman/codex/component"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"
+import { addressGroups, type Group, type Register, renderGroups, sampleRegister } from "#recipes/sub/venue/render"
 import {
 	buildIdentifierModel,
 	defaultLexiconPath,
@@ -88,12 +88,12 @@ import {
 	titleCase,
 } from "#recipes/sub/venue/sources"
 import type { LocaleBaseTuple } from "#synthesizers/locale"
-import { pick } from "#synthesizers/utils"
 import type { SubVenueLexiconTable } from "#tools"
 import { alignRow } from "#utils"
 
 export * from "#recipes/sub/venue/sources"
 export * from "#recipes/sub/venue/context"
+export * from "#recipes/sub/venue/render"
 
 //#region Plan
 
@@ -317,149 +317,6 @@ export function isBoardReserved(raw: string): boolean {
 
 //#endregion
 
-//#region Rendering
-
-/**
- * One labelled piece of the line. Pieces inside a group are space-joined; groups are joined by the register's
- * separator.
- */
-interface Piece {
-	text: string
-	tag?: ComponentTag
-}
-
-type Group = Piece[]
-
-/**
- * Surface register. Every eval in this repo gets a lowercase leg because lowercase is the register users type — Google
- * Maps taught them — so every recipe output has to carry one.
- */
-const Register = {
-	Canonical: "canonical",
-	CommaFree: "comma-free",
-	Lower: "lower",
-	Upper: "upper",
-} as const
-
-type Register = (typeof Register)[keyof typeof Register]
-
-// Registers: 45% canonical, 20% comma-free, 25% lower, 10% upper.
-const CANONICAL_REGISTER_CUTOFF = 0.45
-const COMMA_FREE_REGISTER_CUTOFF = 0.65
-const LOWER_REGISTER_CUTOFF = 0.9
-
-function sampleRegister(random: () => number): Register {
-	const r = random()
-
-	if (r < CANONICAL_REGISTER_CUTOFF) return Register.Canonical
-
-	if (r < COMMA_FREE_REGISTER_CUTOFF) return Register.CommaFree
-
-	if (r < LOWER_REGISTER_CUTOFF) return Register.Lower
-
-	return Register.Upper
-}
-
-/**
- * Join groups into `raw` + `components`, applying the register to BOTH so alignment still finds every value.
- */
-export function renderGroups(
-	groups: Group[],
-	register: Register
-): { raw: string; components: Partial<Record<ComponentTag, string>> } {
-	const fold = (text: string): string => {
-		if (register === Register.Lower) return text.toLowerCase()
-
-		if (register === Register.Upper) return text.toUpperCase()
-
-		return text
-	}
-
-	const separator = register === Register.CommaFree ? " " : ", "
-
-	const raw = groups
-		.map((group) => group.map((piece) => fold(piece.text)).join(" "))
-		.filter(isPresent)
-		.join(separator)
-
-	const components: Partial<Record<ComponentTag, string>> = {}
-
-	for (const group of groups) {
-		for (const piece of group) {
-			if (piece.tag && !components[piece.tag]) {
-				components[piece.tag] = fold(piece.text)
-			}
-		}
-	}
-
-	return { raw, components }
-}
-
-/**
- * The street + tail groups for a country, in that country's own order.
- *
- * DE/ES/FR put the postcode before the locality and DE/ES put the house number after the street; GB and US keep the
- * anglophone order and US carries a region. These are the same orders `synthesizers/locale.ts` renders, restated here
- * because this recipe assembles its groups piece-by-piece (it has to, to place a sub-venue group in front of them).
- */
-export function addressGroups(country: string, tuple: LocaleBaseTuple, withStreet: boolean): Group[] {
-	const groups: Group[] = []
-	const houseNumber = tuple.house_number?.trim()
-	const street = tuple.street.trim()
-
-	if (withStreet && street) {
-		const streetPiece: Piece = { text: street, tag: "street" }
-		const numberPiece: Piece | null = houseNumber ? { text: houseNumber, tag: "house_number" } : null
-
-		if (!numberPiece) {
-			groups.push([streetPiece])
-		} else if (country === "DE" || country === "ES") {
-			groups.push([streetPiece, numberPiece])
-		} else {
-			groups.push([numberPiece, streetPiece])
-		}
-	}
-
-	const locality: Piece = { text: tuple.locality.trim(), tag: "locality" }
-	const postcode = tuple.postcode?.trim()
-	const region = tuple.region?.trim()
-
-	if (country === "US") {
-		groups.push([locality])
-		const tail: Group = []
-
-		if (region) {
-			tail.push({ text: region, tag: "region" })
-		}
-
-		if (postcode) {
-			tail.push({ text: postcode, tag: "postcode" })
-		}
-
-		if (tail.length) {
-			groups.push(tail)
-		}
-	} else if (country === "GB") {
-		groups.push([locality])
-
-		if (postcode) {
-			groups.push([{ text: postcode, tag: "postcode" }])
-		}
-	} else {
-		// FR / DE / ES — postcode then locality, one group.
-		const tail: Group = []
-
-		if (postcode) {
-			tail.push({ text: postcode, tag: "postcode" })
-		}
-
-		tail.push(locality)
-		groups.push(tail)
-	}
-
-	return groups
-}
-
 //#endregion
 
 //#region Positive forms
@@ -491,7 +348,7 @@ export function buildSubVenueForm(
 	if (!promoted.length) return null
 
 	if (attested.length && random() < ATTESTED_FRACTION) {
-		const text = pick(attested, random)
+		const text = sample(attested, random)
 
 		return { text, form: "attested", designatorID: "attested" }
 	}
@@ -500,8 +357,8 @@ export function buildSubVenueForm(
 	const useModifier = modifierCandidates.length > 0 && random() < ENGLISH_MODIFIER_FORM_FRACTION
 
 	if (useModifier) {
-		const promotedSurface = pick(modifierCandidates, random)
-		const modifier = pick(modifiers, random)
+		const promotedSurface = sample(modifierCandidates, random)
+		const modifier = sample(modifiers, random)
 
 		return {
 			text: `${titleCase(modifier)} ${promotedSurface.surface}`,
@@ -510,7 +367,7 @@ export function buildSubVenueForm(
 		}
 	}
 
-	const promotedSurface = pick(promoted, random)
+	const promotedSurface = sample(promoted, random)
 	const identifier = sampleIdentifier(model, promotedSurface.designatorID, random)
 
 	if (!identifier) return null
@@ -709,8 +566,8 @@ function emitPositives(
 			continue
 		}
 
-		const tuple = pick(pools.context, random)
-		const venue = pick(pools.venues, random)
+		const tuple = sample(pools.context, random)
+		const venue = sample(pools.venues, random)
 
 		// A venue name that CONTAINS the sub-venue string (or vice versa) makes the two spans
 		// unresolvable — alignment claims the longer one and quarantines the other — and the row would
@@ -726,6 +583,9 @@ function emitPositives(
 		const r = random()
 		// A quarter of rows carry no street: an airport terminal's address usually does not have one.
 		const body = addressGroups(leg.country, tuple, r >= NO_STREET_SHARE)
+
+		// No layout names this country, so the row would be a venue with no address behind it.
+		if (!body.length) continue
 		// Both orders occur on real signage and mail — "Terminal 5, Heathrow" and "Heathrow, Terminal 5".
 		const groups = r < SUBVENUE_FIRST_CUTOFF ? [subGroup, venueGroup, ...body] : [venueGroup, subGroup, ...body]
 
@@ -766,7 +626,7 @@ function emitNegatives(
 
 	while (produced < target && guard++ < target * 8) {
 		if (!available.length || !pools.context.length) break
-		const negativeClass = pick(available, random)
+		const negativeClass = sample(available, random)
 		const register = sampleRegister(random)
 		let groups: Group[]
 
@@ -784,14 +644,17 @@ function emitNegatives(
 						? pools.longerNames
 						: pools.unpromotedShapes
 
-			const name = pick(pool, random)
-			const tuple = pick(pools.context, random)
+			const name = sample(pool, random)
+			const tuple = sample(pools.context, random)
 
 			groups = [
 				[{ text: name, tag: "venue" }],
 				...addressGroups(leg.country, tuple, random() < NEGATIVE_WITH_STREET_SHARE),
 			]
 		}
+
+		// No layout names this country, so the row would carry a name with no address behind it.
+		if (!groups.length || groups.every((group) => group.every((piece) => piece.tag === "venue"))) continue
 
 		const ok = emitRow(context, leg, stats, groups, register, `sub-venue-negative:${negativeClass}`, {
 			leg: leg.locale,
@@ -809,7 +672,7 @@ function emitNegatives(
 }
 
 function pickTuple(pool: readonly LocaleBaseTuple[], random: () => number): LocaleBaseTuple {
-	return pick(pool, random)
+	return sample(pool, random)
 }
 
 /**

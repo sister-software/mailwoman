@@ -2,6 +2,8 @@
  * @copyright Sister Software
  */
 
+import { sample } from "@mailwoman/core/random"
+
 import { makeCaPostcode, makePoBoxPhrase } from "#recipes/po/box/cedex/phrases"
 import type { Rendered } from "#recipes/po/box/cedex/types"
 import {
@@ -11,7 +13,6 @@ import {
 	QC_FSA_LETTERS,
 	VENUES_FR,
 } from "#recipes/po/box/cedex/vocabulary"
-import { pick } from "#synthesizers/utils"
 
 const CA_FR_GOLDEN_ORDER_CUTOFF = 0.4,
 	CA_FR_NATIVE_CUTOFF = 0.7,
@@ -33,7 +34,7 @@ export function renderCaFr(random: () => number, locality: string): Rendered {
 		return { fmt: "ca-fr-native", raw: `${phrase}, ${locality} QC ${postcode}`, components }
 
 	if (draw < CA_FR_BARE_CUTOFF) return { fmt: "ca-fr-bare", raw: phrase, components: { po_box: phrase } }
-	const venue = pick(VENUES_FR, random)
+	const venue = sample(VENUES_FR, random)
 
 	return {
 		fmt: "ca-fr-venue",

@@ -4,6 +4,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { renderAUPoBox, renderNZPoBox } from "#recipes/po/box/cedex/au-nz"
@@ -27,7 +28,6 @@ import { renderPmbUs, renderPoBoxUs } from "#recipes/po/box/cedex/us"
 import { CLASS_MIX } from "#recipes/po/box/cedex/vocabulary"
 import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeMilitaryPoBoxRow } from "#synthesizers/po-box"
-import { pick } from "#synthesizers/utils"
 import { alignRow } from "#utils"
 
 const COMPONENT_ORDER = ["house_number", "street", "po_box", "venue", "locality", "postcode", "region", "cedex"]
@@ -108,34 +108,34 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 			let locale: string
 
 			if (kind === "po-box-us") {
-				rendered = renderPoBoxUs(random, pick(usPool, random))
+				rendered = renderPoBoxUs(random, sample(usPool, random))
 				country = "US"
 				locale = "en-US"
 			} else if (kind === "pmb-us") {
-				const tuple = pick(usPool, random)
+				const tuple = sample(usPool, random)
 
 				if (!tuple.postcode || !tuple.street || !tuple.house_number) continue
 				rendered = renderPmbUs(random, tuple)
 				country = "US"
 				locale = "en-US"
 			} else if (kind === "bp-fr") {
-				rendered = renderBpFr(random, pick(frPool, random))
+				rendered = renderBpFr(random, sample(frPool, random))
 				country = "FR"
 				locale = "fr-FR"
 			} else if (kind === "cedex-fr") {
-				rendered = renderCedexFr(random, pick(frPool, random))
+				rendered = renderCedexFr(random, sample(frPool, random))
 				country = "FR"
 				locale = "fr-FR"
 			} else if (kind === "cp-ca-fr") {
-				rendered = renderCaFr(random, pick(qcPool, random))
+				rendered = renderCaFr(random, sample(qcPool, random))
 				country = "CA"
 				locale = "fr-CA"
 			} else if (kind === "po-box-au") {
-				rendered = renderAUPoBox(random, pick(auPool, random))
+				rendered = renderAUPoBox(random, sample(auPool, random))
 				country = "AU"
 				locale = "en-AU"
 			} else if (kind === "po-box-nz") {
-				rendered = renderNZPoBox(random, pick(nzPool, random))
+				rendered = renderNZPoBox(random, sample(nzPool, random))
 				country = "NZ"
 				locale = "en-NZ"
 			} else if (kind === "po-box-us-military") {
@@ -145,7 +145,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 				country = "US"
 				locale = "en-US"
 			} else {
-				rendered = renderCaEn(random, pick(onPool, random))
+				rendered = renderCaEn(random, sample(onPool, random))
 				country = "CA"
 				locale = "en-CA"
 			}

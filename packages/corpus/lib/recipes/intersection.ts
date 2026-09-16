@@ -41,13 +41,14 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
-import { pick, weightedPick } from "#synthesizers/utils"
+import { weightedPick } from "#synthesizers/utils"
 import type { CanonicalRow, LabeledRow } from "#types"
 import { alignRow } from "#utils"
 import { connectDuckDB } from "#utils/parquet"
@@ -519,7 +520,7 @@ export const intersectionRecipe: CorpusRecipe = {
 		const samples: Array<{ form: string; raw: string; tokens: readonly string[]; labels: readonly string[] }> = []
 
 		while (emitted < count && guard++ < count * 10) {
-			const crossing = pick(pool, random)
+			const crossing = sample(pool, random)
 			const { raw, components, formID, tailID, caseID } = renderRow(random, crossing, zipCity)
 
 			if (seenRaw.has(raw)) {

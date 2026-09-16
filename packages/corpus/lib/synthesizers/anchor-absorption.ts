@@ -30,9 +30,12 @@
  *   ZIPs (anchor-fp) are 5-digit strings deliberately absent from the lookup.
  */
 
-import type { ComponentTag } from "@mailwoman/codex/component"
+/* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because every tuple this
+   synthesizer draws from is `US_TUPLES`, a hardcoded US list, and the rows put a bare five-digit ZIP in front of a
+   street to make the anchor channel fire on the wrong span. That is a US postcode shape by construction. */
 
-import { pick } from "#synthesizers/utils"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import { sample } from "@mailwoman/core/random"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
@@ -77,7 +80,7 @@ export interface SynthesizedAnchorAbsorptionRow {
  * leading number that is still a house number when a locality is present).
  */
 function houseNum(random: () => number, realZips: ReadonlyArray<string>): string {
-	if (random() < 0.25) return pick(realZips, random)
+	if (random() < 0.25) return sample(realZips, random)
 
 	return String(1 + Math.floor(random() * 9999))
 }
@@ -151,13 +154,13 @@ export function synthesizeAnchorAbsorptionRow(
 ): SynthesizedAnchorAbsorptionRow {
 	const random = opts.random ?? Math.random
 	const realZips = opts.realZips && opts.realZips.length ? opts.realZips : US_TUPLES.map((t) => t.postcode)
-	const template = opts.forceTemplate ?? pick(ALL_TEMPLATES, random)
-	const street = `${pick(STREET_NAMES, random)} ${pick(STREET_TYPES, random)}`
+	const template = opts.forceTemplate ?? sample(ALL_TEMPLATES, random)
+	const street = `${sample(STREET_NAMES, random)} ${sample(STREET_TYPES, random)}`
 
 	if (template === "h-adversarial") {
 		// US street, leading real-ZIP house number, WITH a trailing postcode → the leading is house_number.
-		const zip = pick(realZips, random)
-		const t = pick(US_TUPLES, random)
+		const zip = sample(realZips, random)
+		const t = sample(US_TUPLES, random)
 		const raw = `${zip} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
 
 		return {
@@ -170,8 +173,8 @@ export function synthesizeAnchorAbsorptionRow(
 
 	if (template === "p-us-rural") {
 		// US rural, leading postcode, NO trailing postcode → the leading IS the postcode (the A0-erosion fix).
-		const zip = pick(realZips, random)
-		const region = pick(RURAL_REGIONS, random)
+		const zip = sample(realZips, random)
+		const region = sample(RURAL_REGIONS, random)
 		const raw = `${zip} ${street}, ${region}`
 
 		return {
@@ -184,8 +187,8 @@ export function synthesizeAnchorAbsorptionRow(
 
 	if (template === "p-de") {
 		// German leading postcode "{pc} {city}, {street} {hn}" → the leading is the postcode.
-		const d = pick(DE_TUPLES, random)
-		const hn = pick(HOUSE_NUMS, random)
+		const d = sample(DE_TUPLES, random)
+		const hn = sample(HOUSE_NUMS, random)
 		const raw = `${d.postcode} ${d.locality}, ${d.street} ${hn}`
 
 		return {
@@ -198,8 +201,8 @@ export function synthesizeAnchorAbsorptionRow(
 
 	if (template === "anchor-fp") {
 		// Leading 5-digit that is NOT a real ZIP (anchor MISSES) + trailing postcode → still house_number.
-		const fake = pick(FAKE_ZIPS, random)
-		const t = pick(US_TUPLES, random)
+		const fake = sample(FAKE_ZIPS, random)
+		const t = sample(US_TUPLES, random)
 		const raw = `${fake} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
 
 		return {
@@ -213,13 +216,13 @@ export function synthesizeAnchorAbsorptionRow(
 	if (template === "locale-ambig") {
 		// Minimal context — the LOCAL token decides. Half: "{realZip} {street}" (street-type → house#);
 		// half: "{realZip} {locality}" (no street, leading postcode → postcode). No trailing, no region.
-		const zip = pick(realZips, random)
+		const zip = sample(realZips, random)
 
 		if (random() < 0.5) {
 			return { raw: `${zip} ${street}`, components: { house_number: zip, street }, locale: "en-US", template }
 		}
 
-		const t = pick(US_TUPLES, random)
+		const t = sample(US_TUPLES, random)
 
 		return {
 			raw: `${zip} ${t.locality}`,
@@ -237,8 +240,8 @@ export function synthesizeAnchorAbsorptionRow(
 		// rows ("36 Oxbow Dr, Bradford, VT" → postcode). The house# spans 1-4 digits AND real 5-digit ZIPs
 		// (the hard case: 5-digit + locality is STILL a house number, distinct from p-us-rural's no-locality).
 		const hn = houseNum(random, realZips)
-		const t = pick(US_TUPLES, random)
-		const region = random() < 0.5 ? pick(RURAL_REGIONS, random) : t.region
+		const t = sample(US_TUPLES, random)
+		const region = random() < 0.5 ? sample(RURAL_REGIONS, random) : t.region
 		const raw = `${hn} ${street}, ${t.locality}, ${region}`
 
 		return {
@@ -251,7 +254,7 @@ export function synthesizeAnchorAbsorptionRow(
 
 	// standard: normal house number + trailing postcode → house_number (baseline, keeps the common case).
 	const hn = houseNum(random, realZips)
-	const t = pick(US_TUPLES, random)
+	const t = sample(US_TUPLES, random)
 	const raw = `${hn} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
 
 	return {
@@ -262,7 +265,7 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 }
 
-// Weighted template bag — the template mix. Expanded to a flat array so `pick` draws at the target
+// Weighted template bag — the template mix. Expanded to a flat array so `sample` draws at the target
 // frequencies (matches the boundary-stress ALL_TEMPLATES idiom).
 //
 // A3 (#220, after the per-row diagnostic on the A2 probe): A1/A2 both held CASE-H (100) + postcode

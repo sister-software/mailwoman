@@ -31,6 +31,7 @@ import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
@@ -38,7 +39,6 @@ import { CSVSpliterator } from "spliterator"
 import { stableSourceID } from "#adapters/utils"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "#synthesizers/locale"
-import { pick } from "#synthesizers/utils"
 import { alignRow } from "#utils"
 
 /**
@@ -405,7 +405,7 @@ export function applyCountryAppend(
 			)
 		}
 
-		const form = pick(forms, random)
+		const form = sample(forms, random)
 		synth.raw = `${synth.raw}, ${form}`
 		synth.components = { ...synth.components, country: form }
 	}

@@ -24,7 +24,11 @@
  *   - USPS DMM 508 §4.1.4 / §4.5.4 — PO Box and street-addressed PO Box
  */
 
-import { countryToLocale as baseCountryToLocale, pick, tieredNumber } from "#synthesizers/utils"
+import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address-format"
+import { countryCodeForTable } from "@mailwoman/codex/country"
+import { sample } from "@mailwoman/core/random"
+
+import { countryToLocale as baseCountryToLocale, tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -126,7 +130,7 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 		(s) => s.split("").join(" "),
 	]
 
-	const f = pick(variants, random)
+	const f = sample(variants, random)
 
 	return f(num)
 }
@@ -185,55 +189,63 @@ export function synthesizePoBoxRow(
 	const pickNumber = opts.pickNumber ?? defaultPickNumber
 	const pmbRatio = opts.pmbRatio ?? 0
 
-	const locale = countryToLocale(base.country)
+	const locale = poBoxTemplateLocale(base.country)
 	const tpl = LEADERS_BY_LOCALE.get(locale)
 
 	if (!tpl) return null
 
 	const number = maybeNoisifyBoxNumber(pickNumber(random), random)
-	const leader = pick(tpl.leaders, random)
+	const leader = sample(tpl.leaders, random)
 	const poBoxPhrase = composePoBoxPhrase(leader, number)
 
 	// PMB variant: requires both a street and a PMB-supporting locale.
 	const wantPmb = base.street && tpl.pmb && random() < pmbRatio
 
+	// A tuple's `country` is whatever its source wrote — `ES`, `ESP` or `Spain` — and a layout is keyed by the alpha-2
+	// code. Resolving here rather than requiring the code of every caller keeps the same breadth `poBoxTemplateLocale`
+	// already accepts for the box vocabulary.
+	const iso2 = countryCodeForTable(base.country)
+
+	if (!iso2) return null
+
+	// The country's own layout writes the order and the separators, and reports which components it PRINTED — France
+	// absorbs the region into its postcode line, so a row that emitted `region` regardless would carry a label whose
+	// text is not in `raw`.
+	const adminTail: ComponentDict = { locality: base.locality, postcode: base.postcode }
+
+	if (base.region?.trim()) {
+		adminTail.region = base.region
+	}
+
 	if (wantPmb) {
-		const pmbLeader = pick(tpl.pmb!, random)
+		const pmbLeader = sample(tpl.pmb!, random)
 		const pmbPhrase = composePoBoxPhrase(pmbLeader, number)
-		const streetLine = base.houseNumber ? `${base.houseNumber} ${base.street}` : base.street!
-		const raw = `${streetLine}, ${pmbPhrase}, ${base.locality}, ${base.region} ${base.postcode}`
+		const dict: ComponentDict = { ...adminTail, street: base.street!, po_box: pmbPhrase }
+
+		if (base.houseNumber) {
+			dict.house_number = base.houseNumber
+		}
+
+		const rendered = formatAddressRow(dict, iso2, { singleLine: true })
+
+		if (!rendered) return null
 
 		return {
-			raw,
-			components: {
-				...(base.houseNumber ? { house_number: base.houseNumber } : {}),
-				street: base.street!,
-				po_box: pmbPhrase,
-				locality: base.locality,
-				region: base.region,
-				postcode: base.postcode,
-				country: base.country,
-			},
+			raw: rendered.raw,
+			components: { ...rendered.components, country: base.country },
 			locale,
 			template: "pmb-with-street",
 		}
 	}
 
-	// Standard PO box: replaces the street line entirely. Region-optional — NZ (and other region-less
-	// locales) read "Private Bag 12, Auckland 1010" with no region token between locality and postcode.
-	const hasRegion = Boolean(base.region && base.region.trim())
-	const tail = hasRegion ? `${base.locality}, ${base.region} ${base.postcode}` : `${base.locality} ${base.postcode}`
-	const raw = `${poBoxPhrase}, ${tail}`
+	// A PO box replaces the street line entirely.
+	const rendered = formatAddressRow({ ...adminTail, po_box: poBoxPhrase }, iso2, { singleLine: true })
+
+	if (!rendered) return null
 
 	return {
-		raw,
-		components: {
-			po_box: poBoxPhrase,
-			locality: base.locality,
-			...(hasRegion ? { region: base.region } : {}),
-			postcode: base.postcode,
-			country: base.country,
-		},
+		raw: rendered.raw,
+		components: { ...rendered.components, country: base.country },
 		locale,
 		template: "po-box",
 	}
@@ -268,11 +280,11 @@ const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => 
  */
 export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
 	const random = opts.random ?? Math.random
-	const unit = pick(MIL_UNITS, random)
+	const unit = sample(MIL_UNITS, random)
 	const unitID = String(1 + Math.floor(random() * 9999))
-	const { region, zip } = pick(MIL_REGION_ZIP, random)
+	const { region, zip } = sample(MIL_REGION_ZIP, random)
 	const zipStr = zip(random)
-	const po = pick(MIL_PO_CODES, random)
+	const po = sample(MIL_PO_CODES, random)
 	const hasBox = unit.boxRequired || random() < 0.5
 	const unitLine = hasBox ? `${unit.code} ${unitID} Box ${1 + Math.floor(random() * 9999)}` : `${unit.code} ${unitID}`
 	const raw = `${unitLine}, ${po} ${region} ${zipStr}`
@@ -294,14 +306,14 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 const PO_BOX_TEMPLATE_LOCALES: ReadonlySet<string> = new Set(PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale))
 
 /**
- * Map a country code (ISO-3166-1 alpha-2 or alpha-3, or country display name) to the locale code we have a PO box
- * template for.
+ * The locale whose PO-BOX VOCABULARY a country's rows are written in — which is a narrower question than
+ * `countryToLocale`'s, and the reason this carries its own name rather than shadowing it.
  *
- * TEMPLATE-SCOPED on top of the shared `#synthesizers/utils` map: a locale the shared map resolves but
- * {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back to `en-US`, so `DE` (shared: `de-DE`, no PO-box template)
- * keeps rendering the en-US box vocabulary here.
+ * A locale the shared map resolves but {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back to `en-US`, so `DE`
+ * (shared: `de-DE`, no PO-box template) renders the en-US box vocabulary. The ORDER is a separate axis and comes from
+ * the country's own codex layout, so such a row is German-ordered with American box words.
  */
-export function countryToLocale(country: string): string {
+export function poBoxTemplateLocale(country: string): string {
 	const locale = baseCountryToLocale(country)
 
 	return PO_BOX_TEMPLATE_LOCALES.has(locale) ? locale : "en-US"

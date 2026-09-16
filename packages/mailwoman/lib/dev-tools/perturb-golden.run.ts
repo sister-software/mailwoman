@@ -27,6 +27,8 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dirname, join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
+
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
 	options: { golden: { type: "string" }, out: { type: "string" }, "per-file": { type: "string" } },
@@ -48,13 +50,24 @@ interface GoldenRow {
 }
 
 /**
- * Collapse the space between a trailing region + postcode, e.g. "OR 97214" → "OR97214".
+ * Collapse the whitespace between the region and the postcode where the row writes them adjacently — `OR 97214` →
+ * `OR97214`, `Auvergne-Rhône-Alpes 69001` → `Auvergne-Rhône-Alpes69001`.
+ *
+ * Driven by the row's own components rather than by a shape. `\b([A-Z]{2})\s+(\d{5})\b` matches a US region code and a
+ * five-digit ZIP and nothing else, so it read every non-US row as unperturbable — and this tool runs over the whole
+ * golden directory, `fr.jsonl` included. A country whose layout writes the postcode first, or writes no region, still
+ * produces no change here, and the caller counts that rather than emitting the row unperturbed.
  */
-function glue(raw: string): string {
-	return raw.replaceAll(/\b([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\b/g, "$1$2")
+function glue(raw: string, components: Record<string, string>): string {
+	const region = components.region?.trim()
+	const postcode = components.postcode?.trim()
+
+	if (!region || !postcode) return raw
+
+	return raw.replaceAll(`${region} ${postcode}`, `${region}${postcode}`)
 }
 
-const PERTURBATIONS: Array<{ name: string; apply: (raw: string) => string }> = [
+const PERTURBATIONS: Array<{ name: string; apply: (raw: string, components: Record<string, string>) => string }> = [
 	{ name: "delimiter-strip", apply: (r) => r.replaceAll(",", "") },
 	{ name: "lowercase", apply: (r) => r.toLowerCase() },
 	{ name: "glue", apply: glue },
@@ -63,6 +76,14 @@ const PERTURBATIONS: Array<{ name: string; apply: (raw: string) => string }> = [
 async function main(): Promise<void> {
 	await makeDirectories(dirname(OUT))
 	const out: string[] = []
+
+	/**
+	 * Per class: cases written, and rows the class could not change. A class that covers one country reports a large
+	 * unperturbed count here rather than looking like a class that simply produced fewer cases.
+	 */
+	const emitted = new Map<string, number>()
+	const unperturbed = new Map<string, number>()
+
 	let base = 0
 
 	for await (const file of Globerator.files("jsonl", { cwd: GOLDEN, absolute: false })) {
@@ -89,20 +110,27 @@ async function main(): Promise<void> {
 			if (!Object.keys(expected).length) continue
 
 			for (const p of PERTURBATIONS) {
-				const input = p.apply(row.raw)
+				const input = p.apply(row.raw, row.components)
 
-				if (input === row.raw && p.name !== "lowercase") continue
+				// A perturbation that changed nothing is not a case. `lowercase` is the exception: a row already lowercase
+				// is still a lowercase case, and the register leg exists to be graded on every row.
+				if (input === row.raw && p.name !== "lowercase") {
+					unperturbed.set(p.name, (unperturbed.get(p.name) ?? 0) + 1)
 
-				// perturbation was a no-op (skip; keep lowercase always)
+					continue
+				}
+
 				out.push(
 					stringifyJSON({
 						input,
-						locale: row.locale ?? (row.country === "FR" ? "fr-FR" : "en-US"),
+						locale: row.locale ?? OVERLAY_LOCALE_BY_COUNTRY[(row.country ?? "").toUpperCase()] ?? "en-US",
 						expected,
 						perturb_class: p.name,
 						source: `perturb/${file}`,
 					})
 				)
+
+				emitted.set(p.name, (emitted.get(p.name) ?? 0) + 1)
 			}
 		}
 
@@ -111,7 +139,13 @@ async function main(): Promise<void> {
 
 	await writeLocalTextFile(out, OUT)
 
-	console.log(`wrote ${out.length} perturbed cases (${PERTURBATIONS.map((p) => p.name).join(", ")}) → ${OUT}`)
+	console.log(`wrote ${out.length} perturbed cases → ${OUT}\n`)
+	console.log(`| class | cases | rows it could not change |`)
+	console.log(`| --- | --: | --: |`)
+
+	for (const p of PERTURBATIONS) {
+		console.log(`| ${p.name} | ${emitted.get(p.name) ?? 0} | ${unperturbed.get(p.name) ?? 0} |`)
+	}
 }
 
 await main()

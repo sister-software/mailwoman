@@ -2,10 +2,15 @@
  * @copyright Sister Software
  */
 
+/* oxlint-disable mailwoman/prefer-home -- this module is the US arm of the cedex recipe, named so in its path, and its
+   sibling arms carry the other countries. A layout call would answer the same string for the only country that reaches
+   it. */
+
+import { sample } from "@mailwoman/core/random"
+
 import { makePoBoxPhrase } from "#recipes/po/box/cedex/phrases"
 import type { Rendered, USTuple } from "#recipes/po/box/cedex/types"
 import { US_LEADERS_COMMON, US_LEADERS_RARE, US_PMB_LEADERS, VENUES_EN } from "#recipes/po/box/cedex/vocabulary"
-import { pick } from "#synthesizers/utils"
 
 const US_FULL_CUTOFF = 0.4,
 	US_NO_POSTCODE_CUTOFF = 0.55,
@@ -30,7 +35,7 @@ export function renderPoBoxUs(random: () => number, tuple: USTuple): Rendered {
 	if (draw < US_BARE_CUTOFF) return { fmt: "bare", raw: phrase, components: { po_box: phrase } }
 
 	if (draw < US_VENUE_CUTOFF) {
-		const venue = pick(VENUES_EN, random)
+		const venue = sample(VENUES_EN, random)
 
 		return {
 			fmt: "venue",
