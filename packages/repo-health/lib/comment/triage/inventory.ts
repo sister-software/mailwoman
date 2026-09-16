@@ -10,6 +10,7 @@
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import type { RepoContext } from "#check"
 import { inventorySourceComments, type InventoryResult } from "#comment/triage/index"
@@ -29,13 +30,14 @@ export interface TriageInventoryReport extends InventoryResult {
 }
 
 /**
- * The tracked TypeScript a comment inventory reads: source only.
+ * The tracked TypeScript and Python source a comment inventory reads.
  *
  * `.d.ts` carries generated declarations and `out/` the compiled tree, so both would inventory comments this repository
  * did not write and cannot edit.
  */
 function isInventorySource(path: string): boolean {
-	if (!path.endsWith(".ts") && !path.endsWith(".tsx")) return false
+	const isPython = path.startsWith("corpus-python/") && path.endsWith(".py")
+	if (!isPython && !path.endsWith(".ts") && !path.endsWith(".tsx")) return false
 
 	if (path.endsWith(".d.ts")) return false
 
@@ -49,12 +51,21 @@ export async function runCommentInventory(
 	context: RepoContext,
 	databasePath: string = DEFAULT_TRIAGE_DATABASE
 ): Promise<TriageInventoryReport> {
-	const resolved = String(resolvePath(context.repoRoot, databasePath))
-	const files = context.trackedFiles.filter((path) => isInventorySource(path))
+	const resolved = resolvePath(context.repoRoot, databasePath)
+	const discovered = new Set(
+		(
+			await Globerator.from("**/*", {
+				cwd: context.repoRoot,
+				absolute: false,
+				throwIfDirectoryMissing: false,
+			}).toArray()
+		).filter((path) => path.endsWith(".ts") || path.endsWith(".tsx") || path.endsWith(".py"))
+	)
+	const files = context.trackedFiles.filter((path) => discovered.has(path) && isInventorySource(path))
 
 	await makeDirectories(dirname(resolved))
 
 	const result = await inventorySourceComments(resolved, context.repoRoot, files)
 
-	return { databasePath: resolved, files: files.length, ...result }
+	return { databasePath: resolved.toString(), files: files.length, ...result }
 }
