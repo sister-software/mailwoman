@@ -78,7 +78,8 @@ WITH us AS (
 		span_starts,
 		span_ends,
 		list_position(span_tags, 'region') AS i,
-		list_contains(span_tags, 'street') AS has_street
+		list_contains(span_tags, 'street') AS has_street,
+		span_tags[list_position(span_starts, list_min(span_starts))] AS first_tag
 	FROM read_parquet([${fileList}])
 	WHERE country = 'US'
 )
@@ -86,9 +87,10 @@ SELECT
 	source,
 	CASE WHEN i IS NULL THEN NULL ELSE substring(raw, span_starts[i] + 1, span_ends[i] - span_starts[i]) END AS region,
 	has_street,
+	first_tag,
 	count(*) AS n
 FROM us
-GROUP BY 1, 2, 3`
+GROUP BY 1, 2, 3, 4`
 
 const started = Date.now()
 const reader = await db.runAndReadAll(sql)
@@ -111,10 +113,14 @@ interface SourceComposition {
 const bySource = new Map<string, SourceComposition>()
 
 /**
- * Per region: rows, and how many of them carry a `street` span. The bare admin surface under test has no street in it,
- * so a region whose corpus mass is street-bearing has seen its region code mostly in company the probe does not offer.
+ * Per region: rows, how many carry a `street` span anywhere, and what tag OPENS the row.
+ *
+ * The opening tag is the one the trace points at. The bare admin surface writes the locality first, and a region whose
+ * rows open on a street has shown the model a street in the position the probe puts a locality in. The unconditioned
+ * street share does not separate the regions — 47 of 50 sit between 89% and 99.5% — because it counts a street anywhere
+ * in the row rather than in front.
  */
-const streetBearing = new Map<string, { rows: number; withStreet: number }>()
+const streetBearing = new Map<string, { rows: number; withStreet: number; openingTag: Map<string, number> }>()
 
 for (const row of reader.getRowObjects()) {
 	const source = String(row.source)
@@ -139,7 +145,7 @@ for (const row of reader.getRowObjects()) {
 	if (code) {
 		entry.byRegion.set(code, (entry.byRegion.get(code) ?? 0) + rows)
 
-		const shape = streetBearing.get(code) ?? { rows: 0, withStreet: 0 }
+		const shape = streetBearing.get(code) ?? { rows: 0, withStreet: 0, openingTag: new Map<string, number>() }
 
 		shape.rows += rows
 
@@ -147,6 +153,9 @@ for (const row of reader.getRowObjects()) {
 			shape.withStreet += rows
 		}
 
+		const opening = row.first_tag == null ? "none" : String(row.first_tag)
+
+		shape.openingTag.set(opening, (shape.openingTag.get(opening) ?? 0) + rows)
 		streetBearing.set(code, shape)
 	} else {
 		entry.unfolded.set(surface, (entry.unfolded.get(surface) ?? 0) + rows)
@@ -198,8 +207,8 @@ console.log(
 		`${pooledTotal.toLocaleString()} region-bearing US rows\n`
 )
 
-console.log(`| region | rows | share | carries a street |`)
-console.log(`| --- | --: | --: | --: |`)
+console.log(`| region | rows | share | carries a street | opens on a locality |`)
+console.log(`| --- | --: | --: | --: | --: |`)
 
 const ranked = [...pooled].toSorted((a, b) => b[1] - a[1])
 const detail = Number(values.detail)
@@ -209,7 +218,8 @@ for (const [code, n] of [...ranked.slice(0, detail), ...ranked.slice(-detail)]) 
 
 	console.log(
 		`| ${code} | ${n.toLocaleString()} | ${formatPercent(n, pooledTotal)} ` +
-			`| ${shape ? formatPercent(shape.withStreet, shape.rows) : "—"} |`
+			`| ${shape ? formatPercent(shape.withStreet, shape.rows) : "—"} ` +
+			`| ${shape ? formatPercent(shape.openingTag.get("locality") ?? 0, shape.rows) : "—"} |`
 	)
 }
 
@@ -225,7 +235,14 @@ if (values["out-json"]) {
 			files: mixture.files.length,
 			pooled: Object.fromEntries(ranked),
 			street_bearing: Object.fromEntries(
-				[...streetBearing].map(([code, shape]) => [code, { rows: shape.rows, with_street: shape.withStreet }])
+				[...streetBearing].map(([code, shape]) => [
+					code,
+					{
+						rows: shape.rows,
+						with_street: shape.withStreet,
+						opening_tag: Object.fromEntries([...shape.openingTag].toSorted((a, b) => b[1] - a[1])),
+					},
+				])
 			),
 			sources: sources.map((entry) => ({
 				source: entry.source,

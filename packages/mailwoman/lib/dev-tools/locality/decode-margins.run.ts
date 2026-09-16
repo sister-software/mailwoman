@@ -41,6 +41,14 @@ const { values } = parseArguments({
 		regions: { type: "string" },
 		"per-region": { type: "string", default: "40" },
 		country: { type: "string", default: "US" },
+		/**
+		 * Re-render each subject's region as this code, leaving its locality and postcode alone.
+		 */
+		"swap-region": { type: "string" },
+		/**
+		 * Re-render each subject's postcode as this literal, leaving its locality and region alone.
+		 */
+		"swap-postcode": { type: "string" },
 	},
 })
 
@@ -104,6 +112,11 @@ interface RegionMargins {
 	rawMargin: number
 	decodedMargin: number
 	priorsApplied: Map<string, number>
+	/**
+	 * What won at the first locality piece instead. A margin says how far the locality came behind; this says what it
+	 * came behind, which is the difference between a model that is unsure and one that has learned another reading.
+	 */
+	decodedAs: Map<string, number>
 	unlocated: number
 }
 
@@ -116,10 +129,19 @@ for (const [region, bucket] of [...byRegion].toSorted()) {
 		rawMargin: 0,
 		decodedMargin: 0,
 		priorsApplied: new Map(),
+		decodedAs: new Map(),
 		unlocated: 0,
 	}
 
-	for (const place of bucket) {
+	for (const subject of bucket) {
+		// A crossed pairing denotes no place, and nothing here claims one: the grade is the locality label's margin at
+		// the tokens the locality occupies, which is a reading of what the decode conditions on.
+		const place = {
+			...subject,
+			region: values["swap-region"] ?? subject.region,
+			postcode: values["swap-postcode"] ?? subject.postcode,
+		}
+
 		const input = renderAdmin(place)
 		// `caseCountry`, not `defaultCountry`: the first selects the weights overlay the classifier loads with, which is
 		// what a trace is about; the second is a resolver prior `diagnoseParse` never reaches.
@@ -150,7 +172,11 @@ for (const [region, bucket] of [...byRegion].toSorted()) {
 
 		const first = covering[0]!
 
-		if (isLocalityLabel(trace.labels[trace.path[first.index]!] ?? "")) {
+		const won = trace.labels[trace.path[first.index]!] ?? "?"
+
+		entry.decodedAs.set(won, (entry.decodedAs.get(won) ?? 0) + 1)
+
+		if (isLocalityLabel(won)) {
 			entry.decodedAsLocality++
 		}
 
@@ -175,22 +201,35 @@ for (const [region, bucket] of [...byRegion].toSorted()) {
 	results.set(region, entry)
 }
 
-console.log(`#2311 decode margins — ${values.eval}, ${results.size} region(s)\n`)
-console.log(`| region | rows | decoded as locality | raw margin | post-prior margin | priors that fired |`)
+const swaps: string[] = []
+
+if (values["swap-region"]) {
+	swaps.push(`region → ${values["swap-region"]}`)
+}
+
+if (values["swap-postcode"]) {
+	swaps.push(`postcode → ${values["swap-postcode"]}`)
+}
+
+const swapped = swaps.join(", ")
+
+console.log(`#2311 decode margins — ${values.eval}, ${results.size} region(s)${swapped ? `, ${swapped}` : ""}\n`)
+console.log(`| region | rows | decoded as locality | raw margin | post-prior margin | what won instead |`)
 console.log(`| --- | --: | --: | --: | --: | --- |`)
 
 for (const [region, entry] of [...results].toSorted(
 	(a, b) => b[1].decodedAsLocality / b[1].rows - a[1].decodedAsLocality / a[1].rows
 )) {
-	const priors = [...entry.priorsApplied]
+	const won = [...entry.decodedAs]
+		.filter(([label]) => !isLocalityLabel(label))
 		.toSorted((a, b) => b[1] - a[1])
-		.map(([kind, n]) => `${kind} ${n}`)
+		.map(([label, n]) => `${label} ${n}`)
 		.join(", ")
 
 	console.log(
 		`| ${region} | ${entry.rows} | ${formatPercent(entry.decodedAsLocality, entry.rows)} ` +
 			`| ${(entry.rawMargin / entry.rows).toFixed(3)} | ${(entry.decodedMargin / entry.rows).toFixed(3)} ` +
-			`| ${priors || "none"} |`
+			`| ${won || "—"} |`
 	)
 }
 
