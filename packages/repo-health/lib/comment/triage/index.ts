@@ -164,14 +164,19 @@ export async function pythonSourceComments(
 ): Promise<SourceComment[]> {
 	if (!files.length) return []
 	const helper = resolvePath(repoRoot, "corpus-python/scripts/comment_nodes.py")
+
 	const { stdout } = await runFile("python3", [helper, ...files.map((file) => resolvePath(repoRoot, file))], {
 		cwd: repoRoot.toString(),
 	})
+
 	const parsed = parseJSONStrict<Record<string, PythonCommentNode[]>>(stdout)
+
 	return Object.entries(parsed).flatMap(([absolutePath, nodes]) => {
 		const path = relative(repoRoot, absolutePath).toString()
+
 		return nodes.map((node) => {
 			const contentHash = digest(node.text)
+
 			return { ...node, id: digest(`${path}:${node.start}:${node.end}:${contentHash}`), path, contentHash }
 		})
 	})
@@ -250,11 +255,13 @@ export async function inventorySourceComments(
 	try {
 		const typescriptFiles = files.filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
 		const pythonFiles = files.filter((file) => file.endsWith(".py"))
+
 		const collected = [
 			...(
 				await Promise.all(
 					typescriptFiles.map(async (file) => {
 						const absolutePath = resolvePath(repoRoot, file)
+
 						return sourceComments(relative(repoRoot, absolutePath).toString(), await readLocalTextFile(absolutePath))
 					})
 				)
