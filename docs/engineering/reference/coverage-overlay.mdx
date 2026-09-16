@@ -32,18 +32,18 @@ The **global holes layer** is decoupled from the US rooftop pipeline (its own Du
 
 ## Code map
 
-| File                                                            | Role                                                                                                                |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `mailwoman/coverage-core.ts`                                    | The build pipeline (React-free): DuckDB H3 aggregation → NDJSON → `tippecanoe` → PMTiles. The fog model lives here. |
-| `mailwoman/commands/coverage/build.tsx`                         | `mailwoman coverage build` — thin Ink wrapper over `coverage-core`.                                                 |
-| `mailwoman/commands/tiles/publish.tsx`                          | `mailwoman tiles publish` — rclone upload of a PMTiles to an R2 bucket (multipart).                                 |
-| `cartographer/coverage/index.ts`                                | `CoverageTileSetID` (= `"coverage-v5"`), the two fog fill layers, fog color/opacity, `createCoverageSource`.        |
-| `scripts/build-importance.ts`                                   | Builds `place_importance` (Wikipedia importance + population fallback) — the holes-layer salience source.           |
-| `docs/src/pages/demo/index.tsx`                                 | Demo wiring — registers the coverage source + adds the default-off layers on map load.                              |
-| `docs/src/components/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                      |
-| `scripts/build-address-point-extract.ts`                        | Per-state situs address-point DB builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).       |
+| File                                                     | Role                                                                                                                                                       |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mailwoman/coverage/core.ts`                             | The build pipeline (React-free): DuckDB H3 aggregation → NDJSON → `tippecanoe` → PMTiles. The fog model lives here.                                        |
+| `mailwoman/commands/coverage/build.tsx`                  | `mailwoman coverage build` — thin Ink wrapper over `coverage/core.ts`.                                                                                     |
+| `mailwoman/commands/tiles/publish.tsx`                   | `mailwoman tiles publish` — rclone upload of a PMTiles to an R2 bucket (multipart).                                                                        |
+| `cartographer/coverage/index.ts`                         | `CoverageTileSetID` (= `"coverage-v5"`), the two fog fill layers, fog color/opacity, `createCoverageSource`.                                               |
+| `mailwoman/commands/gazetteer/importance.tsx`            | `mailwoman gazetteer importance` — builds `place_importance` (Wikipedia importance + population fallback), the holes-layer salience source.                |
+| `earth/runtime/use/geocoder-runtime.ts`                  | Map wiring — registers the coverage source + adds the default-off layers on map load. `docs/src/pages/demo/` is an `EarthRedirect` and carries none of it. |
+| `earth/panels/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                                                             |
+| `mailwoman/commands/situs/address-points.tsx`            | `mailwoman situs address-points` — per-state situs address-point DB builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).           |
 
-Source data (NOT in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `scripts/build-importance.ts`).
+Source data (NOT in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `mailwoman gazetteer importance`).
 
 ## Runbook: rebuild + republish
 
@@ -52,7 +52,7 @@ Source data (NOT in git): the per-state US rooftop databases `$MAILWOMAN_DATA_RO
 ```bash
 cp $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db \
    $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db
-npx tsx scripts/build-importance.ts --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db
+mailwoman gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db
 # Downloads Nominatim's wikimedia-importance.csv.gz (needs a browser User-Agent — it 403s curl's default).
 ```
 
@@ -91,12 +91,12 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 | State group         | Source                            | Notes                                                                                                                                                                                                                              |
 | ------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 48 states + DC + VI | Overture addresses `2026-05-20.0` | `build-address-point-extract.ts` (default).                                                                                                                                                                                        |
-| **HI**              | **OpenAddresses**                 | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `build-address-point-extract.ts --oa-csv <4 county CSVs>` → 348K rooftop points.                                                   |
+| 48 states + DC + VI | Overture addresses `2026-05-20.0` | `mailwoman situs address-points` (default).                                                                                                                                                                                        |
+| **HI**              | **OpenAddresses**                 | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `mailwoman situs address-points --oa-csv <4 county CSVs>` → 348K rooftop points.                                                   |
 | **NH**              | TIGER interpolation only          | No rooftop source exists — OA's only NH run is coordinate-only (0 usable of 610K), Overture absent. NH renders **street-level** (visibly a less-covered region — measured). Real NH rooftop points = **NH GRANIT** (not yet done). |
 | AK                  | _excluded_                        | Antimeridian: `h3_cell_to_boundary_wkt` emits unwrapped lon for Aleutian cells. Needs antimeridian splitting before inclusion.                                                                                                     |
 
-To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `build-address-point-extract.ts --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
+To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `mailwoman situs address-points --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
 
 ## Tuning knobs (`coverage build`)
 
@@ -126,7 +126,7 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 
 ## Gotchas (learned the hard way)
 
-- **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical _aggregating_ subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `coverage-core.ts` — don't undo it.)
+- **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical _aggregating_ subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `mailwoman/coverage/core.ts` — don't undo it.)
 - **`.gitignore` bare `coverage` rule** (the vitest report dir) matches any dir named `coverage` at any depth — it was silently swallowing `mailwoman/commands/coverage/` and `cartographer/coverage/`. Scoped `!`-negations are in `.gitignore`; keep them or the command + module vanish from git/npm-publish.
 - **Don't serve PMTiles client-side.** XYZ via the tile worker only.
 - **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale; it does NOT subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode IS coarse. Don't "finish" it to street level.
@@ -135,10 +135,10 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 
 1. **Close real holes with rooftop/postcode data.** The map now NAMES the gaps — biggest wins: UK/Ireland (Royal Mail isn't in open GeoNames; needs Code-Point Open or OA), and the Overture-EU address parquets already on disk (`…/overture/<rel>/addresses-<cc>.parquet`) → real EU **rooftop** databases (would upgrade EU from postcode-coarse to street-level + clear more holes).
 2. **NH rooftop points** via NH GRANIT — NH is street-level only today.
-3. **AK** — the antimeridian guard now DROPS wrapped hexes (so AK partial-renders if its state database is included); a proper fix splits the boundary at ±180 in `coverage-core.ts` instead of dropping.
-4. **Importance refresh cadence** — `place_importance` is built onto a WOF-DB copy; re-run `build-importance` when WOF or the Nominatim importance dump refreshes, then re-bake.
+3. **AK** — the antimeridian guard now DROPS wrapped hexes (so AK partial-renders if its state database is included); a proper fix splits the boundary at ±180 in `mailwoman/coverage/core.ts` instead of dropping.
+4. **Importance refresh cadence** — `place_importance` is built onto a WOF-DB copy; re-run `mailwoman gazetteer importance` when WOF or the Nominatim importance dump refreshes, then re-bake.
 5. **Browser perf** — the ~1 GiB / 59M-feature archive serves per-tile (fine in practice), but worth watching dense-metro z12 tile sizes if it feels slow.
 
 ## See also
 
-- [Data, locales, and coverage](../../concepts/data-locales-and-coverage.mdx) — the coverage-claims concept page this overlay makes visible on the demo map
+- [Data, locales, and coverage](../../records/site-2026-08/concepts/data-locales-and-coverage.mdx) — the coverage-claims concept page this overlay makes visible on the demo map

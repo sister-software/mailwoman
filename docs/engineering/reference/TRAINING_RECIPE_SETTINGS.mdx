@@ -73,7 +73,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | 0.05    | v0.3.0, v0.4.0, v0.5.0 threads v3 + bisects | v0.3.0/v0.4.0: stable. v0.5.0: diverged. |
 | **0.0** | v0.5.0 CE-only, v0.5.1                      | Stable. Best results.                    |
 
-**How we got to 0.0.** The gradient-norm ratio probe (2026-05-24) revealed CRF gradient dominates CE by 8-20× at the divergence inflection point. Even at weight=0.05, the effective optimization mix was ~1:0.8 CE:CRF. Below loss 0.41, CE and CRF develop opposing curvature — the CRF pulls the model off its CE-preferred basin. See [dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.mdx).
+**How we got to 0.0.** The gradient-norm ratio probe (2026-05-24) revealed CRF gradient dominates CE by 8-20× at the divergence inflection point. Even at weight=0.05, the effective optimization mix was ~1:0.8 CE:CRF. Below loss 0.41, CE and CRF develop opposing curvature — the CRF pulls the model off its CE-preferred basin. See [dual-loss curvature conflict](../../records/site-2026-08/concepts/dual-loss-curvature-conflict.mdx).
 
 **What 0.05 did.** Shipped v0.3.0 and v0.4.0 successfully at h256 with those corpora. Failed at h384 and with the v0.4.0 corpus. The destabilization is recipe-dependent, not a universal property of 0.05 — it interacted with the larger model and/or the new corpus.
 
@@ -212,6 +212,6 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe s
 ## See also
 
 - [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx) — the smoke discipline that catches recipe failures
-- [Dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.mdx) — why crf_loss_weight=0 works
-- [v0.5.0 — as shipped](../v0-5-0-shipped.mdx) — the thread table
-- [What the eval numbers mean](../../understanding/our-approach/what-the-eval-numbers-mean.mdx) — plain-English interpretation
+- [Dual-loss curvature conflict](../../records/site-2026-08/concepts/dual-loss-curvature-conflict.mdx) — why crf_loss_weight=0 works
+- [v0.5.0 — as shipped](../../records/plan/v0-5-0-shipped.mdx) — the thread table
+- [What the eval numbers mean](../../records/site-2026-08/understanding/our-approach/what-the-eval-numbers-mean.mdx) — plain-English interpretation

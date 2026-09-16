@@ -1,7 +1,7 @@
 # PIX1 whole-edge — bar verdicts (2026-08-04)
 
-Grades the four bars in
-[`docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md`](../../superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md).
+Grades the four bars pre-registered for the PIX1 whole-edge arm. Those bars were never committed as their own
+document, so this record and the four verdicts below are the whole of it — the four bars are restated in place.
 Defect record: [`2026-08-04-pix1-parent-assumption.md`](./2026-08-04-pix1-parent-assumption.md).
 
 Model: shipped en-US weights, `model-v401-base-step-060000-int8.onnx` (md5 `c968c24a`). Gazetteer: the

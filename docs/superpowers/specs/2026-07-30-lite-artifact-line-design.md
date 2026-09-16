@@ -1,7 +1,7 @@
 # The Lite artifact line — free channel vs subscriber channel (design)
 
 2026-07-30. Operator + Claude. GTM item D1. Companion to D2, the public
-[database products catalog](../../articles/licensing/data-products.md), which is the artifact
+[database products catalog](../../records/site-2026-08/licensing/data-products.md), which is the artifact
 inventory this policy is applied to. The pricing page shipped first (PRs #1353 / #1355) and
 already publishes the OEM band this doc's registration mechanic hangs off.
 
@@ -308,12 +308,12 @@ for doing 1–4 first regardless of when counsel appears.
 
 ## See also
 
-- [Database products catalog](../../articles/licensing/data-products.md) — the artifact
+- [Database products catalog](../../records/site-2026-08/licensing/data-products.md) — the artifact
   inventory this policy applies to (D2).
-- [Pricing](../../articles/licensing/pricing.mdx) — the published tiers and the OEM band.
-- [Data licensing & provenance](../../articles/licensing/data-provenance.md) — the per-source
+- [Pricing](../../records/site-2026-08/licensing/pricing.mdx) — the published tiers and the OEM band.
+- [Data licensing & provenance](../../records/site-2026-08/licensing/data-provenance.md) — the per-source
   license table and the ODbL boundary this document's §5 rule is derived from.
-- [Spatial-layer contract](../../articles/plan/reference/layer-contract.mdx) — the
+- [Spatial-layer contract](../../engineering/reference/layer-contract.mdx) — the
   shipped/build-local/private tiers.
 - `docs/superpowers/plans/counsel-dossier.md` — where every PENDING COUNSEL marker above is
   filed.

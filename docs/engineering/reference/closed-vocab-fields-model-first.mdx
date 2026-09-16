@@ -27,7 +27,7 @@ That doc carries the source capability tiers and the positive-evidence-only rule
    as the [postcode anchor](./QUERY_SHAPE.mdx). `codex`'s matchers (`matchCountry`,
    `matchPOBox`, the cedex pattern) flip role from _override_ to _feature-source_.
 3. **Starved closed-vocab fields are covered by training**, the same negative-space
-   recipe that fixed `unit` — see [negative space](../../concepts/negative-space-coverage.mdx).
+   recipe that fixed `unit` — see [negative space](../../records/site-2026-08/concepts/negative-space-coverage.mdx).
 
 ## Why not a deterministic overlay — the reasoning
 
@@ -43,7 +43,7 @@ country is the _canonical_ job of a context-sensitive tagger.
 with **zero homographs**, against the crippled (badly-trained) model. The homograph case
 — the one that matters — is exactly where a flat lookup _cannot_ win without a hand-coded
 guard, and that guard is the growing-exception-list smell the project rejects
-([provenance-first](../../concepts/corpus-poisoning-vulnerability.mdx)). The
+([provenance-first](../../records/site-2026-08/concepts/corpus-poisoning-vulnerability.mdx)). The
 overlay buys perfect precision only on the cases that were never hard.
 
 **It contradicts a principle we already committed to.** The postcode-anchor work

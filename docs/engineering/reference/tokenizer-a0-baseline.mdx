@@ -5,7 +5,7 @@ title: Tokenizer A0 — baseline
 
 # Tokenizer A0 — baseline
 
-The v0.5.0 plan ([`PHASE_8 §A`](../phases/PHASE_8_v0_5_0_fresh_slate.mdx)) splits the tokenizer retrain into two steps:
+The v0.5.0 plan ([`PHASE_8 §A`](../../records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx)) splits the tokenizer retrain into two steps:
 
 - **A0** trains on `corpus-v0.3.0` (the existing en-US + fr-FR corpus, no transliterations) using the new SentencePiece harness. Its purpose is to validate the harness and measure a byte-fallback **baseline** before the new synthetic data lands.
 - **A1** retrains on `corpus-v0.4.0` (= v0.3.0 + Thread B kryptonite + Thread B2 transliteration). Its purpose is to hit the plan's `< 5%` byte-fallback target on non-Latin scripts.
@@ -104,7 +104,7 @@ A0's `model_card.json` is the contract for every future tokenizer. It carries:
 
 ## See also
 
-- [PHASE_8 §A](../phases/PHASE_8_v0_5_0_fresh_slate.mdx#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan's tokenizer scope
-- [Tokenization](../../concepts/tokenization.mdx) — what SentencePiece does and why byte-fallback matters
-- [v0.5.0 — as shipped](../v0-5-0-shipped.mdx) — where A0 fits in the six-thread bundle
+- [PHASE_8 §A](../../records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan's tokenizer scope
+- [Tokenization](../../records/site-2026-08/concepts/tokenization.mdx) — what SentencePiece does and why byte-fallback matters
+- [v0.5.0 — as shipped](../../records/plan/v0-5-0-shipped.mdx) — where A0 fits in the six-thread bundle
 - [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx) — how the corpus A1 will train on is being assembled

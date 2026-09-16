@@ -48,7 +48,7 @@ never as a post-parse verdict. Measured grounding: the balanced country extract 
 `country` from 0 to alive at P=100 / over-fire=0 (data alone), and the remaining
 recall gap is exactly the long-tail the clue channel exists for. See
 [closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx)
-and the new [gazetteer-anchor rung](../understanding/our-approach/the-knowledge-ladder.mdx)
+and the new [gazetteer-anchor rung](../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx)
 in the knowledge ladder.
 
 **2. Canonicalize for synonymy, disambiguate by stage, never drop a span.** The parser
@@ -57,7 +57,7 @@ _referent_ with geographic context; every span survives the parse — classified
 explicitly `unknown` — each with a canonical value. The lossless typed decomposition
 is a deliverable in its own right (record linkage, dataset matching), not a
 by-product of geocoding. See
-[synonymy and homonymy](../concepts/synonymy-and-homonymy.mdx).
+[synonymy and homonymy](../site-2026-08/concepts/synonymy-and-homonymy.mdx).
 
 **3. Soft priors, not hard masks.** Positional masks and user hints (focus country,
 focus point) re-enter the system as _features_ the model or resolver can overrule —

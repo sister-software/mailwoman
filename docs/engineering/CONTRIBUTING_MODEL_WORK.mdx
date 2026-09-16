@@ -8,9 +8,9 @@ description: Which evals decide a change, the change-shape taxonomy, and how to 
 
 You want to improve a tag, add a locale, or change anything that touches the model. This page is
 the procedure. The concepts behind it live elsewhere
-([What Mailwoman is](../concepts/what-mailwoman-is.mdx),
-[Eval discipline](../concepts/eval-discipline.mdx),
-[Negative space](../concepts/negative-space-coverage.mdx)); this is the part you follow with your
+([What Mailwoman is](../records/site-2026-08/concepts/what-mailwoman-is.mdx),
+[Eval discipline](../records/site-2026-08/concepts/eval-discipline.mdx),
+[Negative space](../records/site-2026-08/concepts/negative-space-coverage.mdx)); this is the part you follow with your
 hands.
 
 ## The iron rules
@@ -24,7 +24,7 @@ hands.
 3. **Compare fp32-to-fp32.** Int8 is a release artifact, not an experiment lens.
 4. **One variable per run.** Prove one change solo, then consolidate. Stacking corpus recipes in one 20k run
    dilutes every tag (measured, twice — see the cumulative-dilution note in the
-   [parity scorecard](../evals/competitive-parity/parity-scorecard-2026-06-09.md)).
+   [parity scorecard](../records/evals/competitive-parity/parity-scorecard-2026-06-09.md)).
 5. **Recompile before eval.** Eval harnesses load compiled `core/out` — a stale build makes your
    core change a silent no-op.
 6. **The D-rule (adopted 2026-07-26, ROAD_TO_MAILWOMAN_V8_1_0 §2/§5): no default-on mechanism ships
@@ -132,7 +132,7 @@ Run for _every_ candidate, regardless of what you changed (this is what
 
 The input-robustness check is the metamorphic layer of the Gauntlet — label-preserving
 perturbations that must not move the assembled coordinate. See
-[Input robustness](../concepts/input-robustness.mdx) for the absorption layers behind it and the
+[Input robustness](../records/site-2026-08/concepts/input-robustness.mdx) for the absorption layers behind it and the
 coverage matrix.
 
 The ship-config channels are part of the contract: a gaz-trained model is graded with

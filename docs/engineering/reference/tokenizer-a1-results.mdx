@@ -5,7 +5,7 @@ title: Tokenizer A1 — corpus-v0.4.0 retrain results
 
 # Tokenizer A1 — corpus-v0.4.0 retrain results
 
-A1 is the v0.5.0 plan ([`PHASE_8 §A`](../phases/PHASE_8_v0_5_0_fresh_slate.mdx)) tokenizer retrain on `corpus-v0.4.0`. Same harness as [A0](./tokenizer-a0-baseline.mdx); the only intended differences are the corpus (v0.4.0 = v0.3.0 + Thread B kryptonite + Thread B2 transliteration) and the country list (widened to cover Thread B2's target locales).
+A1 is the v0.5.0 plan ([`PHASE_8 §A`](../../records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx)) tokenizer retrain on `corpus-v0.4.0`. Same harness as [A0](./tokenizer-a0-baseline.mdx); the only intended differences are the corpus (v0.4.0 = v0.3.0 + Thread B kryptonite + Thread B2 transliteration) and the country list (widened to cover Thread B2's target locales).
 
 Trained 2026-05-24, single CPU host, 2.09 hours wall-clock (vs A0's 1.04h — wider country list + larger sample set). SentencePiece configuration unchanged from A0; sampling widened.
 
@@ -81,6 +81,6 @@ This document was produced by an autonomous AI agent operating in a Mailwoman pl
 ## See also
 
 - [Tokenizer A0 — baseline](./tokenizer-a0-baseline.mdx) — what A1 is measured against
-- [PHASE_8 §A](../phases/PHASE_8_v0_5_0_fresh_slate.mdx#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan
+- [PHASE_8 §A](../../records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan
 - [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx) — how the corpus A1 trained on was assembled
 - Harness fix that unblocked the run: commit `51b77d5` (`harness: read MANIFEST.json for train extract resolution`)

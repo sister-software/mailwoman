@@ -9,7 +9,7 @@
  *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check/docs-structure.ts`
  *   from the repo root).
  *
- *   Three checks:
+ *   Four checks:
  *
  *   1. Frontmatter validity — two modes, chosen by the `--strict` CLI flag:
  *        - Strict (`--strict`) — THE LIVE MODE. Both CI (`.github/workflows/docs-build.yml`) and
@@ -26,8 +26,10 @@
  *          script at that tree remains a way to check them; delete it once nothing does.
  *   2. Exact duplicate `title:` frontmatter across the published site.
  *   3. Orphan pages — published docs absent from every sidebar in `docs/sidebars.ts`.
+ *   4. Relative links (`./`, `../`) that resolve to nothing, over the WHOLE docs tree rather than the
+ *      published pages — see `../docs/links.ts` for why that scope differs from the other three.
  *
- *   Checks 2 and 3 are unconditional — the `--strict` flag affects check 1 only. Known-intentional
+ *   Checks 2, 3 and 4 are unconditional — the `--strict` flag affects check 1 only. Known-intentional
  *   findings live in `docs-structure-allowlist.ts`, each with a reason. The evals/retrospectives
  *   trees are a delegated workstream and are skipped by the frontmatter check (both modes) and by
  *   the legacy `role:` requirement (see `isDelegatedWorkstream`).
@@ -42,6 +44,7 @@ import { parseArgs } from "node:util"
 import sidebars from "../../sidebars.ts"
 import { validatePage } from "../docs/frontmatter/contract.ts"
 import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "../docs/frontmatter/index.ts"
+import { collectMarkdownFiles, findBrokenLinks } from "../docs/links.ts"
 import { allowedDuplicateTitles, allowedOrphans } from "../docs/structure-allowlist.ts"
 
 const { values: flags } = parseArgs({
@@ -288,6 +291,21 @@ function checkOrphans(pages: DocPage[]): string[] {
 
 //#endregion
 
+//#region Check 4 — relative links resolve
+
+/**
+ * Unlike the three checks above, this one reads the WHOLE docs tree rather than the published pages: 62 of the 109
+ * broken links this check was written for sit under `docs/engineering`, which `collectDocPages` never walks and
+ * Docusaurus never builds, so nothing had ever resolved a path there.
+ */
+async function checkRelativeLinks(): Promise<string[]> {
+	const broken = await findBrokenLinks(await collectMarkdownFiles())
+
+	return broken.map(({ file, line, target }) => `${file}:${line}: relative link \`${target}\` resolves to nothing`)
+}
+
+//#endregion
+
 const pages = await collectDocPages()
 const published = pages.filter((page) => !isExcludedFromBuild(page))
 
@@ -298,6 +316,7 @@ const failuresByCheck: [name: string, failures: string[]][] = [
 	],
 	["Duplicate titles", checkDuplicateTitles(published)],
 	["Orphan pages", checkOrphans(published)],
+	["Relative links", await checkRelativeLinks()],
 ]
 
 let failureCount = 0
