@@ -25,16 +25,16 @@
  *       node packages/mailwoman/lib/dev-tools/us/locality-reachability.run.ts --weights-cache <dir> --out-json <path>
  */
 
+import { US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { type NameKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { sql } from "kysely"
 import { JSONSpliterator } from "spliterator"
 
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
@@ -80,9 +80,13 @@ for (const row of rows) {
 	const region = row.expected?.region?.trim()
 	const postcode = row.expected?.postcode?.trim()
 
-	if (!locality || !region || !postcode || row.lat == null || row.lon == null || byCity.has(locality)) continue
+	// Keyed by name AND region: 30 states hold a Springfield, and a name-only key would collapse them into one row and
+	// silently shrink the panel. Reading a 5,703-row source, that key dropped 639 rows.
+	const id = `${locality}|${region}`
 
-	byCity.set(locality, { locality, region, postcode, lat: row.lat, lon: row.lon })
+	if (!locality || !region || !postcode || row.lat == null || row.lon == null || byCity.has(id)) continue
+
+	byCity.set(id, { locality, region, postcode, lat: row.lat, lon: row.lon })
 }
 
 const panel = values.limit ? [...byCity.values()].slice(0, Number(values.limit)) : [...byCity.values()]
@@ -119,8 +123,8 @@ async function goldPlace(city: PanelCity): Promise<number | null> {
 	const candidates = await db
 		.selectFrom("candidate")
 		.select(["spr_id", "latitude", "longitude"])
-		.where("name_key", "=", sql.lit(key))
-		.where("placetype_id", "=", sql.lit(LOCALITY_PLACETYPE_ID))
+		.where("name_key", "=", key)
+		.where("placetype_id", "=", LOCALITY_PLACETYPE_ID)
 		.execute()
 
 	let best: { id: number; km: number } | null = null
@@ -141,15 +145,30 @@ async function goldPlace(city: PanelCity): Promise<number | null> {
 /**
  * Whether `sprID` carries a row under `key` — the reachability question, asked of the artifact the run probed.
  */
-async function carriesKey(sprID: number, key: string): Promise<boolean> {
+async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 	const row = await db
 		.selectFrom("candidate")
 		.select("spr_id")
-		.where("spr_id", "=", sql.lit(sprID))
-		.where("name_key", "=", sql.lit(key))
+		.where("spr_id", "=", sprID)
+		.where("name_key", "=", key)
 		.executeTakeFirst()
 
 	return row !== undefined
+}
+
+/**
+ * The city's last word, when that word is a USPS suffix — the collision #2308 measures, carried on each outcome so a
+ * verdict can be read against it rather than joined by hand afterwards.
+ */
+function suffixTail(locality: string): string | undefined {
+	const last = locality
+		.trim()
+		.split(/\s+/)
+		.at(-1)
+		?.toLowerCase()
+		.replaceAll(/[^a-z]/g, "")
+
+	return last && US_STREET_SUFFIX_LOOKUP.has(last) ? last : undefined
 }
 
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
@@ -162,6 +181,8 @@ const outcomes: Array<{
 	goldID: number | null
 	answered: string | null
 	verdict: Verdict
+	suffixTail: string | null
+	words: number
 }> = []
 
 for (const city of panel) {
@@ -188,7 +209,17 @@ for (const city of panel) {
 		verdict = "unreachable"
 	}
 
-	outcomes.push({ city: city.locality, input, askedValue, askedKey, goldID, answered, verdict })
+	outcomes.push({
+		city: city.locality,
+		input,
+		askedValue,
+		askedKey,
+		goldID,
+		answered,
+		verdict,
+		suffixTail: suffixTail(city.locality) ?? null,
+		words: city.locality.trim().split(/\s+/).length,
+	})
 }
 
 const tally = new Map<Verdict, number>()
@@ -214,6 +245,63 @@ console.log(
 		` ${tally.get("reachable_not_picked") ?? 0} were reachable and lost the ranking, and` +
 		` ${tally.get("not_asked") ?? 0} never produced a locality span for the backend to answer.`
 )
+
+const shapes = [
+	["ends in a suffix word", outcomes.filter((row) => row.suffixTail !== null)],
+	["other multi-word", outcomes.filter((row) => row.suffixTail === null && row.words > 1)],
+	["single word", outcomes.filter((row) => row.suffixTail === null && row.words === 1)],
+] as const
+
+console.log(`\nby name shape:\n\n| shape | rows | matched | not_asked | unreachable | mis-ranked |`)
+console.log(`| --- | --: | --: | --: | --: | --: |`)
+
+for (const [name, bucket] of shapes) {
+	const count = (verdict: Verdict) => bucket.filter((row) => row.verdict === verdict).length
+
+	console.log(
+		`| ${name} | ${bucket.length} | ${formatPercent(count("matched"), bucket.length)} |` +
+			` ${count("not_asked")} | ${count("unreachable")} | ${count("reachable_not_picked")} |`
+	)
+}
+
+/**
+ * Rows below this are not reported per word: a rate over fewer cities than this reads the draw rather than the word,
+ * and the 581-row panel this replaced had 24 of its 34 tail words at one or two rows.
+ */
+const MIN_ROWS_PER_WORD = 10
+
+const byWord = new Map<string, typeof outcomes>()
+
+for (const row of outcomes) {
+	if (row.suffixTail === null) continue
+
+	const bucket = byWord.get(row.suffixTail) ?? []
+
+	bucket.push(row)
+	byWord.set(row.suffixTail, bucket)
+}
+
+const readable = [...byWord].filter(([, wordRows]) => wordRows.length >= MIN_ROWS_PER_WORD)
+
+console.log(
+	`\nper tail word, ${readable.length} words with >= ${MIN_ROWS_PER_WORD} rows` +
+		` (${byWord.size - readable.length} words below that are omitted, not zero):\n`
+)
+console.log(`| word | rows | matched | not_asked | unreachable |`)
+console.log(`| --- | --: | --: | --: | --: |`)
+
+for (const [word, wordRows] of readable.toSorted(
+	(a, b) =>
+		a[1].filter((row) => row.verdict === "matched").length / a[1].length -
+		b[1].filter((row) => row.verdict === "matched").length / b[1].length
+)) {
+	const count = (verdict: Verdict) => wordRows.filter((row) => row.verdict === verdict).length
+
+	console.log(
+		`| ${word} | ${wordRows.length} | ${formatPercent(count("matched"), wordRows.length)} |` +
+			` ${count("not_asked")} | ${count("unreachable")} |`
+	)
+}
 
 for (const row of missed.filter((r) => r.verdict === "unreachable").slice(0, 12)) {
 	console.log(`  UNREACHABLE ${row.input} → asked ${stringifyJSON(row.askedKey)}, gold ${row.goldID} lacks that key`)
