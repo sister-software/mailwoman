@@ -15,11 +15,17 @@
  *   STDOUT-vs-STDERR is the discriminator that makes these assertions worth anything. An unhandled rejection also
  *   exits 1 and also prints the message — but node's default handler writes it to STDERR. A message on stdout with an
  *   empty stderr is proof it went through Ink's `<Text color="red">` frame instead.
+ *
+ *   BOTH STREAMS ARE STRIPPED OF ANSI. `childEnv()` passes the parent's environment through, so the child's chalk
+ *   level follows whatever `FORCE_COLOR` the terminal set. `expect(stdout).not.toMatch(/\s+at\s/)` is the assertion
+ *   that makes this matter: on a coloured frame an escape sequence can sit between the whitespace and the `at`, and a
+ *   negative assertion then passes because the pattern missed rather than because the stack is absent.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -47,11 +53,11 @@ async function runHarness(thrown: string): Promise<{ code: number | undefined; s
 			env: childEnv(),
 		})
 
-		return { code: 0, stdout: result.stdout, stderr: result.stderr }
+		return { code: 0, stdout: stripAnsi(result.stdout), stderr: stripAnsi(result.stderr) }
 	} catch (thrownError) {
 		const error = thrownError as Error & { stdout?: string; stderr?: string; code?: number }
 
-		return { code: error.code, stdout: error.stdout ?? "", stderr: error.stderr ?? "" }
+		return { code: error.code, stdout: stripAnsi(error.stdout ?? ""), stderr: stripAnsi(error.stderr ?? "") }
 	}
 }
 

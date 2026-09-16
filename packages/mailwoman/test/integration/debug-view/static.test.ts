@@ -12,12 +12,19 @@
  *   The `--debug-size` floor, empty-input, and `--debug` format-guard tests below all run UNCONDITIONALLY (no guard):
  *   each rejection fires before `runStaticDebug` ever calls `createGeocodeSession`, so none of the three needs
  *   weights or a database.
+ *
+ *   EVERY FRAME IS STRIPPED OF ANSI BEFORE IT IS MATCHED. The frame has two outputs and the assertions below are about
+ *   only one of them: chalk emits a dim/reset pair around each evidence label, so `/system\s+us/` cannot match a
+ *   coloured frame — `\s+` does not span the reset sequence sitting between the label and its value. chalk's level
+ *   follows `FORCE_COLOR`, which several terminals and `tmux`/`direnv` setups set and nothing here clears, so a test
+ *   that matches the raw capture passes or fails by the environment it happens to run in.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
 import { $public } from "mailwoman/env"
@@ -65,7 +72,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
 		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "100x30" })
 
-		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
+		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
 		// The resolved tier line — street-level when the database is present, admin centroid otherwise; either is a
 		// legitimate resolve for this environment, so the assertion accepts both.
@@ -82,7 +89,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("the captured frame carries the dev-mode evidence rows and result sections from REAL pipeline data", async () => {
 		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "140x40" })
 
-		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
+		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
 		// The evidence rows, each with a value only the live classifier can produce: the conventions system and how
 		// it was chosen, the locale head's own axis, the SentencePiece stream, the channels as fed, the decode.
