@@ -1,6 +1,6 @@
 """Streaming parquet → encoded tensors data pipeline for Phase 2 training.
 
-Reads ``corpus-v0.1.0`` parquet slices via PyArrow's row-group iterator (lazy, memory-stable),
+Reads ``corpus-v0.1.0`` parquet files via PyArrow's row-group iterator (lazy, memory-stable),
 filters / weights rows per the YAML config, encodes each row through the SentencePiece
 tokenizer with realigned BIO labels, and yields PyTorch ``(input_ids, attention_mask, labels)``
 tensors in a batched ``DataLoader``-compatible shape.
@@ -15,19 +15,19 @@ Why PyArrow + a generator and not ``datasets.load_dataset('parquet', streaming=T
 
 Per Phase 2 §2:
 
-- Lazy + streaming + memory-stable: row-group iteration, never reads a full slice.
+- Lazy + streaming + memory-stable: row-group iteration, never reads a full parquet file.
 - Stratified sampling: ``country_weights`` are renormalized probabilities; rows are accepted
   with probability proportional to their country's weight relative to the max.
 - Length filter: rows whose SP tokenization exceeds ``max_length`` are dropped.
 - Tokenizer alignment verification: re-tokenize a sample and assert the stored ``tokens``
   match (see ``verify_tokenizer_alignment``).
 
-v0.5.0 char-offset labels (#519): slices whose schema carries
+v0.5.0 char-offset labels (#519): parquet files whose schema carries
 ``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
 augmentations (which re-target it; see ``augment.py``) and the #511 relabel pass (char
 arithmetic; see ``relabel.py``) into ``encode_row``, which builds the per-char label array FROM
-the spans. Frozen pre-v0.5.0 slices carry no span columns and ride the legacy token path. A
-slice with a partial column set, or a null span value in a span-schema slice, is corrupt and
+the spans. Frozen pre-v0.5.0 files carry no span columns and ride the legacy token path. A
+file with a partial column set, or a null span value in a span-schema file, is corrupt and
 raises loudly — never a silent fallback.
 
 The modules, in the order a row travels them:
@@ -42,7 +42,7 @@ The modules, in the order a row travels them:
 - `anchors.py` — the postcode→anchor lookup reader.
 - `verify.py` — the corpus/tokenizer compatibility check a run makes before it starts.
 
-EVERY STAGE DRAWS FROM ONE `random.Random`. Slice order, row-group order, row order, the
+EVERY STAGE DRAWS FROM ONE `random.Random`. File order, row-group order, row order, the
 country-acceptance test, the source multinomial, the shuffle buffer and each augmentation share
 the caller's stream, so adding, dropping or reordering a draw anywhere reshuffles the corpus a
 seeded run trains on. `tests/mailwoman_train/data/test_loader_split_parity.py` pins the emitted
@@ -57,10 +57,10 @@ from __future__ import annotations
 from ...labels import IGNORE_INDEX
 from .anchors import load_anchor_lookup
 from .batch import collate, iter_batches
-from .corpus_files import _LEGACY_SLICES_KEY as _LEGACY_SLICES_KEY
-from .corpus_files import _slice_first_source as _slice_first_source
-from .corpus_files import _slice_paths as _slice_paths
-from .corpus_files import manifest_slices, source_row_counts
+from .corpus_files import _PRE_RENAME_MANIFEST_KEY as _PRE_RENAME_MANIFEST_KEY
+from .corpus_files import _first_source as _first_source
+from .corpus_files import _parquet_paths as _parquet_paths
+from .corpus_files import manifest_files, source_row_counts
 from .encode import iter_encoded
 from .example import EncodedExample
 from .mixture import _raw_row_stream as _raw_row_stream
@@ -75,7 +75,7 @@ __all__ = [
     "iter_encoded",
     "iter_rows",
     "load_anchor_lookup",
-    "manifest_slices",
+    "manifest_files",
     "source_row_counts",
     "verify_tokenizer_alignment",
 ]

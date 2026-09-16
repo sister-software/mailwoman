@@ -11,7 +11,7 @@
 #      runtime? (The v383 gap: a truncated census log hid a source drawing zero rows; the #1467
 #      root cause was a slot that never saw gradient. Zero painted GB rows here = the defect
 #      repeating, silently.)
-#   3. Does `synth-gb` at dose 6.0 under the corrected 1.0 dependent_locality class weight skew the
+#   3. Does `synth-gb` at weight 6.0 under the corrected 1.0 dependent_locality class weight skew the
 #      dep-loc emission? Read per-tag F1 — dep-loc firing on US/FR rows is the v4.1.x failure mode
 #      this probe exists to catch BEFORE the spend.
 #   4. Does `synth-sub-venue` at 12.0 move `unit` without bleeding into `venue`? Same per-tag read.
@@ -27,9 +27,9 @@
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2-2k.yaml --resume none
 data:
-  # v0.17.0-batch = v0.15.0-venue + TWO overlay slices (manifest chain assembled 2026-08-05):
+  # v0.17.0-batch = v0.15.0-venue + TWO overlay parquet files (manifest chain assembled 2026-08-05):
   #   part-sub-venue.parquet  120,000 rows  source=synth-sub-venue  (#1486 — designator x per-region identifier)
-  #   part-gb.parquet         800,000 rows  source=synth-gb         (v0.14.0-gb's slice, HM Land Registry PPD OGL v3.0)
+  #   part-gb.parquet         800,000 rows  source=synth-gb         (v0.14.0-gb's recipe output, HM Land Registry PPD OGL v3.0)
   corpus_dir: /data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
@@ -93,16 +93,16 @@ data:
     synth-fragment: 6.0
     synth-fr-fragment: 12.0
     synth-no-fragment: 12.0
-    # ---- DECISIONS RESOLVED 2026-08-05 (both slices ride the v0.17.0-batch overlay above) ----
+    # ---- DECISIONS RESOLVED 2026-08-05 (both sources ride the v0.17.0-batch overlay above) ----
     # synth-gb at 6.0: operator ruled "do it all to make the most of the cost"; the measured risk
     # (32.8% B-dependent_locality mass skewing the tag, seen in the v4.1.x arc UNDER the 0.3 class
     # weight this run corrects to 1.0) is exactly what the 2k probe reads before the 60k spend —
-    # per-tag dep-loc emission + the US/FR stability boards are the kill switch. Dose 6.0 matches
-    # the other single-country synth slices, not the 12.0 saturation tier.
+    # per-tag dep-loc emission + the US/FR stability boards are the kill switch. Weight 6.0 matches
+    # the other single-country synth sources, not the 12.0 saturation tier.
     synth-gb: 6.0
-    # Sub-venue slice (#1486): 120k rows (84k pos / 36k neg), dose 12.0 per the slice report —
-    # `unit` is a starved tag and the slice's negatives (rejection-ledger confounds) carry the
-    # identifier-required shape rule, so saturation dosing is deliberate.
+    # The `synth-sub-venue` source (#1486): 120k rows (84k pos / 36k neg), weight 12.0 per the recipe report —
+    # `unit` is a starved tag and the recipe output's negatives (rejection-ledger confounds) carry the
+    # identifier-required shape rule, so the saturation weight is deliberate.
     synth-sub-venue: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

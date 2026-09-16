@@ -10,7 +10,7 @@
 #                  0.05 / 161.05 = 0.0003104626, or 310.46 pulls per 1,000,000-row epoch;
 #   receipt        require at least 250 emitted rows matching the source, VE, and component order.
 #
-# The persisted one-epoch CPU audit is the dose measurement because augmentation can emit extra rows.
+# The persisted one-epoch CPU audit is the exposure measurement because augmentation can emit extra rows.
 # Training must not start unless that audit passes and its report is bound to this config and manifest.
 # Grade the candidate against v5.0 seed 42 on the 649-row board plus the promotion battery. The four
 # ve_city_postcode_trailing_state rows are the target metric; tier-1 regressions remain disqualifying.

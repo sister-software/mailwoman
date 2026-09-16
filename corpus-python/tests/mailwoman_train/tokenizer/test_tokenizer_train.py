@@ -6,7 +6,7 @@ postcode-shape preservation invariant when UDS literals are present in the SP mo
 
 The full ``train_tokenizer`` end-to-end (with parquet input) is exercised by hand from the
 CLI; covering it here would require committing a parquet fixture or training on the real
-30 GB slice tree, neither of which is appropriate for fast unit tests.
+30 GB parquet tree, neither of which is appropriate for fast unit tests.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import sentencepiece as spm  # type: ignore[import-not-found]
 from mailwoman_train.tokenizer.train import (
     DEFAULT_USER_DEFINED_SYMBOLS,
     detect_script,
-    iter_train_slices,
+    iter_train_files,
     load_fixture_lines,
     measure_byte_fallback,
     parse_user_defined_symbols_file,
@@ -236,19 +236,19 @@ def test_measure_byte_fallback_empty_input(tmp_path: Path):
     assert r["overall"]["rate"] == 0.0
 
 
-def test_iter_train_slices_prefers_manifest(tmp_path: Path):
+def test_iter_train_files_prefers_manifest(tmp_path: Path):
     """MANIFEST.json slices[] is the source of truth — absolute paths win over glob."""
-    # The manifest references a slice in a sibling dir that is *not* under <corpus>/train/,
+    # The manifest references a parquet file in a sibling dir that is *not* under <corpus>/train/,
     # which is exactly the cross-version adapter-addition case (corpus-v0.4.0 → v0.3.0 base
     # paths). The glob would never reach it.
     sibling = tmp_path / "elsewhere"
     sibling.mkdir()
-    cross_version_slice = sibling / "part-0000.parquet"
-    cross_version_slice.write_bytes(b"")  # contents unused; only path resolution is tested
+    cross_version_file = sibling / "part-0000.parquet"
+    cross_version_file.write_bytes(b"")  # contents unused; only path resolution is tested
 
     corpus = tmp_path / "v0.4.0"
     (corpus / "train").mkdir(parents=True)
-    # A local slice that the glob fallback *would* return; the manifest should beat it.
+    # A local file that the glob fallback *would* return; the manifest should beat it.
     local_only = corpus / "train" / "part-local.parquet"
     local_only.write_bytes(b"")
 
@@ -258,18 +258,18 @@ def test_iter_train_slices_prefers_manifest(tmp_path: Path):
             {
                 "corpus_version": "0.4.0",
                 "slices": [
-                    {"split": "train", "path": str(cross_version_slice)},
+                    {"split": "train", "path": str(cross_version_file)},
                     {"split": "test", "path": str(corpus / "test" / "part-0000.parquet")},
                 ],
             }
         ),
         encoding="utf-8",
     )
-    out = iter_train_slices(corpus)
-    assert out == [cross_version_slice]
+    out = iter_train_files(corpus)
+    assert out == [cross_version_file]
 
 
-def test_iter_train_slices_falls_back_to_glob_when_manifest_has_no_train_split(tmp_path: Path):
+def test_iter_train_files_falls_back_to_glob_when_manifest_has_no_train_split(tmp_path: Path):
     """A manifest with no train-split entries should not preempt the glob fallback."""
     corpus = tmp_path / "v0.4.0"
     (corpus / "train").mkdir(parents=True)
@@ -279,10 +279,10 @@ def test_iter_train_slices_falls_back_to_glob_when_manifest_has_no_train_split(t
         json.dumps({"slices": [{"split": "test", "path": "/nowhere/test.parquet"}]}),
         encoding="utf-8",
     )
-    assert iter_train_slices(corpus) == [local]
+    assert iter_train_files(corpus) == [local]
 
 
-def test_iter_train_slices_falls_back_to_glob_when_manifest_missing(tmp_path: Path):
+def test_iter_train_files_falls_back_to_glob_when_manifest_missing(tmp_path: Path):
     """Corpora without a MANIFEST (ad-hoc fixtures) keep working via the glob fallback."""
     corpus = tmp_path / "ad-hoc"
     (corpus / "train").mkdir(parents=True)
@@ -290,15 +290,15 @@ def test_iter_train_slices_falls_back_to_glob_when_manifest_missing(tmp_path: Pa
     b = corpus / "train" / "part-0001.parquet"
     a.write_bytes(b"")
     b.write_bytes(b"")
-    assert iter_train_slices(corpus) == [a, b]
+    assert iter_train_files(corpus) == [a, b]
 
 
-def test_iter_train_slices_raises_when_neither_source_yields_slices(tmp_path: Path):
-    """No manifest, no train/ slices → caller-visible FileNotFoundError, not silent empty."""
+def test_iter_train_files_raises_when_neither_source_yields_files(tmp_path: Path):
+    """No manifest, no train/ parquet files → caller-visible FileNotFoundError, not silent empty."""
     corpus = tmp_path / "empty"
     (corpus / "train").mkdir(parents=True)
     with pytest.raises(FileNotFoundError):
-        iter_train_slices(corpus)
+        iter_train_files(corpus)
 
 
 def test_committed_multi_script_fixture_loads_and_has_balanced_scripts():

@@ -3,8 +3,8 @@
 # ONE VARIABLE against v4.11.0: max_steps 4000 -> 1000. Same corpus (v0.27.0), source, weight, brake,
 # seed. The null control is what suggests it.
 #
-# v4.13.0 fine-tuned the BASE corpus with no added slice for 4,000 steps and still graded 5 improved /
-# 10 regressed. Ten rows are the price of the fine-tune itself, charged before any slice is read, and
+# v4.13.0 fine-tuned the BASE corpus with no added source for 4,000 steps and still graded 5 improved /
+# 10 regressed. Ten rows are the price of the fine-tune itself, charged before any added source is read, and
 # they recur in every treated arm:
 #
 #   run            regressed   fine-tune tax   attributable to the data
@@ -26,7 +26,7 @@
 #      gb-op2-four-seasons-cjk — must hold, since those are the data's doing and not the tax.
 #
 # If this is also net-negative, steps is not the change either and the fine-tune route is closed on
-# measurement rather than on judgement: the tax exceeds what an additive slice can buy back at every
+# measurement rather than on judgement: the tax exceeds what an additive source can buy back at every
 # distance tried.
 
 data:
@@ -169,9 +169,9 @@ data:
     VU: 1.0
     ZA: 1.0
   source_weights:
-    # DOSE-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # REPS-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
-    # a 10.5% share. Parity with the bare trailing-region slices, measured at 7.7 and 5.2 reps/row.
+    # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
     synth-house-venue: 2.0
     overture-latam: 6.0
@@ -199,7 +199,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # dose held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

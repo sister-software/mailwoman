@@ -2,7 +2,7 @@
 
 A corpus builder is run by hand, months apart, and nothing in the suite imports it. So a module of
 this shape can break at IMPORT time and the whole suite stays green — which is what happened when
-`build_fragment_slice.py` became `corpora/fragment.py`: it read its country-surface table through
+the fragment builder moved from the package root to `corpora/fragment/`: it read its country-surface table through
 `Path(__file__).parent / "data"`, the move put one more directory between the two, and the failure
 surfaced only when someone ran the builder.
 

@@ -66,7 +66,7 @@ def render_row(
     country: bool = False,
     short_region: str | None = None,
 ) -> dict[str, Any]:
-    """Render one LABEL row in one register, returning the slice record (spans, legacy tokens, provenance)."""
+    """Render one LABEL row in one register, returning the corpus record (spans, legacy tokens, provenance)."""
     renderer = RowRenderer()
     sep = "" if register == "unspaced" else " "
 

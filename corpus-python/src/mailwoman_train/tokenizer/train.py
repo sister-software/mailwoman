@@ -1,7 +1,7 @@
 """SentencePiece tokenizer training harness (v0.5.0 Thread A).
 
 A reproducible trainer that produces a versioned tokenizer + model card from a corpus
-slice tree. Used to train ``tokenizer-v0.5.0-a0`` on ``corpus-v0.3.0`` and (once Thread B
+parquet tree. Used to train ``tokenizer-v0.5.0-a0`` on ``corpus-v0.3.0`` and (once Thread B
 lands) ``tokenizer-v0.5.0-a1`` on ``corpus-v0.4.0`` via the same code path.
 
 The runtime wrapper lives in ``mailwoman_train.tokenizer`` — that's the SP encoder + label
@@ -74,38 +74,38 @@ class TrainerConfig:
     extra_sp_kwargs: dict[str, Any] = field(default_factory=dict)
 
 
-def iter_train_slices(corpus_dir: Path) -> list[Path]:
-    """Resolve the train-split slice paths for ``corpus_dir``.
+def iter_train_files(corpus_dir: Path) -> list[Path]:
+    """Resolve the train-split parquet paths for ``corpus_dir``.
 
     Source of truth is ``MANIFEST.json``'s ``slices[]`` (each entry carries an absolute
     ``path``), which supports adapter-addition corpora composed across versions — e.g.
-    ``corpus-v0.4.0`` is logically ``corpus-v0.3.0`` base slices + new kryptonite +
-    transliteration slices, with the v0.3.0 slices left on disk under their original
+    ``corpus-v0.4.0`` is logically ``corpus-v0.3.0``'s base parquet files + the new kryptonite +
+    transliteration recipe outputs, with the v0.3.0 files left on disk under their original
     versioned dir rather than re-emitted. Globbing ``<corpus>/train/`` would silently
-    miss those cross-version base slices.
+    miss those cross-version base files.
 
     Falls back to a glob over ``<corpus>/train/`` for backward-compat with corpora that
     don't carry a manifest (e.g. ad-hoc test fixtures). Raises ``FileNotFoundError`` if
-    neither source yields slices.
+    neither source yields a parquet file.
     """
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        slices = [Path(s["path"]) for s in data.get("slices", []) if s.get("split") == "train"]
-        if slices:
-            return sorted(slices)
+        files = [Path(s["path"]) for s in data.get("slices", []) if s.get("split") == "train"]
+        if files:
+            return sorted(files)
     train_dir = corpus_dir / "train"
-    slices = sorted(train_dir.glob("*.parquet"))
-    if not slices:
-        raise FileNotFoundError(f"no parquet slices via MANIFEST.json or {train_dir}")
-    return slices
+    files = sorted(train_dir.glob("*.parquet"))
+    if not files:
+        raise FileNotFoundError(f"no parquet files via MANIFEST.json or {train_dir}")
+    return files
 
 
 def iter_raws_by_country(corpus_dir: Path, country: str) -> Iterable[str]:
-    """Yield ``raw`` strings from every train slice whose row matches ``country``."""
-    for slice in iter_train_slices(corpus_dir):
+    """Yield ``raw`` strings from every train parquet file whose row matches ``country``."""
+    for path in iter_train_files(corpus_dir):
         # Column-projected read keeps RSS low.
-        t = pq.read_table(slice, columns=["raw", "country"])
+        t = pq.read_table(path, columns=["raw", "country"])
         raws = t["raw"]
         countries = t["country"]
         for i in range(t.num_rows):
@@ -149,26 +149,26 @@ def mine_postcode_literals(
     *,
     top_k: int,
     countries: Sequence[str] | None = None,
-    max_slices: int | None = None,
+    max_files: int | None = None,
 ) -> list[str]:
     """Return the top-``top_k`` postcode literals in the train split by frequency.
 
-    Reads each slice's ``labels`` column and pulls out tokens whose BIO label endswith
+    Reads each parquet file's ``labels`` column and pulls out tokens whose BIO label endswith
     ``-postcode``. The unigram trainer will not always keep these whole on its own; adding
     them as UDS guarantees one piece per common postcode literal.
 
     ``countries``: when given, only count postcodes from rows whose ``country`` matches.
-    ``max_slices``: for unit tests; in production leave ``None`` to scan everything.
+    ``max_files``: for unit tests; in production leave ``None`` to scan everything.
     """
     counter: Counter[str] = Counter()
-    slices = iter_train_slices(corpus_dir)
-    if max_slices is not None:
-        slices = slices[:max_slices]
-    for slice in slices:
+    files = iter_train_files(corpus_dir)
+    if max_files is not None:
+        files = files[:max_files]
+    for path in files:
         cols = ["tokens", "labels"]
         if countries is not None:
             cols.append("country")
-        t = pq.read_table(slice, columns=cols)
+        t = pq.read_table(path, columns=cols)
         tokens_col = t["tokens"]
         labels_col = t["labels"]
         countries_col = t["country"] if countries is not None else None
@@ -408,7 +408,7 @@ __all__ = [
     "build_model_card",
     "detect_script",
     "iter_raws_by_country",
-    "iter_train_slices",
+    "iter_train_files",
     "load_fixture_lines",
     "measure_byte_fallback",
     "mine_postcode_literals",

@@ -127,7 +127,7 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   augment_glue_prob: 0.25
-  augment_ordinal_prob: 0.3 # The num-ordinal invariant, native from step 0 (v3.24's proven dose).
+  augment_ordinal_prob: 0.3 # The num-ordinal invariant, native from step 0 (v3.24's proven value).
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json

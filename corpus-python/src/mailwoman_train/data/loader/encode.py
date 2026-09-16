@@ -2,7 +2,7 @@
 
 Everything a channel needs is loaded ONCE here, before the row loop, and passed to every
 `encode_row` call. The two paths are exclusive: the char path skips SentencePiece entirely,
-requires span-schema slices, and refuses a configured channel, because the channels project per
+requires span-schema parquet files, and refuses a configured channel, because the channels project per
 SentencePiece piece and have no per-unit alignment yet.
 """
 
@@ -125,13 +125,13 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
     """One row on the CharCNN path: per-unit char windows, labels straight from the span triple.
 
     Span-schema is REQUIRED here — the per-char label array comes from the span triple with no
-    whitespace-token quantization, and a token-only frozen slice has no honest char-level labels to
+    whitespace-token quantization, and a token-only frozen parquet file has no honest char-level labels to
     offer. Loud failure, never a silent fallback (#519).
     """
     starts, ends, tags = row.get("span_starts"), row.get("span_ends"), row.get("span_tags")
     if starts is None or ends is None or tags is None:
         raise ValueError(
-            f"data.char_mode={char.mode} requires span-schema slices (v0.5.0 #519); "
+            f"data.char_mode={char.mode} requires span-schema parquet files (v0.5.0 #519); "
             f"got a token-only row: {row['raw'][:60]!r}"
         )
     raw = row["raw"]
@@ -241,7 +241,7 @@ def iter_encoded(
             country_lexicon=lexicons.country,
             street_type_lexicon=lexicons.street_type,
             locality_surface_lexicon=lexicons.locality_surface,
-            # v0.5.0 char-offset labels (#519): rows from a span-schema slice train FROM the
+            # v0.5.0 char-offset labels (#519): rows from a span-schema parquet file train FROM the
             # spans (encode_row builds the per-char label array from them; the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
             span_starts=row.get("span_starts"),

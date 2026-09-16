@@ -118,7 +118,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 # an output-head expansion) AND a same-commit extension of the JS ``COMPONENT_TAGS`` union in
 # ``core/types/component.ts`` (the decoder maps model indices → labels through it — they must move
 # together). Until then ACTIVE stays STAGE3 and these tags collapse to ``O`` at load, so defining them
-# now is inert for live models and lets the parser slice emit them.
+# now is inert for live models and lets the secondary-address recipe emit them.
 STAGE4_FINE_TAGS: Final[tuple[str, ...]] = (
     "unit_designator",
     "level_designator",
@@ -195,7 +195,7 @@ STAGE3_CN_BIO_LABELS: Final[tuple[str, ...]] = (
 
 #
 # The JP seven and the CN one behind ONE classifier, so a single from-scratch character model can
-# train on the 2M-row JP slice and the CN organizational-unit slice together. STAGE3 keeps its ids,
+# train on the 2M-row JP corpus and the CN organizational-unit rows together. STAGE3 keeps its ids,
 # the JP tags keep theirs (this is ``stage3-jp`` with ``locality_unit`` appended), so a JP-only
 # consumer reading a CJK checkpoint sees every JP label at the id it already knows.
 CJK_FINE_TAGS: Final[tuple[str, ...]] = JP_FINE_TAGS + CN_FINE_TAGS

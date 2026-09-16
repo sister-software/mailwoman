@@ -16,11 +16,10 @@ with the class rules translated to German surface reality:
 - `bare-street`, `bare-locality` (expect_no_street — the negative class is the point).
 
 SPLIT DISCIPLINE (recorded, weaker than FR's): the training feed's only DE street data is the
-synth-german slice (OA Berlin + Sachsen), so the board excludes state codes BE and SN entirely —
+`synth-german` source (OA Berlin + Sachsen), so the board excludes state codes BE and SN entirely —
 GEOGRAPHIC disjointness. Ubiquitous street vocabulary (Hauptstraße) still repeats across Länder;
 the board therefore measures class behavior over shared vocabulary with held-out compositions,
-not FR-grade surface disjointness. The reserved-surface list is still emitted for future slice
-builders.
+not FR-grade surface disjointness. The reserved-surface list is still emitted for future recipes.
 
 Usage:
   python -m mailwoman_train.countries.de.fragment_board [--per-class 400] [--seed 42] \

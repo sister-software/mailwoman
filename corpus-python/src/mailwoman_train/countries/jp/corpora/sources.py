@@ -38,7 +38,7 @@ class KenAllIndex:
 
     The join needs one correction that is worth the measurement it took: Overture writes the ōaza
     prefix (``字崎枝``, ``大字上田``) and KEN_ALL does not. Exact town match alone hits **17.8%**
-    of rows; retrying with a leading ``字``/``大字`` stripped takes it to **89.6%** (200k-row slice,
+    of rows; retrying with a leading ``字``/``大字`` stripped takes it to **89.6%** (200k-row probe corpus,
     2026-08-04). The remaining 10.4% falls back to the municipality catch-all, and nothing misses.
     """
 

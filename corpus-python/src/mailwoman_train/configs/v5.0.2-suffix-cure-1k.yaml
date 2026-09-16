@@ -146,7 +146,7 @@ data:
     VU: 1.0
     ZA: 1.0
   # The ONE variable against v5.0.1-null: synth-suffix-boundary raised 4x over the base recipe.
-  # A first dose proposal — verify the loader's preflight share print, and read the 2026-08-23
+  # A first weight proposal — verify the loader's preflight share print, and read the 2026-08-23
   # trailing-region arc before raising it further.
   source_weights:
     synth-house-venue: 2.0

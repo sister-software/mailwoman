@@ -35,7 +35,7 @@ Typical volume-side run (see ``train_remote.py::audit_epoch_mixture``)::
 
 from __future__ import annotations
 
-from .cli import DOSE_OUTLIER_MULTIPLE, main, print_summary, run
+from .cli import REPS_OUTLIER_MULTIPLE, main, print_summary, run
 from .passes import (
     AUGMENT_KEYS,
     DrawPass,
@@ -59,7 +59,7 @@ from .receipts import (
 
 __all__ = [
     "AUGMENT_KEYS",
-    "DOSE_OUTLIER_MULTIPLE",
+    "REPS_OUTLIER_MULTIPLE",
     "CorpusReceiptError",
     "DrawPass",
     "EmittedPass",

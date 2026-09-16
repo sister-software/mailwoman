@@ -1,11 +1,11 @@
 # v5.4.0 PROBE — 2,000 steps, the target-family mixture at the full run's SHARES
 #
 # The pre-run probe for `v5.4.0-target-families-60k.yaml`. It answers three questions and no others:
-# does the v0.29.0 overlay resolve all 719 slices on the volume, do the six new sources actually
+# does the v0.29.0 overlay resolve all 719 parquet files on the volume, do the six new sources actually
 # draw, and does the run start and step. It is NOT a treatment measurement — 2,000 steps cannot move
 # a family, and any board read off this checkpoint is noise.
 #
-# The doses are the 60k config's divided by thirty, because the probe is thirty times shorter and the
+# The reps targets are the 60k config's divided by thirty, because the probe is thirty times shorter and the
 # quantity worth holding constant is the SHARE of the mixture, not the exposure per row. 2,000 steps
 # x batch 128 = 256,000 samples; the six sources demand 0.03333*142083 + 0.03333*80081 + 0.26667*4551
 # + 0.26667*4944 + 0.26667*5279 + 0.01667*153965 = 13,911 draws, 5.4% of the probe, which is the same
@@ -191,7 +191,7 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-  source_doses:
+  source_reps:
     synth-sg-register: 0.03333
     synth-pk-register: 0.03333
     synth-bd-register: 0.26667

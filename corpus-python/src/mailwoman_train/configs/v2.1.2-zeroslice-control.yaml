@@ -1,5 +1,5 @@
-# v2.1.2 ZERO-SLICE CONTROL (#901, DeepSeek-consulted): the attribution probe — init_from the
-# shipped double-splice base, v0.9.4 corpus VERBATIM (no family slices). If SE/SI/BE/DK dip with
+# v2.1.2 NO-ADDED-SOURCE CONTROL (#901, DeepSeek-consulted; the v2.1.2-zeroslice-control run): the attribution probe — init_from the
+# shipped double-splice base, v0.9.4 corpus VERBATIM (no family sources). If SE/SI/BE/DK dip with
 # row-identity overlap to the family-probe casualties, ANY fine-tune of the surgery base is the
 # mechanism (-> embedding-freeze next); if stable, the family data is convicted (-> drop-CZ next).
 # 2k PROBE variant of v2.1.0-boundary-family — diagnostic-before-fix. Bars in check-v193/RESULTS.md.
@@ -14,7 +14,7 @@
 # no optimizer state). Probe 2k FIRST; the probe check covers EVERY graded locale at reduced n
 # (the run-1 lesson). Pre-registration in check-v193/RESULTS.md before any grade.
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
+  # v0.9.4 overlay = v0.9.3a3's 694 parquet files VERBATIM (re-rooted to /data) + the 1 fr-bare-street parquet file.
   corpus_dir: /data/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street
   tokenizer_dir: /data/models/tokenizer/v0.7.1-nsplice
   max_length: 128
@@ -42,7 +42,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street slice.
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -66,7 +66,7 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street slice. 6.0 = targeted-fix precedent.
+    # #251 NEW: the bare-no-postcode FR street source. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

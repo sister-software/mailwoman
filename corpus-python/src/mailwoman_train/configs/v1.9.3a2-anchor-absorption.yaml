@@ -22,17 +22,17 @@
 #     NOTE (architecture correction to the consult): locale is SELF-CONDITIONED — the model INFERS locale
 #     from the pooled rep + FiLM-modulates (model.py); there is NO gold locale INPUT to drop. So the
 #     consult's "locale dropout" is inapplicable (no channel to mask); the locale-crutch risk is handled
-#     by the locale-AMBIGUOUS-TEXT counter-aug slice (weak country signal -> decision rests on local
-#     tokens), NOT a misleading-locale-tag slice (which would corrupt the aux head's target).
-#  4. source_weights += counter-aug slice (synth-anchor-absorption, weight 6.0 = targeted-fix precedent):
-#     6 slices (H-adversarial 30 / P-congruent 20 / P-incongruent[anchor-adversarial] 15 /
+#     by the locale-AMBIGUOUS-TEXT counter-augmentation stratum (weak country signal -> decision rests on local
+#     tokens), NOT a misleading-locale-tag stratum (which would corrupt the aux head's target).
+#  4. source_weights += the counter-augmentation source (synth-anchor-absorption, weight 6.0 = targeted-fix precedent):
+#     6 strata (H-adversarial 30 / P-congruent 20 / P-incongruent[anchor-adversarial] 15 /
 #     anchor-false-positive 10 / locale-ambiguous-text 15 / standard 10). Minority floor: CASE-P >=35%.
 #
-# CHECK (the $20 cap sits behind this 2k-step probe): 4 held-out slices (scripts/eval/anchor-absorption-
-# probe.sh) graded vs v1.9.2: SLICE-H (US leading-5-digit house# recall RECOVERS toward no-override
-# ceiling), SLICE-P (DE/Nordic leading postcode coord HOLDS, the German lift), SLICE-ROBUST-DROP (anchor
-# forced unknown -> still right from tokens), SLICE-ROBUST-MISLEAD (anchor forced wrong -> follows TEXT).
-# Checks set RELATIVE to the measured v1.9.2 baseline on each slice (not DeepSeek's absolute %; trust
+# CHECK (the $20 cap sits behind this 2k-step probe): 4 held-out eval sets (scripts/eval/anchor-absorption-
+# probe.sh) graded vs v1.9.2: H (US leading-5-digit house# recall RECOVERS toward no-override
+# ceiling), P (DE/Nordic leading postcode coord HOLDS, the German lift), ROBUST-DROP (anchor
+# forced unknown -> still right from tokens), ROBUST-MISLEAD (anchor forced wrong -> follows TEXT).
+# Checks set RELATIVE to the measured v1.9.2 baseline on each eval set (not DeepSeek's absolute %; trust
 # structure, test numbers). Early-kill @1k: train_loss not O(1) decreasing OR ROBUST-MISLEAD still
 # heavily anchor-following. RESUME from v192 ckpt (grow a capability, NOT init_from). CRF CE-only.
 # conventions-loss-mask OFF. NOT promoted without operator GO + the canary.
@@ -41,8 +41,8 @@ data:
   # PROBE A0 (this config): v192's corpus VERBATIM — anchor_paint_mode is a LOAD-TIME transform
   # (encode_row paints on shape, not the parquet), so the WHERE fix needs NO new data / NO rebuild. The
   # existing US corpus already carries real 5-digit house numbers; shaped-painting fires the anchor on
-  # them at train (gold=house_number) = the override signal. Probe A1 (if A0 under-moves SLICE-H) swaps
-  # corpus_dir to a rebuilt overlay that ADDS the synth-anchor-absorption slice to amplify the signal.
+  # them at train (gold=house_number) = the override signal. Probe A1 (if A0 under-moves eval set H) swaps
+  # corpus_dir to a rebuilt overlay that ADDS the synth-anchor-absorption recipe output to amplify the signal.
   corpus_dir: /data/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
@@ -70,7 +70,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.2 + the one new counter-augmentation slice.
+  source_weights: # VERBATIM from v1.9.2 + the one new counter-augmentation source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -93,8 +93,8 @@ data:
     synth-country: 2.0
     overture: 3.0
     gnaf: 6.0
-    # PROBE A1 ONLY (not A0): the counter-augmentation slice (6 slices, see header) — added by the
-    # rebuilt overlay corpus iff A0 under-moves SLICE-H. 6.0 = the targeted-fix precedent
+    # PROBE A1 ONLY (not A0): the counter-augmentation source (6 strata, see header) — added by the
+    # rebuilt overlay corpus iff A0 under-moves eval set H. 6.0 = the targeted-fix precedent
     # (synth-german/synth-fr-admin-split/gnaf all 6.0). For A0 this line stays commented out.
     synth-anchor-absorption: 6.0
   train_rows_per_epoch: 1000000

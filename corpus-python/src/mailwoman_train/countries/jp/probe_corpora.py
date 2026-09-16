@@ -1,4 +1,4 @@
-"""Build the v8 JP Leg-1 probe slice from Overture-JP (the CJK execution plan, task: probe corpus).
+"""Build the v8 JP Leg-1 probe corpus from Overture-JP (the CJK execution plan, task: probe corpus).
 
 Renders ~200k native space-free JP rows from the on-disk Overture 2026-06-17.0 addresses-jp
 parquet (19.59M points, MLIT lineage) into a #519 span-triple corpus the char-mode data loader
@@ -136,7 +136,7 @@ def render_row(pref: str, muni: str, street: str | None, number: str | None, pos
     if number:
         put("house_number", number)
 
-    # Legacy token columns (unused by the char path, required by the slice schema): whitespace
+    # Legacy token columns (unused by the char path, required by the corpus schema): whitespace
     # tokens with each token labeled by its first char's span tag — honest at the token grain.
     tokens: list[str] = []
     labels: list[str] = []

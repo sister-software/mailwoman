@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sample balanced US/FR `raw` strings from a corpus-vX.Y.Z parquet train split.
 
-Streams every train slice once, materializes a per-country reservoir of `raw`
+Streams every train parquet file once, materializes a per-country reservoir of `raw`
 strings, then writes the concatenated sample (shuffled) to stdout or `--output`.
 
 Used to feed `train_tokenizer.py`; not part of any production loop.
@@ -39,10 +39,10 @@ def reservoir_sample(it: Iterable[str], k: int, rng: random.Random) -> list[str]
 
 
 def iter_raws(corpus_dir: Path, country: str) -> Iterator[str]:
-    """Yield `raw` strings from every train slice whose row matches `country`."""
-    for slice in sorted((corpus_dir / "train").glob("*.parquet")):
-        # Column-projected read keeps RSS low even on 1M-row slices.
-        t = pq.read_table(slice, columns=["raw", "country"])
+    """Yield `raw` strings from every train parquet file whose row matches `country`."""
+    for path in sorted((corpus_dir / "train").glob("*.parquet")):
+        # Column-projected read keeps RSS low even on 1M-row files.
+        t = pq.read_table(path, columns=["raw", "country"])
         raws = t["raw"]
         countries = t["country"]
         for i in range(t.num_rows):

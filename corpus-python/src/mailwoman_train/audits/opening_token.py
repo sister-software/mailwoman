@@ -42,9 +42,9 @@ from pathlib import Path
 from typing import Any
 
 from ..config import load_config
-from ..data.dose import resolve_config_doses
 from ..data.emit import EmitPolicy, emit_row
 from ..data.loader import _raw_row_stream
+from ..data.source_reps import resolve_config_reps
 
 
 def _digits(token: str) -> bool:
@@ -207,7 +207,7 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     """Load a training config, count both levels over one epoch, print the table and return the report."""
     cfg = load_config(config_path)
     corpus_dir = Path(cfg.data.corpus_dir)
-    resolve_config_doses(cfg, corpus_dir)
+    resolve_config_reps(cfg, corpus_dir)
 
     # Raise rather than fall back to a default epoch length: a census counted over a different number
     # of rows than the audit reports is not comparable with it, and nothing downstream would say so.

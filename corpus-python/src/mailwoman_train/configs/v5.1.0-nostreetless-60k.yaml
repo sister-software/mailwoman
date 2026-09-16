@@ -14,12 +14,12 @@
 # TWO variables moved between the shipped model and v5.0.0 — the corpus (v0.19.0 -> v0.27.0) AND the
 # admission set (25 -> 134) — so neither is attributable from that run alone. This isolates the
 # second. The street-less rows are 2.23% of the admitted pool (US share 73.13% -> 71.50%), which is
-# a SMALL dose for the damage observed; the hypothesis is that a consistent street-less label
-# distribution teaches early street termination, not that the dose is large.
+# a SMALL exposure for the damage observed; the hypothesis is that a consistent street-less label
+# distribution teaches early street termination, not that the exposure is large.
 #
 # READ THE RESULT AS AN ANSWER EITHER WAY. If the FR/GB/DE regressions clear, admission is the
 # cause and this is the ship candidate. If they persist, the admission hypothesis is FALSIFIED and
-# the corpus change is the remaining suspect — do not re-run this with a different dose.
+# the corpus change is the remaining suspect — do not re-run this with a different exposure.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl

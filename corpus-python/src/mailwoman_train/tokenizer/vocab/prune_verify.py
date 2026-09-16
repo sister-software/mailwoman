@@ -34,23 +34,23 @@ from ...paths import data_root_path
 
 
 def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, seed: int) -> list[str]:
-    """Fresh random sample across slices: pick slices round-robin, one random batch each."""
+    """Fresh random sample across parquet files: pick files round-robin, one random batch each."""
     import pyarrow.parquet as pq
 
     manifest = json.loads(Path(manifest_path).read_text())
-    slices = [s["path"].replace(remap[0], remap[1], 1) for s in manifest["slices"] if s["split"] == "train"]
+    files = [s["path"].replace(remap[0], remap[1], 1) for s in manifest["slices"] if s["split"] == "train"]
     rng = random.Random(seed)
-    rng.shuffle(slices)
+    rng.shuffle(files)
     rows: list[str] = []
-    per_slice = max(1, n // len(slices) + 1)
+    per_file = max(1, n // len(files) + 1)
 
-    for slice in slices:
-        pf = pq.ParquetFile(slice)
+    for path in files:
+        pf = pq.ParquetFile(path)
         group = rng.randrange(pf.num_row_groups)
         table = pf.read_row_group(group, columns=["raw"])
         raws = table.column(0).to_pylist()
         rng.shuffle(raws)
-        rows.extend(raws[:per_slice])
+        rows.extend(raws[:per_file])
 
         if len(rows) >= n:
             break

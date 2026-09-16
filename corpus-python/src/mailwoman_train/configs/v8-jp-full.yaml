@@ -1,4 +1,4 @@
-# === v8-jp-full — CJK Phase 3/4: the full JP char model on the 2M-row stage3-jp slice. ===
+# === v8-jp-full — CJK Phase 3/4: the full JP char model on the 2M-row stage3-jp corpus. ===
 #
 # The recipe the Leg-1 PASS unlocked. Leg 1 (v8-jp-probe, 200k rows, STAGE3 33-label head) scored
 # coordinate-acceptability 0.9925 against the pre-registered >= 0.70 check (verdict on #1176,
@@ -79,7 +79,7 @@
 #
 # Launch (the operator runs this — it is recorded here, not executed by tooling):
 #   cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-full.yaml --resume auto
-# Prerequisite: the slice must be on the Modal volume — see the `jp_full` row in launch/corpora.py.
+# Prerequisite: the corpus must be on the Modal volume — see the `jp_full` row in launch/corpora.py.
 
 data:
   corpus_dir: /data/corpus/versioned/v8-jp-full-2026-08-04
@@ -91,7 +91,7 @@ data:
     JP: 1.0
   # See the watch-items note above: this filter would drop every row in this corpus.
   coarse_filter: false
-  # The slice's val split is exactly 20,000 rows — take all of it (the probe took 4,096 of 4,000).
+  # The corpus's val split is exactly 20,000 rows — take all of it (the probe took 4,096 of 4,000).
   val_rows: 20000
   # The JP 47-label head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
   label_set: stage3-jp

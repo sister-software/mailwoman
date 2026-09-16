@@ -1,4 +1,4 @@
-"""The two passes that turn eligible Overture-TW rows into a slice.
+"""The two passes that turn eligible Overture-TW rows into a corpus.
 
 Pass 1 MEASURES: it counts eligible rows per 縣市, sums each district's coordinates and lists the
 agencies, and it draws nothing. Pass 2 SELECTS under the quotas pass 1 set. Both stream the same
@@ -237,7 +237,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(selection: Selection) -> set[str]:
-    """Violations RAISE; a slice that fails one is not a slice. Returns the board's 鄉鎮市區."""
+    """Violations RAISE; a corpus that fails one is not a corpus. Returns the board's 鄉鎮市區."""
     pool_units = {normalize_text(f"{row[0]}|{row[1]}") for row in selection.train} | {
         normalize_text(f"{row[0]}|{row[1]}") for row in selection.val
     }
@@ -260,7 +260,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     out_dir = Path(args.out_dir)
     if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
         raise SystemExit(
-            f"{out_dir} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
+            f"{out_dir} exists and is non-empty — pass --force to overwrite (a built corpus is a read-only artifact)"
         )
 
     splits = write_splits(out_dir, args, selection, encoder)

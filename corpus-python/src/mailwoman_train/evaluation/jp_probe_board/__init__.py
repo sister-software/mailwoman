@@ -23,7 +23,7 @@ PRE-REGISTERED DEFINITION — written before any board inference was run (the ba
 
 --- Phase-3 additions (2026-08-05). The check above is UNCHANGED; both additions are diagnostic. ---
 
-**Per-register acceptability.** The full JP slice (#1458) writes a ``register`` column on every
+**Per-register acceptability.** The full JP corpus (#1458) writes a ``register`` column on every
 board row — which of the four surfaces the JP corpus builder rendered it in (``native`` /
 ``arabic_chome`` / ``compact_folded`` / ``designator``). One blended number cannot tell "the model
 reads Japanese" from "the model reads the 68% of the board that is the source's own surface", and
@@ -47,7 +47,7 @@ Usage:
   # Leg-1 probe board (unchanged behavior)
   python -m mailwoman_train.evaluation.jp_probe_board --checkpoint <dir-with-pytorch_model.bin>
 
-  # Phase-3 full-slice board
+  # Phase-3 full-corpus board
   python -m mailwoman_train.evaluation.jp_probe_board --checkpoint <dir> --label-set stage3-jp \
       --board $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04/jp-board.jsonl \
       --vocab $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04/char-vocab-jp-full.json \

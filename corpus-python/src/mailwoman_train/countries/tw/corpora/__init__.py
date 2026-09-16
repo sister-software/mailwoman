@@ -36,7 +36,7 @@ The board carries the row's own coordinate; a per-district centroid table (mean 
 beside it so the JP scorer reads the coordinate half with ``--resolve-tags region,subregion``.
 
 Two modules, the same division as the Japanese and Korean builders: `rows` reads the parquet and renders one row
-in one register, `assemble` runs the MEASURING pass and the SELECTING pass and writes the slice.
+in one register, `assemble` runs the MEASURING pass and the SELECTING pass and writes the corpus.
 
 Usage:
     python -m mailwoman_train.countries.tw.corpora --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-tw-<date>

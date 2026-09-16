@@ -42,7 +42,7 @@ from .checkpoint import find_latest_checkpoint, save_checkpoint
 
 @torch.no_grad()
 def _mlm_eval(cfg: Config, model: Any, tokenizer: Tokenizer, device: Any, *, mask_token_id: int) -> dict[str, Any]:
-    """MLM cross-entropy + perplexity over a bounded slice of the val split."""
+    """MLM cross-entropy + perplexity over a bounded sample of the val split."""
     was_training = model.training
     model.eval()
     gen = torch.Generator().manual_seed(cfg.train.seed)

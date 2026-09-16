@@ -246,11 +246,11 @@ def test_glued_raw_projects_split_labels_onto_pieces():
 # region Char-offset span re-target (#519)
 
 # Every augmented COPY must carry spans consistent with ITS raw — the mutation-upstream hazard
-# this slice exists to close.
+# this section exists to close.
 
 
-def _slices(row: dict) -> list[tuple[str, str]]:
-    """(tag, raw slice) pairs for a row's span triple."""
+def _span_texts(row: dict) -> list[tuple[str, str]]:
+    """(tag, span text) pairs for a row's span triple."""
     return [
         (t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
     ]
@@ -284,7 +284,7 @@ def test_expansion_splices_raw_and_retargets_spans():
     assert len(results) == 2
     augmented = results[1]
     assert augmented["raw"] == "350 5th Ave Northwest"
-    assert _slices(augmented) == [("house_number", "350"), ("street", "5th Ave Northwest")]
+    assert _span_texts(augmented) == [("house_number", "350"), ("street", "5th Ave Northwest")]
     _assert_span_invariants(augmented)
 
 
@@ -322,7 +322,7 @@ def test_glue_shifts_spans_with_the_splice():
     }
     fused = glue_region_postcode(row, 4)
     assert fused["raw"] == "123 Main St Buffalo NY14201"
-    assert _slices(fused) == [
+    assert _span_texts(fused) == [
         ("house_number", "123"),
         ("street", "Main St"),
         ("locality", "Buffalo"),
@@ -371,8 +371,8 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
     dropped = drop_separator_punct(_punct_row())
     assert dropped is not None
     assert dropped["raw"] == "123 Main St Portland OR 97214"
-    # The critical property: every span still slices its ORIGINAL entity text in the mutated raw.
-    assert _slices(dropped) == [
+    # The critical property: every span still covers its ORIGINAL entity text in the mutated raw.
+    assert _span_texts(dropped) == [
         ("house_number", "123"),
         ("street", "Main St"),
         ("locality", "Portland"),
@@ -399,7 +399,7 @@ def test_punct_drop_preserves_interior_apostrophe():
     dropped = drop_separator_punct(row)
     assert dropped is not None
     assert dropped["raw"] == "Ben & Jerry's Burlington"
-    assert _slices(dropped) == [("venue", "Ben & Jerry's"), ("locality", "Burlington")]
+    assert _span_texts(dropped) == [("venue", "Ben & Jerry's"), ("locality", "Burlington")]
     _assert_span_invariants(dropped)
 
 
@@ -418,7 +418,7 @@ def test_punct_drop_removes_standalone_punct_token():
     assert dropped["raw"] == "Portland  OR"  # the comma char removed; its surrounding spaces remain
     assert dropped["tokens"] == ["Portland", "OR"]
     assert dropped["labels"] == ["B-locality", "B-region"]
-    assert _slices(dropped) == [("locality", "Portland"), ("region", "OR")]
+    assert _span_texts(dropped) == [("locality", "Portland"), ("region", "OR")]
 
 
 def test_punct_drop_strips_wrapping_quotes():
@@ -433,7 +433,7 @@ def test_punct_drop_strips_wrapping_quotes():
     dropped = drop_separator_punct(row)
     assert dropped is not None
     assert dropped["raw"] == "350 5th Ave"
-    assert _slices(dropped) == [("house_number", "350"), ("street", "5th Ave")]
+    assert _span_texts(dropped) == [("house_number", "350"), ("street", "5th Ave")]
     assert dropped["tokens"] == ["350", "5th", "Ave"]
 
 
@@ -511,7 +511,7 @@ def test_expansion_preserves_intra_span_punctuation():
     assert len(results) == 2
     augmented = results[1]
     assert augmented["raw"] == "P.O. Box 123, Buffalo New York 14201"
-    assert _slices(augmented) == [
+    assert _span_texts(augmented) == [
         ("po_box", "P.O. Box 123"),
         ("locality", "Buffalo"),
         ("region", "New York"),
@@ -538,7 +538,7 @@ def test_expansion_preserves_whitespace_geometry():
     rng = random.Random(42)
     augmented = list(augment_row(row, rng, directional_prob=1.0, region_prob=0.0))[1]
     assert augmented["raw"] == "350 5th  Ave Northwest\nBuffalo"
-    assert _slices(augmented) == [
+    assert _span_texts(augmented) == [
         ("house_number", "350"),
         ("street", "5th  Ave Northwest"),
         ("locality", "Buffalo"),
@@ -598,7 +598,7 @@ def test_expansion_then_glue_compose_still_verifies():
     assert expanded["raw"] == "350 5th Ave Northwest Buffalo, NY 14201"
     fused = glue_region_postcode(expanded, 5)
     assert fused["raw"] == "350 5th Ave Northwest Buffalo, NY14201"
-    assert _slices(fused) == [
+    assert _span_texts(fused) == [
         ("house_number", "350"),
         ("street", "5th Ave Northwest"),
         ("locality", "Buffalo"),

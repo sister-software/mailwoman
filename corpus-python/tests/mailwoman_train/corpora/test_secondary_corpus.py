@@ -1,4 +1,4 @@
-"""Tests for the secondary-address slice generator (#1100 / #456, STAGE4)."""
+"""Tests for the secondary-address recipe (#1100 / #456, STAGE4)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from mailwoman_train.corpora.secondary import _row_from_groups, _secondary_forms
 from mailwoman_train.labels import STAGE4_TAGS
 
 
-def _slices(row: dict) -> list[tuple[str, str]]:
+def _span_texts(row: dict) -> list[tuple[str, str]]:
     return [
         (t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
     ]
@@ -27,7 +27,7 @@ def test_row_from_groups_designator_id_space_joined_fields_comma_joined():
     assert row["raw"] == "789 Elm Boulevard, STE 200, Miami, FL 33101"
     # Designator + id are ADJACENT (one logical unit), not comma-split.
     assert "STE 200" in row["raw"]
-    assert _slices(row) == [
+    assert _span_texts(row) == [
         ("house_number", "789"),
         ("street", "Elm Boulevard"),
         ("unit_designator", "STE"),
@@ -49,8 +49,8 @@ def test_row_from_groups_delimiter_free_variant():
     )
     assert row["raw"] == "42 Pine Road FL 3 Austin"
     assert "," not in row["raw"]
-    # Spans still slice their own text with no delimiters present.
-    assert _slices(row) == [
+    # Spans still cover exactly their own text with no delimiters present.
+    assert _span_texts(row) == [
         ("house_number", "42"),
         ("street", "Pine Road"),
         ("level_designator", "FL"),
@@ -59,14 +59,14 @@ def test_row_from_groups_delimiter_free_variant():
     ]
 
 
-def test_generate_every_span_slices_its_own_text():
+def test_generate_every_span_covers_its_own_text():
     """The corruption guard: every span in every generated row references its entity text exactly."""
     rows = generate(cap=15)
     assert rows
     for r in rows:
         for s, e, t in zip(r["span_starts"], r["span_ends"], r["span_tags"], strict=True):
             assert 0 <= s < e <= len(r["raw"])
-            assert r["raw"][s:e].strip(), f"empty slice for {t} in {r['raw']!r}"
+            assert r["raw"][s:e].strip(), f"empty span text for {t} in {r['raw']!r}"
 
 
 def test_generate_covers_all_stage4_secondary_tags():
@@ -81,7 +81,7 @@ def test_generate_covers_all_stage4_secondary_tags():
         "entrance",
         "staircase",
     ):
-        assert tag in seen, f"secondary slice never emits {tag}"
+        assert tag in seen, f"the secondary recipe never emits {tag}"
 
 
 def test_generate_only_emits_known_tags():

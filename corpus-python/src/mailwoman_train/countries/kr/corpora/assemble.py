@@ -283,7 +283,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     for directory in (out_dir, registry_dir):
         if directory.exists() and any(directory.iterdir()) and not args.force:
             raise SystemExit(
-                f"{directory} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
+                f"{directory} exists and is non-empty — pass --force to overwrite (a built corpus is a read-only artifact)"
             )
 
     survey = survey_register(juso_zip, args)

@@ -30,8 +30,8 @@ from pathlib import Path
 import torch
 
 from ..config import Config
-from ..data.dose import format_derivation, resolve_config_doses
 from ..data.loader import IGNORE_INDEX, iter_batches
+from ..data.source_reps import format_derivation, resolve_config_reps
 from ..evaluation.metrics import cross_pollution, token_f1
 from ..nn.encoder import force_math_sdpa
 from ..protocols import TrainCallback
@@ -137,11 +137,11 @@ def train(
         return
     # Mandatory on gfx1103 — flash/mem-efficient SDPA paths crash bf16 on this GPU.
     force_math_sdpa()
-    # #1677: a dosed source's weight is derived here, from the corpus's row counts and this run's samples, so
-    # the mixture the loader samples is the one the config named in reps per row.
-    derived_doses = resolve_config_doses(cfg)
-    if derived_doses:
-        print(format_derivation(derived_doses), flush=True)
+    # #1677: a reps-targeted source's weight is derived here, from the corpus's row counts and this run's
+    # samples, so the mixture the loader samples is the one the config named in reps per row.
+    derived_reps = resolve_config_reps(cfg)
+    if derived_reps:
+        print(format_derivation(derived_reps), flush=True)
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 

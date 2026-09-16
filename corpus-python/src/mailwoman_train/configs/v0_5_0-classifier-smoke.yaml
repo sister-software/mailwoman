@@ -144,7 +144,7 @@ train:
   lr_schedule: constant
 
 eval:
-  # Golden v0.1.2 stays the eval anchor for v0.5.0. The non-Latin adversarial slice +
+  # Golden v0.1.2 stays the eval anchor for v0.5.0. The non-Latin adversarial subset +
   # kryptonite catalogue are NEW eval splits per the plan doc § Success metrics; their
   # fixtures land alongside Thread D (reconcile).
   golden_dir: ""

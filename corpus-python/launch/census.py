@@ -33,12 +33,12 @@ def diagnose_corpus(
     verify_country: str = "",
     verify_source: str = "",
 ) -> None:
-    """Check which corpus slices the data loader actually sees on the Modal volume.
+    """Check which corpus parquet files the data loader actually sees on the Modal volume.
 
     Pass ``--corpus-dir`` to point at an overlay. Pass ``--verify-country DE --verify-source
     synth-german`` to additionally PULL a few rows through the real filter and confirm they survive
-    — a slice whose rows are all filtered out is a run that trains on nothing and reports success.
-    This is the pre-launch "verify the loader sees the slice, THEN launch" check.
+    — a source whose rows are all filtered out is a run that trains on nothing and reports success.
+    This is the pre-launch "verify the loader sees the source, THEN launch" check.
     """
     import json
     import random
@@ -46,7 +46,7 @@ def diagnose_corpus(
     from collections import Counter
     from pathlib import Path
 
-    vol.reload()  # see slices committed after this container started
+    vol.reload()  # see files committed after this container started
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
     corpus_root = Path(corpus_dir)
@@ -57,22 +57,22 @@ def diagnose_corpus(
 
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        train_slices = [s for s in data.get("slices", []) if s.get("split") == "train"]
-        print(f"MANIFEST: {len(train_slices)} train slices, {sum(s['rows'] for s in train_slices):,} rows")
+        train_files = [s for s in data.get("slices", []) if s.get("split") == "train"]
+        print(f"MANIFEST: {len(train_files)} train parquet files, {sum(s['rows'] for s in train_files):,} rows")
 
-        existing = sum(1 for s in train_slices if Path(s["path"]).exists())
-        missing = len(train_slices) - existing
-        print(f"Train slice files: {existing} exist, {missing} missing")
+        existing = sum(1 for s in train_files if Path(s["path"]).exists())
+        missing = len(train_files) - existing
+        print(f"Train parquet files: {existing} exist, {missing} missing")
         if missing > 0:
-            for s in train_slices:
+            for s in train_files:
                 if not Path(s["path"]).exists():
                     print(f"  MISSING: {s['path']}")
                     break
 
-    from mailwoman_train.data.loader import _slice_first_source, _slice_paths
+    from mailwoman_train.data.loader import _first_source, _parquet_paths
 
-    paths = _slice_paths(corpus_root, "train")
-    print(f"\n_slice_paths returned {len(paths)} train slices")
+    paths = _parquet_paths(corpus_root, "train")
+    print(f"\n_parquet_paths returned {len(paths)} train parquet files")
 
     by_source: Counter[str] = Counter()
     errors = 0
@@ -81,7 +81,7 @@ def diagnose_corpus(
             errors += 1
             continue
         try:
-            src = _slice_first_source(p)
+            src = _first_source(p)
             by_source[src] += 1
         except Exception as exc:  # noqa: BLE001
             errors += 1
@@ -90,7 +90,7 @@ def diagnose_corpus(
 
     print(f"\nSource index ({errors} errors, {sum(by_source.values())} readable):")
     for src, count in by_source.most_common():
-        print(f"  {src:35s} {count:4d} slices")
+        print(f"  {src:35s} {count:4d} files")
 
     # Pre-launch verification: do rows of the target country/source actually survive the filter?
     if verify_country or verify_source:
@@ -146,16 +146,16 @@ def country_census_raw(
     vol.reload()
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
-    from mailwoman_train.data.loader import _slice_paths
+    from mailwoman_train.data.loader import _parquet_paths
 
-    slices = _slice_paths(Path(corpus_dir), "train")
-    print(f"train slices: {len(slices)}")
+    files = _parquet_paths(Path(corpus_dir), "train")
+    print(f"train parquet files: {len(files)}")
 
     counts: Counter[str] = Counter()
     by_source: dict[str, Counter[str]] = {}
     seen = 0
-    for sh in slices:
-        pf = pq.ParquetFile(sh)
+    for path in files:
+        pf = pq.ParquetFile(path)
         for batch in pf.iter_batches(batch_size=8192, columns=["country", "source"]):
             cc = batch.column("country").to_pylist()
             ss = batch.column("source").to_pylist()
@@ -223,8 +223,8 @@ def digit_prior(
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
     reflects it. A previous count said P(house_number | bare digit)=0.810 vs P(postcode|·)=0.101 —
-    but that was ONE synthetic slice, read off disk, unweighted. The prior the model actually sees
-    is the WEIGHTED multinomial over ~700 slice refs, after the country filter, the coarse filter,
+    but that was ONE synthetic recipe output, read off disk, unweighted. The prior the model actually sees
+    is the WEIGHTED multinomial over ~700 parquet files, after the country filter, the coarse filter,
     and the augmentations. Those are not decorations: `augment_glue_prob` alone rewrites token
     boundaries, which is the thing under investigation.
 

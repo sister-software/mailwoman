@@ -106,6 +106,6 @@ train:
 
 eval:
   # Use golden v0.1.2 as the eval anchor (4535 entries, includes venue/street/
-  # house_number support — confirmed coverage check in v0.3.0 slice 2).
+  # house_number support — confirmed coverage check in v0.3.0 parquet file 2).
   golden_dir: ""
   val_jsonl: ""

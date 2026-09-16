@@ -1,4 +1,4 @@
-"""Build the SECONDARY-ADDRESS training slice (#1100 / #456, STAGE4 tags).
+"""Build the SECONDARY-ADDRESS recipe output (#1100 / #456, STAGE4 tags).
 
 The parser has no examples of the secondary-address vertical axis — units, levels (floors), buildings,
 and the EU entrance/staircase forms. This generator synthesizes labeled rows that emit the STAGE4
@@ -12,11 +12,11 @@ level-semantics lexicons — ``@mailwoman/codex`` (``codex/us/unit-designator.ts
 training surfaces, not the full table.
 
 Rows carry char-offset spans (#519) — the authoritative label channel for v0.5.0+ training — built by
-cursor tracking and self-checked (every span must slice its own entity text) before write, the same
-corruption guard the augmentation slice enforces.
+cursor tracking and self-checked (every span must cover exactly its own entity text) before write, the same
+corruption guard the augmentation recipe enforces.
 
 STAGE4 is DEFINED but NOT the active label set (see ``labels.py``); until activation these tags collapse
-to ``O`` at load. This slice is staged so a STAGE4-active retrain can consume it the moment the
+to ``O`` at load. This recipe output is staged so a STAGE4-active retrain can consume it the moment the
 label-stage bump lands.
 
 Usage::
@@ -61,7 +61,7 @@ BUILDING_IDS: tuple[str, ...] = ("A", "B", "C", "1", "2", "North", "West")
 
 # region Realistic base addresses (street, number, city, region, postcode, country)
 
-# Curated so the slice is self-contained + deterministic; a spread of US + EU orders.
+# Curated so the recipe output is self-contained + deterministic; a spread of US + EU orders.
 US_BASES: tuple[tuple[str, str, str, str, str], ...] = (
     ("Main St", "123", "Portland", "OR", "97214"),
     ("Oak Avenue", "456", "Chicago", "IL", "60614"),
@@ -85,7 +85,7 @@ def _row_from_groups(groups: list[list[tuple[str, str]]], sep: str) -> dict[str,
     """Build a row (raw + tokens + labels + char-offset spans) from ordered GROUPS. Within a group the
     (tag, text) parts are ALWAYS space-joined (a designator + its id — "STE 200", "FL 3" — are one
     logical unit); groups are joined by ``sep`` (", " punctuated / " " delimiter-free, #1101). Cursor
-    tracks char offsets so each span slices its own entity text exactly."""
+    tracks char offsets so each span covers exactly its own entity text."""
     tokens: list[str] = []
     labels: list[str] = []
     span_starts: list[int] = []
@@ -172,8 +172,8 @@ def generate(cap: int) -> list[dict[str, Any]]:
 
 
 def _self_check(rows: list[dict[str, Any]]) -> None:
-    """Every span MUST slice its own entity text in raw, spans sorted + non-overlapping — the corruption
-    guard. Raises on the first violation rather than writing a silently mislabeled slice."""
+    """Every span MUST cover exactly its own entity text in raw, spans sorted + non-overlapping — the
+    corruption guard. Raises on the first violation rather than writing a silently mislabeled output."""
     for r in rows:
         raw = r["raw"]
         prev_end = -1
@@ -183,9 +183,9 @@ def _self_check(rows: list[dict[str, Any]]) -> None:
             if s < prev_end:
                 raise ValueError(f"span [{s},{e}) overlaps previous in {raw!r}")
             prev_end = e
-            slice_text = raw[s:e]
-            if not slice_text.strip():
-                raise ValueError(f"empty span slice for tag {t} in {raw!r}")
+            span_text = raw[s:e]
+            if not span_text.strip():
+                raise ValueError(f"empty span text for tag {t} in {raw!r}")
 
 
 def main() -> None:
@@ -198,7 +198,7 @@ def main() -> None:
     rows = generate(args.cap)
     _self_check(rows)
 
-    # Tag histogram — surfaces coverage so "we built a secondary slice" can't hide "no level rows".
+    # Tag histogram — surfaces coverage so "we built the secondary rows" can't hide "no level rows".
     hist: dict[str, int] = {}
     for r in rows:
         for t in r["span_tags"]:
@@ -212,7 +212,7 @@ def main() -> None:
         for r in rows[:200]:
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
 
-    print(f"secondary slice: {len(rows)} rows -> {args.out_parquet}")
+    print(f"secondary recipe output: {len(rows)} rows -> {args.out_parquet}")
     print(
         "STAGE4 tag coverage:",
         {

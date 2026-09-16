@@ -314,7 +314,7 @@ def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
 
 
 def to_record(aligned: Aligned) -> dict[str, Any]:
-    """One aligned string as a row in the CJK slice schema."""
+    """One aligned string as a row in the CJK corpus schema."""
     raw = aligned.raw
     tokens: list[str] = []
     labels: list[str] = []

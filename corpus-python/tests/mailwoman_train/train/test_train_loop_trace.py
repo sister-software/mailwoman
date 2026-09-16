@@ -84,7 +84,7 @@ def _probe_config(root: Path) -> Config:
 
     cfg = load_config(PROBE_2K)
     # The shipped weights name the full corpus's sources; a two-row stand-in has none of those
-    # slices, and the loader refuses a positive weight with nothing behind it. Sampling the two
+    # rows, and the loader refuses a positive weight with nothing behind it. Sampling the two
     # rows uniformly is what this test wants anyway.
     cfg.data.source_weights = None
     cfg.data.corpus_dir = str(corpus)

@@ -2,7 +2,7 @@
 
 The third of three country builders, and the last without a seeded reference. `build` threads one
 `random.Random` through the selection masks, the register draw and the country-prefix fraction, so
-moving a draw re-renders the slice; and nothing in the suite ran this path, because it reads an
+moving a draw re-renders the corpus; and nothing in the suite ran this path, because it reads an
 Overture-TW parquet no test has.
 
 The fixture is not a sample of that source. It is the shapes the renderers branch on: a village
@@ -37,7 +37,7 @@ REFERENCE_README = [
     "  shapes the renderers branch on, not a sample of the source.",
     "",
     "train / val: every rendered row as raw + register + the span triple, in emission order.",
-    "  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole slice.",
+    "  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole corpus.",
     "board: the held-out 鄉鎮市區 rows, each carrying its coordinate and routing fields.",
     "centroids: the per-district means, which are what the board rows are scored against.",
     "report: the build report with the source path removed, since that is the fixture's tmp dir.",
@@ -119,7 +119,7 @@ def reference_args(parquet: Path, out_dir: Path) -> argparse.Namespace:
 def run_build(root: Path) -> dict[str, Any]:
     """One build, returned as the pinned payload."""
     parquet = write_fixture(root)
-    out_dir = root / "slice"
+    out_dir = root / "corpus"
     report = build(reference_args(parquet, out_dir))
 
     def rendered(split: str) -> list[dict[str, Any]]:
@@ -150,7 +150,7 @@ def test_the_build_is_deterministic_under_a_fixed_seed(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("section", ["train", "val", "board", "centroids"])
-def test_the_written_slice_matches_the_committed_reference(built: dict[str, Any], section: str) -> None:
+def test_the_written_corpus_matches_the_committed_reference(built: dict[str, Any], section: str) -> None:
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
     expected = json.loads(REFERENCE.read_text(encoding="utf-8"))[section]

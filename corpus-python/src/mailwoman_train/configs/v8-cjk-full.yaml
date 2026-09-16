@@ -1,4 +1,4 @@
-# === v8-cjk-full — the JP full slice plus the CN organizational-unit slice, one 49-label head (#2034). ===
+# === v8-cjk-full — the full JP source plus the CN organizational-unit source, one 49-label head (#2034). ===
 #
 # `v8-jp-full` (seed 42, 24k steps) cleared its pre-registered check: coordinate-acceptability 0.9928 on
 # the held-out 20,000-row JP board (the v8-jp-full 24k record under docs/records/evals/, dated 2026-08-05). This run

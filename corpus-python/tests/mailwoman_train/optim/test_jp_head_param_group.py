@@ -32,7 +32,7 @@ CONFIGS = paths.CONFIGS
 FULL = CONFIGS / "v8-jp-full.yaml"
 PROBE_2K = CONFIGS / "v8-jp-full-2k.yaml"
 
-# The full slice's sealed train-split char vocab (build-report.json: char_vocab_size 2237). The
+# The full JP corpus's sealed train-split char vocab (build-report.json: char_vocab_size 2237). The
 # vocab file lives on the data root; the size is all `build_model` needs, so the test stays offline.
 CHAR_VOCAB_SIZE = 2237
 

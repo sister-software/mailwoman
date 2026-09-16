@@ -1,8 +1,8 @@
 """Running the audit from a recipe, and printing the mixture where a human will read it.
 
-The printed summary is not decoration. #1677 was a weight chosen as a number rather than as a dose:
-the exposure every weight implicitly picks — passes per row — was in nobody's output, so the one
-figure that mattered was the one nobody saw. The dose column and the outlier warning below exist to
+The printed summary is not decoration. #1677 was a weight chosen as a number rather than as reps per
+row: the exposure every weight implicitly picks — passes per row — was in nobody's output, so the one
+figure that mattered was the one nobody saw. The reps/row column and the outlier warning below exist to
 put it in front of whoever is looking at the mixture.
 """
 
@@ -13,14 +13,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ...data.dose import format_derivation, resolve_config_doses
+from ...data.source_reps import format_derivation, resolve_config_reps
 from .passes import audit_mixture
 from .receipts import CorpusReceiptError, corpus_receipt_binding
 
 #: A source whose per-row exposure exceeds this multiple of the median is almost certainly a mistake.
-#: 8x is deliberately loose — the #1677 case was 33x the slices weighted six times higher, so a guard
+#: 8x is deliberately loose — the #1677 case was 33x the sources weighted six times higher, so a guard
 #: that only catches THAT is a guard for one incident rather than for the foot-gun.
-DOSE_OUTLIER_MULTIPLE = 8.0
+REPS_OUTLIER_MULTIPLE = 8.0
 
 
 def run(
@@ -43,9 +43,9 @@ def run(
     d = cfg.data
     resolved_corpus_dir = corpus_dir or Path(d.corpus_dir)
     # The same resolution the trainer runs (#1677), so the audit reports the weights the run will sample with.
-    derived_doses = resolve_config_doses(cfg, resolved_corpus_dir)
-    if derived_doses:
-        print(format_derivation(derived_doses))
+    derived_reps = resolve_config_reps(cfg, resolved_corpus_dir)
+    if derived_reps:
+        print(format_derivation(derived_reps))
     epoch_rows = draws or getattr(d, "train_rows_per_epoch", None)
     if not epoch_rows:
         raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")
@@ -120,42 +120,42 @@ def _print_receipts(report: dict[str, Any]) -> None:
         print(f"  {receipt['name']}: {receipt['observed_draws']:,} observed; minimum {receipt['required_draws']:,}")
 
 
-def _print_dose_guard(per_source: dict[str, dict[str, Any]]) -> None:
-    """Warn where one source's per-row exposure dwarfs the rest, and say how to pick a dose instead.
+def _print_reps_guard(per_source: dict[str, dict[str, Any]]) -> None:
+    """Warn where one source's per-row exposure dwarfs the rest, and say how to pick reps per row instead.
 
-    A source whose row count could not be read is named separately: an unknown dose is not a safe
+    A source whose row count could not be read is named separately: an unknown exposure is not a safe
     one, and the outlier comparison could not have considered it.
     """
-    doses = sorted(s["reps_per_row"] for s in per_source.values() if s.get("reps_per_row"))
-    if doses:
-        median = doses[len(doses) // 2]
+    reps_per_row = sorted(s["reps_per_row"] for s in per_source.values() if s.get("reps_per_row"))
+    if reps_per_row:
+        median = reps_per_row[len(reps_per_row) // 2]
         hot = {
             src: s["reps_per_row"]
             for src, s in per_source.items()
-            if s.get("reps_per_row") and s["reps_per_row"] > median * DOSE_OUTLIER_MULTIPLE
+            if s.get("reps_per_row") and s["reps_per_row"] > median * REPS_OUTLIER_MULTIPLE
         }
         if hot:
             print(
-                f"\n⚠ DOSE OUTLIER — median exposure is {median:.1f} reps/row; these exceed "
-                f"{DOSE_OUTLIER_MULTIPLE:g}x that:"
+                f"\n⚠ REPS OUTLIER — median exposure is {median:.1f} reps/row; these exceed "
+                f"{REPS_OUTLIER_MULTIPLE:g}x that:"
             )
             for src, reps in sorted(hot.items(), key=lambda kv: -kv[1]):
                 rows = per_source[src].get("rows") or 0
                 print(f"    {src:<28} {reps:>9.1f} reps/row over {rows:,} rows")
             print(
-                "  Weight is not dose. To choose an exposure directly, invert it: "
+                "  Weight is not reps per row. To choose an exposure directly, invert it: "
                 "weight = target_reps x rows x total_weight / total_samples (#1677)."
             )
 
     unknown = [src for src, s in per_source.items() if s.get("rows") is None]
     if unknown:
-        print(f"\n  row count unavailable, dose UNKNOWN (not safe): {', '.join(sorted(unknown))}")
+        print(f"\n  row count unavailable, reps per row UNKNOWN (not safe): {', '.join(sorted(unknown))}")
 
 
 def print_summary(report: dict[str, Any]) -> None:
     _print_source_table(report)
     _print_receipts(report)
-    _print_dose_guard(report["draw_level"]["per_source"])
+    _print_reps_guard(report["draw_level"]["per_source"])
 
 
 def main() -> None:

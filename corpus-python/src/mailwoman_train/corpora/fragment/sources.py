@@ -52,9 +52,9 @@ def collect_oa_pairs(
 ]:
     """Distinct (street, number) pairs + distinct CITY names from a locale's OA CSVs.
 
-    The city names feed bare-locality POLARITY rows: the #511 spread-scan measured slice street
+    The city names feed bare-locality POLARITY rows: the #511 spread-scan measured the recipe's street
     surfaces as ~46% street-family / ~54% admin in the base (European street names ARE place
-    names), so a street-only fragment slice would teach "context-free name = street". The
+    names), so a street-only fragment recipe would teach "context-free name = street". The
     established family (si-bare-village / fr-bare-street) balances polarity; fragments balance
     with bare-locality twins so the discriminant the model can learn is morphology/lexical
     identity, not fragment-ness.

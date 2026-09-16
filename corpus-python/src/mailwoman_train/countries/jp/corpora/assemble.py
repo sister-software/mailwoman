@@ -1,8 +1,8 @@
-"""Assembling the Japan slice: survey, select, render, write, report.
+"""Assembling the Japan corpus: survey, select, render, write, report.
 
 ONE `random.Random` runs through every stage below — the exact-selection masks, the shuffle, the
 register draw, and each per-row fraction. They share a stream, so the ORDER these stages run in and
-the order of the draws inside them decide what the slice contains.
+the order of the draws inside them decide what the corpus contains.
 `tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows for that reason.
 
 Two passes over the source rather than one: pass 1 counts eligible rows per prefecture so the
@@ -92,7 +92,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     print(f"pass 1: {scanned:,} eligible rows · {len(pool_counts)} prefectures · board pool {board_count:,}")
     print(f"pass 1: dropped {dict(dropped)}")
     # A drop rate this filter was not designed for means the source changed shape, not that the tail
-    # got longer — surface it rather than quietly shipping a differently-composed slice.
+    # got longer — surface it rather than quietly shipping a differently-composed corpus.
     drop_rate = sum(dropped.values()) / max(scanned + sum(dropped.values()), 1)
     if drop_rate > 0.02:
         raise RuntimeError(
@@ -104,7 +104,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     quotas = {prefecture: min(cap, count) for prefecture, count in pool_counts.items()}
     shortfall = target - sum(quotas.values())
     # Water-filling lands at or below target; hand the remainder to the prefectures with headroom so
-    # the slice hits its row count exactly rather than "about".
+    # the corpus hits its row count exactly rather than "about".
     if shortfall > 0:
         for prefecture in sorted(pool_counts, key=lambda p: pool_counts[p] - quotas[p], reverse=True):
             headroom = pool_counts[prefecture] - quotas[prefecture]
@@ -292,7 +292,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(args: argparse.Namespace, selection: Selection) -> tuple[set[str], set[str]]:
-    """Violations RAISE; a slice that fails one is not a slice. Returns (train prefectures, board municipalities)."""
+    """Violations RAISE; a corpus that fails one is not a corpus. Returns (train prefectures, board municipalities)."""
     train_prefectures = {row[0] for row in selection.train}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")
@@ -319,7 +319,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     out_dir = Path(args.out_dir)
     if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
         raise SystemExit(
-            f"{out_dir} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
+            f"{out_dir} exists and is non-empty — pass --force to overwrite (a built corpus is a read-only artifact)"
         )
 
     splits = write_splits(out_dir, args, selection, encoder)
@@ -391,7 +391,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--variant-hyphen-fraction", type=float, default=0.05)
     parser.add_argument("--max-field-chars", type=int, default=MAX_FIELD_CHARS)
     parser.add_argument(
-        "--max-row-groups", type=int, default=None, help="smoke slice: read only the first N row groups"
+        "--max-row-groups", type=int, default=None, help="smoke build: read only the first N row groups"
     )
     parser.add_argument(
         "--upweight-pattern",

@@ -96,10 +96,10 @@ def run_draw_pass(
     total_draws = sum(draw_totals.values())
 
     full_windows = [w for w in window_counts if sum(w.values()) == window]
-    # DOSE, not just share (#1677). `reps_per_row` is the number every weight is implicitly choosing and
-    # that nobody sees: a 0.60% share of 7.68M draws over 277 rows is 165 passes per row, while a 3.57%
+    # REPS PER ROW, not just share (#1677). `reps_per_row` is the number every weight is implicitly choosing
+    # and that nobody sees: a 0.60% share of 7.68M draws over 277 rows is 165 passes per row, while a 3.57%
     # share over 53,078 rows is 5. The v4.6.0 bare-country collapse was picked at weight 1.0 — the
-    # smallest number in the config — by someone reading 1.0 as a small dose.
+    # smallest number in the config — by someone reading 1.0 as a small exposure.
     rows_by_source = source_row_counts(corpus_dir, "train")
 
     per_source: dict[str, dict[str, Any]] = {}
@@ -114,8 +114,8 @@ def run_draw_pass(
             "draws": draws_for_src,
             "draw_share": share,
             "max_window_relative_deviation": max(deviations) if deviations else 0.0,
-            # `None` when the slice's row count could not be read — reported as unknown rather than as a
-            # dose of zero, which would read as "this slice is safe".
+            # `None` when the source's row count could not be read — reported as unknown rather than as
+            # zero reps per row, which would read as "this source is safe".
             "rows": rows,
             "reps_per_row": (draws_for_src / rows) if rows else None,
         }

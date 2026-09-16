@@ -1,7 +1,7 @@
 # v5.7.0 — three admin-tail surfaces the corpus has never carried, each with its own probe
 #
 # Control: v5.6.0-bare-postcode-60k.yaml at seed 42. This config differs from it in the corpus
-# version, THREE `source_doses`/`source_weights` lines, one supersession, and three receipts. FROM
+# version, THREE `source_reps`/`source_weights` lines, one supersession, and three receipts. FROM
 # SCRATCH: no `init_from`, launched with `--resume none`.
 #
 # WHY ONE ARM CARRIES THREE ADDED SOURCES. v5.6.0 added exactly one and said so, because a single
@@ -277,7 +277,7 @@ data:
   #
   # The two added lines are the arm's exposure decisions and the epoch audit is what confirms them —
   # see the header for the count behind each.
-  source_doses:
+  source_reps:
     synth-sg-register: 1.0
     synth-pk-register: 1.0
     synth-bd-register: 8.0
@@ -292,7 +292,7 @@ data:
     # it": the generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is
     # why nothing failed for five model versions.
     #
-    # Each floor is COUNTED. A 1.0 dose is exactly rows/samples of the run (`derive_source_weights`),
+    # Each floor is COUNTED. A reps target of 1.0 is exactly rows/samples of the run (`derive_source_weights`),
     # so 16,000 US rows draw about 2,083 per 1,000,000-row epoch and 500 is a floor a real draw clears
     # four times over. The Canadian source at 4.0 draws about 7,156, and 1,000 clears seven times over.
     # `synth-unit-v30` inherits its predecessor's weight, which the v5.6.0 audit measured at 9,013

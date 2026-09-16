@@ -277,7 +277,7 @@ def run_build(root: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """One build against the fixture, with the projection stubbed, returned as the pinned payload."""
     monkeypatch.setattr(registers, "transform_coordinates", stub_transform)
     archive, permits = write_fixture(root)
-    out_dir, registry_dir = root / "slice", root / "registry"
+    out_dir, registry_dir = root / "corpus", root / "registry"
     report = build(reference_args(archive, permits, out_dir, registry_dir))
 
     def rendered(directory: Path) -> list[dict[str, Any]]:

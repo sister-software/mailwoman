@@ -1,11 +1,10 @@
-"""Affix-split relabel pass (#511): make the base corpus agree with the affix slice.
+"""Affix-split relabel pass (#511): make the base corpus agree with the affix recipe output.
 
 The #492 probe ladder found the affix ceiling is contradictory labels: 69.4% of base-corpus
 street rows label affix surfaces monolithically (``South County Road 175 West`` = all
-``B/I-street``) while the affix slice labels the same surfaces split — at >=1,000:1 effective
-gradient mass against the slice. This pass relabels street spans at load time with EXACTLY the
-slice builder's split semantics (``scripts/build-street-affix-slice.mjs::parseStreet``), so the
-whole mix makes one consistent claim:
+``B/I-street``) while the affix recipe labels the same surfaces split — at >=1,000:1 effective
+gradient mass against its output. This pass relabels street spans at load time with EXACTLY the
+affix recipe's split semantics (its ``parseStreet``), so the whole mix makes one consistent claim:
 
 - Trailing USPS Pub-28 suffix -> ``B-street_suffix``   (REQUIRED for any split)
 - Leading directional        -> ``B-street_prefix``    (only if >2 words, i.e. room for name+suffix)
@@ -111,7 +110,7 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
 
     Returns ``(prefix_count, suffix_count)`` — how many leading tokens become street_prefix
     (0 or 1) and trailing tokens become street_suffix (0 or 1) — or None for no relabel.
-    Mirrors build-street-affix-slice.mjs::parseStreet exactly; see module docstring.
+    Mirrors the affix recipe's ``parseStreet`` exactly; see module docstring.
     """
     if len(words) < 2:
         return None
@@ -148,7 +147,7 @@ def relabel_row(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
     char-offset span arrays when the row carries them — #519).
 
     Returns True if any span was split. Rows whose street spans don't meet the builder's
-    split contract are left untouched (the slice makes no claim about them either).
+    split contract are left untouched (the affix recipe makes no claim about them either).
     """
     labels = row["labels"]
     tokens = row["tokens"]
@@ -190,7 +189,7 @@ def relabel_spans(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
     """Split every ``street`` char-offset span in ``row`` with the builder's exact semantics —
     pure char arithmetic (#519).
 
-    The span's raw slice is whitespace-split (the builder's ``street.trim().split(/\\s+/)``,
+    The span's raw substring is whitespace-split (the builder's ``street.trim().split(/\\s+/)``,
     punctuation intact — "St." conservatively does not match, same as parseStreet), the split
     decision is the SAME ``split_street_span``, and the street span is replaced in place by up to
     three spans (street_prefix / street / street_suffix) whose offsets are the matched words'
@@ -257,7 +256,7 @@ def _audit(lexicon_path: str, corpus_dir: str, rows: int, sample: int) -> None:
     lex = AffixRelabelLexicon.load(lexicon_path)
     files = sorted(Path(corpus_dir).glob("*.parquet"))
     if not files:
-        raise FileNotFoundError(f"no parquet slices under {corpus_dir}")
+        raise FileNotFoundError(f"no parquet files under {corpus_dir}")
     rng = random.Random(42)
     table = pq.read_table(rng.choice(files), columns=["raw", "tokens", "labels"]).slice(0, rows)
     total = with_street = split_count = prefix_count = 0
@@ -295,7 +294,7 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(description="Audit the affix-split relabel pass on a corpus sample.")
     ap.add_argument("--lexicon", required=True)
-    ap.add_argument("--corpus-dir", required=True, help="directory of parquet slices (e.g. .../train)")
+    ap.add_argument("--corpus-dir", required=True, help="directory of parquet files (e.g. .../train)")
     ap.add_argument("--rows", type=int, default=10_000)
     ap.add_argument("--sample", type=int, default=25)
     args = ap.parse_args()

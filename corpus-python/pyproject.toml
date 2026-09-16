@@ -148,6 +148,6 @@ disallow_untyped_decorators = false
 [tool.bandit]
 exclude_dirs = ["launch", "scripts"]
 # B311: pseudo-random generators are used for corpus sampling/splits, seeded for
-# reproducibility (audits/, build_*_slice, data/loader.py, tokenizer/train.py). They are
+# reproducibility (audits/, corpora/, countries/*/corpora, data/loader/, tokenizer/train.py). They are
 # data-generation randomness, never security/crypto — the CSPRNG rule does not apply.
 skips = ["B311"]

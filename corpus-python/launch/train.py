@@ -96,8 +96,8 @@ def _train_gpu(
     import torch
 
     # Fetch the latest committed volume state. Without this, a container mounts a stale
-    # snapshot and never sees slices added via `modal volume put` after deploy — which silently
-    # trains on the old corpus (the v0.7.1 intersection-slice trap, night-3 2026-05-29).
+    # snapshot and never sees parquet files added via `modal volume put` after deploy — which silently
+    # trains on the old corpus (the v0.7.1 intersection-recipe trap, night-3 2026-05-29).
     vol.reload()
 
     # Add training code to path
@@ -138,8 +138,8 @@ def _train_gpu(
             f"Corpus not found at {train_dir} (cfg.data.corpus_dir={cfg.data.corpus_dir}). "
             "Stage it first: `modal run -m launch.train_remote::sync --version <name>`."
         )
-    slice_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
-    print(f"Corpus: {cfg.data.corpus_dir} ({slice_count} train slices)")
+    file_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
+    print(f"Corpus: {cfg.data.corpus_dir} ({file_count} train parquet files)")
 
     if cfg.data.required_corpus_receipts:
         from pathlib import Path

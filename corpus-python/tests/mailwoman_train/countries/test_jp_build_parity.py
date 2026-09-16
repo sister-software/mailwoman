@@ -2,7 +2,7 @@
 
 `build` threads one `random.Random` through the selection masks, the register draw, the postcode
 fraction, the hyphen variant, the spacing and the country prefix. They share a stream, so moving,
-adding or dropping a draw anywhere re-renders the whole slice, and nothing else in the suite would
+adding or dropping a draw anywhere re-renders the whole corpus, and nothing else in the suite would
 notice: the JP builder reads Overture-JP and KEN_ALL, which no test has, so it has never run under
 pytest at all.
 
@@ -39,7 +39,7 @@ REFERENCE_README = [
     "  KEN_ALL CSV carrying the shapes the renderers branch on, not a sample of the real source.",
     "",
     "train / val: every rendered row as raw + register + the span triple, in emission order.",
-    "  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole slice.",
+    "  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole corpus.",
     "board: the held-out municipalities' rows, same form.",
     "report: the build report with the paths removed, since those are the fixture's tmp dir.",
 ]
@@ -151,7 +151,7 @@ def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Names
 def run_build(root: Path) -> dict[str, Any]:
     """One build, returned as the pinned payload."""
     parquet, kenall = write_fixture(root)
-    out_dir = root / "slice"
+    out_dir = root / "corpus"
     report = build(reference_args(parquet, kenall, out_dir))
 
     def rendered(split: str) -> list[dict[str, Any]]:

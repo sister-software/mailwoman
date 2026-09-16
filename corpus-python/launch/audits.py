@@ -113,7 +113,7 @@ def census_region_code_token(config_name: str = "v5.6.0-bare-postcode-60k.yaml",
     """Count what a two-letter uppercase token teaches: a country, or a region.
 
     Settles which reading of a contested code the mixture attests more — `NL` is a Canadian province
-    and the Netherlands, `PE` a Canadian province and Peru — so a dose meant to outweigh the country
+    and the Netherlands, `PE` a Canadian province and Peru — so an exposure meant to outweigh the country
     attestations has a count to be set against. No code list is typed: every two-letter uppercase
     token is counted, and the contested set falls out of the data.
 

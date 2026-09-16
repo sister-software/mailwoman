@@ -1,12 +1,12 @@
-# v5.4.0 — FROM-SCRATCH treatment: the #1931 target families, each named by its dose
+# v5.4.0 — FROM-SCRATCH treatment: the #1931 target families, each named by its reps per row
 #
 # Control: v5.3.0-reviewed-ve-postcode-tail-60k.yaml at seed 42, whose step-060000 checkpoint and
 # exported graph are on the volume. It is the attribution control because this config's
 # `source_weights` block is BYTE-IDENTICAL to v5.3.0's and its corpus is v5.3.0's plus eight
-# parquets — so every difference between the two arms is named in `source_doses` below.
+# parquets — so every difference between the two arms is named in `source_reps` below.
 #
 # v5.0.0-base-alltails-60k.yaml at seed 42 is the LINEAGE reference, not the attribution control.
-# Against v5.0.0 this arm carries a third delta neither `corpus_dir` nor `source_doses` names:
+# Against v5.0.0 this arm carries a third delta neither `corpus_dir` nor `source_reps` names:
 # `synth-reviewed-postcode-tail: 0.05` over v0.28.0's 22 reviewed Venezuelan rows, which is v5.3.0's
 # whole treatment riding along. Read any movement on the four `ve_city_postcode_trailing_state` rows
 # against v5.0.0 as v5.3.0's result, never as this arm's.
@@ -17,24 +17,24 @@
 # Treatment deltas against v5.3.0, and no others:
 #
 #   corpus_dir     v0.28.0 -> v0.29.0-target-families, a pure overlay ADD of eight parquets
-#                  (390,903 rows) onto v0.28.0's 711 slices. Nothing is removed or rewritten.
+#                  (390,903 rows) onto v0.28.0's 711 parquet files. Nothing is removed or rewritten.
 #
-#   source_doses   the six new sources name their exposure in REPS PER ROW (#1677) and the weight is
-#                  derived at launch from each slice's row count and this run's sample budget. Weight
-#                  is not dose: the 277-row slice that took 165 passes per row was picked at 1.0, the
+#   source_reps    the six new sources name their exposure in REPS PER ROW (#1677) and the weight is
+#                  derived at launch from each source's row count and this run's sample budget. Weight
+#                  is not reps per row: the 277-row source that took 165 passes per row was picked at 1.0, the
 #                  smallest number in its config. The derivation prints at launch; read it.
 #
 #   receipts       one per family, so the audit fails if a family does not actually draw. The
 #                  seventh, `ve-locality-postcode-region`, is INHERITED from v5.3.0 and guards that
 #                  arm riding along; it is not a target of this one.
 #
-# The audit's DOSE OUTLIER warning on this config lists seven sources and none of them is new here:
+# The audit's REPS OUTLIER warning on this config lists seven sources and none of them is new here:
 # six carry v5.0.0's weights unchanged, and `synth-reviewed-postcode-tail` at 12.8 reps/row over 22
 # rows is v5.3.0's arm by construction (its receipt asks for 250 draws from 22 rows). The six sources
 # this config adds realize 0.1 to 1.0 reps/row, all under the audit's threshold. Read the warning as
 # a property both arms share, which is what a controlled comparison wants.
 #
-# Families targeted, and what each slice teaches:
+# Families targeted, and what each recipe output teaches:
 #
 #   F2 (#1748/#1673) synth-trailing-region-es-v28, 4,944 rows. The Spanish trailing-region surfaces
 #                    re-read from the gazetteer in the languages the province writes: `Illes Balears`
@@ -46,10 +46,10 @@
 #                    leftcontext-v26}-tuples.jsonl`, ~83,000 rows, ~8,489 of them ES rows carrying the
 #                    English exonyms) were built for the 2026-08-23 arc that closed DO-NOT-SHIP, and
 #                    they are in NEITHER this corpus lineage NOR any shipped config's mixture: no
-#                    v0.29.0 slice is labeled `synth-trailing-region*`, and neither v5.0.0 nor v5.3.0
+#                    v0.29.0 parquet file is labeled `synth-trailing-region*`, and neither v5.0.0 nor v5.3.0
 #                    weights that source, so a row carrying it would be dropped at load anyway. The
-#                    corrected slice therefore replaces nothing and competes with nothing — read a
-#                    result on the three F2 board rows as this slice's own.
+#                    corrected recipe output therefore replaces nothing and competes with nothing — read a
+#                    result on the three F2 board rows as this source's own.
 #
 #   F6 + SG (#1822) synth-sg-register, 142,083 rows. The four Singapore registers: the HDB block line
 #                    with a `#NN-NN` unit, the `S(NNNNNN)` postcode, the building-led venue, the
@@ -59,7 +59,7 @@
 #                    sector line, the Dhaka trailing postcode, and the base PK/BD/VN formats from
 #                    OpenStreetMap. ⚠ ODbL: all three sources are share-alike. A PROPRIETARY-weights
 #                    build must drop `osm`, `synth-pk-register` and `synth-bd-register` from
-#                    source_doses; a source absent from the mixture is dropped at load, which is the
+#                    source_reps; a source absent from the mixture is dropped at load, which is the
 #                    mechanism, and the license filter (`--exclude-share-alike`) is what keeps them
 #                    out of a proprietary CORPUS in the first place.
 #
@@ -69,14 +69,14 @@
 #                    the region.
 #
 # F1 is what BLOCKS a ship, not a target: `COMER parís.méxico`, the two `parís.méxico` rows and the two
-# GB `*-hill` rows must clear before any default-on ship. F4 rides its proven #1569 dose unchanged
+# GB `*-hill` rows must clear before any default-on ship. F4 rides its proven #1569 weight unchanged
 # (synth-suffix-boundary 2.5) — do not raise it chasing F1; that was measured not to move.
 #
 # PRE-REGISTERED WATCH (#1677's discipline, #513's adjacency rule). Grade these before reading any
 # target metric, because relabeling one boundary loosens its neighbours: the bare-toponym rows
 # `bz-cs-belize-city`, `kh-cs-phnom-penh`, `tt-cs-port-of-spain`, `bn-cs-bandar-seri-begawan`,
 # `il-cs-tel-aviv-yafo`, `my-cs-petaling-jaya`, and the `*-street-name-*` family. The SG and PK
-# register slices both teach a leading untagged token (`Blk`, `House`), which is the shape most
+# register sources both teach a leading untagged token (`Blk`, `House`), which is the shape most
 # likely to loosen the bare-locality boundary.
 #
 # Grade the candidate against v5.3.0 seed 42 on the routed board plus the promotion battery, and
@@ -262,10 +262,10 @@ data:
     synth-suffix-boundary: 2.5
   # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the six
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 =
-  # 417,339 draws, 5.4% of the run. The big register slices take one pass each because they carry
-  # their diversity in the rows; the four-to-five-thousand-row slices take eight, which is the
+  # 417,339 draws, 5.4% of the run. The big register sources take one pass each because they carry
+  # their diversity in the rows; the four-to-five-thousand-row sources take eight, which is the
   # exposure `synth-suffix-boundary` already draws at weight 2.5.
-  source_doses:
+  source_reps:
     synth-sg-register: 1.0
     synth-pk-register: 1.0
     synth-bd-register: 8.0

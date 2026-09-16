@@ -25,9 +25,9 @@ from pathlib import Path
 from typing import Any
 
 from ..config import load_config
-from ..data.dose import resolve_config_doses
 from ..data.emit import EmitPolicy, emit_row
 from ..data.loader import _raw_row_stream
+from ..data.source_reps import resolve_config_reps
 
 
 def _bare(token: str) -> str | None:
@@ -147,7 +147,7 @@ def run(config_path: Path, *, json_path: Path | None = None, draws: int | None =
     """Load a training config, count both levels over one epoch, print the table and return the report."""
     cfg = load_config(config_path)
     corpus_dir = Path(cfg.data.corpus_dir)
-    resolve_config_doses(cfg, corpus_dir)
+    resolve_config_reps(cfg, corpus_dir)
 
     epoch_rows = draws or getattr(cfg.data, "train_rows_per_epoch", None)
 

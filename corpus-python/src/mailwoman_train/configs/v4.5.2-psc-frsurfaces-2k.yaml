@@ -2,7 +2,7 @@
 # Mechanism fixes (data, decision-free): CZ street-less form (#1642) + FR bare-street-only
 # counter-form (#1644) — the v4.5.0 erosion's confirmed cause was 'every delimiter-free surface
 # ends in a locality' training toward a categorical trailing-locality prior.
-# ONE config knob vs v4.5.0: synth-fr-bare-street dose 12.0 -> 6.0 (the FR shapes were the
+# ONE config knob vs v4.5.0: synth-fr-bare-street weight 12.0 -> 6.0 (the FR shapes were the
 # erosion's attacker; CZ stays 12.0 — its forms were not implicated). B11 template otherwise
 # verbatim: init_from v4.4.0 step-060000, EWC lambda=1.0e4 + the base fisher, LR 1e-5.
 # CHECK (pre-registered, the v4.5.0 lesson): the probe is graded ON THE BOARD, not val — export
@@ -66,7 +66,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # dose held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

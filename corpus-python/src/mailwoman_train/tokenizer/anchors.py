@@ -127,10 +127,10 @@ def _paint_anchor_chars(
     GB OUTWARD FALLBACK (2026-08-05). A unit postcode that misses retries its outward district
     (``SW1A 2AA`` -> ``SW1A``) and paints the WHOLE unit span from it, mirroring
     ``neural/anchor-inference.ts``'s ``spanMode: "shaped"`` exactly. It earns its keep on real
-    slices: against the v2 lookup, ``synth-gb-v1`` misses 217 spans in 200,000 rows (retired unit
+    recipe outputs: against the v2 lookup, ``synth-gb-v1`` misses 217 spans in 200,000 rows (retired unit
     codes — Code-Point Open is a 2026-05 snapshot, the tuples are older), and 215 of those 217 have
     a live outward district. INERT for every lookup shipped before that date: they hold five-digit
-    keys only, and a five-digit key's outward slice is two digits, which is not a key in any of
+    keys only, and a five-digit key's outward part is two digits, which is not a key in any of
     them (and the shape guard rejects it first).
     """
     postcode = raw[begin:end].replace(" ", "").upper()

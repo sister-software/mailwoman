@@ -1,4 +1,4 @@
-"""`tokenizer` — train a versioned SentencePiece tokenizer from a corpus slice tree.
+"""`tokenizer` — train a versioned SentencePiece tokenizer from a corpus parquet tree.
 
 Writes `tokenizer.model` beside a model card carrying the byte-fallback rate measured on a held-out
 fixture, so a tokenizer's coverage is a recorded number rather than a claim.
@@ -23,7 +23,7 @@ def add_parser(subparsers: Any) -> None:
         "--corpus",
         required=True,
         help='Corpus to train on. Accepts "v0.3.0" / "0.3.0" (resolves under '
-        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit slice-tree path "
+        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit corpus-tree path "
         "(parent of train/, val/, test/).",
     )
     parser.add_argument(
@@ -74,7 +74,7 @@ def add_parser(subparsers: Any) -> None:
 
 
 def resolve_corpus_dir(spec: str) -> Path:
-    """Resolve a `--corpus` argument into a concrete slice-tree path.
+    """Resolve a `--corpus` argument into a concrete corpus-tree path.
 
     Accepts three forms: a version string (`v0.3.0` or `0.3.0`), a path that already holds
     `train/`, and a path one level above one that does.

@@ -116,7 +116,7 @@ def golden_to_bio_labels(
 def decode_components(pieces: list[PieceSpan], pred_label_ids: list[int], raw: str) -> dict[str, str]:
     """Convert a per-piece predicted label sequence into a {tag: surface_string} dict.
 
-    For each contiguous run of ``B-TAG`` + ``I-TAG`` pieces, slice ``raw`` from the run's
+    For each contiguous run of ``B-TAG`` + ``I-TAG`` pieces, take the substring of ``raw`` from the run's
     first char_begin to last char_end. Returns the first occurrence per tag (consistent with
     the golden set's single-value-per-tag schema).
     """

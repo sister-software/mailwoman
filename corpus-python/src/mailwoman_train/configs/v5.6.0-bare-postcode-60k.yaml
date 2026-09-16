@@ -1,8 +1,8 @@
-# v5.6.0 — v5.5.0's mixture plus the bare-postcode slice, the shape the corpus never carried
+# v5.6.0 — v5.5.0's mixture plus the bare-postcode source, the shape the corpus never carried
 #
 # Control: v5.5.0-restored-generations-60k.yaml at seed 42. This config differs from it in the corpus
-# version, ONE `source_doses` line and ONE receipt, so every difference between the two arms is the
-# added slice. FROM SCRATCH: no `init_from`, launched with `--resume none`.
+# version, ONE `source_reps` line and ONE receipt, so every difference between the two arms is the
+# added source. FROM SCRATCH: no `init_from`, launched with `--resume none`.
 #
 # WHAT IS BEING FIXED. `100 00` is a real Prague postcode. v5.3.0 read it as one; v5.4.0 and v5.5.0 read
 # `100` as a house number and `00` as a street, so the resolver is handed no postcode and returns
@@ -83,7 +83,7 @@
 #   3. The target-family boards v5.4.0 won and v5.5.0 held, which must not give any of it back:
 #      `sg/register.jsonl` 118/240, `us/family-po-box.jsonl` 6/6, `ve/family-locality-postcode.jsonl` 5/5.
 #
-# The new receipt below fails the run if the added slice does not actually draw — the check that would
+# The new receipt below fails the run if the added source does not actually draw — the check that would
 # have caught the silent generation drop five model versions earlier.
 
 data:
@@ -266,14 +266,14 @@ data:
     synth-suffix-boundary: 2.5
   # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the seven
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
-  # 1.0*20460 = 437,799 draws, 5.7% of the run. The big register slices take one pass each because they
-  # carry their diversity in the rows; the four-to-five-thousand-row slices take eight, which is the
+  # 1.0*20460 = 437,799 draws, 5.7% of the run. The big register sources take one pass each because they
+  # carry their diversity in the rows; the four-to-five-thousand-row sources take eight, which is the
   # exposure `synth-suffix-boundary` already draws at weight 2.5.
   #
-  # `synth-bare-postcode` takes ONE pass, the same as the two register slices, because its 20,460 rows
+  # `synth-bare-postcode` takes ONE pass, the same as the two register sources, because its 20,460 rows
   # are distinct real codes rather than templated variations. That line is the arm's only exposure
   # decision and the epoch audit is what confirms it — see the header.
-  source_doses:
+  source_reps:
     synth-sg-register: 1.0
     synth-pk-register: 1.0
     synth-bd-register: 8.0
@@ -286,7 +286,7 @@ data:
     # generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is why nothing
     # failed for five model versions.
     #
-    # The floor is COUNTED, not chosen by symmetry with the entries below. A 1.0 dose is exactly
+    # The floor is COUNTED, not chosen by symmetry with the entries below. A reps target of 1.0 is exactly
     # rows/samples of the run (`derive_source_weights`), so 20,460 rows over 7,680,000 samples draw about
     # 2,664 per 1,000,000-row epoch, and the measured CZ share of the parquet — 5,290 of 20,460 — puts
     # about 689 of those under `country: CZ`. 250 is the floor a real draw clears three times over and a
@@ -339,7 +339,7 @@ data:
     - synth-suffix-boundary
     # A bare postcode has nothing to augment: a directional, a region or a glue token appended to
     # `119 00` produces a row whose label sequence no longer matches its surface, and the shape this
-    # slice exists to teach is the two-token input with nothing else in it.
+    # source exists to teach is the two-token input with nothing else in it.
     - synth-bare-postcode
   train_rows_per_epoch: 1000000
   val_rows: 4096

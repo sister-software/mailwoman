@@ -79,7 +79,7 @@ def render(surface: str, number: str | None, tag: str = "street") -> dict[str, A
 
 
 def render_locality_postcode(city: str, postcode: str) -> dict[str, Any]:
-    """Slice-v2 (v251 read-out): the "Eight Mile Plains 4113" class — locality + trailing postcode."""
+    """Fragment recipe v2 (v251 read-out): the "Eight Mile Plains 4113" class — locality + trailing postcode."""
     tokens = city.split() + [postcode]
     labels = ["B-locality"] + ["I-locality"] * (len(city.split()) - 1) + ["B-postcode"]
     text = f"{city} {postcode}"
@@ -97,7 +97,7 @@ def render_locality_postcode(city: str, postcode: str) -> dict[str, Any]:
 def render_context(
     street: str, number: str, city: str, country: str, trailing: bool, with_country: bool
 ) -> dict[str, Any]:
-    """Slice-v4: COMMA-FREE context rows — the failure-census headline class (71/143 street misses
+    """Fragment recipe v4: COMMA-FREE context rows — the failure-census headline class (71/143 street misses
     were unpunctuated street<->admin boundaries: "Rue Henri Barbusse Paris France"). Euro order
     STREET NUMBER CITY [COUNTRY]; en order NUMBER STREET CITY [COUNTRY]. No punctuation anywhere."""
     parts: list[tuple[str, str]] = []  # (tag, text)
@@ -139,7 +139,7 @@ def render_context(
 
 
 def render_unit(unit: str, number: str, street: str) -> dict[str, Any]:
-    """Slice-v2: AU compact unit rows — "UNIT 711 139 BOUVERIE STREET" (unit, house_number, street)."""
+    """Fragment recipe v2: AU compact unit rows — "UNIT 711 139 BOUVERIE STREET" (unit, house_number, street)."""
     unit_tokens, street_tokens = unit.split(), street.split()
     tokens = unit_tokens + [number] + street_tokens
     labels = (
@@ -189,7 +189,7 @@ def render_country_context(
     street: str, number: str, city: str, country_name: str, trailing: bool, comma: bool
 ) -> dict[str, Any]:
     """#1104 country counterweight: a full address ENDING in a country token, comma'd OR comma-free, so the
-    fine-tune keeps the country class alive — the slice-v5 mass (bare streets/localities/admin pairs) is
+    fine-tune keeps the country class alive — the recipe-v5 mass (bare streets/localities/admin pairs) is
     country-SPARSE and eroded country recall 88.6%→82.0%. Fields are groups (number+street space-joined as
     one unit); groups are joined by ", " (comma'd) or " " (comma-free). Cursor-tracks char-offset spans."""
     groups: list[list[tuple[str, str]]] = (

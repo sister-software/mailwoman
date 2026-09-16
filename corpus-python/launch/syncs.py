@@ -17,9 +17,9 @@ somebody will repeat, because a transfer nobody can enumerate is a corpus that q
 staged. Fifty-line clones — one per version, differing only in path strings — is how this file once
 reached fifty-seven of them.
 
-An overlay corpus ships only its own new slices; its MANIFEST names the base version's slices by
+An overlay corpus ships only its own new parquet files; its MANIFEST names the base version's files by
 absolute `/data/...` path, so the base must already be on the volume. Neither entry point checks
-that — `audit_epoch_mixture` does, and it reports which slice is missing.
+that — `audit_epoch_mixture` does, and it reports which file is missing.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def _run_transfers(transfers: list[Transfer]) -> None:
     """Run each transfer, and refuse one that moved nothing.
 
     rclone EXITS 0 WHEN THE SOURCE PREFIX IS EMPTY. Without the file count the caller reads a clean
-    run and a training job fails much later on a missing slice, with nothing pointing back here.
+    run and a training job fails much later on a missing parquet file, with nothing pointing back here.
     """
     import subprocess
 

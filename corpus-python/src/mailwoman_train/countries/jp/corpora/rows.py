@@ -23,9 +23,9 @@ from ....text.kana import int_to_kanji
 
 LABEL_SET_NAME = "stage3-jp"
 
-# Same source string as the probe slice. An unlisted source is DROPPED by ``source_weights``, so a
+# Same source string as the probe corpus. An unlisted source is DROPPED by ``source_weights``, so a
 # new name would silently empty the feed of any config that names the probe's — the corpus_dir
-# already distinguishes the two slices.
+# already distinguishes the two corpora.
 SOURCE = "overture-jp"
 
 _COMPACT = re.compile(r"^[0-9]+(?:-[0-9]+)*$")
@@ -64,7 +64,7 @@ def render_row(
     hyphen: str = "-",
     municipality_kana: str | None = None,
 ) -> dict[str, Any]:
-    """Render one JP row in one register, returning the #519 span-triple slice record.
+    """Render one JP row in one register, returning the #519 span-triple corpus record.
 
     Order is native large-to-small and space-free by default (``spaced`` inserts single ASCII spaces
     between the admin components, which real typed input does carry). The 〒 mark stays OUTSIDE the
@@ -116,7 +116,7 @@ def render_row(
             renderer.put("house_number", hyphen.join(parts) if parts else number)
 
     raw = renderer.raw
-    # Legacy token columns (the char path ignores them; the slice schema requires them): whitespace
+    # Legacy token columns (the char path ignores them; the corpus schema requires them): whitespace
     # tokens labeled by the span covering their first character — honest at the token grain.
     tokens: list[str] = []
     labels: list[str] = []

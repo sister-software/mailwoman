@@ -57,7 +57,7 @@ def _surface(pieces: list[str]) -> tuple[str, list[tuple[int, int]]]:
 
 
 def _join_runs(text: str, offsets: list[tuple[int, int]], selected: list[int]) -> str:
-    """Slice each maximal contiguous run of selected pieces, join with ' ' — mirrors the JS harness.
+    """Take the substring under each maximal contiguous run of selected pieces, join with ' ' — mirrors the JS harness.
 
     The JS side emits one NODE per span (street, street_suffix, …) and joins their values with a
     space; a contiguous run of pieces is exactly one such node.

@@ -57,7 +57,7 @@ def test_an_unresolvable_val_split_leaves_no_graph_behind(tmp_path: Path, monkey
     import mailwoman_train.data.loader as loader
 
     def raise_unresolvable(*_args: object, **_kwargs: object):
-        raise FileNotFoundError("MANIFEST declares 7 'val' slices but 6 are unresolvable")
+        raise FileNotFoundError("MANIFEST declares 7 'val' parquet files but 6 are unresolvable")
 
     monkeypatch.setattr(loader, "iter_batches", raise_unresolvable)
 

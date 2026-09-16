@@ -59,7 +59,7 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml") -> None:
         print(
             "  v0.5.0 train dir exists:",
             os.path.isdir(ctrain),
-            "slices:",
+            "files:",
             len(os.listdir(ctrain)) if os.path.isdir(ctrain) else 0,
         )
 

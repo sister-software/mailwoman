@@ -1,10 +1,10 @@
-"""#1677: a dose names the exposure; the weight is derived from it, never picked."""
+"""#1677: a reps-per-row target names the exposure; the weight is derived from it, never picked."""
 
 from __future__ import annotations
 
 import pytest
 
-from mailwoman_train.data.dose import derive_source_weights, format_derivation, total_samples
+from mailwoman_train.data.source_reps import derive_source_weights, format_derivation, total_samples
 
 # The v4.6.0 run the issue measured: 60,000 steps × batch 128, fixed weights summing to 168.
 SAMPLES = total_samples(60_000, 128)
@@ -17,20 +17,20 @@ def _reps(weights: dict[str, float], src: str) -> float:
     return weights[src] / total * SAMPLES / ROWS[src]
 
 
-def test_a_dose_of_five_lands_at_five_reps_per_row():
+def test_a_target_of_five_lands_at_five_reps_per_row():
     merged, derived = derive_source_weights(FIXED, {"synth-bare-country-v23": 5.0}, ROWS, SAMPLES)
 
     assert merged is not None
     assert _reps(merged, "synth-bare-country-v23") == pytest.approx(5.0)
-    # The issue's table: parity with the ES slice is a weight near 0.030, not the 1.0 that was picked.
+    # The issue's table: parity with the ES source is a weight near 0.030, not the 1.0 that was picked.
     assert derived[0].weight == pytest.approx(0.0302, abs=0.0005)
-    # The fixed weights are untouched; the dosed draws come out of their share.
+    # The fixed weights are untouched; the reps-targeted draws come out of their share.
     assert {k: merged[k] for k in FIXED} == FIXED
 
 
-def test_two_doses_hold_together():
-    # `tiger` carries a fixed weight, so it cannot also take a dose.
-    with pytest.raises(ValueError, match="both a weight and a dose"):
+def test_two_targets_hold_together():
+    # `tiger` carries a fixed weight, so it cannot also take a reps target.
+    with pytest.raises(ValueError, match="both a weight and a reps target"):
         derive_source_weights(FIXED, {"tiger": 3.0}, ROWS, SAMPLES)
 
     fixed = {"ban": 100.0}
@@ -43,7 +43,7 @@ def test_two_doses_hold_together():
     assert len(derived) == 2
 
 
-def test_no_doses_leaves_the_weights_as_they_were():
+def test_no_targets_leaves_the_weights_as_they_were():
     assert derive_source_weights(FIXED, None, ROWS, SAMPLES) == (FIXED, [])
     assert derive_source_weights(None, {}, ROWS, SAMPLES) == (None, [])
 
@@ -69,8 +69,8 @@ def test_the_log_line_carries_the_exposure_beside_the_weight():
     assert format_derivation([]) == ""
 
 
-def test_a_fractional_dose_is_printed_not_rounded_to_zero():
-    """A probe divides the full run's doses by the step ratio, so its exposures are below one."""
+def test_a_fractional_target_is_printed_not_rounded_to_zero():
+    """A probe divides the full run's reps targets by the step ratio, so its exposures are below one."""
     _, derived = derive_source_weights(FIXED, {"synth-bare-country-v23": 0.0333}, ROWS, SAMPLES)
 
     assert "0.033 reps/row" in format_derivation(derived)

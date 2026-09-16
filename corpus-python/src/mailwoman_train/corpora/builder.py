@@ -109,7 +109,7 @@ def verify_record(
 
     Five independent checks, each of which has a scar behind it: the row fits S=96 so the loader
     never truncates it silently, no span holds whitespace (an interior U+3000 in a source name field
-    put one inside a ``district``), every span slices its own text (the secondary-corpus self-check),
+    put one inside a ``district``), every span covers exactly its own text (the secondary-corpus self-check),
     every tag is in the active label set (a tag outside it collapses to ``O`` at load — silent,
     #1349), and the triple survives ``char_label_array_from_spans``, the function the char path
     actually calls.

@@ -2,28 +2,28 @@
 #
 # THE FOURTH SHAPE, AND THE FIRST THAT CONTAINS ITS OWN ALTERNATIVES.
 #
-# Four trailing-region runs graded DO-NOT-SHIP because the slice carried ONLY admin segments and so
+# Four trailing-region runs graded DO-NOT-SHIP because the recipe output carried ONLY admin segments and so
 # damaged whichever class occupied the position it taught:
 #
 #   v4.8.0   9.4%   7/25 regressed, 12 venue-led   "Ye Three Lords, 27 Minories, London EC3N 1DE"
 #                                                    -> locality "Ye Three Lords", venue AND street gone
 #   v4.9.0   9.4%  11/31 regressed, 15 venue-led   binding moved to dependent_locality; bare streets broke
-#   v4.10.0  3.1%   9/22 regressed,  9 venue-led   damage scales with dose, sub-linearly, and does not vanish
+#   v4.10.0  3.1%   9/22 regressed,  9 venue-led   damage scales with exposure, sub-linearly, and does not vanish
 #
-# `house-venue` was already emitting the surface those slices were built to teach. Its default tail is
+# `house-venue` was already emitting the surface those recipes were built to teach. Its default tail is
 # `${locality}, ${region} ${postcode}` — `Springfield, IL 02101` and `Bengaluru, Karnataka 560038` are
 # the same shape — and EVERY row it emits carries a venue, a street AND a house number. The surface is
 # taught with its alternatives present rather than against them.
 #
 # WHAT IS ADDED: 18,000 rows, IN/PT/MX, REAL (postcode, locality, region) triples from the GeoNames
 # postal exports with the corrected column mapping (admin2 is the city; column 3 is a street or a
-# colonia and becomes the dependent locality). Measured on the emitted slice: venue 100%, street 100%,
+# colonia and becomes the dependent locality). Measured on the emitted rows: venue 100%, street 100%,
 # house_number 100%.
 #
 #   Bob's Pizza, 9 Lake Dr, Srikakulam, Andhra Pradesh 532001
 #   8457 Maple Blvd, Brasserie du Marche, Aguascalientes, Aguascalientes 20000
 #
-# DOSE: none to tune. The rows are emitted under the EXISTING `synth-house-venue` source, so they join
+# EXPOSURE: none to tune. The rows are emitted under the EXISTING `synth-house-venue` source, so they join
 # a bucket that has shipped at weight 2.0 and take their share of it rather than claiming their own.
 # That is deliberate — every previous failure in this arc came from a new source carrying ~9% of the
 # stream on its own.
@@ -176,9 +176,9 @@ data:
     VU: 1.0
     ZA: 1.0
   source_weights:
-    # DOSE-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # REPS-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
-    # a 10.5% share. Parity with the bare trailing-region slices, measured at 7.7 and 5.2 reps/row.
+    # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
     synth-house-venue: 2.0
     overture-latam: 6.0
@@ -206,7 +206,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # dose held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

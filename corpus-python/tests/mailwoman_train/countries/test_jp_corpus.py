@@ -1,8 +1,8 @@
-"""Fixtures for the Phase-3 JP slice recipe — rung 1 of the fixtures → smoke → full ladder.
+"""Fixtures for the Phase-3 JP corpus recipe — rung 1 of the fixtures → smoke → full ladder.
 
 Every expected string here is hand-readable Japanese: a reviewer can check 香川県高松市八島町二丁目3-16
 by eye, which is the whole reason the Phase-0 de-risk was cheap. The span assertions are written as
-(tag, sliced text) pairs rather than raw offsets so a failure says WHAT was mislabeled.
+(tag, span text) pairs rather than raw offsets so a failure says WHAT was mislabeled.
 """
 
 from __future__ import annotations
@@ -232,7 +232,7 @@ def test_verify_accepts_every_register() -> None:
 
 def test_stage3_jp_is_a_superset_so_the_universal_tags_are_still_legal() -> None:
     # Worth pinning: stage3-jp = STAGE3's 16 + the JP seven. `region`/`locality`/`street` do not
-    # vanish, they just get no support from this slice — a zero the build report has to name rather
+    # vanish, they just get no support from this corpus — a zero the build report has to name rather
     # than a collapse the loader would hide.
     assert {"region", "locality", "street"} <= TAG_SET
     assert {"prefecture", "municipality", "district", "block"} <= TAG_SET

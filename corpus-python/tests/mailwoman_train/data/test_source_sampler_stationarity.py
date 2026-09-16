@@ -3,7 +3,7 @@
 ``_raw_row_stream`` samples sources by weighted multinomial, but when a source's finite
 iterator exhausts it DELETES the source and renormalizes the remaining mixture. So
 ``source_weights`` is only the OPENING distribution: a small oversampled source (the #1569
-30k-row suffix slice at weight 12.0) is live for the first ~3,330 optimizer steps of each
+30k-row suffix source at weight 12.0) is live for the first ~3,330 optimizer steps of each
 ~7,812-step epoch and silent afterwards. The v4.3.3 B1 board oscillated in lockstep with
 those exposure windows.
 
@@ -49,10 +49,10 @@ def _rows(source: str, n: int, country: str = "US") -> list[dict]:
     ]
 
 
-def _write_corpus(tmp_path: Path, slices: dict[str, list[dict]]) -> Path:
+def _write_corpus(tmp_path: Path, files: dict[str, list[dict]]) -> Path:
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
-    for name, rows in slices.items():
+    for name, rows in files.items():
         table = pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA)
         pq.write_table(table, corpus / "train" / name)
     return corpus
@@ -140,9 +140,9 @@ def test_positive_weight_source_with_zero_selectable_rows_raises(tmp_path: Path)
 
 
 def test_source_absent_from_source_weights_raises(tmp_path: Path) -> None:
-    """The mirror of the guard above, and the one that was missing. A positive weight with no slice
-    raises; a slice with no weight used to be filtered out and logged at INFO as "zero-weighted",
-    which is what a DELIBERATE zero also says. The shape it hid: a regenerated slice takes a version
+    """The mirror of the guard above, and the one that was missing. A positive weight with no rows
+    raises; a source with no weight used to be filtered out and logged at INFO as "zero-weighted",
+    which is what a DELIBERATE zero also says. The shape it hid: a regenerated recipe output takes a version
     suffix in its ``source`` column, the config keeps the old key, and training continues on the
     superseded vintage."""
     corpus = _write_corpus(

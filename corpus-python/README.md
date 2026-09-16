@@ -25,7 +25,7 @@ fail. `launch/train_remote.py`'s docstring is the table of what each module owns
 
 The JSONL → Parquet conversion that lived here in Phase 1 was deleted alongside the JS-native
 Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/parquet.ts` —
-`mailwoman corpus build` now writes `.parquet` slices directly with no Python in the loop.
+`mailwoman corpus build` now writes the `.parquet` files directly with no Python in the loop.
 
 ## Install
 

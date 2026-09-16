@@ -1,8 +1,8 @@
-"""Build the FULL JP training slice from Overture-JP (v8 CJK Phase 3, epic #1176).
+"""Build the FULL JP training corpus from Overture-JP (v8 CJK Phase 3, epic #1176).
 
-The Leg-1 probe slice (``probe_corpora.py`` beside this package, 200k rows) proved the char path on
+The Leg-1 probe corpus (``probe_corpora.py`` beside this package, 200k rows) proved the char path on
 the universal STAGE3 subset: coordinate-acceptability **0.9925 vs the pre-registered 0.70 check**.
-Phase 3 is the full slice the probe's PASS unlocked, and it differs from the probe in four ways:
+Phase 3 is the full corpus the probe's PASS unlocked, and it differs from the probe in four ways:
 
 1. **JP-native labels** (``label_set: stage3-jp``, 47 BIO — activated by #1357). The probe mapped
    prefecture→``region`` / municipality→``locality`` / the whole ōaza-chōme surface→``street``.
@@ -42,7 +42,7 @@ reader can tell whether the constraint still binds):
   a half-width-kana fold · 3,637 already in a kanji-designator form.
 - ``postcode`` and ``unit`` are 100% NULL (Overture-JP postcode fill is zero, re-verified #473), so
   the 〒 fraction joins KEN_ALL. The probe joined at MUNICIPALITY granularity, which always returns
-  the ``NNN-0000`` catch-all — every probe postcode ended in four zeros. This slice joins at TOWN
+  the ``NNN-0000`` catch-all — every probe postcode ended in four zeros. This corpus joins at TOWN
   granularity first (see ``KenAllIndex``): 17.8% exact, 89.6% once a leading ``字``/``大字`` is
   stripped, remainder on the municipality catch-all, zero misses.
 - Exactly 2 distinct non-BMP characters occur (𨦻 ×109, 𨫤 ×25). Python string offsets are

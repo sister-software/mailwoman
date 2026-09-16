@@ -7,7 +7,7 @@ from pathlib import Path
 import pyarrow.parquet as pq
 
 from ...tokenizer import Tokenizer, whitespace_spans
-from .corpus_files import _slice_paths
+from .corpus_files import _parquet_paths
 from .parquet import _REQUIRED_COLUMNS
 
 
@@ -28,8 +28,8 @@ def verify_tokenizer_alignment(
 
     If invariant (1) fails this raises; (2) failed earlier when we constructed Tokenizer.
     """
-    slice = _slice_paths(corpus_dir, "train")[0]
-    pf = pq.ParquetFile(slice)
+    path = _parquet_paths(corpus_dir, "train")[0]
+    pf = pq.ParquetFile(path)
     t = pf.read_row_group(0, columns=list(_REQUIRED_COLUMNS))
     raws = t["raw"]
     tokens_col = t["tokens"]
@@ -40,6 +40,6 @@ def verify_tokenizer_alignment(
         try:
             whitespace_spans(raw, toks)
         except ValueError as exc:
-            raise RuntimeError(f"corpus tokenizer invariant broken at row {i} of slice {slice}: {exc}") from exc
+            raise RuntimeError(f"corpus tokenizer invariant broken at row {i} of {path}: {exc}") from exc
         # Smoke the SP encoder so a mis-pointed tokenizer.model fails fast.
         tokenizer.encode_with_spans(raw)

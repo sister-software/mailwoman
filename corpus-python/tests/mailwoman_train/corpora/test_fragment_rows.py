@@ -50,7 +50,7 @@ CASES: dict[str, dict[str, Any]] = {
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_every_span_covers_the_text_it_claims(name: str) -> None:
-    """`raw[start:end]` is the surface, not a neighbour and not an off-by-one slice of it."""
+    """`raw[start:end]` is the surface, not a neighbour and not an off-by-one substring of it."""
     row = CASES[name]
     raw = row["raw"]
     triple = zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)

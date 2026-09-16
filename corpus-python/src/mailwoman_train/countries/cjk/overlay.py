@@ -1,11 +1,11 @@
-"""Build the v8 CJK overlay corpus: the JP full slice plus the CN organizational-unit slice, under one head (#2034).
+"""Build the v8 CJK overlay corpus: the full JP corpus plus the CN organizational-unit rows, under one head (#2034).
 
-The JP model (``v8-jp-full``, 24k steps, coordinate-acceptability 0.9928) trained on the 2M-row JP slice with the
+The JP model (``v8-jp-full``, 24k steps, coordinate-acceptability 0.9928) trained on the 2M-row JP corpus with the
 47-label ``stage3-jp`` head. The CN rows the `cn-organizational-units` recipe labels (151 over the three coarse-placer
 splits) carry one tag that head does not have, ``locality_unit``, so they cannot ride a JP-only run. This builder lays
 out the corpus a from-scratch CJK run reads instead:
 
-- **A MANIFEST that references the JP parts where they already are.** The loader's ``_slice_paths`` takes a manifest
+- **A MANIFEST that references the JP parts where they already are.** The loader's ``_parquet_paths`` takes a manifest
   path AS-IS when it exists (the overlay rule from v0.4.0 → v0.3.0), so the eight JP train parts and the JP val part are
   listed by their path under the volume root and never copied. Only the CN parts live in this directory.
 - **The CN rows as parquet parts in the JP schema.** The TypeScript recipe emits aligned JSONL (``span_starts`` /
@@ -20,7 +20,7 @@ out the corpus a from-scratch CJK run reads instead:
 WHITESPACE INSIDE A SPAN IS ALLOWED HERE, deliberately. The JP builder refuses it because the one case it met was a
 source defect (an interior U+3000 inside a district name). A CN row's Latin admin tail carries a real inner space —
 ``Inner Mongolia``, ``Xinjiang Uyghur`` — and in ``char_mode: char`` every character is its own unit, the space
-included, so the label array is well-formed. The other JP checks (fits S, every span slices its own text, every tag in
+included, so the label array is well-formed. The other JP checks (fits S, every span covers exactly its own text, every tag in
 the active set, the array builds) are kept.
 
 Usage (local artifact; the manifest paths are written for the volume):
@@ -100,7 +100,7 @@ def build(
     extra_corpora: Sequence[tuple[Path, str]] = (),
 ) -> dict[str, Any]:
     """Write the overlay. ``extra_corpora`` are further versioned corpora on the same schema and label set (the Korean
-    slice, ``juso-kr``), referenced by volume path like the JP parts and folded into the sealed vocabulary."""
+    corpus, ``juso-kr``), referenced by volume path like the JP parts and folded into the sealed vocabulary."""
     if out_dir.exists() and any(out_dir.iterdir()) and not force:
         raise RuntimeError(f"{out_dir} is not empty; pass --force to overwrite")
     for split in ("train", "val"):
@@ -155,7 +155,7 @@ def build(
         extra_parts[corpus_dir.name] = {**parts, "source": [corpus_source]}
     save_char_vocab(vocab, out_dir / "char-vocab-cjk.json")
 
-    slices = (
+    entries = (
         [
             {"path": f"{volume_root}/{jp_version}/{split}/{name}", "split": split, "source": "overture-jp"}
             for split in ("train", "val")
@@ -177,10 +177,10 @@ def build(
         "base_corpus_version": jp_version,
         "label_set": LABEL_SET_NAME,
         "note": (
-            "Overlay: the JP full slice referenced by volume path plus the CN organizational-unit parts written here. "
+            "Overlay: the full JP corpus referenced by volume path plus the CN organizational-unit parts written here. "
             "The loader takes each path as-is when it exists; on the volume both do."
         ),
-        "slices": slices,
+        "slices": entries,
     }
     (out_dir / "MANIFEST.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

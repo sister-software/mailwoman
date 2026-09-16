@@ -1,7 +1,7 @@
 """Contract tests for the affix-split relabel pass (#511).
 
-The critical property is BUILDER PARITY: split_street_span must agree with
-build-street-affix-slice.mjs::parseStreet on every case, or the pass introduces a third
+The critical property is BUILDER PARITY: split_street_span must agree with the affix recipe's
+``parseStreet`` (`packages/corpus/lib/recipes/street/affix.ts`) on every case, or the pass introduces a third
 labeling and re-creates the contradiction it exists to cure.
 """
 
@@ -193,7 +193,7 @@ class TestRelabelSpans:
     """Char-arithmetic re-target of the #519 span triple — the v0.5.0 form of the pass."""
 
     @staticmethod
-    def _slices(row):
+    def _span_texts(row):
         return [
             (t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
         ]
@@ -208,7 +208,7 @@ class TestRelabelSpans:
             "span_tags": ["house_number", "street", "locality", "region", "postcode"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("house_number", "1234"),
             ("street_prefix", "SE"),
             ("street", "Division"),
@@ -230,7 +230,7 @@ class TestRelabelSpans:
             "span_tags": ["street"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("street_prefix", "N"),
             ("street", "Dixie Box"),
             ("street_suffix", "Road"),
@@ -275,7 +275,7 @@ class TestRelabelSpans:
             "span_tags": ["street", "street"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("street_prefix", "N"),
             ("street", "Main"),
             ("street_suffix", "St"),
@@ -323,7 +323,7 @@ class TestRelabelSpans:
             "span_tags": ["street", "street_suffix"],
         }
         assert relabel_row(row, LEX) is False
-        assert self._slices(row) == [("street", "Menlo Park"), ("street_suffix", "Road")]
+        assert self._span_texts(row) == [("street", "Menlo Park"), ("street_suffix", "Road")]
 
     def test_second_pass_is_a_no_op(self):
         row = {
@@ -349,7 +349,7 @@ class TestRelabelSpans:
             "span_tags": ["street_prefix", "street"],
         }
         assert relabel_row(row, LEX) is True
-        assert self._slices(row) == [
+        assert self._span_texts(row) == [
             ("street_prefix", "N"),
             ("street", "Main"),
             ("street_suffix", "St"),

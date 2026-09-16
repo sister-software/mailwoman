@@ -79,7 +79,7 @@ def render_row(
     register: str,
     country: bool = False,
 ) -> dict[str, Any]:
-    """Render one TW row in one register, returning the slice record (spans, legacy tokens, provenance)."""
+    """Render one TW row in one register, returning the corpus record (spans, legacy tokens, provenance)."""
     renderer = RowRenderer()
     sep = " " if register == "spaced" else ""
     digits = fullwidth_digits if register == "official" else ascii_digits

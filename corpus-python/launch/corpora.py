@@ -247,7 +247,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         checks=(
             "corpus-python/src/mailwoman_train/configs/v5.4.0-target-families-2k.yaml",
             "corpus-python/src/mailwoman_train/configs/v5.4.0-target-families-60k.yaml",
-            "corpus-python/src/mailwoman_train/data/dose.py",
+            "corpus-python/src/mailwoman_train/data/source_reps.py",
             "corpus/versioned/v0.28.0-reviewed-postcode-tail/corpus-v0.28.0-reviewed-postcode-tail/train/reviewed-postcode-tail-00000.parquet",
             "corpus/versioned/v0.29.0-target-families/corpus-v0.29.0-target-families/MANIFEST.json",
             "corpus/versioned/v0.29.0-target-families/corpus-v0.29.0-target-families/train/synth-sg-register-00000.parquet",
@@ -265,7 +265,7 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
         checks=(
             "corpus-python/src/mailwoman_train/configs/v5.5.0-restored-generations-60k.yaml",
             "corpus-python/src/mailwoman_train/configs/v5.6.0-bare-postcode-60k.yaml",
-            "corpus-python/src/mailwoman_train/data/dose.py",
+            "corpus-python/src/mailwoman_train/data/source_reps.py",
             "corpus/versioned/v0.29.0-target-families/corpus-v0.29.0-target-families/train/synth-sg-register-00000.parquet",
             "corpus/versioned/v0.30.0-bare-postcode/corpus-v0.30.0-bare-postcode/MANIFEST.json",
             "corpus/versioned/v0.30.0-bare-postcode/corpus-v0.30.0-bare-postcode/train/synth-bare-postcode-00000.parquet",

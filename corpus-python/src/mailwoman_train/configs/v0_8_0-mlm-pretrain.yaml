@@ -23,7 +23,7 @@
 #     --config v0_8_0-mlm-pretrain.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
-  # v0.3.0 (674 train slices) NOT v0.4.0 (12 synth-overlay slices): MLM wants broad,
+  # v0.3.0 (674 train parquet files) NOT v0.4.0 (12 synth-overlay parquet files): MLM wants broad,
   # representative text coverage, and v0.4.0 is a thin synth overlay meant to be used WITH
   # source-weighting (which we drop here). No row in launch/corpora.py stages v0.3.0 any more —
   # put it on the volume with `sync_assets --corpus-versions v0.3.0` before running this.
