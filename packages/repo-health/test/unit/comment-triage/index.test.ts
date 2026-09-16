@@ -85,14 +85,14 @@ describe("syncCommentTriage", () => {
 		const first = await syncCommentTriage({ owner: "acme", repository: "widgets", database, fetchPage: pages, now })
 		const second = await syncCommentTriage({ owner: "acme", repository: "widgets", database, fetchPage: pages, now })
 
-		expect(first).toMatchObject({ comments: 4, snapshots: 4, findings: 4 })
+		expect(first).toMatchObject({ comments: 4, snapshots: 4, findings: 5 })
 		expect(second).toMatchObject({ comments: 4, snapshots: 0, findings: 0 })
 
 		using db = new DatabaseClient<CommentTriageDatabase>(database)
 		expect(await db.selectFrom("comment_triage_run").selectAll().execute()).toHaveLength(2)
 		expect(await db.selectFrom("comment_triage_node").selectAll().execute()).toHaveLength(4)
 		expect(await db.selectFrom("comment_triage_snapshot").selectAll().execute()).toHaveLength(4)
-		expect(await db.selectFrom("comment_triage_finding").selectAll().execute()).toHaveLength(4)
+		expect(await db.selectFrom("comment_triage_finding").selectAll().execute()).toHaveLength(5)
 
 		expect(await db.selectFrom("comment_triage_reference").selectAll().execute()).toEqual([
 			expect.objectContaining({ target: "#42", observed_state: "closed" }),

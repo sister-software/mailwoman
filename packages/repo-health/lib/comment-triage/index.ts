@@ -196,6 +196,7 @@ export interface TriageLead {
 		| "overly_verbose"
 		| "closed_github_reference"
 		| "missing_github_reference"
+		| "repository_file_reference"
 		| "missing_file_reference"
 	severity: "minor" | "material"
 	confidence: "low" | "medium"
@@ -470,30 +471,32 @@ export async function syncCommentTriage(options: SyncCommentTriageOptions): Prom
 				reference.targetURL
 			)
 
-			const label =
-				reference.observedState === "closed"
-					? "closed_github_reference"
-					: reference.observedState === "missing" && reference.kind === "github_issue"
-						? "missing_github_reference"
-						: reference.observedState === "missing"
-							? "missing_file_reference"
-							: undefined
+			const labels = [
+				reference.observedState === "closed" ? "closed_github_reference" : undefined,
+				reference.observedState === "missing" && reference.kind === "github_issue"
+					? "missing_github_reference"
+					: undefined,
+				reference.kind === "repository_file" ? "repository_file_reference" : undefined,
+				reference.observedState === "missing" && reference.kind === "repository_file"
+					? "missing_file_reference"
+					: undefined,
+			].filter((label): label is TriageLead["label"] => label !== undefined)
 
-			if (!label) continue
+			for (const label of labels) {
+				const findingId = sha256Hex(`${snapshotId}\0${label}\0rule/v1`)
 
-			const findingId = sha256Hex(`${snapshotId}\0${label}\0rule/v1`)
+				const finding = insertFinding.run(
+					findingId,
+					snapshotId,
+					label,
+					"minor",
+					label === "repository_file_reference" ? "low" : "medium",
+					`References ${reference.target}, which is ${reference.observedState} on the repository default branch.`,
+					startedAt
+				)
 
-			const finding = insertFinding.run(
-				findingId,
-				snapshotId,
-				label,
-				"minor",
-				"medium",
-				`References ${reference.target}, which is ${reference.observedState} on the repository default branch.`,
-				startedAt
-			)
-
-			findings += Number(finding.changes)
+				findings += Number(finding.changes)
+			}
 		}
 	}
 
