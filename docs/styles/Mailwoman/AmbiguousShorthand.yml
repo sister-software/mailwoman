@@ -28,10 +28,21 @@
 ##
 ## Contracts survive by being written as contracts. Vale's markdown parser
 ## skips inline code and fenced blocks natively, so `mailwoman eval promote`,
-## `packages/corpus/lib/shard-recipes/`, `@mailwoman/locale-hint` and
+## the MANIFEST's `slices` key, `@mailwoman/locale-hint` and
 ## `promotion-eval.ts` all pass when they are backticked — which is how an
 ## identifier, a path, or a command the reader types should be written
-## anyway. A BARE `promotion-eval` in running prose does trip this rule:
+## anyway.
+##
+## That MANIFEST key is the example on purpose: it carries a banned word, it
+## is deliberately NOT renamed, and the reason is legible. Every corpus on
+## disk and on the Modal volume writes it; the Python reader's fallback
+## accepts exactly two spellings and six further readers accept it with none
+## at all, so a rename is a flag day rather than an edit. The previous attempt
+## is recorded in CHANGELOG under "an overlay corpus resolved ONE parquet file
+## of 706, silently" — a key renamed without migrating the manifests, and a
+## run that would have trained on 22 rows of 706 while reporting success.
+##
+## A BARE `promotion-eval` in running prose does trip this rule:
 ## tokens carry word boundaries, and a hyphen is a word boundary, so the
 ## remedy is the backticks, not a rename. Renaming a contract-bearing
 ## identifier is a separate, operator-approved change.

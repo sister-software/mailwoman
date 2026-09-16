@@ -139,6 +139,10 @@ The worker allowlists two Price ids and the shop provisions both Prices.
 (EconomyMetaphor: `Price` is a Stripe API object, a third-party contract like
 axios's `HttpStatusCode`, and 106 sites in `packages/license-worker` name it.)
 
+The POI taxonomy holds 970 entries and `erasableSyntaxOnly` is a tsconfig flag.
+(EconomyMetaphor: the word boundary protects `taxonomy` and the letters inside
+`syntax`, so banning tax outright costs neither.)
+
 The recipe sits in `packages/corpus/lib/extract-recipes/` as
 `synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked
 artifact names are exempt — that is the replacement both rules ask for.)

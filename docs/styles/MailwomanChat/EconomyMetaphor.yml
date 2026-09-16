@@ -25,6 +25,12 @@ message: "'%s' is a monetary metaphor — state the actual cost and its unit (ro
 level: error
 ignorecase: true
 tokens:
+  # `tax` in ANY form. There is no non-metaphorical tax in this project: every one of the 116
+  # word-boundary occurrences in the tree is the metaphor, and the word boundary protects the 970
+  # `taxonomy`/`taxonomies` occurrences (`@mailwoman/poi-taxonomy`) and the `tax` inside `syntax`
+  # by construction. A real sales tax would be a Stripe concern and would arrive as a dollar figure,
+  # which the rule below already admits.
+  - tax(?:es|ed|ing)?
   - '\w+[- ]tax\b'
   - pay(s|ing)? the tax
   - paid the tax
