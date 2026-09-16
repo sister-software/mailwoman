@@ -1,6 +1,6 @@
-# House-number interpolation — design (#483, slice 1)
+# House-number interpolation — design (#483, increment 1)
 
-First slice of the interpolation tier scoped in
+First increment of the interpolation tier scoped in
 [2026-06-11-geocoder-table-stakes-scoping.md](./2026-06-11-geocoder-table-stakes-scoping.md):
 "123 Main St" where no address point exists → estimate the coordinate between known ranges
 along the street segment. This document covers the pilot — a Vermont-scoped TIGER EDGES
@@ -96,7 +96,7 @@ only if a national build makes size hurt.
 
 **Scoping is postcode-first, like the address-point tier.** TIGER edges carry no
 locality name, so locality scope can't be matched directly against this table — a known
-limitation of this slice (see open questions). Queries without a postcode fall back to a
+limitation of this increment (see open questions). Queries without a postcode fall back to a
 statewide street-name match, which is honest but ambiguous for common names ("Main
 Street" exists in many towns); the lookup ABSTAINS when the statewide candidates span
 multiple postcodes with no way to pick.
@@ -127,7 +127,7 @@ Given `{ street, number, postcode? }`:
 6. **Answer** — `{ lat, lon, interpolated: true, parityMatched, uncertaintyM, source,
 release }` where `uncertaintyM` is half the segment's polyline length in meters.
 
-No side-of-street offset in this slice: TIGER centerline + half-segment uncertainty is
+No side-of-street offset in this increment: TIGER centerline + half-segment uncertainty is
 the honest claim. Offsetting perpendicular by ~10 m to the matched side is a cheap
 follow-up once the eval says the centerline is the dominant error term (it isn't — range
 uniformity is).
@@ -140,7 +140,7 @@ tier slots in immediately after it as the fall-through: same `(street, number, p
 locality)` extraction, consulted ONLY when the exact tier missed, stamping
 `resolution_tier: "interpolated"` + the uncertainty metadata.
 
-**This slice ships the module standalone and does NOT wire core.** The wiring needs a
+**This increment ships the module standalone and does NOT wire core.** The wiring needs a
 second `ResolveOpts` member (or a widening of `addressPoints` into an ordered tier list)
 and that interface decision deserves its own review — noted as a follow-up on #483
 rather than smuggled into the pilot. The module's `find()` signature is deliberately
@@ -243,13 +243,13 @@ Method 2 clear the check on its bracketed stratum?
 
 ## Open questions
 
-1. **Workspace split.** This slice implements inside `resolver-wof-sqlite` (the module is
+1. **Workspace split.** This increment implements inside `resolver-wof-sqlite` (the module is
    small, shares the normalizer + geo helpers, and ships nothing by default). The scoping
    note leaned toward a new `@mailwoman/resolver-interpolation` workspace — different
    data lifecycle (TIGER yearly vintages vs WOF), the slim/fat split the demo taught.
    **Operator call** before this grows beyond a pilot: stay (one fewer package, shared
    normalizer stays intra-package) vs split (independent versioning of the TIGER data
-   contract). Nothing in this slice blocks either answer.
+   contract). Nothing in this increment blocks either answer.
 2. **Odd/even fidelity.** Vermont measures 99.99% of address-carrying sides
    parity-consistent (8 `mixed` of 137,256), but a clean from/to pair doesn't prove the
    real houses obey it, and TIGER does not guarantee it nationally; the `mixed` bucket and

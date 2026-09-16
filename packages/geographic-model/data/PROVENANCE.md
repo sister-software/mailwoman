@@ -2,26 +2,26 @@
 
 ## `model/` — the authored records
 
-The authoring source for the frozen pharmacy slice and the wave-1 breadth records amended onto it. Seven concepts, one
+The authoring source for the frozen pharmacy record set and the wave-1 breadth records amended onto it. Seven concepts, one
 relation, two external mappings, two assertions. Authored by hand; edit these and regenerate the artifact below.
 
 - **Authority:** [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](../../../docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
-  §4 — the frozen vertical slice (#1917), and issue #1927, whose Scope block lists the concepts and the relation
+  §4 — the frozen first record set (#1917), and issue #1927, whose Scope block lists the concepts and the relation
   verbatim. Both are named in every record's `provenance`; no third-party source contributed anything here.
 - **Authored:** 2026-08-26.
 - **Layout:** the loader reads every `*.json` file under `model/` and merges them, so the file boundaries are
   authoring convenience. `model.json` is the one exception — it holds the document's `version`, and nothing else.
 - **Not authored:** no source observations, and no hand-authored derived facts. Both tables therefore compile empty,
-  which is the truthful answer for this slice rather than an unread one: nothing external was recorded, and the one
+  which is the truthful answer for this record set rather than an unread one: nothing external was recorded, and the one
   assertion sits on `pharmacy`, which has no descendants for `isA` inheritance to materialize onto.
 
 ### What each record states
 
-| File             | Record                                                                                                    | Reading                                                                                                                                                                                           |
-| ---------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `relations.json` | `affords`                                                                                                 | `establishment` → `activity`, not transitive, not symmetric, `defeasible` semantics — an exception qualifies a record rather than falsifying the set                                              |
-| `concepts.json`  | `place`, `establishment`, `healthcare_facility`, `pharmacy`, `drugstore`, `activity`, `obtain_medication` | the `isA` chain the slice names, and two assertions: `pharmacy affords obtain_medication` (`necessary`, unscoped) and `drugstore affords obtain_medication` (`strongly_expected`, scoped to `US`) |
-| `mappings.json`  | `poi-taxonomy-pharmacy`, `poi-taxonomy-drugstore`                                                         | `@mailwoman/poi-taxonomy` categories `pharmacy` and `drugstore` name the concepts of the same names                                                                                               |
+| File             | Record                                                                                                    | Reading                                                                                                                                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `relations.json` | `affords`                                                                                                 | `establishment` → `activity`, not transitive, not symmetric, `defeasible` semantics — an exception qualifies a record rather than falsifying the set                                                   |
+| `concepts.json`  | `place`, `establishment`, `healthcare_facility`, `pharmacy`, `drugstore`, `activity`, `obtain_medication` | the `isA` chain the record set names, and two assertions: `pharmacy affords obtain_medication` (`necessary`, unscoped) and `drugstore affords obtain_medication` (`strongly_expected`, scoped to `US`) |
+| `mappings.json`  | `poi-taxonomy-pharmacy`, `poi-taxonomy-drugstore`                                                         | `@mailwoman/poi-taxonomy` categories `pharmacy` and `drugstore` name the concepts of the same names                                                                                                    |
 
 Identifiers are bare (`pharmacy`, not `mw:pharmacy`). The issue writes the `mw:` prefix as namespace notation in prose;
 a literal colon inside a concept identifier would collide with the separator `compileGeographicModel` builds derived

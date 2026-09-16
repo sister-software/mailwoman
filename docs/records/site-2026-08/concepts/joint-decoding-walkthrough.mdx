@@ -169,7 +169,7 @@ The previous pipeline (v0.4.0 and earlier) had:
 - An argmax classifier — no top-k.
 - A Stage 5 that only sorted spans by position and emitted them in order.
 
-Given those three constraints, `NY-NY Steakhouse, Houston, TX` returned `region: NY, locality: Houston, region: TX` and downstream code crashed trying to make sense of two regions. The fix had to live at the reconciler layer because none of the upstream stages can see the joint picture by design — they each look at their own slice.
+Given those three constraints, `NY-NY Steakhouse, Houston, TX` returned `region: NY, locality: Houston, region: TX` and downstream code crashed trying to make sense of two regions. The fix had to live at the reconciler layer because none of the upstream stages can see the joint picture by design — they each look at their own part of it.
 
 This is the [knowledge-ladder](../understanding/our-approach/the-knowledge-ladder.mdx) point made concrete. Each stage knows its own kind of information; the joint decoder is what composes them. Removing the joint decoder is what makes geocoders fail on adversarial inputs. Adding it back is most of what v0.5.0 set out to do.
 

@@ -4,7 +4,7 @@ _Self-emitted by `scripts/eval/per-type-report.ts`. Both parsers graded through 
 
 ## Part A — coordinate accuracy by bucket (real OpenAddresses US, 2000 rows)
 
-Both parsers through the same resolver, against real address points. Slices overlap (a row can be both directional and multi-word-locality); `plain` is the complement.
+Both parsers through the same resolver, against real address points. Strata overlap (a row can be both directional and multi-word-locality); `plain` is the complement.
 
 | bucket              |    n | neural loc-match | v0 loc-match | neural coord p50 km | v0 coord p50 km |
 | ------------------- | ---: | ---------------: | -----------: | ------------------: | --------------: |

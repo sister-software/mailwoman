@@ -118,7 +118,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 			.join("")
 			.trim()
 
-		expect(reassembled).toBe(",Leeds") // raw.slice per-piece omits the sentinel-consumed leading space, as expected
+		expect(reassembled).toBe(",Leeds") // `raw.slice` per piece omits the sentinel-consumed leading space, as expected
 	})
 
 	test("guillemets «» (2-byte UTF-8 fallback) — downstream comma+locality offsets survive", async () => {

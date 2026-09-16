@@ -98,7 +98,7 @@ describe("collapseWhitespace", () => {
 	it("offsetMap stays correct + length-matched after a trailing-punct trim", () => {
 		const r = collapseWhitespace("ABC.")
 		expect(r.text).toBe("ABC")
-		expect(r.map).toEqual([0, 1, 2]) // the trailing '.' at index 3 is sliced off
+		expect(r.map).toEqual([0, 1, 2]) // the trailing '.' at index 3 is dropped
 		expect(r.map).toHaveLength(r.text.length)
 	})
 

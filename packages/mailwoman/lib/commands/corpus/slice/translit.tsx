@@ -46,9 +46,9 @@ export const spec = {
 
 const CorpusTranslitParquet: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildTranslitSlice } = await import("@mailwoman/corpus/tools")
+		const { buildTranslitOverlay } = await import("@mailwoman/corpus/tools")
 
-		await buildTranslitSlice(
+		await buildTranslitOverlay(
 			{
 				jsonl: options.jsonl,
 				baseManifest: options.baseManifest,

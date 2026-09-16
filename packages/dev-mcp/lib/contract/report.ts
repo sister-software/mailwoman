@@ -44,7 +44,7 @@ export async function runContractCensus(registry: EngineRegistryLike, args: Reco
 	const reading = describeObservedRate({
 		events: census.rows_violating,
 		n: census.n_evaluated,
-		selection: limit && limit < set.inputs.length ? "slice" : set.selection,
+		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "structurally invalid tree",
 	})
 

@@ -89,8 +89,8 @@ export interface SurfaceSample {
 }
 
 /**
- * The slice of a geocode run this file reads. Declared structurally so the surface can be exercised without a warm
- * engine — a full `GeocodeSession` is several gigabytes of prerequisite to test a fold.
+ * The subset of a geocode run's fields this file reads. Declared structurally so the surface can be exercised without a
+ * warm engine — a full `GeocodeSession` is several gigabytes of prerequisite to test a fold.
  */
 export interface GeocodeRunLike {
 	result: { components?: Record<string, string | undefined> }

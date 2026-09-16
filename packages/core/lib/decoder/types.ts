@@ -60,7 +60,7 @@ export interface DecoderToken {
 /**
  * One node of the address tree — a component span plus any nested child components.
  *
- * `value` is the raw text covered by this span, sliced from the original input by `[start, end)`. `confidence` is
+ * `value` is the raw text covered by this span, taken from the original input by `[start, end)`. `confidence` is
  * aggregated across the span's tokens (currently mean; see `build-tree.ts`). `children` are tagged subcomponents whose
  * spans fall within this node's span AND whose tag's containment rule names this node's tag as a permitted parent.
  */

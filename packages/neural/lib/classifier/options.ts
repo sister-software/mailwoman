@@ -354,7 +354,7 @@ export interface ParseOpts {
 	 */
 	spanProposer?: boolean
 	/**
-	 * Address-system conventions enforcement (#511 Tier A / #478's rules-as-constraints slice).
+	 * Address-system conventions enforcement (#511 Tier A / the rules-as-constraints part of #478).
 	 *
 	 * - `"auto"` — detect the system from the model's locale head (`locale_logits` output, v1.1.0+ exports; silently no-ops
 	 *   on models without it) and apply that system's codex conventions: forbidden tags become a hard emission mask

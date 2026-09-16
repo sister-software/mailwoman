@@ -11,7 +11,7 @@
  *        hanging `I-X` (treat as new span). A `B-X` that is whitespace-adjacent to an already-open
  *        `X` span is also folded in (spurious-boundary repair for multi-word values the model
  *        fragments, e.g. "Saint Paul" → B-locality B-locality); a comma/separator between them
- *        keeps them distinct. Span `value` is sliced from `raw` by [start, end), NOT concatenated
+ *        keeps them distinct. Span `value` is taken from `raw` by [start, end), NOT concatenated
  *        from `piece` — this avoids SentencePiece's synthetic leading-space markers in the output.
  *   2. Parent attachment — for each span, find the nearest labeled span whose tag is the
  *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.

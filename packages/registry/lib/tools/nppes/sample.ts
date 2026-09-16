@@ -32,7 +32,7 @@ export interface MessyRow extends Record<string, string> {
 }
 
 /**
- * One state's slice of the sample pass.
+ * One state's share of the sample pass.
  */
 export interface NPPESStateSample {
 	rows: MessyRow[]
@@ -52,7 +52,7 @@ export interface NPPESStateSample {
 export interface NPPESSample extends NPPESStateSample {
 	/**
 	 * Corpus-wide address-frequency table — the inverse-frequency signal. Counted over EVERY practice address in the
-	 * registry, not just the sample, so the sharing structure is a corpus statistic rather than a slice artifact.
+	 * registry, not just the sample, so the sharing structure is a corpus statistic rather than a sampling artifact.
 	 */
 	addressFrequency: TermFrequencyTable
 }

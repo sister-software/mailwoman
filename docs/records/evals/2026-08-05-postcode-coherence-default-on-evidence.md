@@ -249,7 +249,7 @@ REACHABLE through the lookups the pass itself makes. Measured with
 `mailwoman/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`.
 
 The candidate set is bounded by codex, not by the gazetteer — `candidateSystemsForPostcode` knows eight systems, so a
-country with no codex slice can never be proposed however many rows it holds. These eight are therefore the whole
+country with no codex module can never be proposed however many rows it holds. These eight are therefore the whole
 universe:
 
 | system | country | postcode rows (FTS) | reachable (FTS) | postcode rows (cand.) | reachable (cand.) |
@@ -269,7 +269,7 @@ measured.
 
 **So the mechanism can speak for four countries on the production extract set and six on the candidate table.** The
 M5V 3L9 abstention the landing record recorded is the CA row here, and it is a extract-set fact: the FTS set carries zero
-CA postcode rows while the candidate table carries 843,739. JP and NZ are unreachable on both — a codex slice with no
+CA postcode rows while the candidate table carries 843,739. JP and NZ are unreachable on both — a codex module with no
 postcode data behind it.
 
 Two consequences must be explicit:
@@ -337,7 +337,7 @@ Three conditions attach, none of them blocking:
    9 in 10 addresses".
 
 What default-on does NOT fix, so the flip is not oversold: `gb-downing-us-scoped` stays broken because the en-GB
-overlay does not parse the GB postcode (§1.4); JP and NZ have codex slices and no postcode data (§3); CA and AU need
+overlay does not parse the GB postcode (§1.4); JP and NZ have codex modules and no postcode data (§3); CA and AU need
 the candidate table (§3); and the coarse placer still cannot override `defaultCountry` even at 0.9999908844 confidence,
 which the landing record already flagged for its own ticket.
 
@@ -490,7 +490,7 @@ No other test pinned this default. Full repo suite and the resolver suite both c
 ### 7.6 What is still not fixed
 
 Unchanged from §5, restated so the flip is not read as more than it is: `gb-downing-us-scoped` still fails (the GB
-postcode parse under the en-GB overlay, not the resolver); JP and NZ have a codex slice with no postcode data; CA and
+postcode parse under the en-GB overlay, not the resolver); JP and NZ have a codex module with no postcode data; CA and
 AU need the candidate table; the coarse placer still cannot override `defaultCountry`; and the built regression corpus
 still drifts from its seed with no warning. These are recorded as D6 in the
 [runtime-flag register](../../engineering/reference/runtime-flags.mdx).

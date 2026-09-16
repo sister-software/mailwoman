@@ -33,7 +33,7 @@ export interface AlignCanonicalOptions {
 	corpusVersion: string
 }
 
-export async function alignCanonicalSlice(args: AlignCanonicalOptions): Promise<void> {
+export async function alignCanonicalRows(args: AlignCanonicalOptions): Promise<void> {
 	await using outStream = createNewlineWriter(args.output)
 	let labeled = 0
 	let quarantined = 0

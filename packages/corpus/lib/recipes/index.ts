@@ -92,13 +92,13 @@ export const RECIPES_BY_NAME: ReadonlyMap<string, CorpusRecipe> = new Map(RECIPE
 /**
  * Look up a recipe by its `<recipe>` name.
  */
-export function getSliceRecipe(name: string): CorpusRecipe | undefined {
+export function getRecipe(name: string): CorpusRecipe | undefined {
 	return RECIPES_BY_NAME.get(name)
 }
 
 /**
  * All recipes (for `--list` / help).
  */
-export function listSliceRecipes(): readonly CorpusRecipe[] {
+export function listRecipes(): readonly CorpusRecipe[] {
 	return RECIPES
 }

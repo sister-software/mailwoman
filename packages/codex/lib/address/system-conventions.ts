@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-address-system parsing conventions (#478's rules-as-constraints slice, started as the #511
+ *   Per-address-system parsing conventions (the rules-as-constraints part of #478, started as the #511
  *   Tier A corrective). The model's locale head detects WHICH address system a string belongs to;
  *   this table says what is and isn't grammatical in that system, so the decoder can obey the
  *   detection instead of merely being nudged by it.
@@ -56,7 +56,7 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * prefix — it destroyed `street_prefix` wholesale (measured on data/eval/external/ fr-street-prefix-real.jsonl at
 	 * conventions=auto: F1 0.0 with the forbid on → 80.0 with it off; the larger real-FR eval reported the same collapse,
 	 * ~96 → ~0.6). We keep ONLY `street_suffix` forbidden: the current model with the forbid OFF shows zero FR
-	 * street_suffix leakage (fp=0 on that same slice) and FR has no trailing street suffix, so the constraint costs
+	 * street_suffix leakage (fp=0 on that same eval set) and FR has no trailing street suffix, so the constraint costs
 	 * nothing while still guarding against any future suffix mis-tag. Postcode: exactly five digits (NF Z 10-011; see
 	 * fr/code-postal).
 	 */

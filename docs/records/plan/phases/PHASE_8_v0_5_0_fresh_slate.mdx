@@ -15,7 +15,7 @@
 v0.4.0 shipped a `§4-only` recipe after the full §1+§3+§4 destabilized at every tested learning rate. The campaign's deeper finding wasn't about §1 or §3 specifically — it was that the training-side improvements we were trying to bolt onto v0.3.0 weights ran into architectural constraints we had inherited from v0.1.0:
 
 - **Tokenizer locked at v0.1.0** — byte-fallback on non-Latin scripts drives 92% of country FN, 18% of postcode FN. No model-side fix possible without retraining the tokenizer, which forces a fresh model train.
-- **Single classifier head doing both boundary discovery and type classification** — BIO labeling couples these two problems; v0.4.0's bio_slip slice (6% of postcode FN) is the symptom. A phrase-grouping layer (new Stage 2.7) decouples them, but its outputs need to flow into the classifier's conditioning — which requires a classifier retrained to use them.
+- **Single classifier head doing both boundary discovery and type classification** — BIO labeling couples these two problems; v0.4.0's bio_slip class (6% of postcode FN) is the symptom. A phrase-grouping layer (new Stage 2.7) decouples them, but its outputs need to flow into the classifier's conditioning — which requires a classifier retrained to use them.
 - **Stage 5 reconcile is structural-only today** — sorts spans, attaches via PARENT_OF. To do real concordance matching (`NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg`) it needs top-k from classifier + top-k from resolver + concordance scoring. The classifier needs to emit top-k by design, not just argmax.
 
 These three changes individually would each require either a fresh train or a meaningful runtime rewrite. Doing them together is roughly the same cost as doing the most expensive one alone, with much higher leverage.
@@ -29,7 +29,7 @@ Six work areas, each with its own thread. Cross-thread dependencies noted.
 - **What:** new sentencepiece tokenizer trained on corpus + synthetic transliteration pairs (DeepSeek-generated, see Thread B). Vocab budget 48K-64K (up from current 32K) to accommodate non-Latin sub-pieces with low byte-fallback.
 - **Why:** closes the 92% country FN driven by byte-fallback. Enables ja-JP / ko-KR / zh-CN / ru-RU model expansion in v0.6.0+ without another tokenizer fork.
 - **Specifics:**
-  - Target: < 5% byte-fallback on a balanced multi-script eval slice
+  - Target: < 5% byte-fallback on a balanced multi-script eval set
   - Hand-crafted "must keep whole" rules for known postcode formats (5-digit ZIP, UK postcodes, JP `100-0005`, etc.) — uses sentencepiece user-defined symbols
   - Train on the SAME corpus the model will train on (consistency)
 - **Output:** `/data/models/tokenizer/v0.5.0/` + new model card
@@ -81,7 +81,7 @@ Six work areas, each with its own thread. Cross-thread dependencies noted.
 - **What:** new pipeline stage between kind classifier and neural classifier. Proposes coherent input units with confidence scores. Ships in two flavors:
   - **Rule-based** first (port of v1's section/sub-section logic): proximity, punctuation, capitalization, hyphenation. Deterministic, no training, fast.
   - **Learned** later (small 1-2M param span proposer trained on segmentation labels derived from corpus). Validates whether learned generalization beats rules.
-- **Why:** decouples boundary discovery from type classification — addresses v0.4.0's bio_slip slice at source rather than via decoder post-trim. Feeds both Stage 3 (as input conditioning) and Stage 5 (as span candidates).
+- **Why:** decouples boundary discovery from type classification — addresses v0.4.0's bio_slip class at source rather than via decoder post-trim. Feeds both Stage 3 (as input conditioning) and Stage 5 (as span candidates).
 - **Specifics:**
   - New workspace `@mailwoman/phrase-grouper/` alongside `@mailwoman/locale-hint` + `@mailwoman/kind-classifier`
   - Output: `Array<{ span: Section; kindHypothesis: PhraseKind; confidence: number }>`
@@ -122,9 +122,9 @@ Parallel-safe:
 
 Different from v0.4.0's "≥2 of 4 axes" frame, because v0.5.0 is changing the architecture. Per-axis:
 
-- **Coarse F1 (country / region / locality)**: recover to ≥ v0.3.0 baseline (country ≥ 0.28, region ≥ 0.18, locality ≥ 0.27) on the non-adversarial slice of golden v0.1.2. Stretch: improve via better phrase boundaries.
+- **Coarse F1 (country / region / locality)**: recover to ≥ v0.3.0 baseline (country ≥ 0.28, region ≥ 0.18, locality ≥ 0.27) on the non-adversarial subset of golden v0.1.2. Stretch: improve via better phrase boundaries.
 - **Fine F1 (street / house_number / venue)**: hold v0.4.0's small wins (street ≥ 0.30, house_number ≥ 0.78, venue ≥ 0.39).
-- **Non-Latin adversarial slice (new eval split)**: country F1 ≥ 0.50 (vs current ~0 — these are mostly byte-fallback empty preds). This is the tokenizer win directly measured.
+- **Non-Latin adversarial set (new eval split)**: country F1 ≥ 0.50 (vs current ~0 — these are mostly byte-fallback empty preds). This is the tokenizer win directly measured.
 - **Kryptonite catalogue (new eval fixture)**: hand-curated set of 20-30 incongruent-component cases (`NY-NY Steakhouse`, etc.). Target: 80%+ resolved to the correct place via Stage 5 reconcile.
 - **Training stability**: zero divergence runs in the v0.5.0 verdict-smoke + full-train sequence. Verdict-smoke redesign should make this enforceable.
 - **Calibration**: ECE ≤ v0.3.0 baseline.

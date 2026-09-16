@@ -41,7 +41,7 @@ export function toCIK(value: string | number): CIK | null {
 }
 
 /**
- * The slice of `SECClient` (`sec-client.ts`) this module needs — {@linkcode fetchCompanyTickers}/
+ * The subset of `SECClient` (`sec-client.ts`) this module needs — {@linkcode fetchCompanyTickers}/
  * {@linkcode fetchTenKFilings} take this rather than the concrete class so a test can substitute a trivial stub instead
  * of building a full axios harness. A real `createSECClient()` instance already satisfies this structurally; the
  * production caller always passes one, so this stays "go through the existing SEC client", never a second fetcher.

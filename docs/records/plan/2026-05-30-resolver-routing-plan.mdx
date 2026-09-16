@@ -27,7 +27,7 @@ A per-input **routing layer** in front of the resolver:
   `p(v0-wins)`. Interpretable + debuggable; no extra parse cost.
 - **Confidence bands:** `p > 0.8` → v0; `p < 0.2` → neural; the narrow ambiguous
   band → **resolver-as-arbiter** (run both, resolve both, pick the higher
-  resolver-confidence result). Caps the 2× parse cost to a small traffic slice.
+  resolver-confidence result). Caps the 2× parse cost to a small share of traffic.
 - **resolver-as-arbiter** is the powerful core mechanism — it makes
   _resolvability_ (gazetteer support) the routing signal, directly optimizing the
   end goal. Used three ways: online fallback (ambiguous band), offline

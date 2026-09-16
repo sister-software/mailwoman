@@ -1,7 +1,7 @@
 # Typed evidence and derivation — design spec
 
 **Status:** implemented 2026-09-04/05 (plan Tasks 1–10; receipts below). **Written:** 2026-08-21.
-**Public companion:** [`docs/superpowers/plans/2026-08-08-inferential-resolution.md`](../plans/2026-08-08-inferential-resolution.md) — the design record this implements the first slice of.
+**Public companion:** [`docs/superpowers/plans/2026-08-08-inferential-resolution.md`](../plans/2026-08-08-inferential-resolution.md) — the design record this implements the first increment of.
 **Related:** #1571 (inferential resolution), #1685 (coverage basis, landed), #1756 (`parent_fallback_retry` inert).
 
 A pure leaf workspace holding the typed-evidence vocabulary, the epistemic-status axis, the
@@ -348,7 +348,7 @@ Run before building the arms, not after.
   block aggregate_ and has a materially different posture from address-level records; that
   distinction is worth putting to counsel as its own narrow question, and neither ships here.
 - **Removal-power exclusions.** Demote-only until §6.2 has a number.
-- **Central place theory, naming families, terrain masks.** Companion plan, later slices.
+- **Central place theory, naming families, terrain masks.** Companion plan, later increments.
 - **`filer_cluster` being empty.** Real, unrelated.
 
 ---

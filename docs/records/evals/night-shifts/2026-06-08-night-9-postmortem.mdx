@@ -5,18 +5,18 @@
 ## Headline
 
 The honest-eval foundation (#371 leakage-free split + #373 PIP-containment) was built and
-**immediately earned its keep**: on the leakage-free US/Vermont slice it exposed a real,
+**immediately earned its keep**: on the leakage-free US/Vermont set it exposed a real,
 root-caused, resolver-only defect that the legacy name-match metric (93.7%) completely hides —
 and the fix, once chased to the bottom, collapses the full-US wrong-state error tail
 (coord p90 **2763km → ~10km**) with no metro regression.
 
 ## The finding, end to end
 
-Honest slice = OA rows in corpus-held-out geography the model never trained on. Only US/Vermont
+Held-out set = OA rows in corpus-held-out geography the model never trained on. Only US/Vermont
 clears the 1000-row trust floor (1428 rows); FR held-out départements = 16 rows; DE has no manifest
 holdout.
 
-1. **Symptom (VT slice):** name-match 93.7%, region-match **0%**, coord p50 **326km** — the
+1. **Symptom (VT set):** name-match 93.7%, region-match **0%**, coord p50 **326km** — the
    resolver finding the right _name_ in the wrong _state_, invisible to name-match.
 2. **Cause A:** the gazetteer was built without `scripts/add-region-abbrevs.ts`, so `region="VT"`
    never resolved (WOF stores "Vermont"; FTS had no USPS abbreviations) → locality lookup ran
@@ -30,7 +30,7 @@ holdout.
 
 ### Measured (validation copy of the gazetteer; self-emitted)
 
-| slice              | metric          | baseline |      abbrev only | abbrev + ancestry backfill |
+| set                | metric          | baseline |      abbrev only | abbrev + ancestry backfill |
 | ------------------ | --------------- | -------: | ---------------: | -------------------------: |
 | VT held-out (1428) | region-match    |     0.0% |            99.9% |                      99.9% |
 | VT held-out        | coord p50 (km)  |    326.3 |              3.4 |                        3.4 |
@@ -53,7 +53,7 @@ disagreement found Cause B.
   a resolver eval-integrity section in `concepts/eval-discipline.md`.
 - **#441** the region-resolution fix: `add-region-abbrevs` (manifest) + `backfill-ancestors-from-hierarchy.ts`.
   Validated on the honest harness; cross-locale no-regression (DE/FR identical); neural beats v0 on
-  the honest slice (p99 277 vs 2120km); slim/demo propagation analyzed; **+ a regression suite**
+  the held-out set (p99 277 vs 2120km); slim/demo propagation analyzed; **+ a regression suite**
   (`region-abbrev.test.ts`, 8 tests) hardening the abbrev→region + constraint path.
   **DB not promoted** (canonical swap is operator-conditional/blocked — see below).
 - **#443** `research blog: "The right name in the wrong state"` — the eval-honesty narrative, house voice,
@@ -76,7 +76,7 @@ disagreement found Cause B.
 - **#240 comment** — survey: ~60% built; de-prioritized because the region fix subsumes the
   anchor's disambiguation value (residual value = sub-km precision only).
 - **#387 comment** — the city-state retrain recipe + pre-registered check, **deferred** to sign-off
-  (no turnkey synth/config; no DE honest-slice check; merge wall; 3 prior reverts).
+  (no turnkey synth/config; no DE held-out-set check; merge wall; 3 prior reverts).
 
 ## Pre-flight fixes (done before any eval)
 
@@ -97,7 +97,7 @@ disagreement found Cause B.
 - Kept the abbrev+backfill gazetteer as a **validation copy** (`admin-abbrev-test.db`); did not
   swap the canonical (the swap was classifier-blocked, and matches the operator-conditional posture).
 - **Deferred the Modal #387 retrain** (logged a sign-off recipe) rather than launching: merge wall
-  blocks model promotion, no turnkey city-state synth/config exists, no DE honest-slice check, and
+  blocks model promotion, no turnkey city-state synth/config exists, no DE held-out-set check, and
   the recipe has 3 prior reverts. "Prepped recipe = success" per the plan's Tier-7.
 - **De-prioritized #189/#240/#369** after surveying them — the region fix subsumed the wrong-state
   failure they targeted; their residual value (sub-km precision) is lower than estimated pre-fix.

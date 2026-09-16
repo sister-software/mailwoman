@@ -60,7 +60,7 @@ with the [protomaps-basemap](https://github.com/protomaps/basemaps) layer names
 (`earth`, `water`, `roads`, `boundaries`, `places`, …) renders; other schemas
 decode fine but draw only the layers this package styles.
 
-Working in this repo, the committed test fixture — a hand-authored slice of
+Working in this repo, the committed test fixture — a hand-authored extract of
 southeast Portland — is enough to see the browser run without downloading
 anything:
 

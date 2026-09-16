@@ -33,7 +33,7 @@ difference to the record is two names, and one of them carries 4.1% of the board
 per-municipality report (landed) and the kana-surface register (running).
 
 **Han unification did not cost what it was expected to.** Municipality names that contain a code point the CN rows
-also label (102 of the CN slice's 166 Han characters are in the JP vocabulary) read **0.9947** on the shared head
+also label (102 of the CN corpus's 166 Han characters are in the JP vocabulary) read **0.9947** on the shared head
 against 0.9909 on the JP-only record; names with none read 0.9217 against 0.9997, and 598 of those 598 are
 Kasumigaura. The cost shows on the Chinese side instead: two of the 14 CN board rows start the `locality_unit` one
 character late, on a Han-unified numeral (四, 一) at the boundary with the dependent locality.

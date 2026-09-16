@@ -15,7 +15,7 @@ whether the point lands in Manhattan or in a village 280km upstate.
 
 So this harness measures two things the old one could not:
 
-1. **A leakage-free slice.** Evaluate only on OpenAddresses rows whose geography the training
+1. **A leakage-free set.** Evaluate only on OpenAddresses rows whose geography the training
    corpus held out (`corpus/src/split.ts` `defaultHoldouts()`: US = VT/WY/ND, FR = Corse/Lozère/
    Creuse). Those are places the model has never seen. In the current samples only **US/Vermont**
    clears a 1000-row trust floor (1428 rows); FR's held-out départements total 16 rows, and DE has
@@ -27,7 +27,7 @@ So this harness measures two things the old one could not:
 
 ## What it found, immediately
 
-The first run on the honest Vermont slice:
+The first run on the held-out Vermont set:
 
 | metric                                         |      value |
 | ---------------------------------------------- | ---------: |
@@ -54,10 +54,10 @@ sources state/province abbreviations from the in-repo chromium-i18n libaddressin
 them into the `names` table, which `build-fts` folds into `place_search`. It was simply missing from
 the build manifest's post-build step, so the deployed gazetteer was built without it (0 `abbr` rows).
 
-### The fix, measured on the same slice
+### The fix, measured on the same set
 
 Running `add-region-abbrevs.ts` and rebuilding the FTS index, then re-measuring on the identical VT
-slice:
+set:
 
 | metric                                   | baseline | abbrev-enriched |
 | ---------------------------------------- | -------: | --------------: |
@@ -111,7 +111,7 @@ the gazetteer.
 
 Re-measured on the abbreviation-enriched **and** ancestry-backfilled gazetteer:
 
-| slice              | metric               |       baseline |      abbrev only | abbrev + backfill |
+| set                | metric               |       baseline |      abbrev only | abbrev + backfill |
 | ------------------ | -------------------- | -------------: | ---------------: | ----------------: |
 | VT held-out (1428) | region-match         |           0.0% |            99.9% |             99.9% |
 | VT held-out        | coord p50 / p90 (km) |     326 / 1827 |        3.4 / 7.4 |         3.4 / 7.4 |
@@ -135,7 +135,7 @@ it never trained on:
 | v0 (Pelias)           |    91.9% |  99.5% |       3.3 |       7.2 |      2120 |
 
 The medians tie; the neural parser's p99 tail (277km vs 2120km) is far tighter, which is the
-beat-Pelias-on-the-hard-cases result we want on a held-out slice.
+beat-Pelias-on-the-hard-cases result we want on a held-out set.
 
 ## Status
 
@@ -155,5 +155,5 @@ beat-Pelias-on-the-hard-cases result we want on a held-out slice.
    re-publish to R2 (smoke-test region-match ≥99.9%, coord p50 ≤5km after).
 2. Fold the ancestry repair into `build-unified-wof`'s `populateAncestors` so a fresh build is
    correct without the post-build step.
-3. Broaden the honest slice: a targeted OA re-ingest for FR's held-out départements, and a DE
+3. Broaden the held-out set: a targeted OA re-ingest for FR's held-out départements, and a DE
    holdout in the corpus manifest, so region-match and coordinate error can be reported per locale.

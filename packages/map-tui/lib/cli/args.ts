@@ -11,7 +11,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 /**
  * Argument parsing for the `map-tui` bin.
  *
- * `parseCLIArgs` is pure: it takes the argv slice and an environment record, and answers with a discriminated result
+ * `parseCLIArgs` is pure: it takes the argv array and an environment record, and answers with a discriminated result
  * (`help` / `version` / `browse`) or throws {@link CLIArgsError}. Reading `process.argv` / `process.env` is the bin's
  * job (./cli.ts), which keeps every rejection path testable without a subprocess.
  */

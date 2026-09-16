@@ -14,7 +14,7 @@ converged on the same answers. Sources are listed at the end._
    hard reordered/international case, the nearest published SOTA — Chinese flexible-order
    address parsing — reports house-number F1 of **~90–91%**, and neural parsers _collapse_ on reorder
    (deepparse: 100% → 28%; libpostal overall 0.992 → 0.781). **87.4% is respectable-to-SOTA for this
-   slice, not a failure.** Both the literature and DeepSeek independently call the 91% bar wrong for
+   stratum, not a failure.** Both the literature and DeepSeek independently call the 91% bar wrong for
    this regime.
 2. **The plateau-and-backfire is well-explained:** a _positional shortcut_ (the model learned
    "house*number = the leading number" because real FR data is canonical-order) + a \_synthetic-realism
@@ -79,18 +79,18 @@ regime made house*number near-trivial. On the diversified golden (#563, 56 local
 **v4.5.0 itself scores only 54.5%** — proof the eval got materially harder. Against the only published
 hard-case analog (~90–91%), **87.4% is at the frontier, not below a reasonable bar.** Both the
 literature and the independent DeepSeek consult judged the 91% floor mis-calibrated and 87.4%
-respectable for this slice; DeepSeek's phrasing: *"87.4% on the single hardest subfield in the hardest
+respectable for this stratum; DeepSeek's phrasing: *"87.4% on the single hardest subfield in the hardest
 order permutation is not a miss — it's plausibly state-of-the-art for this specific slice."\_
 
 This **does not** mean re-baseline silently — that would violate the no-silent-check-drift discipline.
 It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored to this literature
-(a defensible bar is ~85–90% for the postcode-first slice), recorded in the check config and the ledger.
+(a defensible bar is ~85–90% for the postcode-first stratum), recorded in the check config and the ledger.
 
 ## Reframed recommendation
 
 The research shifts my earlier "hold" lean. The honest reading:
 
-- **The shipped v4.5.0 is the weaker model for this slice (54.5%).** v1.5.0 (87.4%) is a large, honest
+- **The shipped v4.5.0 is the weaker model for this stratum (54.5%).** v1.5.0 (87.4%) is a large, honest
   improvement that sits at the literature frontier for reordered house numbers. Holding it back against
   a bar that the SOTA itself can't clear is hard to justify.
 - **So the defensible path is: re-baseline the `fr.house_number` floor to a literature-anchored

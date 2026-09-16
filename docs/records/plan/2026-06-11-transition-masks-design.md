@@ -1,9 +1,9 @@
-# Per-system transition masks — design note (#478 slice 3, not yet built)
+# Per-system transition masks — design note (#478 increment 3, not yet built)
 
-Status: DESIGN ONLY (night-11). Slice 1 (emission mask, v4.3.0) and the span bridge (v4.4.0
+Status: DESIGN ONLY (night-11). Increment 1 (emission mask, v4.3.0) and the span bridge (v4.4.0
 corrective) shipped; the train-time loss-mask pairing is implemented and banked
 (`use_conventions_loss_mask`, probe deferred by consult — rides the next full run). Transition
-masks are the next decode-side slice, recorded here with their failure mode BEFORE anyone
+masks are the next decode-side increment, recorded here with their failure mode BEFORE anyone
 implements them in a hurry.
 
 ## The idea
@@ -35,7 +35,7 @@ the glue rows, asserted not-worse under the mask.
 2. The double-postcode emission is real (the comma-bridge incident) but is better attacked at
    its source first — it is a training-distribution question (why does the model double-label?)
    before it is a decode-constraint question.
-3. Slice discipline: each conventions slice shipped against a measured failure. This one
+3. Increment discipline: each conventions increment shipped against a measured failure. This one
    currently has none. The design waits for its evidence, like the `de` emission row waits for
    the leakage audit's class to grow past ~1%.
 

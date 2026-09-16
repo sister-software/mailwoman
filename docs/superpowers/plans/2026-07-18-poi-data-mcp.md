@@ -468,7 +468,7 @@ NOT a subagent task — the controller runs these after the final review, as bac
 
 1. Smoke-scale: `gazetteer build poi --countries US --limit 50000` → verify `mailwoman poi "coffee near Springfield IL" --db <out>` returns ranked cafes.
 2. Full 4-country build (bandwidth-bound; run detached, log to scratchpad).
-3. Demo slice decision (record, don't block): a CA-only `poi-demo.db` for R2/httpvfs is the Tier-A candidate; publishing rides the existing `gazetteer publish` path and the budget review the spec requires.
+3. Demo extract decision (record, don't block): a CA-only `poi-demo.db` for R2/httpvfs is the Tier-A candidate; publishing rides the existing `gazetteer publish` path and the budget review the spec requires.
 
 ## Execution notes
 

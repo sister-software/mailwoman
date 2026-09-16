@@ -142,7 +142,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
   situs tier on prod AND the Node path — v4.4.0 parses `street="Cage"`, `house_number="1502 A"`
   while the TX extract keys `street_norm="a cage street"`, `number="1502"`; either mismatch kills
   the keyed probe. The #48 (identifier/unit boundary) family, now with a live resolver-visible
-  receipt and two change shapes (a leading-letter-street board slice; a self-validating probe
+  receipt and two change shapes (a leading-letter-street board stratum; a self-validating probe
   retry).
 - **The two standing reds, not relaxed**: Zabiče SI (demo republish debt) and the autocomplete
   typeahead (port interaction drift).

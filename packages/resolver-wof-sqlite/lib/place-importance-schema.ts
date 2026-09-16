@@ -63,7 +63,7 @@ export interface PlaceImportanceTable {
 }
 
 /**
- * The `place_importance` slice of a WOF admin database, for `new DatabaseClient<PlaceImportanceDatabase>(...)`.
+ * The `place_importance` table of a WOF admin database, for `new DatabaseClient<PlaceImportanceDatabase>(...)`.
  */
 export interface PlaceImportanceDatabase {
 	place_importance: PlaceImportanceTable

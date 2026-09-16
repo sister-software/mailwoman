@@ -37,7 +37,7 @@ replaces `state.defaultCountry` for the whole walk.
    `null` — no override, two lookups spent, byte-identical walk. Every correctly-scoped domestic parse
    exits here. It is never "US loses to FR"; it is "US had no answer".
 2. Otherwise, try each other country `candidateSystemsForPostcode` allows (a model-free shape test
-   over each codex slice's own postcode pattern — no safelist, no prior).
+   over each codex module's own postcode pattern — no safelist, no prior).
 3. Adopt a country only if EXACTLY one makes the pair consistent. Zero (no evidence) and two-or-more
    (a genuine geographic tie) both abstain.
 
@@ -45,9 +45,9 @@ Consistency = the postcode resolves in that country AND an EXACT-matching same-n
 within `thresholdKm` (default 25) of it. Non-exact locality hits contribute nothing — a generous FTS match
 ("Paris" → "Parish") is evidence about the index, not about the country.
 
-Two bounds fall out of the candidate set being codex-shaped. A country with no codex slice can never
+Two bounds fall out of the candidate set being codex-shaped. A country with no codex module can never
 be proposed: the gazetteer holds `75001` in PL, and this pass will never return PL. And a shape no
-slice recognizes (a bare `27`) yields no candidates at all.
+module recognizes (a bare `27`) yields no candidates at all.
 
 Cost: 2 lookups on the byte-stable path, at most 8 when it fires (a numeric shape matches at most
 `us`/`de`/`fr`), and nothing at all unless a `defaultCountry` is in force and the tree carries both a
@@ -344,7 +344,7 @@ within-tier ranking), so the "before" assertion genuinely lands on Paris, Texas 
 
 The safety properties have direct tests: coherent-default-wins, abstain-on-zero, abstain-on-tie,
 abstain-without-a-locality, abstain-on-an-unrecognized-shape, never-propose-a-country-without-a-codex-
-slice (the PL row), exact-match-only, check-respected, backend-throw-degrades-to-no-override, and a
+module (the PL row), exact-match-only, check-respected, backend-throw-degrades-to-no-override, and a
 byte-identical flag-on-vs-off assertion on the domestic control.
 
 Repo-wide: unit suite 4,637 passed / 1 failed (`geocode.test.ts` "missing address argument" — a 15 s

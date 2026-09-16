@@ -32,8 +32,7 @@ const DOMINANT_SOURCE_SHARE = 0.4
 const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
 
 /**
- * Options for {@linkcode audit}. `sampleSliceCount` is the property name the `mailwoman corpus audit` command passes,
- * and moves with that command.
+ * Options for {@linkcode audit}.
  */
 export interface AuditOpts {
 	corpusDir: PathBuilderLike
@@ -43,7 +42,7 @@ export interface AuditOpts {
 	 * a slow run. The first row of each file determines its source — corpus-v0.2.0+ files are 100% source-segregated, so
 	 * a one-row read is authoritative.
 	 */
-	sampleSliceCount?: number
+	sampleFileCount?: number
 }
 
 interface FileCountStats {
@@ -52,7 +51,7 @@ interface FileCountStats {
 	 */
 	bySplit: Record<string, Record<string, number>>
 	/**
-	 * Total parquet files counted (may be less than file count if sampleSliceCount caps reads)
+	 * Total parquet files counted (may be less than file count if `sampleFileCount` caps reads)
 	 */
 	totalCounted: number
 	/**
@@ -404,7 +403,7 @@ export async function audit(opts: AuditOpts): Promise<void> {
 
 	const stats =
 		(await manifestScan(opts.corpusDir, prefixes)) ??
-		(await scanParquetFiles(opts.corpusDir, opts.sampleSliceCount ?? 100))
+		(await scanParquetFiles(opts.corpusDir, opts.sampleFileCount ?? 100))
 
 	const trainStats = stats.bySplit["train"] ?? {}
 	const rows = buildAuditRows(trainStats, config?.sourceWeights ?? {})

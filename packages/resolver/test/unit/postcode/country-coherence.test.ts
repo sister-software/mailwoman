@@ -233,7 +233,7 @@ const LONDON_OH: ResolvedPlace = {
 
 //#region Fixtures — the 2026-08-09 eu-mixed panel block (#24)
 
-// `Valy 117, 37901 Třeboň` — the pair case the codex shape list could not reach (no `cz` slice).
+// `Valy 117, 37901 Třeboň` — the pair case the codex shape list could not reach (no `cz` address system).
 const PC_37901_CZ: ResolvedPlace = {
 	id: 900_100,
 	name: "37901",
@@ -543,11 +543,11 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	// Until #24 this asserted the opposite — that PL was UNREACHABLE, because the candidate set came from
-	// `candidateSystemsForPostcode` and there is no `pl` codex slice. That was a corollary of the source,
-	// never a safety property: the pair is coherent in exactly one country and the pass exists to say so.
-	// The gazetteer's own postcode membership is now the candidate source, so the 8 codex slices stop
-	// bounding the mechanism. (The abstention rules are unchanged and tested below.)
-	it("proposes a country with no codex slice when the GAZETTEER holds the postcode there", async () => {
+	// `candidateSystemsForPostcode` and there is no `pl` codex address system. That was a corollary of the
+	// source, never a safety property: the pair is coherent in exactly one country and the pass exists to say
+	// so. The gazetteer's own postcode membership is now the candidate source, so the 8 codex address systems
+	// stop bounding the mechanism. (The abstention rules are unchanged and tested below.)
+	it("proposes a country with no codex address system when the GAZETTEER holds the postcode there", async () => {
 		const plPostcode: ResolvedPlace = {
 			id: 8_000_048_250,
 			name: "75001",

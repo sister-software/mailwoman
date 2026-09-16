@@ -31,7 +31,7 @@ describe("buildAddressTree", () => {
 		expect(allTags.toSorted()).toEqual(["house_number", "locality", "postcode", "region", "street"])
 	})
 
-	test("groups B-street + I-street + I-street into one street span sliced from raw", () => {
+	test("groups B-street + I-street + I-street into one street span taken from raw", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const street = findByTag(tree.roots, "street")!
 		expect(street.value).toBe("Pennsylvania Avenue NW")

@@ -120,7 +120,7 @@ function canonicalizeFilePath(path: string, legacyPrefix: string, canonicalPrefi
 	return path
 }
 
-export async function buildTranslitSlice(
+export async function buildTranslitOverlay(
 	options: TranslitOverlayOptions,
 	report?: (line: string) => void
 ): Promise<void> {

@@ -103,7 +103,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			adapters,
 			adapterInputs,
 			synthesize: options.synthesize,
-			rowsPerSlice: options.rowsPerFile,
+			rowsPerFile: options.rowsPerFile,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 

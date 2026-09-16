@@ -121,8 +121,8 @@ const DESIGNATOR_INFO = new Map<AuDeliveryServiceAbbreviation, { requiresNumber:
 )
 
 /**
- * One anchored regex per designator: phrase + (required|optional) identifier. The id shape matches the US slice
- * ([\dA-Za-z][\dA-Za-z-]*); MS additionally requires a digit-leading id (see above).
+ * One anchored regex per designator: phrase + (required|optional) identifier. The id shape matches the US address
+ * system ([\dA-Za-z][\dA-Za-z-]*); MS additionally requires a digit-leading id (see above).
  */
 const MATCHERS: ReadonlyArray<{ abbreviation: AuDeliveryServiceAbbreviation; re: RegExp }> = DESIGNATOR_PATTERNS.map(
 	([abbreviation, src]) => {

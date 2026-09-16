@@ -137,7 +137,7 @@ Note the signal-handler registration still passes the signal name as the first a
 /**
  * The ONE blessed accessor for CLI arguments. Everything outside `core/env` + this module is forbidden from touching
  * `process.argv` directly (enforced by the `sister-software/no-process-globals` oxlint rule) — prefer `node:util`
- * `parseArgs` (which reads this same slice by default) and reach for this only where `parseArgs` cannot express the
+ * `parseArgs` (which reads this same argument range by default) and reach for this only where `parseArgs` cannot express the
  * grammar (e.g. verbatim passthrough of undeclared flags to a child process — see
  * `corpus-python/scripts/train_with_resume.ts`).
  */

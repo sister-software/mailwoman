@@ -21,12 +21,12 @@ You'll see all of these at once:
 
 [onnxruntime-web](./onnx-runtime.mdx) (as of v1.25–1.26) ships two distinct WebGPU execution providers in the same package:
 
-| Import path              | Bundle                               | WebGPU EP                   | Int8 QDQ status                    |
-| ------------------------ | ------------------------------------ | --------------------------- | ---------------------------------- |
-| `onnxruntime-web`        | `ort.bundle.min.mjs` (405 KB)        | **JSEP** (JavaScript-based) | Broken — slice kernel bug on Metal |
-| `onnxruntime-web/webgpu` | `ort.webgpu.bundle.min.mjs` (113 KB) | **Native**                  | Correct on all backends            |
+| Import path              | Bundle                               | WebGPU EP                   | Int8 QDQ status                      |
+| ------------------------ | ------------------------------------ | --------------------------- | ------------------------------------ |
+| `onnxruntime-web`        | `ort.bundle.min.mjs` (405 KB)        | **JSEP** (JavaScript-based) | Broken — `Slice` kernel bug on Metal |
+| `onnxruntime-web/webgpu` | `ort.webgpu.bundle.min.mjs` (113 KB) | **Native**                  | Correct on all backends              |
 
-The default import resolves to the JSEP bundle. The JSEP has a known bug ([microsoft/onnxruntime#25227](https://github.com/microsoft/onnxruntime/issues/25227)) where a slice operation used to reverse a tensor on a specific axis produces wrong results. This manifests as incorrect dequantization of int8 weights, which corrupts every downstream layer.
+The default import resolves to the JSEP bundle. The JSEP has a known bug ([microsoft/onnxruntime#25227](https://github.com/microsoft/onnxruntime/issues/25227)) where a `Slice` operation used to reverse a tensor on a specific axis produces wrong results. This manifests as incorrect dequantization of int8 weights, which corrupts every downstream layer.
 
 Chrome's WebGPU implementation (Dawn/Vulkan) happens to mask the bug in some cases. Safari's WebGPU implementation (Metal) exposes it reliably.
 
@@ -84,6 +84,6 @@ If you're using a CDN:
 
 ## References
 
-- [microsoft/onnxruntime#25227](https://github.com/microsoft/onnxruntime/issues/25227) — upstream bug report (slice kernel in JSEP)
+- [microsoft/onnxruntime#25227](https://github.com/microsoft/onnxruntime/issues/25227) — upstream bug report (`Slice` kernel in JSEP)
 - [huggingface/transformers.js#1512](https://github.com/huggingface/transformers.js/issues/1512) — same bug, confirmed fixed by native EP
 - [huggingface/transformers.js#1382](https://github.com/huggingface/transformers.js/pull/1382) — Transformers.js V4 migration to native EP

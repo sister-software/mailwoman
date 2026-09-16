@@ -196,7 +196,7 @@ export class ONNXRunner {
 	/**
 	 * Run inference on a single token id sequence — see {@link InferFunction} for the parameter contract.
 	 *
-	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0; truncates if longer. Output is sliced back to the actual
+	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0; truncates if longer. Output is trimmed back to the actual
 	 * input length. Every soft-feed channel is present-conditional on the graph's declared inputs, with the zero-fill
 	 * confidence=0 identity for a declared-but-unsupplied channel (`packSoftChannelFeeds`).
 	 */
@@ -237,7 +237,7 @@ export class ONNXRunner {
 
 	/**
 	 * Run a char-path graph (`char_ids` + `attention_mask`, no `input_ids`; #2164) on one encoding. The encoder already
-	 * padded to S, so no fixed sequence length applies; the output is sliced to the real unit count. The char path is
+	 * padded to S, so no fixed sequence length applies; the output is trimmed to the real unit count. The char path is
 	 * channel-free by contract, so no soft-feed tensors are packed.
 	 */
 	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {

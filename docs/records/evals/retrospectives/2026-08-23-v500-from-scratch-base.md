@@ -107,7 +107,7 @@ What IS measured: four newly-admitted countries carry rows with **zero street ro
 JP 2,092,821, KR 1,083,156, TW 678,660. That is 15,212,584 rows, **2.23%** of the admitted pool by ROW
 COUNT; the US row share moves 73.13% → 71.50%. The config's 34-source `source_weights` reweighting
 shifts effective sampler shares, so the row arithmetic is approximate — the falsification below
-rests on the config diff, not on these share numbers. A ~2% dose is small for the damage observed,
+rests on the config diff, not on these share numbers. A ~2% share is small for the damage observed,
 so this was a hypothesis and not a finding.
 
 ## The isolation run
@@ -122,7 +122,7 @@ Pre-registered reading, in the config header:
 > not re-run this with a different dose.
 
 The falsification clause is the required half. The 2026-08-23 trailing-region arc spent four runs
-re-dosing a change that could not work; a dose is not a fix when the mechanism is wrong.
+re-weighting a change that could not work; a weight change is not a fix when the mechanism is wrong.
 
 ## Defects found by running the controls first
 
@@ -149,7 +149,7 @@ v5.1.0 (130, CJK dropped)                  37         43   -6   193/649
 
 D-rule: v5.0.0 FR 2 / GB 4 / DE 1 → v5.1.0 **FR 3 / GB 13 / DE 0**. Dropping the street-less
 countries did not clear the regressions — GB got worse. **The admission hypothesis is falsified**,
-per the pre-registered clause, and no re-dose follows.
+per the pre-registered clause, and no re-weight follows.
 
 Two facts survive the falsification, and they are the yield of the arc:
 
@@ -208,10 +208,10 @@ Three findings:
    `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary extract
    teaches. Mechanism-consistent, small, and honestly attributed. (Null↔cure share the same base
    init, seed, and steps, so the treatment comparison is not confounded by the separate country-admission change.)
-3. **The D-rule core is base-inherited and dose-immune.** FR 2 / GB 4 / DE 1 are identical across
+3. **The D-rule core is base-inherited and unchanged at every weight.** FR 2 / GB 4 / DE 1 are identical across
    base, null, and cure: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
    `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More
-   suffix-boundary dose is not the change for these — the venue-boundary class needs its own treatment
+   suffix-boundary weight is not the change for these — the venue-boundary class needs its own treatment
    (#1366's territory), or this lineage does not ship default-on.
 
 Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, cure int8 `f2d264f09b7d6f269158ab97d1843346`.

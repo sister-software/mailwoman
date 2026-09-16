@@ -12,7 +12,7 @@ That zero is the whole story. The parse was string-perfect and the resolver stil
 
 ## The reframe: the German "wall" is largely a metric artifact
 
-Our `oa-resolver-eval` locality-match is name-centric — it compares the resolved WOF _name_ to OA's gold _name string_. It penalises a geographically-correct resolve that returns `Plauen` against gold `Plauen Vogtl`. Meanwhile the resolver already places these German addresses at coord **p50 1.3 km** via the postcode anchor. So a large slice of the "25.6% / 77.4% German locality" number was never a geocoding failure — it was a scoreboard that can't read a name variant.
+Our `oa-resolver-eval` locality-match is name-centric — it compares the resolved WOF _name_ to OA's gold _name string_. It penalises a geographically-correct resolve that returns `Plauen` against gold `Plauen Vogtl`. Meanwhile the resolver already places these German addresses at coord **p50 1.3 km** via the postcode anchor. So a large share of the "25.6% / 77.4% German locality" number was never a geocoding failure — it was a scoreboard that can't read a name variant.
 
 The fix starts with the scoreboard. **The non-gameable metric:** a locality is correctly resolved iff the real OA per-address point lies _inside the polygon_ of the resolver-assigned WOF locality (point-in-polygon containment, not centroid distance — distance is gameable in a dense metro). The circularity guard is absolute: score against the real OA point, **never** the postcode centroid the resolver itself consumed.
 

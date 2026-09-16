@@ -45,7 +45,7 @@ You'd split on whitespace. The model can't, because it has to handle `75008Paris
 
 The `▁` marks "starts a new word." Common address words are single pieces (`▁Belmont`, `▁Portland`, `▁St`); digit strings split apart (`2119` is four pieces, `97214` is five). The vocabulary was tuned on addresses, so it fragments differently than a prose tokenizer would.
 
-One distinction matters more than the segmentation itself: every piece carries character offsets into your original string (`▁Belmont` covers characters 8 through 15). When the parse is assembled, each component's value is sliced out of the raw input by those offsets — never reassembled from pieces. Pieces are internal bookkeeping. You always get your own bytes back, spacing and casing intact.
+One distinction matters more than the segmentation itself: every piece carries character offsets into your original string (`▁Belmont` covers characters 8 through 15). When the parse is assembled, each component's value is taken from the raw input by those offsets — never reassembled from pieces. Pieces are internal bookkeeping. You always get your own bytes back, spacing and casing intact.
 
 ## Scoring every piece
 

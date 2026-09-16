@@ -60,7 +60,7 @@
  *   the shipped gazetteer within 4 km of truth on 21 of them.
  *
  *   1. **The candidate countries came from a proxy.** `candidateSystemsForPostcode` is a shape test over
- *      the eight slices codex specifies (`us de fr ca gb jp au nz`), so CZ, CH, BE, DK, AT, NL and IT
+ *      the eight address systems codex specifies (`us de fr ca gb jp au nz`), so CZ, CH, BE, DK, AT, NL and IT
  *      could never be PROPOSED, however good the evidence. `13000` shapes as `[us, de, fr]`; the
  *      gazetteer holds it in exactly one country, and that country is CZ. The candidate set now unions
  *      the shape list with the countries the gazetteer actually holds the postcode in — one unscoped
@@ -283,11 +283,11 @@ const MAX_CANDIDATE_COUNTRIES = 12
  * row. One UNSCOPED lookup.
  *
  * This is the #24 candidate source, and it replaces a proxy with the thing itself. The pass used to ask codex "which
- * address SYSTEMS could this shape be?" — a model-free shape test over the eight slices codex specifies. That answer is
- * correct and useless for two thirds of Europe: `13000` shapes as `[us, de, fr]`, the gazetteer holds it in exactly one
- * country (CZ), and CZ has no codex slice, so the pass could not propose the only country that could possibly be right.
- * Membership in the gazetteer is positive evidence of the same kind the pair test already runs on, available for one
- * lookup, and it is EXHAUSTIVE for postcodes at the measured cardinality.
+ * address SYSTEMS could this shape be?" — a model-free shape test over the eight address systems codex specifies. That
+ * answer is correct and useless for two thirds of Europe: `13000` shapes as `[us, de, fr]`, the gazetteer holds it in
+ * exactly one country (CZ), and CZ has no codex address system, so the pass could not propose the only country that
+ * could possibly be right. Membership in the gazetteer is positive evidence of the same kind the pair test already runs
+ * on, available for one lookup, and it is EXHAUSTIVE for postcodes at the measured cardinality.
  *
  * `exactMatch !== false` is the admission bar: a fuzzy postcode hit is a DIFFERENT postcode (the 2026-08-05 Code-Point
  * lesson — `BT3 9QQ` trigram-matching Sheffield's `S3 9QQ`), and a fuzzy locality hit is evidence about the index, not
@@ -389,11 +389,11 @@ async function coherenceIn(
  * make the pair consistent are the codex shape's other candidate systems tried, and only a UNIQUE coherent alternative
  * produces a verdict — zero (no evidence) and two-or-more (a genuine tie) both abstain.
  *
- * The candidate set is `candidateSystemsForPostcode` — a model-free SHAPE test over each codex slice's own postcode
- * pattern, no safelist and no prior. Its `SystemCode` values are ISO-3166 alpha-2 in lower case, so the upper-casing
- * below is the whole conversion. Note the corollary: a country with no codex slice can never be proposed (the gazetteer
- * holds `75001` in PL, and this pass will never return PL), which bounds the mechanism to the systems whose postcode
- * shapes are actually specified.
+ * The candidate set is `candidateSystemsForPostcode` — a model-free SHAPE test over each codex address system's own
+ * postcode pattern, no safelist and no prior. Its `SystemCode` values are ISO-3166 alpha-2 in lower case, so the
+ * upper-casing below is the whole conversion. Note the corollary: a country with no codex address system can never be
+ * proposed (the gazetteer holds `75001` in PL, and this pass will never return PL), which bounds the mechanism to the
+ * systems whose postcode shapes are actually specified.
  */
 export async function findPostcodeCountryScope(
 	roots: readonly AddressNode[],
@@ -445,7 +445,7 @@ export async function findPostcodeCountryScope(
 	//    - the SHAPE list (`candidateSystemsForPostcode`, or the shape-coherence pass's narrowing when #31
 	//      Mechanism 1 supplied one — a pure subset of it), and
 	//    - the countries the GAZETTEER actually holds this postcode in (#24). Exhaustive at the measured
-	//      cardinality, and the only source that can name a country codex has no slice for — which was the
+	//      cardinality, and the only source that can name a country codex has no address system for — which was the
 	//      whole reason the CZ/CH/BE/DK/AT/NL block of the 2026-08-09 panel resolved to US namesakes while
 	//      their own postcodes sat in the shipped gazetteer within 4 km of truth.
 	//

@@ -103,7 +103,7 @@ second bundling bug to patch.
 ## Verdict — keep reconcile retired
 
 Both checks fail. Reconcile loses tag-value accuracy on US and FR with no locale where it wins overall,
-and it still breaks the geocoder precondition on 5.6% of rows where argmax never does. There is no slice
+and it still breaks the geocoder precondition on 5.6% of rows where argmax never does. There is no subset
 — not even FR — where re-promotion is net-positive. **Argmax stays the default. Joint-reconcile remains
 opt-in (`jointReconcile: true`) and undefaulted; this report is the record of why.** The #427 "reconcile
 helps FR" claim was an artifact of grading raw neural — the same blind spot that hid the original

@@ -23,9 +23,9 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { alignCanonicalSlice } = await import("@mailwoman/corpus/tools")
+		const { alignCanonicalRows } = await import("@mailwoman/corpus/tools")
 
-		await alignCanonicalSlice({
+		await alignCanonicalRows({
 			input: options.input,
 			output: options.out,
 			corpusVersion: options.corpusVersion,

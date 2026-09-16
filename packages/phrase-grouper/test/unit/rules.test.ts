@@ -119,7 +119,7 @@ test("scorePostcode: po_box hits are skipped (the kind classifier owns that sign
 		"PO Box 90210"
 	)
 
-	// "PO Box " is 7 chars; the [7,12) slice is the ZIP "90210".
+	// "PO Box " is 7 chars; the [7,12) substring is the ZIP "90210".
 	expect(out.map(summarize)).toEqual([{ body: "90210", start: 7, end: 12, kind: "POSTCODE", confidence: 0.8 }])
 })
 

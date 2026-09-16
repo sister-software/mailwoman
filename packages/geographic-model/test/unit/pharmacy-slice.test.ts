@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The authored records — the frozen pharmacy slice and the wave-1 set amended onto it — read through
+ *   The authored records — the frozen pharmacy record set and the wave-1 set amended onto it — read through
  *   the artifact a consumer would read.
  *
  *   Every assertion below is made against the COMMITTED artifact or against a fresh compile of the
  *   committed authoring files — never against a fixture built in this file. A fixture would prove that
  *   the compiler works, which `compile.test.ts` already covers; what is unproven until here is that the
- *   records someone actually authored say what the frozen slice says they say.
+ *   records someone actually authored say what the frozen record set says they say.
  *
  *   WAVE 1 IS COMPLETE. All three records are authored — the `drugstore` concept, its US-scoped
  *   assertion, and the `poi-taxonomy` mapping that was held back until the POI branch could search a
@@ -23,7 +23,7 @@
  *   is asserted where it is meaningful instead: between two compiles, and between the committed
  *   artifact and a fresh compile once both are canonically serialized.
  *
- *   Frozen slice: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4 (#1917); wave-1
+ *   Frozen record set: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` §4 (#1917); wave-1
  *   amendment: the same record's §4.1 (#1961), authored by #1963.
  */
 
@@ -58,7 +58,7 @@ const OBTAIN_MEDICATION = toConceptID("obtain_medication")
 const AFFORDS = toRelationID("affords")
 
 /**
- * The external category the slice maps into. The mapping names it as a string; this is the same string, resolved
+ * The external category the record set maps into. The mapping names it as a string; this is the same string, resolved
  * through the package that owns the vocabulary.
  */
 const POI_CATEGORY = toPOICategoryID("pharmacy")
@@ -169,7 +169,7 @@ describe("the committed artifact", () => {
 		).toBe(serializeCompiledModel(await compileAuthoredGeographicModel()))
 	})
 
-	it("carries the ancestry the slice states", async () => {
+	it("carries the ancestry the record set states", async () => {
 		const closure = new Map(
 			(await readCompiledGeographicModel()).inheritanceClosure.map((entry) => [String(entry.concept), entry.ancestors])
 		)
@@ -260,7 +260,7 @@ describe("the wave-1 records", () => {
 	})
 })
 
-describe("reading the slice through the runtime lookups", () => {
+describe("reading the record set through the runtime lookups", () => {
 	it("answers the proposition from the external category id, with provenance", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 		const concepts = index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, POI_CATEGORY)

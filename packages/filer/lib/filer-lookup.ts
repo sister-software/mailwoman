@@ -37,7 +37,7 @@
  *
  *   **Authoritative/inferred never conflated (criterion 2).** `cluster` is read from `filer_cluster WHERE
  *   assertion = 'authoritative'` ONLY; `inferred_links` is read from `filer_edge WHERE assertion =
- *   'inferred'` ONLY — two disjoint queries against two disjoint slices. There is no code path here that
+ *   'inferred'` ONLY — two disjoint queries against two disjoint row sets. There is no code path here that
  *   could fold an inferred relationship into the authoritative `cluster` field: the same guarantee
  *   `cluster-filers.ts` makes on the write side (decision 5), restated here on the read side.
  *

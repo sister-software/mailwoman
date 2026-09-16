@@ -59,14 +59,14 @@ const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
 
 /**
  * How an input set was chosen. `hand-picked` is the one that earns the extra sentence — a full board carries its own
- * denominator, and a declared slice carries the slice.
+ * denominator, and a declared subset carries the predicate that chose it.
  *
- * `random-draw` is separate from `slice` because the two subsets support opposite claims. A declared slice is chosen by
- * a predicate and generalizes to nothing beyond it; a random draw from a 26-million-row register is the one subset here
- * whose rate estimates the population's. Collapsing them would print "declared-slice" over the only sample in this file
- * that is not one.
+ * `random-draw` is separate from `subset` because the two support opposite claims. A declared subset is chosen by a
+ * predicate and generalizes to nothing beyond it; a random draw from a 26-million-row register is the one subset here
+ * whose rate estimates the population's. Collapsing them would print "declared-subset" over the only sample in this
+ * file that is not one.
  */
-export type Selection = "full" | "slice" | "hand-picked" | "random-draw"
+export type Selection = "full" | "subset" | "hand-picked" | "random-draw"
 
 /**
  * How each selection reads inside the observed-rate sentence. A full board says nothing — its denominator already is
@@ -74,7 +74,7 @@ export type Selection = "full" | "slice" | "hand-picked" | "random-draw"
  */
 const SELECTION_ADJECTIVE: Record<Selection, string> = {
 	full: "",
-	slice: "declared-slice ",
+	subset: "declared-subset ",
 	"hand-picked": "hand-picked ",
 	"random-draw": "randomly-drawn ",
 }

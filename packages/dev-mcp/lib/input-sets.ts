@@ -237,8 +237,8 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
 /**
  * Resolve a reference into the rows it names.
  *
- * A board slice reports what it excluded, not merely what it kept. That asymmetry is the point: a caller who filters to
- * `country: "gb"` is told which countries just left the measurement, in the same object that carries the result.
+ * A board subset reports what it excluded, not merely what it kept. That asymmetry is the point: a caller who filters
+ * to `country: "gb"` is told which countries just left the measurement, in the same object that carries the result.
  */
 export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSet> {
 	switch (ref.kind) {
@@ -301,7 +301,7 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
 		inputs: rungs,
 		n: rungs.length,
 		sha256: sha256Hex(rungs.map((r) => `${r.id}\t${r.input}`)),
-		selection: "slice",
+		selection: "subset",
 		populationN: board.populationN ?? board.n,
 		notCovered: [
 			...board.notCovered,
@@ -456,7 +456,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 }
 
 /**
- * The regression board, optionally sliced.
+ * The regression board, optionally filtered to a subset.
  */
 async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promise<ResolvedInputSet> {
 	const all = await loadRegressionCases()
@@ -473,10 +473,10 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 		return true
 	})
 
-	const isSlice = filtered.length !== all.length
+	const isSubset = filtered.length !== all.length
 	const notCovered: string[] = []
 
-	if (isSlice) {
+	if (isSubset) {
 		const keptCountries = new Set(filtered.map((r) => r.country))
 		const droppedCountries = [...new Set(all.map((r) => r.country))].filter((c) => !keptCountries.has(c))
 		const keptKinds = new Set(filtered.map((r) => r.addressKind))
@@ -512,13 +512,13 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 		})),
 		n: filtered.length,
 		sha256: sha256Hex(filtered.map((r) => `${r.id}\t${r.input}`)),
-		selection: isSlice ? "slice" : "full",
-		...(isSlice ? { populationN: all.length } : {}),
+		selection: isSubset ? "subset" : "full",
+		...(isSubset ? { populationN: all.length } : {}),
 		notCovered,
 		hasTruth: truthCounts(filtered),
 		corpusHash,
-		notes: isSlice
-			? [`Declared slice of the ${all.length}-row board.`]
+		notes: isSubset
+			? [`Declared subset of the ${all.length}-row board.`]
 			: [`The full regression board, ${all.length} rows, corpus ${corpusHash.slice(0, 12)}.`],
 	}
 }
@@ -623,10 +623,10 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 		...(typeof row.tolerance_m === "number" ? { toleranceM: row.tolerance_m } : {}),
 	}))
 
-	const isSlice = filtered.length !== all.length
+	const isSubset = filtered.length !== all.length
 	const notCovered: string[] = []
 
-	if (isSlice) {
+	if (isSubset) {
 		const keptTypes = new Set(filtered.map((row) => row.truth_type))
 		const dropped = [...new Set(all.map((row) => row.truth_type))].filter((t) => t && !keptTypes.has(t))
 
@@ -642,12 +642,12 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 		inputs,
 		n: inputs.length,
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
-		selection: isSlice ? "slice" : "full",
-		...(isSlice ? { populationN: all.length } : {}),
+		selection: isSubset ? "subset" : "full",
+		...(isSubset ? { populationN: all.length } : {}),
 		notCovered,
 		hasTruth: coordinateTruthCounts(inputs),
 		notes: [
-			`Benchmark panel ${version}, ${all.length} rows${isSlice ? ` sliced to ${inputs.length}` : ""}.`,
+			`Benchmark panel ${version}, ${all.length} rows${isSubset ? ` filtered to ${inputs.length}` : ""}.`,
 			"Carries truth_type — report stratified by it rather than blended.",
 		],
 	}
@@ -726,23 +726,23 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 		...(row.expect ? { expectComponents: row.expect as Record<string, string> } : {}),
 	}))
 
-	const isSlice = filtered.length !== all.length
+	const isSubset = filtered.length !== all.length
 
 	return {
 		setID: ref.country ? `parity:${ref.country}` : "parity",
 		inputs,
 		n: inputs.length,
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
-		selection: isSlice ? "slice" : "full",
-		...(isSlice ? { populationN: all.length } : {}),
-		notCovered: isSlice
+		selection: isSubset ? "subset" : "full",
+		...(isSubset ? { populationN: all.length } : {}),
+		notCovered: isSubset
 			? [`countries excluded: ${[...new Set(all.map((r) => r.country))].filter((c) => c !== ref.country).join(", ")}`]
 			: [],
 		// Component expectations only. `coordinateTruthCounts` reports 0 coordinates, which is the honest reading: this
 		// corpus cannot support a distance claim however many rows it has.
 		hasTruth: { components: inputs.length, coordinates: 0, tier: 0, any: inputs.length, none: 0 },
 		notes: [
-			`Parity corpus, ${all.length} live fixtures (${tombstones} tombstones skipped)${isSlice ? `, sliced to ${inputs.length}` : ""}.`,
+			`Parity corpus, ${all.length} live fixtures (${tombstones} tombstones skipped)${isSubset ? `, filtered to ${inputs.length}` : ""}.`,
 			"Component expectations only — NO coordinates, so a cross-engine distance comparison cannot be graded on it.",
 		],
 	}

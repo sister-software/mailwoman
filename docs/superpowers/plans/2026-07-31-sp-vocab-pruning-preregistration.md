@@ -21,7 +21,7 @@ behavior change** on every input whose segmentation never used a pruned piece.
    any input whose best path avoided `P`, by construction.
 4. **ONNX surgery on the INT8 artifact directly**: row-gather `weight_quantized` by the old→new
    id map. Never prune-then-requantize — requantization changes the scale globally and forfeits
-   bit-parity; row-slicing a quantized tensor with unchanged scale/zero-point keeps every kept
+   bit-parity; row-selecting a quantized tensor with unchanged scale/zero-point keeps every kept
    row byte-identical.
 
 ## Bars (pass/fail, pre-registered)

@@ -89,7 +89,7 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 	const reading = describeObservedRate({
 		events: differing.length,
 		n: answered.length,
-		selection: limit && limit < set.inputs.length ? "slice" : set.selection,
+		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "row read differently",
 	})
 

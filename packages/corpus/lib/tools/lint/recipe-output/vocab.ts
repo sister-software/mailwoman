@@ -171,14 +171,13 @@ async function readSource(con: DuckDBConnection, path: string): Promise<string> 
 }
 
 /**
- * Options for {@linkcode lintSliceVocab}. `slice` is the property name the `mailwoman dev lint slice-vocab` command
- * passes, and moves with that command.
+ * Options for {@linkcode lintRecipeVocab}.
  */
 export interface LintRecipeVocabOptions {
 	/**
 	 * The recipe output parquet to lint.
 	 */
-	slice: string
+	recipeOutputPath: string
 	/**
 	 * Base corpus version. Default `v0.5.0`.
 	 */
@@ -207,7 +206,7 @@ export interface LintRecipeVocabOptions {
 export type VocabRow = [token: string, outputTag: string, baseTag: string, baseFrac: number, baseTotal: number]
 
 /**
- * Findings summary returned by {@linkcode lintSliceVocab}.
+ * Findings summary returned by {@linkcode lintRecipeVocab}.
  */
 export interface LintRecipeVocabSummary {
 	/**
@@ -224,7 +223,7 @@ export interface LintRecipeVocabSummary {
 /**
  * Lint a synthetic recipe output's (token → tag) vocabulary against the base corpus, country-scoped.
  */
-export async function lintSliceVocab(options: LintRecipeVocabOptions): Promise<LintRecipeVocabSummary> {
+export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<LintRecipeVocabSummary> {
 	const baseVersion = options.baseVersion ?? "v0.5.0"
 	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")
 	const threshold = options.threshold ?? 0.7
@@ -234,7 +233,7 @@ export async function lintSliceVocab(options: LintRecipeVocabOptions): Promise<L
 	const con = await connectDuckDB()
 
 	// 1. the recipe output's own (token -> dominant tag) + the COUNTRIES it uses each token in
-	const outputRows = await readRows(con, options.slice)
+	const outputRows = await readRows(con, options.recipeOutputPath)
 	const outputTags = new Map<string, Map<string, number>>()
 	const outputCountries = new Map<string, Set<string | null>>()
 

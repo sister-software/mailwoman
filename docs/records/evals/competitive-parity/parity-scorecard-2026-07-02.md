@@ -11,7 +11,7 @@ for campaign tags. Self-emitted from `scripts/eval/promotion-check.ts` (the #479
 of the [2026-07-01 trajectory review](https://github.com/sister-software/mailwoman/blob/main/docs/articles/reviews/2026-07-01-claude-trajectory-review.md). Since
 the north-star moved to the assembled coordinate, five label-F1 regressions shipped as
 "coordinate-invisible" with per-case justification but no periodic backstop. This re-score is the
-backstop: it re-measures every v4.4.0-check slice against the currently shipped bytes and asks
+backstop: it re-measures every v4.4.0-check subset against the currently shipped bytes and asks
 whether the deferred label debt stayed bounded. **Verdict: it did — 17/17 floors PASS
 (`verdict.json`), and most of the ledger moved the other way.** Two unsigned drifts surface and
 go on the record: `fr.cedex_real` 96.1 → 89.4 (still 19pp above floor) and the unfloored

@@ -1,6 +1,6 @@
 # 2026-07-02 — lab session postmortem: #884 ship evidence + the #885 measurement re-anchor
 
-Lab session off `HANDOFF-825-rev.md` (the re-railing sprint's Tracks 2 + 4 lab slice). CPU-only
+Lab session off `HANDOFF-825-rev.md` (the re-railing sprint's Tracks 2 + 4 lab share). CPU-only
 as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
 
 ## What shipped

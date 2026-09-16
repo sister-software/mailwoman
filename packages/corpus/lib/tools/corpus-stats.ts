@@ -28,11 +28,11 @@
  * ```
  *
  *   Usage: mailwoman corpus stats\
- *   --slices <glob-pattern-or-dir>\
+ *   --parquet <parquet-file-or-dir>\
  *   --out <stats.json>
  *
  *   For a quick local-corpus baseline (limited but useful for linter testing): mailwoman corpus stats\
- *   --slices $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/train/\
+ *   --parquet $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/train/\
  *   --out /tmp/corpus-stats-local.json
  */
 
@@ -47,19 +47,18 @@ import { accumulateCooccurrences, createCooccurrenceStats, streamTokenLabelRows 
 const MIN_BIGRAM_COUNT = 2
 
 /**
- * Options for {@linkcode buildCorpusStats}. The property names are the ones the `mailwoman corpus stats` command passes,
- * and move with that command.
+ * Options for {@linkcode buildCorpusStats}.
  */
 export interface CorpusStatsOptions {
 	/**
 	 * A directory of parquet files, one parquet file, or a literal path.
 	 */
-	slicesArg: string
+	parquetPath: string
 	outputPath: string
 	/**
 	 * Read at most this many rows per parquet file.
 	 */
-	limitPerSlice?: number
+	limitPerFile?: number
 }
 
 async function discoverParquetFiles(pathArg: string): Promise<string[]> {
@@ -76,7 +75,7 @@ async function discoverParquetFiles(pathArg: string): Promise<string[]> {
 }
 
 export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> {
-	const parquetPaths = await discoverParquetFiles(args.slicesArg)
+	const parquetPaths = await discoverParquetFiles(args.parquetPath)
 
 	console.error(`Discovered ${parquetPaths.length} parquet file(s)`)
 
@@ -89,7 +88,7 @@ export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> 
 
 		const before = totalRows
 
-		for await (const { tokens, labels } of streamTokenLabelRows(path, args.limitPerSlice)) {
+		for await (const { tokens, labels } of streamTokenLabelRows(path, args.limitPerFile)) {
 			totalRows++
 
 			if (tokens.length !== labels.length) continue // skip malformed

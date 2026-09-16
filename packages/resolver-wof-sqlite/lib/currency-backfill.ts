@@ -24,7 +24,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Corroboration radius for the currency backfill (#1737), km — both for the live-near blocker and the GeoNames
- * attestation. Measured basis (2026-08-19 prototype, GB locality slice): at 10 km, 20 of 108 dead names resurrect —
+ * attestation. Measured basis (2026-08-19 prototype, GB locality rows): at 10 km, 20 of 108 dead names resurrect —
  * Rochester (Kent), Aldershot, Staines, Telford, Ebbw Vale among them — while the `Birmingham/Wolverhampton/…`
  * conurbation blobs stay dead (no attestation) and Swansea/Wrexham stay out because a live same-name row already serves
  * them within the radius.

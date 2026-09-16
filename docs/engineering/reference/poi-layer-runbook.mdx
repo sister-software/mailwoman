@@ -39,8 +39,8 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
 - **There is no top-level `country` column** in the Places theme (the addresses theme has
   one; Places does not). Country lives at `addresses[1].country` (1-based DuckDB list
   index). The builder probes `DESCRIBE` output and picks the right expression
-  (`chooseCountryExpression`); rows with no address struct are **excluded from country
-  slices** under the addresses-based filter — this is the accepted v1 limitation.
+  (`chooseCountryExpression`); rows with no address struct are **excluded from per-country
+  subsets** under the addresses-based filter — this is the accepted v1 limitation.
 - **The category property is mid-transition.** The old `categories` property is slated for
   removal in Overture's September 2026 release; the new `taxonomy` property
   (`taxonomy.primary`) replaces it. The builder probes for both and prefers `taxonomy`
@@ -124,10 +124,10 @@ the tell (`readLayerManifest` throws).
 ## Publish (demo)
 
 Decision of record (2026-07-19): publish the FULL multi-country poi.db to R2 for byte-range
-access — no separate demo slice artifact. Demo config: category queries only (no FTS name
+access — no separate demo extract artifact. Demo config: category queries only (no FTS name
 search over httpvfs — multi-hop traversal is the slow path), ring budget capped ~3–4 (the
 CLI default is 12). Contingency if the shipped file or probe latency surprises: a
-labeled regional slice, as fallback only.
+labeled regional extract, as fallback only.
 
 **Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the R2 asset
 uploader (`docs/scripts/publish-demo-assets-to-r2.py`), not the gazetteer path: stage a hardlink dir mirroring the R2 layout

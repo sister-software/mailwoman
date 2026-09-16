@@ -56,7 +56,7 @@ export interface CharUnit {
 	 */
 	text: string
 	/**
-	 * UTF-16 offsets into the original string, so a decoded span can be sliced from the input as typed.
+	 * UTF-16 offsets into the original string, so a decoded span can be read back out of the input as typed.
 	 */
 	start: number
 	end: number

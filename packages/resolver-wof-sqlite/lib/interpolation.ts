@@ -21,7 +21,7 @@
  *   match must agree on a single postcode or the lookup ABSTAINS (a common street name spanning
  *   towns is ambiguity, not an answer).
  *
- *   Standalone in this slice — core tier wiring (`resolution_tier: "interpolated"` after the
+ *   Standalone for now — core tier wiring (`resolution_tier: "interpolated"` after the
  *   exact-point fall-through) is a noted follow-up on #483, so the `find()` shape mirrors
  *   `AddressPointLookup.find()` to keep that wiring mechanical.
  */

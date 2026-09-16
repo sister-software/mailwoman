@@ -52,7 +52,7 @@ The recall axis is the differentiator. Nominatim is sharper when it answers
 centroids at p50 2.1km), but it **abstains on 17% of inputs** where mailwoman
 misses only 3-4%. mailwoman answers nearly always, at coarser precision, and —
 with the isotonic-calibrated per-field confidence — can tell you when to trust
-the answer. That is the slice a calibrated parser should own.
+the answer. That is the subset a calibrated parser should own.
 
 ## The #370 rescore change
 

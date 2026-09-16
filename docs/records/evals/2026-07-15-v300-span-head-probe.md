@@ -86,7 +86,7 @@ couldn't reproduce a known baseline:
 1. `from_pretrained()` never passed `map_location`, so a GPU-trained checkpoint **could not load on a
    CPU-only box at all**. This affects every local grading run, not just this one.
 2. The check concatenated street-family _pieces_, dropping the `O`-labelled bare `▁` separator and
-   welding words (`▁5|th|▁|Ave` → `"5thAve"`). Now slices by char offsets. token@1 0.285 → 0.348.
+   welding words (`▁5|th|▁|Ave` → `"5thAve"`). Now takes the substring by char offsets. token@1 0.285 → 0.348.
 
 ## The fork (operator's call — the pre-registration says so)
 

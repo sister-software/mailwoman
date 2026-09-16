@@ -208,7 +208,7 @@ export async function dedupCeiling(
 		`Recommendation: drop 0.85. Set the bar against a subpart-aware / adjudicated entity truth, report NPI-level AND ` +
 			`entity-level side by side, and target "separate the ~${pct(collideDistinct, pairs)} genuinely-distinct co-located ` +
 			`pairs the GBT can still reach" rather than a round F1. The GBT's corroboration-feature work (#625 revised) ` +
-			`attacks exactly that separable slice.`,
+			`attacks exactly that separable subset.`,
 		"",
 		`## Caveats`,
 		"",

@@ -92,7 +92,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
 ## What could've gone better
 
-- **Run-1's probe check lacked the failure slice that later killed it.** The SI leg existed as
+- **Run-1's probe check lacked the failure stratum that later killed it.** The SI leg existed as
   data (the sets were built nights ago) but wasn't in the probe registration. Fixed for run 2;
   rule of thumb: a probe check should include every locale the full check will grade, at reduced n.
 - A `pkill -f <script>` matched its own background shell's argv and killed it (exit 144, ~20 min

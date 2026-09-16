@@ -17,15 +17,15 @@ When the resolver turns a parsed address into a place, we used to grade it one w
 
 There are ten places called "Sheldon" in the United States. "New York" is a city and a state and a village 280 kilometers apart. "Washington" is a town in most states you can name. When you grade by name, every one of those is a tie, and the resolver gets full marks for picking _any_ of them. The metric was answering "is this the right word?" when the only question that matters is "is this the right place on Earth?"
 
-So we built a harness that asks the second question, and pointed it at the one slice of data where it would tell the truth.
+So we built a harness that asks the second question, and pointed it at the one subset of data where it would tell the truth.
 
 ## Leakage-free, or it's just a memory test
 
-The slice you measure on matters as much as the metric you measure with. Our model trains on a corpus that covers the same towns the eval tests, so a random evaluation partly measures memorization: the model recalling a place it has already seen rather than generalizing to one it hasn't. The corpus deliberately holds a few regions out of training entirely. Evaluate only on those held-out places and you're testing the model on geography it has never met.
+The subset you measure on matters as much as the metric you measure with. Our model trains on a corpus that covers the same towns the eval tests, so a random evaluation partly measures memorization: the model recalling a place it has already seen rather than generalizing to one it hasn't. The corpus deliberately holds a few regions out of training entirely. Evaluate only on those held-out places and you're testing the model on geography it has never met.
 
 In our current data that's Vermont: 1,428 addresses the model trained around, not on. We ran the full pipeline on them and stopped grading by name. We measured **region-match**, the great-circle distance from the gold point to the resolved one, and **PIP-containment** (whether the gold coordinate actually falls inside the resolved place's polygon). None of those can be fooled by a matching string.
 
-Here is what the held-out slice said, next to the number we'd been quoting:
+Here is what the held-out set said, next to the number we'd been quoting:
 
 | metric                 | what we quoted | the measured number |
 | ---------------------- | -------------: | ------------------: |
@@ -41,7 +41,7 @@ The model wasn't the problem. Hand it `226 Bridge Rd, North Hero, VT 05474` and 
 
 It throws it away because it can't read it. Who's On First stores Vermont as "Vermont"; our search index carried no abbreviations, so `findPlace("VT")` matched nothing. With no resolved region, the resolver had no parent to constrain the locality search, so it searched the whole country — and when ten Sheldons compete with no geographic filter, the one with the largest population wins. Vermont's Sheldon (population 932) loses to Iowa's (population 5,455) every single time. The 326 kilometers was the distance between the right name and the famous one.
 
-The fix already existed in the repo. A build step that pulls state abbreviations from a reference dataset we already ship had fallen out of the build manifest, so the gazetteer went out without it. We put it back, rebuilt the index, and re-ran the same slice:
+The fix already existed in the repo. A build step that pulls state abbreviations from a reference dataset we already ship had fallen out of the build manifest, so the gazetteer went out without it. We put it back, rebuilt the index, and re-ran the same held-out set:
 
 | metric                 | before |  after |
 | ---------------------- | -----: | -----: |

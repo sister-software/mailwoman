@@ -119,7 +119,7 @@ export interface LayerContractDatabase {
 }
 
 /**
- * The slice of a Kysely handle the contract helpers touch — the parameter type every one of them takes.
+ * The subset of a Kysely handle the contract helpers touch — the parameter type every one of them takes.
  *
  * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is NOT assignable to
  * `Kysely<LayerContractDatabase>` even when `POIDatabase extends LayerContractDatabase`. The incompatibility is in

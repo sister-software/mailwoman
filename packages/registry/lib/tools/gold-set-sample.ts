@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gold-set P3 (#625) — sample the HARD slice for adjudication. The programmatic entity truth
+ *   Gold-set P3 (#625) — sample the HARD stratum for adjudication. The programmatic entity truth
  *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-FLAGGED subparts (Is-Subpart + parent
  *   LBN/TIN); it can't settle the genuinely-ambiguous co-located collisions: distinct NPIs at one
  *   address with near-identical names that are NOT flagged subparts of the same parent. Those are
@@ -72,7 +72,7 @@ interface HardPair {
 }
 
 /**
- * Gold-set P3 (#625) — sample the HARD co-located name-collision slice for adjudication.
+ * Gold-set P3 (#625) — sample the HARD co-located name-collision stratum for adjudication.
  */
 export async function goldSetSample(
 	options: GoldSetSampleOptions = {},
@@ -100,7 +100,7 @@ export async function goldSetSample(
 		if (sim < TAU) continue
 		const sameParent = a.subpart && b.subpart && a.parent === b.parent && a.parent !== "|"
 
-		if (sameParent) continue // programmatic truth already collapses these — not the hard slice
+		if (sameParent) continue // programmatic truth already collapses these — not the hard stratum
 		const sameAuth = a.auth !== "" && a.auth === b.auth
 		const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
 

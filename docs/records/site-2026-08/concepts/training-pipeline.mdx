@@ -105,7 +105,7 @@ After training, the **eval** stage runs the model against the held-out golden se
 
 - Tokenize the input.
 - Run the model (with CRF Viterbi decode).
-- Decode the BIO labels back into component strings (find the contiguous spans, slice out the original characters).
+- Decode the BIO labels back into component strings (find the contiguous spans, carve out the original characters).
 - Compare to the gold components.
 
 The output is a markdown report and a JSON dump under `docs/records/evals/`. Per-component [precision, recall, F1](./quality-and-evaluation.mdx), plus an overall "exact match" rate and a calibration histogram (does confidence match accuracy?).

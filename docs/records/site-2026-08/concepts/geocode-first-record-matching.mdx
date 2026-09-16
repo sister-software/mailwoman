@@ -69,7 +69,7 @@ geography levels carry the heaviest evidence by design (±9.45 bits at the
 same-building grain vs ±6.32 for an exact name), which is why the boundary bends
 with distance rather than with spelling. (Prior λ is illustrative here to keep the
 boundary visible; production runs λ=1e-4 with phone and spatial-key corroboration
-this two-axis slice omits. Generator:
+this two-axis view omits. Generator:
 `scripts/record-matcher/viz/geocode-first-surface.ts`.)_
 
 What changed is that mailwoman is now a **geocoder with calibrated confidence.**
@@ -237,7 +237,7 @@ address appears across the records you hand it — so when you dedupe a _whole_
 dataset, the input is the corpus and it just works. Hand it a thin sample and
 there's nothing to be rare against: every address looks unique, the signal
 flattens, and the change degrades to baseline with no warning. The fix is cheap — the frequency
-table is a parse-free string scan, no geocoding — so when you're matching a slice,
+table is a parse-free string scan, no geocoding — so when you're matching a subset,
 build the table over the full source and pass it in. The one thing you can't do is
 conjure rarity from a single record with nothing to compare it to.
 

@@ -25,7 +25,7 @@ The name confirmation only fires for **9,020 / 34,249 postcodes — 26.3%.** Jap
 
 **Granularity mismatch.** GeoNames' `place_name` is at the eup/myeon/dong level — 추자면 (Chuja-_myeon_). WOF's locality layer is finer, at the ri/village level — so the nearest point to that postcode is "Mung," a hamlet _inside_ Chuja-myeon, spatially dead-on but nominally a different unit. The two sources are both right and don't agree, because they're describing different rungs of the ladder. (This is also why the name-confirmed tier averages 4.8 km while the point tier averages 1.2 km: confirming the name pulls the answer up to the coarser, correctly-named unit, which sits a little farther from the postcode centroid. That's the trade you want from a _coarse_ resolver, so the build prefers it — `is_containing=1`.)
 
-**Missing 구 districts.** The single largest miss bucket is 구 (gu, urban districts) — 9,515 postcodes, the Gangnam-gu / Haeundae-gu level that dominates Seoul and Busan addressing. WOF KR simply doesn't carry these as named localities, so there's nothing to confirm against. The most address-dense slice of the country is the slice WOF is thinnest on.
+**Missing 구 districts.** The single largest miss bucket is 구 (gu, urban districts) — 9,515 postcodes, the Gangnam-gu / Haeundae-gu level that dominates Seoul and Busan addressing. WOF KR simply doesn't carry these as named localities, so there's nothing to confirm against. The most address-dense part of the country is the part WOF is thinnest on.
 
 ### One bug worth writing down
 

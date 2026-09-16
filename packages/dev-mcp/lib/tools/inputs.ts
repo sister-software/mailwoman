@@ -18,7 +18,7 @@ export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_inputs",
 	description:
 		"Describe an input set BEFORE measuring it: how many rows, which strata, what kind of truth it carries, " +
-		"and — for a slice — what it excluded. Cheap and idempotent; call it first. `matching` additionally answers " +
+		"and — for a subset — what it excluded. Cheap and idempotent; call it first. `matching` additionally answers " +
 		"CLASS SIZE — how many rows carry a given surface shape, and which — which is the number a defect report is " +
 		"worth nothing without, and the one most often asserted rather than counted.",
 	inputSchema: z.object({

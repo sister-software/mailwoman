@@ -20,7 +20,7 @@ toOpenCage(set).timezone // { name: "America/New_York", offset_sec: -18000 }
 ## Design
 
 `AnnotationSet` is the native typed representation (camelCase, the canonical form). Each recipe package
-implements `Annotator` — `(input: { lat, lon, place? }) => Partial<AnnotationSet>` — and fills the slice
+implements `Annotator` — `(input: { lat, lon, place? }) => Partial<AnnotationSet>` — and fills the fields
 it owns; `composeAnnotators` runs them concurrently and merges, skipping any that throw. Two serializers,
 `toOpenCage()` and `toNative()`, render the set at the API edge. One schema, two shapes (the hybrid
 decision).

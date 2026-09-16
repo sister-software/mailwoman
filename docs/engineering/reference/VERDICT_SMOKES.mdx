@@ -18,7 +18,7 @@ Promoted to the full 50K run, **`cw-only` diverged at step 2250** — `macro_f1`
 
 Why the smoke missed it: the smoke ran cosine LR decay over `warmup_steps=1000` → `max_steps=3000`. By step 2250 the cosine schedule had decayed the learning rate to roughly `0.5 * (1 + cos(π * 0.625))` ≈ **30% of peak**, and by step 2750 to ~6%. The destabilizing dynamics needed sustained peak LR to manifest, and the cosine tail collapsed the LR before the loss curve made the divergence visible.
 
-The smoke was reporting "this recipe is stable at this hparam slice" when what it had demonstrated was "this recipe is stable when LR is decaying off". Two different statements; the smoke conflated them.
+The smoke was reporting "this recipe is stable at this hyperparameter setting" when what it had demonstrated was "this recipe is stable when LR is decaying off". Two different statements; the smoke conflated them.
 
 This cost a 6h rented-GPU full-train cycle.
 

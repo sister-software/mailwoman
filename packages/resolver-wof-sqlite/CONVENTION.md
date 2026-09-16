@@ -87,6 +87,6 @@ and wiring are in place and tested; the asset is built and shipped once it has r
   _implementations_ live in `lookup.ts`. An asset built against a newer code revision (one that adds a
   strategy) names a strategy an older build won't have — that's why the runtime warns-and-skips rather
   than throwing, and why the `meta.strategies_known` row records what the asset was built against.
-- **`field_mapping` / `tokenNormalization` are not in the schema yet** — the #289/#290 slice ships
+- **`field_mapping` / `tokenNormalization` are not in the schema yet** — the #289/#290 delivery ships
   `candidateStrategies` + `scoringWeights`; later phases (the `locator[]` semantics) extend the
   `Convention` JSON, no schema migration needed (it's an opaque JSON column).

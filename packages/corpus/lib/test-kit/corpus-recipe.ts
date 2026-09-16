@@ -15,7 +15,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 
-import type { SliceRecipeOpts } from "#recipes/scaffold"
+import type { RecipeOptions } from "#recipes/scaffold"
 
 /**
  * The fields a recipe assertion reads off an emitted row.
@@ -38,7 +38,7 @@ export interface RecipeRow {
  * A recipe's `run` surface, as the tests drive it.
  */
 export interface CorpusRecipe<TStats> {
-	run(options: SliceRecipeOpts, emit: (line: string) => void): Promise<TStats>
+	run(options: RecipeOptions, emit: (line: string) => void): Promise<TStats>
 }
 
 /**
@@ -71,7 +71,7 @@ export function recipeRunner<TStats>(prefix: string, recipe: CorpusRecipe<TStats
 	return async function run(
 		tuples: object[],
 		surfaces: string[],
-		opts: Partial<SliceRecipeOpts> = {}
+		opts: Partial<RecipeOptions> = {}
 	): Promise<{ stats: TStats; rows: RecipeRow[] }> {
 		await using inputs = await scratch(prefix, tuples, surfaces)
 		const lines: string[] = []

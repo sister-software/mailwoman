@@ -137,15 +137,15 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
 
 	for (let start = 0; start < nonEmptyGroups.length; start++) {
 		for (let len = 1; len <= maxWords && start + len <= nonEmptyGroups.length; len++) {
-			const slice = nonEmptyGroups.slice(start, start + len)
-			const tokens = slice.map((g) => g.fstToken)
+			const groups = nonEmptyGroups.slice(start, start + len)
+			const tokens = groups.map((g) => g.fstToken)
 
 			windows.push({
 				key: tokens.join(" "),
 				concatKey: tokens.join(""),
 				startPos: start,
 				endPos: start + len - 1,
-				pieceIndices: slice.flatMap((g) => g.pieceIndices),
+				pieceIndices: groups.flatMap((g) => g.pieceIndices),
 			})
 		}
 	}
@@ -324,16 +324,16 @@ export function buildSegmentWindows(
 
 	for (let i = 1; i <= nonEmptyGroups.length; i++) {
 		if (i === nonEmptyGroups.length || groupSegments[i] !== groupSegments[segStart]) {
-			const slice = nonEmptyGroups.slice(segStart, i)
+			const groups = nonEmptyGroups.slice(segStart, i)
 
 			// Both ends, because the postcode's position relative to the locality is a per-country convention:
 			// "Macclesfield SK11 9PD" (GB/NZ) vs "12210 Montpeyroux" (FR). Each strip is an anchored full-match
 			// against the country's own shape, so a country that only ever writes one form is unaffected by the
 			// other pass — it simply never matches.
-			const tokens = slice.map((g) => g.fstToken)
+			const tokens = groups.map((g) => g.fstToken)
 			const trailTake = trailingSegmentPostcodeTake(tokens, parentPostcodeShape)
 			const leadTake = leadingSegmentPostcodeTake(tokens.slice(0, tokens.length - trailTake), leadingPostcodeShape)
-			const keySlice = slice.slice(leadTake, slice.length - trailTake)
+			const keyGroups = groups.slice(leadTake, groups.length - trailTake)
 			const keyTokens = tokens.slice(leadTake, tokens.length - trailTake)
 
 			windows.push({
@@ -341,8 +341,8 @@ export function buildSegmentWindows(
 				concatKey: keyTokens.join(""),
 				startPos: segStart,
 				endPos: i - 1,
-				pieceIndices: slice.flatMap((g) => g.pieceIndices),
-				...(keySlice.length === slice.length ? {} : { keyPieceIndices: keySlice.flatMap((g) => g.pieceIndices) }),
+				pieceIndices: groups.flatMap((g) => g.pieceIndices),
+				...(keyGroups.length === groups.length ? {} : { keyPieceIndices: keyGroups.flatMap((g) => g.pieceIndices) }),
 			})
 
 			segStart = i

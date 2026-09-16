@@ -70,7 +70,7 @@ async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog:
 	}
 }
 
-export async function buildKryptoniteSlice(
+export async function buildKryptoniteOverlay(
 	options: KryptoniteOverlayOptions,
 	report?: (line: string) => void
 ): Promise<void> {

@@ -205,7 +205,7 @@ export interface FloodDatabase extends LayerContractDatabase {
 }
 
 /**
- * The slice of a Kysely handle the DDL touches. Same reasoning as `LayerContractHandle`: Kysely is invariant in its
+ * The subset of a Kysely handle the DDL touches. Same reasoning as `LayerContractHandle`: Kysely is invariant in its
  * schema parameter, so naming only the members these functions call lets a caller pass its own wider handle.
  */
 export type FloodSchemaHandle = Pick<Kysely<FloodDatabase>, "schema">

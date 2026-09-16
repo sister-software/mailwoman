@@ -41,7 +41,7 @@ Checks:
   `lower`, `upper`, `ws`, `trail-dot`, `comma-tight`. DIR = drop the postcode, must stay within
   5km. Known deterministic failures live in `KNOWN_INV_XFAIL` (currently empty; INV is 35/35 green)
   with anti-rot bookkeeping — an xfail that starts passing is flagged.
-- **Golden `graceful/*` slices** (`data/eval/golden/v0.1.2`) — small labeled adversarial slices
+- **Golden `graceful/*` sets** (`data/eval/golden/v0.1.2`) — small labeled adversarial sets
   (`graceful/typo|mis-casing|mis-punctuation|whitespace`, ~10 typo cases).
 - **`perturb-golden.ts`** — a one-off perturbation generator (delimiter-strip, lowercase, glue),
   never a standing check.
@@ -55,7 +55,7 @@ Checks:
 | Abbreviation swap        | capable but OFF at runtime (deliberate) | yes                  | golden entries only — no stability check |
 | Number spelling          | no                                      | no                   | nowhere                                  |
 | Typos (single-char edit) | no                                      | no                   | ~10 labeled golden cases only            |
-| Transpositions           | no                                      | no                   | folded into golden typo slice            |
+| Transpositions           | no                                      | no                   | folded into golden typo set              |
 
 ## Deliverable 1 — docs
 

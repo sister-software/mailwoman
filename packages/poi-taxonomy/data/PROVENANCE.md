@@ -46,7 +46,7 @@ Produced by `scripts/build-venue-word-hints.ts` from the f6 venue-word survey ar
 (`$MAILWOMAN_DATA_ROOT/derived/venue-word-lexicon-f6.json`, md5 `a2ae6f4b29ee0ee45870273487d86e79`).
 **Do not hand-edit.** The survey compared token rates across 13.68M Overture poi names (the poi.db
 build corpus, CDLA-Permissive-2.0) against 4.8M candidate-gazetteer primary place names; the
-committed slice keeps the 2,249 tokens that clear the composed bars recorded in the file's own
+committed subset keeps the 2,249 tokens that clear the composed bars recorded in the file's own
 provenance block (venue ratio ≥ 0.9 at ≥ 100 poi occurrences, top CLASS share ≥ 0.7 excluding
 `other`, place rate ≤ 5 ppm — the toponym suppressor). Generated 2026-08-12. Regenerate with:
 

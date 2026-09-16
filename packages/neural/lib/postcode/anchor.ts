@@ -209,9 +209,9 @@ function confidenceFromCountryCount(k: number): number {
 const HOUSE_NUMBER_PENALTY = 0.2
 
 /**
- * Standalone street-type words for the locales without a codex slice yet (ES/IT). US comes from `@mailwoman/codex/us`,
- * German from `@mailwoman/codex/de`, French from `@mailwoman/codex/fr`; the Dutch compound suffixes are still inline
- * below pending a `codex/nl` slice.
+ * Standalone street-type words for the locales without a codex address system yet (ES/IT). US comes from
+ * `@mailwoman/codex/us`, German from `@mailwoman/codex/de`, French from `@mailwoman/codex/fr`; the Dutch compound
+ * suffixes are still inline below pending a `codex/nl` address system.
  */
 const NON_US_STREET_WORDS = new Set([
 	// Spanish
@@ -235,7 +235,7 @@ const NON_US_STREET_WORDS = new Set([
 ])
 
 /**
- * Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` slice).
+ * Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` address system).
  */
 const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk", "steeg", "dreef"]
 

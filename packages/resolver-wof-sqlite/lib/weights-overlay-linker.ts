@@ -578,7 +578,7 @@ export async function committedSoftFeedLinks(): Promise<{
 }
 
 /**
- * The slice of a weights package's committed `model-card.json` the dev materialization reads: the shipped digests the
+ * The subset of a weights package's committed `model-card.json` the dev materialization reads: the shipped digests the
  * release re-verifies against the published tarball, and the channel requirements that name evidence lexicons.
  */
 export interface WeightsCard {

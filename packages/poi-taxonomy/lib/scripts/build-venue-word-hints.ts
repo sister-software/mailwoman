@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Generator for `data/venue-word-hints.json` — the MINED single-token venue-class hint table, the
- *   narrow slice of the f6 venue-word survey that earned committing. One derived input (the f6
- *   lexicon artifact under the data root), one committed output; the slice is a pure filter, so a
+ *   narrow subset of the f6 venue-word survey that earned committing. One derived input (the f6
+ *   lexicon artifact under the data root), one committed output; the subset is a pure filter, so a
  *   regenerate against the same input is byte-identical.
  *
  *   ── Why a COMPOSED measure, not the venue ratio alone ────────────────────────────────────────────
  *   The survey's headline finding is that venue-frequency alone is toponym-saturated: famous-place
  *   tokens appear 35–60× denser in venue names than in place names ("Café de Paris", "Hotel México"),
  *   so `paris` scores a venue ratio of 0.973 — higher than `comer`'s 0.954 — while meaning nothing
- *   venue-like. Three bars compose the slice, and each kills a distinct false-positive family:
+ *   venue-like. Three bars compose the filter, and each kills a distinct false-positive family:
  *
  *   • {@linkcode VENUE_RATIO_MIN} + {@linkcode POI_FREQ_MIN} — the token is attested in venue names
  *     at rate, not by accident of a small denominator.

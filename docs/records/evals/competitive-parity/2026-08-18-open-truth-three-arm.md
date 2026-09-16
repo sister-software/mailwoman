@@ -1,6 +1,6 @@
 # Open-truth three-arm benchmark — Mailwoman vs Pelias vs Photon (2026-08-18)
 
-_The publishable slice of the August 2026 three-arm geocoder comparison: every row printed here has a
+_The publishable subset of the August 2026 three-arm geocoder comparison: every row printed here has a
 reference coordinate traceable to an open address register. Measurements: Pelias and Photon captured
 2026-08-09 (UTC), Mailwoman captured 2026-08-12. Published 2026-08-18._
 

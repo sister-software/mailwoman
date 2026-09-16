@@ -225,7 +225,7 @@ console.log(`${workerCount} workers: ${done} rows in ${s.toFixed(2)} s → ${(do
 ```
 
 Two details in there earn their space. Work is pulled, not pushed: a worker asks for the next batch when
-it finishes one, so a slow batch never leaves a worker idle behind a fixed slice. And the batch size of
+it finishes one, so a slow batch never leaves a worker idle behind a fixed share. And the batch size of
 32 amortizes the message round-trip without letting one worker sit on a queue the others could drain.
 
 ## 4. Sweep the worker count

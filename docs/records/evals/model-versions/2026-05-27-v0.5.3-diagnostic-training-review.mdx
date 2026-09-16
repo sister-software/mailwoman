@@ -195,7 +195,7 @@ Add f1.locality, f1.region, f1.street, f1.house_number, f1.postcode, f1.venue co
 | 1   | Demo presets pass?                   | 6 manual tests, neural-only AND full pipeline. Must be 6/6.                      |
 | 2   | Per-tag F1 improves on core tags?    | Golden eval matrix, locality/region/street/house_number each ≥ previous release. |
 | 3   | Overconfident-wrong doesn't regress? | Must be ≤ previous + 2pp in hybrid-joint mode.                                   |
-| 4   | No new failure-class zero-outs?      | Check kryptonite and adversarial slices.                                         |
+| 4   | No new failure-class zero-outs?      | Check the kryptonite and adversarial sets.                                       |
 | 5   | Int8 matches fp32?                   | Per-tag F1 deltas \> 1pt = investigate.                                          |
 
 **Never compare val_macro_f1 across tokenizer versions.** Different tokenizers invalidate BIO alignment comparisons.

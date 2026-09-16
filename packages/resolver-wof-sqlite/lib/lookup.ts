@@ -305,7 +305,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		}
 
 		// #920 country-aware extract routing: probe each NON-MAIN extract's country set once at
-		// construction (they're small, purpose-built extracts — postcode/locality slices; main is the
+		// construction (they're small, purpose-built extracts — postcode/locality extracts; main is the
 		// multi-GB admin DB and is the fallback anyway, so it is deliberately NOT scanned). Feeds
 		// pickExtractForPlacetype so two postcode extracts (postalcode-us + postalcode-geonames-tail)
 		// route by the query's country instead of first-match starving the second extract.

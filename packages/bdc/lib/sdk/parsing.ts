@@ -60,7 +60,7 @@ import { CSVSpliterator } from "spliterator"
 import type { ProviderID } from "#sdk/common"
 
 /**
- * Column positions in the FCC's 12-column availability CSV. Named rather than sliced by offset so a reader can check
+ * Column positions in the FCC's 12-column availability CSV. Named rather than indexed by offset so a reader can check
  * them against the header row without counting commas:
  *
  * `frn,provider_id,brand_name,location_id,technology,max_advertised_download_speed,`

@@ -17,7 +17,7 @@ import type { AnyNode } from "domhandler"
 import { findAll, removeElement, textContent } from "domutils"
 import { parseDocument } from "htmlparser2"
 
-export interface DocumentSliceOptions {
+export interface DocumentNarrowingOptions {
 	/**
 	 * Narrow to the inner HTML of the FIRST element with this (lower-case) name — an SGML/XML envelope's payload element.
 	 * A document that states no such element is not narrowed, which is the right reading for a bare fragment that never
@@ -25,7 +25,7 @@ export interface DocumentSliceOptions {
 	 */
 	within?: string
 	/**
-	 * Element names to remove entirely, applied AFTER {@linkcode DocumentSliceOptions.within} so an envelope's own
+	 * Element names to remove entirely, applied AFTER {@linkcode DocumentNarrowingOptions.within} so an envelope's own
 	 * metadata is never mistaken for the payload's.
 	 */
 	without?: readonly string[]
@@ -36,7 +36,7 @@ export interface DocumentSliceOptions {
  * questions — a regex `<head[^>]*>[\s\S]*?<\/head>` cannot tell a `<` inside an attribute value from a tag, and a
  * document whose envelope is malformed is exactly the document a caller most needs read correctly.
  */
-export function sliceDocument(html: string, options: DocumentSliceOptions = {}): string {
+export function narrowDocument(html: string, options: DocumentNarrowingOptions = {}): string {
 	const document = parseDocument(html, { decodeEntities: true })
 
 	const envelope = options.within ? findAll((element) => element.name === options.within, document).at(0) : undefined

@@ -44,7 +44,7 @@ describe("encodeCharUnits", () => {
 		}
 	})
 
-	it("treats an astral code point as one unit and slices it back out of the input by UTF-16 offsets", () => {
+	it("treats an astral code point as one unit and reads it back out of the input by UTF-16 offsets", () => {
 		const raw = "札幌市中央区北１条西𠮷野１"
 		const encoded = encodeCharUnits(raw, vocabulary, contract)
 		const astral = encoded.units.find((unit) => unit.text === "𠮷")!

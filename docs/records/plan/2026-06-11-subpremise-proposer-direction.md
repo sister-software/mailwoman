@@ -10,7 +10,7 @@ PO Box 123 · Apt 4B · Suite 500 · Unit 9 · Level 12 · 3rd Floor · Private 
 61547 · CMB B99 — every one is **DESIGNATOR + IDENTIFIER**: a closed-vocabulary leader (now
 provenance-tracked across `codex/us|fr|ca|au|nz`) followed by a short id with per-designator
 shape rules. Addressing standards treat them as one family too (USPS "secondary unit
-designators"; AU's subpremise forms in the same AMAS table the #517 slices mined; NZ Post's
+designators"; AU's subpremise forms in the same AMAS table the #517 recipes mined; NZ Post's
 delivery-service types). The model currently learns each tag's instances separately
 (`unit` extract, `po_box/cedex` extract) and shares nothing across the family.
 

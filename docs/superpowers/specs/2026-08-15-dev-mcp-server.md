@@ -430,8 +430,8 @@ out (describe): { set_id, n, sha256, source, strata: { by_country: {…}, by_add
 
 - `{ kind: "board" }` — all 837 rows. **The default everywhere.**
 - `{ kind: "board", country: "gb" }` / `{ kind: "board", address_kind: "us_po_box" }` /
-  `{ kind: "board", status: "pass" }` — a declared slice, reported with its own denominator and with
-  what the slice excluded.
+  `{ kind: "board", status: "pass" }` — a declared subset, reported with its own denominator and with
+  what the subset excluded.
 - `{ kind: "panel", version: "v2" | "v3" }` — the benchmark panel (420 / 424 rows), which carries
   `truth_type` and so supports stratified reporting.
 - `{ kind: "golden", version: "v0.1.3", split: "dev" }`
@@ -802,7 +802,7 @@ arm captured after cannot be silently compared.
 
 Declaring the confound explicitly — `variable: ["backend", "country_scope"]` — is the same run without
 the warning, because the caller has said the thing the warning would have told them. That is the honest
-description of a 1×2 slice of a 2×2.
+description of one row of a 2×2.
 
 ### 6.4 External arms
 
@@ -1113,7 +1113,7 @@ different cost, not a larger `n` on this one.
 
 ---
 
-## 11. First slice
+## 11. First increment
 
 > **§3.1 update, 2026-08-18.** The supervisor/socket split was resolved by a different reduce than the
 > one sketched here, driven by measured need: staleness (not warmth) was the binding cost — the
@@ -1125,7 +1125,7 @@ different cost, not a larger `n` on this one.
 > it discards the initialized MCP session with the module graph. Warmth across restarts remains
 > deliberately unbuilt: engines are lazy and rebuild on first use, which the restart report states.
 
-> **Status, 2026-08-16.** This section is the plan of record and is kept as written. The slice shipped
+> **Status, 2026-08-16.** This section is the plan of record and is kept as written. The increment shipped
 > (#1698), and the prediction it tests held, so the deferrals below were taken in order rather than
 > abandoned: every tool named here as waiting now exists, plus `mwdev_runs`. All four `ArmSpec` members
 > are built. Of the §9 questions this section listed as downstream, oracle billing (§9.6), who starts
@@ -1142,7 +1142,7 @@ run. That is a behavioural prediction about the agent, and it is falsifiable in 
 
 Build exactly this:
 
-| Tool                      | Why it is in the first slice                                                                                                             |
+| Tool                      | Why it is in the first increment                                                                                                         |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `mwdev_daemon` (§4.1)     | Nothing else works without a lifecycle and the tree fingerprint (§3.4).                                                                  |
 | `mwdev_run` (§4.3)        | The warm engine over `{kind:"board"}` by default. This is the whole §5.1 mechanism: the full corpus is the shortest legal thing to type. |
@@ -1153,7 +1153,7 @@ store, recorded arms, external arms and the oracles. Seven of the ten §9 questi
 of those and cost nothing to defer — regression.db writes, the memory budget, oracle billing, who starts
 Pelias, retention, board-case writes, `run_id` tracing.
 
-**How the slice reports on itself.** After it exists, the check is not "is it faster" — that is already
+**How the increment reports on itself.** After it exists, the check is not "is it faster" — that is already
 measured at 7.8× (§1.2) and was never in doubt. The check is whether the next investigation's panel is
 the board or a hand-picked ten. Count it: over the following working period, what fraction of measurement
 claims cite `n ≥ 100` versus a self-chosen sample, and how many new one-off scripts land in `scratchpad/`.

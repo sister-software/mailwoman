@@ -107,7 +107,7 @@ The picture changes meaningfully:
 France, Lozère, ՍԵՆՏ-ԱԼԲԱՆ-ՍՅՈՒՐ-ԼԻՄԱՆՅՈԼ              →  pred: "" (empty)
 ```
 
-These are v0.3.0's documented known-failure modes. The bytefallback tokenizer treats non-Latin scripts as the same opaque sequence, and the model gives up on the prefix. We have known v0.3.0 was bad at these. The v0.4.0 weights didn't change anything about this slice, so it isn't a real recipe regression. After excluding adversarial inputs, country FN drops from 194 to roughly 16. The −0.07 country regression is mostly a golden-set adversarial-weighting artifact.
+These are v0.3.0's documented known-failure modes. The bytefallback tokenizer treats non-Latin scripts as the same opaque sequence, and the model gives up on the prefix. We have known v0.3.0 was bad at these. The v0.4.0 weights didn't change anything about this adversarial set, so it isn't a real recipe regression. After excluding adversarial inputs, country FN drops from 194 to roughly 16. The −0.07 country regression is mostly a golden-set adversarial-weighting artifact.
 
 **Postcode false-negatives** split into four buckets:
 
@@ -118,20 +118,20 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 | House number confused for postcode |     11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
 | BIO span boundary slip             |      6% | `LE TRÉPORT, 76470` → predicts `", 7647"`                     |
 
-The empty-prediction slice is the one worth acting on. NAD's downweight was the most aggressive change in the §4 source rebalance: it carried a lot of "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
+The empty-prediction class is the one worth acting on. NAD's downweight was the most aggressive change in the §4 source rebalance: it carried a lot of "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
 
-That's a fix v0.4.1 should target. It is not the same problem as the headline regression number suggests. The 6% boundary-slip slice is a different bug — the model gets the tag right but emits a span that includes the preceding comma+space. That's a decoder fix, no retraining required, and it has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
+That's a fix v0.4.1 should target. It is not the same problem as the headline regression number suggests. The 6% boundary-slip class is a different bug — the model gets the tag right but emits a span that includes the preceding comma+space. That's a decoder fix, no retraining required, and it has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
 
 ## What didn't get fixed (the v0.4.1 list)
 
 The two destabilizers — §1 per-token CRF normalization and §3 class-weighted cross-entropy — are deferred. Both individually look like reasonable training-side improvements; both, at this LR + this loss landscape, made the model find a confident-wrong degenerate minimum after several hundred post-warmup steps. The sanity-check pass over `model.py` and `crf.py` ruled out implementation bugs: the `per_token` reduction is mathematically `nll.sum() / total_tokens.clamp(min=1)`, and class_weights enters via PyTorch-standard `cross_entropy(weight=...)`. The destabilization is a real recipe interaction.
 
-The leading hypothesis at the v0.4.0 boundary is that some adapter slice in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign (it measures per-source extract distribution against the training config's source_weights, with concentration warnings), and the v0.4.1 starting point will be running gradient-norm probes per adapter to find what's causing the spike.
+The leading hypothesis at the v0.4.0 boundary is that some adapter source in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign (it measures per-source extract distribution against the training config's source_weights, with concentration warnings), and the v0.4.1 starting point will be running gradient-norm probes per adapter to find what's causing the spike.
 
 Three orthogonal threads for v0.4.1:
 
 - Source-weight tweak (bump NAD partway back to recover positional exposure) + synthesis pass over component-order permutations.
-- Corpus-side investigation of which adapter slice destabilizes CRF gradients.
+- Corpus-side investigation of which adapter source destabilizes CRF gradients.
 - Schedule + class-weight ratio redesign (constant-LR smokes, milder weight ratios).
 
 ## What we'd tell a future ourselves
@@ -150,4 +150,4 @@ A few things this campaign made obvious that we'd want to put on the shelf for t
 - [`docs/articles/plan/phases/PHASE_2_training.md`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_2_training.mdx) — the canonical iteration log with the full campaign narrative
 - `corpus-python/scripts/diagnose_regression.py` — the per-tag FN/FP bucketer
 
-Next: v0.4.1 scope discussion. The empty-pred slice on postcodes is the highest-confidence single-target fix. The §1 CRF investigation is the higher-risk, higher-reward thread. We'll likely run both in parallel.
+Next: v0.4.1 scope discussion. The empty-pred class on postcodes is the highest-confidence single-target fix. The §1 CRF investigation is the higher-risk, higher-reward thread. We'll likely run both in parallel.

@@ -20,7 +20,7 @@ Thread B's commit (`d8a6bae`), transliteration in this commit (Thread B2).
 | Kryptonite      | Shipped (Thread B, commit `d8a6bae`) | ~5,000           | `deepseek-kryptonite`      |
 | Transliteration | Shipped (Thread B2)                  | ~50,000–75,000   | `deepseek-translit-<scrp>` |
 
-The kryptonite slice is what unblocks Stage 5 reconcile (Thread D) and the Stage 2.5
+The kryptonite rows are what unblocks Stage 5 reconcile (Thread D) and the Stage 2.5
 kind-classifier's joint-decoding test surface. Transliteration is what unblocks Thread A's
 `<5%` byte-fallback target on non-Latin scripts. See
 [PHASE_8 §B](../phases/PHASE_8_v0_5_0_fresh_slate.mdx) for the threading rationale.
@@ -294,7 +294,7 @@ rows fit comfortably.
 
 ## Changelog
 
-| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-23 | Initial doc + kryptonite slice generation (5K rows, deepseek-v4-flash).                                                                                                                                                                                                                                                                                                                                    |
-| 2026-05-24 | Transliteration slice generation shipped under Thread B2: 73,319 rows from 5 scripts × 14,978 seeds (en-US + fr-FR), `max_tokens=60000`, 5.2 rps sustained, ~234 min wall-clock at conc=15. 73,316 rows aligned (3 quarantined). 5 parquet files added: `part-translit-{armn,cyrl,hang,hans,jpan}.parquet`. v0.3.0 parquet paths in MANIFEST canonicalized from `$MAILWOMAN_DATA_ROOT/...` to `/data/...`. |
+| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-23 | Initial doc + kryptonite row generation (5K rows, deepseek-v4-flash).                                                                                                                                                                                                                                                                                                                                    |
+| 2026-05-24 | Transliteration row generation shipped under Thread B2: 73,319 rows from 5 scripts × 14,978 seeds (en-US + fr-FR), `max_tokens=60000`, 5.2 rps sustained, ~234 min wall-clock at conc=15. 73,316 rows aligned (3 quarantined). 5 parquet files added: `part-translit-{armn,cyrl,hang,hans,jpan}.parquet`. v0.3.0 parquet paths in MANIFEST canonicalized from `$MAILWOMAN_DATA_ROOT/...` to `/data/...`. |

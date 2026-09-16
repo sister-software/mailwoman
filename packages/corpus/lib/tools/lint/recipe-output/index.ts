@@ -28,7 +28,7 @@
  *   flagged recipe output should require `lint_acknowledged: true` before training consumes it.
  *
  *   Usage: mailwoman dev lint corpus-slice\
- *   --slice <new-recipe-output.parquet>\
+ *   --database <new-recipe-output.parquet>\
  *   --stats <corpus-stats.json>\
  *   [--rules <rules.json>]\
  *   [--out-md /tmp/lint-report.md]\
@@ -80,14 +80,13 @@ function defaultRulesPath(): string {
 }
 
 /**
- * Options for {@linkcode lintCorpusSlice}. `slicePath` is the property name the `mailwoman dev lint corpus-slice`
- * command passes, and moves with that command.
+ * Options for {@linkcode lintRecipeOutput}.
  */
 export interface LintRecipeOutputOptions {
 	/**
 	 * The new recipe output parquet to lint.
 	 */
-	slicePath: string
+	recipeOutputPath: string
 	/**
 	 * Pre-computed corpus stats JSON (see `corpus-stats.ts`).
 	 */
@@ -204,7 +203,7 @@ export interface LintFlag {
 }
 
 /**
- * Findings summary returned by {@linkcode lintCorpusSlice}.
+ * Findings summary returned by {@linkcode lintRecipeOutput}.
  */
 export interface LintRecipeOutputSummary {
 	errors: number
@@ -430,7 +429,7 @@ function renderReport(
 /**
  * Lint a recipe output against corpus stats + the anti-pattern rules; print the markdown report to stdout.
  */
-export async function lintCorpusSlice(
+export async function lintRecipeOutput(
 	options: LintRecipeOutputOptions,
 	report?: (line: string) => void
 ): Promise<LintRecipeOutputSummary> {
@@ -442,9 +441,9 @@ export async function lintCorpusSlice(
 		`  ${corpus.row_count} rows from ${corpus.slice_paths.length} parquet file(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
 	)
 
-	report?.(`Reading recipe output from ${options.slicePath}...`)
+	report?.(`Reading recipe output from ${options.recipeOutputPath}...`)
 
-	const output = await statsFromRecipeOutput(streamTokenLabelRows(options.slicePath))
+	const output = await statsFromRecipeOutput(streamTokenLabelRows(options.recipeOutputPath))
 
 	report?.(`  ${output.rowCount} rows`)
 
@@ -462,7 +461,7 @@ export async function lintCorpusSlice(
 	]
 
 	const rendered = renderReport(
-		{ outputPath: options.slicePath, statsPath: options.statsPath, rulesPath },
+		{ outputPath: options.recipeOutputPath, statsPath: options.statsPath, rulesPath },
 		output,
 		flags
 	)
@@ -476,7 +475,7 @@ export async function lintCorpusSlice(
 	if (options.outJSON) {
 		await writeLocalJSONFile(
 			{
-				recipe_output: options.slicePath,
+				recipe_output: options.recipeOutputPath,
 				stats: options.statsPath,
 				flags,
 				summary: {

@@ -8,7 +8,7 @@
  * See `exhibit21-parser.md` for the parsing contract and abstention rules.
  */
 
-import { sliceDocument } from "@mailwoman/core/html/document"
+import { narrowDocument } from "@mailwoman/core/html/document"
 import { extractTableRows, padAndDropBlankColumns, type TableCell, widestRow } from "@mailwoman/core/html/tables"
 import { BLOCK_ELEMENTS, htmlToLayoutText } from "@mailwoman/core/html/text"
 import { isPresent } from "@mailwoman/core/objects"
@@ -341,7 +341,7 @@ function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhi
  * — and `<script>`/`<style>` because their text is code.
  */
 function documentWindow(html: string): string {
-	return sliceDocument(html, { within: "text", without: ["head", "script", "style"] })
+	return narrowDocument(html, { within: "text", without: ["head", "script", "style"] })
 }
 
 const LI_OPEN_PATTERN = /<li[^>]*>/gi
@@ -606,7 +606,7 @@ export function parseExhibit21(html: string): ParsedExhibit21 {
 }
 
 /**
- * The slice of `SECClient` (`sec-client.ts`) this module needs — {@linkcode fetchExhibit21} takes this rather than the
+ * The subset of `SECClient` (`sec-client.ts`) this module needs — {@linkcode fetchExhibit21} takes this rather than the
  * concrete class so a test can substitute a trivial stub instead of building a full axios harness. A real
  * `createSECClient()` instance already satisfies this structurally.
  */

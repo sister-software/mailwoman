@@ -36,7 +36,7 @@ const CorpusAudit: CommandComponent<typeof spec, [string]> = ({ options, args })
 	const state = useCommandTask(async () => {
 		const { audit } = await import("@mailwoman/corpus/tools")
 
-		audit({ corpusDir: args[0], configPath: options.config, sampleSliceCount: options.sample })
+		audit({ corpusDir: args[0], configPath: options.config, sampleFileCount: options.sample })
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

@@ -186,6 +186,6 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 // which the project's repair discipline forbids (a repair may add spans on O-tokens or snap
 // boundaries, never re-classify a token from one entity to another). Net on the US golden set it was
 // −302 postcode / +16 house_number; an anchor-ablation probe showed the model is 100% correct on the
-// target slice once the binary postcode anchor (which fires on a leading number that is a valid ZIP
+// target rows once the binary postcode anchor (which fires on a leading number that is a valid ZIP
 // elsewhere) is removed. The disambiguation is being absorbed model-side: a region-congruence anchor
 // upgrade + augmented postcode-leading extracts. See the 2026-06-24 postmortem + DeepSeek consult 019ef789.

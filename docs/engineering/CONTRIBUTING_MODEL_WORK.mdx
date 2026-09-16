@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: Contributing model work — the runbook
-description: Which evals decide a change, the change-shape taxonomy, and how to ship a corpus slice without breaking four locales.
+description: Which evals decide a change, the change-shape taxonomy, and how to ship a corpus recipe without breaking four locales.
 ---
 
 # Contributing model work — the runbook
@@ -22,7 +22,7 @@ hands.
 2. **Never compare F1 across tokenizer versions.** Same tokenizer or the comparison is void
    (`per-locale-f1.ts --tokenizer` enforces this; the model card records the version).
 3. **Compare fp32-to-fp32.** Int8 is a release artifact, not an experiment lens.
-4. **One variable per run.** Prove one change solo, then consolidate. Stacking corpus slices in one 20k run
+4. **One variable per run.** Prove one change solo, then consolidate. Stacking corpus recipes in one 20k run
    dilutes every tag (measured, twice — see the cumulative-dilution note in the
    [parity scorecard](../evals/competitive-parity/parity-scorecard-2026-06-09.md)).
 5. **Recompile before eval.** Eval harnesses load compiled `core/out` — a stale build makes your
@@ -53,7 +53,7 @@ hands.
 ## Which tool for which tag (the change-shape taxonomy)
 
 - **Open-vocab / distributional tags** (street, affixes, unit, locality): the model must learn the
-  boundary from context → **format-diverse synth corpus slice + retrain** is the tool.
+  boundary from context → **format-diverse synth corpus recipe + retrain** is the tool.
 - **Closed-vocab tags** (country, po_box, cedex): a finite surface set in a predictable slot →
   **gazetteer/codex lexicon as a soft anchor feature** — the matcher informs the model, it never
   overrides it. We measured the override version and reversed it; read
@@ -67,18 +67,18 @@ hands.
   NZ arcs distilled). Note the closed-vs-open-vocab wall stated there — it works for place names and
   FAILS for venue/street spans (#1287/#1288 falsified with receipts); don't re-run those.
 - **Format quirks both systems miss** (rare edge shapes): consider a [query-shape route](./reference/QUERY_SHAPE.mdx) before a
-  corpus slice — some formats are structurally different enough that routing beats tagging.
+  corpus recipe — some formats are structurally different enough that routing beats tagging.
 - **Cross-locale grammar leakage** (a convention from one address system firing in another —
   USPS suffix logic on French streets): **a conventions row + the decode-time mask**, not a
-  corpus slice. `codex/address-system-conventions.ts` keyed by the model's own locale head; zero GPU,
-  applies without retrain. Shipped v4.3.0 (#478 slice 1).
+  corpus recipe. `codex/address-system-conventions.ts` keyed by the model's own locale head; zero GPU,
+  applies without retrain. Shipped v4.3.0 (#478 increment 1).
 
-**The base-consistency check (the #511 lesson — run it BEFORE weighting any corpus slice):** a coverage
-slice cannot outvote a contradicting base corpus. The affix slice spent four releases fighting
+**The base-consistency check (the #511 lesson — run it BEFORE weighting any corpus source):** a coverage
+recipe's rows cannot outvote a contradicting base corpus. The affix source spent four releases fighting
 ~467M base rows that labeled the same surfaces the other way (≥1,000:1 effective gradient mass);
 every weight and architecture change failed because the equilibrium was the mixing ratio. Audit what
 the base corpus says about your tag's surfaces first (`packages/mailwoman/lib/dev-tools/audit-affix-misses.run.ts` is the
-template — per-row miss classification + absorption check). If the base contradicts the slice,
+template — per-row miss classification + absorption check). If the base contradicts the recipe output,
 the fix is a relabel pass (make the mix agree), not a bigger weight. Corollary, measured on
 v4.3.0: relabeling one boundary loosens its neighbors — pre-register watches on the adjacent
 classes (#513).
@@ -193,7 +193,7 @@ operator-approved v4.15.0 revision (the #723 anchor-pollution trade), and both h
 across the v5.1.0 tokenizer swap; the anchor-fed postcode channel is structurally stable, so the
 zero margin is by construction, not fragility. Any dip triggers rule 1, and the
 [#901](https://github.com/sister-software/mailwoman/issues/901) campaign acceptance bar must name both
-postcode slices explicitly.
+postcode floors explicitly.
 
 ### Answer-key versions are not comparable across conventions (v0.1.2 → v0.1.3, 2026-08-06)
 
@@ -246,15 +246,15 @@ Why this is required: the v5.1.0 splice shipped on "byte-identical by constructi
 out ASCII-only — FR/DE/ES shared é/ü/ö with the spliced pieces and 52/15,000 EU rows
 re-tokenized, measured only after the fact. Net-positive that time; the check removes the luck.
 
-## Adding a corpus slice
+## Adding a corpus recipe
 
-1. Generator lives in `corpus/` (`synthesize-*.ts`) or `scripts/build-*-extract.mjs`; every row
-   carries `synth: {method, base_source_id}` ancestry.
+1. The recipe lives in `packages/corpus/lib/recipes/` and its row generator under
+   `packages/corpus/lib/synthesizers/`; every row carries `synth: {method, base_source_id}` ancestry.
 2. Audit format diversity against the real eval's observed forms _before_ generating — thin
    diversity teaches lexical pattern-matching, not the boundary.
 3. Overlay manifests declare lineage against a base corpus version
-   (`scripts/assemble-*-overlay-manifest.py` is the pattern); never hand-edit a manifest.
-4. Train via `modal run -d scripts/modal/train_remote.py --config <yaml> --resume auto`
+   (`mailwoman corpus overlay-manifest` writes one); never hand-edit a manifest.
+4. Train via `modal run -d corpus-python/launch/train_remote.py --config <yaml> --resume auto`
    (~1h A100). Config lives in `corpus-python/src/mailwoman_train/configs/` — copy the latest,
    change one variable, write the acceptance-bar comment.
 
@@ -270,9 +270,9 @@ coordinate, read the Latin board before a resolver mechanism ships.
   One package for the family, `@mailwoman/neural-weights-cjk`; `release.config.json` `charWeights.<family>` names the
   graph and the sealed vocabulary, and the package's `scripts/link-dev-weights.ts` links them into the data-root
   overlay for a dev checkout.
-- **Corpus.** `build_jp_slice.py` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the compact
-  folded number, the designator form, the municipality's kana reading) and holds out whole municipalities;
-  `build_cjk_overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
+- **Corpus.** `countries/jp/corpora/` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the
+  compact folded number, the designator form, the municipality's kana reading) and holds out whole municipalities;
+  `countries/cjk/overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
   register is a renderer entry with a weight and a build report that states the row count it landed on.
 - **The board read.** `scripts/score_jp_probe_board.py --label-set stage3-cjk` over the 20,000-row JP board: the check
   is coordinate-acceptability at 15 km through the municipality centroid table; beside it, the municipality macro, the
@@ -325,7 +325,7 @@ Three more receipts from the same run:
    four fine-tune generations deep; capabilities trained into ANCESTOR bases on feeds that no
    longer exist ride along invisibly. The v4.0.0 run exposed one: FR venue-led competence
    ("MR & MRS CRAB, 20 Rue de la Huchette…") existed only by inheritance — the CURRENT feed's
-   `source_weights` never admitted a venue slice (`synth-house-venue` is not in the map, and an
+   `source_weights` never admitted a venue source (`synth-house-venue` is not in the map, and an
    unlisted source is DROPPED), so the from-scratch model never saw the class and regressed on it.
    Audit rule: **before any base run, diff the feed's `source_weights` against the capability
    surface you expect** — what is not in the map is not in the model.

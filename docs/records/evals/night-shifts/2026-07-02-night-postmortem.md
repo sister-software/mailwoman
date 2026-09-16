@@ -10,7 +10,7 @@ operator merge (no self-merge).
 
 1. **#874** env SDK → `@mailwoman/core/env` (repo-wide) + hermetic smoke — the biggest; from the day session.
 2. **#879** drop the `as unknown as ResolverBackend` cast (closes #873). Pure type-level.
-3. **#876** `recognizeUsRegions`→`recognizeUSRegions` (internal acronym-gap slice of #875).
+3. **#876** `recognizeUsRegions`→`recognizeUSRegions` (internal acronym-gap increment of #875).
 4. **#878** unknown-span corpus-gap eval (#493 item). **#880** exonym-vs-coverage rebuild probe (#826).
    — #878/#880 are new tracked evals, no runtime surface.
    Order only matters for #874 (touches the most); the rest are independent.
@@ -30,7 +30,7 @@ operator merge (no self-merge).
   fixed too. Untracked, so local-only.
 - **#875 filed** — the v5.0.0 sweep missed two acronyms: `Us` and generic `Json`/`Jsonl` (~28 identifiers,
   some public). Documented in AGENTS.md as a version-conditional batch.
-- **PR #876** — `recognizeUsRegions` → `recognizeUSRegions` (internal-only slice of #875; no public
+- **PR #876** — `recognizeUsRegions` → `recognizeUSRegions` (internal-only increment of #875; no public
   re-export → zero release impact). Compile + affected tests green. Flagged for merge.
 - **Coverage quantified (change C, closes the #823 loop).** Ran `frontier-gap.ts` against the live
   `candidate.db` (→ `candidate-global-coverage.db`, the post-#266/#267 build), geonames cities15000 top-2/country:

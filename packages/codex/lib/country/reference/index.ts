@@ -29,7 +29,7 @@ export function countryFlag(alpha2: string): string {
 }
 
 /**
- * Fill the country-reference slice (ISO 3166 alpha-2, flag, calling code, currency) from a resolved country code.
+ * Fill the country-reference fields (ISO 3166 alpha-2, flag, calling code, currency) from a resolved country code.
  * Abstains on anything that isn't two ASCII letters.
  */
 export const countryReferenceAnnotator: Annotator = ({ countryCode }): Partial<AnnotationSet> => {

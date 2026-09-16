@@ -35,9 +35,9 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
 
 		await buildCorpusStats({
-			slicesArg: options.parquet,
+			parquetPath: options.parquet,
 			outputPath: options.out,
-			limitPerSlice: options.limitPerFile,
+			limitPerFile: options.limitPerFile,
 		})
 
 		return "done"

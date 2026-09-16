@@ -75,7 +75,7 @@ export interface NUTS {
 }
 
 /**
- * The native enrichment set. Every field is optional; an annotator fills the slice it owns. camelCase throughout,
+ * The native enrichment set. Every field is optional; an annotator fills the fields it owns. camelCase throughout,
  * structured sub-objects — the internal representation the serializers map from.
  */
 export interface AnnotationSet {
@@ -140,7 +140,7 @@ export interface AnnotatorInput {
 }
 
 /**
- * A unit of enrichment: takes a coordinate/place, returns the slice of the set it can fill.
+ * A unit of enrichment: takes a coordinate/place, returns the fields of the set it can fill.
  */
 export type Annotator = (input: AnnotatorInput) => Partial<AnnotationSet> | Promise<Partial<AnnotationSet>>
 

@@ -30,7 +30,7 @@
  *      scope). Either way the span's contribution to the resolve is stripped: `firstPostcodeValue`,
  *      the walk's postcode lookup, and the post-walk postcode passes all skip excluded spans.
  *   3. **No confident siblings → ABSTAIN** (the `postcode-country-coherence.ts:269` posture
- *      verbatim). A shape no codex system recognizes (the 10/110 slice-less codes) also abstains —
+ *      verbatim). A shape no codex system recognizes (the 10/110 codes from countries without a codex system) also abstains —
  *      an empty candidate set is no evidence either way.
  *
  *   ## What counts as a sibling signal
@@ -43,8 +43,8 @@
  *     `country_hint` metadata stamp (`mailwoman/region-recognition.ts` writes it on 2-letter US
  *     state abbreviations).
  *   - Signals are filtered to the codex SystemCode universe BEFORE the intersection test. A country
- *     with no codex slice (ES, MX, IE, …) can never appear in any candidate set, so an unfiltered
- *     signal would make every intersection empty and every span "foreign" — the slice-less filter
+ *     with no codex address system (ES, MX, IE, …) can never appear in any candidate set, so an unfiltered
+ *     signal would make every intersection empty and every span "foreign" — filtering out those countries
  *     is the whole reason the JP-shaped "15 07691" span in the ES Portopetro row ABSTAINS rather
  *     than false-excludes.
  *
@@ -63,7 +63,7 @@
  *
  *   M-1's six Gauntlet exclusion spans grade 4 exclusions (US "1600"/"3080"/"1200" via their region,
  *   PR "3499" via the territory-mapped country) + 2 documented abstentions (MX "2000" — no country
- *   token, "Tabasco" is not a `matchSubdivision` key; ES "15 07691" — no ES slice). Within-country,
+ *   token, "Tabasco" is not a `matchSubdivision` key; ES "15 07691" — no ES address system). Within-country,
  *   the exclusion problem is close to empty on the curated board, and a 5-digit house number in a
  *   DE/FR address is shape-native — the shape cannot exclude it (M-1 finding #1), so the mechanism
  *   CONFIRMS it instead.
@@ -82,7 +82,7 @@ import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decod
 /**
  * The codex address systems a sibling signal can speak for — the universe `candidateSystemsForPostcode` can return, in
  * the upper-case ISO form this module's signals are emitted in (`SystemCode` itself is lower-case). Signals from
- * countries with no codex slice are filtered out BEFORE the intersection test, so a slice-less country can never
+ * countries with no codex address system are filtered out BEFORE the intersection test, so such a country can never
  * manufacture an empty intersection (the false-exclusion trap; see the header). Derived from codex's own list so a
  * system added there is admitted here in the same change.
  */
@@ -178,8 +178,8 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 		const code = node.value.trim()
 		const systems = candidateSystemsForPostcode(code)
 
-		// A shape no codex system recognizes is no evidence either way — abstain (the 10/110
-		// slice-less Gauntlet codes: IE Eircode, SI, IM, …).
+		// A shape no codex system recognizes is no evidence either way — abstain (the 10/110 Gauntlet
+		// codes from countries without a codex system: IE Eircode, SI, IM, …).
 		if (!systems.length) {
 			verdict.abstained.push(code)
 

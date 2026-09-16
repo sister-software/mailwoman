@@ -672,7 +672,7 @@ It is the natural second layer, once the acquisition path and the distribution q
 
 **England, whole.** The bounded region is the product's own extent rather than a sub-region, because
 the EA publishes England as one file and the coverage claim in §3.2 is stated at England scale. A
-county-scale slice would be a smaller build of the same thing, not a different claim.
+county-scale build would be a smaller build of the same thing, not a different claim.
 
 The verification ladder still runs on a smaller area first — see below — but the artifact the pilot
 produces covers what the authority's statement covers, which keeps the manifest's declared extent and

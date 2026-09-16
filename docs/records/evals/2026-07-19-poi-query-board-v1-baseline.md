@@ -14,7 +14,7 @@ against.
 
 ## Composition (45 cases)
 
-| slice                  |   n | notes                                                                                                                   |
+| set                    |   n | notes                                                                                                                   |
 | ---------------------- | --: | ----------------------------------------------------------------------------------------------------------------------- |
 | category + anchor      |  22 | ≥4 per country: US 6, CA 5, MX 5, FR 6 — well-known city-center golds, 25 km tolerance                                  |
 | locale-hintd synonym   |   5 | 3 exact-locale-hintd (`er`/en-US, `petrol station`/en-GB, `mailbox`/en-CA), 2 unconditional                             |
@@ -133,7 +133,7 @@ current standing.**
 Breach detection is unit-tested against synthetic result sets (`poi-board.test.ts`,
 `evaluateFloors — breach detection`) — no live board run needed to prove a floor fails: an
 overall dip below 90%, a single abstain miss, a single address-guard miss, and an absent
-category slice each register as a breach.
+category set each register as a breach.
 
 ## Next steps (not this PR)
 

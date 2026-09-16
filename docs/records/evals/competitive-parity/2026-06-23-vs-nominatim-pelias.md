@@ -35,7 +35,7 @@ Three systems, identical real held-out OpenAddresses rows (truth lat/lon), 150/l
 - **The test set favors Pelias.** OpenAddresses is one of Pelias's INDEXED sources — its 81% / p50 0.0 km is partly recall-of-its-own-data, not generalization (home-field advantage). Nominatim (OSM) overlaps less. mailwoman trained on a disjoint held-out split.
 - **The real mailwoman gap is coverage/recall:** ~27% no-result aggregate (worse on EU non-IT) vs Pelias ~1% / Nominatim ~20%. It fails to return a usable coordinate for a quarter of these addresses.
 
-## Messy inputs — the slice that should favor a calibrated parser
+## Messy inputs — the subset that should favor a calibrated parser
 
 _(filled from the `--messy` run: lowercase + dropped commas/dash-postcodes + abbreviations — the "typed in a hurry" case where a search index that leans on exact tokens + structure should degrade more than a learned parser.)_
 

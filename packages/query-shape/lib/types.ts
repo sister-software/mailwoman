@@ -168,8 +168,8 @@ export interface NormalizedInputLite {
 }
 
 /**
- * Read-only view of one known-format hit — the narrow slice the downstream stages consume. `KnownFormatHit` satisfies
- * it structurally (its `SpanRange` carries `body` as well).
+ * Read-only view of one known-format hit — the narrow subset of fields the downstream stages consume. `KnownFormatHit`
+ * satisfies it structurally (its `SpanRange` carries `body` as well).
  *
  * The `(string & {})` union arms keep these views assignable FROM the dependency-free pipeline contract
  * (`@mailwoman/core/pipeline`'s `QueryShapeLite`, whose fields are plain strings) while the named union still drives

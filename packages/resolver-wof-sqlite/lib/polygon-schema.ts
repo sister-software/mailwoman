@@ -30,7 +30,7 @@ export interface PolygonDatabase {
 }
 
 /**
- * The slice of a Kysely handle the polygon DDL touches. Kysely is invariant in its schema parameter, so naming only
+ * The subset of a Kysely handle the polygon DDL touches. Kysely is invariant in its schema parameter, so naming only
  * `schema` lets a builder holding a wider handle pass it without a cast.
  */
 export type PolygonSchemaHandle = Pick<Kysely<PolygonDatabase>, "schema">

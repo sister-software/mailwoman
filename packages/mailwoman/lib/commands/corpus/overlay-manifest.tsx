@@ -54,7 +54,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			newDir: options.newDir,
 			modalRoot: options.modalRoot,
 			version: options.corpusVersion,
-			slices: parquets.map((parquet, index) => ({ parquet, source: sources[index]! })),
+			files: parquets.map((parquet, index) => ({ parquet, source: sources[index]! })),
 			note: options.note,
 		})
 

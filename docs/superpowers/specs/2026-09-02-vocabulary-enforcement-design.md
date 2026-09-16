@@ -47,7 +47,7 @@ the acronym-casing convention already exempts them and this ban follows the same
 ## Why a sense census comes before any rewrite
 
 The retired word reached zero occurrences from 3,481 only after its four concepts were named — a corpus
-recipe, a corpus slice, a WOF extract, a region database — so each site had one agreed replacement
+recipe, a corpus recipe output, a WOF extract, a region database — so each site had one agreed replacement
 rather than a per-site guess. `AGENTS.md` records that as the working precedent.
 
 A per-site rewrite with no census is how a docstring loses its meaning, and this repository's

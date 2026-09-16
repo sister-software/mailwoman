@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The inverse of the per-slice postcode patterns: given a postcode string, which address SYSTEMS
- *   could it belong to? Each codex slice owns its own postcode shape (`us` accepts
+ *   The inverse of the per-system postcode patterns: given a postcode string, which address SYSTEMS
+ *   could it belong to? Each codex address system owns its own postcode shape (`us` accepts
  *   `\d{5}(-\d{4})?`, `ca` accepts `A1A 1A1`, `jp` accepts `NNN-NNNN`, …); this is the single place
  *   that asks all of them at once and collects the matches.
  *
@@ -39,7 +39,7 @@ export type SystemCode = "us" | "de" | "fr" | "es" | "it" | "ca" | "gb" | "jp" |
 
 /**
  * Per-system membership test: each entry returns true when the string is accepted by that system's own postcode shape
- * (after that system's normalization — so `D-68161` reaches `de`, `1012 LM` reaches nothing here since NL has no slice
+ * (after that system's normalization — so `D-68161` reaches `de`, `1012 LM` reaches nothing here since NL has no system
  * yet, etc.). Ordered for a stable, alphabetical-ish result.
  */
 const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean]> = [
@@ -124,7 +124,7 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 	/^\d{4}\s?[A-Z]{2}$/i,
 	// GB unit — outward (1-2 letters + digit + optional alnum) + inward `\d[A-Z]{2}`, the same shape
 	// `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN anchors, restated here so this module stays
-	// dependency-free within the package (the slices import THIS, never the reverse).
+	// dependency-free within the package (the address-system modules import THIS, never the reverse).
 	/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
 	// CA urban LDU — `M1J 1A8`. The `[1-9]` in the second position is the whole tier claim: a `0` there marks a RURAL
 	// forward sortation area, which measures 2.08 km p50 against the locality's 929 m and does not belong here.

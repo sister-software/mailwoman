@@ -247,7 +247,8 @@ export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLi
  *
  * **The known confound is structural and unfixable here.** "Paris London" and "Moscow Idaho" are the same string shape
  * — two bare capitalized words — and separating them needs to know that Idaho is a region, which is a gazetteer fact,
- * not a structural one. The hard-slice board's 18 `comma_free` rows are that population, and they fire this rule. That
+ * not a structural one. The hard-case board's 18 `comma_free` rows
+ * (`packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) are that population, and they fire this rule. That
  * is the reason ROAD_TO_V9 §4.3 specifies **classification + a declared fork, never a router**: both readings are named
  * in the marker, neither wins, and the resolver keeps answering exactly as it did.
  *

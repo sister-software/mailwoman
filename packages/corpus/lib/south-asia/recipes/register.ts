@@ -28,7 +28,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
-import { alignAndWrite, type CorpusRecipe, readTuples, type SliceRecipeOpts, recipeSourceID } from "#recipes/scaffold"
+import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recipeSourceID } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -124,7 +124,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 				description: `The OpenStreetMap ${country} corpus JSONL (osm-${country.toLowerCase()}.corpus.jsonl)`,
 			},
 		],
-		async run(opts: SliceRecipeOpts, write) {
+		async run(opts: RecipeOptions, write) {
 			if (!opts.input) {
 				throw new Error(`${name}: --input <osm-${country.toLowerCase()}.corpus.jsonl> is required`)
 			}

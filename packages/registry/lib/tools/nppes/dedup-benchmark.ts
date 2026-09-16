@@ -17,7 +17,7 @@
  *   NPI split across two genuinely-distant addresses is geo-first behaving correctly, counted here
  *   as a recall miss. We resolve and report; interpretation is the consumer's.
  *
- *   Sample: a tractable, variation-rich slice — providers in one state (default TX) that have ≥1
+ *   Sample: a tractable, variation-rich subset — providers in one state (default TX) that have ≥1
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
  *   registry via `streamRows` (#616), so nothing loads whole.
  *
@@ -257,7 +257,7 @@ export async function nppesDedupBenchmark(
 	// input-scoped address-frequency table + collapsed spatial. On this deliberately-sub-sampled corpus the
 	// auto table is sparse (few repeats), so the inverse-frequency signal is near-inert and F1 collapses to
 	// ≈baseline — NOT a regression, just the honest truth that IDF is a corpus statistic you can't synthesize
-	// from a slice. On a FULL-dataset dedup the input IS the corpus and this default reaches the baseline; the
+	// from a sample. On a FULL-dataset dedup the input IS the corpus and this default reaches the baseline; the
 	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 	const defaultOutOfBox = score(defaultRes.entities, npiLabel)

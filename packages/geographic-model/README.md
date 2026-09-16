@@ -54,7 +54,7 @@ It is plain deterministic TypeScript with no I/O: no reasoner, no query engine, 
 
 ## What is authored today
 
-The first slice, in [`data/model/`](./data/model/):
+The first record set, in [`data/model/`](./data/model/):
 
 ```text
 place
@@ -99,7 +99,7 @@ Architecturally excluded for the life of the package: an OWL/DL reasoner, a SPAR
 
 This README is the package-local summary. The authoritative documents are in the mailwoman repository:
 
-- The ownership boundary and the frozen first slice: [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
+- The ownership boundary and the frozen first record set: [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
 - The program that governs growth, with its decision points: [sister-software/mailwoman#1916](https://github.com/sister-software/mailwoman/issues/1916)
 
 ## Layout

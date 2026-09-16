@@ -8,8 +8,8 @@
  *   pooled sequence; v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
  *   turns that posterior into a `SystemCode` the conventions layer can act on.
  *
- *   Conservative by contract: below the confidence threshold, or for locales without a codex system
- *   slice, detection returns null and the parse proceeds exactly as before. The mask must never
+ *   Conservative by contract: below the confidence threshold, or for locales without a codex address
+ *   system, detection returns null and the parse proceeds exactly as before. The mask must never
  *   fire on a guess.
  */
 
@@ -47,7 +47,7 @@ function localeVerdict(
 }
 
 /**
- * ISO-2 country → codex address-system slice. Unmapped locales have no conventions yet.
+ * ISO-2 country → codex address system. Unmapped locales have no conventions yet.
  */
 const COUNTRY_TO_SYSTEM: Partial<Record<(typeof LOCALE_COUNTRIES)[number], SystemCode>> = {
 	US: "us",

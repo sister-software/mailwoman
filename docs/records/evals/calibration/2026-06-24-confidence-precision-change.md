@@ -30,7 +30,7 @@ A confidence story a judge can break is worse than none. Split the rows at the d
 | confidence < 0.900 (low)  |  68 |             72.1% |
 | confidence ≥ 0.900 (high) |  92 |             85.9% |
 
-The high-confidence bucket outperforms the low-confidence bucket by 13.8pp out-of-sample. The discrimination is a property of the shipped model, not of the slice the curve was fit on.
+The high-confidence bucket outperforms the low-confidence bucket by 13.8pp out-of-sample. The discrimination is a property of the shipped model, not of the subset the curve was fit on.
 
 ## Where the confidence comes from (per-locale, τ=0)
 

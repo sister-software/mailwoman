@@ -71,7 +71,7 @@ function col(label: string): number {
 
 /**
  * The task-8 path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are "shoreditch"'s fused street run,
- * row 3 is a decisive "london" locality. Rows past the real pieces stay zero (the runner slices to seqLen, and the
+ * row 3 is a decisive "london" locality. Rows past the real pieces stay zero (the runner trims to seqLen, and the
  * loader's warmup `infer([0])` reads only row 0 — harmless).
  */
 function fusedLatticeSession(): void {

@@ -42,7 +42,7 @@ onnxruntime-web          → ort.bundle.min.mjs     → JSEP (old, broken)
 onnxruntime-web/webgpu   → ort.webgpu.bundle.min.mjs → Native EP (fixed)
 ```
 
-The JSEP (JavaScript-based execution provider) has a [slice kernel bug](https://github.com/microsoft/onnxruntime/issues/25227) that produces incorrect results when reversing a tensor on a specific axis. This corrupts the dequantization of int8 weights. The bug is worse on Safari's Metal backend than Chrome's Dawn/Vulkan backend — Chrome happened to mask it in our case.
+The JSEP (JavaScript-based execution provider) has a [`Slice` kernel bug](https://github.com/microsoft/onnxruntime/issues/25227) that produces incorrect results when reversing a tensor on a specific axis. This corrupts the dequantization of int8 weights. The bug is worse on Safari's Metal backend than Chrome's Dawn/Vulkan backend — Chrome happened to mask it in our case.
 
 The native WebGPU EP handles the same operations correctly on all backends.
 

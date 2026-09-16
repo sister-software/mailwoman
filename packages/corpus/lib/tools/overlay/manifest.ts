@@ -5,7 +5,7 @@
  *
  *   Assemble a corpus OVERLAY MANIFEST — generalized from assemble-fr-admin-split-overlay-manifest.
  *   ADDS parquet files to a base corpus, keeping every base file VERBATIM (pure overlay ADD), and
- *   re-roots base paths to /data (the Modal volume). Parameterized by --slice-parquet + --source, one
+ *   re-roots base paths to /data (the Modal volume). Parameterized by --parquet + --source, one
  *   label per parquet, so it works for any overlay (the fr-admin-split one is the original; #148's
  *   overture-multilocale is the second user; v0.29.0's eight target-family recipe outputs are why it
  *   takes a set rather than one — chaining eight single-file overlays would leave seven dead
@@ -19,7 +19,7 @@
  *   `mailwoman dev jsonl-to-parquet --input <labeled> --output <NEW>/train/<parquet>`, then
  *   `mailwoman corpus overlay-manifest --base <BASE>/MANIFEST.json --new-dir <NEW>\
  *   --modal-root /data/corpus/versioned/<ver>/<dir> --version <ver>\
- *   --slice-parquet <parquet> --source <source> --note "..."`
+ *   --parquet <parquet> --source <source> --note "..."`
  *
  *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
  */
@@ -134,10 +134,9 @@ export interface OverlayManifestOptions {
 	modalRoot: string
 	version: string
 	/**
-	 * The parquets this overlay adds, in the order they should appear after the base's own. The property name is the one
-	 * the `mailwoman corpus overlay-manifest` command passes, and moves with that command.
+	 * The parquets this overlay adds, in the order they should appear after the base's own.
 	 */
-	slices: readonly OverlayFile[]
+	files: readonly OverlayFile[]
 	note: string
 }
 
@@ -160,12 +159,12 @@ export function rerootBaseFilePath(path: string, baseManifestPath: string): stri
 }
 
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
-	if (!args.slices.length) throw new Error("an overlay must add at least one parquet file")
+	if (!args.files.length) throw new Error("an overlay must add at least one parquet file")
 
 	const base = await readLocalJSONFile<BaseManifest>(args.base)
 	const baseFiles = baseManifestFiles(base)
 
-	for (const file of args.slices) {
+	for (const file of args.files) {
 		if (baseFiles.some((s) => s.source === file.source)) {
 			console.log(`WARN: base already contains source '${file.source}' — is this the right base?`)
 		}
@@ -174,7 +173,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	const kept = baseFiles.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
 	const added: ParquetFileDescriptor[] = []
 
-	for (const file of args.slices) {
+	for (const file of args.files) {
 		added.push(
 			await descriptor(
 				join(args.newDir, "train", file.parquet),
@@ -186,7 +185,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	}
 
 	const addedRows = added.reduce((total, file) => total + file.rows, 0)
-	const sources = args.slices.map((file) => file.source).join(", ")
+	const sources = args.files.map((file) => file.source).join(", ")
 
 	const manifest = {
 		corpus_version: args.version,

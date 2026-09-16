@@ -7,7 +7,7 @@ from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not
 
 **What changed since 06-10:** the #492 ladder closed (cause = a 1,039:1 label contradiction,
 NOT capacity), the #511 relabel run shipped as **v4.3.0** after a FAIL→corrective→PASS check
-(`2026-06-11-v4.3.0-ship-check.md`), and the conventions layer shipped its first slice (#478:
+(`2026-06-11-v4.3.0-ship-check.md`), and the conventions layer shipped its first increment (#478:
 locale head exported + fr mask). Ship config now includes `addressSystemConventions: "auto"`.
 
 ## Lens 1 — capability arenas (v4.3.0 int8, TRUE ship config: anchor + gaz + conventions fed)

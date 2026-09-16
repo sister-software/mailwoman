@@ -8,7 +8,7 @@ date: 2026-06-20
 
 The whole geocoder runs in your browser. You type an address, you get a rooftop coordinate, and no server ever sees your query — the gazetteer it resolves against is a SQLite database sitting on a CDN, and the page reads it with HTTP range requests, a few kilobytes at a time. It's a lovely trick. We were proud of it. Then we counted the requests it took to find a single city, and the number was 243.
 
-So the questions for the day: why does looking up one name cost 243 round trips? What goes wrong when you search a database you can only read a slice at a time? And how do you get a global gazetteer — every country, region, county, and city we resolve against — down to about a dozen reads without putting a server back in the loop?
+So the questions for the day: why does looking up one name cost 243 round trips? What goes wrong when you search a database you can only read a byte range at a time? And how do you get a global gazetteer — every country, region, county, and city we resolve against — down to about a dozen reads without putting a server back in the loop?
 
 {/* truncate */}
 

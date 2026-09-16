@@ -116,7 +116,7 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
    to a fork, by the book). Post-ship: the standing 40-row FR harness — re-run only because a
    retrain directive triggered salvage-first — caught #949 on the _shipped_ line. The gap it
    exposed (no fr.street-class floor; golden-dev FR is postcode-anchored canonical) is the next
-   check-spec improvement, and it rhymes with the review's R1 exactly: the blind spot was a slice
+   check-spec improvement, and it rhymes with the review's R1 exactly: the blind spot was a subset
    nobody re-measured.
 
 4. **Introspection as a product surface.** #941's parse-trace + visualizer turns the decode path

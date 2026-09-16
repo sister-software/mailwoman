@@ -25,7 +25,7 @@ an OpenCage integration, or when a downstream consumer already expects that bloc
 
 ## 1. Compose the annotators you have
 
-An annotator is a function from `{ lat, lon, countryCode?, placeName?, date? }` to the slice of the set
+An annotator is a function from `{ lat, lon, countryCode?, placeName?, date? }` to the part of the set
 it can fill. `composeAnnotators` runs a list of them over one input concurrently and merges the
 results. An annotator that throws is skipped, so one missing database never sinks the block.
 

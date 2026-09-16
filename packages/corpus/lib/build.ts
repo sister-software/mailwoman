@@ -107,9 +107,9 @@ export interface BuildCorpusOptions {
 	synthesize?: boolean
 
 	/**
-	 * Max rows per `.parquet` file, forwarded to `writeParquetFiles` as `rowsPerFile`. Default 1_000_000.
+	 * Max rows per `.parquet` file, forwarded to `writeParquetFiles`. Default 1_000_000.
 	 */
-	rowsPerSlice?: number
+	rowsPerFile?: number
 
 	/**
 	 * Progress hook. Errors thrown abort the build.
@@ -155,7 +155,7 @@ export interface BuildCorpusManifest {
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
 	const synthesize = opts.synthesize ?? true
-	const rowsPerFile = opts.rowsPerSlice ?? 1_000_000
+	const rowsPerFile = opts.rowsPerFile ?? 1_000_000
 	const built_at = new Date().toISOString()
 
 	await makeDirectories(opts.outputDir)

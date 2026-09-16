@@ -124,13 +124,13 @@ After shipping, we ran a categorized per-tag FP/FN analysis on the shipped check
 France, Lozère, ՍԵՆՏ-ԱԼԲԱՆ-ՍՅՈՒՐ-ԼԻՄԱՆՅՈԼ              →  pred: "" (empty)
 ```
 
-This is v0.3.0's documented non-Latin-byte-fallback failure mode. The v0.4.0 weights did not regress this slice; the eval suite is counting v0.3.0's known failure modes against v0.4.0. After excluding adversarials, country FN drops 194 → ~16.
+This is v0.3.0's documented non-Latin-byte-fallback failure mode. The v0.4.0 weights did not regress this subset; the eval suite is counting v0.3.0's known failure modes against v0.4.0. After excluding adversarials, country FN drops 194 → ~16.
 
 **The country −0.07 F1 regression is mostly a golden-set adversarial-weighting artifact, not a real recipe regression.**
 
 ## The decoder sidecar
 
-The bio_slip slice (6% of postcode FN) is a decoder bug, not a model bug. The model's BIO tag attribution is correct; the emitted span includes leading/trailing punctuation tokens. Fixed in `core/decoder/build-tree.ts` (commit `c72ab4c` on main):
+The bio_slip class (6% of postcode FN) is a decoder bug, not a model bug. The model's BIO tag attribution is correct; the emitted span includes leading/trailing punctuation tokens. Fixed in `core/decoder/build-tree.ts` (commit `c72ab4c` on main):
 
 ```ts
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
@@ -143,15 +143,15 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 }
 ```
 
-Both `node.value` and `node.start`/`node.end` trim in sync so consumers slicing `raw[start:end]` get the same string as `node.value`. Spans that trim to empty (all-punctuation, pathological model output) are dropped. Word-internal punctuation (hyphens in `Sainte-Livrade-sur-Lot`, accents in `Montréal`) is preserved. 6 new boundary-trim tests pass; full repo suite (1592 tests under singleFork + 30s timeout) green.
+Both `node.value` and `node.start`/`node.end` trim in sync so consumers reading `raw[start:end]` get the same string as `node.value`. Spans that trim to empty (all-punctuation, pathological model output) are dropped. Word-internal punctuation (hyphens in `Sainte-Livrade-sur-Lot`, accents in `Montréal`) is preserved. 6 new boundary-trim tests pass; full repo suite (1592 tests under singleFork + 30s timeout) green.
 
 ## What deferred to v0.4.1
 
-§1 (per-token CRF norm) and §3 (class weights) both deferred. Both individually broke training in at least one tested configuration. The leading hypothesis at this iteration's boundary is that a high-variance adapter slice in `corpus-v0.3.0` produces gradient spikes the per-token-normalized CRF can't dampen — a `corpus-audit` + gradient-norm probe pass per source-id would surface a candidate.
+§1 (per-token CRF norm) and §3 (class weights) both deferred. Both individually broke training in at least one tested configuration. The leading hypothesis at this iteration's boundary is that a high-variance adapter source in `corpus-v0.3.0` produces gradient spikes the per-token-normalized CRF can't dampen — a `corpus-audit` + gradient-norm probe pass per source-id would surface a candidate.
 
 v0.4.1 thread proposals (drafted in [`PR i116 body`](https://github.com/sister-software/mailwoman/tree/issue-116-phase-2-x-v0-4-0)):
 
-- **Thread A** — source-weight tweak (NAD 1.0 → 1.5 partial restore) + synthesis pass over component-order permutations + case-norm eval. Targets the 65% empty_pred slice. 1-2 days.
+- **Thread A** — source-weight tweak (NAD 1.0 → 1.5 partial restore) + synthesis pass over component-order permutations + case-norm eval. Targets the 65% empty_pred class. 1-2 days.
 - **Thread B** — corpus-side gradient-norm probe per source-id. Find the high-variance adapter. 3-5 days.
 - **Thread C** — verdict-smoke framework redesign (constant-LR) + milder class_weights ratio. 1-2 days.
 

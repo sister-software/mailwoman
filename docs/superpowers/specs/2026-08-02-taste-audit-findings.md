@@ -9,7 +9,7 @@
 
 Sixteen of the twenty-three clusters landed on `worktree-taste-audit` across 21 commits. Every one
 was verified against a recorded baseline (4,617 passing tests before any edit) with `yarn compile`,
-`yarn lint` and the affected test slices green per commit.
+`yarn lint` and the affected test projects green per commit.
 
 | cluster   | what landed                                                                 |
 | --------- | --------------------------------------------------------------------------- |

@@ -471,8 +471,8 @@ export type PhraseKind =
 /**
  * One phrase proposal emitted by Stage 2.7. The contract:
  *
- * - `span`: the input slice (sub-Span of the tokenized input) the proposal applies to.
- * - `kindHypothesis`: structural shape this slice looks like.
+ * - `span`: the input span (a sub-span of the tokenized input) the proposal applies to.
+ * - `kindHypothesis`: structural shape this span looks like.
  * - `confidence`: 0..1 score. Used by downstream stages to weight proposals.
  *
  * Per "possibilities not constraints", emit a proposal whenever a rule fires — overlapping proposals over the same

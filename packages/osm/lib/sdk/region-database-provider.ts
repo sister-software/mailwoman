@@ -59,7 +59,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 		return provider
 	}
 
-	#slicePath(countryCode: string): string {
+	#addressPointsPath(countryCode: string): string {
 		return join(this.#dataRoot, "osm", `address-points-${countryCode}-${countryCode}.db`)
 	}
 
@@ -74,7 +74,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 	async #probeExtracts(): Promise<void> {
 		for (const cc of supportedOSMCountries()) {
-			const path = this.#slicePath(cc)
+			const path = this.#addressPointsPath(cc)
 
 			if (await pathExists(path)) {
 				this.#onDisk.add(path)
@@ -97,7 +97,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 		// Only countries with a registered street locale AND an on-disk extract — never key with the wrong rules.
 		if (supportedOSMCountries().includes(cc)) {
-			const path = this.#slicePath(cc)
+			const path = this.#addressPointsPath(cc)
 
 			if (this.#onDisk.has(path)) {
 				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry(cc) }) }

@@ -108,7 +108,7 @@ As rev-2 design §acceptance, with bars re-anchored to Task 6.3's holdout number
 
 ### Task 9: Paired-punctuation audit — quotes, brackets, braces, parens (final task)
 
-**Scope:** characterize + harden the decode path's handling of paired punctuation, end to end: tokenizer pieces → `groupPiecesIntoWords` (the pending-start machine's treatment of quote/bracket pieces — leading-quote word starts, trailing quote+comma) → `normalizeFSTToken` fold (quotes strip via `\p{P}` — verify probeable windows survive quoting) → priors (a quoted venue/place name must still probe) → decoder spans (do stray quote/bracket chars leak into component values at span edges? `build-tree` raw slicing) → formatter round-trip.
+**Scope:** characterize + harden the decode path's handling of paired punctuation, end to end: tokenizer pieces → `groupPiecesIntoWords` (the pending-start machine's treatment of quote/bracket pieces — leading-quote word starts, trailing quote+comma) → `normalizeFSTToken` fold (quotes strip via `\p{P}` — verify probeable windows survive quoting) → priors (a quoted venue/place name must still probe) → decoder spans (do stray quote/bracket chars leak into component values at span edges? `build-tree` raw-offset substring extraction) → formatter round-trip.
 
 **Explicit cases (table-driven, fixture tier + skipIf-production tier per the Task-4 pattern):** `"The Grange", Fishburn, Stockton-on-Tees` (quoted venue); `12 High St (rear entrance), Leeds` (parenthetical aside); `Unit 4 [Block B]` (bracketed designator); braces; curly vs straight quotes (what does NFKC map?); guillemets «»; UNBALANCED pairs (fail-open, never crash, never drop).
 

@@ -1361,7 +1361,7 @@ Esc              → exit() (useApp), after cleanup restores the main screen
 "q"              → exit() unless focused === "input"
 focused "map":   arrows pan by (columns/8 cells * 2)px x / (rows/8 * 4)px y; "+"/"=" zoom in, "-" zoom out
                   (clamped to source zoom bounds); "0" clears viewportOverride
-focused "output": up/down scroll offset (slice the hierarchy rows)
+focused "output": up/down scroll offset (window the hierarchy rows)
 ```
 
 Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} onSubmit={submit}/>` where `submit` sets busy, `session.geocode(inputValue)`, replaces `data`, clears `viewportOverride`, returns to ready; a thrown error renders in the output pane (message row, red) with the previous result retained.

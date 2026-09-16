@@ -46,25 +46,25 @@ directions it covers, so the design in Part C only proposes what is missing.
 
 ### A.1 Shape rules per country (direction 1)
 
-| Thing                             | Where                                                     | Role                                                                                                                    | Direction |
-| --------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------- |
-| Per-system postcode shape + brand | `codex/{us,de,fr,ca,gb,jp,au,nz,es,it}/`                  | 10 slices, each a `Tagged` brand + `*_PATTERN` + normalizer. `codex/us/zipcode.ts:169`, `codex/gb/postcode.ts:55`, etc. | 1         |
-| `candidateSystemsForPostcode`     | `codex/postcode-systems.ts:59`                            | The shape oracle: which of 8 systems accept this string. `SYSTEM_ACCEPTS` at `:43` — `es`/`it` deliberately absent      | 1         |
-| `ADDRESS_SYSTEM_CONVENTIONS`      | `codex/address-system-conventions.ts:43`                  | The only actual postcode RECORD type (`postcodePattern` + `forbiddenTags`). **2 entries**: `fr`, `gb`                   | 1         |
-| `PATTERNS` (query-shape)          | `query-shape/known-formats.ts:31`                         | 11 rows, 9 `KnownFormat` members. Carries `nl_postcode`, which codex has no slice for                                   | 1         |
-| `POSTCODE_PATTERNS` (neural)      | `neural/postcode-repair.ts:61`                            | 10 rows. Adds IE/NL/PT/PL — four systems with no codex slice                                                            | 1         |
-| `postcode_shapes.py`              | `corpus-python/src/mailwoman_train/postcode_shapes.py:24` | 9 rows. Header claims to mirror `postcode-repair.ts` verbatim; **it is one row behind (IE missing)**                    | 1         |
-| `scoreByPostcode`                 | `locale-hint/rules.ts:55`                                 | Format hit → locale candidate. Ambiguous 5-digit → en-US @0.5                                                           | 1         |
-| `scorePostcodeOnly`               | `kind-classifier/classify.ts:38`, `rules.ts:22–54`        | The `postcode_only` kind, with a share threshold and a full-vs-fragment length rule                                     | 1         |
+| Thing                             | Where                                                     | Role                                                                                                                     | Direction |
+| --------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------- |
+| Per-system postcode shape + brand | `codex/{us,de,fr,ca,gb,jp,au,nz,es,it}/`                  | 10 modules, each a `Tagged` brand + `*_PATTERN` + normalizer. `codex/us/zipcode.ts:169`, `codex/gb/postcode.ts:55`, etc. | 1         |
+| `candidateSystemsForPostcode`     | `codex/postcode-systems.ts:59`                            | The shape oracle: which of 8 systems accept this string. `SYSTEM_ACCEPTS` at `:43` — `es`/`it` deliberately absent       | 1         |
+| `ADDRESS_SYSTEM_CONVENTIONS`      | `codex/address-system-conventions.ts:43`                  | The only actual postcode RECORD type (`postcodePattern` + `forbiddenTags`). **2 entries**: `fr`, `gb`                    | 1         |
+| `PATTERNS` (query-shape)          | `query-shape/known-formats.ts:31`                         | 11 rows, 9 `KnownFormat` members. Carries `nl_postcode`, which codex has no module for                                   | 1         |
+| `POSTCODE_PATTERNS` (neural)      | `neural/postcode-repair.ts:61`                            | 10 rows. Adds IE/NL/PT/PL — four systems with no codex module                                                            | 1         |
+| `postcode_shapes.py`              | `corpus-python/src/mailwoman_train/postcode_shapes.py:24` | 9 rows. Header claims to mirror `postcode-repair.ts` verbatim; **it is one row behind (IE missing)**                     | 1         |
+| `scoreByPostcode`                 | `locale-hint/rules.ts:55`                                 | Format hit → locale candidate. Ambiguous 5-digit → en-US @0.5                                                            | 1         |
+| `scorePostcodeOnly`               | `kind-classifier/classify.ts:38`, `rules.ts:22–54`        | The `postcode_only` kind, with a share threshold and a full-vs-fragment length rule                                      | 1         |
 
 **Three divergent copies of the shape table exist** (query-shape, neural, corpus-python), which
 `codex/postcode-systems.ts:11-15` explicitly anticipated and warned against. Each has a live reason —
-NL/IE/PT/PL have no codex slice — so this is the AGENTS.md "a duplicate is a bug report about the
+NL/IE/PT/PL have no codex module — so this is the AGENTS.md "a duplicate is a bug report about the
 shared tool" pattern: the shared tool is missing four countries, not four authors failing to find it.
 
 ### A.2 Prefix → region structure (direction 3)
 
-Enumerated by reading every codex slice. Only six countries carry any prefix→region structure at all.
+Enumerated by reading every codex module. Only six countries carry any prefix→region structure at all.
 
 | Country           | Export                                                          | Shape                                                                                              | Entries |
 | ----------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------- |
@@ -76,7 +76,7 @@ Enumerated by reading every codex slice. Only six countries carry any prefix→r
 | FR                | `codex/fr/departement.ts:37` `FR_DEPARTEMENTS`                  | 2-digit code → département + region                                                                | 101     |
 | JP                | `codex/jp/postal-code.ts:74` `JP_FIRST_DIGIT_REGION`            | first digit → routing region                                                                       | 10      |
 | ES                | —                                                               | `codigoPostalProvincePrefix` returns the raw prefix; the module ships no province table on purpose | 0       |
-| IT / AU / NZ / NL | —                                                               | AU and IT each warn against inferring a region from digits; NL has no slice                        | 0       |
+| IT / AU / NZ / NL | —                                                               | AU and IT each warn against inferring a region from digits; NL has no codex module                 | 0       |
 
 Accessors: `departementOfCodePostal` (`codex/fr/code-postal.ts:82`), `regionForCodePostal` (`:114`),
 `provinceOfPostalCode` (`codex/ca/postal-code.ts:109`), `leitzoneOf` (`codex/de/postleitzahl.ts:99`),
@@ -174,7 +174,7 @@ shape alone vs the system, on the 110 asserted codes
    here, and the Gauntlet is a regression board whose pass rate is never a ship gauge — so this is a
    ceiling on what the board can SHOW, not proof the defect is rare in the wild.
 2. **Shape alone cannot pin the system for half the codes.** 49 of 100 asserted codes are accepted
-   by more than one system, and 10 by none (IE Eircode, SI, IM, and the other slice-less countries).
+   by more than one system, and 10 by none (IE Eircode, SI, IM, and the other countries with no codex module).
    Any mechanism that treats "shape validity" as evidence of a specific country is reading a
    coin-flip. This is exactly why `findPostcodeCountryScope` abstains on ≥2 coherent countries
    (`postcode-country-coherence.ts:269`) rather than picking.
@@ -329,10 +329,10 @@ the locality's country. Three outcomes:
   `postcode-country-coherence.ts:269`.
 
 **Artifact.** None. Everything it needs is `codex/postcode-systems.ts` plus the tree. The one codex
-change it wants is filling the four missing slices (IE, NL, PT, PL) so
+change it wants is filling the four missing codex modules (IE, NL, PT, PL) so
 `candidateSystemsForPostcode` stops returning empty for 10 of 110 Gauntlet codes — and that fill
 should collapse the three divergent shape tables (A.1) into the codex, since the only reason they
-diverged is the missing slices.
+diverged is the missing modules.
 
 **D-rule.** Opt-in behind `postcodeShapeCoherence`, default-OFF. It can only ever DEMOTE a postcode,
 and demotion is the failure mode with teeth, so a default-on promotion needs the full check set.
@@ -559,7 +559,7 @@ stacking it into this arc violates one-variable-per-run.
 
 - **A default-on promotion for any of the three.** Each needs its own evidence record, the way #1477
   got one for postcode-country coherence.
-- **The three divergent shape tables.** A.1 names them and the four missing codex slices that caused
+- **The three divergent shape tables.** A.1 names them and the four missing codex modules that caused
   them. Collapsing them is the right fix and it is a codex task, not a mechanism.
 - **Fixing the two stale docstrings** (`resolve.ts:263`, `postcode-country-coherence.ts:71-72`) and
   the `runtime-flags.mdx:49` row. Named here so they are not lost; they belong to whoever next

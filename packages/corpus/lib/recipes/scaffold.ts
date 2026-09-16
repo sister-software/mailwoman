@@ -324,10 +324,9 @@ export function alignAndWrite(
 }
 
 /**
- * Parsed options a recipe's `run` receives. Common fields + the union of recipe-specific flags. The name is the one the
- * `mailwoman corpus slice` command imports, and moves with that command.
+ * Parsed options a recipe's `run` receives. Common fields + the union of recipe-specific flags.
  */
-export interface SliceRecipeOpts {
+export interface RecipeOptions {
 	output: string
 	seed: number
 	variants: number
@@ -469,5 +468,5 @@ export interface CorpusRecipe {
 	 * Do the build: create the recipe's PRNG from `opts.seed` (its LEGACY generator — `makeLcg` or `makeMulberry32` — for
 	 * byte-reproducibility), synthesize, and emit each row via `write`.
 	 */
-	run(opts: SliceRecipeOpts, write: WriteRecipeLine): Promise<RecipeStats>
+	run(opts: RecipeOptions, write: WriteRecipeLine): Promise<RecipeStats>
 }

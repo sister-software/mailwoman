@@ -31,7 +31,7 @@ files the intersection extract reads — already on disk) — the classic Pelias
 and our intersection extraction already parses the geometry. **Plan shape:** (1) segment table
 keyed by normalized street name + side-aware ranges (TIGER LFROMADD/LTOADD etc.) → (2) linear
 interpolation along segment geometry → (3) resolver tier between exact-point and
-locality-centroid, output flagged `interpolated`. **Eval:** hold out a slice of NAD address
+locality-centroid, output flagged `interpolated`. **Eval:** hold out a subset of NAD address
 points, query their addresses, measure coord error vs truth — the honest-eval pattern at street
 grain. **Open questions:** odd/even side handling fidelity in TIGER; ZIP+4-assisted snapping
 (needs #525's ZCTA work as a prior); whether interpolation lives in `resolver-wof-sqlite` or a

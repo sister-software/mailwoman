@@ -98,7 +98,7 @@ export const EDGE_ENTRY_SIZE = 8
 export const ENTRY_REF_SIZE = 4
 
 /**
- * Entry-table record: id, pre/post interval labels, rank, parent-list slice, flags, payload slice.
+ * Entry-table record: id, pre/post interval labels, rank, parent-list range, flags, payload range.
  */
 export const ENTRY_RECORD_SIZE = 32
 

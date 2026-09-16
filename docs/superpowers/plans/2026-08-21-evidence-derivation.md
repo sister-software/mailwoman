@@ -1764,7 +1764,7 @@ write, and already names the coverage consult as the caller's obligation. `res9S
 already exists in `bdc/sdk/filing-landscape.ts` and moves rather than being re-derived.
 `normalizeLocalityForKey`'s fold was verified correct, so Task 1's denominator stands.
 `eval-harness/fragment-board.ts` is the board falsifier 2 will run on. `match/fellegi-sunter.ts` supplies
-`scorePair` / `decide` for the relation side when a later slice needs them.
+`scorePair` / `decide` for the relation side when a later increment needs them.
 
 **Out of scope, found during the same survey.** `packages/resolver/lib/fold-name.ts`'s `foldName` claims to be
 diacritic-insensitive and is not — it maps each combining mark to a space, so 6 of 9 French commune pairs

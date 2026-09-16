@@ -11,7 +11,7 @@
  *      an unfed channel is a diagnostic fact, the #566/#685 OOD class, not an empty one).
  *   3. Emissions heatmap — labels × pieces; toggle raw logits vs post-prior emissions (the delta
  *      IS the priors' influence); conventions-masked cells hatched; viterbi path outlined. Label
- *      rows are sliced to the model's emission width (the Stage-prefix rule — a narrower model
+ *      rows are trimmed to the model's emission width (the Stage-prefix rule — a narrower model
  *      never emits the tail labels).
  *   4. Decode band — final tokens, confidence bars, repair-pass diffs as before→after chips.
  *

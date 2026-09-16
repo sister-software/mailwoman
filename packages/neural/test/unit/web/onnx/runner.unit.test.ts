@@ -282,7 +282,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 		const result = await runner.infer([5, 6])
 		expect(result.maxSpan).toBe(L)
-		// Sliced to the REAL token count (2), not the padded SEQ.
+		// Trimmed to the REAL token count (2), not the padded SEQ.
 		expect(result.spanScores).toHaveLength(2)
 		expect(result.spanScores![0]).toHaveLength(L)
 		expect(result.spanScores![0]![0]).toEqual([0, 1, 2])

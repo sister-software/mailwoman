@@ -19,7 +19,7 @@ The demo's ONNX model produced correct results via WASM but garbage via WebGPU o
 
 onnxruntime-web ships two WebGPU execution providers in the same package:
 
-- `import "onnxruntime-web"` → JSEP (old, broken slice kernel on Metal)
+- `import "onnxruntime-web"` → JSEP (old, broken `Slice` kernel on Metal)
 - `import "onnxruntime-web/webgpu"` → Native EP (correct on all backends)
 
 The default import uses JSEP. Chrome's Dawn/Vulkan masked the bug; Safari's Metal exposed it.

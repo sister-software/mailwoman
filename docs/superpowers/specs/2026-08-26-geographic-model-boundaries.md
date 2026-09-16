@@ -1,6 +1,6 @@
-# Geographic-model boundaries and the pharmacy first slice
+# Geographic-model boundaries and the pharmacy first increment
 
-**Date:** 2026-08-26 · **Status:** design of record; the first slice has since landed · **Issue:** #1917 ·
+**Date:** 2026-08-26 · **Status:** design of record; the first increment has since landed · **Issue:** #1917 ·
 **Epic:** #1916 (program parent #1680) · **Companions:** #1683 (empirical activity-affordance
 vector), #1928 (the semantic-utility probe this record supplies a target for).
 
@@ -12,7 +12,7 @@ closing note). **Companion decision:**
 
 This record does two things and nothing else. It **names the current owner** of every boundary the
 world-model program would otherwise re-create, each against a path that exists on HEAD; and it
-**freezes one vertical slice** — `pharmacy affords obtain_medication` — so that every later issue in
+**freezes one end-to-end increment** — `pharmacy affords obtain_medication` — so that every later issue in
 the program has a fixed target to be judged against.
 
 No package was created by this record. `@mailwoman/geographic-model` appeared throughout as a
@@ -104,10 +104,10 @@ in place — `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts` sets
 `basis: CoverageBasis.SourcePresent` on both the rows-derived and the override coverage sets, with a
 comment stating that the `1.0` means "Overture returned rows here", not "everything here is known".
 
-The consequence binds the slice in §4: **`supportsExclusion` is false for every cell of the shipped
+The consequence binds the increment in §4: **`supportsExclusion` is false for every cell of the shipped
 POI layer today.** Any coverage-aware negative fact the program authors is therefore inert against
 `poi.db` until that register is rebuilt with an earned basis. That is the correct behavior, not a
-defect to route around, and it is why the slice states the coverage rule as a check rather than as a
+defect to route around, and it is why the increment states the coverage rule as a check rather than as a
 capability.
 
 ### 2.4 Execution — the runtime POI branch
@@ -228,7 +228,7 @@ contradiction, or a coverage-qualified absence. It may not create an imperative.
 
 ---
 
-## 4. The frozen vertical slice
+## 4. The frozen increment
 
 Verbatim from #1917. Every Phase B–F issue in the program is judged against this block, and any change
 to it is an explicit amendment to this record, not a widening in passing.
@@ -245,7 +245,7 @@ ranking behavior: unchanged
 
 What each line binds:
 
-- **entity kind: `pharmacy`** — the only establishment class the first slice requires. No sibling
+- **entity kind: `pharmacy`** — the only establishment class the first increment requires. No sibling
   class is minted to make the proposition read better.
 - **activity: `obtain_medication`** — the only activity. It is an identifier the geographic model
   owns; #1683 may later fit statistics against it, and this record does not.
@@ -259,10 +259,10 @@ What each line binds:
   relation stay unminted until an executable need names one.
 - **coverage rule** — a missing expected observation becomes negative evidence only where
   `supportsExclusion(...)` from `packages/core/lib/layers/manifest.ts` permits it. As measured in §2.3,
-  that permits nothing against today's `poi.db`; the rule is written as a check so the first slice
+  that permits nothing against today's `poi.db`; the rule is written as a check so the first increment
   cannot accidentally ship an exclusion the data does not support.
 - **ranking behavior: unchanged** — no ordering, score term, boost, or penalty changes anywhere in
-  `packages/resolver/` or `packages/neural/` as a consequence of this slice. First production
+  `packages/resolver/` or `packages/neural/` as a consequence of this increment. First production
   integration is diagnostic and observational only.
 
 Deferred by name, even where convenient during implementation: roads, utilities and electrification,
@@ -362,7 +362,7 @@ amendment admits that change. Three things about it:
 | Probe row `sem-act-fr-01` as a target for new semantics              | Its blocker is not semantic. #1930's caveat 1 and #1039 both record it: a `poi.db` entry named `Somewhere` claims the prefix before the `near` split is considered, so `matchPOISubject` never reaches the activity phrase. No concept, assertion or mapping changes that.                                                               |
 | A second relation — `isa` as a relation record, `partOf`, `sells`    | §4 keeps relations unminted until an executable need names one. Wave 1's need is one further asserting concept under the relation that already exists.                                                                                                                                                                                   |
 | A second external vocabulary — Wikidata QIDs, OSM tags               | The board's `brandWikidata` values identify **brands**, not concept classes, and the one brand row that fails does so on search radius. No attested target, and the member addition is a schema revision.                                                                                                                                |
-| Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` is not a target. That intermediate exists because §4's frozen slice named one; nothing names this one, and an intermediate carrying no assertion adds a review obligation and states nothing.                                                                                                        |
+| Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` is not a target. That intermediate exists because §4's frozen increment named one; nothing names this one, and an intermediate carrying no assertion adds a review obligation and states nothing.                                                                                                    |
 
 #### What this amendment does not change
 
@@ -593,7 +593,7 @@ statistics, water/land compatibility, coverage inference, spatial statistics, ma
 3. **DIAGNOSTIC-ONLY requires a pre-registered structured metric.** A free-form claim of better
    diagnosis or better abstention does not satisfy the check.
 4. **No real target, no probe.** If no defensible target exposes a mechanism the first affordance
-   observation can address, record that the first slice lacks one and choose a different observation or
+   observation can address, record that the first increment lacks one and choose a different observation or
    stop — do not author a fixture whose only purpose is to pass.
 5. **This record's boundary is amended explicitly.** A change that needs a second relation, a second
    activity, a second entity kind, or a `@mailwoman/core` dependency amends §3 or §4 in a reviewed
@@ -610,7 +610,7 @@ statistics, water/land compatibility, coverage inference, spatial statistics, ma
 - Where the runtime join between candidates, layer evidence, and world facts lives. §3 assigns it to
   the runtime and resolver; the integration point is a later decision.
 - Whether the `poi.db` coverage register gets an earned basis, and by what measurement. §2.3 records
-  only that it has none today, which is what makes the slice's coverage rule a check rather than a
+  only that it has none today, which is what makes the increment's coverage rule a check rather than a
   capability.
 - The `drugstore`/`pharmacy` retrieval split in §5.3. It is recorded as evidence. Ranking and retrieval
   behavior are unchanged by this record, and any repair is separate work with its own D-rule

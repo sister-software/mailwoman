@@ -59,7 +59,7 @@ precedent. We doubled it and retrained.
 It came back at **84.7%**. Lower. And when we dumped the misses, the model wasn't just
 making the old mistake more often. It had invented a new one. On `47110
 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel`, instead of grabbing the whole postcode, it
-now sliced `47110` into a house number `4` and a postcode `7110`. Sometimes it glued the
+now split `47110` into a house number `4` and a postcode `7110`. Sometimes it glued the
 postcode and the real house number into a single number, `47110 85`. We'd made the model
 so hungry for a leading house number that it started carving one out of the postcode
 itself. The postcode tag, which had been rock-solid, slipped too.

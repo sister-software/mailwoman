@@ -7,8 +7,8 @@
  *   the same document compiles to the same bytes, and a document whose tables and object keys are
  *   permuted compiles to the SAME bytes as the unpermuted one.
  *
- *   The fixture extends the frozen first slice (`pharmacy affords obtain_medication`) with the
- *   inheritance shapes a closure has to get right and one slice cannot exercise: a chain
+ *   The fixture extends the frozen first record set (`pharmacy affords obtain_medication`) with the
+ *   inheritance shapes a closure has to get right and one record set cannot exercise: a chain
  *   (`hospital_pharmacy` → `pharmacy` → `retailer`), a diamond (`late_night_pharmacy` reaching
  *   `retailer` by two routes), two ancestors stating one proposition (`corner_shop`), and a
  *   descendant that speaks for itself (`veterinary_pharmacy`).
@@ -161,7 +161,7 @@ const observed: SourceObservationRecord = {
 	provenance: { source: "overture-places", sourceVersion: "2026-07-22.0" },
 }
 
-function slice(): GeographicModelDocument {
+function fixture(): GeographicModelDocument {
 	return {
 		version: "0.1.0",
 		relations: [affords],
@@ -222,7 +222,7 @@ function factsAbout(model: CompiledGeographicModel, concept: string): DerivedFac
 
 describe("the inheritance closure", () => {
 	it("is transitive, deduplicated, and carries an entry for every concept", () => {
-		const model = compileGeographicModel(slice())
+		const model = compileGeographicModel(fixture())
 
 		expect(model.inheritanceClosure.map((entry) => entry.concept)).toEqual(model.concepts.map((concept) => concept.id))
 
@@ -238,7 +238,7 @@ describe("the inheritance closure", () => {
 	})
 
 	it("leaves the authored document untouched", () => {
-		const document = slice()
+		const document = fixture()
 		const before = stringifyJSON(document)
 
 		compileGeographicModel(document)
@@ -249,7 +249,7 @@ describe("the inheritance closure", () => {
 
 describe("derived facts", () => {
 	it("materializes every ancestor's assertions onto its descendants", () => {
-		const model = compileGeographicModel(slice())
+		const model = compileGeographicModel(fixture())
 		const inherited = factsAbout(model, "hospital_pharmacy")
 
 		expect(inherited.map((fact) => [fact.relation, fact.object, fact.modality])).toEqual([
@@ -261,7 +261,7 @@ describe("derived facts", () => {
 	})
 
 	it("names every record the derivation read", () => {
-		const model = compileGeographicModel(slice())
+		const model = compileGeographicModel(fixture())
 		const [fact] = factsAbout(model, "hospital_pharmacy")
 
 		expect(fact?.inputs).toEqual([
@@ -273,7 +273,7 @@ describe("derived facts", () => {
 	})
 
 	it("states one proposition once, naming every ancestor that supports it", () => {
-		const model = compileGeographicModel(slice())
+		const model = compileGeographicModel(fixture())
 		const facts = factsAbout(model, "corner_shop")
 
 		expect(facts).toHaveLength(1)
@@ -289,7 +289,7 @@ describe("derived facts", () => {
 	})
 
 	it("derives nothing for a pair the descendant states itself", () => {
-		const model = compileGeographicModel(slice())
+		const model = compileGeographicModel(fixture())
 		const facts = factsAbout(model, "veterinary_pharmacy")
 
 		// The authored `unusual` assertion stands alone; only the unrelated inherited pair is materialized.
@@ -297,7 +297,7 @@ describe("derived facts", () => {
 	})
 
 	it("refuses to write a fact whose subject the relation does not accept", () => {
-		const document = slice()
+		const document = fixture()
 
 		document.concepts.push({
 			...establishment("pharmacy_district", ["pharmacy"]),
@@ -319,7 +319,7 @@ describe("derived facts", () => {
 	})
 
 	it("refuses two derived facts claiming one identifier", () => {
-		const document = slice()
+		const document = fixture()
 
 		document.derivedFacts.push({
 			id: toDerivedFactID(`${DERIVATION_ISA_INHERITANCE}:hospital_pharmacy:affords:obtain_medication:necessary`),
@@ -375,7 +375,7 @@ describe("compilation refuses what the validator refuses", () => {
 	})
 
 	it("refuses a concept that is a kind of itself", () => {
-		const document = slice()
+		const document = fixture()
 
 		document.concepts.push(establishment("mail_room", ["mail_room"]))
 
@@ -383,7 +383,7 @@ describe("compilation refuses what the validator refuses", () => {
 	})
 
 	it("admits acyclic multiple inheritance", () => {
-		expect(() => compileGeographicModel(slice())).not.toThrow()
+		expect(() => compileGeographicModel(fixture())).not.toThrow()
 	})
 })
 
@@ -395,18 +395,18 @@ describe("the artifact's bytes", () => {
 	}
 
 	it("are identical for two compiles of one document", () => {
-		expect(compiledBytes(slice())).toBe(compiledBytes(slice()))
+		expect(compiledBytes(fixture())).toBe(compiledBytes(fixture()))
 	})
 
 	it("are identical for a document whose tables and keys are permuted", () => {
 		// Without this the test would pass on two identical inputs and prove nothing about ordering.
-		expect(stringifyJSON(permuted(slice()))).not.toBe(stringifyJSON(slice()))
+		expect(stringifyJSON(permuted(fixture()))).not.toBe(stringifyJSON(fixture()))
 
-		expect(compiledBytes(permuted(slice()))).toBe(compiledBytes(slice()))
+		expect(compiledBytes(permuted(fixture()))).toBe(compiledBytes(fixture()))
 	})
 
 	it("carry the authored version and no compilation clock", () => {
-		const bytes = compiledBytes(slice())
+		const bytes = compiledBytes(fixture())
 
 		expect(bytes).toContain(`"modelVersion": "0.1.0"`)
 		expect(bytes).toContain(`"schemaVersion": ${ARTIFACT_SCHEMA_VERSION}`)
@@ -414,7 +414,7 @@ describe("the artifact's bytes", () => {
 	})
 
 	it("emit every object's keys in code-point order", () => {
-		const model = compileGeographicModel(slice())
+		const model = compileGeographicModel(fixture())
 		const bytes = serializeCompiledModel(model)
 		const roundTripped = parseCompiledGeographicModel(parseJSONStrict(bytes))
 
@@ -425,7 +425,7 @@ describe("the artifact's bytes", () => {
 
 describe("the artifact reader", () => {
 	it("refuses an artifact written against another format version", () => {
-		const model = compileGeographicModel(slice())
+		const model = compileGeographicModel(fixture())
 
 		expect(() => parseCompiledGeographicModel({ ...model, schemaVersion: ARTIFACT_SCHEMA_VERSION + 1 })).toThrow(
 			GeographicModelArtifactError
@@ -433,7 +433,7 @@ describe("the artifact reader", () => {
 	})
 
 	it("refuses an artifact missing a table rather than reading it as empty", () => {
-		const { derivedFacts: _derivedFacts, ...withoutFacts } = compileGeographicModel(slice())
+		const { derivedFacts: _derivedFacts, ...withoutFacts } = compileGeographicModel(fixture())
 
 		expect(() => parseCompiledGeographicModel(withoutFacts)).toThrow(/derivedFacts/)
 	})
@@ -441,7 +441,7 @@ describe("the artifact reader", () => {
 
 describe("the read surface", () => {
 	it("answers by lookup, and tells an unknown concept apart from a silent one", () => {
-		const index = createGeographicModelIndex(compileGeographicModel(slice()))
+		const index = createGeographicModelIndex(compileGeographicModel(fixture()))
 
 		expect(index.concept(toConceptID("pharmacy"))?.label).toBe("pharmacy")
 		expect(index.relation(toRelationID("affords"))?.semantics).toBe(RelationSemantics.Defeasible)
@@ -457,7 +457,7 @@ describe("the read surface", () => {
 	})
 
 	it("translates an external identifier into the concepts mapped from it", () => {
-		const index = createGeographicModelIndex(compileGeographicModel(slice()))
+		const index = createGeographicModelIndex(compileGeographicModel(fixture()))
 
 		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, toPOICategoryID("pharmacy"))).toEqual([
 			"pharmacy",

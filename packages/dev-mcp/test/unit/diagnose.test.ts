@@ -117,7 +117,7 @@ const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country:
 
 describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
-		// The detector's spans are offsets into the NORMALIZED input, component values are sliced from the RAW one, so
+		// The detector's spans are offsets into the NORMALIZED input, component values are taken from the RAW one, so
 		// the comparison folds both to characters. "SW1A 1AA" vs "sw1a1aa" is the same assertion.
 		const facts = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "uk_postcode", confidence: 1, span: { body: "SW1A 1AA" } }] } }),

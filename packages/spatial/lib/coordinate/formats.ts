@@ -270,7 +270,7 @@ export function toMGRS(lat: number, lon: number): string {
 }
 
 /**
- * Fill the coordinate-format slice of an {@link AnnotationSet} from a `{lat, lon}`.
+ * Fill the coordinate-format fields of an {@link AnnotationSet} from a `{lat, lon}`.
  */
 export const coordinateFormatAnnotator: Annotator = ({ lat, lon, date }): Partial<AnnotationSet> => ({
 	dms: toDMS(lat, lon),

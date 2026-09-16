@@ -140,9 +140,9 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 		sample,
 		provenance: provenanceFor(engine, set),
 		nRequested: selected.length,
-		// A `limit` makes a full board a slice, and reporting the set's own selection would let a 20-row probe carry a
+		// A `limit` makes a full board a subset, and reporting the set's own selection would let a 20-row probe carry a
 		// full board's confidence wording.
-		selection: limit && limit < set.inputs.length ? "slice" : set.selection,
+		selection: limit && limit < set.inputs.length ? "subset" : set.selection,
 		eventLabel: "incorrect component",
 	}
 }

@@ -157,7 +157,7 @@ The issue queue relevant to this branch's work:
 | **#208** — G-NAF ingest (AU training data)                       | Directly blocks the AU word-order fix. The ceiling is measured (+22pp); the data is the blocker.                                                                | Not visible in open list |
 | **PR #782** — demo span-rescore                                  | Demo wiring of the span-rescore change. Open, waiting deploy-preview verification.                                                                              | Open PR                  |
 
-The issues that are ALREADY SHIPPED but still open (a recurring pattern in this repo — see the night-shift postmortem's "4× verify-before-building confirmed: several 'open' issues can be closed"): none directly on this branch, but #370 (the parent span-rescore issue) is still open despite substantial shipped work. The issue body describes the parse↔resolve rescoring loop, which is a broader concept than the implemented span-rescore. The shipped work (raw-text recovery) is one slice of it. Consider updating #370's body or creating a sub-issue to track what's done vs what remains.
+The issues that are ALREADY SHIPPED but still open (a recurring pattern in this repo — see the night-shift postmortem's "4× verify-before-building confirmed: several 'open' issues can be closed"): none directly on this branch, but #370 (the parent span-rescore issue) is still open despite substantial shipped work. The issue body describes the parse↔resolve rescoring loop, which is a broader concept than the implemented span-rescore. The shipped work (raw-text recovery) is one part of it. Consider updating #370's body or creating a sub-issue to track what's done vs what remains.
 
 ---
 

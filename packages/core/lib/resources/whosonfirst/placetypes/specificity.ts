@@ -7,9 +7,10 @@
  *
  *   WOF placetype ids are assignment order, and `Placetype.ts` says so in place ("these IDs are not in any specific
  *   order. Avoid using them for sorting."). Every consumer that needs "is this row finer or coarser than that one"
- *   therefore writes its own table, and two identical copies already existed — `eval-harness/oa-resolver-eval.ts` and
- *   `dev-tools/score-hard-slice-board.run.ts` — agreeing on seven placetypes and both missing everything below
- *   `localadmin`.
+ *   therefore writes its own table, and two identical copies already existed — the OA resolver eval (now
+ *   `packages/mailwoman/lib/eval-harness/oa/resolver/tree-hits.ts`) and the hard-case board scorer
+ *   (`packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) — agreeing on seven placetypes and both missing
+ *   everything below `localadmin`.
  *
  *   THAT SHARED GAP IS WHY THIS FILE EXISTS. #1746: the currency backfill refused to
  *   resurrect a deprecated locality whenever ANY live same-name row sat within 10 km, "possibly under another

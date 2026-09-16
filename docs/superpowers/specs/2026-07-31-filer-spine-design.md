@@ -210,7 +210,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 ## 9. Open questions (deferred, not blocking)
 
 1. Does 3d's competition view need Part 27/90 area licenses after all? (Revisit at 3d exit — D2.)
-2. Is a 990-based EIN/co-op pass worth its own slice once rural operators are a named segment? (D6.)
+2. Is a 990-based EIN/co-op pass worth its own increment once rural operators are a named segment? (D6.)
 3. When the competition analysis is good enough to publish, who reviews the wording? (D5 — the
    answer today is the operator; revisit if counsel is ever retained.)
 

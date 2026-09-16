@@ -148,7 +148,7 @@ emitter (export-only, prints text). The record is also the `poi_search` MCP sche
 ### 3.3 The lexicon (`variant-aliases` grows up)
 
 The taxonomy is general-purpose — biking trails, restaurants, hospitals — not ISP-specific;
-ISP-adjacent categories are one slice of it. It therefore splits from `variant-aliases`:
+ISP-adjacent categories are one part of it. It therefore splits from `variant-aliases`:
 
 - **New data package `@mailwoman/poi-taxonomy`**: the Overture category snapshot (ids +
   hierarchy + basic-label tier) plus the synonym table (phrase → category id), bootstrapped

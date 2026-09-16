@@ -110,9 +110,9 @@ export function toDerivedFactID(id: string): DerivedFactID {
 }
 
 /**
- * The complete set of concept kinds. Three, deliberately: the first executable slice needs an establishment class, an
- * activity, and the place class an establishment is sited in. Widening this vocabulary is a reviewed schema revision,
- * which is the review cost the program accepted in exchange for refusing speculative upper-ontology breadth.
+ * The complete set of concept kinds. Three, deliberately: the first executable record set needs an establishment class,
+ * an activity, and the place class an establishment is sited in. Widening this vocabulary is a reviewed schema
+ * revision, which is the review cost the program accepted in exchange for refusing speculative upper-ontology breadth.
  */
 export const ConceptKind = {
 	/**

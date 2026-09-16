@@ -66,7 +66,7 @@ The single highest-changeage item in the backlog, because every win already ship
 
 R1 and R5 have the same fix: one full re-score and one documentation truth-pass.
 
-- **Run a full per-tag parity re-score** against the current shipped model (v5.0.0 line) on the same golden slices as the v4.4.0 check, and publish it as `parity-scorecard-2026-07-xx.md`. This re-baselines the "coordinate-invisible" ledger of deferred label-F1 debt in one shot: either the erosion is bounded (likely) and the pattern is vindicated, or it is not and we learn that now, cheaply.
+- **Run a full per-tag parity re-score** against the current shipped model (v5.0.0 line) on the same golden sets as the v4.4.0 check, and publish it as `parity-scorecard-2026-07-xx.md`. This re-baselines the "coordinate-invisible" ledger of deferred label-F1 debt in one shot: either the erosion is bounded (likely) and the pattern is vindicated, or it is not and we learn that now, cheaply.
 - **Decide the ledger's fate explicitly.** Either repopulate `evals/scores-by-version.json` from the re-score and commit to updating it at every promote, or formally deprecate it and update `AGENTS.md` to name the actual authority (the latest parity scorecard + per-release model-cards). The current state — documented-canonical but null-filled — is the worst of both.
 - **Truth-pass the three stale records:** `releases.mdx` current-version line, `status.mdx` (still quoting v4.4.0 tables per the 06-25 review), and the plan `README.mdx` — see Track 5.
 - **Add the standing rule:** every N promotes (suggest 5) or any promote that lowers a check floor triggers a full re-score. Write it into `CONTRIBUTING_MODEL_WORK.mdx` so it is a check, not a virtue.
@@ -90,7 +90,7 @@ The output is not the decisions themselves — it is that autonomous shifts stop
 
 The diacritic defect (R2) is the only thing on the board that requires training budget, and the falsified-change discipline that served the project should apply to it before the spend:
 
-- **Pre-register the check before anything runs** (per `CONTRIBUTING_MODEL_WORK.mdx`): CZ/PL content-gap rate targets, a no-regression floor on the US/FR slices from Track 2's fresh scorecard, and the DE/`ß` and FR-accent cases (#727) as named slices.
+- **Pre-register the check before anything runs** (per `CONTRIBUTING_MODEL_WORK.mdx`): CZ/PL content-gap rate targets, a no-regression floor on the US/FR subsets from Track 2's fresh scorecard, and the DE/`ß` and FR-accent cases (#727) as named subsets.
 - **Define the cheap probe first:** before a full multi-locale retrain, a bounded experiment that isolates the rendering hypothesis — e.g., a tokenizer-only rebuild (or byte-fallback coverage audit) scored against the failing CZ/PL spans on CPU, to confirm the failure is representational before buying GPU time to fix it. If the probe can't be defined, the shift notes' own rule applies: not ready to train.
 - **Freeze locale expansion until this lands.** No locale 17 (Sweden waits on its license anyway) and no new locale extracts before the rendering fix, because every added locale deepens the exact defect this campaign exists to fix.
 

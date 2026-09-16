@@ -481,11 +481,11 @@ export interface ResolveOpts {
 	 * {@link anchorPosterior} boost. This collapses the off-continent tail for LOW-population places the soft prior can't
 	 * move (FI/PL — their towns lose to a high-pop namesake in the population-first gazetteer even when the country is
 	 * pinned). On a miss the node is left UNRESOLVED ("in-region or unresolved") rather than re-resolved globally — the
-	 * off-continent rows are precisely the ones whose locality isn't in the country's gazetteer slice, so a global
-	 * fallback just re-admits the wrong-continent guess (measured: it collapses back to the soft-prior baseline). The win
-	 * is coverage-bounded: tail collapse at a recall cost set by how complete the country's gazetteer is (PL −9.5pp, FI
-	 * −32pp). Undefined (default) → byte-stable. Ignored when a resolved parent or {@link defaultCountry} already pins
-	 * the country.
+	 * off-continent rows are precisely the ones whose locality isn't among the gazetteer's rows for the country, so a
+	 * global fallback just re-admits the wrong-continent guess (measured: it collapses back to the soft-prior baseline).
+	 * The win is coverage-bounded: tail collapse at a recall cost set by how complete the country's gazetteer is (PL
+	 * −9.5pp, FI −32pp). Undefined (default) → byte-stable. Ignored when a resolved parent or {@link defaultCountry}
+	 * already pins the country.
 	 */
 	hardCountry?: string
 	/**
@@ -729,7 +729,8 @@ export interface ResolveOpts {
 	 *
 	 * Reach is bounded by codex's `candidateSystemsForPostcode` and the attached gazetteer: measured 2026-08-05 it can
 	 * speak for US/DE/FR/GB on the production FTS extract set and additionally CA/AU on the candidate table; JP and NZ
-	 * have a codex slice with no postcode rows behind it, so the pass abstains there at the cost of its two lookups.
+	 * have a codex address system with no postcode rows behind it, so the pass abstains there at the cost of its two
+	 * lookups.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**

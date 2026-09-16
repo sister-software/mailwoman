@@ -1,6 +1,6 @@
 # Mechanism accounts — diagnosis implementation for mailwoman
 
-**Date:** 2026-08-17 · **Status:** design of record; first slices landed (see §8) · **Epic:** #1716
+**Date:** 2026-08-17 · **Status:** design of record; first increments landed (see §8) · **Epic:** #1716
 **Origin:** the 2026-08-16 design conversation, the #1711 investigation that motivated it, and two
 claim-tagged research reports (`docs/records/research/2026-08-16-*.md`).
 

@@ -10,17 +10,17 @@ shipped model; nothing in `release.config.json`, the weights cards or the demo m
 
 This document is the evidence behind that call. The artifacts are retained — fp32
 `f2dbf4a85f845068234a1a565c323682`, int8 `afb8ca11bc1e2952b049d437bba611ef`, both on the Modal
-volume — because the next attempt is a re-dose and rebuilt of the same recipe, not a fresh design, and
+volume — because the next attempt is a re-weight and rebuild of the same recipe, not a fresh design, and
 the comparison arm is worth keeping.
 
 ## What a retry needs before it is worth GPU time
 
 Both, together. Either alone fails for the reason the other one causes.
 
-1. **#1677 — re-dose `synth-bare-country-v23`.** Weight 1.0 gave its 277 rows **165 repetitions each**
+1. **#1677 — re-weight `synth-bare-country-v23`.** Weight 1.0 gave its 277 rows **165 repetitions each**
    against 5× for the 53,078-row Spanish extract weighted six times higher. 0.030 puts it at parity.
    The sampler allocates by weight normalised across sources and ignores row count, so weight is not
-   dose and nothing in the config or launch output displays the number anyone reasons in.
+   reps per row and nothing in the config or launch output displays the number anyone reasons in.
 2. **#1673 — rebuilt the ES extract on official-language names.** It teaches English exonyms:
    461 `Balearic Islands` rows against **4** containing `Illes`, and zero `Portopetro`. `spr.name` is
    the wrong column for any non-English locale.
@@ -149,7 +149,7 @@ badly negative.
 
 ### The likely cause is the extract that produced the headline win
 
-`synth-bare-country-v23` is 277 rows at dose 1.0, and the sampler allocates draw share **by weight
+`synth-bare-country-v23` is 277 rows at weight 1.0, and the sampler allocates draw share **by weight
 normalised over sources, not by rows × weight** — so those 277 surfaces repeat roughly twenty times
 an epoch. The extract teaches exactly one lesson: _a bare capitalised name is a `country`._
 
@@ -158,7 +158,7 @@ event seen from two sides. The model learned the lesson too well and generalised
 toponym. `bare-region-georgia` landing 10,089 km out is the tell — the row the bare-country work was
 supposed to help.
 
-This is the base-consistency lesson (#511) in a new costume: a small extract at high effective dose
+This is the base-consistency lesson (#511) in a new costume: a small extract at high reps per row
 outvoting a much larger base, and the visible win arriving with an invisible bill.
 
 ## What the corpus additions bought
@@ -218,10 +218,10 @@ failed hypothesis about the trailing-region extract.
    is one surface away, and the mechanism is understood.
 3. **File the `arena.perturb` floor for its own check revision.** It fails the shipped model; leaving
    it stale means every future candidate carries a phantom failure.
-4. **Re-dose `synth-bare-country-v23` before the next run.** 277 rows at dose 1.0 repeat ~20× an
+4. **Re-weight `synth-bare-country-v23` before the next run.** 277 rows at weight 1.0 repeat ~20× an
    epoch under the per-source sampler, and they taught "bare capitalised name → country" strongly
    enough to erase the bare-locality and bare-street classes. The mechanism works — that is what
-   +11.0 pp shows — but the dose is the change, and the next attempt should carry a pre-registered
+   +11.0 pp shows — but the weight is the change, and the next attempt should carry a pre-registered
    watch on the bare-toponym board rows, per the #513 adjacent-class rule.
 5. **The measurement lesson.** The board's counted pass/fail header prints ABOVE the promote-flag
    block. Reading the tail alone shows the flips and hides the breakage. Read `counted cases pass`

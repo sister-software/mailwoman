@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the canonical recipe produce the country/region nodes it has been silently missing (#1026 — the GeoNames admin fold), delete the four superseded admin-mutation scripts, and corral the loose diagnostics — the PR C slice of the cleanup spec.
+**Goal:** Make the canonical recipe produce the country/region nodes it has been silently missing (#1026 — the GeoNames admin fold), delete the four superseded admin-mutation scripts, and corral the loose diagnostics — the PR C increment of the cleanup spec.
 
 **Architecture:** `foldGeonames` gains the existing (never-wired) `adminForCountries` capability from `ingestGeonamesAliases` (#267); `buildAdmin` computes the zero-coverage gap set (geonames − overture − WOF-priority) and passes it. An E2E rebuild through `gazetteer build admin` must then pass the full verify check — that artifact is the #1026 swap candidate.
 

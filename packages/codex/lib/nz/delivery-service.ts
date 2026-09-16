@@ -26,7 +26,7 @@
  *       punctuation-free".
  *
  *   All six types are CURRENT in the October 2021 ADV358 (including CMB — no legacy flag is needed
- *   for the NZ slice).
+ *   for the NZ address system).
  *
  *   **"Private Box" — colloquial alias, officially invalid:** ADV358 does not list "Private Box" as a
  *   Delivery Service Type and NZ Post's live standards pages (addressing-standards, how-to-address-

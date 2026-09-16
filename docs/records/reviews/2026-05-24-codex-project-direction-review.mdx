@@ -4,7 +4,7 @@
 
 Mailwoman is on the right strategic track. The strongest idea in the project is still the Pelias-style split between parsing and resolving, updated for a modern TypeScript/runtime world: a small contextual parser proposes possibilities, deterministic structure supplies cheap priors, and a resolver/gazetteer checks world coherence. That direction is better than either "rules forever" or "one model does everything."
 
-The current work is a significant step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level checks before spending H100/LLM/human-labeling budget at scale.
+The current work is a significant step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset checks before spending H100/LLM/human-labeling budget at scale.
 
 Recommended posture: continue, but narrow the next cycle. Treat the next spend as validation of the pipeline hypothesis, not as a release train.
 
@@ -70,7 +70,7 @@ Before expensive validation, wire the real path behind a flag:
 2. Stage 2.7 phrase proposals are converted into classifier-compatible priors or candidate spans.
 3. Resolver supplies top-k candidates per admin span.
 4. `reconcileSpans` runs in `runPipeline`.
-5. Eval compares fallback argmax vs joint decode on the kryptonite set and normal golden slices.
+5. Eval compares fallback argmax vs joint decode on the kryptonite set and normal golden sets.
 
 Until that path exists, further training only validates part of the system.
 
@@ -96,7 +96,7 @@ The project has made real progress, but the model metrics are not yet a green li
 - Confidence is reported mostly per token; product users need parse-level and candidate-level calibration.
 - Golden v0.1.2 includes adversarial transliteration rows the model was not trained for; that is useful as a stress test but misleading as a headline denominator unless separately weighted.
 
-The next expensive run needs predefined acceptance slices, not a single headline F1. Minimum:
+The next expensive run needs predefined acceptance subsets, not a single headline F1. Minimum:
 
 - rule-only baseline
 - neural-only argmax
@@ -176,7 +176,7 @@ If a new phrase-grouper rule needs a large dictionary or a bug-specific exceptio
 - Move from "model F1" checks to "pipeline outcome" checks: parse exact match, top-k resolver recall, graceful failure, and calibration.
 - Treat `reconcileSpans` as an integration priority, not a future idea.
 - Promote `predict_top_k` from Python training support into TypeScript/browser runtime support.
-- Use synthetic data as a controlled slice with explicit weights, not just extra rows.
+- Use synthetic data as a controlled source with explicit weights, not just extra rows.
 - Create an explicit "expensive run preflight" checklist that must pass before rented GPU time.
 
 ### Defer
@@ -244,7 +244,7 @@ Check it behind `forceJointReconcile` or similar. Run it against:
 - postcode-only/locality-only fast paths
 - browser demo fixture set
 
-Compare to current fallback. If joint decode does not beat fallback on kryptonite without hurting normal slices, fix scoring before retraining.
+Compare to current fallback. If joint decode does not beat fallback on kryptonite without hurting the normal subsets, fix scoring before retraining.
 
 ### Step 4 - Build an eval matrix that mirrors product claims
 
@@ -268,7 +268,7 @@ This report should become the release check for any new weights.
 Keep DeepSeek generation, but route it through explicit curriculum weights:
 
 - start synthetic transliteration at a low batch share
-- keep kryptonite rows as high-value adversarial validation and small training slice
+- keep kryptonite rows as high-value adversarial validation and small training source
 - preserve a clean non-synthetic control run
 - use source-specific gradient/loss dashboards
 - require semantic spot-check sampling before corpus promotion

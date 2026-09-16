@@ -45,10 +45,10 @@ export const spec = {
 const DevLintRecipeOutputVocab: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { lintSliceVocab } = await import("@mailwoman/corpus/tools")
+			const { lintRecipeVocab } = await import("@mailwoman/corpus/tools")
 
-			return lintSliceVocab({
-				slice: options.parquet,
+			return lintRecipeVocab({
+				recipeOutputPath: options.parquet,
 				baseVersion: options.baseVersion,
 				baseRoot: options.baseRoot,
 				threshold: options.threshold,

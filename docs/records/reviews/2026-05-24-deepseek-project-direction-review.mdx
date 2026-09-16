@@ -6,7 +6,7 @@ A third-party review synthesizing the project's documentation, blog posts, retro
 
 Mailwoman is on the right strategic track. The strongest idea in the project is the Knowledge Ladder — a staged decomposition that assigns structural priors (phrase grouping, kind classification, locale detection) to cheap rule-based layers, semantic tagging to a small neural model, sequence validity to a CRF with a frozen structural transition mask, cross-component coherence to a joint-decoding reconciler, and world hierarchy to a WOF gazetteer. This is the correct line. It is better than "rules forever" or "one model does everything."
 
-The current work is a significant step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level product checks before spending H100/LLM/human-labeling budget at scale.
+The current work is a significant step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset product checks before spending H100/LLM/human-labeling budget at scale.
 
 **Recommended posture: continue, but narrow the next cycle.** Treat the next spend as validation of the pipeline hypothesis, not as a release train.
 
@@ -69,7 +69,7 @@ The docs describe a nearly complete v0.5.0 pipeline, but the runtime still does 
 - `runPipeline` collects phrase proposals and passes QueryShape into the classifier, but does not feed phrase proposals into the classifier, does not receive real top-k from the TypeScript classifier, and does not call joint reconcile.
 - The architectural thesis — "candidate generation plus joint coherence beats per-stage argmax" — has not been proven end-to-end with real model output in the default runtime.
 
-This is the largest product risk. Before expensive validation, wire the real path behind a feature flag and run it against the kryptonite catalogue. If joint decode does not beat fallback on kryptonite without hurting normal slices, fix scoring before retraining.
+This is the largest product risk. Before expensive validation, wire the real path behind a feature flag and run it against the kryptonite catalogue. If joint decode does not beat fallback on kryptonite without hurting the normal subsets, fix scoring before retraining.
 
 ### 2. Training instability is the central technical blocker
 
@@ -221,7 +221,7 @@ Check behind `forceJointReconcile` or similar. Run against:
 - Postcode-only / locality-only fast paths.
 - Browser demo fixture set.
 
-Compare to current fallback. If joint decode does not beat fallback on kryptonite without hurting normal slices, fix scoring before retraining.
+Compare to current fallback. If joint decode does not beat fallback on kryptonite without hurting the normal subsets, fix scoring before retraining.
 
 ### Step 3 — Run a capacity-gradient experiment
 
@@ -258,7 +258,7 @@ This report becomes the release check for any new weights.
 Keep DeepSeek generation, but route it through explicit curriculum weights:
 
 - Start synthetic transliteration at a low batch share (e.g., 5%).
-- Keep kryptonite rows as high-value adversarial validation and a small training slice.
+- Keep kryptonite rows as high-value adversarial validation and a small training source.
 - Preserve a clean non-synthetic control run for comparison.
 - Use source-specific gradient/loss dashboards during training.
 - Require semantic spot-check sampling before corpus promotion.

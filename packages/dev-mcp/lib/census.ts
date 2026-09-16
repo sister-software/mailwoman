@@ -52,7 +52,7 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 }
 
 /**
- * One row's slice of the census — kept so a reader can go from an inert mechanism to the rows that SHOULD have fired
+ * One row's entry in the census — kept so a reader can go from an inert mechanism to the rows that SHOULD have fired
  * it, and from a starvation count to the exact inputs.
  */
 export interface CensusRow {

@@ -71,7 +71,7 @@ where the sub-venue carries both forms:
 
 with the sub-venue labeled `unit` and the containing venue labeled `venue`.
 
-Include the confound shapes as NEGATIVES in the same corpus slice, or the model learns the surface rather
+Include the confound shapes as NEGATIVES in the same corpus recipe, or the model learns the surface rather
 than the structure: `12 East Check` (street), `Briggate` / `Kirkgate` (single-token GB street names),
 `Check House` (venue), `Wing Yip` (business name), `Grand Central Terminal` (the pair inside a longer
 name).
@@ -107,11 +107,11 @@ source into the corpus is the natural next step, not a new dependency.
 
 ## Bars
 
-Whatever the corpus slice produces has to hold the existing board: 30 confound rows, zero `unit` emissions,
+Whatever the corpus recipe produces has to hold the existing board: 30 confound rows, zero `unit` emissions,
 and the shipped designator+identifier cases (`Concourse B`, `Terminal 5`, `Check 12`, `Wing B`) stay
 correct. The five modifier cases above are the target; `West Wing` already passes and must not
 regress.
 
 Success is the required-scale table collapsing — the modifier class winning at the shipped 6.0
-rather than needing 11. If a retrained model still needs 9+, the corpus slice did not teach the structure
+rather than needing 11. If a retrained model still needs 9+, the recipe output did not teach the structure
 and the data is the thing to look at, not the scale.

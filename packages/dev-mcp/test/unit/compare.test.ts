@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   A cross-engine comparison end to end: a stub registry for the mailwoman arm, a scripted Axios adapter for the
- *   external one, and a real board slice for the truth coordinates.
+ *   external one, and a real board subset for the truth coordinates.
  *
- *   The slice is `AD` — two rows, both carrying a truth coordinate — so the arithmetic in every assertion below can be
+ *   The subset is `AD` — two rows, both carrying a truth coordinate — so the arithmetic in every assertion below can be
  *   checked by hand against the two answers the stubs give.
  */
 

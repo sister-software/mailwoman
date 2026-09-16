@@ -35,7 +35,7 @@ I'd checked that the new rows carried the tags I wanted: street, city, postcode,
 
 ## The fix is old, and we already own it
 
-The repair turns out to be a thing we built a year ago for exactly this and then didn't carry forward. Our older locale recipe — the one behind the European countries — doesn't only render addresses in their native shape. For a slice of them it renders an _international_ form, the kind you'd write on a parcel crossing a border: `12 Rue de Rivoli, Paris, France`. Country included, on purpose. That slice is why adding France never taught the model to forget France. The new Overture pipeline, in its youth and efficiency, skipped it — it took the addresses exactly as given, silences and all.
+The repair turns out to be a thing we built a year ago for exactly this and then didn't carry forward. Our older locale recipe — the one behind the European countries — doesn't only render addresses in their native shape. For a share of them it renders an _international_ form, the kind you'd write on a parcel crossing a border: `12 Rue de Rivoli, Paris, France`. Country included, on purpose. That share is why adding France never taught the model to forget France. The new Overture pipeline, in its youth and efficiency, skipped it — it took the addresses exactly as given, silences and all.
 
 So Brazil isn't a wall; it's a reminder to put the border back on some of the parcels. Render a fraction of the new rows with the country spelled out, and the pile stops teaching absence. Canada and Mexico ship as they are — that run passed. Brazil waits for the next build, which is a smaller thing than it sounded like at 4 a.m.
 

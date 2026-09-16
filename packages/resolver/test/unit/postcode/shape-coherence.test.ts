@@ -15,7 +15,7 @@
  *     (US 1600/3080/1200 via their region, PR 3499 via the territory-mapped country) + 9 synthesized
  *     US/PR 4-digit rows = 13/13. The MX and ES rows are DOCUMENTED ABSTENTIONS, not in the
  *     denominator — MX has no country token ("Tabasco" is not a `matchSubdivision` key), and ES has
- *     no codex slice at all.
+ *     no codex address system at all.
  *   - **B1-3** — confound protection ≤2% false exclusions: "Sydney NSW 2000, Australia" stays
  *     CONFIRMED (the default country is never a signal), "10 Downing Street, London SW1A 2AA" under a
  *     US default abstains, "Ponce, 00716, Puerto Rico" stays CONFIRMED via the PR→US territory map.
@@ -221,7 +221,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 		expect(roots[0]!.tag).toBe("postcode")
 	})
 
-	it("abstains on the ES row — a slice-less country can never manufacture an exclusion", () => {
+	it("abstains on the ES row — a country without a codex system can never manufacture an exclusion", () => {
 		const roots = [postcodeNode("15 07691"), node({ tag: "region", value: "Illes Balears" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -233,7 +233,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("abstains on a shape no codex system recognizes", () => {
-		// "1200 02" matches no slice — an empty candidate set is no evidence either way.
+		// "1200 02" matches no codex system — an empty candidate set is no evidence either way.
 		const roots = [postcodeNode("1200 02"), node({ tag: "country", value: "United States" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)

@@ -1,5 +1,5 @@
 > **Point-in-time design record.** The embedded code listings are the plan as written, NOT the shipped code —
-> several diverged during implementation (e.g. the repair test's input, the Stage-prefix heatmap slice). The
+> several diverged during implementation (e.g. the repair test's input, the Stage-prefix heatmap window). The
 > shipped files are canonical; read this for intent and sequencing only.
 
 # Parse Trace + ModelVisualizer Implementation Plan

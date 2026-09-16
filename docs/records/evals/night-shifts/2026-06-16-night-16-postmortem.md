@@ -130,7 +130,7 @@ circumvented).
   only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the
   cross-_agency_ links are **28, all pairwise (2 agencies); ZERO span all three agencies** (no entity
   resolves across provider + funder + facility at once). The "10 spanning all three source kinds" framing
-  counted 3 sources where 2 are FCC. A `--cross-agency-only` flag renders the honest 28-link slice; the
+  counted 3 sources where 2 are FCC. A `--cross-agency-only` flag renders the cross-agency 28-link subset; the
   framing is an operator call, and map renders are the operator's to verify.
 - **#673 — #655 option 2 is data-blocked.** A feasibility analysis, not an experiment: the FCC/TX sources
   carry no NPI/EIN/TIN, so the only shared cross-source signals are name+geocode (what FS already

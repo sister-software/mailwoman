@@ -21,7 +21,7 @@ rates 8–87% consistent with the 69.4% aggregate measurement.
 
 Design was pressure-tested in a 3-turn DeepSeek consult (curl fallback — the `pi` wrapper timed
 out again at 180s): concurrence on all-rows scope (GB splits are schema-correct; a country filter
-adds brittleness), relabel probability 1.0 (partial relabeling is a weaker dose of the same
+adds brittleness), relabel probability 1.0 (partial relabeling is a weaker form of the same
 contradiction — p=0.9 still leaves ~156:1), and probe decisiveness. Its push-back we adopted: the
 32-row affix eval is too small to check on (one instance ≈ 4pp); expand to ≥100/≥100 instances
 before the full-run check. One correction ours: the probe keeps extract weight 20.0 for probe-0

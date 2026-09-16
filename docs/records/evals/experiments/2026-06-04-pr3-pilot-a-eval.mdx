@@ -95,7 +95,7 @@ Two blind spots let training look healthy to the dashboard while German was brea
 
 ## Shipped from this run regardless
 
-- **Export bug fix (`corpus-python/src/mailwoman_train/model.py`).** The FiLM split used `.chunk(2, dim=-1)`, which the dynamo exporter emits as an opset-18 `Split(num_outputs=2)` node. onnxruntime-node — and the WASM/WebGPU web runtime — reject it: `Unrecognized attribute: num_outputs`. v0.7.2 had no FiLM so it never hit this. Replaced with two explicit slices (`film[..., :H]`, `film[..., H:]`) — mathematically identical, same trained weights, every runtime loads it. Any future self-conditioned export needs this. 11 PR3 CPU tests stay green.
+- **Export bug fix (`corpus-python/src/mailwoman_train/model.py`).** The FiLM split used `.chunk(2, dim=-1)`, which the dynamo exporter emits as an opset-18 `Split(num_outputs=2)` node. onnxruntime-node — and the WASM/WebGPU web runtime — reject it: `Unrecognized attribute: num_outputs`. v0.7.2 had no FiLM so it never hit this. Replaced with two explicit index expressions (`film[..., :H]`, `film[..., H:]`) — mathematically identical, same trained weights, every runtime loads it. Any future self-conditioned export needs this. 11 PR3 CPU tests stay green.
 
 ## Decisions made
 

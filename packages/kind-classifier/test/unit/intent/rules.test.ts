@@ -42,8 +42,9 @@ function registers(text: string): string[] {
 }
 
 describe("bare_toponym — one place-name, no address grammar", () => {
-	// The hard-slice board's `bare_namesake` class (fixtures/hard-slice-board.jsonl), which is the
-	// population ROAD_TO_V9 §3 assembled for exactly this register.
+	// The hard-case board's `bare_namesake` class (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`,
+	// scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`), which is the population ROAD_TO_V9 §3
+	// assembled for exactly this register.
 	const POSITIVE = [
 		"Fulda",
 		"Jena",
@@ -136,7 +137,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 		"12 rue de Rome Paris",
 		"10118",
 		"Paris London Berlin",
-		// A comma is the admin-context marker; the hard-slice `comma_control` register.
+		// A comma is the admin-context marker; the hard-case board's `comma_control` register.
 		"Athens, Georgia",
 		"Portland, ME",
 	]

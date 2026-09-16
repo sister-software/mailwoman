@@ -10,8 +10,8 @@
  *   re-segmenting the query. The trailing trim also drops trailing sentence-punctuation NOISE (#829 tail): a
  *   trailing `.`/`,`/`;`/`:` (e.g. `…Washington DC.`) glues onto the last token and drops the street
  *   tier (`address_point`→`admin`). Trailing only + a conservative set — leading punctuation and
- *   quotes/brackets are never touched (they can be meaningful). Offset-map-correct via the same slice
- *   as the whitespace trim, so span alignment survives.
+ *   quotes/brackets are never touched (they can be meaningful). Offset-map-correct via the same substring
+ *   step as the whitespace trim, so span alignment survives.
  */
 
 import { identityMap } from "#offset-map"

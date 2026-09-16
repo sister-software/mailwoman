@@ -30,13 +30,13 @@ reproduced here. The table below is the declaration of 2026-07-02; several packa
 
 ## Tiers
 
-| Tier | Locales                                                | What the tier means                                                            |
-| ---- | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| 1    | US, FR                                                 | Per-tag floors the release process enforces, plus real-world evaluation slices |
-| 2    | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Trained, with a per-locale coordinate panel behind the claim                   |
-| 3    | NO, SE                                                 | Trained exposure, thinly measured. Claims beyond the panel are unverified      |
-| 4    | CZ, PL, SK, SI                                         | Covered by the diacritic tokenizer splice shipped in release 5.1.0             |
-| 5    | JP                                                     | Resolver route only: postcode resolution, with no parser training claim        |
+| Tier | Locales                                                | What the tier means                                                          |
+| ---- | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| 1    | US, FR                                                 | Per-tag floors the release process enforces, plus real-world evaluation sets |
+| 2    | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Trained, with a per-locale coordinate panel behind the claim                 |
+| 3    | NO, SE                                                 | Trained exposure, thinly measured. Claims beyond the panel are unverified    |
+| 4    | CZ, PL, SK, SI                                         | Covered by the diacritic tokenizer splice shipped in release 5.1.0           |
+| 5    | JP                                                     | Resolver route only: postcode resolution, with no parser training claim      |
 
 A locale appearing in two tiers is not an error. Tier 4 records a tokenizer capability rather than an
 evaluation, so CZ and PL hold both a coordinate panel and a splice.
@@ -131,7 +131,7 @@ built from a source that spans countries rather than from per-locale training.
 | Every result comes back on the `admin` tier            | No street bundle is installed for that country                         | Check the combination table. Only US and FR have published street data |
 | A Japanese address parses poorly                       | There is no Japanese parser claim. The resolver route is postcode-only | Resolve by postcode                                                    |
 | A Korean address parses poorly                         | No open Korean data path has been adopted                              | None today. The constraint is licensing, not engineering               |
-| A tier-2 locale is worse than the panel suggests       | Panels are 1000 rows per locale, and a slice can be unrepresentative   | Report it with the input strings                                       |
+| A tier-2 locale is worse than the panel suggests       | Panels are 1000 rows per locale, and a sample can be unrepresentative  | Report it with the input strings                                       |
 
 ## Rationale
 

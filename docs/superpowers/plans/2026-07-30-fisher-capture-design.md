@@ -12,7 +12,7 @@ regime, which is what EWC's quadratic approximation assumes). Diagonal-only (D4 
 blockwise buys accuracy the first consumer can't yet use and multiplies storage; revisit if λ
 calibration shows the diagonal is too blunt.
 
-**Per-locale slices: not in v1.** One Fisher over the full feed. A per-locale family
+**Per-locale Fisher matrices: not in v1.** One Fisher over the full feed. A per-locale family
 (F_us, F_fr, …) enables "protect only what this customer doesn't touch" later — file it as the
 v2 refinement once a real engagement asks for it.
 

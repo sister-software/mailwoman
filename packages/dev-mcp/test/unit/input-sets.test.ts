@@ -38,10 +38,10 @@ describe("resolveInputSet — board", () => {
 		expect(set.corpusHash).toMatch(/^[0-9a-f]{64}$/)
 	})
 
-	it("reports what a slice EXCLUDED, not only what it kept", async () => {
+	it("reports what a subset EXCLUDED, not only what it kept", async () => {
 		const set = await resolveInputSet({ kind: "board", country: "GB" })
 
-		expect(set.selection).toBe("slice")
+		expect(set.selection).toBe("subset")
 		expect(set.n).toBeGreaterThan(0)
 		expect(set.populationN).toBeGreaterThan(set.n)
 		expect(set.notCovered.some((line) => line.startsWith("countries excluded:"))).toBe(true)
@@ -107,10 +107,10 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 		expect(set.notes.join(" ")).toContain("truth_type")
 	})
 
-	it("reports what a truth_type slice excluded", async () => {
+	it("reports what a truth_type subset excluded", async () => {
 		const set = await resolveInputSet({ kind: "panel", version: "v2", truth_type: "rooftop" })
 
-		expect(set.selection).toBe("slice")
+		expect(set.selection).toBe("subset")
 		expect(set.populationN).toBe(420)
 		expect(set.notCovered.join(" ")).toContain("truth types excluded")
 	})
@@ -118,7 +118,9 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 
 describe.skipIf(!havePanel21)("resolveInputSet — panel v2.1", () => {
 	it("resolves the re-sourced v2.1 panel with a coordinate on every row", async () => {
-		// v2.1 = v2 with the 25 city-only rows whose truth was copied from hard-slice-board.jsonl (circular truth,
+		// v2.1 = v2 with the 25 city-only rows whose truth was copied from the hard-case board
+		// (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`, scored by
+		// `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) (circular truth,
 		// #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order; v2 stays immutable.
 		const set = await resolveInputSet({ kind: "panel", version: "v2.1" })
 
@@ -181,12 +183,12 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 		expect(set.selection).toBe("random-draw")
 	})
 
-	it("is a random draw, not a declared slice — the two support opposite claims", async () => {
-		// A slice is chosen by a predicate and generalizes to nothing beyond it. This is the one subset in this file
-		// whose rate estimates the population's, and the sentence a caller relays has to say so.
+	it("is a random draw, not a declared subset — the two support opposite claims", async () => {
+		// A declared subset is chosen by a predicate and generalizes to nothing beyond it. This is the one set in this
+		// file whose rate estimates the population's, and the sentence a caller relays has to say so.
 		const set = await resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 })
 
-		expect(set.selection).not.toBe("slice")
+		expect(set.selection).not.toBe("subset")
 		expect(set.hasTruth.coordinates).toBe(25)
 	})
 

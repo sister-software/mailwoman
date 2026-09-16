@@ -93,7 +93,8 @@ export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorNa
 
 /**
  * All lowercase surface tokens for the floor-class designators — the set the span proposer populates `levelDesignators`
- * with when wiring the US codex slice. Includes canonical names, approved abbreviations, and Appendix C2 variants.
+ * with when wiring the US codex address system. Includes canonical names, approved abbreviations, and Appendix C2
+ * variants.
  */
 export const US_FLOOR_DESIGNATOR_TOKENS: ReadonlySet<string> = new Set(US_FLOOR_DESIGNATOR_LOOKUP.keys())
 

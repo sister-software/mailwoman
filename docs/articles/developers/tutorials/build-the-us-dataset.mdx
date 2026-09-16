@@ -1,6 +1,6 @@
 ---
 title: Build the US address dataset from public sources
-description: Ingest Overture's US address slice, build one state's rooftop and interpolation databases from it and from Census TIGER, then geocode against what you built. Vermont end to end.
+description: Ingest Overture's US addresses, build one state's rooftop and interpolation databases from them and from Census TIGER, then geocode against what you built. Vermont end to end.
 role: tutorial
 verified-with: mailwoman 8.7.0
 ---
@@ -9,7 +9,7 @@ verified-with: mailwoman 8.7.0
 
 Let's say the hosted databases are not an option for you — an air-gapped deployment, a license review that
 wants provenance per row, or a state whose published database is stale. By the end of this page you'll have
-built one state's address data yourself, from Overture's US address slice and Census TIGER, and geocoded
+built one state's address data yourself, from Overture's US addresses and Census TIGER, and geocoded
 a real street address against it at the rooftop tier. Vermont takes about half an hour, and 21 minutes of
 that is one download you make once for all fifty states.
 
@@ -96,7 +96,7 @@ npx mailwoman data status
 which is the correct starting state. It is also the check you come back to in step 7, so run it now and
 know what empty looks like.
 
-## 2. Ingest the US address slice
+## 2. Ingest the US addresses
 
 ```bash
 npx mailwoman gazetteer overture-ingest --countries US --release 2026-06-17.0

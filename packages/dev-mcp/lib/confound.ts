@@ -109,7 +109,7 @@ export function checkConfounds(
 		warnings.push(
 			`Undeclared differences: ${movedButUndeclared.join(", ")}. The delta cannot be attributed to ` +
 				`${declared.length ? declared.join(", ") : "any single pin"} alone — these moved too. ` +
-				`Either pin them across both arms, or declare them and read the result as a 1×2 slice of a 2×2.`
+				`Either pin them across both arms, or declare them and read the result as one row of a 2×2.`
 		)
 	}
 

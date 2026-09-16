@@ -39,9 +39,9 @@ const parse = createRuntimePipeline({ classifier })
 function walk(raw, node, depth = 0) {
 	const label = "  ".repeat(depth) + node.tag
 	const span = `[${node.start}, ${node.end})`
-	const slice = JSON.stringify(raw.slice(node.start, node.end))
+	const text = JSON.stringify(raw.slice(node.start, node.end))
 
-	console.log(`${label.padEnd(22)} ${span.padEnd(10)} ${slice.padEnd(9)} conf ${node.confidence.toFixed(3)}`)
+	console.log(`${label.padEnd(22)} ${span.padEnd(10)} ${text.padEnd(9)} conf ${node.confidence.toFixed(3)}`)
 
 	for (const child of node.children) walk(raw, child, depth + 1)
 }
@@ -94,7 +94,7 @@ Every node carries `start` and `end`. They are character offsets, half-open, and
 them is the one
 [Install and first parse](../get-started/install-and-first-parse.mdx#4-read-the-tree) describes. Here it
 is casing only, so the two strings are the same length and an offset taken against either lands in the
-same place. That is a property of this input, not a guarantee: slice `tree.raw`.
+same place. That is a property of this input, not a guarantee: read spans out of `tree.raw`.
 
 Spans are what you build a highlighted input box on, what you use to attribute a correction back to a
 position, and what you check when a component looks right but came from the wrong part of the string.

@@ -64,7 +64,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 		return provider
 	}
 
-	#slicePath(countryCode: string): string {
+	#addressPointsPath(countryCode: string): string {
 		return join(this.#dataRoot, "ban", `address-points-${countryCode}.db`)
 	}
 
@@ -83,7 +83,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 	async #probeExtracts(): Promise<void> {
 		for (const cc of supportedBANCountries()) {
-			for (const path of [this.#slicePath(cc), this.#streetCentroidPath(cc)]) {
+			for (const path of [this.#addressPointsPath(cc), this.#streetCentroidPath(cc)]) {
 				if (await pathExists(path)) {
 					this.#onDisk.add(path)
 				}
@@ -107,7 +107,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 		// Only countries with a registered street locale AND an on-disk extract — never key with the wrong rules.
 		if (supportedBANCountries().includes(cc)) {
 			const locale = streetLocaleForBANCountry(cc)
-			const path = this.#slicePath(cc)
+			const path = this.#addressPointsPath(cc)
 
 			if (this.#onDisk.has(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })

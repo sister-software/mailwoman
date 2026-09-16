@@ -34,8 +34,8 @@ export interface ScoringWeights {
 
 /**
  * A geographically-scoped resolution profile. Namespaced sections grow per phase; #289 ships the dispatch + scoring
- * slice (`candidateStrategies` + `scoringWeights`). Later phases add `fieldMapping` (locale semantics for `locator[]`),
- * `tokenNormalization`, etc.
+ * sections (`candidateStrategies` + `scoringWeights`). Later phases add `fieldMapping` (locale semantics for
+ * `locator[]`), `tokenNormalization`, etc.
  */
 export interface Convention {
 	/**

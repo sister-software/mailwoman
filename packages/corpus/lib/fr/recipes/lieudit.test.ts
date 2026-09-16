@@ -14,7 +14,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { frLieuditRecipe } from "@mailwoman/corpus/fr/recipes/lieudit"
-import type { SliceRecipeOpts } from "@mailwoman/corpus/recipes/scaffold"
+import type { RecipeOptions } from "@mailwoman/corpus/recipes/scaffold"
 import type { RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
@@ -40,7 +40,7 @@ async function fixtureBanDir(files: Record<string, string[]>): Promise<string> {
 	return dir
 }
 
-function baseOpts(overrides: Partial<SliceRecipeOpts> = {}): SliceRecipeOpts {
+function baseOpts(overrides: Partial<RecipeOptions> = {}): RecipeOptions {
 	return { output: "", seed: 42, variants: 1, count: 100, ...overrides }
 }
 

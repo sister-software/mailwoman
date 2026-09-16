@@ -16,7 +16,7 @@ messy input) points at structured span prediction.
    (B-*) + END (entity token whose successor doesn't continue it), supervised from the BIO labels,
    fp32 BCE, weight 0.5. init_from stable v257, 2k. **Result: US region→street flips 5 → 2** (3 of
    the VT cases fixed), gauntlet regression + metamorphic BOTH still PASS, aggregate parity street
-   flat (boundary cases are a small slice of the 267 slots — the win is in the targeted class).
+   flat (boundary cases are a small share of the 267 slots — the win is in the targeted class).
    Inference-invariant (head off the logits path, never exported → no #378 SLO cost — that is what
    made it the cheap falsifier). The hypothesis held: span-consistency pressure fixes boundary
    absorption without touching the BIO head. **v2.6.1 (full 8k, same head/weight) running** to test

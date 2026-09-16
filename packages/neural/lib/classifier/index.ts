@@ -426,7 +426,7 @@ export class NeuralAddressClassifier {
 		this.assertEmissionWidth(logits)
 
 		// INVARIANT for everything below: one row of emissions per piece. `ONNXRunner.infer` truncates its
-		// input to `fixedSeqLen` and slices `logits` to what it ran, so an untruncated `pieces` breaks that
+		// input to `fixedSeqLen` and trims `logits` to what it ran, so an untruncated `pieces` breaks that
 		// pairing and every lockstep consumer indexes off the end — the token build reading `logits[i]`,
 		// `enforceWordConsistency` reading `emissions[pi]`.
 		//

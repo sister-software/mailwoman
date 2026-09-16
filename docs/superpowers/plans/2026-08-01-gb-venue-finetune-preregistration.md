@@ -71,26 +71,26 @@ decision is the operator's with the verdict in hand. The gauntlet fixtures flip
 
 The first λ sweep (v4.1.0, venue weight 2.0, lr 1e-5, 2k steps) came back **non-signal**: all
 four λ values byte-identical to the base on the six target fixtures, GB board venue 53.8% →
-54.5% (noise). Dose math confirms the design defect: at weight 2.0 the venue extract is ~1.4% of
+54.5% (noise). The exposure arithmetic confirms the design defect: at weight 2.0 the venue extract is ~1.4% of
 samples — ~7k venue rows (~2.4k GB) seen in 2k steps at a fine-tune lr. The probe cannot
 exercise λ if the increment moves nothing; the sweep result is VOID, not "λ unconstrained".
 
 **Named revision (the one allowed):** raise `synth-house-venue` to **12.0** for the fine-tune
 feed — the v3.8.x oversample precedent (no-fragment ran its corrective extract at 12.0) — and
 re-run the identical 4-λ × 2k sweep as v4.1.2. Everything else unchanged. The λ pick rule
-applies at the revised dose. If the revised probe still shows no target movement, STOP —
-operator conversation before any further spend (the mechanism, not the dose, would be in
+applies at the revised weight. If the revised probe still shows no target movement, STOP —
+operator conversation before any further spend (the mechanism, not the weight, would be in
 question).
 
 ---
 
 ## Addendum 2 (2026-08-01) — MAIN-RUN VERDICT: V1 MISS / B1 PASS → operator conversation
 
-**λ calibration delivered**: at dose 12.0 the sweep separated — λ=1e6 brakes the target (−4.5pp
+**λ calibration delivered**: at weight 12.0 the sweep separated — λ=1e6 brakes the target (−4.5pp
 venue on the board), λ=1e2/1e4 within noise of λ=0 → **λ=1e4 is the calibrated B11 template
 default**, with a receipt.
 
-**B1 (the guarantee check): PASS.** The 8k main (v4.1.1, dose 12, λ=1e4, md5 02b8c323…) passes
+**B1 (the guarantee check): PASS.** The 8k main (v4.1.1, weight 12, λ=1e4, md5 02b8c323…) passes
 the FULL v7.0.0-base spec (every floor, no waivers) and the full gauntlet (regression +
 metamorphic + held-out). The sellable sentence — "a Fisher-protected fine-tune holds every base
 capability" — held on its first dogfood.
@@ -100,11 +100,11 @@ real partial progress on two more (New North: house_number "287-293" + postcode 
 Far East: the mixed-script venue now extracted in full). GB board: venue 53.8→80.8, locality
 54→78.8, postcode 74.5→92.3, all-components 10.5→20.5.
 
-**Why the residual three are NOT one more dose turn** (the reason this stops here per the stop
+**Why the residual three are NOT one more weight turn** (the reason this stops here per the stop
 rules): they fail through three different mechanisms, each outside the extract's teaching —
 
 1. _Typeless GB street names_ ("Minories" — no Road/St/Close token): board street accuracy sat
-   at ~29% through every dose; the PPD tuples are overwhelmingly typed streets. Ye Three Lords
+   at ~29% at every weight; the PPD tuples are overwhelmingly typed streets. Ye Three Lords
    needs the model to accept a bare proper noun as a street on positional evidence alone.
 2. _The doubled bare venue_ ("Southfields Station, Southfields Station") — a venue-only
    fragment, not the extract's venue+address template at all.
@@ -125,7 +125,7 @@ The probe set's strongest named mechanism (the FR control row: a trailing countr
 the whole venue template OOD) is now IN the synthesizer — `COUNTRY_APPEND_RATE = 0.3`, every
 template order, tagged `country`, per-country surface pools (incl. the UK/United Kingdom mix) —
 with rate-band + order tests. The fine-tune run (`v4.1.3-gb-venue-country-8k.yaml`, calibrated
-dose 12 / λ=1e4) is DEFERRED on the operator's budget call: a fine-tune 7.0.1 would be
+weight 12 / λ=1e4) is DEFERRED on the operator's budget call: a fine-tune 7.0.1 would be
 superseded by the next base retrain anyway, and the extract code is the durable piece — the next
 base feed inherits it for free. Pre-registered bars for WHOEVER runs it: T1 `fr-op2-le-colimacon`
 flips to full PASS; T2 op2 venue-field hits at least double vs the staged 7.0.1 candidate;
@@ -136,11 +136,11 @@ Stop rule: any miss → operator conversation, no contingency.
 
 ## Addendum 4 (2026-08-01) — country-tail RUN VERDICT: NEGATIVE (stopped per the stop rule)
 
-The v4.1.3 run (dose 12, λ=1e4, v0.15.2 overlay, md5 baccf7df) FAILS its bars: T1 the FR control
+The v4.1.3 run (weight 12, λ=1e4, v0.15.2 overlay, md5 baccf7df) FAILS its bars: T1 the FR control
 still fails at BOTH the pipeline and bare-classifier levels — the model learned to TAG the tail
 (`country` now emits on tailed rows) without transferring venue competence through it (venue null
 everywhere; the FR control's house_number degraded 44→"4"); the corrected gauntlet shows 0 newly
-passing and a conditional regression (VERDICT FAIL). Mechanism read: at fine-tune dose the model solves
+passing and a conditional regression (VERDICT FAIL). Mechanism read: at fine-tune weight the model solves
 the new pattern by its easiest route (tail token → country) and the added tail tokens dilute the
 venue boundary signal rather than extending it. The EXTRACT change stays banked (a from-scratch
 base learns the joint pattern from step 0 — the run-2 lesson says composition differs at base

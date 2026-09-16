@@ -17,12 +17,12 @@ with a different `--arm`; it changes no row, no comparator, no metric and no thr
 Route (a) of the boundaries record §5.5 — commit the target rows first, graded on outcomes only.
 
 Route (b) pre-registers on the §5.3 recall gap, and it cannot be executed against the frozen
-vertical slice: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see needs a
+first increment: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see needs a
 **second** establishment class asserting the affordance, which §4 forbids ("no sibling class is
 minted") and stop condition 5 makes an explicit amendment rather than a probe. It would also need a
 recall metric the committed grader does not have (§5.5's second bound). Route (a) needs neither: the
 comparator already exists and is committed, the anchors and expectations are copied byte-for-byte
-from committed board rows, and the semantic arm is reachable from the frozen slice alone — activity
+from committed board rows, and the semantic arm is reachable from the frozen increment alone — activity
 phrase → `obtain_medication` → the concepts that afford it → POI category `pharmacy` through the
 committed mapping.
 

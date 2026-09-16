@@ -4,7 +4,7 @@
 
 **Status:** opened 2026-05-20, supersedes the [original sketch](#changelog). Phases 0–3 have shipped (`@mailwoman/neural@2.1.0` on npm; CLI + per-component policy live). Real-world deployment has not yet generated feedback, but the team has accepted the architectural risk of beginning Phase 4 work now so that the output shape (`src` attr already reserved on the XML serializer) can land before downstream consumers depend on its absence.
 
-**Branch:** sub-phase branches off `main` (`feature/phase-4-<slice>`). Each sub-phase ships independently.
+**Branch:** sub-phase branches off `main` (`feature/phase-4-<increment>`). Each sub-phase ships independently.
 
 **Depends on:** `@mailwoman/core@2.x` decoder pipeline (PR #58 lineage), `@mailwoman/neural@2.x`.
 
@@ -26,9 +26,9 @@ The original sketch listed three options. This plan picks **Option B**.
 
 ## Sub-phase breakdown
 
-Phase 4 ships in three slices, each independently mergeable:
+Phase 4 ships in three increments, each independently mergeable:
 
-| Slice                                 | Goal                                                                                                                                                                                                                                                              | Independently useful?                                                                                 |
+| Increment                             | Goal                                                                                                                                                                                                                                                              | Independently useful?                                                                                 |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | **4.1 — Source provenance (this PR)** | Thread `source` + `source_id` from `ClassificationProposal` through the decoder; `AddressNode` gains optional `source` + `sourceId`; XML serializer emits `src` attribute; JSON / tuple projections unchanged.                                                    | Yes — surfaces classifier provenance to debug + downstream filtering. No resolver yet.                |
 | **4.2 — WOF SQLite loader package**   | New package `@mailwoman/resolver-wof-sqlite` (or fold into `@mailwoman/neural`? decide in 4.2). Loads a WOF SQLite distribution, exposes an FTS5-backed lookup `findPlace({ locality, region, country, locale })` returning candidate WOF places with confidence. | Yes — usable standalone for "what's the WOF id for Paris, FR?" without going through the full parser. |

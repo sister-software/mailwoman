@@ -547,7 +547,7 @@ class WOFResolver implements Resolver {
 		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is conditional
 		// upstream on high confidence (so it only fires when the model is sure), and on a miss the node is
 		// left UNRESOLVED rather than re-resolved globally: the off-continent rows are precisely the ones
-		// whose locality isn't in the country's gazetteer slice, so a global retry would just re-admit the
+		// whose locality isn't among the gazetteer's rows for the country, so a global retry would just re-admit the
 		// wrong-continent guess the hard filter exists to drop ("in-region or unresolved"). Measured: a
 		// global fallback collapses back to the soft-prior baseline (FI p90 3050, PL p90 1078); pure-hard
 		// collapses the tail (FI 18 km, PL p99 8172→494) at a coverage-bounded recall cost.

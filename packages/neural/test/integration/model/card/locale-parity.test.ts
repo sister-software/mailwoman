@@ -20,7 +20,7 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, test } from "vitest"
 
 /**
- * The slice of the model card this parity guard reads. Deliberately partial — a field is added here only when an
+ * The subset of the model card this parity guard reads. Deliberately partial — a field is added here only when an
  * assertion below needs it.
  */
 interface ModelCard {

@@ -37,7 +37,7 @@
  *
  *   - **Resolution is bounded by class size.** A conformal p-value moves in steps of 1/(n+1), so a class needs
  *     n >= 1/alpha - 1 calibration rows before a threshold at error rate alpha exists at all (19 rows for alpha=0.05).
- *     On the 2026-08-19 board slice the shapes ran evidence_starved 113, retrieval_empty 95, scope_miss_readmission
+ *     On the 2026-08-19 board subset the shapes ran evidence_starved 113, retrieval_empty 95, scope_miss_readmission
  *     75, wrong_instance_detected 38, rank_flip 10, parse_shape_contradiction 3, mis_tag_in_vocabulary 1. The first
  *     four could carry calibration; the last three cannot, and splitting them into train/calibration halves makes it
  *     worse.
@@ -179,7 +179,7 @@ const COMPONENT_FOR_KNOWN_FORMAT = {
 } as const satisfies Record<KnownFormat, string>
 
 /**
- * The slice of a {@link GeocodeRun} an account reads, declared structurally.
+ * The subset of a {@link GeocodeRun}'s fields an account reads, declared structurally.
  *
  * A `GeocodeRun` satisfies this by shape, so `runDiagnose` passes one straight through — and the assembly stays
  * testable without constructing a whole `GeocodeResult`, which is twenty-five fields of which six matter here.
@@ -352,7 +352,7 @@ function decodeReading(parse: NeuralParseTrace): DecodeReading {
 /**
  * Fold a detector span and a component value to the same comparable form.
  *
- * Known-format spans are offsets into the NORMALIZED input while component values are sliced from the RAW one, so the
+ * Known-format spans are offsets into the NORMALIZED input while component values are taken from the RAW one, so the
  * two frames cannot be compared by offset. Folding away case and every non-alphanumeric character compares what both
  * frames do agree on — the characters — which is what the contradiction is about.
  */
@@ -898,7 +898,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
-		// Under a cap the emitted slice leads with non-clean rows — the ones every aggregate above points
+		// Under a cap the emitted rows lead with the non-clean ones — the ones every aggregate above points
 		// at — and says what it left out. The aggregates are computed over EVERY row regardless.
 		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
 		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),

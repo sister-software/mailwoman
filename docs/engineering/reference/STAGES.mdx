@@ -110,7 +110,7 @@ export interface NormalizeOpts {
 export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 ```
 
-**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (Slice B of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Public `normalize()` function with NFC + punctuation + whitespace (always) + abbreviation expansion + case-fold (opt-in). Essential `offsetMap` composed across transforms. Small en-US + fr-FR abbreviation dictionaries.
+**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (increment B of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Public `normalize()` function with NFC + punctuation + whitespace (always) + abbreviation expansion + case-fold (opt-in). Essential `offsetMap` composed across transforms. Small en-US + fr-FR abbreviation dictionaries.
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 
@@ -136,7 +136,7 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 
 **Reuse.** Once computed, `QueryShape` passes into every subsequent stage as additional context. It is not its own stage.
 
-**Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (Slice A of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Pure functions, no ML, zero workspace dependencies. Detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), PO Box / BP. Hyphen / apostrophe / underscore are "connectors" so `"10118-1234"` and `"Saint-Denis"` stay one token. Accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
+**Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (increment A of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Pure functions, no ML, zero workspace dependencies. Detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), PO Box / BP. Hyphen / apostrophe / underscore are "connectors" so `"10118-1234"` and `"Saint-Denis"` stay one token. Accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
 
 ## Stage 2 — `locale-hint`
 
@@ -219,7 +219,7 @@ export interface KindClassifier {
 
 **Today.** `@mailwoman/kind-classifier` workspace shipped 2026-05-23. Rule-based, pure functions. Composes per-kind scorers (po_box, intersection, landmark, postcode_only, locality_only, structured_address, vague) and returns the top kind plus alternatives sorted by confidence. Wired in as the default `classifyKind` by `mailwoman/runtime-pipeline.ts::createRuntimePipeline`.
 
-**Future.** Hybrid rule + tiny model. Rule path is shipped; model path remains: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from a labeled corpus slice (Phase 5 Studio is the source of those labels).
+**Future.** Hybrid rule + tiny model. Rule path is shipped; model path remains: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from labeled corpus rows (Phase 5 Studio is the source of those labels).
 
 **Failure classes owned.** Routes around the encoder for the trivial cases that don't need it (postcode-only, locality-only). Improves accuracy on intersection / PO box by routing to specialist heads when they exist (v0.6.0+).
 
@@ -263,7 +263,7 @@ Per "possibilities not constraints", the grouper emits overlapping proposals fre
 
 **Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output contract; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
 
-**Failure classes owned.** Boundary discovery on mid-position postcodes (`Paris 75008`), hyphenated compounds (`NY-NY Steakhouse`), multi-word localities (`Saint Petersburg`), repetition tokens (`Buffalo Buffalo`). Addresses v0.4.0's bio_slip slice at source rather than via decoder post-trim.
+**Failure classes owned.** Boundary discovery on mid-position postcodes (`Paris 75008`), hyphenated compounds (`NY-NY Steakhouse`), multi-word localities (`Saint Petersburg`), repetition tokens (`Buffalo Buffalo`). Addresses v0.4.0's bio_slip class at source rather than via decoder post-trim.
 
 **Open questions.**
 
@@ -347,7 +347,7 @@ export interface SpanRereader {
 
 **Today.** Not built.
 
-**Future.** v0.6.0+ at earliest. Needs a corpus slice of ambiguity-flagged spans (Studio can produce this).
+**Future.** v0.6.0+ at earliest. Needs a corpus recipe of ambiguity-flagged spans (Studio can produce this).
 
 **Failure classes owned.** Ambiguous locality names (#1), repeated admin names (#2), consistency portion of numeric chaos (#5).
 

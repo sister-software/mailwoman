@@ -4,7 +4,7 @@
 
 **Goal:** Eliminate the last two DB mutators (`fill-zcta-centroids`, `backfill-postcode-centroids`) by folding their fills into a sealed `gazetteer build postcode-extract` command; classify every remaining drawer resident (audit → eval, codegen renamed, remaining builders seal-retrofitted); file PR E for the pure ports.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md` §5 (PR C/D slice). **Deferred to PR E:** verbatim ports of `build-postcode-locality{,-cjk,-kr,-tw}`, `build-postalcode-nl-pc6`, `build-supplemental-gazetteer` (~2.2k lines, each needing source-data E2E), and the corpus tooling (`build-corpus-stats`, `align-canonical-extract`, `assemble-overlay-manifest`) — mechanical ports with per-artifact validation, their own session. `build-pilot-anchor-lookup` is LIVE (neural/scorer + eval consume its output) — stays until PR E decides its home.
+**Spec:** `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md` §5 (PR C/D increment). **Deferred to PR E:** verbatim ports of `build-postcode-locality{,-cjk,-kr,-tw}`, `build-postalcode-nl-pc6`, `build-supplemental-gazetteer` (~2.2k lines, each needing source-data E2E), and the corpus tooling (`build-corpus-stats`, `align-canonical-extract`, `assemble-overlay-manifest`) — mechanical ports with per-artifact validation, their own session. `build-pilot-anchor-lookup` is LIVE (neural/scorer + eval consume its output) — stays until PR E decides its home.
 
 ## Global Constraints
 

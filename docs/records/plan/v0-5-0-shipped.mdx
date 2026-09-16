@@ -14,7 +14,7 @@ The v0.5.0 plan ([`PHASE_8_v0_5_0_fresh_slate.md`](./phases/PHASE_8_v0_5_0_fresh
 The [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.mdx) ended with three structural ceilings that small recipe tweaks could not clear:
 
 1. The v0.1.0 tokenizer's byte-fallback rate on non-Latin scripts (the cause of 92% of country FN in the golden eval).
-2. The classifier doing boundary discovery and type classification at the same time via BIO labels (the cause of the bio_slip slice on `", 22220"` for `22220`).
+2. The classifier doing boundary discovery and type classification at the same time via BIO labels (the cause of the bio_slip class on `", 22220"` for `22220`).
 3. Stage 5 reconcile only sorting spans — it could not catch joint-incoherent parses like `NY-NY Steakhouse, Houston, TX`.
 
 Patching each ceiling individually meant three medium iterations. v0.5.0 bundles them into one **fresh-slate** ship — pay the cost once, clear all three at once.

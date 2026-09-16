@@ -108,7 +108,7 @@ export interface OutputTensor {
 
 /**
  * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair: pad to `fixedSeqLen` with id 0 + mask 0,
- * truncate if longer. `seqLen` is the real (unpadded) length every downstream read slices to.
+ * truncate if longer. `seqLen` is the real (unpadded) length every downstream read trims to.
  */
 export function packTokenFeed(
 	tokenIDs: number[],
@@ -132,7 +132,7 @@ export function packTokenFeed(
 
 /**
  * Pack a char-path encoding (`char_ids (S, W)` + `attention_mask (S)`, already S-padded by the encoder) into the two
- * int64 tensors the char graph declares. `seqLen` is the count of real units, what the logits are sliced back to.
+ * int64 tensors the char graph declares. `seqLen` is the count of real units, what the logits are trimmed back to.
  */
 export function packCharFeed(
 	charIDs: ReadonlyArray<readonly number[]>,
@@ -250,7 +250,7 @@ export function packSoftChannelFeeds(
 }
 
 /**
- * Decode a session's outputs into an {@link InferResult}, sliced to the real `seqLen` (the pad tail is never real).
+ * Decode a session's outputs into an {@link InferResult}, trimmed to the real `seqLen` (the pad tail is never real).
  * `localeLogits` and `spanScores` are optional exactly as the exports are — absent tensors yield absent fields.
  */
 export function decodeInferOutput(

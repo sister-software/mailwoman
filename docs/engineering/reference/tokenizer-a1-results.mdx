@@ -30,7 +30,7 @@ Fixture: same 43-line `data/eval/multi-script/v0.5.0-a0.jsonl` A0 used. Numbers 
 | ----------- | --------- | --------- | ------------ | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **overall** | **36.7%** | **18.2%** | **−18.5 pt** | 18.0%          | +0.2 pt     | halved vs A0; lands on the v0.1.0 leakage floor. Misses the plan's `<5%` target — pulled by thai + residual cjk.                                                                                        |
 | cjk         | 80.0%     | 45.2%     | −34.8 pt     | 51.6%          | −6.4 pt     | **stretch hit** — beats v0.1.0 leakage floor. Largest non-Latin script class; this is the headline win.                                                                                                 |
-| cyrillic    | 2.2%      | 2.4%      | +0.2 pt      | 0.0%           | +2.4 pt     | within noise of A0. Eval fixture's Cyrillic slice is short / common-vocabulary; not enough surface for the B2 cyrl training file to change the number.                                                  |
+| cyrillic    | 2.2%      | 2.4%      | +0.2 pt      | 0.0%           | +2.4 pt     | within noise of A0. Eval fixture's Cyrillic rows are short / common-vocabulary; not enough surface for the B2 cyrl training file to change the number.                                                  |
 | armenian    | 21.3%     | **0.0%**  | −21.3 pt     | 0.0%           | 0.0 pt      | **stretch hit** — matches v0.1.0 leakage floor.                                                                                                                                                         |
 | greek       | 16.3%     | 12.5%     | −3.8 pt      | 0.0%           | +12.5 pt    | B2 does not cover Greek — modest improvement is character-coverage spillover.                                                                                                                           |
 | arabic      | 5.0%      | 4.8%      | −0.2 pt      | 0.0%           | +4.8 pt     | B2 does not cover Arabic — essentially flat.                                                                                                                                                            |
@@ -56,7 +56,7 @@ A1 is a material improvement over A0 on every targeted script and preserves the 
 2. The covered scripts hit or beat their floor (cjk, cyrillic-noise, armenian).
 3. C-train's classifier consumes the tokenizer; it does not need `<5%` byte-fallback to ship Tier 2 BIO labels on en-US / fr-FR. Latin improved.
 
-The follow-up work for `<5%` overall is a **Thread B3**: extend `TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` to `grek`, `arab`, `hebr`, `deva`, `thai` (per [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx#scope) — these are noted as additive / deferred), regenerate the deepseek slice, retrain as `v0.5.0-a2`. Treating this as a separate thread keeps C-train unblocked.
+The follow-up work for `<5%` overall is a **Thread B3**: extend `TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` to `grek`, `arab`, `hebr`, `deva`, `thai` (per [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx#scope) — these are noted as additive / deferred), regenerate the deepseek rows, retrain as `v0.5.0-a2`. Treating this as a separate thread keeps C-train unblocked.
 
 ## Model card
 

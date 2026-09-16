@@ -196,7 +196,7 @@
  *   A query that instead WRITES the same place with spaces ("Stockton on Tees") groups into three
  *   `▁`-delimited words, and its space-joined window key (`"stockton on tees"`) never matches that
  *   concatenated index entry. So every window is probed under BOTH candidate keys — the space-join AND the
- *   bare concatenation (`slice.map(fstToken).join("")`) — for BOTH the X and Y role, since either side of a
+ *   bare concatenation (`groups.map(fstToken).join("")`) — for BOTH the X and Y role, since either side of a
  *   real pair can be the multi-word one. `probeWindows` tries the four `(x-form, y-form)` combinations in a
  *   fixed order — space/space, space/concat, concat/space, concat/concat — and returns on the first hit: a
  *   real index cannot disagree with itself on the SAME pair of real-world places, but if a contrived index
@@ -591,15 +591,15 @@ function probeWindowPair(
  * Build the candidate for an explicit inclusive `[startPos, endPos]` word-group range (the anchored-mode selector).
  */
 function makeCandidateWindow(nonEmptyGroups: readonly WordGroup[], startPos: number, endPos: number): CandidateWindow {
-	const slice = nonEmptyGroups.slice(startPos, endPos + 1)
-	const tokens = slice.map((g) => g.fstToken)
+	const groups = nonEmptyGroups.slice(startPos, endPos + 1)
+	const tokens = groups.map((g) => g.fstToken)
 
 	return {
 		key: tokens.join(" "),
 		concatKey: tokens.join(""),
 		startPos,
 		endPos,
-		pieceIndices: slice.flatMap((g) => g.pieceIndices),
+		pieceIndices: groups.flatMap((g) => g.pieceIndices),
 	}
 }
 

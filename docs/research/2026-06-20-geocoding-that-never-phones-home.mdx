@@ -24,9 +24,9 @@ So the menu is: rent it and leak the query, host it and run a cluster, or parse 
 
 ## What if it just ran on the device
 
-The whole pipeline, parse and then resolve to a coordinate, runs client-side. The parser is a 29.8 MB int8 ONNX model executed by `onnxruntime-web`. The gazetteer is a single global SQLite file, around 530 MB covering every country we resolve against, and the page never downloads it. It reads it over HTTP range requests, pulling roughly a dozen small slices to answer a query instead of fetching the file. No Elasticsearch, no PostGIS, no native module to compile: the resolver is plain `node:sqlite`, and the same code runs in Node and in a tab.
+The whole pipeline, parse and then resolve to a coordinate, runs client-side. The parser is a 29.8 MB int8 ONNX model executed by `onnxruntime-web`. The gazetteer is a single global SQLite file, around 530 MB covering every country we resolve against, and the page never downloads it. It reads it over HTTP range requests, pulling roughly a dozen small ranges to answer a query instead of fetching the file. No Elasticsearch, no PostGIS, no native module to compile: the resolver is plain `node:sqlite`, and the same code runs in Node and in a tab.
 
-The "dozen slices instead of the whole file" part has its own story. It used to take 243 round trips, and getting it down to twelve meant rethinking how the database is indexed rather than how it's fetched. That's [a whole separate post](/research/243-round-trips-to-find-a-city). The point here is the consequence: a global geocoder that fits through a straw, with no server at the other end of it.
+The "dozen ranges instead of the whole file" part has its own story. It used to take 243 round trips, and getting it down to twelve meant rethinking how the database is indexed rather than how it's fetched. That's [a whole separate post](/research/243-round-trips-to-find-a-city). The point here is the consequence: a global geocoder that fits through a straw, with no server at the other end of it.
 
 ## A neural parser the size of a photo
 

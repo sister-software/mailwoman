@@ -13,7 +13,7 @@
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import type { SliceRecipeOpts } from "@mailwoman/corpus"
+import type { RecipeOptions } from "@mailwoman/corpus"
 import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
 import { Box, Text } from "ink"
 
@@ -76,19 +76,19 @@ const num = (s: string | undefined): number | undefined => (s == null ? undefine
 
 const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { getSliceRecipe, listSliceRecipes } = await import("@mailwoman/corpus")
+		const { getRecipe, listRecipes } = await import("@mailwoman/corpus")
 
 		if (options.list || !args.length) {
 			return [
 				"recipes:",
-				...listSliceRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
+				...listRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
 				"",
 				"usage: mailwoman corpus slice <recipe> --out <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
 			]
 		}
 
 		const name = args[0]!
-		const recipe = getSliceRecipe(name)
+		const recipe = getRecipe(name)
 
 		if (!recipe) {
 			throw new CommandError(`unknown recipe "${name}". Run \`mailwoman corpus slice --list\`.`)
@@ -103,7 +103,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		const seed = options.seed != null ? Number(options.seed) : Date.now()
 
-		const opts: SliceRecipeOpts = {
+		const opts: RecipeOptions = {
 			output: options.out,
 			seed,
 			variants: countOption(options.variants, 1),

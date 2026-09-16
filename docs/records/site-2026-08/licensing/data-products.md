@@ -464,7 +464,7 @@ work happens at public block granularity plus the address spine we already own.
 ## What is not on this shelf
 
 - **Build inputs.** Postcode extracts, `tiger.db`, the durable GeoNames alias fold, and the raw
-  Overture parquet slices are intermediates that feed the artifacts above. They are documented
+  Overture parquet extracts are intermediates that feed the artifacts above. They are documented
   in the build runbooks, not here.
 - **Demo assets.** The map-highlight polygons and the address-coverage tile overlay exist to make
   the demo work; see the [coverage overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).

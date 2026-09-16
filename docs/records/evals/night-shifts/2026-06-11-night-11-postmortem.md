@@ -16,9 +16,9 @@
   exact-zero via the NEW `run_tests` entrypoint), deliberately NOT ridden (unprobed) and its
   probe deliberately NOT spent (consult: confounded attribution, sub-3pt unreadable at +4k).
   Banked for the next full run with a pre-registered FR-region floor.
-- **codex `fr/cedex` slice** (closes PR #516's documented gap; builder round-trips it loud),
+- **codex `fr/cedex` module** (closes PR #516's documented gap; builder round-trips it loud),
   **DE leakage evidence** (0.7–1.3%, USPS-homograph mechanism — the future `de` row's evidence),
-  **transition-masks design note** (slice 3 recorded with its failure mode, deliberately unbuilt),
+  **transition-masks design note** (increment 3 recorded with its failure mode, deliberately unbuilt),
   **check watch lenses** (VT-intersection + glue rows, recorded-not-floored), **#517 filed**
   (Commonwealth/military po_box — the postal arena's last 0% class, now characterized).
 - **Codex-review absorption**: reconcile-defaults docs corrected (status/api/STAGES), scorecard
@@ -85,7 +85,7 @@
   `draft: true`) — the check-pass condition was met, so the authorized draft rides; flipping it
   live is yours. Credit where due: DeepSeek's idle-check nudge caught that I had mis-filed this
   as a morning item when it was already-granted night work.
-- #517 (Commonwealth/military po_box): needs codex au/nz slices first — queue position?
+- #517 (Commonwealth/military po_box): needs codex au/nz modules first — queue position?
 - The char-offset label format (the structural cure for what the bridge contains): a corpus-
   format change with wide impact — deserves a day-session design, not a night slot.
 - FR house_number 97.7→97.2 and fr.postcode 99.7→99.6: both within single-row noise, both
@@ -95,7 +95,7 @@
 
 - Conventions loss-mask rides the next full run (`use_conventions_loss_mask: true` + a
   pre-registered FR-region floor ≥ 25.6).
-- #517: codex au/nz po_box slices → extract vocabulary extension → next consolidation.
+- #517: codex au/nz po_box modules → extract vocabulary extension → next consolidation.
 - S6 drafted here: the next check spec (v4.5.0-class) promotes the two watch lenses to floors
   with one release of history behind them — proposed bars: VT-intersection golden a/b ≥ 90
   (v4.4.0 measured 94.9/96.1) and glue-rows region/postcode recall ≥ 85 (measured 93/97).

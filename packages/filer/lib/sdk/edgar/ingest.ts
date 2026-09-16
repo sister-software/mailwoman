@@ -48,8 +48,8 @@ import {
 import { parseExhibit21 } from "#sdk/exhibit21/index"
 
 /**
- * The slice of `SECClient` this module needs — JSON reads plus raw document reads. A real `createSECClient()` satisfies
- * it structurally, and a test substitutes an object literal rather than building an axios harness.
+ * The subset of `SECClient` this module needs — JSON reads plus raw document reads. A real `createSECClient()`
+ * satisfies it structurally, and a test substitutes an object literal rather than building an axios harness.
  */
 export interface SECIngestClient {
 	get<T>(input: string | URL): Promise<T>
