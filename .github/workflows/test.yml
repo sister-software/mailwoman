@@ -289,7 +289,7 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      # corpus-python's 971 tests — the training data loader, the relabel licensing, the dose
+      # corpus-python's 971 tests — the training data loader, the relabel licensing, the reps-per-row
       # derivation, the resume/LR restamp. CI ran ruff, mypy and bandit over this tree and never
       # pytest, so four of those tests were red on main and no check could see it: three called
       # `iter_encoded` with a None tokenizer that a later guard correctly refuses, and the

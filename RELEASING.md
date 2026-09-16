@@ -240,7 +240,7 @@ coverage immediately. The **browser demo does not.** It loads, over `sql.js-http
 - **admin tier** (locality/region/postcode): the global **candidate table** — `WofCandidateTableLookup`,
   `docs/src/shared/httpvfs-resolver.ts` → `adminGazetteerUrl()` in `resources.tsx`.
 - **street tier** (address points / interpolation): per-state `situs-<state>.db` / `interp-<state>.db`
-  database slices byte-ranged off R2 — `docs/src/pages/demo/index.tsx`. (Night-15, #583/#585/#638.)
+  byte ranges read off R2 from the database — `docs/src/pages/demo/index.tsx`. (Night-15, #583/#585/#638.)
 
 The candidate table (`build-candidate.ts`, 2026-06-20) **retired the slim `wof-hot.db`**: it's an FTS-free,
 `WITHOUT ROWID` B-tree keyed on `name_key` so a resolve is one contiguous probe (~12 range fetches/session

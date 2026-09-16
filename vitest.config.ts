@@ -113,7 +113,7 @@ export default defineConfig({
 		],
 	},
 	test: {
-		// isolate: false — a shared module graph per worker. Measured 2026-08-01: core+neural slice
+		// isolate: false — a shared module graph per worker. Measured 2026-08-01: core+neural together
 		// 8m23s → 1m30s (5.6×), full sweep 4m48s wall. Every test file used to re-transform and
 		// re-import the entire aliased workspace graph on its own; now each fork pays that once.
 		// The old isolate:true justification (libpostal's top-level await breaking `class extends`

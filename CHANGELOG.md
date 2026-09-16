@@ -116,32 +116,33 @@ condition and raised `ERR_MODULE_NOT_FOUND`. Three path-keyed registers had gone
 duplicate-export allowlist, the banned-vocabulary exemption, and both Vale code configs' sub-venue globs, none of
 which is a module specifier and none of which the new move operation can see.
 
-### Fixed — an overlay corpus resolved ONE slice of 706, silently
+### Fixed — an overlay corpus resolved ONE parquet file of 706, silently
 
 The 2026-09-01 vocabulary rename changed the manifest key the trainer's loader reads without migrating the
 manifests, which are immutable build artifacts. Measured on 2026-09-09: `v0.28.0-reviewed-postcode-tail`
-declares 706 train slices, and the loader resolved one — the overlay's own file — because the new key read
+declares 706 train parquet files, and the loader resolved one — the overlay's own file — because the new key read
 empty and the glob fallback saw only the overlay directory. A run would have trained on 22 rows and reported
 success; the `val` split raised `FileNotFoundError`, which is the only reason it surfaced. The loader and the
 overlay assembler now accept either spelling and write only the current one, so the strict partial-resolution
-guard sees the declared slices and reports honestly. The assembler also takes a SET of parquets: eight chained
-single-slice overlays would leave seven dead directories and an eight-deep base chain for one version.
+guard sees the declared files and reports honestly. The assembler also takes a SET of parquets: eight chained
+single-file overlays would leave seven dead directories and an eight-deep base chain for one version.
 
 `mailwoman corpus slice --variants 0` was silently one, because the command read `Number(options.variants) || 1`
-and zero is falsy. It doubled a slice built to emit only its self-contained rows: the po-box military slice came out
-at 10,558 rows against the 5,279 asked for. The count now goes through `countOption`, which also refuses a blank
-value, since `Number("")` is zero and would switch a slice off from the other direction. The `po-box` and
-`trailing-region` recipes honour `--source-name`, so a slice can be dosed apart from the rows that share its label
+and zero is falsy. It doubled a recipe output built to emit only its self-contained rows: the po-box military
+output came out at 10,558 rows against the 5,279 asked for. The count now goes through `countOption`, which also
+refuses a blank value, since `Number("")` is zero and would switch a recipe off from the other direction. The
+`po-box` and `trailing-region` recipes honour `--source-name`, so one output can take its own reps per row apart
+from the rows that share its label
 rather than drawing whatever they draw.
 
-### Added — the v5.4.0 target-family corpus and config, each family named by its dose
+### Added — the v5.4.0 target-family corpus and config, each family named by its reps per row
 
-`v0.29.0-target-families` is a pure overlay add of eight parquets, 390,903 rows, onto v0.28.0's 711 slices.
+`v0.29.0-target-families` is a pure overlay add of eight parquets, 390,903 rows, onto v0.28.0's 711 files.
 It carries the Singapore registers (142,083 rows, F6 and the SG board), the Pakistan and Bangladesh register
 lines (84,632) and the OpenStreetMap PK/BD/VN base formats (153,965) for F8, the corrected Spanish
 trailing-region surfaces (4,944) for F2, and the military po_box line (5,279) for F9. The config names each
 family in `source_doses` — reps per row, with the weight derived at launch — rather than guessing a weight:
-the six sources take 5.43% of the run, and the 2k probe holds the same 5.43% by dividing its doses by the step
+the six sources take 5.43% of the run, and the 2k probe holds the same 5.43% by dividing its reps by the step
 ratio. The launch log prints each derivation to three decimals, since a probe's exposures are legitimately
 below one and one decimal printed every one of them as zero. The OpenStreetMap sources are ODbL, so a
 proprietary build drops them from the mixture; the config header says so.
@@ -160,7 +161,7 @@ The locality-postcode family (#1821) reads 10 of 17, every Venezuelan row failin
 (#1754) 4 of 13. The grading and the case-file writer are one module, `grade-seed-cases.ts`, which the Singapore
 register board builder now shares.
 
-### Fixed — the trailing-region tuples name a Spanish region as its addresses do; a slice names its dose
+### Fixed — the trailing-region tuples name a Spanish region as its addresses do; a source names its reps per row
 
 The Spanish trailing-region tuples taught the region in English: 3,289 rows on disk carried `Balearic Islands` (113),
 `Corunna` (214) and the accent-stripped `Leon` (143), and zero carried `Illes Balears`, the surface of the board row
@@ -174,9 +175,10 @@ language, and `@mailwoman/codex/country`'s `regionLanguagesAlpha3` answers per r
 command that rebuilds them. Rebuilt, the Spanish tuples are 5,279 rows over 79 surfaces: `Islas Baleares`, `Illes
 Balears` and `Balearic Islands` at 101 each, `La Coruña`, `A Coruña` and `Corunna` at 163 each, `León` beside `Leon`.
 
-A training config may now name a slice's exposure instead of its weight (#1677): `source_doses` gives reps per row,
-and the trainer and the epoch audit derive the weight from the slice's row count and the run's samples at launch,
-printing the derivation. The 277-row slice that took 165 passes per row at weight 1.0 takes weight 0.030 for 5.
+A training config may now name a source's exposure instead of its weight (#1677): `source_doses` gives reps per row,
+and the trainer and the epoch audit derive the weight from the source's row count and the run's samples at launch,
+printing the derivation. The 277-row source that took 165 passes per row at weight 1.0 takes weight 0.030 for 5.
+(That key is `source_reps` now; this entry keeps the spelling the release shipped under.)
 
 ### Added — OpenStreetMap corpus rows for Pakistan, Bangladesh and Vietnam, behind `--exclude-share-alike`
 
@@ -485,7 +487,7 @@ The new names, by concept:
 | the geocode cascade's per-region databases | `mailwoman/geocode-regions`, `RegionDatabaseProvider`, `RegionDatabases`, `RegionDatabaseResolver`, `RegionDatabaseFactory`, `RegionDatabaseCacheEntry` |
 | the same, per source register              | `@mailwoman/ban`/`@mailwoman/osm` `sdk/region-database-provider`, `BANRegionDatabaseProvider`, `OSMRegionDatabaseProvider`                              |
 | WOF SQLite extracts                        | `@mailwoman/resolver-wof-sqlite/extracts`, `ExtractConfig`, `ResolvedExtract`, `resolveExtracts`, `pickExtractForPlacetype`, `wofExtractPaths`          |
-| a corpus recipe and its output             | `@mailwoman/corpus/recipes/*`, `CorpusRecipe`, and a corpus **slice**                                                                                   |
+| a corpus recipe and its output             | `@mailwoman/corpus/recipes/*`, `CorpusRecipe`, and a corpus **recipe output**                                                                           |
 | per-country postcode databases             | `@mailwoman/core/resources/whosonfirst/extract-repo`, and `database` throughout the gazetteer pipeline                                                  |
 
 **Migrating:** search your own source for the retired word — every import that carried it has a same-shaped

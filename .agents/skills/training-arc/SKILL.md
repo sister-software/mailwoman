@@ -8,7 +8,8 @@ description: Protocol for grading a model change. Control FIRST, run-shape as an
 Eight training runs in one session were graded candidate-vs-shipped, and every one reported a regression
 that was, in substantial part, the cost of fine-tuning at all. The controls that would have said so ran
 eighth and ninth instead of first. The full ledger is
-`docs/records/evals/retrospectives/2026-08-23-trailing-region-dose-arc.md`.
+`docs/records/evals/retrospectives/2026-08-23-trailing-region-dose-arc.md` — a dated record, so its
+filename keeps the spelling the arc was named under.
 
 Nothing below is style advice. Each step is a mistake that shipped.
 
@@ -135,8 +136,8 @@ measurement in this protocol.
   regardless of the row count. Check with `mwdev_coverage` before assuming a locale is taught.
 - **A hypothesis-bearing corpus change declares `data.required_corpus_receipts`.** Each receipt states
   the minimum sampled rows and may constrain source, country, and a contiguous component sequence.
-  Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU; a missing source or a zero-dose
-  label order must stop the run. A source file or rendering branch is not evidence that the sampler
+  Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU; a missing source, or a label
+  order whose source is drawn zero times, must stop the run. A source file or rendering branch is not evidence that the sampler
   reaches the target rows (#1869).
 
 ## Reporting — the structure is part of the protocol

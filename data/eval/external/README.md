@@ -191,7 +191,8 @@ Two German sets from OpenAddresses Berlin + Saxony support the multi-locale work
   same `ingest-openaddresses.ts`, selected with `--sources de/berlin,de/sn/statewide`.
 - **`openaddresses-de-golden.jsonl`** (1,500 records, held-out seed 7) is the
   _parser_ eval set (`{raw, components}` with street + house_number), rendered in
-  idiomatic German order. Built by `build-german-slice.mjs --golden`.
+  idiomatic German order. Built by the root script `build-german-shard.mjs --golden`, since deleted;
+  the recipe that replaced it is `packages/corpus/lib/de/recipes/locale.ts`.
 
 Two changes make non-US OpenAddresses usable here:
 
@@ -203,12 +204,12 @@ Two changes make non-US OpenAddresses usable here:
    to a US namesake (`Berlin` resolved to a 20k-pop US Berlin, coord ~5,940 km). Pass
    `--default-country DE` (or `none`) for non-US data and the coord drops to ~10 km.
 
-The German _training_ slice (`synth-german`, `corpus/lib/synthesize-german.ts`)
+The German _training_ recipe output (`synth-german`, now `packages/corpus/lib/de/recipes/locale.ts`)
 renders these real DE tuples in German order via the OpenCage `DE` template, so the
 model learns house-number-after-street and postcode-before-city. Run the German
 before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
 
-## ES/IT/NL — order-slice goldens (#241, 2026-07-02)
+## ES/IT/NL — field-order goldens (#241, 2026-07-02)
 
 Per-locale held-out parser goldens mirroring the German pattern above —
 `{raw, components, country, order}` rows rendered from REAL OpenAddresses
@@ -217,7 +218,7 @@ tuples by the `locale` recipe's `--golden` mode
 
 - **`openaddresses-es-golden.jsonl`** / **`openaddresses-it-golden.jsonl`** /
   **`openaddresses-nl-golden.jsonl`** (1,500 records each, held-out seed 7 vs
-  the training slices' seed 42 — the same seed split the DE golden used).
+  the training rows' seed 42 — the same seed split the DE golden used).
   ~60% native order (house-after-street, postcode-before-city), ~40%
   international; the `order` field stratifies them.
 - Surface diversity matches the observed eval forms: ES rows mix the

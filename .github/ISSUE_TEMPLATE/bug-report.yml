@@ -81,7 +81,7 @@ body:
         the CLI command and version). A measured zero states the coverage it
         was measured across; an unknown says the system did not measure.
       placeholder: |
-        41/58 rows resolved on the board slice (baseline 40/58).
+        41/58 rows resolved on the board subset (baseline 40/58).
         The one differing row is `07691 Portopetro, Illes Balears, Spain`.
         Measured with mwdev_run over the full board.
     validations:
