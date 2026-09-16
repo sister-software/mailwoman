@@ -3,72 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mailwoman data` command group's bundle registry (#task-6) — the consumer download path
- *   `mailwoman doctor`'s fix hints have pointed at (a bare `curl`) since the candidate/POI checks
- *   were written, without a command behind it. This module is the PURE half: what a bundle is, where
- *   its artifacts live on the public bucket, where they land on disk, and the present/missing/stale
- *   decision. `commands/data/pull.tsx` and `commands/data/status.tsx` own the IO (network + fs).
- *
- *   SURVEY (2026-08-03, this task): a one-time enumeration of what the public bucket serves, recorded
- *   here as the paper trail behind the `BUNDLES` table below. Every artifact resolves against
- *   `PUBLIC_BUCKET_BASE_URL` — a public, unauthenticated HTTPS base. No bucket name, no credentials,
- *   nothing a consumer of this package configures. 413 files total. What's there, by top-level prefix:
- *
- *   - `gazetteer/<date>/candidate.db` — 12 dated builds, `2026-06-20b` .. `2026-07-07a`. Only the
- *     LATEST is live (matches `doctor/checks.ts`'s `CANDIDATE_URL` before this change): 1,652,916,224
- *     bytes. The older dates are retained history, not alternates to offer.
- *   - `poi/<date>/poi.db` — 2 dated builds, `2026-07-19a` and `2026-07-20a` (latest, matches the
- *     demo's `POI_LAYER_VERSION`): 3,889,184,768 bytes.
- *   - `street/us/<slug>/{situs,interp}.db` — the 50-state + DC + VI national street tier, 52 slugs,
- *     103 files, 41,261,826,048 bytes total. `vi` ships `situs.db` only (no TIGER interpolation
- *     database for the territory — a real gap, not an omission here). Sizes recorded per-slug below.
- *   - `street/fr/2026-07-10/situs.db` — the FR national BAN rooftop database (situs-only, no
- *     interpolation tier; matches the demo's `NATIONAL_STREET_DATABASE_VERSION`), 6,952,509,440 bytes.
- *     `street/fr/national/situs.db` also exists (an older, pre-dated-convention upload) but nothing
- *     current points at it — not registered here.
- *   - `en-us/<version>/*` — the MODEL release assets (weights, tokenizer, FST, postcode binaries).
- *     Out of scope: those install via `npm install @mailwoman/neural-weights-en-us`
- *     (`doctor/checks.ts`'s `WEIGHTS_FIX`), not `mailwoman data pull`.
- *   - `pair-index/*.bin`, `sqljs/*` — small binaries the DEMO stages same-origin; not a
- *     server-side download consumers of this CLI would ever want as a "bundle".
- *
- *   NOT SHIPPED (checked, absent): no `timezone`/`nuts`/`un-locode` artifact anywhere under
- *   `mailwoman/` in the bucket — `@mailwoman/timezone-lookup` and `@mailwoman/nuts-lookup` build
- *   their own data locally today. No bundle is defined for them; inventing a path here would be
- *   exactly the mistake this task's brief warns against. Also checked and absent: an `.md5` sidecar
- *   for ANY object in the bucket (`{Path}.md5` — zero matches across all 413 files, and `rclone
- *   lsjson --hash` reports no native hash either, since these are multipart uploads). So every
- *   `BUNDLES` entry below carries `md5Sidecar: false` today; `needsDownload`'s md5-comparison branch
- *   exists and is unit-tested against synthetic remote state for the day a bundle publishes one (see
- *   `docs/scripts/publish-demo-assets-to-r2.py` / `gazetteer publish` — neither writes a sidecar yet).
- *
- *   LOCAL PATH CONVENTIONS — confirmed by reading the actual consumers, not assumed:
- *
- *   - `candidate`: `<dataRoot>/wof/candidate.db` — `doctor/runner.ts`'s `conventionCandidatePath`.
- *   - `poi`: `<dataRoot>/poi/poi.db` — `doctor/runner.ts`'s `poiPath()`.
- *   - `us`: `<dataRoot>/address-points/address-points-us-<slug>.db` and
- *     `<dataRoot>/interpolation/interpolation-us-<slug>.db` — `geocode-core.ts`'s
- *     `selectAddressPointsDB`/`selectInterpolationDB`, the SAME convention `resolveDatabasePath`
- *     (`data-release.ts`) understands for the `"address-points"`/`"interpolation"` families. A
- *     `releases.json` pinning either family to a version routes the download to the VERSIONED
- *     filename (`resolveBundleArtifacts`, below) so a later `mailwoman geocode` run resolves it.
- *   - `fr`: `<dataRoot>/ban/address-points-fr.db` — `ban/scripts/build-address-point-database.ts`'s own
- *     default `--out` (`dataRootPath("ban", "address-points-fr.db")`), which is also where
- *     `BANRegionDatabaseProvider` looks. `mailwoman geocode` wires that provider (`commands/geocode.tsx`
- *     imports `@mailwoman/ban/sdk` and passes `nationalDatabases`), so pulling this bundle is sufficient
- *     — a French address resolves to the `address_point` tier with no further configuration
- *     (re-verified 2026-08-04 on four Paris addresses, uncertainty 1 m). What FR still lacks is the
- *     INTERPOLATION tier: a BAN miss falls straight through to admin rather than estimating along the
- *     street, because no French interpolation database is built.
+ *   Registry for downloadable public-data bundles. It defines remote artifacts, their local paths,
+ *   and whether local state is current; the data commands own network and filesystem I/O.
  */
 
 import type { DataReleaseManifest } from "#data/release"
 
 /**
- * The public, unauthenticated bucket every bundle artifact resolves against — the same host `doctor/checks.ts`'s
- * (now-removed) `CANDIDATE_URL`/`POI_URL` and the browser runtime's `ASSET_BASE_URL`
- * (`packages/mailwoman/lib/browser-runtime/resources.ts`) point at. No credentials: this is the read side of the R2
- * bucket `commands/tiles/publish.tsx`/`commands/gazetteer/publish.tsx` write to.
+ * Public base URL for bundle artifacts.
  */
 export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 

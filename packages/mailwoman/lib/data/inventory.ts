@@ -3,24 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What is in the data root, and for each artifact whether it can say how it was built.
- *
- *   Phase 1 of the lab-reproducibility sequence (`docs/superpowers/specs/2026-08-17-lab-reproducibility-
- *   strategy.md`). The contract it reports against already exists — `layer_manifest` / `layer_coverage`,
- *   specified in `docs/engineering/reference/layer-contract.mdx` — and the finding that prompted this is
- *   that it is implemented on a minority of the built databases. The gap is an unfinished rollout, not a
- *   missing design, which is why the answer is a scoreboard rather than a new mechanism.
- *
- *   DATABASES ARE THE UNIT, because `layer_manifest` is a table: provenance lives inside SQLite artifacts
- *   and nowhere else, so a walk that reported every file would count parquet databases and tiles it could
- *   never classify. The report says what it did not look at rather than implying coverage it lacks.
- *
- *   IT DOES NOT SIZE THE ROOT. `du` over ~744 GB takes minutes and answers a different question — disk
- *   pressure, not reproducibility. Sizes here come from `stat` on each database, which is free.
- *
- *   A SYMLINK IS A DECISION. `candidate.db` is a symlink to one of about ten candidate builds, and which
- *   one is live is expressed in that link and nowhere else. Reporting the target makes a real choice
- *   visible instead of leaving it as a filesystem detail.
+ *   Inventories databases in the data root and reports their provenance and symlink targets.
  */
 
 import { pathExists, readLink, isSymbolicLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
