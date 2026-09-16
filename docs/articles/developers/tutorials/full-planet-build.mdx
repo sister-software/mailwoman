@@ -138,7 +138,7 @@ done
 7.3 MB of gzipped CSV. Then build:
 
 ```bash
-node node_modules/@mailwoman/ban/out/scripts/build-address-point-extract.js \
+node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js \
   --csv-dir "$MAILWOMAN_DATA_ROOT/ban/sources" --depts 48,2A,05 \
   --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db"
 ```

@@ -10,7 +10,7 @@
  *   (adresse.data.gouv.fr, Licence Ouverte/Etalab) and writes a national FR extract on the SHARED situs
  *   schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`), so the existing
  *   `AddressPointSqliteLookup` reads it with zero changes. See `./sdk` for the ingestion surface and
- *   `./scripts/build-address-point-extract` for the build CLI.
+ *   `./scripts/build/address-point-database` for the build CLI.
  */
 
 export * from "#sdk/index"

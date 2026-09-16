@@ -34,7 +34,7 @@ import {
 
 /**
  * The columns this lookup projects — a typed projection of the SHARED {@link AddressPointTable}, so a column rename in
- * `build-address-point-extract.ts` (the writer) is a compile error here (the reader).
+ * `mailwoman situs address-points` (the writer) is a compile error here (the reader).
  */
 type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release" | "locality_norm" | "postcode">
 

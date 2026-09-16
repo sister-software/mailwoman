@@ -12,7 +12,7 @@
  *   sparse to bracket.
  *
  *   Matching key is `street_key` — THE shared normalizer plus the route fold
- *   (`canonicalizeRouteKey`), identical at build time (`scripts/build-address-point-extract.ts`) and
+ *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and
  *   query time, by construction. Scope is postcode-first like the segment tier; a query without a
  *   postcode goes straight to the fallback (which carries its own statewide-ambiguity abstention).
  *

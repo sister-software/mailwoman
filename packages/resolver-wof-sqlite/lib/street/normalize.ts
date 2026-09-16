@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   THE street normalizer for the address-point tier (#476). One function, used by BOTH the extract
- *   builder (`scripts/build-address-point-extract.ts`) and the lookup tier (`address-point.ts`) —
+ *   builder (`mailwoman situs address-points`) and the lookup tier (`address/point/index.ts`) —
  *   never two implementations (the PLACETYPE_ORDER lesson: parallel copies silently corrupt).
  *
  *   Normalization contract (deliberately aggressive — both sides apply the same function, so

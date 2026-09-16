@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for the SITUS / rooftop ADDRESS-POINT extracts (`address-points-<cc>-<slug>.db`, built
- *   by `scripts/build-address-point-extract.ts` — the #476/#567 national rooftop tier behind the
- *   demo's "type any US address, get the building"). Single source of truth for the columns shared
+ *   by `mailwoman situs address-points` and by `@mailwoman/ban`'s `./scripts/build/address-point-database`
+ *   — the #476/#567 national rooftop tier behind the demo's "type any US address, get the building").
+ *   Two writers share one schema, which is why it lives here. Single source of truth for the columns shared
  *   by the BUILDER and the READER ({@link AddressPointSqliteLookup}), so a column rename in one is a
  *   compile error in the other.
  *

@@ -22,10 +22,12 @@
  *   extract ships under the same terms as the permissive core — no ODbL counsel sign-off. `source = "ban:fr"`.
  *
  *   Usage:
- *     node ban/out/scripts/build-address-point-extract.js \
+ *     node packages/ban/lib/scripts/build/address-point-database.ts \
  *       --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
  *     # validate on a few départements first:
- *     node ban/out/scripts/build-address-point-extract.js --depts 48,2A,05 --out /tmp/ban-sample.db
+ *     node packages/ban/lib/scripts/build/address-point-database.ts --depts 48,2A,05 --out /tmp/ban-sample.db
+ *     # from an installed package, through the `./scripts/*` export:
+ *     node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js --help
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
