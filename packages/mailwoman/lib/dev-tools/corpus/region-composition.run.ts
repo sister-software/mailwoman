@@ -28,13 +28,12 @@
  */
 
 import { US_STATE_ABBREVIATIONS, lookupUSState } from "@mailwoman/codex/us/state"
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
-import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/utils/parquet"
-import { join } from "path-ts"
+
+import { openMixture, readMixtureFiles } from "#dev-tools/corpus/mixture"
 
 const DEFAULT_CORPUS = String(
 	dataRootPath("corpus", "versioned", "v0.31.0-region-code-and-unit", "corpus-v0.31.0-region-code-and-unit")
@@ -59,62 +58,12 @@ const { values } = parseArguments({
 	},
 })
 
-/**
- * One parquet file as the corpus manifest records it.
- */
-interface ManifestSlice {
-	split: string
-	path: string
-	rows: number
-}
+const mixture = await readMixtureFiles(values.corpus!, values.split!, values.files ? Number(values.files) : undefined)
 
-interface CorpusManifest {
-	corpus_version: string
-	total_rows: number
-	slices: ManifestSlice[]
-}
-
-/**
- * The manifest records the path the builder wrote under, which is the Modal volume mount rather than this checkout's
- * data root. Both spell the same tree below their first segment.
- */
-const MANIFEST_ROOT = "/data/"
-
-function localPath(manifestPath: string): string {
-	return manifestPath.startsWith(MANIFEST_ROOT)
-		? String(join(mailwomanDataRoot(), manifestPath.slice(MANIFEST_ROOT.length)))
-		: manifestPath
-}
-
-const manifest = await readLocalJSONFile<CorpusManifest>(join(values.corpus!, "MANIFEST.json"))
-const slices = manifest.slices.filter((entry) => entry.split === values.split)
-
-if (!slices.length) {
-	throw new Error(
-		`${values.corpus}/MANIFEST.json records no ${values.split} split — it carries ` +
-			`${[...new Set(manifest.slices.map((entry) => entry.split))].toSorted().join(", ")}.`
-	)
-}
-
-const files: string[] = []
-const requested = values.files ? slices.slice(0, Number(values.files)) : slices
-
-for (const entry of requested) {
-	const path = localPath(entry.path)
-
-	if (!(await pathExists(path))) {
-		throw new Error(`${entry.path} resolves to ${path}, which is not on this host. The corpus is not materialized.`)
-	}
-
-	files.push(path)
-}
-
-const db = await connectDuckDB()
-
-await db.run(`SET memory_limit='${escapeSQLString(values["memory-limit"]!)}'`)
-await db.run(`SET threads=${Number(values.threads)}`)
-
-const fileList = files.map((path) => `'${escapeSQLString(path)}'`).join(", ")
+const { db, fileList } = await openMixture(mixture.files, {
+	memoryLimit: values["memory-limit"]!,
+	threads: Number(values.threads),
+})
 
 /**
  * `span_starts` and `span_ends` are character offsets into `raw`, and `span_tags` is the parallel tag list, so the
@@ -138,8 +87,8 @@ const started = Date.now()
 const reader = await db.runAndReadAll(sql)
 
 console.log(
-	`${manifest.corpus_version} ${values.split}: ${files.length} of ${slices.length} file(s), ` +
-		`${requested.reduce((sum, entry) => sum + entry.rows, 0).toLocaleString()} rows, ${Date.now() - started} ms\n`
+	`${mixture.manifest.corpus_version} ${values.split}: ${mixture.files.length} of ${mixture.available} file(s), ` +
+		`${mixture.rows.toLocaleString()} rows, ${Date.now() - started} ms\n`
 )
 
 /**
@@ -243,9 +192,9 @@ console.log(`\nregions with no row at all: ${!absent.length ? "none" : absent.jo
 if (values["out-json"]) {
 	await writeLocalJSONFile(
 		{
-			corpus_version: manifest.corpus_version,
+			corpus_version: mixture.manifest.corpus_version,
 			split: values.split,
-			files: files.length,
+			files: mixture.files.length,
 			pooled: Object.fromEntries(ranked),
 			sources: sources.map((entry) => ({
 				source: entry.source,
