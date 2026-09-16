@@ -6,10 +6,9 @@
  * ahead of it. This renders one set of real localities four ways and reports the locality-match rate of each, so the
  * three-arm table on the issue and the REVERSE risk are one measurement rather than two.
  *
- * The reverse arm is the half a three-arm table cannot show. Teaching `«locality», «region» «postcode»` risks the
- * inverse — a genuine street before a region code read as a locality — and the only way to see it is to ask for a
- * street in that exact position and count how often it comes back tagged `locality`. A row whose locality is null there
- * is CORRECT.
+ * Teaching `«locality», «region» «postcode»` risks the inverse: a genuine street before a region code read as a
+ * locality. The reverse arm measures it by putting a street in that position and counting how often it comes back
+ * tagged `locality`. A row whose locality is null there is CORRECT.
  *
  * The panel is derived from the US coordinate set, one row per distinct locality, and the street arm reuses that row's
  * own street so no arm invents an address that does not exist.
@@ -109,9 +108,8 @@ const ARMS = [
 		render: (row: ArmRow) => renderAdmin(row, { house_number: "123", street: "Main St" }),
 	},
 	{
-		// The ONE arm no layout can write, and that is the point: it puts a street name where a LOCALITY belongs, to
-		// check the model does not read it as one. A renderer that produces well-formed addresses cannot express a
-		// deliberate malformation, so this arm keeps its literal and says why.
+		// This arm puts a street name where a locality belongs, to check the model does not read it as one. A layout
+		// renders well-formed addresses and cannot express that, so this arm keeps a literal.
 		name: "street_only",
 		inverted: true,
 		render: (row: ArmRow) => `${row.street}, ${row.region} ${row.postcode}`,

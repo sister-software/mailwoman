@@ -2,9 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The coordinate panel as a panel — reading it, writing a row through its country's layout, and the one split
- *   every probe over it stratifies by. Shared by the tools that measure the bare admin surface, because each of these
- *   was written twice before it was written once.
+ * @file Reading a coordinate eval set as a panel, writing a row through its country's layout, and the suffix split the
+ *   probes over it stratify by. Shared by the tools that measure the bare admin surface.
  */
 
 import { type ComponentDict, formatAddress } from "@mailwoman/codex/address-format"
@@ -50,8 +49,8 @@ export interface PanelLocality {
 export interface CoordPanel {
 	localities: PanelLocality[]
 	/**
-	 * Rows whose expected locality carried a trailing parenthetical, stripped before grading. Reported rather than
-	 * silent: a normalizer nobody counts is a grader quietly deciding what correct means.
+	 * Rows whose expected locality carried a trailing parenthetical, stripped before grading. Counted so a caller can see
+	 * how much of the panel the normalizer changed.
 	 */
 	qualifiersStripped: number
 }
