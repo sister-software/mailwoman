@@ -45,8 +45,19 @@ export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
  *
  * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name` — the CITY for the IN/MX/PT-shaped
  * exports whose `place` column is a street or colonia.
+ *
+ * `latitude`/`longitude` are the POSTCODE's coordinate, not the locality's. A consumer grading distance to a place
+ * needs a gazetteer centroid instead.
  */
-export const GEONAMES_POSTAL_COLUMNS = { country: 0, postcode: 1, place: 2, admin1Name: 3, admin2Name: 5 } as const
+export const GEONAMES_POSTAL_COLUMNS = {
+	country: 0,
+	postcode: 1,
+	place: 2,
+	admin1Name: 3,
+	admin2Name: 5,
+	latitude: 9,
+	longitude: 10,
+} as const
 
 export function createGeonamesPostalAdapter(): CorpusAdapter {
 	return {

@@ -72,16 +72,23 @@ const { db, fileList } = await openMixture(mixture.files, {
  */
 const sql = `
 WITH us AS (
-	SELECT source, raw, span_starts, span_ends, list_position(span_tags, 'region') AS i
+	SELECT
+		source,
+		raw,
+		span_starts,
+		span_ends,
+		list_position(span_tags, 'region') AS i,
+		list_contains(span_tags, 'street') AS has_street
 	FROM read_parquet([${fileList}])
 	WHERE country = 'US'
 )
 SELECT
 	source,
 	CASE WHEN i IS NULL THEN NULL ELSE substring(raw, span_starts[i] + 1, span_ends[i] - span_starts[i]) END AS region,
+	has_street,
 	count(*) AS n
 FROM us
-GROUP BY 1, 2`
+GROUP BY 1, 2, 3`
 
 const started = Date.now()
 const reader = await db.runAndReadAll(sql)
@@ -102,6 +109,12 @@ interface SourceComposition {
 }
 
 const bySource = new Map<string, SourceComposition>()
+
+/**
+ * Per region: rows, and how many of them carry a `street` span. The bare admin surface under test has no street in it,
+ * so a region whose corpus mass is street-bearing has seen its region code mostly in company the probe does not offer.
+ */
+const streetBearing = new Map<string, { rows: number; withStreet: number }>()
 
 for (const row of reader.getRowObjects()) {
 	const source = String(row.source)
@@ -125,6 +138,16 @@ for (const row of reader.getRowObjects()) {
 
 	if (code) {
 		entry.byRegion.set(code, (entry.byRegion.get(code) ?? 0) + rows)
+
+		const shape = streetBearing.get(code) ?? { rows: 0, withStreet: 0 }
+
+		shape.rows += rows
+
+		if (row.has_street) {
+			shape.withStreet += rows
+		}
+
+		streetBearing.set(code, shape)
 	} else {
 		entry.unfolded.set(surface, (entry.unfolded.get(surface) ?? 0) + rows)
 	}
@@ -175,14 +198,19 @@ console.log(
 		`${pooledTotal.toLocaleString()} region-bearing US rows\n`
 )
 
-console.log(`| region | rows | share |`)
-console.log(`| --- | --: | --: |`)
+console.log(`| region | rows | share | carries a street |`)
+console.log(`| --- | --: | --: | --: |`)
 
 const ranked = [...pooled].toSorted((a, b) => b[1] - a[1])
 const detail = Number(values.detail)
 
 for (const [code, n] of [...ranked.slice(0, detail), ...ranked.slice(-detail)]) {
-	console.log(`| ${code} | ${n.toLocaleString()} | ${formatPercent(n, pooledTotal)} |`)
+	const shape = streetBearing.get(code)
+
+	console.log(
+		`| ${code} | ${n.toLocaleString()} | ${formatPercent(n, pooledTotal)} ` +
+			`| ${shape ? formatPercent(shape.withStreet, shape.rows) : "—"} |`
+	)
 }
 
 const absent = US_STATE_ABBREVIATIONS.filter((code) => !pooled.has(code))
@@ -196,6 +224,9 @@ if (values["out-json"]) {
 			split: values.split,
 			files: mixture.files.length,
 			pooled: Object.fromEntries(ranked),
+			street_bearing: Object.fromEntries(
+				[...streetBearing].map(([code, shape]) => [code, { rows: shape.rows, with_street: shape.withStreet }])
+			),
 			sources: sources.map((entry) => ({
 				source: entry.source,
 				no_region_span: entry.noRegionSpan,
