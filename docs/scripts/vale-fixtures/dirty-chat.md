@@ -86,6 +86,10 @@ The fine-tune tax means the run pays the tax twice; yesterday paid the tax,
 but this one is nearly free — it costs nothing: a free lunch, a free win, a
 cheap win, done for free. It also costs approximately nothing.
 
+Price the change first, then price it in; we priced the ratio and priced out
+the rest. It is worth the cost, it pays for itself, it paid for itself at zero
+cost, and it buys you a clean board.
+
 That is tomorrow's work — a good place to pause; we've accomplished a lot,
 so let's pick this up and call it a night, winding down. Pick it up later.
 
@@ -126,6 +130,14 @@ match.)
 
 Spend was $29 of the $40 Modal budget. (EconomyMetaphor: a real dollar
 figure with its budget named is not a metaphor.)
+
+The cost of the rebuild was 40 minutes and a 16 GB heap; the cost per row is
+two lookups. (EconomyMetaphor: `cost` WITH ITS UNIT is what the rule asks for,
+so the noun must stay quiet — it is the remedy, not the offence.)
+
+The worker allowlists two Price ids and the shop provisions both Prices.
+(EconomyMetaphor: `Price` is a Stripe API object, a third-party contract like
+axios's `HttpStatusCode`, and 106 sites in `packages/license-worker` name it.)
 
 The recipe sits in `packages/corpus/lib/extract-recipes/` as
 `synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked

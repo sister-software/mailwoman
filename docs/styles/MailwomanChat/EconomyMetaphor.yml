@@ -5,6 +5,21 @@
 ## metaphor hides which one. State the actual cost with its unit. A REAL
 ## dollar figure ("$29 of the $40 Modal budget") is not a metaphor and no
 ## token here matches it.
+##
+## `price` AS A VERB is the same move one step further in: "price that ratio",
+## "price the change first" say that something should be weighed without
+## saying against what, in what unit, or by which measurement. Write the
+## measurement — "run the census over all 241", "measure the label ratio in
+## `suffix-boundary-v2.jsonl`".
+##
+## THE NOUNS ARE NOT BANNED, and the distinction is load-bearing rather than a
+## carve-out. `cost` with a unit is this rule's own REMEDY — the message below
+## asks for it by name — and 135 sites already write it that way. `Price` with
+## a capital P is a Stripe API object: 106 sites in `packages/license-worker`
+## and `@mailwoman/ops-cli` name Price ids, the Price allowlist and the two
+## Prices the shop provisions, which is a third-party contract in the same
+## class as axios's `HttpStatusCode`. A rule that refused those would be
+## refusing correct writing, and its first fix would be an exemption list.
 extends: existence
 message: "'%s' is a monetary metaphor — state the actual cost and its unit (rows regressed, minutes, dollars of which budget)."
 level: error
@@ -19,3 +34,11 @@ tokens:
   - free lunch
   - free win
   - cheap win
+  # `price` as a verb: weighing something without naming the unit or the measurement.
+  - pric(?:e|es|ed|ing) (?:the|that|this|a|an|it|them|its|their|each|every|what)\b
+  - pric(?:e|es|ed|ing) (?:in|out|up)\b
+  - worth the (?:cost|price|spend)
+  - pays? for (?:itself|themselves)
+  - paid for itself
+  - at (?:zero|no) cost
+  - buys? (?:you|us|it)
