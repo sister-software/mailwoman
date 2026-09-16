@@ -9,6 +9,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
@@ -309,11 +310,20 @@ function droppedRow(run: GeocodeRun): string[] {
 }
 
 function refusalRow(run: GeocodeRun): string[] {
-	const markers = (run.result as { intent_markers?: Array<{ kind: string; evidence?: string }> }).intent_markers
+	const markers = (run.result as { intent_markers?: QueryIntentMarker[] }).intent_markers
 
 	if (!markers?.length) return []
 
-	const named = markers.map((m) => (m.evidence ? `${m.kind} (${m.evidence})` : m.kind)).join(", ")
+	// `evidence` is the marker's MEASUREMENT (`Record<string, unknown>`), so it is serialized rather than interpolated;
+	// a template literal renders it `[object Object]` and the line then names a refusal it cannot justify. `mechanism`
+	// is the `family:rule` that fired and is what a reader acts on — the kind alone does not say which rule refused.
+	const named = markers
+		.map((marker) => {
+			const evidence = marker.evidence ? ` ${stringifyJSON(marker.evidence)}` : ""
+
+			return `${marker.kind} via ${marker.mechanism}${evidence}`
+		})
+		.join(", ")
 
 	return [
 		`intent: REFUSED as ${named} — the #1649 check discarded a completed parse rather than the parse failing. ` +
