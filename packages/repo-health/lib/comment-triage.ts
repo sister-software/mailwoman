@@ -7,11 +7,13 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { runFile } from "@mailwoman/core/process"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { relative, resolvePath } from "path-ts"
+import { relative, resolvePath, type PathBuilderLike } from "path-ts"
 import ts from "typescript"
 
-export type CommentKind = "line" | "block" | "jsdoc"
+export type CommentKind = "line" | "block" | "jsdoc" | "docstring"
 
 export type TriageCategory = "outdated" | "sensational" | "unclear" | "overly_verbose"
 
@@ -52,7 +54,7 @@ CREATE TABLE IF NOT EXISTS source_comment (
   start_column INTEGER NOT NULL,
   end_line INTEGER NOT NULL,
   end_column INTEGER NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('line', 'block', 'jsdoc')),
+  kind TEXT NOT NULL CHECK (kind IN ('line', 'block', 'jsdoc', 'docstring')),
   text TEXT NOT NULL,
   content_hash TEXT NOT NULL,
   observed_at TEXT NOT NULL
@@ -132,6 +134,39 @@ export function sourceComments(path: string, text: string): SourceComment[] {
 	return comments
 }
 
+interface PythonCommentNode {
+	start: number
+	end: number
+	startLine: number
+	startColumn: number
+	endLine: number
+	endColumn: number
+	kind: "line" | "docstring"
+	text: string
+}
+
+/**
+ * Read Python line comments and module docstrings with the standard-library tokenizer and AST.
+ */
+export async function pythonSourceComments(
+	repoRoot: PathBuilderLike,
+	files: readonly string[]
+): Promise<SourceComment[]> {
+	if (!files.length) return []
+	const helper = resolvePath(repoRoot, "corpus-python/scripts/comment_nodes.py")
+	const { stdout } = await runFile("python3", [helper, ...files.map((file) => resolvePath(repoRoot, file))], {
+		cwd: repoRoot.toString(),
+	})
+	const parsed = parseJSONStrict<Record<string, PythonCommentNode[]>>(stdout)
+	return Object.entries(parsed).flatMap(([absolutePath, nodes]) => {
+		const path = relative(repoRoot, absolutePath).toString()
+		return nodes.map((node) => {
+			const contentHash = digest(node.text)
+			return { ...node, id: digest(`${path}:${node.start}:${node.end}:${contentHash}`), path, contentHash }
+		})
+	})
+}
+
 /**
  * Heuristics are leads only: each points at wording a human reviewer must confirm.
  */
@@ -190,12 +225,13 @@ export function heuristicLeads(comment: SourceComment): TriageLead[] {
 }
 
 export async function inventorySourceComments(
-	databasePath: string,
-	repoRoot: string,
+	databasePath: PathBuilderLike,
+	repoRoot: PathBuilderLike,
 	files: readonly string[]
 ): Promise<InventoryResult> {
 	const observedAt = new Date().toISOString()
 	using database = new DatabaseClient<CommentTriageDatabase>(databasePath)
+	database.exec("DROP TABLE IF EXISTS comment_triage_lead; DROP TABLE IF EXISTS source_comment;")
 	database.exec(SCHEMA)
 	const insertComment = database.prepare(`INSERT INTO source_comment VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	const insertLead = database.prepare(`INSERT INTO comment_triage_lead VALUES (?, ?, ?, ?, ?, ?)`)
@@ -205,33 +241,42 @@ export async function inventorySourceComments(
 	database.exec("BEGIN IMMEDIATE; DELETE FROM comment_triage_lead; DELETE FROM source_comment;")
 
 	try {
-		for (const file of files) {
-			const absolutePath = resolvePath(repoRoot, file)
-			const comments = sourceComments(String(relative(repoRoot, absolutePath)), await readLocalTextFile(absolutePath))
-
-			for (const comment of comments) {
-				insertComment.run(
-					comment.id,
-					comment.path,
-					comment.start,
-					comment.end,
-					comment.startLine,
-					comment.startColumn,
-					comment.endLine,
-					comment.endColumn,
-					comment.kind,
-					comment.text,
-					comment.contentHash,
-					observedAt
+		const typescriptFiles = files.filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
+		const pythonFiles = files.filter((file) => file.endsWith(".py"))
+		const collected = [
+			...(
+				await Promise.all(
+					typescriptFiles.map(async (file) => {
+						const absolutePath = resolvePath(repoRoot, file)
+						return sourceComments(relative(repoRoot, absolutePath).toString(), await readLocalTextFile(absolutePath))
+					})
 				)
+			).flat(),
+			...(await pythonSourceComments(repoRoot, pythonFiles)),
+		]
 
-				commentCount++
+		for (const comment of collected) {
+			insertComment.run(
+				comment.id,
+				comment.path,
+				comment.start,
+				comment.end,
+				comment.startLine,
+				comment.startColumn,
+				comment.endLine,
+				comment.endColumn,
+				comment.kind,
+				comment.text,
+				comment.contentHash,
+				observedAt
+			)
 
-				for (const lead of heuristicLeads(comment)) {
-					insertLead.run(lead.commentID, lead.category, lead.reason, lead.confidence, lead.source, observedAt)
+			commentCount++
 
-					leadCount++
-				}
+			for (const lead of heuristicLeads(comment)) {
+				insertLead.run(lead.commentID, lead.category, lead.reason, lead.confidence, lead.source, observedAt)
+
+				leadCount++
 			}
 		}
 
@@ -247,7 +292,7 @@ export async function inventorySourceComments(
 /**
  * Persist human reviewer findings after validating their comment identity and taxonomy.
  */
-export function recordReviewerLeads(databasePath: string, leads: readonly TriageLead[]): number {
+export function recordReviewerLeads(databasePath: PathBuilderLike, leads: readonly TriageLead[]): number {
 	const observedAt = new Date().toISOString()
 	using database = new DatabaseClient<CommentTriageDatabase>(databasePath)
 	database.exec(SCHEMA)
