@@ -15,6 +15,7 @@
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { runFile } from "@mailwoman/core/process"
 import { shopOperations } from "@mailwoman/license-worker/shop"
 import { operations, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"
 import {
@@ -28,12 +29,18 @@ import {
 	type Diagnostic,
 	type RepoContext,
 	writeBaseline,
+	syncCommentTriage,
 } from "@mailwoman/repo-health"
 
 /**
  * How many times `health fix` re-takes a plan before giving up. See {@link runFix} for why one pass is not enough.
  */
 const MAXIMUM_FIX_PASSES = 8
+
+/**
+ * GitHub's response when a repository has disabled Discussions, so its comment collection is empty.
+ */
+const GITHUB_DISCUSSIONS_DISABLED = 410
 
 export interface DispatchIO {
 	stdout: (text: string) => void
@@ -82,6 +89,7 @@ function usage(io: DispatchIO): number {
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
+			"  mwops comments sync --owner <owner> --repository <repo> --database <sqlite-path> [--json]",
 			"  mwops health baseline debt        (rewrite packages/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
 			"",
@@ -94,6 +102,78 @@ function usage(io: DispatchIO): number {
 	)
 
 	return 2
+}
+
+function nextPage(link: string | null): URL | undefined {
+	if (!link) return undefined
+
+	for (const part of link.split(",")) {
+		const match = /<([^>]+)>;\s*rel="([^"]+)"/.exec(part)
+
+		if (!match) continue
+
+		const [, href, relation] = match
+
+		if (href && relation?.split(/\s+/).includes("next")) return new URL(href)
+	}
+
+	return undefined
+}
+
+/**
+ * `mwops comments sync` — fetch the repository-wide GitHub comment collections into an explicit local SQLite file.
+ */
+async function runComments(args: readonly string[], io: DispatchIO): Promise<number> {
+	const { options, rest } = parseOptions(args)
+
+	if (
+		rest[0] !== "sync" ||
+		typeof options.owner !== "string" ||
+		typeof options.repository !== "string" ||
+		typeof options.database !== "string"
+	) {
+		io.stderr("mwops comments: expected sync --owner <owner> --repository <repo> --database <sqlite-path>\n")
+
+		return 2
+	}
+
+	// Delegate credential resolution to the user's authenticated gh installation. The token stays in this function's
+	// closure and is never part of service input, output, or a database row.
+	const { stdout } = await runFile("gh", ["auth", "token"], { cwd: io.repoRoot })
+	const token = stdout.trim()
+
+	if (!token) throw new Error("gh auth token returned no GitHub token")
+
+	const result = await syncCommentTriage({
+		owner: options.owner,
+		repository: options.repository,
+		database: options.database,
+		fetchPage: async (url) => {
+			const response = await fetch(url, {
+				headers: {
+					accept: "application/vnd.github+json",
+					authorization: `Bearer ${token}`,
+					"x-github-api-version": "2022-11-28",
+				},
+			})
+
+			// GitHub returns 410 when Discussions is disabled for a repository. That is an empty collection, not a partial
+			// issue/PR-comment sync: the other two repository-wide endpoints remain available and are still collected.
+			if (response.status === GITHUB_DISCUSSIONS_DISABLED && url.pathname.endsWith("/discussions/comments")) {
+				return { body: [], next: undefined }
+			}
+
+			if (!response.ok) throw new Error(`GitHub comment sync failed: ${response.status} ${response.statusText}`)
+
+			return { body: (await response.json()) as unknown, next: nextPage(response.headers.get("link")) }
+		},
+	})
+
+	io.stdout(
+		`${options.json === true ? prettyJSON(result) : `${result.comments} comments, ${result.snapshots} new snapshots, ${result.findings} new findings`}\n`
+	)
+
+	return 0
 }
 
 /**
@@ -338,6 +418,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 			return await runOperation("shop", shopOperations, rest, io)
 		case "health":
 			return await runHealth(rest, io)
+		case "comments":
+			return await runComments(rest, io)
 		default:
 			return usage(io)
 	}

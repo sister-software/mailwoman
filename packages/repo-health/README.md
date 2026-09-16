@@ -11,6 +11,20 @@ plus `lib/move/` apply the mechanical repair a check's diagnostic describes.
 `lib/registry.ts` is the package's only executable entry point. A check file that is not registered is dead code and
 knip reports it.
 
+## GitHub comment triage
+
+This is an explicit writing operation, not a health check. It imports the repository-wide GitHub issue/PR comments,
+inline review comments, and discussion comments into a local SQLite review cache:
+
+```sh
+yarn mwops comments sync --owner sister-software --repository mailwoman --database .mailwoman/comment-triage.sqlite
+```
+
+Each sync retains a source snapshot keyed by GitHub's stable node ID and a content hash. Rule findings are separate,
+multi-label leads (`potentially_outdated`, `sensational`, `unclear`, `overly_verbose`) with a rationale and confidence;
+they never modify a GitHub comment or constitute a human decision. Disabled GitHub Discussions are represented as an
+empty collection. The SQLite artifact is intentionally ignored by Git.
+
 ## Checks
 
 | id                            | what it reads                                                                                                                                                                                          | spawns  |

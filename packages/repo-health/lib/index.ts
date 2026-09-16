@@ -12,6 +12,7 @@
 
 export * from "#baseline"
 export * from "#check"
+export * from "#comment-triage/index"
 export * from "#context"
 export * from "#fix"
 export * from "#fixes"
