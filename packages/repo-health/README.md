@@ -25,6 +25,11 @@ multi-label leads (`potentially_outdated`, `sensational`, `unclear`, `overly_ver
 they never modify a GitHub comment or constitute a human decision. Disabled GitHub Discussions are represented as an
 empty collection. The SQLite artifact is intentionally ignored by Git.
 
+The synchronizer also resolves same-repository `#123` references and backticked `packages/...` or `docs/...` file
+paths. It records each target separately: closed or permanently unavailable GitHub work earns a reference lead, as does
+a file path absent from the default-branch tree. Open issues and present files remain recorded as evidence but do not
+become findings.
+
 ## Checks
 
 | id                            | what it reads                                                                                                                                                                                          | spawns  |

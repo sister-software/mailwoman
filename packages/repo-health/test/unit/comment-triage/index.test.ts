@@ -27,15 +27,30 @@ function comment(id: string, body: string) {
 
 const pages: GitHubPageFetcher = async (url) => {
 	if (url.href === firstIssuePage.href)
-		return { body: [comment("IC_1", "Currently this is obviously broken!!")], next: secondIssuePage }
+		return {
+			body: [comment("IC_1", "Currently this is obviously broken!! See #42 and `packages/removed.ts`.")],
+			next: secondIssuePage,
+			status: 200,
+		}
 
-	if (url.href === secondIssuePage.href) return { body: [comment("IC_2", "Short follow-up.")], next: undefined }
+	if (url.href === secondIssuePage.href)
+		return { body: [comment("IC_2", "Short follow-up.")], next: undefined, status: 200 }
 
 	if (url.pathname.endsWith("/pulls/comments"))
-		return { body: [comment("PRRC_1", "Please change this.")], next: undefined }
+		return { body: [comment("PRRC_1", "Please change this.")], next: undefined, status: 200 }
 
 	if (url.pathname.endsWith("/discussions/comments"))
-		return { body: [comment("DC_1", "A discussion reply.")], next: undefined }
+		return { body: [comment("DC_1", "A discussion reply.")], next: undefined, status: 200 }
+
+	if (url.pathname.endsWith("/issues/42"))
+		return {
+			body: { state: "closed", html_url: "https://github.com/acme/widgets/issues/42" },
+			next: undefined,
+			status: 200,
+		}
+
+	if (url.pathname.endsWith("/git/trees/HEAD"))
+		return { body: { tree: [{ path: "packages/present.ts" }] }, next: undefined, status: 200 }
 
 	throw new Error(`Unexpected page ${url}`)
 }
@@ -70,13 +85,18 @@ describe("syncCommentTriage", () => {
 		const first = await syncCommentTriage({ owner: "acme", repository: "widgets", database, fetchPage: pages, now })
 		const second = await syncCommentTriage({ owner: "acme", repository: "widgets", database, fetchPage: pages, now })
 
-		expect(first).toMatchObject({ comments: 4, snapshots: 4, findings: 2 })
+		expect(first).toMatchObject({ comments: 4, snapshots: 4, findings: 4 })
 		expect(second).toMatchObject({ comments: 4, snapshots: 0, findings: 0 })
 
 		using db = new DatabaseClient<CommentTriageDatabase>(database)
 		expect(await db.selectFrom("comment_triage_run").selectAll().execute()).toHaveLength(2)
 		expect(await db.selectFrom("comment_triage_node").selectAll().execute()).toHaveLength(4)
 		expect(await db.selectFrom("comment_triage_snapshot").selectAll().execute()).toHaveLength(4)
-		expect(await db.selectFrom("comment_triage_finding").selectAll().execute()).toHaveLength(2)
+		expect(await db.selectFrom("comment_triage_finding").selectAll().execute()).toHaveLength(4)
+
+		expect(await db.selectFrom("comment_triage_reference").selectAll().execute()).toEqual([
+			expect.objectContaining({ target: "#42", observed_state: "closed" }),
+			expect.objectContaining({ target: "packages/removed.ts", observed_state: "missing" }),
+		])
 	})
 })

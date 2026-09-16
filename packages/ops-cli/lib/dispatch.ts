@@ -160,12 +160,14 @@ async function runComments(args: readonly string[], io: DispatchIO): Promise<num
 			// GitHub returns 410 when Discussions is disabled for a repository. That is an empty collection, not a partial
 			// issue/PR-comment sync: the other two repository-wide endpoints remain available and are still collected.
 			if (response.status === GITHUB_DISCUSSIONS_DISABLED && url.pathname.endsWith("/discussions/comments")) {
-				return { body: [], next: undefined }
+				return { body: [], next: undefined, status: 200 }
 			}
 
-			if (!response.ok) throw new Error(`GitHub comment sync failed: ${response.status} ${response.statusText}`)
-
-			return { body: (await response.json()) as unknown, next: nextPage(response.headers.get("link")) }
+			return {
+				body: (await response.json()) as unknown,
+				next: nextPage(response.headers.get("link")),
+				status: response.status,
+			}
 		},
 	})
 

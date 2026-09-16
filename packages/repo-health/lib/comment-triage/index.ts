@@ -30,7 +30,7 @@ export interface GitHubCommentNode {
 }
 
 export interface GitHubPageFetcher {
-	(url: URL): Promise<{ body: unknown; next: URL | undefined }>
+	(url: URL): Promise<{ body: unknown; next: URL | undefined; status: number }>
 }
 
 export interface CommentTriageDatabase {
@@ -68,6 +68,14 @@ export interface CommentTriageDatabase {
 		status: "proposed"
 		created_at: string
 	}
+	comment_triage_reference: {
+		id: string
+		snapshot_id: string
+		kind: "github_issue" | "repository_file"
+		target: string
+		observed_state: "open" | "closed" | "missing" | "present"
+		target_url: string | null
+	}
 }
 
 export interface SyncCommentTriageOptions {
@@ -104,6 +112,28 @@ const SOURCES: ReadonlyArray<{ path: string; kind: CommentKind }> = [
  * A length only earns review as potentially verbose once a reviewer might lose the requested action in it.
  */
 const VERBOSE_COMMENT_WORDS = 150
+
+/**
+ * GitHub's REST limit tolerates a small concurrent lookup pool while preventing one comment corpus from flooding it.
+ */
+const MAXIMUM_REFERENCE_LOOKUPS = 12
+
+/**
+ * The inclusive lower bound of HTTP's successful response range.
+ */
+const HTTP_SUCCESS_FIRST = 200
+/**
+ * The exclusive upper bound of HTTP's successful response range.
+ */
+const HTTP_REDIRECT_FIRST = 300
+/**
+ * GitHub's response for a resource that has no current representation.
+ */
+const GITHUB_NOT_FOUND = 404
+/**
+ * GitHub's response for a resource that has been permanently removed.
+ */
+const GITHUB_GONE = 410
 
 function asComment(value: unknown, kind: CommentKind): GitHubCommentNode {
 	if (!value || typeof value !== "object") throw new TypeError("GitHub returned a non-object comment record")
@@ -144,6 +174,10 @@ export async function collectGitHubCommentNodes(
 		while (page) {
 			const response = await fetchPage(page)
 
+			if (response.status < HTTP_SUCCESS_FIRST || response.status >= HTTP_REDIRECT_FIRST) {
+				throw new Error(`GitHub ${source.path} lookup failed with HTTP ${response.status}`)
+			}
+
 			if (!Array.isArray(response.body)) throw new TypeError(`GitHub ${source.path} response was not an array`)
 
 			comments.push(...response.body.map((comment) => asComment(comment, source.kind)))
@@ -155,10 +189,127 @@ export async function collectGitHubCommentNodes(
 }
 
 export interface TriageLead {
-	label: "potentially_outdated" | "sensational" | "unclear" | "overly_verbose"
+	label:
+		| "potentially_outdated"
+		| "sensational"
+		| "unclear"
+		| "overly_verbose"
+		| "closed_github_reference"
+		| "missing_github_reference"
+		| "missing_file_reference"
 	severity: "minor" | "material"
 	confidence: "low" | "medium"
 	rationale: string
+}
+
+interface GitHubIssue {
+	state?: unknown
+	html_url?: unknown
+}
+
+interface GitTree {
+	tree?: Array<{ path?: unknown }> | undefined
+}
+
+interface ResolvedReference {
+	kind: "github_issue" | "repository_file"
+	target: string
+	observedState: "open" | "closed" | "missing" | "present"
+	targetURL: string | null
+}
+
+const ISSUE_REFERENCE = /(?<![\w/])#(\d+)\b/g
+const REPOSITORY_FILE_REFERENCE = /`((?:packages|docs)\/[\w./-]+\.(?:ts|tsx|md|mdx|json))`/g
+
+function issueNumbers(body: string): number[] {
+	return [...body.matchAll(ISSUE_REFERENCE)].map((match) => Number(match[1])).filter(Number.isSafeInteger)
+}
+
+function repositoryFiles(body: string): string[] {
+	return [...body.matchAll(REPOSITORY_FILE_REFERENCE)].map((match) => match[1]!).filter(Boolean)
+}
+
+async function resolveReferences(
+	owner: string,
+	repository: string,
+	comments: readonly GitHubCommentNode[],
+	fetchPage: GitHubPageFetcher
+): Promise<Map<string, ResolvedReference[]>> {
+	const issues = new Set(comments.flatMap((comment) => issueNumbers(comment.body)))
+	const files = new Set(comments.flatMap((comment) => repositoryFiles(comment.body)))
+	const resolvedIssues = new Map<number, ResolvedReference>()
+
+	const resolveIssue = async (number: number): Promise<void> => {
+		const response = await fetchPage(new URL(`https://api.github.com/repos/${owner}/${repository}/issues/${number}`))
+
+		// GitHub uses 410 for issue records that are permanently unavailable (for example, an issue from a deleted
+		// repository transfer). A comment cannot rely on that target either, so it earns the same missing-reference lead.
+		if (response.status === GITHUB_NOT_FOUND || response.status === GITHUB_GONE) {
+			resolvedIssues.set(number, {
+				kind: "github_issue",
+				target: `#${number}`,
+				observedState: "missing",
+				targetURL: null,
+			})
+
+			return
+		}
+
+		if (response.status < HTTP_SUCCESS_FIRST || response.status >= HTTP_REDIRECT_FIRST) {
+			throw new Error(`GitHub reference #${number} lookup failed with HTTP ${response.status}`)
+		}
+
+		const issue = response.body as GitHubIssue
+
+		if ((issue.state !== "open" && issue.state !== "closed") || typeof issue.html_url !== "string") {
+			throw new TypeError(`GitHub issue #${number} response was missing state or URL`)
+		}
+
+		resolvedIssues.set(number, {
+			kind: "github_issue",
+			target: `#${number}`,
+			observedState: issue.state,
+			targetURL: issue.html_url,
+		})
+	}
+
+	const issueNumbersToResolve = [...issues]
+
+	for (let start = 0; start < issueNumbersToResolve.length; start += MAXIMUM_REFERENCE_LOOKUPS) {
+		await Promise.all(issueNumbersToResolve.slice(start, start + MAXIMUM_REFERENCE_LOOKUPS).map(resolveIssue))
+	}
+
+	const treeResponse = files.size
+		? await fetchPage(new URL(`https://api.github.com/repos/${owner}/${repository}/git/trees/HEAD?recursive=1`))
+		: undefined
+
+	if (treeResponse && (treeResponse.status < HTTP_SUCCESS_FIRST || treeResponse.status >= HTTP_REDIRECT_FIRST)) {
+		throw new Error(`GitHub default-branch tree lookup failed with HTTP ${treeResponse.status}`)
+	}
+
+	const tree = new Set(
+		((treeResponse?.body as GitTree | undefined)?.tree ?? []).flatMap((entry) =>
+			typeof entry.path === "string" ? [entry.path] : []
+		)
+	)
+
+	const result = new Map<string, ResolvedReference[]>()
+
+	for (const comment of comments) {
+		const references = [
+			...issueNumbers(comment.body).flatMap((number) => [resolvedIssues.get(number)!]),
+			...repositoryFiles(comment.body).map((path) => ({
+				kind: "repository_file" as const,
+				target: path,
+				observedState: tree.has(path) ? ("present" as const) : ("missing" as const),
+				targetURL: null,
+			})),
+		]
+
+		result.set(comment.id, references)
+	}
+
+	return result
 }
 
 /**
@@ -230,6 +381,11 @@ function createSchema(db: DatabaseClient<CommentTriageDatabase>): void {
 			analyzer TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL,
 			UNIQUE(snapshot_id, label, analyzer)
 		);
+		CREATE TABLE IF NOT EXISTS comment_triage_reference (
+			id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL REFERENCES comment_triage_snapshot(id),
+			kind TEXT NOT NULL, target TEXT NOT NULL, observed_state TEXT NOT NULL, target_url TEXT,
+			UNIQUE(snapshot_id, kind, target)
+		);
 	`)
 }
 
@@ -242,6 +398,7 @@ export async function syncCommentTriage(options: SyncCommentTriageOptions): Prom
 	const startedAt = now().toISOString()
 	const runId = crypto.randomUUID()
 	const comments = await collectGitHubCommentNodes(options.owner, options.repository, options.fetchPage)
+	const references = await resolveReferences(options.owner, options.repository, comments, options.fetchPage)
 
 	await makeDirectories(dirname(options.database))
 	using db = new DatabaseClient<CommentTriageDatabase>(options.database)
@@ -269,6 +426,11 @@ export async function syncCommentTriage(options: SyncCommentTriageOptions): Prom
 		VALUES (?, ?, ?, ?, ?, ?, 'rule/v1', 'proposed', ?)
 	`)
 
+	const insertReference = db.prepare(`
+		INSERT OR IGNORE INTO comment_triage_reference (id, snapshot_id, kind, target, observed_state, target_url)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`)
+
 	insertRun.run(runId, options.owner, options.repository, startedAt)
 	let snapshots = 0
 	let findings = 0
@@ -290,6 +452,44 @@ export async function syncCommentTriage(options: SyncCommentTriageOptions): Prom
 				lead.severity,
 				lead.confidence,
 				lead.rationale,
+				startedAt
+			)
+
+			findings += Number(finding.changes)
+		}
+
+		for (const reference of references.get(comment.id) ?? []) {
+			const referenceId = sha256Hex(`${snapshotId}\0${reference.kind}\0${reference.target}`)
+
+			insertReference.run(
+				referenceId,
+				snapshotId,
+				reference.kind,
+				reference.target,
+				reference.observedState,
+				reference.targetURL
+			)
+
+			const label =
+				reference.observedState === "closed"
+					? "closed_github_reference"
+					: reference.observedState === "missing" && reference.kind === "github_issue"
+						? "missing_github_reference"
+						: reference.observedState === "missing"
+							? "missing_file_reference"
+							: undefined
+
+			if (!label) continue
+
+			const findingId = sha256Hex(`${snapshotId}\0${label}\0rule/v1`)
+
+			const finding = insertFinding.run(
+				findingId,
+				snapshotId,
+				label,
+				"minor",
+				"medium",
+				`References ${reference.target}, which is ${reference.observedState} on the repository default branch.`,
 				startedAt
 			)
 
