@@ -343,7 +343,7 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 
 		if (!(await isDirectory(dirPath))) continue
 
-		for await (const file of Globerator.files("jsonl", { cwd: dirPath, absolute: false })) {
+		for await (const file of Globerator.files("jsonl", { cwd: dirPath, absolute: false, recursive: false })) {
 
 			// A line that does not parse is skipped rather than failing the census, so a hand-edited fixture never hides
 			// the rest of its file.

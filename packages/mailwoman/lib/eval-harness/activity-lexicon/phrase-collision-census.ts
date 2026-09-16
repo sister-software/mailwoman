@@ -346,7 +346,7 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 
 		if (!(await pathExists(root))) continue
 
-		const paths = await Globerator.files("jsonl", { cwd: root, recursive: true }).toSorted()
+		const paths = await Globerator.files("jsonl", { cwd: root }).toSorted()
 
 		for (const path of paths) {
 			files++

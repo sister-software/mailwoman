@@ -540,7 +540,7 @@ interface FalsehoodRow {
 async function loadFalsehoods(dir: string): Promise<ExtractedAssertion[]> {
 	const out: ExtractedAssertion[] = []
 
-	for await (const entry of Globerator.files("jsonl", { cwd: dir, absolute: false })) {
+	for await (const entry of Globerator.files("jsonl", { cwd: dir, absolute: false, recursive: false })) {
 		const file = basename(entry, ".jsonl")
 
 		for await (const line of TextSpliterator.fromAsync(join(dir, entry))) {

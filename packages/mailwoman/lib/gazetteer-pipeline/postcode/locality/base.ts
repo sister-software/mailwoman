@@ -253,7 +253,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 async function geojsonFiles(dir: string): Promise<string[]> {
 	if (!(await pathExists(dir))) return []
 
-	return Globerator.files("geojson", { cwd: dir, recursive: true }).toArray()
+	return Globerator.files("geojson", { cwd: dir }).toArray()
 }
 
 export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOptions): Promise<void> {

@@ -90,7 +90,7 @@ async function boardRows(): Promise<Row[]> {
 		try {
 			// A country directory carries more than `regression.jsonl` — street-name-boundaries, gloss-keys, others.
 			// Reading only the first name silently measured 326 of 854 rows.
-			files = await Globerator.files("jsonl", { cwd: join(root, entry), absolute: false }).toArray()
+			files = await Globerator.files("jsonl", { cwd: join(root, entry), absolute: false, recursive: false }).toArray()
 		} catch {
 			continue
 		}

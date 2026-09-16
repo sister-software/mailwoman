@@ -237,7 +237,11 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			// inputPath is a directory of NDJSON files (per fetch-nad.ts featureserver output).
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
 			// featureserver per-OID-range file pattern is the primary distribution.
-			const files = await Globerator.files("ndjson", { cwd: opts.inputPath, absolute: false }).toSorted()
+			const files = await Globerator.files("ndjson", {
+				cwd: opts.inputPath,
+				absolute: false,
+				recursive: false,
+			}).toSorted()
 
 			let emitted = 0
 			outer: for (const file of files) {

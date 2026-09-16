@@ -174,7 +174,7 @@ export async function promoteGolden(
 	const seenNormalized = new Set<string>()
 
 	if (await pathExists(priorDir)) {
-		for await (const f of Globerator.files("jsonl", { cwd: priorDir, absolute: false })) {
+		for await (const f of Globerator.files("jsonl", { cwd: priorDir, absolute: false, recursive: false })) {
 			const country = f.replace(".jsonl", "").toUpperCase()
 			const entries = await JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)).toArray()
 

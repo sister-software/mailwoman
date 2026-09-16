@@ -37,6 +37,7 @@ export interface TriageInventoryReport extends InventoryResult {
  */
 function isInventorySource(path: string): boolean {
 	const isPython = path.startsWith("corpus-python/") && path.endsWith(".py")
+
 	if (!isPython && !path.endsWith(".ts") && !path.endsWith(".tsx")) return false
 
 	if (path.endsWith(".d.ts")) return false
@@ -52,15 +53,15 @@ export async function runCommentInventory(
 	databasePath: string = DEFAULT_TRIAGE_DATABASE
 ): Promise<TriageInventoryReport> {
 	const resolved = resolvePath(context.repoRoot, databasePath)
+
 	const discovered = new Set(
-		(
-			await Globerator.from("**/*", {
-				cwd: context.repoRoot,
-				absolute: false,
-				throwIfDirectoryMissing: false,
-			}).toArray()
-		).filter((path) => path.endsWith(".ts") || path.endsWith(".tsx") || path.endsWith(".py"))
+		await Globerator.files(["ts", "tsx", "py"], {
+			cwd: context.repoRoot,
+			absolute: false,
+			throwIfDirectoryMissing: false,
+		}).toArray()
 	)
+
 	const files = context.trackedFiles.filter((path) => discovered.has(path) && isInventorySource(path))
 
 	await makeDirectories(dirname(resolved))

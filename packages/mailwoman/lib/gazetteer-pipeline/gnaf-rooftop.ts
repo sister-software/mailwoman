@@ -171,7 +171,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 
 	const only = options.states ? new Set(options.states.map((s) => s.toUpperCase())) : null
 
-	const states = (await Globerator.files("psv", { cwd: standardDir, absolute: false }).toArray())
+	const states = (await Globerator.files("psv", { cwd: standardDir, absolute: false, recursive: false }).toArray())
 		.filter((f) => f.endsWith("_ADDRESS_DETAIL_psv.psv"))
 		.map((f) => f.replace("_ADDRESS_DETAIL_psv.psv", ""))
 		.filter((s) => !only || only.has(s))

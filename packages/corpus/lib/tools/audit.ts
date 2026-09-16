@@ -120,7 +120,7 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 
 		if (!(await pathExists(splitDir))) continue
 
-		const files = await Globerator.files("parquet", { cwd: splitDir, absolute: false }).toSorted()
+		const files = await Globerator.files("parquet", { cwd: splitDir, absolute: false, recursive: false }).toSorted()
 
 		stats.totalFiles += files.length
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))

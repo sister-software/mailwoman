@@ -27,7 +27,12 @@ import { describe, expect, it } from "vitest"
 
 describe("the conformance suite register", () => {
 	it("names every committed suite file in its own directory", async () => {
-		const committed = await Globerator.files("jsonl", { cwd: CONFORMANCE_SUITE_DIR, absolute: false }).toArray()
+		const committed = await Globerator.files("jsonl", {
+			cwd: CONFORMANCE_SUITE_DIR,
+			absolute: false,
+			recursive: false,
+		}).toArray()
+
 		const registered = new Set(CONFORMANCE_SUITES.map((suite) => basename(suite.path)))
 
 		expect(committed.length).toBeGreaterThan(0)

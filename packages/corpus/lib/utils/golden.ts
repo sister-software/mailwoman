@@ -173,7 +173,7 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
  * Validate every `.jsonl` in a golden directory.
  */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = await Globerator.files("jsonl", { cwd: dir, absolute: false }).toSorted()
+	const files = await Globerator.files("jsonl", { cwd: dir, absolute: false, recursive: false }).toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 

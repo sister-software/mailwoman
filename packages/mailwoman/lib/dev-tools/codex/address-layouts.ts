@@ -212,7 +212,11 @@ const usedSlots = new Set<string>()
 const streetNodes = new Set<string>()
 let withoutFormat = 0
 
-for (const file of await Globerator.files("json", { cwd: specsDirectory, absolute: false }).toSorted()) {
+for (const file of await Globerator.files("json", {
+	cwd: specsDirectory,
+	absolute: false,
+	recursive: false,
+}).toSorted()) {
 	const code = file.replace(/\.json$/, "")
 	const metadata = await readLocalJSONFile<AddressMetadata>(join(specsDirectory, file))
 	const order = STREET_ORDERS[code] ?? "number-first"

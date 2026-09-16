@@ -89,7 +89,7 @@ const found = new Map<string, string>()
 for (const cc of countryDirectories) {
 	const directory = join(CASES_DIR, cc)
 
-	const files = await Globerator.files("jsonl", { cwd: directory, absolute: false }).toSorted()
+	const files = await Globerator.files("jsonl", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
 		const path = join(directory, name)

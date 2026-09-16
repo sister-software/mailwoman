@@ -135,7 +135,7 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 
 	for (const cc of ccDirs) {
 		const ccPath = join(dir, cc)
-		const files = await Globerator.files("jsonl", { cwd: ccPath, absolute: false }).toSorted()
+		const files = await Globerator.files("jsonl", { cwd: ccPath, absolute: false, recursive: false }).toSorted()
 		const ccCases: SeedCase[] = []
 
 		for (const file of files) {

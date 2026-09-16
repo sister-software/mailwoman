@@ -62,9 +62,9 @@ function wofCountiesByState(candidatePath: string): Map<string, number> {
 export async function countyKeyParity(candidatePath: string, interpolationDir: string): Promise<StateParity[]> {
 	const wof = wofCountiesByState(candidatePath)
 
-	const files = (await Globerator.files("db", { cwd: interpolationDir, absolute: false }).toSorted()).filter((file) =>
-		EXTRACT_NAME.test(file)
-	)
+	const files = (
+		await Globerator.files("db", { cwd: interpolationDir, absolute: false, recursive: false }).toSorted()
+	).filter((file) => EXTRACT_NAME.test(file))
 
 	const report: StateParity[] = []
 

@@ -65,7 +65,7 @@ async function discoverParquetFiles(pathArg: string): Promise<string[]> {
 	const stat = await statPath(pathArg)
 
 	if (stat.isDirectory()) {
-		return await Globerator.files("parquet", { cwd: pathArg }).toArray()
+		return await Globerator.files("parquet", { cwd: pathArg, recursive: false }).toArray()
 	}
 
 	if (stat.isFile() && pathArg.endsWith(".parquet")) return [pathArg]

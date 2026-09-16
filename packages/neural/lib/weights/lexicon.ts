@@ -61,7 +61,7 @@ const warnedUndeclaredLexicon = new Set<string>()
  */
 async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Promise<string[]> {
 	try {
-		return (await Globerator.files("json", { cwd: dir, absolute: false }).toArray())
+		return (await Globerator.files("json", { cwd: dir, absolute: false, recursive: false }).toArray())
 			.filter((name) => name.startsWith(prefix))
 			.toSorted()
 	} catch {

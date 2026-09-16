@@ -22,7 +22,11 @@ const OUT_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-inpu
 const cases: ParityCase[] = []
 let parityFileCount = 0
 
-for (const entry of await Globerator.files("test.ts", { cwd: TEST_DIR, absolute: false }).toSorted()) {
+for (const entry of await Globerator.files("test.ts", {
+	cwd: TEST_DIR,
+	absolute: false,
+	recursive: false,
+}).toSorted()) {
 	const path = join(TEST_DIR, entry)
 	const text = await readLocalTextFile(path)
 

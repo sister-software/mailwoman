@@ -87,7 +87,7 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"esbuild": "0.28.2",
 		"path-ts": "^2.3.0",
-		"spliterator": "^7.7.1",
+		"spliterator": "^7.8.0",
 		"typescript": "npm:@typescript/typescript6@^6.0.2"
 	},
 	"devDependencies": {

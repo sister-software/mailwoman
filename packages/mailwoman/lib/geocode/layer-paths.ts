@@ -62,9 +62,13 @@ export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: Lay
 	const [directory, canonical] = LAYER_DATABASES[id].segments
 
 	try {
-		return (await Globerator.files("db", { cwd: resolvePath(dataRoot, directory), absolute: false }).toSorted()).filter(
-			(name) => name !== canonical
-		)
+		return (
+			await Globerator.files("db", {
+				cwd: resolvePath(dataRoot, directory),
+				absolute: false,
+				recursive: false,
+			}).toSorted()
+		).filter((name) => name !== canonical)
 	} catch {
 		return []
 	}

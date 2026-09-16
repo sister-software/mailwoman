@@ -73,7 +73,7 @@ const PQ_NO_COORDINATE = 90
 async function allPostcodes(csvDir: string): Promise<Set<string>> {
 	const out = new Set<string>()
 
-	for await (const file of Globerator.files("csv", { cwd: csvDir, absolute: false })) {
+	for await (const file of Globerator.files("csv", { cwd: csvDir, absolute: false, recursive: false })) {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
 		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			const pc = line.split(",")[0]?.replaceAll('"', "").trim()
@@ -91,7 +91,7 @@ async function samplePostcodes(csvDir: string, perArea: number, seed: number): P
 	const random = mulberry32(seed)
 	const out: SampledPostcode[] = []
 
-	for (const file of await Globerator.files("csv", { cwd: csvDir, absolute: false }).toSorted()) {
+	for (const file of await Globerator.files("csv", { cwd: csvDir, absolute: false, recursive: false }).toSorted()) {
 		const rows: SampledPostcode[] = []
 
 		// Code-Point area files are small (the largest ~90k rows); whole-file split is bounded here.

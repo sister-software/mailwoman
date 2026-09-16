@@ -86,7 +86,7 @@ async function main(): Promise<void> {
 
 	let base = 0
 
-	for await (const file of Globerator.files("jsonl", { cwd: GOLDEN, absolute: false })) {
+	for await (const file of Globerator.files("jsonl", { cwd: GOLDEN, absolute: false, recursive: false })) {
 		// The stride below needs the row COUNT before it can pick a row, then indexes them, so the whole
 		// set has to be resident either way — streaming would only move the materialization.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above

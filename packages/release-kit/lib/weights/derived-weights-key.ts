@@ -64,7 +64,7 @@ async function gazetteerDataPaths(): Promise<string[]> {
 
 	if (!(await pathExists(dir))) return []
 
-	return Globerator.files(["json", "jsonl"], { cwd: dir }).toArray()
+	return Globerator.files(["json", "jsonl"], { cwd: dir, recursive: false }).toArray()
 }
 
 /**

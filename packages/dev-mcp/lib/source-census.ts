@@ -166,7 +166,7 @@ export async function gazetteerArtifacts(dataRoot?: PathBuilderLike): Promise<st
 
 	if (!(await pathExists(wof))) return []
 
-	return (await Globerator.files("db", { cwd: wof, absolute: false }).toArray())
+	return (await Globerator.files("db", { cwd: wof, absolute: false, recursive: false }).toArray())
 		.filter((name) => !/\.(?:prev\d*|bak)\b/.test(name))
 		.toSorted()
 		.map((name) => join(wof, name))

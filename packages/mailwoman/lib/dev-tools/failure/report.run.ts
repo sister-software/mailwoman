@@ -68,7 +68,7 @@ async function loadCorpus(
 	if (spec?.startsWith("golden:")) {
 		const [, dir, sampleArg] = spec.split(":")
 		const sampleN = sampleArg ? Number(sampleArg) : Infinity
-		const files = Globerator.files("jsonl", { cwd: resolvePath(dir!), absolute: false })
+		const files = Globerator.files("jsonl", { cwd: resolvePath(dir!), absolute: false, recursive: false })
 		const fixtures: Fixture[] = []
 
 		for await (const file of files) {

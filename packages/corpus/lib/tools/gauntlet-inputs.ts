@@ -51,16 +51,19 @@ export function normalizeGauntletSurface(surface: string): string {
 export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_DIR): Promise<ReadonlySet<string>> {
 	const inputs = new Set<string>()
 
-	// `Globerator.files` lists ONE directory, so the walk is explicit. Every subdirectory is read, not only the
-	// two-letter country ones the gauntlet loader admits: `generalization/` holds parked passes, and a parked row is
-	// still a board input a recipe must not train on.
+	// Each immediate subdirectory is read independently so `generalization/` parked passes remain board inputs a
+	// recipe must not train on.
 	const entries = await Globerator.from("*", { cwd: String(dir), withFileTypes: true, onlyFiles: false }).toArray()
 	const directories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name)
 
 	for (const directory of [".", ...directories]) {
 		const here = directory === "." ? dir : join(dir, directory)
 
-		for (const file of await Globerator.files("jsonl", { cwd: String(here), absolute: false }).toArray()) {
+		for (const file of await Globerator.files("jsonl", {
+			cwd: String(here),
+			absolute: false,
+			recursive: false,
+		}).toArray()) {
 			try {
 				for await (const row of JSONSpliterator.fromAsync<{ input?: unknown }>(join(here, String(file)))) {
 					if (typeof row.input === "string" && row.input.trim()) {

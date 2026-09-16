@@ -33,7 +33,7 @@ async function newestConfig(repoRoot: string): Promise<string> {
 	if (!(await pathExists(dir))) return ""
 
 	const named = (
-		await Globerator.files("yaml", { cwd: dir, absolute: false })
+		await Globerator.files("yaml", { cwd: dir, absolute: false, recursive: false })
 			.filter((name) => !name.includes("smoke"))
 			.parallelMap(async (name) => ({ name, at: (await statPath(`${dir}/${name}`)).mtimeMs }))
 			.toArray()

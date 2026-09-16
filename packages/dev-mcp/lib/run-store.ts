@@ -207,7 +207,7 @@ export async function listRuns(
 	dir: PathBuilderLike = RUN_STORE_DIR,
 	currentFingerprint?: string
 ): Promise<RunSummary[]> {
-	return Globerator.files("json", { cwd: dir, absolute: false, throwIfDirectoryMissing: false })
+	return Globerator.files("json", { cwd: dir, absolute: false, recursive: false, throwIfDirectoryMissing: false })
 		.map((file) => readStoredRunFile(dir, file))
 		.filter(isPresent)
 		.map(({ run, bytes, file }): RunSummary => ({

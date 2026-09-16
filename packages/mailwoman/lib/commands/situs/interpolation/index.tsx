@@ -562,7 +562,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 
 		// States from our target list that have at least one downloaded county SHP. The listing is materialized once
 		// so the filter callback stays synchronous.
-		const edgesEntries = await Globerator.files("shp", { cwd: EDGES_DIR, absolute: false }).toArray()
+		const edgesEntries = await Globerator.files("shp", { cwd: EDGES_DIR, absolute: false, recursive: false }).toArray()
 
 		const availableStates = TARGET_STATES.filter((abbr) => {
 			const fips = STATE_FIPS[abbr]

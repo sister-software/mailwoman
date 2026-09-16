@@ -95,7 +95,11 @@ const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i
 const countryFormats = await (async () => {
 	const out = new Map<string, string | null>()
 
-	for (const file of await Globerator.files("json", { cwd: specsDirectory, absolute: false }).toSorted()) {
+	for (const file of await Globerator.files("json", {
+		cwd: specsDirectory,
+		absolute: false,
+		recursive: false,
+	}).toSorted()) {
 		const metadata = await readLocalJSONFile<{ fmt?: string }>(join(specsDirectory, file))
 
 		out.set(file.replace(/\.json$/, ""), metadata.fmt ?? null)

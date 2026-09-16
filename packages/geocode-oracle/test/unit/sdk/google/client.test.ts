@@ -235,7 +235,7 @@ describe("the response cache", () => {
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
 		expect(transport.calls).toHaveLength(1)
-		expect(await Globerator.files("json", { cwd: cacheDir }).toArray()).toHaveLength(1)
+		expect(await Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).toHaveLength(1)
 	})
 
 	it("never writes the API key to disk, nor into a filename", async () => {
@@ -245,7 +245,7 @@ describe("the response cache", () => {
 
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
-		const entries = await Globerator.files("json", { cwd: cacheDir, absolute: false }).toArray()
+		const entries = await Globerator.files("json", { cwd: cacheDir, absolute: false, recursive: false }).toArray()
 
 		expect(entries).toHaveLength(1)
 
@@ -264,7 +264,7 @@ describe("the response cache", () => {
 
 		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a permanently
 		// broken address, self-healing only by hand-deleting a hash-named file.
-		expect(await Globerator.files("json", { cwd: cacheDir }).toArray()).toHaveLength(0)
+		expect(await Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).toHaveLength(0)
 	})
 
 	it("does persist ZERO_RESULTS as a stable answer", async () => {
