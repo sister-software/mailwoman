@@ -79,7 +79,10 @@ WITH us AS (
 		span_ends,
 		list_position(span_tags, 'region') AS i,
 		list_contains(span_tags, 'street') AS has_street,
-		span_tags[list_position(span_starts, list_min(span_starts))] AS first_tag
+		span_tags[list_position(span_starts, list_min(span_starts))] AS first_tag,
+		-- The surface the probe writes: a locality, a region and a postcode, and nothing else. Compared as a SET, so a
+		-- row is bare whatever order it writes them in.
+		list_sort(list_distinct(span_tags)) = ['locality', 'postcode', 'region'] AS bare_admin
 	FROM read_parquet([${fileList}])
 	WHERE country = 'US'
 )
@@ -88,9 +91,10 @@ SELECT
 	CASE WHEN i IS NULL THEN NULL ELSE substring(raw, span_starts[i] + 1, span_ends[i] - span_starts[i]) END AS region,
 	has_street,
 	first_tag,
+	bare_admin,
 	count(*) AS n
 FROM us
-GROUP BY 1, 2, 3, 4`
+GROUP BY 1, 2, 3, 4, 5`
 
 const started = Date.now()
 const reader = await db.runAndReadAll(sql)
@@ -120,7 +124,22 @@ const bySource = new Map<string, SourceComposition>()
  * street share does not separate the regions — 47 of 50 sit between 89% and 99.5% — because it counts a street anywhere
  * in the row rather than in front.
  */
-const streetBearing = new Map<string, { rows: number; withStreet: number; openingTag: Map<string, number> }>()
+const streetBearing = new Map<
+	string,
+	{
+		rows: number
+		withStreet: number
+		bareAdmin: number
+		/**
+		 * Rows writing the region as its two-letter code rather than its name, and how many of those are the bare admin
+		 * surface. The model reads a SURFACE: `Arkansas` and `AR` are one region to a counter and two strings to it, so a
+		 * count that folds them cannot say what the code token was seen in company with.
+		 */
+		codeForm: number
+		codeFormBare: number
+		openingTag: Map<string, number>
+	}
+>()
 
 for (const row of reader.getRowObjects()) {
 	const source = String(row.source)
@@ -145,12 +164,31 @@ for (const row of reader.getRowObjects()) {
 	if (code) {
 		entry.byRegion.set(code, (entry.byRegion.get(code) ?? 0) + rows)
 
-		const shape = streetBearing.get(code) ?? { rows: 0, withStreet: 0, openingTag: new Map<string, number>() }
+		const shape = streetBearing.get(code) ?? {
+			rows: 0,
+			withStreet: 0,
+			bareAdmin: 0,
+			codeForm: 0,
+			codeFormBare: 0,
+			openingTag: new Map<string, number>(),
+		}
 
 		shape.rows += rows
 
 		if (row.has_street) {
 			shape.withStreet += rows
+		}
+
+		if (row.bare_admin) {
+			shape.bareAdmin += rows
+		}
+
+		if (surface === code) {
+			shape.codeForm += rows
+
+			if (row.bare_admin) {
+				shape.codeFormBare += rows
+			}
 		}
 
 		const opening = row.first_tag == null ? "none" : String(row.first_tag)
@@ -207,8 +245,8 @@ console.log(
 		`${pooledTotal.toLocaleString()} region-bearing US rows\n`
 )
 
-console.log(`| region | rows | share | carries a street | opens on a locality |`)
-console.log(`| --- | --: | --: | --: | --: |`)
+console.log(`| region | rows | share | opens on a locality | bare admin | code-form rows | bare of code-form |`)
+console.log(`| --- | --: | --: | --: | --: | --: | --: |`)
 
 const ranked = [...pooled].toSorted((a, b) => b[1] - a[1])
 const detail = Number(values.detail)
@@ -218,8 +256,10 @@ for (const [code, n] of [...ranked.slice(0, detail), ...ranked.slice(-detail)]) 
 
 	console.log(
 		`| ${code} | ${n.toLocaleString()} | ${formatPercent(n, pooledTotal)} ` +
-			`| ${shape ? formatPercent(shape.withStreet, shape.rows) : "—"} ` +
-			`| ${shape ? formatPercent(shape.openingTag.get("locality") ?? 0, shape.rows) : "—"} |`
+			`| ${shape ? formatPercent(shape.openingTag.get("locality") ?? 0, shape.rows) : "—"} ` +
+			`| ${shape ? shape.bareAdmin.toLocaleString() : "—"} ` +
+			`| ${shape ? shape.codeForm.toLocaleString() : "—"} ` +
+			`| ${shape?.codeForm ? formatPercent(shape.codeFormBare, shape.codeForm) : "—"} |`
 	)
 }
 
@@ -240,6 +280,9 @@ if (values["out-json"]) {
 					{
 						rows: shape.rows,
 						with_street: shape.withStreet,
+						bare_admin: shape.bareAdmin,
+						code_form: shape.codeForm,
+						code_form_bare: shape.codeFormBare,
 						opening_tag: Object.fromEntries([...shape.openingTag].toSorted((a, b) => b[1] - a[1])),
 					},
 				])

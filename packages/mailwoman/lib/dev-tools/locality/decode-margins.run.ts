@@ -5,23 +5,24 @@
  *
  *   Does the MODEL refuse the locality, or does a decode-time prior take it away? (#2311)
  *
- *   The bare admin surface reads 100.0% in Vermont and 2.3% in Arkansas, and eight properties of the training corpus
- *   fail to predict which region a row falls in — six of them with the sign backwards. That exhausts the corpus as an
- *   explanation and leaves the decode, which has two halves a rate cannot tell apart.
- *
- *   `traceParse` carries both: `logits` is the model's raw emission and `emissions` is what viterbi decoded over, after
- *   every prior in `priors` has written into it. So the locality label's margin can be read twice for the same token.
- *   A row where the raw emission already refuses the locality is a training result. A row where the raw emission
- *   favours it and the post-prior matrix does not names the prior that took it.
+ *   `traceParse` carries both readings of the same token: `logits` is the model's raw emission, and `emissions` is what
+ *   viterbi decoded over, after every prior in `priors` has written into it. A row whose raw emission already refuses
+ *   the locality is a training result. A row whose raw emission favours it and whose post-prior matrix does not names
+ *   the prior that took it.
  *
  *   The margin is `max(locality labels) - max(every label)` at the pieces covering the expected locality, so `0` means
- *   a locality label won and a negative number is how far behind it came. Reported as a mean over a region's rows
- *   alongside the share of rows whose first locality piece was decoded as a locality at all.
+ *   a locality label won and a negative number is how far behind it came. A margin says how far the locality came
+ *   behind; the winning label beside it says WHAT it came behind, which is the difference between a model that is
+ *   unsure and one that has learned another reading.
+ *
+ *   `--swap-region` and `--swap-postcode` re-render each subject under a different region code or postcode, so the
+ *   crossed 2x2 can be read at the logit level, before any decision threshold. A crossed pairing denotes no place and
+ *   nothing here claims one.
  *
  *   Run:
  *
  *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --weights-cache <dir>
- *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --regions AR,VT --per-region 40
+ *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --regions AR --swap-postcode 05842
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
