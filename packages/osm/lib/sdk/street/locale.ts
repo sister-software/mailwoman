@@ -27,18 +27,9 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["fr", "fr"],
 	["de", "de"],
 	["nl", "nl"],
-	// CA keys with the `en` BASE, and `streetLocaleForSurface` routes each French-lead surface to the
-	// fr rules per row — at build AND at probe, one shared function (the #861 discipline). A extract
-	// built before the router keys its French-lead rows under the en fold, so the router's fr keys
-	// only match a extract built with it: rebuild the CA extract when adopting. The measured gap the
-	// router closes is abbreviation variance (~3,115 rows: "boul"/"Ste-" cannot fold to the full
-	// French word under en); the bulk of French surfaces passed through the en fold unchanged on both
-	// sides and were already reachable (889,341 QC-bbox "rue " rows answered their own key).
+	// CA defaults to English; surface routing selects French rules when appropriate.
 	["ca", "en"],
-	// The 2026-08-19 retrieval-coverage lane (census bucket 1). Each locale's rules carry the letter
-	// map its NFKD fold cannot supply: pl folds ł→l (Świętokrzyska strips, Łucka does not), vn folds
-	// đ→d, id is ASCII-clean. Type abbreviations expand leading (ul→ulica, jl→jalan); vn deliberately
-	// ships none — "Đ." folds to a bare "d" and expanding initials is the wrong trade.
+	// These locales provide transliteration and abbreviation rules their base folds do not cover.
 	["pl", "pl"],
 	["vn", "vn"],
 	["id", "id"],

@@ -8,12 +8,7 @@
  *   The data file (`data/aliases.json`) catalogs ~35 hand-curated regional terms: "servo" → fuel
  *   (en-AU), "マクド" → McDonald's (ja-JP), "PFK" → KFC (fr-CA), etc.
  *
- *   See:
- *
- *   - `docs/articles/understanding/exotic-poi/regional-variant-queries.md` for the linguistic
- *       background and the source tables this data is derived from.
- *   - Issue #166 for the v0.6.0+ runtime integration plan (kind classifier consumes this table to emit
- *       `kind=amenity` / `kind=brand` proposals, filtered by `@mailwoman/locale-hint` output).
+ *   The runtime uses this table when resolving POI intent.
  */
 
 export { VARIANT_ALIAS_VERSION, getAllAliases, lookupVariantAliases, resolveLocaleScope } from "#lookup"

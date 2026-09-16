@@ -16,31 +16,17 @@ export interface PlaceEntry {
 	name: string
 	parentChain: number[]
 	/**
-	 * REFERENTIAL likelihood in [0, 1] — population-anchored (`referentialFromPopulation`), and the ONLY score the
-	 * decoder bias is allowed to read (ROAD_TO_V9 §2, ratified 2026-08-06).
-	 *
-	 * This field was called `importance` through format v4, where it carried whichever score the source database happened
-	 * to hold: the population proxy on a database with no `place_importance` table (which is every shipped
-	 * `fst-per-locale` binary), the Wikipedia score where the concordance join landed otherwise. The rename is the point
-	 * — a v4 artifact's value is a CONFLATION that cannot be told apart after the fact, which is why `fst-freshness.ts`
-	 * reports anything below {@link FST_FORMAT_VERSION} as format-stale rather than reading it as referential.
+	 * Population-based referential likelihood in [0, 1], used by decoder bias.
 	 */
 	referential: number
 	/**
-	 * Encyclopedic (Wikipedia) importance in [0, 1], fan-out-guarded per #1497. Carried for consumers that want to
-	 * DISPLAY salience; never read by the decoder or by any ranking.
-	 *
-	 * `undefined` = this place has no encyclopedic signal, or the artifact predates format 5. NEVER conflate either with
-	 * 0 — the meaning-of-zero rule; roughly 89% of the 2026-08-05 gazetteer's rows have no Wikipedia article at all.
+	 * Encyclopedic importance in [0, 1] for display only; `undefined` means unavailable.
 	 */
 	encyclopedic?: number
 	lat: number
 	lon: number
 	/**
-	 * Surface-ambiguity class (survey #4): how many DISTINCT countries carry a place with THIS entry's accepting surface,
-	 * counted over the whole admin DB at build time (clamped to 255). A property of the surface, not the place — the same
-	 * place reached via different alias surfaces reports each surface's own count. `undefined` = built without ambiguity
-	 * data (pre-2026-07-27 artifacts) — NEVER conflate with 1 (the unambiguous case); the meaning-of-zero rule.
+	 * Number of countries sharing this accepting surface, clamped to 255; `undefined` means unavailable.
 	 */
 	crossCountryBranches?: number
 }

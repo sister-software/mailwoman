@@ -6,10 +6,7 @@ import { sleep } from "#utils/sleep"
  * @author Teffen Ellis, et al.
  * @file Retry-with-backoff helper for the Who's On First data sources.
  *
- *   This lives apart from `DataSourceCache` because both that module and `PlacetypeDataSource` need
- *   it, and each already imports the other — putting it in either one closes an import cycle.
- *
- *   Deferred move: the retry home is `#api/retry`; this helper stays only until its callers migrate there.
+ *   It stays separate from `DataSourceCache` and `PlacetypeDataSource` to avoid an import cycle.
  */
 
 /**
@@ -32,7 +29,7 @@ export async function tryWithBackoff<T>(attempts: number, callback: () => T): Pr
 			lastError = error
 		}
 
-		// We try to avoid contention by giving a pause between attempts.
+		// Retry after fixed-duration jitter.
 		const delay = Math.floor(Math.random() * 1000) + 1000 * attempts
 		await sleep(delay)
 	}

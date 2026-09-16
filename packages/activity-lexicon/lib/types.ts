@@ -5,15 +5,7 @@
  *
  *   Types for the reviewed activity-phrase lexicon.
  *
- *   AN ENTRY DECLARES A SURFACE FORM AND NOTHING ELSE. The phrase is what a person types; the activity is a concept
- *   identifier some other artifact owns. Which entity kinds afford that activity, in which country, with what modality
- *   and on whose authority are not stated here and cannot be — this vocabulary is recognition, and a consumer that
- *   wants the semantics reads the artifact that carries them.
- *
- *   EVERY ENTRY NAMES WHAT ATTESTS IT. {@linkcode ActivityPhraseAttestation} is a discriminated union rather than a
- *   free-text field because an attestation nobody can check is indistinguishable from an invented one: each member
- *   points at something committed — a query row, another entry in this lexicon, a synonym in a committed vocabulary,
- *   or a clause of the activity concept's own description — and names the exact text it rests on.
+ *   Entries recognize a typed phrase and name a committed attestation; world semantics live elsewhere.
  */
 
 /**

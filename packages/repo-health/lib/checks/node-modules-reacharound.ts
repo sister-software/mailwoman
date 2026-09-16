@@ -12,11 +12,7 @@
  *   hoist, and a `files` change by silently pointing at nothing, and the caller reads that as "the artifact is missing"
  *   rather than "I looked in the wrong place".
  *
- *   WHY THIS AND NOT A BLANKET `node:path` BAN. A survey counted 1,095 `join`/`resolve` call sites across 244 files, and
- *   the great majority are the right tool: CLI `--out` flags, `mkdtemp` scratch dirs, walking a user-supplied tree,
- *   composing under a root a caller passed in. Banning the import would flag 1,075 correct lines to catch 20. This guard
- *   is keyed on the ONE substring that separates the classes — a `node_modules` segment inside a path-building call — so
- *   a false positive is a real design question every time, and the allowlist stays short enough to read.
+ *   The check targets literal `node_modules` path segments rather than general path construction.
  *
  *   Scoped to `join`/`resolve` ARGUMENTS via the TypeScript AST rather than a grep, because `node_modules` appears
  *   legitimately (and constantly) in vitest exclude globs, `.gitignore`-shaped arrays, and prose. Files are prefiltered

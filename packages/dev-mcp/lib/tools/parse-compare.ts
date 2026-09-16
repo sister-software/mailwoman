@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_parse_compare` tool definition — the description an agent reads, the input schema, and the handler
- *   wiring. The measurement lives in `../parse-compare-report.ts`.
+ *   wiring. The measurement lives in `#parse/compare/report`.
  */
 
 import { z } from "zod"

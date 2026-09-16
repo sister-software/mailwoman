@@ -63,10 +63,7 @@ const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(v
  * admin resolution is never altered.
  */
 /**
- * Half-width (degrees) of the bbox derived from a resolved locality centroid for the #247 OSM bbox fall-through. ~0.25°
- * ≈ 28 km N–S — generous enough for a large metro whose centroid sits off the queried point, while the EXACT `(street,
- * number)` match keeps a cross-commune collision rare. The proper fix is per-point scope backfill (the OSM association
- * / point-in-polygon pass, #250); this is the coverage stopgap until then.
+ * Half-width in degrees of the locality-centroid bbox used for an exact street-and-number fallback.
  */
 const LOCALITY_BBOX_RADIUS_DEG = 0.25
 
@@ -324,17 +321,8 @@ function pushCandidate(list: string[], v: string | undefined, cap: number): void
 }
 
 /**
- * Street-centroid tier (#1042): the street-level rung BELOW the exact/interpolation tiers and ABOVE admin-centroid
- * resolution. For a STREET-ONLY query (a thoroughfare with NO house number), stamp the street's centroid onto a
- * `street` node so a consumer gets a street-level coordinate instead of the commune centroid (or a wrong namesake).
- *
- * The FR no-street class mis-parses the thoroughfare — "Place Bellecour, Lyon" parses `region=Lyon`, `locality="Place
- * Bellecour"`; "Avenue des Champs-Élysées" truncates — so this recovers the thoroughfare + commune RAW-TEXT-first (the
- * same substrate as span-rescore), preferring parsed nodes and falling back to the comma-split raw query. A
- * thoroughfare is recognized by its leading voie type ({@link isVoieShaped}); the commune is any non-voie span. Every
- * (thoroughfare, commune) pair is probed against the exact street-centroid lookup, first hit wins — a false candidate
- * simply misses. Additive only: fires ONLY when no house number is present (rooftop tiers untouched) and no
- * street-level coordinate already resolved, and never alters admin resolution.
+ * Add a street centroid for street-only queries when no rooftop or street coordinate exists. Candidate pairs prefer
+ * parsed values and fall back to comma-separated raw input; a lookup miss is ignored.
  */
 export function applyStreetCentroid(
 	roots: AddressNode[],

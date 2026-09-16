@@ -11,6 +11,16 @@ plus `lib/move/` apply the mechanical repair a check's diagnostic describes.
 `lib/registry.ts` is the package's only executable entry point. A check file that is not registered is dead code and
 knip reports it.
 
+## Source-comment triage
+
+`yarn comments:triage [database-path]` scans every tracked `.ts` and `.tsx` source file (excluding declarations and
+build output) and writes a local SQLite inventory. Each scanner-recognized line, block, and JSDoc comment retains its
+repo-relative path, exact offsets and line/column range, syntax kind, text, and content hash. The default artifact is
+`.cache/mailwoman/comment-triage.sqlite`.
+
+The `comment_triage_lead` table contains low-confidence leads for `outdated`, `sensational`, `unclear`, and
+`overly_verbose` wording. They are review queues, not source edits: a person confirms a lead before changing code.
+
 ## Checks
 
 | id                            | what it reads                                                                                                                                                                                          | spawns  |

@@ -11,9 +11,7 @@
  *   "chemist"/"drugstore" are) — see `brands-lookup-core.ts` for the shared matching core with the
  *   browser-safe `./table` entry.
  *
- *   Deliberately NOT wired to `@mailwoman/variant-aliases` here — that would couple two independently
- *   published packages. {@link resolveBrandName} exists so a caller (the mailwoman runtime wiring, part 2
- *   of the brand-lexicon work) can chain `variant-aliases` → this table itself.
+ *   Variant aliases are composed by the runtime, keeping these independently published packages separate.
  */
 
 import { createBrandLookupCore } from "#brands/lookup-core"
@@ -34,7 +32,7 @@ export function lookupPOIBrand(text: string) {
 }
 
 /**
- * The single best (highest-`rows`) brand for an exact-phrase match, if any — the chaining point for part 2.
+ * The single best exact-phrase brand match, if any.
  */
 export function resolveBrandName(name: string): BrandRecord | undefined {
 	return CORE.resolveBrandName(name)

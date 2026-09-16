@@ -143,14 +143,13 @@ const ComponentTagSchema = z.enum([
 
 /**
  * Canonical parsed-component map carried by `GeocodeResult.components`. Spelled out at this engine-agnostic API
- * boundary for the same reason the result schema is hand-modeled; the compile-time drift pin in
- * `mailwoman/test/api-schema-drift.test.ts` catches any mismatch with the real `ComponentTag`-keyed result type.
+ * boundary for the same reason the result schema is hand-modeled; the compile-time drift test catches any mismatch with
+ * the real `ComponentTag`-keyed result type.
  */
 const GeocodeComponentsSchema = z.partialRecord(ComponentTagSchema, z.string())
 
 /**
- * One `GeocodeOutcome.intent_markers` entry — an advisory the ROAD_TO_V9 §4 intent vocabulary raised about the QUERY.
- * Mirrors `QueryIntentMarker` (`core/pipeline/types.ts`).
+ * One `GeocodeOutcome.intent_markers` entry, mirroring `QueryIntentMarker`.
  *
  * `evidence` is deliberately open (`z.record`): each `code` carries its own measurement — a dominance margin, a pair of
  * interpretations, a taxonomy id — and flattening those into one closed shape would either lose the numbers or invent
@@ -251,14 +250,8 @@ void evidencePin
 void derivationPin
 
 /**
- * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
- * `.loose()` so a field the engine adds that this schema doesn't yet know about still rides through undocumented rather
- * than being stripped or rejected. DOC-ACCURACY ONLY: the route passes `engine.geocode()`'s outcome through verbatim
- * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
- * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
- * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
- * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time regression check
- * that catches this shape drifting from the real `GeocodeResult` interface.
+ * `POST /v1/geocode` response schema. The route passes engine output through verbatim; this schema documents the public
+ * shape and remains independent of the `mailwoman` package.
  */
 export const GeocodeOutcomeLikeSchema = z.object({
 	input: z.string(),
@@ -379,14 +372,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 export type GeocodeOutcomeLike = z.infer<typeof GeocodeOutcomeLikeSchema>
 
 /**
- * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
- * `.loose()` so a field the engine adds that this schema doesn't yet know about still rides through undocumented rather
- * than being stripped or rejected. DOC-ACCURACY ONLY: the route passes `engine.geocode()`'s outcome through verbatim
- * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
- * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
- * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
- * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time regression check
- * that catches this shape drifting from the real `GeocodeResult` interface.
+ * Loose OpenAPI variant of {@link GeocodeOutcomeLikeSchema}.
  */
 export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.loose().openapi("GeocodeOutcome")
 

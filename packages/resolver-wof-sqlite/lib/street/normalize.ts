@@ -3,23 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   THE street normalizer for the address-point tier (#476). One function, used by BOTH the extract
- *   builder (`mailwoman situs address-points`) and the lookup tier (`address/point/index.ts`) —
- *   never two implementations (the PLACETYPE_ORDER lesson: parallel copies silently corrupt).
- *
- *   Normalization contract (deliberately aggressive — both sides apply the same function, so
- *   collisions only need to be _consistent_, not linguistically perfect):
- *
- *   1. Lowercase, NFKD-fold diacritics, collapse whitespace, strip punctuation (periods, commas,
- *        apostrophes).
- *   2. Expand USPS directional abbreviations at the FIRST and LAST token position (`n` → `north`, `se` →
- *        `southeast`) — Overture sources abbreviate inconsistently.
- *   3. Canonicalize a trailing USPS street-type token via the codex suffix table to its canonical full
- *        form (`st`/`str`/`street` → `street`).
- *
- *   Numbered streets are left as digits (`5th` stays `5th`); a SPELLED ordinal before a street suffix
- *   folds to its digit form (`tenth street` → `10th street`, #723) so the grid-city ordinal
- *   cross-streets the source data spells with digits become reachable.
+ *   Shared address-point key normalizer for the builder and lookup tier. It folds punctuation and
+ *   diacritics, expands directional abbreviations, and canonicalizes trailing street types.
  */
 
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"

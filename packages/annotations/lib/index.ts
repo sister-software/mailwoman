@@ -354,8 +354,8 @@ export interface SchemaOrgInput {
 	 */
 	name?: string
 	/**
-	 * The rendered street line (house number + street + unit) as ONE string. Compose it with the locale-aware
-	 * `@mailwoman/formatter` (`formatAddress`) where available, or {@link composeStreetAddress} for a plain join.
+	 * The rendered street line (house number + street + unit) as one string. Use `@mailwoman/codex/address-format` for
+	 * locale-aware rendering or {@link composeStreetAddress} for a plain join.
 	 */
 	streetAddress?: string
 	/**

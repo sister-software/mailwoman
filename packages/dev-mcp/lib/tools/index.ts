@@ -5,12 +5,7 @@
  *
  *   The tool table — the tested contract. `server.ts` only adapts it to the SDK's envelope.
  *
- *   ONE FILE PER TOOL, and the split is along the boundary that matters: a file here is a CONTRACT — the description an
- *   agent reads, the input schema, the handler wiring — while the measurement it calls lives in the package root
- *   (`compare.ts`, `diagnose.ts`, `provenance.ts`, `vocabulary.ts`, …). The pairing is deliberate rather than
- *   duplicated naming: `tools/diagnose.ts` is what an agent is told `mwdev_diagnose` does, `../diagnose.ts` is what it
- *   actually does, and the two change for different reasons. A description is not documentation here — it is the only
- *   thing standing between a tool and being used for the wrong question, which is why they are long.
+ *   Each tool module owns its MCP metadata and wiring; measurements live beside the package root.
  *
  *   Four tools that spawn the compiled CLI live in `../spawn-tools.ts` and are appended below.
  *

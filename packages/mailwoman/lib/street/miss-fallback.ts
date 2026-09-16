@@ -13,14 +13,8 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 
 /**
- * The bare-toponym STREET-MISS fallback (the Moscow/Wellington/Antwerpen class): the model tags a lone bare token
- * `street`, the street tier finds no such street, and the result is null — while the resolver walk, handed the same
- * span as a locality, answers directly. Four checks: null-only (the D-rule geometry the fork wire established); a lone
- * SINGLE-TOKEN street-tagged span (a multi-token retry re-enters the qualifier-strip scrape class — measured: the
- * unguarded retry stripped 'COMER parís.méxico' to Comer, Georgia); never on a declared fork (those belong to the
- * entity probe); and the retry runs under the #912 bare-locality posture — placer anchor/hard filter always withheld
- * (measured: keeping them handed bare 'Wellington' to the GB namesake, 18,726 km out), an INFERRED default country
- * withheld too, an explicit one supreme.
+ * Retry a lone street-tagged token as a locality only after a null result and when no fork is declared. The retry omits
+ * inferred country constraints but preserves an explicit default country.
  */
 export async function applyStreetMissFallback(
 	result: GeocodeOutcomeLike,

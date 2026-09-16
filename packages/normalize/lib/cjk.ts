@@ -3,31 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   CJK input normalization (Direction E, #291) — a conservative, character-level pass that runs as
- *   part of `normalize()` so the parser sees a stable form of CJK addresses. It does only the
- *   transformations that are UNAMBIGUOUS in any context:
- *
- *   - **Strip the postal mark 〒 (U+3012).** The JP cheap-probe found 〒 is byte-fallback OOV for the
- *       SentencePiece tokenizer — it fragments into raw UTF-8 byte pieces and poisons the parse of
- *       the digits right after it (the postcode gets mislabeled as a house number). It's a
- *       "postcode follows" marker with no addressing content of its own, so dropping it is safe and
- *       fixes the bug.
- *   - **Fold full-width ASCII (U+FF01–U+FF5E → U+0021–U+007E).** A full-width `１` is always the digit
- *       1, a full-width `－` always a hyphen — keyboards and copy-paste produce these constantly.
- *       Folding them to ASCII makes `１０４−００６１` and `104-0061` the same input.
- *   - **Fold the ideographic space (U+3000 → ' ').**
- *   - **Fold half-width katakana (U+FF61–U+FF9F).** This matches the JP corpus builder. A voiced
- *       pair such as `ﾃﾞ` contracts from two UTF-16 units to one `デ`; the output offset maps to the
- *       first raw unit in the pair.
- *
- *   It deliberately does NOT convert **kanji numerals** (一二三…): place names carry numeral kanji as
- *   ordinary characters (三田 _Mita_, 四谷 _Yotsuya_), so a blind 三→3 would corrupt them.
- *   Disambiguating "this 三 is a block number, that one is part of a name" is parsing, not
- *   normalization — deferred. Kana→kanji transliteration (ちょうめ→丁目) is dictionary work and likewise
- *   deferred.
- *
- *   Self-limiting: a string with none of these characters returns identity, so Latin input is
- *   untouched.
+ *   Normalizes CJK punctuation and width variants without transliterating names or numeral kanji.
+ *   Offset-map entries for contracted half-width katakana point to the first source unit.
  */
 
 import { identityMap } from "#offset-map"
