@@ -116,11 +116,16 @@ describe("readBoardCoverage", () => {
 		await makeDirectories(join(cases, "gb"))
 		await makeDirectories(join(cases, "generalization"))
 
-		await writeLocalTextFile([
-        				stringifyJSON({ id: "a", country: "GB", status: "pass" }),
-        				stringifyJSON({ id: "b", country: "GB", status: "improvement_target" }),
-        				stringifyJSON({ id: "c", country: "IE", status: "pass" }),
-        			], join(cases, "gb", "regression.jsonl"))
+		await writeLocalTextFile(
+			[
+				stringifyJSON({ id: "a", country: "GB", status: "pass" }),
+				stringifyJSON({ id: "b", country: "GB", status: "improvement_target" }),
+				stringifyJSON({ id: "c", country: "IE", status: "pass" }),
+			],
+			join(cases, "gb", "regression.jsonl")
+		)
+		await makeDirectories(join(cases, "gb", "archived"))
+		await writeLocalJSONFile({ id: "archived", country: "GB", status: "pass" }, cases, "gb", "archived", "old.jsonl")
 
 		// The loader's /^[a-z]{2}$/ filter excludes this directory. A glob would include it and overstate the board.
 		await writeLocalJSONFile({ id: "z", country: "ZZ", status: "pass" }, cases, "generalization", "passes.jsonl")
@@ -132,6 +137,10 @@ describe("readBoardCoverage", () => {
 		const board = await readBoardCoverage(join(root, "cases"))
 
 		expect(board.get("GB")).toEqual({ rows: 2, passed: 1 })
+	})
+
+	it("ignores nested country files the board loader does not read", async () => {
+		expect((await readBoardCoverage(join(root, "cases"))).get("GB")).toEqual({ rows: 2, passed: 1 })
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
