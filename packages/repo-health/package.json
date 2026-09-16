@@ -51,9 +51,9 @@
 			"default": "./out/tracked-sources.js"
 		},
 		"./comment-triage": {
-			"types": "./out/comment-triage.d.ts",
-			"node": "./lib/comment-triage.ts",
-			"default": "./out/comment-triage.js"
+			"types": "./out/comment/triage/index.d.ts",
+			"node": "./lib/comment/triage/index.ts",
+			"default": "./out/comment/triage/index.js"
 		},
 		"./ts-ast": {
 			"types": "./out/ts-ast.d.ts",

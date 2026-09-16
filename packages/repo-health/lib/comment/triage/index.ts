@@ -78,6 +78,16 @@ const SHORT_COMMENT_MAXIMUM_LENGTH = 120
 const LONG_COMMENT_MINIMUM_LENGTH = 900
 const LONG_COMMENT_MINIMUM_SENTENCES = 8
 
+/**
+ * How many sentences a comment's prose carries, splitting on terminal punctuation.
+ *
+ * The split leaves an empty segment wherever two terminators meet and one at the end when the prose closes on a
+ * terminator, so only segments carrying a non-space character count.
+ */
+function countSentences(prose: string): number {
+	return prose.split(/[.!?](?:\s|$)/).filter((segment) => segment.trim().length > 0).length
+}
+
 function digest(value: string): string {
 	return sha256Hex(value)
 }
@@ -173,10 +183,7 @@ export function heuristicLeads(comment: SourceComment): TriageLead[] {
 		})
 	}
 
-	if (
-		prose.length > LONG_COMMENT_MINIMUM_LENGTH ||
-		prose.split(/[.!?](?:\s|$)/).filter(Boolean).length > LONG_COMMENT_MINIMUM_SENTENCES
-	) {
+	if (prose.length > LONG_COMMENT_MINIMUM_LENGTH || countSentences(prose) > LONG_COMMENT_MINIMUM_SENTENCES) {
 		leads.push({
 			commentID: comment.id,
 			category: "overly_verbose",

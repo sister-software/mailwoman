@@ -2,12 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Every country→locale table agrees with the locales `release.config.json` ships.
+ * @file Every country→locale table keys each locale by its own region subtag.
  *
- *   Seven tables map an ISO country code to a locale, each written by hand, and `release.config.json` is the one
- *   that decides what ships. Adding a locale means editing the config and then remembering the others; the one
- *   that is forgotten fails silently, because a table that does not name a country simply answers nothing for it
- *   and every consumer treats that as an absence rather than an error.
+ *   Seven tables map an ISO country code to a locale, each written by hand. A table is read by KEY, so a transposed
+ *   pair fails silently: it answers a locale for the country asked about, and every consumer treats a plausible
+ *   answer as the right one.
  *
  *   THE TABLES ARE DISCOVERED, NOT LISTED. A check that names its subjects cannot see the eighth table somebody
  *   adds, which is the failure it exists to prevent. A declaration qualifies when at least two of its entries pair
@@ -32,13 +31,9 @@
  *   `KR: "ko-kr"` ahead of the Korean package, and the ladder resolves an FST by path and answers nothing when the
  *   file is absent, so the forward-looking entry costs a warning line and no wrong reading. An error there would
  *   fire for the length of every arc that names its locale before shipping it.
- *
- *   The config is read rather than imported: `release.config.json` sits at the repository root, and a package that
- *   reached it at runtime would break the moment it ran from a published tarball.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { readReleaseConfig, shippingLocales } from "@mailwoman/core/release-config"
 import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
@@ -187,15 +182,14 @@ export async function findLocaleTables(context: {
 }
 
 /**
- * The `locale-tables` check: one error per shipping locale a complete table omits, and one per entry whose country key
- * disagrees with its locale's region subtag.
+ * The `locale-tables` check: one error per entry whose country key disagrees with its locale's region subtag.
+ *
+ * Completeness was the second invariant and is retired — see the file header, and the note where it used to run.
  */
 export const localeTablesCheck: RepoCheck = {
 	id: "locale-tables",
-	description: "Every country→locale table agrees with the locales release.config.json ships.",
+	description: "Every country→locale table keys each locale by its own region subtag.",
 	async run(context) {
-		const config = await readReleaseConfig(context.repoRoot)
-		const shipping = shippingLocales(config)
 		const tables = await findLocaleTables(context)
 		const diagnostics: Diagnostic[] = []
 
@@ -215,10 +209,10 @@ export const localeTablesCheck: RepoCheck = {
 		}
 
 		// COMPLETENESS is no longer asked of any table here — see the file header. It bound
-		// `WEIGHTS_PACKAGE_BY_COUNTRY`, which is now derived from this same config by
+		// `WEIGHTS_PACKAGE_BY_COUNTRY`, which is now derived from `release.config.json` by
 		// `@mailwoman/core/release-config`'s `weightsPackageByCountry` and cannot disagree with it. The invariant moved to
 		// that derivation's own test, where a shipping locale it fails to name is a failing assertion rather than a lint
-		// finding about a copy nobody should write again.
+		// finding about a copy nobody should write again. With it went this check's only read of the config.
 		return diagnostics
 	},
 }

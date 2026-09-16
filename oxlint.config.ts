@@ -331,6 +331,24 @@ export default {
 	rules: {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
+		// The shared base sets this to `warn`, which every run prints and no run refuses, so an unused binding
+		// accumulates. `tsc` does not catch it either — `noUnusedLocals` and `noUnusedParameters` are off in
+		// `@sister.software/tsconfig`. Measured before promoting: those two flags over every package's source AND test
+		// project report zero, so this refuses the next one rather than a backlog. The base's options are repeated
+		// verbatim because setting a severity alone drops them, and every axis carries an `^_` escape, so a binding that
+		// must exist unused still has a legal spelling.
+		"no-unused-vars": [
+			"error",
+			{
+				args: "all",
+				argsIgnorePattern: "^_",
+				caughtErrors: "all",
+				caughtErrorsIgnorePattern: "^_",
+				destructuredArrayIgnorePattern: "^_",
+				varsIgnorePattern: "^_",
+				ignoreRestSiblings: true,
+			},
+		],
 		"mailwoman/no-cross-package-reexport": "error",
 		"mailwoman/no-database-boundary-cast": "error",
 		"mailwoman/no-database-handle-cast": "error",
