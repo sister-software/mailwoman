@@ -16,6 +16,7 @@
 import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, writeFile } from "node:fs/promises"
 
 import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
+import { createNewlineWriter } from "spliterator"
 
 import type { Stats } from "#fs/readers"
 import { statPath } from "#fs/readers/stat"
@@ -93,12 +94,16 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 
 	await mkdir(dirname(filePath), { recursive: true })
 
-	// A string is itself an `Iterable<string>` over its characters, so it has to be settled before the iterable branch
-	// or every file would be written one character per line.
+	// A string is itself an `Iterable<string>` over its characters, so settle it before selecting the line writer.
 	const resolved = await content
-	const data = typeof resolved === "string" ? resolved : toLinesText(await Array.fromAsync(resolved))
 
-	return writeFile(filePath, data, "utf8")
+	if (typeof resolved === "string") return writeFile(filePath, resolved, "utf8")
+
+	await using writer = createNewlineWriter(filePath)
+
+	for await (const line of resolved) {
+		await writer.write(line)
+	}
 }
 
 /**

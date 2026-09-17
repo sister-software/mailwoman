@@ -102,22 +102,23 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			synthesize: false,
 		})
 
-		// Vermont-bearing rows after the refactor live in labeled-val.jsonl or labeled-test.jsonl,
-		// never in labeled-train.jsonl. Scan all three for the Vermont component and assert the
-		// train stream produced none.
-		const readJsonl = (path: string) =>
-			Array.fromAsync(JSONSpliterator.fromAsync<{ source_id: string; components: { region?: string } }>(path))
+		const readVermontRows = (path: string) =>
+			JSONSpliterator.fromAsync<{ source_id: string; components: { region?: string } }>(path)
+				.filter((row) => row.components.region === "Vermont")
+				.toArray()
 
-		const trainRows = await readJsonl(join(outDir, "intermediate", "labeled-train.jsonl"))
-		const valRows = await readJsonl(join(outDir, "intermediate", "labeled-val.jsonl"))
-		const testRows = await readJsonl(join(outDir, "intermediate", "labeled-test.jsonl"))
+		const [trainVermont, valVermont, testVermont] = await Promise.all([
+			readVermontRows(join(outDir, "intermediate", "labeled-train.jsonl")),
+			readVermontRows(join(outDir, "intermediate", "labeled-val.jsonl")),
+			readVermontRows(join(outDir, "intermediate", "labeled-test.jsonl")),
+		])
 
-		const vermontHeldOut = [...valRows, ...testRows].filter((r) => r.components.region === "Vermont")
+		const vermontHeldOut = [...valVermont, ...testVermont]
 		expect(vermontHeldOut.length).toBeGreaterThan(0)
-		expect(trainRows.filter((r) => r.components.region === "Vermont")).toEqual([])
+		expect(trainVermont).toEqual([])
 
 		// The .txt manifests stay in lockstep with the per-split JSONL.
-		const trainIDs = new Set(await Array.fromAsync(TextSpliterator.fromAsync(join(outDir, "splits", "train.txt"))))
+		const trainIDs = new Set(await TextSpliterator.fromAsync(join(outDir, "splits", "train.txt")).toArray())
 
 		for (const r of vermontHeldOut) {
 			expect(trainIDs.has(r.source_id)).toBe(false)
