@@ -248,8 +248,8 @@ function renderControlSection(control: LinkageEvalRun): string {
 		"The control run is not an achievement and should not be read as one. A pipeline whose entire family mechanism " +
 		'is "copy the parent name the filer wrote down, canonicalize it, and group by the result" is supposed to score ' +
 		`${formatScoreValue(control.score.f1)} when handed that name. Its job here is narrower and more important: it ` +
-		"proves this harness reads a table the truth can actually reach. Without it, the withheld run's zero is " +
-		"unfalsifiable — an eval pointed at the wrong table reports zero too, and reports it just as confidently with " +
+		"proves this harness reads a table the truth can reach. Without it, the withheld run's zero is " +
+		"unfalsifiable — an eval pointed at the wrong table reports zero too, and reports it as confidently with " +
 		"the answer sitting in the artifact. The two runs differ in exactly one field, and the input hashes below " +
 		"differ accordingly."
 	)
@@ -264,7 +264,7 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 		"decides whether two identifiers denote the same legal entity, and it will not merge two records that share no " +
 		'identifier code, no matter how similar their names are. Even if it did merge them, a merge asserts "same ' +
 		'company", not "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: ' +
-		"two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are NOT the same " +
+		"two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are not the same " +
 		"company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the " +
 		"veto refuses it, which is what a veto is for."
 	)
@@ -317,7 +317,7 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent " +
 			"name a filer discloses — on its Form 499, or on the broadband provider list, whichever carries it; both " +
 			"sources contribute rows to the control build below. The open question this eval exists to baseline is whether " +
-			"that membership is recoverable for a filer that discloses NOTHING — from names, identifiers, or any other " +
+			"that membership is recoverable for a filer that discloses nothing — from names, identifiers, or any other " +
 			'signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so ' +
 			"that a later build with more evidence has something to beat.",
 		"",
@@ -352,7 +352,7 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 			"fact about the company, not about that registration. Scoring FRNs individually would have let the truth " +
 			"partition put a single legal entity in two different families at once.\n\nTreating a shared provider id as " +
 			"proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have " +
-			"been observed reporting DIFFERENT parents, which would mean the fold is joining companies that ought to stay " +
+			"been observed reporting different parents, which would mean the fold is joining companies that ought to stay " +
 			"apart. That failure is not silent here. Folding two registrants that belong to different families puts a " +
 			"truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below " +
 			"1.000, and the test asserting a perfect control fails. The rule is required and wired to a regression check.",
@@ -371,7 +371,7 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"",
 		"## Input record shape",
 		"",
-		"Every field the builder receives in the withheld run, and how much of it the corpus actually fills in. The " +
+		"Every field the builder receives in the withheld run, and how much of it the corpus fills in. The " +
 			"empty columns are worth reading, but not for the obvious reason: filling them in changes nothing, because " +
 			'nothing on the family path reads them (see "What would move this number" below). They are listed so the ' +
 			"corpus's sparsity is not mistaken for the reason the withheld run scores zero.",
@@ -400,12 +400,12 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 			return `withheld: ${pair.recovered ? "yes" : "no"} · control: ${inControl?.recovered ? "yes" : "no"}`
 		}),
 		"",
-		"## What is actually in each artifact",
+		"## What is in each artifact",
 		"",
 		"Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no " +
 			"ownership edge, no family row the prediction would score and no family row carrying a relationship this " +
 			"eval cannot classify — that is the withholding, verified, and a runtime check refuses to report a withheld " +
-			`score if any of those four counts is non-zero. It DOES contain ${withheld.census.nonOwnershipFamilyRows} ` +
+			`score if any of those four counts is non-zero. It does contain ${withheld.census.nonOwnershipFamilyRows} ` +
 			"corporate-family rows, from the management-company disclosures the eval does not withhold; they are " +
 			"namespaced separately from ownership families and the prediction skips them. An earlier version of this " +
 			"page claimed no family row could exist here at all, which was wrong on its own artifact.\n\nThe family " +
@@ -444,17 +444,18 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"The corpus is a fixed literal with no sampling and no randomness; the builder and the clustering pass are " +
 			'deterministic; every date the runs depend on is a constant rather than "today". Re-running reproduces ' +
 			"both scores and both hashes byte for byte. The test suite regenerates this entire page and compares it to " +
-			"the committed copy, so editing the corpus without republishing fails, rather than quietly leaving the " +
+			"the committed copy, so editing the corpus without republishing fails rather than leaving the " +
 			"numbers above stale.",
 		"",
 		"## Caveats",
 		"",
 		`This is a synthetic ${truthForm499Rows.length}-filer corpus, not a run against real FCC Form 499 data — no ` +
 			"such corpus ships in this repo with a stable hash to pin to, so the eval provides exactness and reproducibility " +
-			"at the cost of scale. What the withheld number does NOT say is that ownership is hard to recover in " +
+			"at the cost of scale. What the withheld number does not say is that ownership is hard to recover in " +
 			"general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale " +
-			"is the honest limitation, and it limits confidence rather than the mechanism: a larger corpus of the same " +
-			"shape scores the same, for the reason given above. The control number says nothing about how often real " +
+			"is the one limitation this corpus carries, and it limits confidence rather than the mechanism: a larger " +
+			"corpus of the same shape scores the same, for the reason given above. The control number says nothing " +
+			"about how frequently real " +
 			"filers report a parent, or report it accurately — only that when they do, this pipeline groups them " +
 			"correctly.",
 		"",

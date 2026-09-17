@@ -82,7 +82,7 @@ The golden eval set (`v0.1.2`, 4,535 entries) is the single most important artif
 
 The discipline above grades parser spans against a golden. The resolver — the stage that turns a parsed address into a place on Earth — needs its own, and it fails differently. The trap here is grading resolution by **name-match**: did the resolved place carry the same name string as the gold? That question can only fail when the name is wrong, and the name is almost never wrong. There are ten US localities called "Sheldon"; "New York" is a city, a state, and a village 280km apart. A name-match metric scores every one of those a tie and gives the resolver full marks for picking any of them.
 
-The 2026-06-08 direct-eval run made the cost concrete: on the leakage-free Vermont rows the resolver scored **93.7% locality name-match while its median coordinate was 326km from the truth** — it was finding the right _name_ in the wrong _state_, and name-match could not see it. Two disciplines follow.
+The 2026-06-08 `honest-eval` run made the cost concrete: on the leakage-free Vermont rows the resolver scored **93.7% locality name-match while its median coordinate was 326km from the truth** — it was finding the right _name_ in the wrong _state_, and name-match could not see it. Two disciplines follow.
 
 ### Evaluate on geography the model never trained on
 
@@ -96,7 +96,7 @@ Three metrics survive a name collision:
 - **coordinate error** (great-circle, gold point to resolved centroid, p50/p90) — handles point geometry natively and exposes the wrong-instance resolves that name-match ties.
 - **PIP-containment** — is the gold point inside the resolved place's polygon? Name-surface-independent, but report it _with a polygon-coverage denominator_: WOF point-geometry localities have no polygon and would otherwise count as silent failures, and tight municipal polygons reject rural addresses ascribed to the nearest town. Lead with region-match and coordinate; treat locality-PIP as a coverage-adjusted secondary.
 
-`packages/mailwoman/lib/dev-tools/direct-eval.run.ts` + `packages/mailwoman/lib/dev-tools/pip-containment.run.ts` implement this; see [the direct-eval report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
+`packages/mailwoman/lib/dev-tools/honest-eval.run.ts` + `packages/mailwoman/lib/dev-tools/pip-containment.run.ts` implement this; see [the `honest-eval` report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
 
 ### When aggregate and functional disagree, functional wins
 
