@@ -21,7 +21,7 @@ const loc = parseCoordinateString("37.7749° N, 122.4194° W")
 
 | Capability             | Implementation                                                              |
 | ---------------------- | --------------------------------------------------------------------------- |
-| **Coordinate math**    | Haversine distance, bearing, bounding-box containment                       |
+| **Coordinate math**    | Haversine distance, direction, bounding-box containment                     |
 | **H3 indexing**        | Hexagonal grid indexing via `h3-js` — spatial blocking for the matcher      |
 | **WKB/WKT geometry**   | Parse/format Well-Known Binary geometry via `wkx`                           |
 | **Coordinate parsing** | Parse decimal, DMS, and UTM coordinate strings via `geo-coordinates-parser` |

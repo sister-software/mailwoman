@@ -226,7 +226,7 @@ run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`, `
 the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place to pause` — state the
 next action and stop; the operator sets cadence).
 
-A contract-bearing name keeps its spelling: `@mailwoman/locale-hint`, `mailwoman eval promote`,
+A name tied to a contract keeps its spelling: `@mailwoman/locale-hint`, `mailwoman eval promote`,
 `mwdev_promotion_eval`, `promotion-eval.ts`, `packages/corpus/lib/recipes/`,
 `RegionDatabaseProvider`. Inline code is exempt from the rule, so backtick the identifier and the sentence
 passes. Renaming one is a separate change the operator approves.

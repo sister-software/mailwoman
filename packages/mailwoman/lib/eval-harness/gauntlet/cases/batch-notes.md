@@ -613,7 +613,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 > **Instrument caveat.** The 16 rows under `DE`/`ES`/`GB`/`IN`/`IT`/`NZ` graded through their weights
 > overlay with the anchor channel OFF — those overlay packages carry no `postcode-<cc>.bin`, so
 > `loadFromWeights` warned and degraded. None of the 16 inputs carries a postcode, so the effect on this
-> batch is nil, but a later postcode-bearing row in those countries would need the artifact.
+> batch is nil, but a later row with a postcode in those countries would need the artifact.
 >
 > **2026-08-06 follow-up (#1507 / #1516).** Two corrections to the paragraph above and one addition to the
 > batch itself.

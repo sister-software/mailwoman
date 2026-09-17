@@ -187,7 +187,7 @@ country value is rejected with a clear error.
 `fixtures/usgov-samhsa-treatment-locator/sample.csv` — 9 hand-crafted
 rows covering:
 
-- Standard urban + suite-bearing addresses
+- Standard urban addresses with suites
 - Parent organization on `name2` (joined onto venue)
 - Narrative sub-tenant designators (`"Suite C, behind main building"`)
 - Hyphenated NYC-style house numbers
